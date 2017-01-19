@@ -104,11 +104,14 @@ public abstract class CompletionPhase implements Disposable {
     }
 
     public void ignoreCurrentDocumentChange() {
+      final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      if (commandProcessor.getCurrentCommand() == null) return;
+
       ignoreDocumentChanges = true;
-      CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
+      commandProcessor.addCommandListener(new CommandAdapter() {
         @Override
         public void commandFinished(CommandEvent event) {
-          CommandProcessor.getInstance().removeCommandListener(this);
+          commandProcessor.removeCommandListener(this);
           ignoreDocumentChanges = false;
         }
       });

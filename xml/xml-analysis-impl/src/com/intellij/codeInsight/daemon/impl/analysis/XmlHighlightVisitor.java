@@ -425,17 +425,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (tag == null) return;
 
     final String name = attribute.getName();
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(attribute);
 
-    if (XmlExtension.getExtension(attribute.getContainingFile()).needWhitespaceBeforeAttribute()) {
-      PsiElement prevLeaf = PsiTreeUtil.prevLeaf(attribute);
-
-      if (!(prevLeaf instanceof PsiWhiteSpace)) {
-        TextRange textRange = attribute.getTextRange();
-        HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-        String description = XmlErrorMessages.message("attribute.should.be.preceded.with.space");
-        HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
-        addToResults(info);
-      }
+    if (!(prevLeaf instanceof PsiWhiteSpace)) {
+      TextRange textRange = attribute.getTextRange();
+      HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+      String description = XmlErrorMessages.message("attribute.should.be.preceded.with.space");
+      HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
+      addToResults(info);
     }
 
     if (attribute.isNamespaceDeclaration() || XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {

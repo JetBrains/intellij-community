@@ -218,7 +218,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       Messages.getQuestionIcon(), option) == Messages.OK;
   }
 
-  private static void stop(@Nullable RunContentDescriptor descriptor) {
+  public static void stopProcess(@Nullable RunContentDescriptor descriptor) {
     ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     if (processHandler == null) {
       return;
@@ -502,7 +502,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
 
       for (RunContentDescriptor descriptor : runningToStop) {
-        stop(descriptor);
+        stopProcess(descriptor);
       }
     }
 

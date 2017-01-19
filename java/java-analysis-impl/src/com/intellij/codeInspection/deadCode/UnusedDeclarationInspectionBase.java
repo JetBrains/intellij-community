@@ -706,7 +706,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  @TestOnly
   public List<EntryPoint> getExtensions() {
     return myExtensions;
   }

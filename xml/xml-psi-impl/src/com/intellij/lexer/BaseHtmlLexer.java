@@ -40,7 +40,7 @@ import java.util.Locale;
 /**
  * @author Maxim.Mossienko
  */
-abstract class BaseHtmlLexer extends DelegateLexer {
+public abstract class BaseHtmlLexer extends DelegateLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int SEEN_STYLE = 0x40;
   private static final int SEEN_TAG = 0x80;
@@ -65,8 +65,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   protected String styleType = null;
 
   private final boolean caseInsensitive;
-  private boolean seenContentType;
-  private boolean seenStylesheetType;
+  protected boolean seenContentType;
+  protected boolean seenStylesheetType;
   private CharSequence cachedBufferSequence;
   private Lexer lexerOfCacheBufferSequence;
 
@@ -215,7 +215,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   @Nullable
-  protected static HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
+  protected HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
@@ -366,9 +366,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
           String name = TreeUtil.getTokenText(base);
           if (caseInsensitive) name = name.toLowerCase();
 
-          if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
-             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
-             CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
+          if(endOfTheEmbeddment(name)) {
             break; // really found end
           }
         }
@@ -392,6 +390,12 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       base.getTokenType();
     }
     return tokenEnd;
+  }
+
+  protected boolean endOfTheEmbeddment(String name) {
+    return (hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
+           (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
+           CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name);
   }
 
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {

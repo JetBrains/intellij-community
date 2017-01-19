@@ -9,6 +9,8 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class CCDeleteAnswerPlaceholder extends CCAnswerPlaceholderAction {
   public CCDeleteAnswerPlaceholder() {
     super("Delete", "Delete answer placeholder");
@@ -42,6 +44,11 @@ public class CCDeleteAnswerPlaceholder extends CCAnswerPlaceholderAction {
       return false;
     }
     return state.getAnswerPlaceholder() != null;
+  }
+
+  @Override
+  protected List<AnswerPlaceholder> getPlaceholders(@NotNull TaskFile taskFile) {
+    return taskFile.getAnswerPlaceholders();
   }
 
   @Override

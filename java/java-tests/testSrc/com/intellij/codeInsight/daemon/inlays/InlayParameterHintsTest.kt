@@ -16,21 +16,18 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.DocumentUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
+import java.util.regex.Pattern
 
 
 abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
@@ -38,6 +35,10 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
   private var isParamHintsEnabledBefore = false
   private lateinit var stateBefore: Element
 
+  companion object {
+    val pattern: Pattern = Pattern.compile("<hint\\s+text=\"([0-9a-zA-Z]+)\"/>")
+  }
+  
   override fun setUp() {
     super.setUp()
     
@@ -54,77 +55,24 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
     
     super.tearDown()
   }
-
-  protected fun getInlays(): List<Inlay> {
-    val editor = myFixture.editor
-    return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-  }
-
-  protected fun onLineStartingWith(text: String): InlayAssert {
-    val range = getLineRangeStartingWith(text)
-    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
-    return InlayAssert(myFixture.file, inlays)
-  }
-
-  protected fun getLineRangeStartingWith(text: String): TextRange {
-    val document = myFixture.editor.document
-    val startOffset = document.charsSequence.indexOf(text)
-    val lineNumber = document.getLineNumber(startOffset)
-    return DocumentUtil.getLineTextRange(document, lineNumber)
-  }
-
-  protected fun configureFile(fileName: String, text: String) {
+  
+  fun checkInlays(fileName: String, text: String) {
     myFixture.configureByText(fileName, text)
-    myFixture.doHighlighting()
-  }
 
-}
+    val document = myFixture.getDocument(myFixture.file)
+    val expectedInlays = extractInlays(document)
+    val actualInlays = getActualInlays()
 
-class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
-
-  fun assertNoInlays() {
-    assertThat(inlays).hasSize(0)
-  }
-
-  private fun getAllInlays(): String {
-    val fileManager = FileEditorManager.getInstance(file.project)
-    val fileEditor: FileEditor = fileManager.getEditors(file.virtualFile).first()!!
-    val editor = ((fileEditor as TextEditor).editor as EditorEx)
-
-    val inlays = editor.inlayModel.getInlineElementsInRange(0, file.textLength)
-
-    val hintManager = ParameterHintsPresentationManager.getInstance()
-    return inlays
-      .filter { hintManager.isParameterHint(it) }
-      .map { it.offset to hintManager.getHintText(it) }
-      .joinToString(",")
-  }
-
-  fun assertInlays(vararg expectedInlays: String) {
-    assertThat(expectedInlays.size).isNotEqualTo(0)
-
-    val hintManager = ParameterHintsPresentationManager.getInstance()
-    val hints = inlays.filter { hintManager.isParameterHint(it) }.map { it.offset to hintManager.getHintText(it) }
-    val hintOffsets = hints.map { it.first }
-    val hintNames = hints.map { it.second }
-
-    val elements = hintOffsets.mapNotNull { file.findElementAt(it) }
-    assertThat(hints.size)
-      .withFailMessage("Expected ${expectedInlays.size} elements with hints, Actual elements count ${hints.size}" +
-                         ": ${elements.joinToString(", ")}, file text: \n\n ${file.text} \n\n isCommitted ${isCommitted(file)} \n\n" +
-                         "Psi: \n ${DebugUtil.psiToString(file, true)}\n" +
-                         "All inlays: ${getAllInlays()}")
-
+    assertThat(actualInlays.size)
+      .withFailMessage("Expected ${expectedInlays.size} elements with hints, Actual elements count ${actualInlays.size}" +
+                       ", file text: \n\n ${file.text} \n\n isCommitted ${isCommitted(file)} \n\n" +
+                       "Psi: \n ${DebugUtil.psiToString(file, true)}\n" +
+                       "All inlays: ${actualInlays}")
       .isEqualTo(expectedInlays.size)
 
-    val expect = expectedInlays.map { it.substringBefore("->") to it.substringAfter("->") }
-    val expectedHintNames = expect.map { it.first }
-    val expectedWordsAfter = expect.map { it.second }
-
-    assertThat(hintNames).isEqualTo(expectedHintNames)
-
-    val wordsAfter = elements.map { it.text }
-    assertThat(wordsAfter).isEqualTo(expectedWordsAfter)
+    actualInlays.zip(expectedInlays).forEach {
+      assertThat(it.first).isEqualTo(it.second)
+    }
   }
 
   private fun isCommitted(file: PsiFile): Boolean {
@@ -134,5 +82,44 @@ class InlayAssert(private val file: PsiFile, val inlays: List<Inlay>) {
     assertThat(document).isNotNull()
     return manager.isCommitted(document!!)
   }
+
+  private fun getActualInlays(): List<InlayInfo> {
+    myFixture.doHighlighting()
+    val editor = myFixture.editor
+    val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+    val hintManager = ParameterHintsPresentationManager.getInstance()
+    return allInlays
+      .filter { hintManager.isParameterHint(it) }
+      .map { InlayInfo(hintManager.getHintText(it), it.offset) }
+      .sortedBy { it.offset }
+  }
+
+  fun extractInlays(document: Document): List<InlayInfo> {
+    val text = document.text
+    val matcher = pattern.matcher(text)
+
+    val inlays = mutableListOf<InlayInfo>()
+    var extractedLength = 0
+
+    while (matcher.find()) {
+      val start = matcher.start()
+      val matchedLength = matcher.end() - start
+
+      val realStartOffset = start - extractedLength
+      inlays += InlayInfo(matcher.group(1), realStartOffset)
+
+      removeText(document, realStartOffset, matchedLength)
+      extractedLength += (matcher.end() - start)
+    }
+
+    return inlays
+  }
+
+  private fun removeText(document: Document, realStartOffset: Int, matchedLength: Int) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project, {
+      document.replaceString(realStartOffset, realStartOffset + matchedLength, "")
+    })
+  }
+
 
 }

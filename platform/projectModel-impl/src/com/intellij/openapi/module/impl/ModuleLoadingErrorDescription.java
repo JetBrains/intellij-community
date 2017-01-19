@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
+public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
   private static final ConfigurationErrorType INVALID_MODULE = new ConfigurationErrorType(ProjectBundle.message("element.kind.name.module"), false);
   private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;

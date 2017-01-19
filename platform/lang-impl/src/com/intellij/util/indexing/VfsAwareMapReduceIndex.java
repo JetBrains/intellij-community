@@ -98,20 +98,20 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
     return createUpdateData(data, () -> {
       if (mySnapshotInputMappings != null && isContentPhysical) {
-        return new MapInputKeyIterator<>(mySnapshotInputMappings.readInputKeys(inputId));
+        return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
       }
       if (myInMemoryMode.get()) {
         synchronized (myInMemoryKeys) {
           Collection<Key> keys = myInMemoryKeys.get(inputId);
           if (keys != null) {
-            return new CollectionInputKeyIterator<>(keys);
+            return new CollectionInputDataDiffBuilder<>(inputId, keys);
           }
         }
       }
       if (myForwardIndex != null) {
-        return readInputKeys(inputId);
+        return getKeysDiffBuilder(inputId);
       }
-      return EmptyInputKeyIterator.getInstance();
+      return new EmptyInputDataDiffBuilder(inputId);
     }, () -> {
       if (myInMemoryMode.get()) {
         synchronized (myInMemoryKeys) {

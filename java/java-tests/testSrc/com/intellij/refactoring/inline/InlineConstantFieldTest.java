@@ -25,6 +25,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testQualifiedExpressionInLib() throws Exception {
+    doTest(true);
+  }
+
   public void testQualifiedConstantExpression() throws Exception {
     doTest();
   }
@@ -62,6 +66,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   private void doTest() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(boolean inlineThisOnly) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
     configureByFile(fileName);
@@ -71,7 +79,7 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiField);
     PsiField field = (PsiField)element.getNavigationElement();
-    new InlineConstantFieldProcessor(field, getProject(), refExpr, element instanceof PsiCompiledElement).run();
+    new InlineConstantFieldProcessor(field, getProject(), refExpr, inlineThisOnly || element instanceof PsiCompiledElement).run();
     checkResultByFile(fileName + ".after");
   }
 }

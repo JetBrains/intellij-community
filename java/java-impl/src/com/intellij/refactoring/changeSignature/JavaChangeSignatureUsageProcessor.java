@@ -280,7 +280,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       boolean toInsertDefaultValue = needDefaultValue(changeInfo, caller);
       if (toInsertDefaultValue && ref instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression)ref).getQualifierExpression();
-        if (qualifierExpression instanceof PsiSuperExpression && callerSignatureIsAboutToChangeToo(caller, usages)) {
+        if (qualifierExpression instanceof PsiSuperExpression && caller != null && callerSignatureIsAboutToChangeToo(caller, usages)) {
           toInsertDefaultValue = false;
         }
       }
@@ -300,7 +300,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static boolean callerSignatureIsAboutToChangeToo(final PsiMethod caller, final UsageInfo[] usages) {
+  private static boolean callerSignatureIsAboutToChangeToo(@NotNull final PsiMethod caller, final UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo &&
           MethodSignatureUtil.isSuperMethod(((MethodCallUsageInfo)usage).getReferencedMethod(), caller)) {
@@ -764,7 +764,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
       if (newName != null && !newName.equals(method.getName())) {
         final PsiIdentifier nameId = method.getNameIdentifier();
-        assert nameId != null;
+        assert nameId != null : method;
         nameId.replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createIdentifier(newName));
       }
     }

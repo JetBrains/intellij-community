@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class CreateAssertIntention extends Intention {
     if (BoolUtils.isNegation(expression)) {
       newStatement = buildNewStatement("assertFalse", element, BoolUtils.getNegatedExpressionText(expression));
     }
-    else if (isNullComparison(expression)) {
+    else if (ComparisonUtils.isNullComparison(expression)) {
       final PsiBinaryExpression binaryExpression =
         (PsiBinaryExpression)expression;
       final PsiExpression comparedExpression = ExpressionUtils.getValueComparedWithNull(binaryExpression);
@@ -185,11 +185,5 @@ public class CreateAssertIntention extends Intention {
       (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return JavaTokenType.EQEQ.equals(tokenType);
-  }
-
-  @Contract("null -> false")
-  private static boolean isNullComparison(PsiExpression expression) {
-    return expression instanceof PsiBinaryExpression &&
-           ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null;
   }
 }

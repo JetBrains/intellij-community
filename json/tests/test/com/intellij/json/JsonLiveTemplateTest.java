@@ -67,6 +67,10 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     assertTrue(isApplicableContextUnderCaret("fo<caret>o"));
   }
 
+  public void testExpandableInObjectLiteral() {
+    assertTrue(isApplicableContextUnderCaret("{fo<caret>o}"));
+  }
+
   public void testCustomTemplateExpansion() {
     final String templateContent = "{\n" +
                                    "  \"foo\": \"$1$\"\n" +

@@ -44,8 +44,10 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   protected String getNameLabelText() {
+    final String occurrencesString = myOccurrencesNumber > -1 ? " - " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
+
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
-    return RefactoringBundle.message("inline.field.field.name.label", fieldText);
+    return RefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
   }
 
   protected String getBorderTitle() {
@@ -57,14 +59,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   protected String getInlineAllText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
-    return RefactoringBundle.message("all.references.field", occurrencesString);
-  }
-
-  @Override
-  protected String getDeleteTheDeclarationText() {
-    if (myField.isWritable()) return RefactoringBundle.message("all.references.remove.field");
-    return super.getDeleteTheDeclarationText();
+    return RefactoringBundle.message("all.references.and.remove.the.field");
   }
 
   @Override
@@ -101,7 +96,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                       isSearchForTextOccurrences(), isDeleteTheDeclaration()));
+                                       isSearchForTextOccurrences(), !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();

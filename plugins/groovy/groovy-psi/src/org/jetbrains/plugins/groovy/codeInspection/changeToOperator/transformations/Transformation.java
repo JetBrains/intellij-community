@@ -17,31 +17,37 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.ReplacementData;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 public abstract class Transformation {
 
+  public abstract boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
+  public abstract void apply(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
   @Nullable
-  public ReplacementData transform(GrMethodCallExpression callExpression, OptionsData optionsData) {
-    GrExpression element = getExpandedElement(callExpression);
-    MethodCallData methodInfo = MethodCallData.create(element);
-    if (methodInfo == null) return null;
-
-    String replacement = getReplacement(methodInfo, optionsData);
-    if (replacement == null) return null;
-
-    return new ReplacementData(replacement, this::getExpandedElement);
+  public static GrExpression getBase(@NotNull GrMethodCall callExpression) {
+    GrExpression expression = callExpression.getInvokedExpression();
+    GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
+    return invokedExpression.getQualifierExpression();
   }
 
   @NotNull
-  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
-    return callExpression;
+  public static GrExpression parenthesize(@NotNull GrExpression expression, int parentPrecedence) {
+    if (ParenthesesUtils.getPrecedence(expression) >= parentPrecedence) {
+      return createParenthesizedExpr(expression);
+    }
+    return expression;
   }
 
-  @Nullable
-  public abstract String getReplacement(MethodCallData methodInfo, OptionsData optionsData);
+  @NotNull
+  private static GrExpression createParenthesizedExpr(@NotNull GrExpression expression) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
+    return factory.createParenthesizedExpr(expression);
+  }
 }

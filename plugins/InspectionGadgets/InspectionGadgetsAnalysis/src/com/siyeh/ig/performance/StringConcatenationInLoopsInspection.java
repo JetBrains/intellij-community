@@ -52,6 +52,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("string.concatenation.in.loops.display.name");
   }
 
+  @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
+  @NotNull
+  @Override
+  public String getID() {
+    return "StringConcatenationInLoop";
+  }
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -75,7 +82,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUS)) return;
 
-      if (!checkExpression(expression, expression.getType())) return;
+      if (!checkExpression(expression)) return;
 
       if (ExpressionUtils.isEvaluatedAtCompileTime(expression)) return;
 
@@ -95,19 +102,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (!tokenType.equals(JavaTokenType.PLUSEQ)) return;
 
-      PsiExpression lhs = expression.getLExpression();
+      if (!checkExpression(expression)) return;
 
-      if (!checkExpression(expression, lhs.getType())) return;
+      PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
 
-      lhs = PsiUtil.skipParenthesizedExprDown(lhs);
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        return;
-      }
+      if (!(lhs instanceof PsiReferenceExpression)) return;
       registerError(sign, getAppendedVariable(expression));
     }
 
-    private boolean checkExpression(PsiExpression expression, PsiType type) {
-      if (!TypeUtils.isJavaLangString(type) || ControlFlowUtils.isInExitStatement(expression) ||
+    private boolean checkExpression(PsiExpression expression) {
+      if (!TypeUtils.isJavaLangString(expression.getType()) || ControlFlowUtils.isInExitStatement(expression) ||
           !ControlFlowUtils.isInLoop(expression)) return false;
 
       PsiElement parent = expression;

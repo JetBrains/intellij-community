@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,15 +260,12 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
     private void runUpdateMappings() {
       // TODO: Not clear so far why read action is used here - may be because of ROOTS_RELOADED message sent?
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) return;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) return;
 
-          boolean mappingsChanged = updateMappings();
+        boolean mappingsChanged = updateMappings();
 
-          notifyRootsReloaded(mappingsChanged);
-        }
+        notifyRootsReloaded(mappingsChanged);
       });
     }
 
@@ -349,7 +346,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     return result;
   }
 
-  private SvnCopyRootSimple convert(final RootUrlInfo info) {
+  private static SvnCopyRootSimple convert(final RootUrlInfo info) {
     final SvnCopyRootSimple copy = new SvnCopyRootSimple();
     copy.myVcsRoot = FileUtil.toSystemDependentName(info.getRoot().getPath());
     copy.myCopyRoot = info.getIoFile().getAbsolutePath();
@@ -358,31 +355,24 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   public void loadState(final SvnMappingSavedPart state) {
     ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
-      VcsInitObject.AFTER_COMMON, new DumbAwareRunnable() {
-        public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              final SvnMapping mapping = new SvnMapping();
-              final SvnMapping realMapping = new SvnMapping();
-              try {
-                fillMapping(mapping, state.getMappingRoots());
-                fillMapping(realMapping, state.getMoreRealMappingRoots());
-              } catch (ProcessCanceledException e) {
-                throw e;
-              } catch (Throwable t) {
-                LOG.info(t);
-                return;
-              }
-
-              synchronized (myMonitor) {
-                myMapping.copyFrom(mapping);
-                myMoreRealMapping.copyFrom(realMapping);
-              }
-            }
-          });
+      VcsInitObject.AFTER_COMMON, (DumbAwareRunnable)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        final SvnMapping mapping = new SvnMapping();
+        final SvnMapping realMapping = new SvnMapping();
+        try {
+          fillMapping(mapping, state.getMappingRoots());
+          fillMapping(realMapping, state.getMoreRealMappingRoots());
+        } catch (ProcessCanceledException e) {
+          throw e;
+        } catch (Throwable t) {
+          LOG.info(t);
+          return;
         }
-    });
+
+        synchronized (myMonitor) {
+          myMapping.copyFrom(mapping);
+          myMoreRealMapping.copyFrom(realMapping);
+        }
+      }));
   }
 
   private void fillMapping(final SvnMapping mapping, final List<SvnCopyRootSimple> list) {

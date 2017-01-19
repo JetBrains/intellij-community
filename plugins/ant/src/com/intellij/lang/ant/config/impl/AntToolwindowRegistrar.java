@@ -97,6 +97,8 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     if (modules.length == 1) {
       dataMap.put(LangDataKeys.MODULE.getName(), modules[0]);
     }
+    dataMap.put(LangDataKeys.MODULE_CONTEXT_ARRAY.getName(), modules);
+    dataMap.put("COMPILER_CONTEXT_MAKE", context.isMake());
     return SimpleDataContext.getSimpleContext(dataMap, null);
   }
 

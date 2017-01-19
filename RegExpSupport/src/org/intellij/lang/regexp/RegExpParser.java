@@ -138,7 +138,14 @@ public class RegExpParser implements PsiParser {
         builder.advanceLexer();
       }
       else {
-        checkMatches(builder, RegExpTT.NUMBER, "Number expected");
+        if (builder.getTokenType() == RegExpTT.NUMBER) {
+          final PsiBuilder.Marker numberMark = builder.mark();
+          builder.advanceLexer();
+          numberMark.done(RegExpElementTypes.NUMBER);
+        }
+        else {
+          builder.error("Number expected");
+        }
       }
       if (builder.getTokenType() == RegExpTT.RBRACE) {
         builder.advanceLexer();
@@ -155,7 +162,9 @@ public class RegExpParser implements PsiParser {
           marker.done(RegExpElementTypes.QUANTIFIER);
         }
         else if (builder.getTokenType() == RegExpTT.NUMBER) {
+          final PsiBuilder.Marker numberMark = builder.mark();
           builder.advanceLexer();
+          numberMark.done(RegExpElementTypes.NUMBER);
           checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
           parseQuantifierType(builder);
           marker.done(RegExpElementTypes.QUANTIFIER);
@@ -216,14 +225,18 @@ public class RegExpParser implements PsiParser {
   private void parseClassIntersection(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
-    parseClassdef(builder);
+    boolean left = parseClassdef(builder);
     if (RegExpTT.ANDAND != builder.getTokenType()) {
       marker.drop();
       return;
     }
     while (RegExpTT.ANDAND == builder.getTokenType()) {
       builder.advanceLexer();
-      parseClassdef(builder);
+      final boolean right = parseClassdef(builder);
+      if (!left && !right) {
+        builder.error("character class expected");
+      }
+      left = right;
     }
     marker.done(RegExpElementTypes.INTERSECTION);
   }

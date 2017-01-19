@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   override fun getState(): Element {
     val root = Element("settings")
 
-    if (myRemovedPatterns.isNotEmpty() || myRemovedPatterns.isNotEmpty()) {
+    if (myRemovedPatterns.isNotEmpty() || myAddedPatterns.isNotEmpty()) {
       val blacklists = root.getOrCreateChild(XmlTagHelper.BLACKLISTS)
 
       myRemovedPatterns.forEach { language, patterns ->

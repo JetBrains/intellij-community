@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,10 +41,14 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
   private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
   private static final String USER_USAGE_KEY = "json.schema.user.completion";
   @NotNull private final SchemaType myType;
+  @NotNull private final VirtualFile mySchemaFile;
   @NotNull private final JsonSchemaObject myRootSchema;
 
-  public JsonBySchemaObjectCompletionContributor(@NotNull SchemaType type, final @NotNull JsonSchemaObject rootSchema) {
+  public JsonBySchemaObjectCompletionContributor(@NotNull SchemaType type,
+                                                 @NotNull VirtualFile schemaFile,
+                                                 final @NotNull JsonSchemaObject rootSchema) {
     myType = type;
+    mySchemaFile = schemaFile;
     myRootSchema = rootSchema;
   }
 
@@ -54,13 +59,15 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     if (containingFile == null) return;
 
     updateStat();
-    new Worker(myRootSchema, position, result).work();
+    new Worker(myRootSchema, mySchemaFile, position, result).work();
     result.stopHere();
   }
 
-  public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema, @NotNull final PsiElement position) {
+  public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
+                                                          @NotNull final PsiElement position,
+                                                          @NotNull VirtualFile schemaFile) {
     final List<LookupElement> result = new ArrayList<>();
-    new Worker(schema, position, element -> result.add(element)).work();
+    new Worker(schema, schemaFile, position, element -> result.add(element)).work();
     return result;
   }
 
@@ -76,14 +83,16 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
 
   private static class Worker {
     @NotNull private final JsonSchemaObject myRootSchema;
+    @NotNull private final VirtualFile mySchemaFile;
     @NotNull private final PsiElement myPosition;
     @NotNull private final Consumer<LookupElement> myResultConsumer;
     private final boolean myInsideStringLiteral;
     private final List<LookupElement> myVariants;
 
-    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
+    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull final VirtualFile schemaFile, @NotNull PsiElement position,
                   @NotNull final Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
+      mySchemaFile = schemaFile;
       myPosition = position;
       myResultConsumer = resultConsumer;
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
@@ -93,7 +102,10 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     public void work() {
       JsonSchemaWalker.findSchemasForCompletion(myPosition, new JsonSchemaWalker.CompletionSchemesConsumer() {
         @Override
-        public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
+        public void consume(boolean isName,
+                            @NotNull JsonSchemaObject schema,
+                            @NotNull VirtualFile schemaFile,
+                            @NotNull List<JsonSchemaWalker.Step> steps) {
           if (isName) {
             PsiElement possibleParent = myPosition.getParent().getParent();
             final JsonProperty parent = possibleParent instanceof JsonProperty ? (JsonProperty)possibleParent : null;
@@ -117,7 +129,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             suggestValues(schema);
           }
         }
-      }, myRootSchema);
+      }, myRootSchema, mySchemaFile);
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
       }

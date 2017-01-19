@@ -16,6 +16,8 @@
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.execution.process.AnsiEscapeDecoderTest;
+import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -25,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,9 +40,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -72,6 +74,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.flushDeferredText();
     console.clear();
     console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.waitAllRequests();
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(2, console.getContentSize());
   }
@@ -205,32 +208,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                                                   false,
                                                   false);
     console.getComponent();
-    ProcessHandler processHandler = new MyProcessHandler();
+    ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
     console.attachToProcess(processHandler);
     return console;
-  }
-
-  static class MyProcessHandler extends ProcessHandler {
-    @Override
-    protected void destroyProcessImpl() {
-      notifyProcessTerminated(0);
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return null;
-    }
   }
 
   public void testPerformance() throws Exception {
@@ -243,6 +224,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
           UIUtil.dispatchAllInvocationEvents();
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
+        console.waitAllRequests();
       }).cpuBound().assertTiming());
   }
 
@@ -278,13 +260,62 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testCanPrintUserInputFromBackground() throws ExecutionException, InterruptedException {
-    Future<?> future = JobScheduler.getScheduler().submit(() -> {
-      myConsole.print("input", ConsoleViewContentType.USER_INPUT);
-    });
+    Future<?> future = JobScheduler.getScheduler().submit(() -> myConsole.print("input", ConsoleViewContentType.USER_INPUT));
 
     while (!future.isDone()) {
       UIUtil.dispatchAllInvocationEvents();
     }
     future.get();
+  }
+
+  public void testUserInputIsSentToProcessAfterNewLinePressed() {
+    Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
+
+    AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
+      withCycleConsole(100, console -> {
+        console.attachToProcess(handler);
+        outputStream.reset();
+        console.print("I", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+        console.print("K", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+        console.print("\n", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals("IK\n", outputStream.toString());
+    }));
+  }
+
+  public void testUserTypingIsSentToProcessAfterNewLinePressed() {
+    Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
+
+    AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
+      withCycleConsole(100, console -> {
+        console.attachToProcess(handler);
+        outputStream.reset();
+        Editor editor = console.getEditor();
+        typeIn(editor, 'X');
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+
+        typeIn(editor, 'Y');
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+
+        typeIn(editor, '\n');
+        console.waitAllRequests();
+        assertEquals(3, outputStream.size());
+        assertEquals("XY\n", outputStream.toString());
+    }));
+  }
+
+  private static void typeIn(Editor editor, char c) {
+    TypedAction action = EditorActionManager.getInstance().getTypedAction();
+    DataContext dataContext = ((EditorEx)editor).getDataContext();
+
+    action.actionPerformed(editor, c, dataContext);
   }
 }

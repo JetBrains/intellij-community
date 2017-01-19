@@ -36,10 +36,8 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author cdr
@@ -125,7 +123,7 @@ public class HighlightControlFlowUtil {
     else {
       return false;
     }
-    if (isFieldInitializedInClassInitializer(field, isFieldStatic, initializers)) return true;
+    if (isFieldInitializedInClassInitializer(field, isFieldStatic, Arrays.stream(initializers))) return true;
     if (isFieldStatic) {
       return false;
     }
@@ -155,14 +153,9 @@ public class HighlightControlFlowUtil {
 
   private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field,
                                                               boolean isFieldStatic,
-                                                              PsiClassInitializer[] initializers) {
-    for (PsiClassInitializer initializer : initializers) {
-      if (initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-          && variableDefinitelyAssignedIn(field, initializer.getBody())) {
-        return true;
-      }
-    }
-    return false;
+                                                              Stream<PsiClassInitializer> initializers) {
+    return initializers.anyMatch(initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+                                                && variableDefinitelyAssignedIn(field, initializer.getBody()));
   }
 
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
@@ -324,12 +317,16 @@ public class HighlightControlFlowUtil {
           final PsiField field = (PsiField)variable;
 
           aClass = field.getContainingClass();
+          final PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
           if (aClass == null ||
-              isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC)) ||
-              field.hasModifierProperty(PsiModifier.STATIC) && isFieldInitializedInClassInitializer(field, true, aClass.getInitializers())) {
+              isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC))) {
             return null;
           }
-          final PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
+          if (anotherField != null && !anotherField.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.STATIC) &&
+              isFieldInitializedInClassInitializer(field, true, Arrays.stream(aClass.getInitializers()))) {
+            return null;
+          }
+
           int offset = startOffset;
           if (anotherField != null && anotherField.getContainingClass() == aClass && !field.hasModifierProperty(PsiModifier.STATIC)) {
             offset = 0;

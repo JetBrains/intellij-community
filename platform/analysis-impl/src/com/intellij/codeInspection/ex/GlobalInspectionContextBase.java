@@ -387,7 +387,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    globalContext.codeCleanup(scope, profile, null, runnable, false);
+    globalContext.codeCleanup(scope, profile, null, runnable, true);
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {

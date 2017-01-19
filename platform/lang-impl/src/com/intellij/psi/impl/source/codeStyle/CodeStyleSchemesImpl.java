@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.openapi.options.SchemeManager;
@@ -63,28 +64,10 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
-    String name;
-    if (preferredName == null) {
-      if (parentScheme == null) throw new IllegalArgumentException("parentScheme must not be null");
-      // Generate using parent name
-      name = null;
-      for (int i = 1; name == null; i++) {
-        String currName = parentScheme.getName() + " (" + i + ")";
-        if (mySchemeManager.findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-    else {
-      name = null;
-      for (int i = 0; name == null; i++) {
-        String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (mySchemeManager.findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-    return new CodeStyleSchemeImpl(name, false, parentScheme);
+    return new CodeStyleSchemeImpl(
+      SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> mySchemeManager.findSchemeByName(name) != null), 
+      false,
+      parentScheme);
   }
 
   @Override

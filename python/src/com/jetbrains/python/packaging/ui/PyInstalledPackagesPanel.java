@@ -43,7 +43,7 @@ import java.util.Set;
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   private boolean myHasManagement = false;
 
-  public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
+  public PyInstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(project, area);
   }
 

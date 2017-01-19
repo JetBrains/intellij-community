@@ -18,9 +18,9 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,8 +32,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -60,6 +58,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final DefaultMutableTreeNode myRootNode;
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
+  private final ModuleGrouper myModuleGrouper;
 
   public DirectoryChooserModuleTreeView(@NotNull Project project) {
     myRootNode = new DefaultMutableTreeNode();
@@ -67,6 +66,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myProject = project;
+    myModuleGrouper = ModuleGrouper.instanceFor(myProject);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
@@ -153,8 +153,8 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     DefaultMutableTreeNode node = myModuleNodes.get(module);
     if (node == null) {
       node = new DefaultMutableTreeNode(module, true);
-      final String[] groupPath = module != null ? ModuleManager.getInstance(myProject).getModuleGroupPath(module) : null;
-      if (groupPath == null || groupPath.length == 0){
+      final List<String> groupPath = module != null ? myModuleGrouper.getGroupPath(module) : null;
+      if (groupPath == null || groupPath.isEmpty()) {
         insertNode(node, myRootNode);
       } else {
         final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(new ModuleGroup(groupPath),
@@ -242,7 +242,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       }
       else if (value instanceof Module) {
         final Module module = (Module)value;
-        append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(myModuleGrouper.getShortenedName(module), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(ModuleType.get(module).getIcon());
       } else if (value instanceof ModuleGroup) {
         append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

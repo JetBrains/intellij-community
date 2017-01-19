@@ -53,9 +53,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  *  @author dsl
@@ -871,5 +874,67 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     Disposer.dispose(disposable1);
 
     assertEquals(0, ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).numberOfCachedUrlToIdentity());
+  }
+
+  private volatile boolean run;
+  private volatile Throwable exception;
+  public void testStressConcurrentAccess() throws Throwable {
+    final File tempDirectory = createTempDirectory();
+    VirtualFilePointer fileToCreatePointer = createPointerByFile(tempDirectory, null);
+    assertNotNull(fileToCreatePointer);
+
+    VirtualFilePointerListener listener = new VirtualFilePointerListener() {
+      @Override
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+
+      }
+
+      @Override
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+
+      }
+    };
+    for (int i=0; i<10_000;i++) {
+      Disposable disposable = Disposer.newDisposable();
+      // supply listener to separate pointers under one root so that it will be removed on dispose
+      VirtualFilePointerImpl bb =
+        (VirtualFilePointerImpl)VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
+
+      if (i%1000==0)System.out.println("i = " + i);
+
+      int N = Runtime.getRuntime().availableProcessors();
+      CountDownLatch ready = new CountDownLatch(N);
+      Runnable read = () -> {
+        try {
+          ready.countDown();
+          while (run) {
+            bb.myNode.myLastUpdated = -15;
+            bb.getUrl();
+          }
+        }
+        catch (Throwable e) {
+          exception = e;
+        }
+      };
+
+      run = true;
+      List<Thread> threads = IntStream.range(0, N).mapToObj(n -> new Thread(read, "reader"+n)).collect(Collectors.toList());
+      threads.forEach(Thread::start);
+      ready.await();
+
+      VirtualFilePointer bc = VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
+
+      run = false;
+      threads.forEach(thread -> {
+        try {
+          thread.join();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      });
+      if (exception !=null) throw exception;
+      Disposer.dispose(disposable);
+    }
   }
 }

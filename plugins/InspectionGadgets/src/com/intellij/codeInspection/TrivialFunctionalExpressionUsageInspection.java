@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,22 +55,25 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible();
           }
 
-          if (((PsiCodeBlock)body).getStatements().length == 1) {
+          PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+          if (statements.length == 1) {
             return callParent instanceof PsiStatement
                    || callParent instanceof PsiLocalVariable
-                   || ((PsiCodeBlock)body).getStatements()[0] instanceof PsiReturnStatement && expression.isValueCompatible();
+                   || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
           }
 
           final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
-          if (returnExpressions.size() > 1) {
+          if (returnExpressions.size() > 1 ||
+              (returnExpressions.size() == 1 && !(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement))) {
             return false;
           }
 
-          if (returnExpressions.isEmpty()) {
-            return callParent instanceof PsiStatement;
+          if (!returnExpressions.isEmpty() && callParent instanceof PsiLocalVariable) {
+            return true;
           }
-          return callParent instanceof PsiStatement ||
-                 callParent instanceof PsiLocalVariable;
+
+          return (callParent instanceof PsiStatement && !(callParent instanceof PsiLoopStatement)) ||
+                 callParent instanceof PsiLambdaExpression;
         });
       }
 
@@ -127,60 +134,48 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
   }
 
   private static void replaceWithLambdaBody(PsiMethodCallExpression callExpression, PsiLambdaExpression element) {
-    inlineCallArguments(callExpression, element);
-
-    final PsiElement body = element.getBody();
-    if (body instanceof PsiExpression) {
-      callExpression.replace(body);
+    PsiElement body = element.getBody();
+    PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    if (expression != null) {
+      final CommentTracker ct = new CommentTracker();
+      inlineCallArguments(callExpression, element, ct);
+      ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(expression));
     }
     else if (body instanceof PsiCodeBlock) {
+      element = RefactoringUtil.ensureCodeBlock(element);
+      if(element == null) return;
+      body = element.getBody();
+      if(!(body instanceof PsiCodeBlock)) return;
+      callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if(callExpression == null) return;
+      final CommentTracker ct = new CommentTracker();
+      inlineCallArguments(callExpression, element, ct);
       final PsiElement parent = callExpression.getParent();
-      if (parent instanceof PsiStatement) {
-        final PsiElement gParent = parent.getParent();
-        restoreComments(gParent, parent, body);
-        for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-          PsiElement toInsert;
-          if (statement instanceof PsiReturnStatement) {
-            toInsert = ((PsiReturnStatement)statement).getReturnValue();
-          }
-          else {
-            toInsert = statement;
-          }
-
-          if (toInsert != null) {
-            gParent.addBefore(toInsert, parent);
-          }
-        }
-        parent.delete();
-      }
-      else {
-        final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-        if (statements.length > 0) {
-          final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
-          if (anchor != null) {
-            final PsiElement gParent = anchor.getParent();
-            restoreComments(gParent, anchor, body);
-            for (int i = 0; i < statements.length - 1; i++) {
-              gParent.addBefore(statements[i], anchor);
+      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length > 0) {
+        final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
+        PsiReturnStatement statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
+        if (anchor != null) {
+          final PsiElement gParent = anchor.getParent();
+          for (PsiElement child : body.getChildren()) {
+            if (child != statement && !(child instanceof PsiJavaToken)) {
+              gParent.addBefore(ct.markUnchanged(child), anchor);
             }
           }
-          PsiStatement statement = statements[statements.length - 1];
-          final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-          if (returnValue != null) {
-            callExpression.replace(returnValue);
-          }
+        }
+        final PsiExpression returnValue = statement == null ? null : statement.getReturnValue();
+        if (returnValue != null) {
+          ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(returnValue));
+        } else {
+          ct.deleteAndRestoreComments(callExpression);
         }
       }
     }
   }
 
-  private static void restoreComments(PsiElement gParent, PsiElement parent, PsiElement body) {
-    for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-      gParent.addBefore(comment, parent);
-    }
-  }
-
-  private static void inlineCallArguments(PsiMethodCallExpression callExpression, PsiLambdaExpression element) {
+  private static void inlineCallArguments(PsiMethodCallExpression callExpression,
+                                          PsiLambdaExpression element,
+                                          CommentTracker ct) {
     final PsiExpression[] args = callExpression.getArgumentList().getExpressions();
     final PsiParameter[] parameters = element.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -189,6 +184,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
       for (PsiReference reference : ReferencesSearch.search(parameter)) {
         final PsiElement referenceElement = reference.getElement();
         if (referenceElement instanceof PsiJavaCodeReferenceElement) {
+          ct.markUnchanged(initializer);
           InlineUtil.inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement);
         }
       }
@@ -207,7 +203,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     @Override
     protected void fixExpression(PsiMethodCallExpression callExpression, PsiExpression qualifierExpression) {
       if (qualifierExpression instanceof PsiTypeCastExpression) {
-        final PsiExpression element = ((PsiTypeCastExpression)qualifierExpression).getOperand();
+        final PsiExpression element = PsiUtil.skipParenthesizedExprDown(((PsiTypeCastExpression)qualifierExpression).getOperand());
         if (element instanceof PsiLambdaExpression) {
           replaceWithLambdaBody(callExpression, (PsiLambdaExpression)element);
         }

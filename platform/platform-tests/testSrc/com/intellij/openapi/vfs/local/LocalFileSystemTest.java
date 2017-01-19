@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -111,7 +110,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File dir = createTempDirectory(false);
     ManagingFS managingFS = ManagingFS.getInstance();
 
-    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
     assertNotNull(vFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertFalse(managingFS.wereChildrenAccessed(vFile));
@@ -128,12 +127,12 @@ public class LocalFileSystemTest extends PlatformTestCase {
     boolean subChildCreated = subChild.createNewFile();
     assertTrue(subChildCreated);
 
-    VirtualFile childVFile = myFS.refreshAndFindFileByPath(child.getPath().replace(File.separatorChar, '/'));
+    VirtualFile childVFile = myFS.refreshAndFindFileByPath(child.getPath());
     assertNotNull(childVFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
 
-    VirtualFile subdirVFile = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subdirVFile = myFS.refreshAndFindFileByPath(subdir.getPath());
     assertNotNull(subdirVFile);
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
@@ -146,7 +145,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
 
-    VirtualFile subChildVFile = myFS.refreshAndFindFileByPath(subChild.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subChildVFile = myFS.refreshAndFindFileByPath(subChild.getPath());
     assertNotNull(subChildVFile);
     assertTrue(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
@@ -155,30 +154,35 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testRefreshAndFindFile() throws Exception {
-    File dir = createTempDirectory();
+    doTestRefreshAndFindFile(createTempDirectory());
+  }
 
-    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
-    assertNotNull(vFile);
-    vFile.getChildren();
+  public static void doTestRefreshAndFindFile(@NotNull File tempDir) throws IOException {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile tempVDir = lfs.refreshAndFindFileByPath(tempDir.getPath());
+    assertNotNull(tempVDir);
 
-    for (int i = 0; i < 100; i++) {
-      File subdir = new File(dir, "a" + i);
-      assertTrue(subdir.mkdir());
-    }
+    File file1 = new File(tempDir, "some/nested/dir/hello.txt");
+    FileUtil.writeToFile(file1, "hello");
+    assertNotNull(lfs.refreshAndFindFileByPath(file1.getPath()));
 
-    File subdir = new File(dir, "aaa");
-    assertTrue(subdir.mkdir());
+    File file2 = new File(tempDir, "another/nested/dir/hello.txt");
+    FileUtil.writeToFile(file2, "hello again");
+    assertNotNull(lfs.refreshAndFindFileByPath(file2.getPath()));
 
-    VirtualFile file = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
-    assertNotNull(file);
+    tempVDir.getChildren();
+    tempVDir.refresh(false, true);
+    File file3 = new File(tempDir, "one/more/nested/dir/hello.txt");
+    FileUtil.writeToFile(file3, "hello again");
+    assertNotNull(lfs.refreshAndFindFileByPath(file3.getPath()));
   }
 
   public void testCopyFile() throws Exception {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile fileToCopy = createChildData(fromVDir, "temp_file");
@@ -194,8 +198,8 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile dirToCopy = createChildDirectory(fromVDir, "dir");
@@ -730,19 +734,12 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(vFile);
     assertWritable(file, vFile, true);
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(false);
-      return null;
-    });
-
+    WriteAction.run(() -> vFile.setWritable(false));
     assertWritable(file, vFile, false);
     vFile.refresh(false, false);
     assertWritable(file, vFile, false);
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(true);
-      return null;
-    });
+    WriteAction.run(() -> vFile.setWritable(true));
     assertWritable(file, vFile, true);
     vFile.refresh(false, false);
     assertWritable(file, vFile, true);

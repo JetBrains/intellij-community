@@ -376,6 +376,27 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
     getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
+    doTest();
+  }
+
+  // PY-21598
+  public void testSpaceBetweenParenthesesInEmptyParameterList() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
+    doTest();
+  }
+
+  public void testSpaceWithingCallParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
+    doTest();
+  }
+
+  // PY-21598
+  public void testSpaceBetweenParenthesesInEmptyArgumentList() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
     doTest();
   }
 
@@ -671,6 +692,44 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().SPACE_WITHIN_BRACES = true;
     getCommonCodeStyleSettings().SPACE_WITHIN_BRACKETS = true;
     getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+
+  // PY-10182
+  public void testHangClosingParenthesisInFromImport() {
+    // Shouldn't affect the result
+    getPythonCodeStyleSettings().ALIGN_MULTILINE_IMPORTS = false;
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182
+  public void testHangClosingParenthesisInFunctionCall() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182  
+  public void testHangClosingParenthesisInFunctionDefinition() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182
+  public void testHangClosingBracketsInCollectionLiterals() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-15874
+  public void testHangClosingOffComprehensionsAndGeneratorExpressions() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = false;
+    doTest();
+  }
+  
+  // PY-15874
+  public void testHangClosingOnComprehensionsAndGeneratorExpressions() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
 

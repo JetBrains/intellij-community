@@ -248,7 +248,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
 
     if (FONT_SCALE <= 0) {
-      if (UIUtil.isJDKManagedHiDPI()) FONT_SIZE = (int)UIUtil.DEF_SYSTEM_FONT_SIZE;
+      // Reset font to default on switch from IDEA-managed HiDPI to JDK-managed HiDPI. Doesn't affect OSX.
+      if (UIUtil.isJDKManagedHiDPI() && !SystemInfo.isMac) FONT_SIZE = (int)UIUtil.DEF_SYSTEM_FONT_SIZE;
     }
     else {
       FONT_SIZE = (int)JBUI.scale(FONT_SIZE / FONT_SCALE);

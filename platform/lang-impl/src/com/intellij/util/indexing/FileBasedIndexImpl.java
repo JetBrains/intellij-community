@@ -1891,21 +1891,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     public void ensureUpToDate() {
       //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
       waitUntilIndicesAreInitialized();
-
-      myWorkersFinishedSync.register();
-      int phase = myWorkersFinishedSync.getPhase();
-
-      try {
-        if(myVfsEventsMerger.hasChanges()) {
-          ApplicationManager.getApplication().runReadAction(this::processFilesInReadAction);
-        }
-      }
-      finally {
-        myWorkersFinishedSync.arriveAndDeregister();
-      }
-
-      // we still can have myChangeInfo non empty if a) called outside read action b) request reindex was called
-      myWorkersFinishedSync.awaitAdvance(phase);
+      
+      ApplicationManager.getApplication().runReadAction(this::processFilesInReadAction);
     }
 
     void ensureUpToDateAsync() {
@@ -1922,6 +1909,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void processFilesInReadAction() {
       assert ApplicationManager.getApplication().isReadAccessAllowed();
       myWorkersFinishedSync.register();
+      int phase = myWorkersFinishedSync.getPhase();
       try {
         myVfsEventsMerger.processChanges(info -> {
           myWriteLock.lock();
@@ -1943,6 +1931,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       } finally {
         myWorkersFinishedSync.arriveAndDeregister();
       }
+      myWorkersFinishedSync.awaitAdvance(phase);
     }
 
     private void processFilesInReadActionWithYieldingToWriteAction() {

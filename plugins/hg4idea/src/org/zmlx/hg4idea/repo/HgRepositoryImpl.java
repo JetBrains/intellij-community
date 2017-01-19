@@ -238,7 +238,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
       HgUtil.executeOnPooledThread(new Runnable() {
         public void run() {
-          project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
+          if (!project.isDisposed()) {
+            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
+          }
         }
       }, project);
     }

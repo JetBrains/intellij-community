@@ -9,7 +9,6 @@ import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
@@ -178,10 +177,12 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     final PsiElement element = file.findElementAt(position);
     Assert.assertNotNull(element);
 
-    final JsonSchemaObject schemaObject = new JsonSchemaReader(null).read(new StringReader(schema), null);
+    final PsiFile schemaFile = createFile(myModule, "testSchema.json", schema);
+    final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, schemaFile.getVirtualFile()).read();
     Assert.assertNotNull(schemaObject);
 
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);
+    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element,
+                                                                                                            file.getVirtualFile());
     Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
     myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
     assertStringItems(variants);

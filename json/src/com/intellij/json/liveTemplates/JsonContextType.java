@@ -2,7 +2,9 @@ package com.intellij.json.liveTemplates;
 
 import com.intellij.codeInsight.template.FileTypeBasedContextType;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
@@ -26,7 +28,7 @@ public class JsonContextType extends FileTypeBasedContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    if (!super.isInContext(file, offset)) {
+    if (!(file instanceof JsonFile)) {
       return false;
     }
     final ElementPattern<PsiElement> illegalPattern = or(psiElement().inside(JsonStringLiteral.class),
@@ -35,7 +37,9 @@ public class JsonContextType extends FileTypeBasedContextType {
                                                                                  @Override
                                                                                  public boolean accepts(@NotNull PsiElement element,
                                                                                                         ProcessingContext context) {
-                                                                                   return JsonPsiUtil.isPropertyKey(element);
+                                                                                   return JsonPsiUtil.isPropertyKey(element) &&
+                                                                                          element.getNextSibling() != null &&
+                                                                                          element.getNextSibling().getNode().getElementType() == JsonElementTypes.COLON;
                                                                                  }
                                                                                })));
     return !illegalPattern.accepts(file.findElementAt(offset));

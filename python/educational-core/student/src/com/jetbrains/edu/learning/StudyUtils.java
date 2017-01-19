@@ -848,4 +848,15 @@ public class StudyUtils {
     final int endOffset = startOffset + length + delta;
     return Pair.create(startOffset, endOffset);
   }
+  
+  public static boolean isCourseValid(@Nullable Course course) {
+    if (course == null) return false;
+    if (course.isAdaptive()) {
+      final List<Lesson> lessons = course.getLessons();
+      if (lessons.size() == 1) {
+        return !lessons.get(0).getTaskList().isEmpty();
+      }
+    }
+    return true;
+  }
 }

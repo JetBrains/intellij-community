@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,12 +160,6 @@ static void ParseRoots() {
 }
 
 int main(const int argc, const char* argv[]) {
-    // Checking if necessary API is available (need MacOS X 10.5 or later).
-    if (FSEventStreamCreate == NULL) {
-        printf("GIVEUP\n");
-        return 1;
-    }
-
     CFStringRef path = CFSTR("/");
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
     CFAbsoluteTime latency = 0.3;  // Latency in seconds
@@ -180,13 +174,13 @@ int main(const int argc, const char* argv[]) {
     );
     if (stream == NULL) {
         printf("GIVEUP\n");
-        return 2;
+        return 1;
     }
 
     pthread_t threadId;
     if (pthread_create(&threadId, NULL, EventProcessingThread, stream) != 0) {
         printf("GIVEUP\n");
-        return 3;
+        return 2;
     }
 
     while (TRUE) {

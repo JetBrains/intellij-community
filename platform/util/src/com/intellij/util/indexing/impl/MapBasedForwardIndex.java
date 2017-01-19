@@ -39,8 +39,8 @@ public abstract class MapBasedForwardIndex<Key, Value> extends AbstractForwardIn
 
   @NotNull
   @Override
-  public InputKeyIterator<Key, Value> getInputKeys(final int inputId) throws IOException {
-    return new CollectionInputKeyIterator<Key, Value>(myInputsIndex.get(inputId));
+  public InputDataDiffBuilder<Key, Value> getDiffBuilder(final int inputId) throws IOException {
+    return new CollectionInputDataDiffBuilder<Key, Value>(inputId, myInputsIndex.get(inputId));
   }
 
   @NotNull

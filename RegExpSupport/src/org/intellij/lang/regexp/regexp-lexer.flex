@@ -5,7 +5,7 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 
-import java.util.ArrayList;
+import com.intellij.util.containers.IntArrayList;
 import java.util.EnumSet;
 
 @SuppressWarnings("ALL")
@@ -19,7 +19,7 @@ import java.util.EnumSet;
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
-    final ArrayList<Integer> states = new ArrayList<>();
+    final IntArrayList states = new IntArrayList();
 
     // This was an idea to use the regex implementation for XML schema regexes (which use a slightly different syntax)
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer.
@@ -94,10 +94,10 @@ import java.util.EnumSet;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate QUANTIFIER
+%xstate NEGATED_CLASS
+%xstate QUOTED_CLASS1
 %xstate CLASS1
-%xstate NEGATE_CLASS1
 %state CLASS2
-%state NEGATE_CLASS2
 %state PROP
 %state NAMED
 %xstate OPTIONS
@@ -137,10 +137,10 @@ HEX_CHAR=[0-9a-fA-F]
 
 %%
 
-"\\Q"                { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN; }
+{ESCAPE} "Q"         { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN; }
 
 <QUOTED> {
-  "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
+  {ESCAPE} "E"       { yypopstate(); return RegExpTT.QUOTE_END; }
   {ANY}              { return RegExpTT.CHARACTER; }
 }
 
@@ -232,7 +232,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
 {ESCAPE}  {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}  [\n\b\t\r\f ]        { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
 <CLASS2> {
   {ESCAPE}  {RBRACKET}        { return RegExpTT.ESC_CHARACTER; }
@@ -248,7 +248,7 @@ HEX_CHAR=[0-9a-fA-F]
   {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
 }
 
-{ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
@@ -264,12 +264,14 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}                       { yypopstate(); yypushback(1); }
 }
 
-/* "{" \d+(,\d*)? "}" */
-/* "}" outside counted closure is treated as regular character */
-{LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE} / [:digit:]+ "," [:digit:]+ {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE}  { if (yystate() != CLASS2 && allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+<YYINITIAL> {
+  /* "{" \d+(,\d*)? "}" */
+  /* "}" outside counted quantifier is treated as regular character */
+  {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE}  { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+}
 
 <QUANTIFIER> {
   [:digit:]+          { return RegExpTT.NUMBER; }
@@ -284,69 +286,47 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}               { yypopstate(); yypushback(1); }
 }
 
-<CLASS2> {
-  {LBRACKET}          { if (allowNestedCharacterClasses) {
-                           yypushstate(CLASS2);
-                           return RegExpTT.CLASS_BEGIN;
-                        }
-                        return RegExpTT.CHARACTER;
-                      }
-
-  {LBRACKET} / {RBRACKET} { if (allowNestedCharacterClasses) {
-                              yypushstate(CLASS1);
-                              return RegExpTT.CLASS_BEGIN;
-                            }
-                            return RegExpTT.CHARACTER;
-                          }
-
-  {LBRACKET} / {ESCAPE} {RBRACKET} { if (allowNestedCharacterClasses) {
-                                       yypushstate(CLASS1);
-                                       return RegExpTT.CLASS_BEGIN;
-                                     }
-                                     return RegExpTT.CHARACTER;
-                                   }
+<YYINITIAL> {
+  {LBRACKET} / "^"      { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; }
+  {LBRACKET}            { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
 }
-
-{LBRACKET} / ({RBRACKET} | {ESCAPE} {RBRACKET})   {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER;
-                                                     if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
-
-{LBRACKET} / "^" ({RBRACKET} | {ESCAPE} {RBRACKET}) {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER;
-                                                       if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
-
-{LBRACKET} / "^"          {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER; yypushstate(NEGATE_CLASS2); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET}                {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER; yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
+<NEGATED_CLASS> {
+  "^"  { yybegin(CLASS1); return RegExpTT.CARET; }
+}
+
+<QUOTED_CLASS1> {
+  "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
+  {ANY}              { states.set(states.size() - 1, CLASS2); return RegExpTT.CHARACTER; }
+}
+
 <CLASS1> {
-  {ESCAPE} {RBRACKET}     { yybegin(CLASS2); return RegExpTT.REDUNDANT_ESCAPE; }
-  {RBRACKET}              { yybegin(CLASS2); return RegExpTT.CHARACTER; }
-  .                       { assert false : yytext(); }
-}
-
-<NEGATE_CLASS1> {
-  "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
-  .                       { assert false : yytext(); }
-}
-
-<NEGATE_CLASS2> {
-  "^"                     { yybegin(CLASS2); return RegExpTT.CARET; }
-  .                       { assert false : yytext(); }
+  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN; }
+  {ESCAPE} {RBRACKET}        { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {RBRACKET}                 { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER; }
+  {LBRACKET} / ":"           { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
+  {LBRACKET} / "^"           { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
+  {LBRACKET}                 { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
+  [\n\b\t\r\f ]              { if (commentMode) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
+  {ANY}                      { yypushback(1); yybegin(CLASS2); }
 }
 
 <CLASS2> {
-  {LBRACKET} ":"         { if (allowPosixBracketExpressions) {
+  {LBRACKET} ":"        { if (allowPosixBracketExpressions) {
                             yybegin(BRACKET_EXPRESSION);
                             return RegExpTT.BRACKET_EXPRESSION_BEGIN;
                           } else {
                             yypushback(1);
-                            return RegExpTT.CHARACTER;
+                            return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
                           }
                         }
+  {LBRACKET} / "^"      { if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
+  {LBRACKET}            { if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
-
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   "-"                   { return RegExpTT.MINUS; }
-  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
+  [\n\b\t\r\f ]         { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
 
@@ -369,7 +349,8 @@ HEX_CHAR=[0-9a-fA-F]
   "$"           { return RegExpTT.DOLLAR; }
   {DOT}         { return RegExpTT.DOT;    }
 
-  "(?:"|"(?>" { return RegExpTT.NON_CAPT_GROUP;  }
+  "(?:"       { return RegExpTT.NON_CAPT_GROUP;  }
+  "(?>"       { return RegExpTT.ATOMIC_GROUP;  }
   "(?="       { return RegExpTT.POS_LOOKAHEAD;   }
   "(?!"       { return RegExpTT.NEG_LOOKAHEAD;   }
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
@@ -432,7 +413,6 @@ HEX_CHAR=[0-9a-fA-F]
   [^\r\n]*[\r\n]?  { yypopstate(); return RegExpTT.COMMENT; }
 }
 
-" "          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
-[\n\b\t\r\f]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
+[\n\b\t\r\f ]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
 
 {ANY}        { return RegExpTT.CHARACTER; }

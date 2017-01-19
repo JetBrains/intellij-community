@@ -25,20 +25,17 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 public abstract class InlineOptionsDialog extends RefactoringDialog implements InlineOptions {
   protected JRadioButton myRbInlineAll;
-  protected JRadioButton myDeleteTheDeclaration;
-  protected JRadioButton myKeepTheDeclaration;
+  @Nullable protected JRadioButton myKeepTheDeclaration;
   protected JRadioButton myRbInlineThisOnly;
   protected boolean myInvokedOnReference;
   protected final PsiElement myElement;
@@ -61,11 +58,11 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   }
 
   @Override
-  public boolean isDeleteTheDeclaration() {
-    if (myDeleteTheDeclaration != null) {
-      return myDeleteTheDeclaration.isSelected();
+  public boolean isKeepTheDeclaration() {
+    if (myKeepTheDeclaration != null) {
+      return myKeepTheDeclaration.isSelected();
     }
-    return true;
+    return false;
   }
 
   @NotNull
@@ -80,31 +77,43 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     myRbInlineAll.setSelected(true);
     myRbInlineThisOnly = new JRadioButton();
     myRbInlineThisOnly.setText(getInlineThisText());
-
+    final boolean writable = allowInlineAll();
     optionsPanel.add(myRbInlineAll);
-    JPanel inlineAllOptionsPanel = new JPanel();
-    inlineAllOptionsPanel.setBorder(new EmptyBorder(0, JBUI.scale(20), 0, 0));
-    inlineAllOptionsPanel.setLayout(new BoxLayout(inlineAllOptionsPanel, BoxLayout.Y_AXIS));
-    optionsPanel.add(inlineAllOptionsPanel);
-
+    String keepDeclarationText = getKeepTheDeclarationText();
+    if (keepDeclarationText != null && writable) {
+      myKeepTheDeclaration = new JRadioButton();
+      myKeepTheDeclaration.setText(keepDeclarationText);
+      optionsPanel.add(myKeepTheDeclaration);
+    }
+    
     optionsPanel.add(myRbInlineThisOnly);
     ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbInlineAll);
-    bg.add(myRbInlineThisOnly);
-    new RadioUpDownListener(myRbInlineAll, myRbInlineThisOnly);
+    final JRadioButton[] buttons = myKeepTheDeclaration != null 
+                                   ? new JRadioButton[] {myRbInlineAll, myKeepTheDeclaration, myRbInlineThisOnly} 
+                                   : new JRadioButton[] {myRbInlineAll, myRbInlineThisOnly};
+    for (JRadioButton button : buttons) {
+      bg.add(button);
+    }
+    new RadioUpDownListener(buttons);
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
-    final boolean writable = allowInlineAll();
     myRbInlineAll.setEnabled(writable);
     if(myInvokedOnReference) {
       if (canInlineThisOnly()) {
         myRbInlineAll.setSelected(false);
         myRbInlineAll.setEnabled(false);
+        
+        if (myKeepTheDeclaration != null) {
+          myKeepTheDeclaration.setSelected(false);
+          myKeepTheDeclaration.setEnabled(false);
+        }
+        
         myRbInlineThisOnly.setSelected(true);
       } else {
         if (writable) {
           final boolean inlineThis = isInlineThis();
           myRbInlineThisOnly.setSelected(inlineThis);
+          if (myKeepTheDeclaration != null) myKeepTheDeclaration.setSelected(false);
           myRbInlineAll.setSelected(!inlineThis);
         }
         else {
@@ -115,48 +124,22 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     }
     else {
       myRbInlineAll.setSelected(true);
+      if (myKeepTheDeclaration != null) myKeepTheDeclaration.setSelected(false);
       myRbInlineThisOnly.setSelected(false);
     }
 
-    getPreviewAction().setEnabled(myRbInlineAll.isSelected());
-    myRbInlineAll.addItemListener(
-      new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-          boolean enabled = myRbInlineAll.isSelected();
-          getPreviewAction().setEnabled(enabled);
-        }
+    getPreviewAction().setEnabled(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+    final ActionListener previewListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean enabled = myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected();
+        getPreviewAction().setEnabled(enabled);
       }
-    );
-
-    String deleteDeclarationText = getDeleteTheDeclarationText();
-    String keepDeclarationText = getKeepTheDeclarationText();
-    if (deleteDeclarationText != null && keepDeclarationText != null) {
-      myDeleteTheDeclaration = new JRadioButton();
-      myDeleteTheDeclaration.setText(deleteDeclarationText);
-      myDeleteTheDeclaration.setSelected(true);
-      inlineAllOptionsPanel.add(myDeleteTheDeclaration);
-
-      myKeepTheDeclaration = new JRadioButton();
-      myKeepTheDeclaration.setText(keepDeclarationText);
-      inlineAllOptionsPanel.add(myKeepTheDeclaration);
-
-      UIUtil.setEnabled(inlineAllOptionsPanel, myRbInlineAll.isSelected(), true);
-
-      ButtonGroup gr = new ButtonGroup();
-      gr.add(myDeleteTheDeclaration);
-      gr.add(myKeepTheDeclaration);
-
-      ActionListener enableListener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          UIUtil.setEnabled(inlineAllOptionsPanel, myRbInlineAll.isSelected(), true);
-        }
-      };
-      myRbInlineAll.addActionListener(enableListener);
-      myRbInlineThisOnly.addActionListener(enableListener);
+    };
+    for (JRadioButton button : buttons) {
+      button.addActionListener(previewListener);
     }
-
+    
 
     return optionsPanel;
   }
@@ -168,7 +151,6 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected abstract String getNameLabelText();
   protected abstract String getBorderTitle();
   protected abstract String getInlineAllText();
-  protected String getDeleteTheDeclarationText() {return null;}
   protected String getKeepTheDeclarationText() {return null;}
   protected abstract String getInlineThisText();
   protected abstract boolean isInlineThis();

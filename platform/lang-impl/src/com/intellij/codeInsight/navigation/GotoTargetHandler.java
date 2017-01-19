@@ -42,7 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.JBListWithHintProvider;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
@@ -122,12 +122,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel<>(allElements)) {
-      @Override
-      protected PsiElement getPsiElementForHint(final Object selectedValue) {
-        return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
-      }
-    };
+    final JBList list = new JBList(new CollectionListModel<>(allElements));
+    HintUpdateSupply.installSimpleHintUpdateSupply(list);
 
     list.setFont(EditorUtil.getEditorFont());
     

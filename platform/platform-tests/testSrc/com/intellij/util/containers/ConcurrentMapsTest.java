@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.*;
 
@@ -45,17 +46,8 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakKeysRemovedWhenIdentityStrategyIsUsed() {
-    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<>(ContainerUtil.identityStrategy());
-    map.put(new Object(), new Object());
-
-    do {
-      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    map.put(this, this);
-    assertEquals(1, map.underlyingMapSize());
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -80,7 +72,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
-    ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<>();
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
     map.put(this, this);
     Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
@@ -92,7 +84,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromWeakEntrySet() {
-    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<>();
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
     map.put(this, this);
     Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
@@ -104,17 +96,8 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakTossedWeakKeysAreRemoved() {
-    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<>();
-    map.put(new Object(), new Object());
-
-    do {
-      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    map.put(this, this);
-    assertEquals(1, map.underlyingMapSize());
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   public static void tryGcSoftlyReachableObjects() {
@@ -123,48 +106,37 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftTossedSoftKeysAreRemoved() {
-    ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<>();
-    map.put(new Object(), new Object());
-
-    do {
-      tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    map.put(this, this);
-    assertEquals(1, map.underlyingMapSize());
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakTossedWeakValueIsRemoved() {
-    ConcurrentWeakValueHashMap<Object, Object> map =
-      (ConcurrentWeakValueHashMap<Object, Object>)ContainerUtil.createConcurrentWeakValueMap();
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    checkKeyIsTossedAfterGCPressure(map);
+  }
+
+  private void checkKeyIsTossedAfterGCPressure(ConcurrentMap<Object, Object> map) {
     map.put(new Object(), new Object());
 
+    //noinspection SizeReplaceableByIsEmpty
     do {
+      map.put(this, this);  // to run processQueues();
+      map.remove(this);
+
       tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
       System.gc();
     }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
+    while (map.size() != 0);
+    assertEquals(0, map.size());
     map.put(this, this);
-    assertEquals(1, map.underlyingMapSize());
+    assertEquals(1, map.size());
   }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftTossedSoftValueIsRemoved() {
-    ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<>();
-    map.put(new Object(), new Object());
-
-    do {
-      tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    map.put(this, this);
-    assertEquals(1, map.underlyingMapSize());
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftValueMap();
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -224,7 +196,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftCustomStrategy() {
-    ConcurrentSoftHashMap<String, String> map = new ConcurrentSoftHashMap<>(CUSTOM_STRATEGY);
+    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentSoftMap(10,0.7f,16,CUSTOM_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -236,32 +208,32 @@ public class ConcurrentMapsTest {
 
   @Test
   public void testConcurrentSoftNullKey() {
-    Map<String, String> map = new ConcurrentSoftHashMap<>();
+    Map<String, String> map = ContainerUtil.createConcurrentSoftMap();
 
-    checkNullKeys(map);
+    tryToInsertNullKeys(map);
   }
   @Test
   public void testConcurrentWeakNullKey() {
-    Map<String, String> map = new ConcurrentWeakHashMap<>();
+    Map<String, String> map = ContainerUtil.createConcurrentWeakMap();
 
-    checkNullKeys(map);
+    tryToInsertNullKeys(map);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConcurrentWeakSoftNullKey() {
-    Map<String, String> map = new ConcurrentWeakKeySoftValueHashMap<>(1, 1, 1, CUSTOM_STRATEGY);
+    Map<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, CUSTOM_STRATEGY);
 
-    checkNullKeys(map);
+    tryToInsertNullKeys(map);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConcurrentWeakWeakNullKey() {
-    Map<String, String> map = new ConcurrentWeakKeyWeakValueHashMap<>(1, 1, 1, CUSTOM_STRATEGY);
+    Map<String, String> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(CUSTOM_STRATEGY);
 
-    checkNullKeys(map);
+    tryToInsertNullKeys(map);
   }
 
-  private static void checkNullKeys(Map<String, String> map) {
+  private static void tryToInsertNullKeys(Map<String, String> map) {
     map.put(null, "ab");
     assertEquals(1, map.size());
     assertEquals("ab", map.get(null));
@@ -272,7 +244,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakSoftCustomStrategy() {
-    ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<>(1, 1, 1, CUSTOM_STRATEGY);
+    ConcurrentMap<String, String> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(1, 1, 1, CUSTOM_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -340,7 +312,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
-    ConcurrentLongObjectMap<Object> map = new ConcurrentLongObjectHashMap<>();
+    ConcurrentLongObjectMap<Object> map = ContainerUtil.createConcurrentLongObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -383,7 +355,7 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
-    ConcurrentIntObjectMap<Object> map = new ConcurrentIntObjectHashMap<>();
+    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -404,32 +376,37 @@ public class ConcurrentMapsTest {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakKeyAndValueTossed() {
-    ConcurrentWeakKeyWeakValueHashMap<Object, Object> map =
-      (ConcurrentWeakKeyWeakValueHashMap<Object, Object>)ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
     map.put(new Object(), new Object());
 
     do {
+      map.put(this, this);  // to run processQueues();
+      map.remove(this);
+
       tryGcSoftlyReachableObjects();
       System.gc();
     }
-    while (!map.processQueues());
-    assertTrue(map.isEmpty());
+    while (!map.isEmpty());
 
     map.put(this, new Object());
     do {
+      map.put(this, this);  // to run processQueues();
+      map.remove(this);
+
       tryGcSoftlyReachableObjects();
       System.gc();
     }
-    while (!map.processQueues());
-    assertTrue(map.isEmpty());
+    while (!map.isEmpty());
 
     map.put(new Object(), this);
     do {
+      map.put(this, this);  // to run processQueues();
+      map.remove(this);
+
       tryGcSoftlyReachableObjects();
       System.gc();
     }
-    while (!map.processQueues());
-    assertTrue(map.isEmpty());
+    while (!map.isEmpty());
   }
 
   @Test

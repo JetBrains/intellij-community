@@ -417,6 +417,7 @@ public class JBTabsImpl extends JComponent
     myInfo2Page.clear();
     myInfo2Toolbar.clear();
     myTabListeners.clear();
+    myLastLayoutPass = null;
   }
 
   protected void resetTabsCache() {
@@ -501,18 +502,20 @@ public class JBTabsImpl extends JComponent
   }
 
   public void layoutComp(SingleRowPassInfo data, int deltaX, int deltaY, int deltaWidth, int deltaHeight) {
-    if (data.hToolbar != null) {
-      final int toolbarHeight = data.hToolbar.getPreferredSize().height;
-      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp, deltaWidth, deltaHeight);
-      layout(data.hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
+    JComponent hToolbar = data.hToolbar.get();
+    JComponent vToolbar = data.vToolbar.get();
+    if (hToolbar != null) {
+      final int toolbarHeight = hToolbar.getPreferredSize().height;
+      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
     }
-    else if (data.vToolbar != null) {
-      final int toolbarWidth = data.vToolbar.getPreferredSize().width;
-      final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
-      layout(data.vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
+    else if (vToolbar != null) {
+      final int toolbarWidth = vToolbar.getPreferredSize().width;
+      final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layout(vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
     }
     else {
-      layoutComp(deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
+      layoutComp(deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
     }
   }
 
@@ -3266,6 +3269,7 @@ public class JBTabsImpl extends JComponent
       TabInfo dropInfo = myDropInfo;
       myDropInfo = null;
       myShowDropLocation = true;
+      myForcedRelayout = true;
       setDropInfoIndex(-1);
       if (!isDisposed()) {
         removeTab(dropInfo, null, false, true);

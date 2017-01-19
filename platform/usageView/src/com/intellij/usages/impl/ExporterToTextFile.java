@@ -31,7 +31,7 @@ import java.util.TooManyListenersException;
 /**
  * @author max
  */
-class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
+public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;
 
   public ExporterToTextFile(@NotNull UsageViewImpl usageView) {

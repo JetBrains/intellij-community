@@ -312,9 +312,9 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     ifStatement.setElseBranch(thenBranch);
   }
 
-  private static void addAfter(PsiIfStatement ifStatement, PsiStatement thenBranch) throws IncorrectOperationException {
-    if (thenBranch instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStatement = (PsiBlockStatement) thenBranch;
+  static void addAfter(PsiIfStatement ifStatement, PsiStatement branch) throws IncorrectOperationException {
+    if (branch instanceof PsiBlockStatement) {
+      PsiBlockStatement blockStatement = (PsiBlockStatement) branch;
       final PsiCodeBlock block = blockStatement.getCodeBlock();
       final PsiElement firstBodyElement = block.getFirstBodyElement();
       final PsiElement lastBodyElement = block.getLastBodyElement();
@@ -322,7 +322,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         ifStatement.getParent().addRangeAfter(firstBodyElement, lastBodyElement, ifStatement);
       }
     } else {
-      ifStatement.getParent().addAfter(thenBranch, ifStatement);
+      ifStatement.getParent().addAfter(branch, ifStatement);
     }
   }
 

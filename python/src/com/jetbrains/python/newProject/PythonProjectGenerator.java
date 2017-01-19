@@ -114,11 +114,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     // Check if project synchronizer could be used with this project dir
     // No project can be created remotely if project synchronizer can't work with it
 
-    final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
-    if (remoteManager == null) {
-      return;
-    }
-    final PyProjectSynchronizer synchronizer = remoteManager.getSynchronizer(sdk);
+    final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
     if (synchronizer == null) {
       return;
     }
@@ -213,7 +209,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
                                   @Nullable final PyProjectSynchronizer synchronizer) {
     // Automatic deployment works only after first sync
     if (synchronizer != null) {
-      synchronizer.syncProject(module, PySyncDirection.JAVA_TO_PYTHON, null);
+      synchronizer.syncProject(module, PySyncDirection.LOCAL_TO_REMOTE, null);
     }
   }
 

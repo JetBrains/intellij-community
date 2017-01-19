@@ -794,7 +794,7 @@ shortcuts:
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk" \
+  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} х64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
 skip_desktop_shortcut:
@@ -822,7 +822,7 @@ done:
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
 
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+                 "$productLauncher" "" "" "" SW_SHOWNORMAL
 ;  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
 ;                 "$INSTDIR\bin\Uninstall.exe"
   StrCpy $0 $baseRegKey
@@ -1195,7 +1195,7 @@ keep_current_user:
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} х64.lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"
@@ -1235,6 +1235,10 @@ finish:
   Call un.OMDeleteRegKey
   StrCpy $0 "HKCR"
   StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
+  Call un.OMDeleteRegKey
+
+  StrCpy $0 "${MUI_LANGDLL_REGISTRY_ROOT}"
+  StrCpy $1 "${MUI_LANGDLL_REGISTRY_KEY}"
   Call un.OMDeleteRegKey
 
   StrCpy $0 "HKCR"

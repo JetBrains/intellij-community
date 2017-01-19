@@ -149,7 +149,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull
   SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
-    UsageTarget target = searchFor[0];
+    UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];
       ((TypeSafeDataProvider)target).calcData(UsageView.USAGE_SCOPE, new DataSink() {

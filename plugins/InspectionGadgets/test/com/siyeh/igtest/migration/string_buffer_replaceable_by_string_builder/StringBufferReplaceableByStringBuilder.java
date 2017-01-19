@@ -29,4 +29,12 @@ public class StringBufferReplaceableByStringBuilder {
         final StringBuffer sb = new StringBuffer();
         argument(sb.append("asdf").append("wait"));
     }
+
+    void lambda(StringBuilder logContainer) {
+        StringBuffer allLogs = new StringBuffer();
+        Runnable r = () -> {
+            allLogs.append("logs"); // might be used in another thread
+        };
+        logContainer.append(allLogs);
+    }
 }

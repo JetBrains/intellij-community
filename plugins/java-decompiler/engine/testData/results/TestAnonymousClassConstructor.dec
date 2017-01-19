@@ -1,0 +1,308 @@
+package pkg;
+
+class TestAnonymousClassConstructor {
+   void innerPrivateString() {
+      TestAnonymousClassConstructor.InnerPrivateString var10001 = new TestAnonymousClassConstructor.InnerPrivateString("text") {// 5
+      };
+   }// 6
+
+   void innerPrivate() {
+      TestAnonymousClassConstructor.InnerPrivate var10001 = new TestAnonymousClassConstructor.InnerPrivate(3L, 4) {// 9
+      };
+   }// 10
+
+   void innerStaticPrivateString() {
+      TestAnonymousClassConstructor.InnerStaticPrivateString var10001 = new TestAnonymousClassConstructor.InnerStaticPrivateString("text") {// 13
+      };
+   }// 14
+
+   void innerStaticPrivate() {
+      TestAnonymousClassConstructor.InnerStaticPrivate var10001 = new TestAnonymousClassConstructor.InnerStaticPrivate(3L, 4) {// 17
+      };
+   }// 18
+
+   static void innerStaticPrivateStringStatic() {
+      TestAnonymousClassConstructor.InnerStaticPrivateString var10001 = new TestAnonymousClassConstructor.InnerStaticPrivateString("text") {// 21
+      };
+   }// 22
+
+   static void innerStaticPrivateStatic() {
+      TestAnonymousClassConstructor.InnerStaticPrivate var10001 = new TestAnonymousClassConstructor.InnerStaticPrivate(3L, 4) {// 25
+      };
+   }// 26
+
+   void innerPublicString() {
+      TestAnonymousClassConstructor.InnerPublicString var10001 = new TestAnonymousClassConstructor.InnerPublicString("text") {// 29
+      };
+   }// 30
+
+   void innerPublic() {
+      TestAnonymousClassConstructor.InnerPublic var10001 = new TestAnonymousClassConstructor.InnerPublic(3L, 4) {// 33
+      };
+   }// 34
+
+   void innerStaticPublicString() {
+      TestAnonymousClassConstructor.InnerStaticPublicString var10001 = new TestAnonymousClassConstructor.InnerStaticPublicString("text") {// 37
+      };
+   }// 38
+
+   void innerStaticPublic() {
+      TestAnonymousClassConstructor.InnerStaticPublic var10001 = new TestAnonymousClassConstructor.InnerStaticPublic(3L, 4) {// 41
+      };
+   }// 42
+
+   static void innerStaticPublicStringStatic() {
+      TestAnonymousClassConstructor.InnerStaticPublicString var10001 = new TestAnonymousClassConstructor.InnerStaticPublicString("text") {// 45
+      };
+   }// 46
+
+   static void innerStaticPublicStatic() {
+      TestAnonymousClassConstructor.InnerStaticPublic var10001 = new TestAnonymousClassConstructor.InnerStaticPublic(3L, 4) {// 49
+      };
+   }// 50
+
+   static void n(String s) {
+      System.out.println("n(): " + s);// 53
+   }// 54
+
+   static class InnerStaticPublic {
+      public InnerStaticPublic(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 100
+      }// 101
+   }
+
+   static class InnerStaticPublicString {
+      public InnerStaticPublicString(String s) {
+         TestAnonymousClassConstructor.n(s);// 94
+      }// 95
+   }
+
+   class InnerPublic {
+      public InnerPublic(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 88
+      }// 89
+   }
+
+   class InnerPublicString {
+      public InnerPublicString(String s) {
+         TestAnonymousClassConstructor.n(s);// 82
+      }// 83
+   }
+
+   static class InnerStaticPrivate {
+      private InnerStaticPrivate(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 76
+      }// 77
+   }
+
+   static class InnerStaticPrivateString {
+      private InnerStaticPrivateString(String s) {
+         TestAnonymousClassConstructor.n(s);// 70
+      }// 71
+   }
+
+   class InnerPrivate {
+      private InnerPrivate(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 64
+      }// 65
+   }
+
+   class InnerPrivateString {
+      private InnerPrivateString(String s) {
+         TestAnonymousClassConstructor.n(s);// 58
+      }// 59
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor' {
+   method 'innerPrivateString ()V' {
+      5      4
+      b      6
+   }
+
+   method 'innerPrivate ()V' {
+      5      9
+      8      9
+      d      11
+   }
+
+   method 'innerStaticPrivateString ()V' {
+      5      14
+      b      16
+   }
+
+   method 'innerStaticPrivate ()V' {
+      5      19
+      8      19
+      d      21
+   }
+
+   method 'innerStaticPrivateStringStatic ()V' {
+      4      24
+      a      26
+   }
+
+   method 'innerStaticPrivateStatic ()V' {
+      4      29
+      7      29
+      c      31
+   }
+
+   method 'innerPublicString ()V' {
+      5      34
+      b      36
+   }
+
+   method 'innerPublic ()V' {
+      5      39
+      8      39
+      d      41
+   }
+
+   method 'innerStaticPublicString ()V' {
+      5      44
+      b      46
+   }
+
+   method 'innerStaticPublic ()V' {
+      5      49
+      8      49
+      d      51
+   }
+
+   method 'innerStaticPublicStringStatic ()V' {
+      4      54
+      a      56
+   }
+
+   method 'innerStaticPublicStatic ()V' {
+      4      59
+      7      59
+      c      61
+   }
+
+   method 'n (Ljava/lang/String;)V' {
+      0      64
+      a      64
+      13      64
+      16      64
+      19      65
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+   method '<init> (JI)V' {
+      f      69
+      18      69
+      1b      69
+      1e      70
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+   method '<init> (Ljava/lang/String;)V' {
+      5      75
+      8      76
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPublic' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
+      14      81
+      1e      81
+      21      81
+      24      82
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+      a      87
+      d      88
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
+   method '<init> (JI)V' {
+      f      93
+      18      93
+      1b      93
+      1e      94
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
+   method '<init> (Ljava/lang/String;)V' {
+      5      99
+      8      100
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
+      14      105
+      1e      105
+      21      105
+      24      106
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+      a      111
+      d      112
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 7
+9 <-> 10
+10 <-> 12
+13 <-> 15
+14 <-> 17
+17 <-> 20
+18 <-> 22
+21 <-> 25
+22 <-> 27
+25 <-> 30
+26 <-> 32
+29 <-> 35
+30 <-> 37
+33 <-> 40
+34 <-> 42
+37 <-> 45
+38 <-> 47
+41 <-> 50
+42 <-> 52
+45 <-> 55
+46 <-> 57
+49 <-> 60
+50 <-> 62
+53 <-> 65
+54 <-> 66
+58 <-> 112
+59 <-> 113
+64 <-> 106
+65 <-> 107
+70 <-> 100
+71 <-> 101
+76 <-> 94
+77 <-> 95
+82 <-> 88
+83 <-> 89
+88 <-> 82
+89 <-> 83
+94 <-> 76
+95 <-> 77
+100 <-> 70
+101 <-> 71
+Not mapped:
+57
+63
+69
+75
+81
+87
+93
+99

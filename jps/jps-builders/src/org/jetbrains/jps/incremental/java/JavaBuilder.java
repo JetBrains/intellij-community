@@ -37,6 +37,7 @@ import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -64,8 +65,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -155,6 +155,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<String, Collection<String>>());
+  }
+
+  @Override
+  public void chunkBuildStarted(final CompileContext context, final ModuleChunk chunk) {
+    // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
+    // that all such files are compiled in the first round.
+    try {
+      JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, new DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+        @Override
+        public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+          FSOperations.processFilesToRecompile(context, chunk, processor);
+        }
+      }, chunk);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void buildFinished(CompileContext context) {

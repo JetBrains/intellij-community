@@ -106,6 +106,8 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     "ModuleFileDir",
     "ModuleFilePath",
     "ModuleName",
+    "AffectedModuleNames",
+    "IsMake",
     "ModuleSourcePath",
     "ModuleSdkPath",
     "OutputPath",

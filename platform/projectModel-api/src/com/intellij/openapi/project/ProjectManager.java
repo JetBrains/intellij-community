@@ -107,7 +107,7 @@ public abstract class ProjectManager {
   public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
 
   /**
-   * Closes the specified project.
+   * Closes the specified project, but does not dispose it.
    *
    * @param project the project to close.
    * @return true if the project was closed successfully, false if the closing was disallowed by the close listeners.

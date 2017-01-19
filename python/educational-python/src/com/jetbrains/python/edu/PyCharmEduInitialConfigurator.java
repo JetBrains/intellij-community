@@ -308,6 +308,7 @@ public class PyCharmEduInitialConfigurator {
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
+    rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {

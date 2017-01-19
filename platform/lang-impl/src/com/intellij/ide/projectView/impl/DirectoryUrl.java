@@ -36,7 +36,7 @@ public class DirectoryUrl extends AbstractUrl {
   @NonNls private static final String ELEMENT_TYPE = "directory";
 
   public DirectoryUrl(String url, String moduleName) {
-    super(url, moduleName,ELEMENT_TYPE);
+    super(url, moduleName, ELEMENT_TYPE);
   }
   public static DirectoryUrl create(PsiDirectory directory) {
     Project project = directory.getProject();

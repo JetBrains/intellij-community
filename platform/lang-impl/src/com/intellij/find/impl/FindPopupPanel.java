@@ -186,7 +186,6 @@ public class FindPopupPanel extends JBPanel {
         .createPopup();
       Disposer.register(myFindBalloon, myDisposable);
       registerCloseAction(myFindBalloon);
-      myFindBalloon.getContent().setBorder(JBUI.Borders.empty());
       final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
       Component parent = UIUtil.findUltimateParent(window);
       final RelativePoint showPoint;
@@ -931,7 +930,6 @@ public class FindPopupPanel extends JBPanel {
             .createComponentPopupBuilder(popupContent, null);
           myResultsPopup = (AbstractPopup)builder
             .setShowShadow(false)
-            .setShowBorder(false)
             .setResizable(true)
             .setCancelCallback(() -> {
               DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());

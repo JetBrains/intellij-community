@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.AsciiUtil;
-import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +163,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    return group.isNamedGroup() && hasAtLeastJdkVersion(group, JavaSdkVersion.JDK_1_7);
+    return group.getType() == RegExpGroup.Type.NAMED_GROUP && hasAtLeastJdkVersion(group, JavaSdkVersion.JDK_1_7);
   }
 
   @Override
@@ -326,6 +326,21 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
     return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
+  }
+
+  @Override
+  public Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
+    return Lookbehind.FINITE_REPETITION;
+  }
+
+  @Override
+  public Integer getQuantifierValue(@NotNull RegExpNumber number) {
+    try {
+      return Integer.valueOf(number.getText());
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   @NotNull

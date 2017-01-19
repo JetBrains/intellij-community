@@ -75,6 +75,8 @@ public final class MacroManager {
     registerMacro(new ModuleFilePathMacro());
     registerMacro(new ModuleFileDirMacro());
     registerMacro(new ModuleNameMacro());
+    registerMacro(new AffectedModuleNamesMacro());
+    registerMacro(new CompilerContextMakeMacro());
     registerMacro(new ModulePathMacro());
     registerMacro(new ModuleSdkPathMacro());
 

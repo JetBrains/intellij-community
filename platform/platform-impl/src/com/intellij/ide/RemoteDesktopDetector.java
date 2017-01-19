@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.ide;
 
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -28,6 +29,8 @@ import com.sun.jna.platform.win32.User32;
 
 public class RemoteDesktopDetector {
   private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("Remote Desktop", NotificationDisplayType.BALLOON, false);
   
   public static RemoteDesktopDetector getInstance() {
     return ServiceManager.getService(RemoteDesktopDetector.class);
@@ -61,11 +64,10 @@ public class RemoteDesktopDetector {
           if (myRemoteDesktopConnected) {
             // We postpone notification to avoid recursive initialization of RemoteDesktopDetector 
             // (in case it's initialized by request from com.intellij.notification.EventLog)
-            ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                                                                        ApplicationBundle.message("remote.desktop.detected.title"),
-                                                                                                        ApplicationBundle
-                                                        .message("remote.desktop.detected.message"),
-                                                                                                        NotificationType.INFORMATION)));
+            ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(
+              NOTIFICATION_GROUP
+                .createNotification(ApplicationBundle.message("remote.desktop.detected.message"), NotificationType.INFORMATION)
+                .setTitle(ApplicationBundle.message("remote.desktop.detected.title"))));
           }
         }
       }

@@ -338,16 +338,16 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon toSize(@NotNull Icon icon, int width, int height) {
+  public static Icon toSize(@Nullable Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
 
-  private static class IconSizeWrapper implements Icon {
+  public static class IconSizeWrapper implements Icon {
     private final Icon myIcon;
     private final int myWidth;
     private final int myHeight;
 
-    private IconSizeWrapper(@NotNull Icon icon, int width, int height) {
+    protected IconSizeWrapper(@Nullable Icon icon, int width, int height) {
       myIcon = icon;
       myWidth = width;
       myHeight = height;
@@ -355,9 +355,14 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      x += (myWidth - myIcon.getIconWidth()) / 2;
-      y += (myHeight - myIcon.getIconHeight()) / 2;
-      myIcon.paintIcon(c, g, x, y);
+      paintIcon(myIcon, c, g, x, y);
+    }
+
+    protected void paintIcon(@Nullable Icon icon, Component c, Graphics g, int x, int y) {
+      if (icon == null) return;
+      x += (myWidth - icon.getIconWidth()) / 2;
+      y += (myHeight - icon.getIconHeight()) / 2;
+      icon.paintIcon(c, g, x, y);
     }
 
     @Override

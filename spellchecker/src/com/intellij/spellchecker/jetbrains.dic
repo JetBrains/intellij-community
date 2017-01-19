@@ -108,6 +108,7 @@ constexpr
 contravariant
 contrib
 controlfile
+couchbase
 coursecreator
 covariant
 cron
@@ -256,6 +257,7 @@ inout
 instantiable
 insteadof
 intellij
+interpolator
 intrinsics
 iphone
 iphoneos
@@ -276,6 +278,7 @@ jetbrains
 jibx
 jndi
 jnilib
+jooq
 jpeg
 jpdl
 jquery
@@ -291,6 +294,7 @@ keyframe
 keyframes
 keymap
 keymaps
+keystore
 kotlin
 labeler
 labelers
@@ -302,6 +306,7 @@ lifecycle
 likec
 linestring
 linkplain
+listable
 lldb
 llvm
 logback
@@ -338,6 +343,7 @@ mediumblob
 mediumint
 mediumtext
 metadata
+metas
 middleint
 middleware
 millis
@@ -349,6 +355,7 @@ miny
 mixin
 mlslabel
 mockito
+mojo
 monad
 monoidal
 mongodb
@@ -367,6 +374,7 @@ mybatis
 mysql
 namespace
 namespaces
+narayana
 nchar
 nclob
 ndbcluster
@@ -505,9 +513,11 @@ reifying
 reindex
 reindexing
 renderer
+repackager
 replacer
 repo
 repos
+requeue
 resetlogs
 resizable
 resize
@@ -717,12 +727,14 @@ webjar
 webjars
 webpack
 webservice
+webservices
 whitespace
 whitespaces
 wifi
 wiki
 wildcard
 wildcards
+wildfly
 wordwrap
 workflow
 writeln

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.configurationStore.SerializationUtilKt;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -34,6 +37,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +61,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
   private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(), 
+                                                                                                o2.getClass().getName()));
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -122,7 +127,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     RootModelImpl originalRootModel = moduleRootManager.getRootModel();
     for (ModuleExtension extension : originalRootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(false);
-      model.readExternal(element);
+
+      if (model instanceof PersistentStateComponent) {
+        SerializationUtilKt.deserializeAndLoadState((PersistentStateComponent)model, element);
+      }
+      else {
+        //noinspection deprecation
+        model.readExternal(element);
+      }
+
       registerOnDispose(model);
       myExtensions.add(model);
     }
@@ -154,8 +167,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myWritable = writable;
     myConfigurationAccessor = rootConfigurationAccessor;
 
-    final Set<ContentEntry> thatContent = rootModel.myContent;
-    for (ContentEntry contentEntry : thatContent) {
+    for (ContentEntry contentEntry : rootModel.myContent) {
       if (contentEntry instanceof ClonableContentEntry) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(this);
         myContent.add(cloned);
@@ -407,9 +419,25 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
+  public long getStateModificationCount() {
+    long result = 0;
+    for (ModuleExtension extension : myExtensions) {
+      if (extension instanceof PersistentStateComponentWithModificationTracker) {
+        result += ((PersistentStateComponentWithModificationTracker)extension).getStateModificationCount();
+      }
+    }
+    return result;
+  }
+
   public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
-      extension.writeExternal(element);
+      if (extension instanceof PersistentStateComponent) {
+        XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
+      }
+      else {
+        //noinspection deprecation
+        extension.writeExternal(element);
+      }
     }
 
     for (ContentEntry contentEntry : getContent()) {

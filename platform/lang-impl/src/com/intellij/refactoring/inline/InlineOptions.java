@@ -25,7 +25,7 @@ public interface InlineOptions {
 
   boolean isPreviewUsages();
 
-  default boolean isDeleteTheDeclaration() {
-    return true;
+  default boolean isKeepTheDeclaration() {
+    return false;
   }
 }

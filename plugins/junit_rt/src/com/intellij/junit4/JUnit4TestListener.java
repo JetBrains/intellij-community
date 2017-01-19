@@ -225,6 +225,7 @@ public class JUnit4TestListener extends RunListener {
           testFailure(isIgnored ? failure : null, next, MapSerializerUtil.TEST_IGNORED);
           testFinished(next);
         }
+        myFinishedCount = 0;
       }
     }
     else {

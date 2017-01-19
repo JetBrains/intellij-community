@@ -215,11 +215,12 @@ public class JBUI {
    */
   public static float sysScale(@Nullable Graphics2D g) {
     if (UIUtil.isJDKManagedHiDPI() && g != null) {
-      if (g.getDeviceConfiguration() instanceof BufferedImageGraphicsConfig) {
+      GraphicsConfiguration conf = g.getDeviceConfiguration();
+      if (conf instanceof BufferedImageGraphicsConfig) {
         // take BI's scale directly, not inspecting the device
         return (float)g.getTransform().getScaleX();
       }
-      return sysScale(g.getDeviceConfiguration().getDevice());
+      if (conf != null) return sysScale(conf.getDevice());
     }
     return sysScale();
   }

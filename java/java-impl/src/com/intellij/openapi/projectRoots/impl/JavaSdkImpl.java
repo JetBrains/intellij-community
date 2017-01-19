@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -263,6 +264,7 @@ public class JavaSdkImpl extends JavaSdk {
         scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
       }
     }
+    result.sort((o1, o2) -> Comparing.compare(JdkVersionUtil.getVersion(o2), JdkVersionUtil.getVersion(o1)));
     return result;
   }
 

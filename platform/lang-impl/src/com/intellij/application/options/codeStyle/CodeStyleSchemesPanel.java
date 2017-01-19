@@ -17,10 +17,12 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.DefaultSchemeActions;
+import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +96,7 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
   
 
   @Override
-  protected DefaultSchemeActions<CodeStyleScheme> createSchemeActions() {
+  protected AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
     return
       new CodeStyleSchemesActions(this) {
 
@@ -103,23 +105,27 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
           return myModel;
         }
 
-        @Nullable
-        @Override
-        protected CodeStyleScheme getCurrentScheme() {
-          return getSelectedScheme();
-        }
-
-        @Override
-        public SchemeLevel getSchemeLevel(@NotNull CodeStyleScheme scheme) {
-          return myModel.isProjectScheme(scheme) ? SchemeLevel.Project : SchemeLevel.IDE;
-        }
-
         @Override
         protected void onSchemeChanged(@Nullable CodeStyleScheme scheme) {
           if (!myIsReset) {
             ApplicationManager.getApplication().invokeLater(() -> onCombo());
           }
         }
+
+        @Override
+        protected void renameScheme(@NotNull CodeStyleScheme scheme, @NotNull String newName) {
+          CodeStyleSchemeImpl newScheme = new CodeStyleSchemeImpl(newName, false, scheme);
+          myModel.addScheme(newScheme, false);
+          myModel.removeScheme(scheme);
+          myModel.selectScheme(newScheme, null);
+        }
       };
   }
+
+  @NotNull
+  @Override
+  public SchemesModel<CodeStyleScheme> getModel() {
+    return myModel;
+  }
+  
 }

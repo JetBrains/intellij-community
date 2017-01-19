@@ -43,7 +43,7 @@ public class ParenthesesUtils {
   private static final int ADDITIVE_PRECEDENCE;
   private static final int SHIFT_PRECEDENCE;
   public static final int INSTANCEOF_PRECEDENCE;
-  private static final int RELATIONAL_PRECEDENCE;
+  public static final int RELATIONAL_PRECEDENCE;
   public static final int EQUALITY_PRECEDENCE;
 
   private static final int BINARY_AND_PRECEDENCE;
@@ -52,6 +52,7 @@ public class ParenthesesUtils {
   public static final int AND_PRECEDENCE;
   public static final int OR_PRECEDENCE;
   public static final int CONDITIONAL_PRECEDENCE;
+  public static final int SAFE_CAST_PRECEDENCE;
   private static final int ASSIGNMENT_PRECEDENCE;
 
   private static final int NUM_PRECEDENCES;
@@ -79,6 +80,7 @@ public class ParenthesesUtils {
     AND_PRECEDENCE = i++;
     OR_PRECEDENCE = i++;
     CONDITIONAL_PRECEDENCE = i++;
+    SAFE_CAST_PRECEDENCE = i++;
     ASSIGNMENT_PRECEDENCE = i++;
 
     NUM_PRECEDENCES = i;
@@ -109,6 +111,7 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.kIN, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.kAS, SAFE_CAST_PRECEDENCE);
   }
 
   public static int getPrecedence(GrExpression expression) {
@@ -147,7 +150,7 @@ public class ParenthesesUtils {
     return -1;
   }
 
-  private static int precedenceForBinaryOperator(@NotNull IElementType sign) {
+  public static int precedenceForBinaryOperator(@NotNull IElementType sign) {
     return s_binaryOperatorPrecedence.get(sign);
   }
 }

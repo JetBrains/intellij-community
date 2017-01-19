@@ -27,37 +27,41 @@ import java.io.IOException;
 import java.util.Map;
 
 @ApiStatus.Experimental
-public abstract class UpdateData<Key, Value> {
+public class UpdateData<Key, Value> {
   protected final Map<Key, Value> myNewData;
-  protected final ThrowableComputable<ForwardIndex.InputKeyIterator<Key, Value>, IOException> myCurrentData;
+  protected final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final ID<Key, Value> myIndexId;
   private final ThrowableRunnable<IOException> myForwardIndexUpdate;
 
-  protected UpdateData(@NotNull Map<Key, Value> newData,
-                       @NotNull ThrowableComputable<ForwardIndex.InputKeyIterator<Key, Value>, IOException> currentData,
-                       @NotNull ID<Key, Value> indexId,
-                       @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
+  public UpdateData(@NotNull Map<Key, Value> newData,
+                    @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
+                    @NotNull ID<Key, Value> indexId,
+                    @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
     myNewData = newData;
-    myCurrentData = currentData;
+    myCurrentDataEvaluator = currentDataEvaluator;
     myIndexId = indexId;
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
-  public abstract void iterateKeys(final int inputId,
-                                   final KeyValueUpdateProcessor<Key, Value> addProcessor,
-                                   final KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                                   final RemovedKeyProcessor<Key> removeProcessor) throws StorageException;
+  public void iterateKeys(KeyValueUpdateProcessor<Key, Value> addProcessor,
+                          KeyValueUpdateProcessor<Key, Value> updateProcessor,
+                          RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+    final InputDataDiffBuilder<Key, Value> currentData;
+    try {
+      currentData = getCurrentDataEvaluator().compute();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+    currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
+  }
 
-  public Map<Key, Value> getNewData() {
+  protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {
+    return myCurrentDataEvaluator;
+  }
+
+  protected Map<Key, Value> getNewData() {
     return myNewData;
-  }
-
-  public interface KeyValueUpdateProcessor<Key, Value> {
-    void process(Key key, Value value, int inputId) throws StorageException;
-  }
-
-  public interface RemovedKeyProcessor<Key> {
-    void process(Key key, int inputId) throws StorageException;
   }
 
   public ID<Key, Value> getIndexId() {

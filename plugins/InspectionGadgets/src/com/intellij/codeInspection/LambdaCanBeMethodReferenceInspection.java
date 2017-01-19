@@ -314,7 +314,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (qualifier == null) {
       return true;
     }
-    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
+    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
       if (expression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();

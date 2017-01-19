@@ -601,7 +601,7 @@ public class PlatformTestUtil {
         String logMessage = message;
         if (duration > expectedOnMyMachine) {
           int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ": " + percentage + "% longer";
+          logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
         }
         logMessage +=
           "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
@@ -634,7 +634,9 @@ public class PlatformTestUtil {
           System.gc();
           String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
           TeamCityLogger.warning(s, null);
-          System.err.println(s);
+          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+            System.err.println(s);
+          }
           //if (attempts == 1) {
           //  try {
           //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);

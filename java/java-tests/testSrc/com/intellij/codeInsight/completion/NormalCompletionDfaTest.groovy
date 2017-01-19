@@ -72,4 +72,6 @@ public class FooImpl extends Foo {
 
   void testCastInstanceofedQualifierInLambda2() { doTest() }
 
+  void testCastInstanceofedQualifierInExpressionLambda() { doTest() }
+
 }

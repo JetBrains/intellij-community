@@ -177,8 +177,14 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Override
   protected String validateName(String name) {
     return PsiNameHelper.getInstance(myProject).isIdentifier(name)
-           ? name.equals(mySourceClass.getName())
-             ? "Different name expected" : null
+           ? null
            : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
+  }
+
+  @Nullable
+  @Override
+  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+    return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected" 
+                                                                                                                 : null;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,10 +38,11 @@ import java.util.*;
 class JsonBySchemaObjectAnnotator implements Annotator {
   private final static Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.JsonBySchemaAnnotator");
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
-  private final static JsonSchemaObject ANY_SCHEMA = new JsonSchemaObject();
+  @NotNull private final VirtualFile mySchemaFile;
   private final JsonSchemaObject myRootSchema;
 
-  public JsonBySchemaObjectAnnotator(@NotNull JsonSchemaObject schema) {
+  public JsonBySchemaObjectAnnotator(@NotNull VirtualFile schemaFile, @NotNull JsonSchemaObject schema) {
+    mySchemaFile = schemaFile;
     myRootSchema = schema;
   }
 
@@ -49,9 +51,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final PsiFile psiFile = element.getContainingFile();
     if (! (psiFile instanceof JsonFile)) return;
 
-    final JsonProperty firstProp = getFirstProperty(element);
+    final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
     if (firstProp == null) {
-      checkRootObject(holder, element);
+      final JsonValue root = findTopLevelElement(element);
+      if (root != null) {
+        checkRootObject(holder, root);
+      }
       return;
     }
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
@@ -59,13 +64,16 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final List<BySchemaChecker> checkers = new ArrayList<>();
     JsonSchemaWalker.findSchemasForAnnotation(firstProp, new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
-      public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
+      public void consume(boolean isName,
+                          @NotNull JsonSchemaObject schema,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
         final BySchemaChecker checker = new BySchemaChecker();
         final Set<String> validatedProperties = new HashSet<>();
         checker.checkByScheme(firstProp.getValue(), schema, validatedProperties);
         checkers.add(checker);
       }
-    }, myRootSchema);
+    }, myRootSchema, mySchemaFile);
 
     if (checkers.isEmpty()) return;
 
@@ -86,25 +94,23 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     if (processCheckerResults(holder, checker)) return;
     if (firstProp.getParent() instanceof JsonObject && firstProp.getParent().getParent() instanceof PsiFile) {
-      checkRootObject(holder, element);
+      checkRootObject(holder, firstProp.getParent());
     }
   }
 
-  private static JsonProperty getFirstProperty(@NotNull PsiElement element) {
-    JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
-    if (firstProp == null) {
-      final JsonObject firstObject = PsiTreeUtil.getParentOfType(element, JsonObject.class, false);
-      if (firstObject != null && firstObject.getParent() instanceof JsonValue) {
-        final List<JsonProperty> propertyList = firstObject.getPropertyList();
-        if (!propertyList.isEmpty()) firstProp = propertyList.get(0);
-      }
+  private static JsonValue findTopLevelElement(@NotNull PsiElement element) {
+    PsiElement current = element;
+    while (true) {
+      final JsonValue value = PsiTreeUtil.getParentOfType(current, JsonValue.class, true);
+      if (value != null && (value.getParent() instanceof PsiFile)) return value;
+      if (value == null) return current instanceof JsonValue ? (JsonValue)current : null;
+      current = value;
     }
-    return firstProp;
   }
 
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    JsonValue object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
-    if (object == null) object = PsiTreeUtil.getParentOfType(property, JsonArray.class);
+    JsonValue object = property instanceof JsonObject ? (JsonObject)property : PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = property instanceof JsonArray ? (JsonValue)property : PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
@@ -587,7 +593,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
   }
 
   // todo no pattern properties at the moment
-  @Nullable
+  /*@Nullable
   private static JsonSchemaObject getChild(JsonSchemaObject current, String name) {
     JsonSchemaObject schema = current.getProperties().get(name);
     if (schema != null) return schema;
@@ -621,5 +627,5 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       if (schema != null) return schema;
     }
     return null;
-  }
+  }*/
 }

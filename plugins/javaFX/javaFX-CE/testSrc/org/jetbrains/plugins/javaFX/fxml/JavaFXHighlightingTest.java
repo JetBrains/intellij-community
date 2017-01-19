@@ -501,7 +501,11 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  public void testConstructorNamedArg() {
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 

@@ -24,6 +24,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.modules.java</depends>
   <depends optional="true" config-file="python-plugin-minor-ide.xml">com.intellij.modules.clion</depends>
+  <depends optional="true" config-file="python-plugin-minor-ide.xml">com.intellij.modules.webstorm</depends>
   <depends optional="true" config-file="python-plugin-rider.xml">com.intellij.modules.rider</depends>
 
   <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary

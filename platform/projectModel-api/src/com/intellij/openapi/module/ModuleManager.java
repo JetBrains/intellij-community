@@ -159,12 +159,16 @@ public abstract class ModuleManager extends SimpleModificationTracker {
 
 
   /**
-   * Returns the path to the group to which the specified module belongs, as an
-   * array of group names starting from the project root.
-   *
+   * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
+   * <p>
+   * <strong>Use {@link com.intellij.openapi.module.ModuleGrouper#getGroupPath()} instead.</strong> Exlicit module groups will be replaced
+   * by automatical module grouping accordingly to qualified names of modules, see https://youtrack.jetbrains.com/issue/IDEA-166061 for details.
+   * </p>
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
   @Nullable
   public abstract String[] getModuleGroupPath(@NotNull Module module);
+
+  public abstract boolean hasModuleGroups();
 }

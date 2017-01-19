@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -30,9 +31,7 @@ public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
   private final List<List<PooledConstant>> methodArguments = new ArrayList<>();
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int method_number = data.readUnsignedShort();
 
     for (int i = 0; i < method_number; ++i) {

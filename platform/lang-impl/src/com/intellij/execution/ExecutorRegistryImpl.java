@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
@@ -44,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ExecutorRegistryImpl extends ExecutorRegistry {
+public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponentAdapter {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
@@ -125,13 +127,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ExecutorRegistyImpl";
-  }
-
-  @Override
   public void initComponent() {
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
@@ -192,7 +187,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @Override
-  public synchronized void disposeComponent() {
+  public synchronized void dispose() {
     if (!myExecutors.isEmpty()) {
       for (Executor executor : new ArrayList<>(myExecutors)) {
         deinitExecutor(executor);

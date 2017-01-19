@@ -34,9 +34,9 @@ class JsonSchemaObjectCodeInsightWrapper implements CodeInsightProviders {
     mySchemaType = type;
     mySchemaFile = schemaFile;
     mySchemaObject = schemaObject;
-    myContributor = new JsonBySchemaObjectCompletionContributor(type, schemaObject);
-    myAnnotator = new JsonBySchemaObjectAnnotator(schemaObject);
-    myDocumentationProvider = new JsonBySchemaDocumentationProvider(schemaObject);
+    myContributor = new JsonBySchemaObjectCompletionContributor(type, schemaFile, schemaObject);
+    myAnnotator = new JsonBySchemaObjectAnnotator(schemaFile, schemaObject);
+    myDocumentationProvider = new JsonBySchemaDocumentationProvider(schemaFile, schemaObject);
   }
 
   @Override

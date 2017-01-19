@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,8 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
           if (!(element instanceof RegExpGroup)) {
             return false;
           }
-          final RegExpGroup regExpGroup = (RegExpGroup)element;
-          return (regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup()) &&
-                 Comparing.equal(getGroupName(), regExpGroup.getGroupName());
+          final RegExpGroup group = (RegExpGroup)element;
+          return group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName());
         }
       }
     );
@@ -138,7 +137,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
                 return false;
               }
               final RegExpGroup regExpGroup = (RegExpGroup)element;
-              return regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup();
+              return regExpGroup.isAnyNamedGroup();
             }
           }
         );

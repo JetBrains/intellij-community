@@ -96,7 +96,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     final JavacRef[] supers;
     if (superclass != refCollector.getTypeUtility().getNoType(TypeKind.NONE)) {
       supers = new JavacRef[interfaces.size() + 1];
-      supers[interfaces.size()] = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(superclass));
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(superclass));
+      if (ref == null) return null;
+      supers[interfaces.size()] = ref;
 
     } else {
       supers = interfaces.isEmpty() ? JavacRef.EMPTY_ARRAY : new JavacRef[interfaces.size()];
@@ -104,11 +106,12 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
     int i = 0;
     for (TypeMirror anInterface : interfaces) {
-      supers[i++] = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(anInterface));
-
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(anInterface));
+      if (ref == null) return null;
+      supers[i++] = ref;
     }
     final JavacRef.JavacElementRefBase aClass = refCollector.asJavacRef(element);
-
+    if (aClass == null) return null;
     refCollector.sinkReference(aClass);
     refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
     return super.visitClass(node, refCollector);

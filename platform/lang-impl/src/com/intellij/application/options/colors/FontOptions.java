@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FontComboBox;
+import com.intellij.ui.FontInfoRenderer;
+import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
@@ -98,7 +101,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
                                                ApplicationBundle.message("ligatures.jre.warning",
                                                                          ApplicationNamesInfo.getInstance().getFullProductName())));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    updateWarningIconVisibility(warningIcon);
+    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm);
     panel.add(warningIcon);
     add(panel, "newline, sx 2");
 
@@ -185,13 +188,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
     myEnableLigaturesCheckbox.addActionListener(e -> {
       getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected());
-      updateWarningIconVisibility(warningIcon);
       updateDescription(true);
     });
-  }
-
-  private void updateWarningIconVisibility(JLabel warningIcon) {
-    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm && getFontPreferences().useLigatures());
   }
 
   private int getFontSizeFromField() {
@@ -273,7 +271,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly);
+    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetbrainsJvm);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;

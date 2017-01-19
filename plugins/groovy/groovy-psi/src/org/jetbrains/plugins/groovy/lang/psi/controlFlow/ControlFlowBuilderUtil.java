@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
 
 /**
  * @author ven
@@ -296,7 +297,7 @@ public class ControlFlowBuilderUtil {
     final String referenceName = ref.getReferenceName();
     final ResolverProcessor processor = new PropertyResolverProcessor(referenceName, ref);
 
-    ResolveUtil.treeWalkUp(ref, processor, false);
+    treeWalkUp(ref, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length != 0) {
       return candidates;

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -1315,6 +1316,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (method != null && !result.isAccessible()) {
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
+      HighlightUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
       myHolder.add(info);
     }
     else {
@@ -1362,7 +1364,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
       final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
       if (errorMessage != null) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
+        final HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
+        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() && 
+            !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
+          final boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
+          final LocalQuickFixAndIntentionActionOnPsiElement fixStaticModifier =
+            QuickFixFactory.getInstance().createModifierListFix((PsiModifierListOwner)method, PsiModifier.STATIC, shouldHave, false);
+          QuickFixAction.registerQuickFixAction(info, fixStaticModifier);
+        }
+        myHolder.add(info);
       }
     }
 

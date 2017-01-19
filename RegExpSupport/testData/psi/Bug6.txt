@@ -17,11 +17,12 @@ REGEXP_FILE
           PsiElement(CHARACTER)('-')
         RegExpQuantifierImpl: <{3,}>
           PsiElement(LBRACE)('{')
-          PsiElement(NUMBER)('3')
+          RegExpNumberImpl: <3>
+            PsiElement(NUMBER)('3')
           PsiElement(COMMA)(',')
           PsiElement(RBRACE)('}')
       RegExpGroupImpl: <(?>\s)>
-        PsiElement(NON_CAPT_GROUP)('(?>')
+        PsiElement(ATOMIC_GROUP)('(?>')
         RegExpPatternImpl: <\s>
           RegExpBranchImpl: <\s>
             RegExpSimpleClassImpl: <\s>

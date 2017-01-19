@@ -74,6 +74,8 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (forReading) {
       setUsedForReading(true);
     }
+    
+    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting);
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -201,18 +202,19 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
                                             getAvailableWidth(column));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
-        appendText(cell, style);
+        appendText(cell, style, isSelected);
       }
       else {
         appendTextPadding(myGraphImage.getWidth());
-        appendText(cell, style);
+        appendText(cell, style, isSelected);
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column));
       }
     }
 
-    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style) {
-      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " "), style);
+    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style, boolean isSelected) {
+      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " ").trim(), style);
+      SpeedSearchUtil.applySpeedSearchHighlighting(myGraphTable, this, false, isSelected);
     }
 
     private int getAvailableWidth(int column) {

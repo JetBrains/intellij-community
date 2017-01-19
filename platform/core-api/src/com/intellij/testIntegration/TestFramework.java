@@ -61,6 +61,7 @@ public interface TestFramework {
 
   FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor();
 
+  @NotNull
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 
   /**

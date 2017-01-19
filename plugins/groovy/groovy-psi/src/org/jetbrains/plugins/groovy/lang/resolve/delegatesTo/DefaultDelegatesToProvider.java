@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
     return null;
   }
 
+  @Nullable
   private static PsiType getFromTarget(PsiParameterList parameterList,
                                        PsiAnnotation delegatesTo,
                                        GrClosureSignature signature,
@@ -176,7 +177,7 @@ public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
 
   @Nullable
   private static PsiType inferGenericArgType(@NotNull GrClosureSignature signature,
-                                             @NotNull PsiType targetType,
+                                             @Nullable PsiType targetType,
                                              int genericIndex,
                                              int param) {
     if (targetType instanceof PsiClassType) {

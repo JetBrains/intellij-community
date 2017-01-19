@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
@@ -31,6 +32,8 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 public abstract class EditorAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(EditorAction.class);
+
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
 
@@ -126,11 +129,17 @@ public abstract class EditorAction extends AnAction implements DumbAware {
       presentation.setEnabled(false);
     }
     else {
-      if (e.getInputEvent() instanceof KeyEvent) {
-        updateForKeyboardAccess(editor, presentation, dataContext);
+      if (editor.isDisposed()) {
+        LOG.error("Disposed editor in " + dataContext + " for " + this);
+        presentation.setEnabled(false);
       }
       else {
-        update(editor, presentation, dataContext);
+        if (e.getInputEvent() instanceof KeyEvent) {
+          updateForKeyboardAccess(editor, presentation, dataContext);
+        }
+        else {
+          update(editor, presentation, dataContext);
+        }
       }
     }
   }

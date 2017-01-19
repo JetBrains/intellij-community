@@ -94,8 +94,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          myDirtyScopeHolder.compilerActivityStarted();
-          closeReaderIfNeed();
+          if (project == myProject) {
+            myDirtyScopeHolder.compilerActivityStarted();
+            closeReaderIfNeed();
+          }
         }
       });
 
@@ -103,42 +105,28 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-          compilationFinished(errors, compileContext);
+          compilationFinished(compileContext);
         }
 
         @Override
         public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
-          compilationFinished(errors, compileContext);
+          compilationFinished(compileContext);
         }
 
-        private void compilationFinished(int errors, CompileContext context) {
-          Runnable compilationFinished = () -> {
-            final Module[] compilationModules = ReadAction.compute(() -> {
-              if (myProject.isDisposed()) return null;
-              return context.getCompileScope().getAffectedModules();
-            });
-            if (compilationModules == null) return;
-            Set<Module> modulesWithErrors;
-            if (errors != 0) {
-              modulesWithErrors = Stream.of(context.getMessages(CompilerMessageCategory.ERROR))
-                .map(CompilerMessage::getVirtualFile)
-                .distinct()
-                .map(f -> f == null ? null : myProjectFileIndex.getModuleForFile(f))
-                .collect(Collectors.toSet());
-            }
-            else {
-              modulesWithErrors = Collections.emptySet();
-            }
-            if (modulesWithErrors.contains(null) /*unknown error location*/) {
-              myDirtyScopeHolder.compilerActivityFinished(Module.EMPTY_ARRAY, compilationModules);
-            } else {
-              myDirtyScopeHolder.compilerActivityFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
-            }
-
-            myCompilationCount.increment();
-            openReaderIfNeed();
-          };
-          executeOnBuildThread(compilationFinished);
+        private void compilationFinished(CompileContext context) {
+          if (context.getProject() == myProject) {
+            Runnable compilationFinished = () -> {
+              final Module[] compilationModules = ReadAction.compute(() -> {
+                if (myProject.isDisposed()) return null;
+                return context.getCompileScope().getAffectedModules();
+              });
+              if (compilationModules == null) return;
+              myDirtyScopeHolder.compilerActivityFinished();
+              myCompilationCount.increment();
+              openReaderIfNeed();
+            };
+            executeOnBuildThread(compilationFinished);
+          }
         }
       });
 
@@ -149,18 +137,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
           CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
           boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
           executeOnBuildThread(() -> {
-            Module[] modules = ReadAction.compute(() -> {
-              if (myProject.isDisposed()) return null;
-              return projectCompileScope.getAffectedModules();
-            });
-            if (modules == null) return;
+            myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {
-              myDirtyScopeHolder.compilerActivityFinished(modules, Module.EMPTY_ARRAY);
               myCompilationCount.increment();
               openReaderIfNeed();
-            }
-            else {
-              myDirtyScopeHolder.compilerActivityFinished(Module.EMPTY_ARRAY, modules);
             }
           });
         });

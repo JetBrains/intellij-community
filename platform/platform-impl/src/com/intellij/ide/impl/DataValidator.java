@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,12 @@ public abstract class DataValidator<T> {
       return project.isDisposed() ? project : null;
     }
   };
+  private static final DataValidator<Editor> EDITOR_VALIDATOR = new DataValidator<Editor>() {
+    @Override
+    public Editor findInvalid(final String dataId, final Editor editor, final Object dataSource) {
+      return editor.isDisposed() ? editor : null;
+    }
+  };
 
   @Nullable
   public abstract T findInvalid(final String dataId, T data, final Object dataSource);
@@ -73,6 +80,7 @@ public abstract class DataValidator<T> {
     ourValidators.put(CommonDataKeys.VIRTUAL_FILE.getName(), VIRTUAL_FILE_VALIDATOR);
     ourValidators.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new ArrayValidator<>(VIRTUAL_FILE_VALIDATOR));
     ourValidators.put(CommonDataKeys.PROJECT.getName(), PROJECT_VALIDATOR);
+    ourValidators.put(CommonDataKeys.EDITOR.getName(), EDITOR_VALIDATOR);
   }
 
   public static class ArrayValidator<T> extends DataValidator<T[]> {

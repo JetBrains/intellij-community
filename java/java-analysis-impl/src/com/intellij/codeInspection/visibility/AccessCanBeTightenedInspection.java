@@ -168,16 +168,24 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       final PsiFile memberFile = member.getContainingFile();
       Project project = memberFile.getProject();
 
-      if (myDeadCodeInspection.isEntryPoint(member)) {
-        log(member.getName() +" is entry point");
-        return currentLevel;
+      int minLevel = PsiUtil.ACCESS_LEVEL_PRIVATE;
+      boolean entryPoint = myDeadCodeInspection.isEntryPoint(member);
+      if (entryPoint) {
+        int level = myVisibilityInspection.getMinVisibilityLevel(member);
+        if (level <= 0) {
+          log(member.getName() +" is entry point");
+          return currentLevel;
+        }
+        else {
+          minLevel = level;
+        }
       }
 
       PsiDirectory memberDirectory = memberFile.getContainingDirectory();
       final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
       log(member.getName()+ ": checking effective level for "+member);
 
-      AtomicInteger maxLevel = new AtomicInteger(PsiUtil.ACCESS_LEVEL_PRIVATE);
+      AtomicInteger maxLevel = new AtomicInteger(minLevel);
       AtomicBoolean foundUsage = new AtomicBoolean();
       boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
         PsiElement element = info.getElement();
@@ -195,7 +203,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
           return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, functionalExpression, psiFile, foundUsage);
         });
       }
-      if (!foundUsage.get()) {
+      if (!foundUsage.get() && !entryPoint) {
         log(member.getName() + " unused; ignore");
         return currentLevel; // do not propose private for unused method
       }

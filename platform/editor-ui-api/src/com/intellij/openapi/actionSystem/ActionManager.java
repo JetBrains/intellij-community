@@ -86,6 +86,7 @@ public abstract class ActionManager implements NamedComponent {
    *
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
+  @Nullable
   public abstract AnAction getAction(@NonNls @NotNull String actionId);
 
   /**
@@ -153,6 +154,7 @@ public abstract class ActionManager implements NamedComponent {
    */
   public abstract JComponent createButtonToolbar(final String actionPlace, @NotNull ActionGroup messageActionGroup);
 
+  @Nullable
   public abstract AnAction getActionOrStub(@NonNls String id);
 
   public abstract void addTimerListener(int delay, TimerListener listener);

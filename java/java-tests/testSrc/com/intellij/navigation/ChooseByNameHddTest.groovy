@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,15 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
 class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
-
   void "test go to file by full path"() {
     def psiFile = myFixture.addFileToProject("foo/index.html", "foo")
     def vFile = psiFile.virtualFile
@@ -59,7 +60,9 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
 
     def place = myFixture.addClass("class A {}")
     def popup = ReadAction.compute { ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place) }
-    def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect { ModuleUtilCore.findModuleForPsiElement(it).name }
+    def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect {
+      ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
+    }
     assert resultModules[0] == 'mod2'
     popup.close(false)
   }

@@ -49,10 +49,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyBlock implements ASTBlock {
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
-                                                                      PyElementTypes.DICT_COMP_EXPRESSION,
-                                                                      PyElementTypes.SET_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                      PyElementTypes.DICT_COMP_EXPRESSION,
                                                                       PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                                      PyElementTypes.SET_COMP_EXPRESSION,
                                                                       PyElementTypes.ARGUMENT_LIST,
                                                                       PyElementTypes.PARAMETER_LIST,
                                                                       PyElementTypes.TUPLE_EXPRESSION,
@@ -66,8 +66,11 @@ public class PyBlock implements ASTBlock {
                                                               PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
 
   private static final TokenSet ourHangingIndentOwners = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.LIST_COMP_EXPRESSION,
                                                                          PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.DICT_COMP_EXPRESSION,
                                                                          PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                                         PyElementTypes.SET_COMP_EXPRESSION,
                                                                          PyElementTypes.ARGUMENT_LIST,
                                                                          PyElementTypes.PARAMETER_LIST,
                                                                          PyElementTypes.TUPLE_EXPRESSION,
@@ -250,7 +253,7 @@ public class PyBlock implements ASTBlock {
 
     final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
+      if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -259,7 +262,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
              parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBeforeInSameParent(child, 1)) {
+      if ((childType == PyTokenTypes.RBRACE && !settings.HANG_CLOSING_BRACKETS) || !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -285,6 +288,9 @@ public class PyBlock implements ASTBlock {
           childIndent = Indent.getNoneIndent();
           if (!hasHangingIndent(myNode.getPsi())) {
             childAlignment = getAlignmentForChildren();
+          }
+          else if (settings.HANG_CLOSING_BRACKETS) {
+            childIndent = Indent.getNormalIndent();
           }
         }
       }
@@ -312,7 +318,10 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.GENERATOR_EXPRESSION || parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
-      if (childType == PyTokenTypes.RPAR || !hasLineBreaksBeforeInSameParent(child, 1)) {
+      final boolean tupleOrGenerator = parentType == PyElementTypes.GENERATOR_EXPRESSION ||
+                                       myNode.getPsi(PyParenthesizedExpression.class).getContainedExpression() instanceof PyTupleExpression;
+      if ((childType == PyTokenTypes.RPAR && !(tupleOrGenerator && settings.HANG_CLOSING_BRACKETS)) ||
+          !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -320,18 +329,16 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.ARGUMENT_LIST || parentType == PyElementTypes.PARAMETER_LIST) {
-      if (childType == PyTokenTypes.RPAR) {
+      if (childType == PyTokenTypes.RPAR && !settings.HANG_CLOSING_BRACKETS) {
         childIndent = Indent.getNoneIndent();
       }
+      else if (parentType == PyElementTypes.PARAMETER_LIST ||
+               settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS ||
+               argumentMayHaveSameIndentAsFollowingStatementList()) {
+        childIndent = Indent.getContinuationIndent();
+      }
       else {
-        if (parentType == PyElementTypes.PARAMETER_LIST ||
-            settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS || 
-            argumentMayHaveSameIndentAsFollowingStatementList()) {
-          childIndent = Indent.getContinuationIndent();
-        }
-        else {
-          childIndent = Indent.getNormalIndent();
-        }
+        childIndent = Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
@@ -467,12 +474,11 @@ public class PyBlock implements ASTBlock {
       if (hasLineBreakAfterIgnoringComments(firstChildNode)) {
         return true;
       }
-      final PsiElement[] items = getItems(elem);
-      if (items.length == 0) {
+      final PsiElement firstItem = getFirstItem(elem);
+      if (firstItem == null) {
         return !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
       }
       else {
-        final PsiElement firstItem = items[0];
         if (firstItem instanceof PyNamedParameter) {
           final PyExpression defaultValue = ((PyNamedParameter)firstItem).getDefaultValue();
           return defaultValue != null && hasHangingIndent(defaultValue);
@@ -493,30 +499,34 @@ public class PyBlock implements ASTBlock {
     }
   }
 
-  @NotNull
-  private static PsiElement[] getItems(@NotNull PsiElement elem) {
+  @Nullable
+  private static PsiElement getFirstItem(@NotNull PsiElement elem) {
+    PsiElement[] items = PsiElement.EMPTY_ARRAY;
     if (elem instanceof PySequenceExpression) {
-      return ((PySequenceExpression)elem).getElements();
+      items = ((PySequenceExpression)elem).getElements();
     }
     else if (elem instanceof PyParameterList) {
-      return ((PyParameterList)elem).getParameters();
+      items = ((PyParameterList)elem).getParameters();
     }
     else if (elem instanceof PyArgumentList) {
-      return ((PyArgumentList)elem).getArguments();
+      items = ((PyArgumentList)elem).getArguments();
     }
     else if (elem instanceof PyFromImportStatement) {
-      return ((PyFromImportStatement)elem).getImportElements();
+      items = ((PyFromImportStatement)elem).getImportElements();
     }
     else if (elem instanceof PyParenthesizedExpression) {
       final PyExpression containedExpression = ((PyParenthesizedExpression)elem).getContainedExpression();
       if (containedExpression instanceof PyTupleExpression) {
-        return ((PyTupleExpression)containedExpression).getElements();
+        items = ((PyTupleExpression)containedExpression).getElements();
       }
       else if (containedExpression != null) {
-        return new PsiElement[]{containedExpression};
+        return containedExpression;
       }
     }
-    return PsiElement.EMPTY_ARRAY;
+    else if (elem instanceof PyComprehensionElement) {
+      return ((PyComprehensionElement)elem).getResultExpression();
+    }
+    return ArrayUtil.getFirstElement(items);
   }
 
   private static boolean breaksAlignment(IElementType type) {

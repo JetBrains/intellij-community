@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -81,7 +78,11 @@ public class ScratchFileActions {
       PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
-      final String text = StringUtil.notNullize(getSelectionText(editor));
+      String eventText = getSelectionText(editor);
+      if (eventText == null) {
+        eventText = e.getData(PlatformDataKeys.PREDEFINED_TEXT);
+      }
+      final String text = StringUtil.notNullize(eventText);
       Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
       Consumer<Language> consumer = language1 -> doCreateNewScratch(project, false, language1, text);
       if (language != null) {

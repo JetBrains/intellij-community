@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,12 +28,15 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.sun.jna.Library;
@@ -57,6 +61,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
+  private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
+  private static final String LATEST_JDK_RELEASE = "1.8.0u112";
 
   private final PropertiesComponent myProperties;
 
@@ -75,7 +81,51 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
   private void checkJvm() {
     if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
-      showNotification("unsupported.jvm.ea.message");
+      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
+    }
+    JdkBundle bundle = JdkBundle.createBoot();
+    if (bundle != null && !bundle.isBundled()) {
+      Version version = bundle.getVersion();
+      Integer updateNumber = bundle.getUpdateNumber();
+      if (version != null && updateNumber != null && updateNumber < 112) {
+        final String bundleVersion = version.toCompactString() + "u" + updateNumber;
+        boolean showSwitchOption = false;
+
+        final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
+        if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
+          if (SystemInfo.isMacIntel64) {
+            showSwitchOption = true;
+          }
+          else if (SystemInfo.isWindows || SystemInfo.isLinux) {
+            JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
+            if (bundledJdk.getVersion() != null) {
+              showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
+            }
+          }
+        }
+
+        if (showSwitchOption) {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
+                           @Override
+                           protected void hyperlinkActivated(HyperlinkEvent e) {
+                             String url = e.getDescription();
+                             if ("ack".equals(url)) {
+                               myProperties.setValue(getIgnoreKey(), "true");
+                             }
+                             else if ("switch".equals(url)) {
+                               ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+                             }
+                             else {
+                               BrowserUtil.browse(url);
+                             }
+                           }
+                         }, bundleVersion, LATEST_JDK_RELEASE);
+        }
+        else {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message2"),
+                           bundleVersion, LATEST_JDK_RELEASE);
+        }
+      }
     }
   }
 
@@ -89,7 +139,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
             String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
             if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification("ibus.blocking.warn.message");
+              showNotification(new KeyHyperlinkAdapter("ibus.blocking.warn.message"));
             }
           }
         }
@@ -105,7 +155,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
           long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
           if (handler == LibC.SIG_IGN) {
-            showNotification("ide.sigint.ignored.message");
+            showNotification(new KeyHyperlinkAdapter("ide.sigint.ignored.message"));
           }
         }
       }
@@ -117,17 +167,18 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
   private void checkLauncherScript() {
     if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
-      showNotification("ide.launcher.script.outdated");
+      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"));
     }
   }
 
-  private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
-    final String ignoreKey = "ignore." + key;
+  private void showNotification(final KeyHyperlinkAdapter keyHyperlinkAdapter, Object... params) {
+    @PropertyKey(resourceBundle = "messages.IdeBundle") String key = keyHyperlinkAdapter.getKey();
+    final String ignoreKey = keyHyperlinkAdapter.getIgnoreKey();
     boolean ignored = myProperties.isValueSet(ignoreKey);
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    final String message = IdeBundle.message(key) + IdeBundle.message("sys.health.acknowledge.link");
+    final String message = IdeBundle.message(key, params) + IdeBundle.message("sys.health.acknowledge.link");
 
     final Application app = ApplicationManager.getApplication();
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
@@ -138,18 +189,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           if (component != null) {
             Rectangle rect = component.getVisibleRect();
             JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
-                @Override
-                protected void hyperlinkActivated(HyperlinkEvent e) {
-                  String url = e.getDescription();
-                  if ("ack".equals(url)) {
-                    myProperties.setValue(ignoreKey, "true");
-                  }
-                  else {
-                    BrowserUtil.browse(url);
-                  }
-                }
-              })
+              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, keyHyperlinkAdapter)
               .setFadeoutTime(-1)
               .setHideOnFrameResize(false)
               .setHideOnLinkClick(true)
@@ -253,5 +293,32 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     int SIGINT = 2;
     long SIG_IGN = 1L;
     int sigaction(int signum, Pointer act, Pointer oldact);
+  }
+
+  class KeyHyperlinkAdapter extends HyperlinkAdapter {
+    private final String key;
+
+    KeyHyperlinkAdapter(String key) {
+      this.key = key;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public String getIgnoreKey() {
+      return "ignore." + key;
+    }
+
+    @Override
+    protected void hyperlinkActivated(HyperlinkEvent e) {
+      String url = e.getDescription();
+      if ("ack".equals(url)) {
+        myProperties.setValue(getIgnoreKey(), "true");
+      }
+      else {
+        BrowserUtil.browse(url);
+      }
+    }
   }
 }
