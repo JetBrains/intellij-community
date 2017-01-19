@@ -35,10 +35,10 @@ public class LineNumberConvertor {
 
   @NotNull private final Corrector myCorrector = new Corrector();
 
-  public LineNumberConvertor(@NotNull TreeMap<Integer, Integer> fragments1,
-                             @NotNull TreeMap<Integer, Integer> fragments2,
-                             @NotNull TreeMap<Integer, Integer> invertedFragments1,
-                             @NotNull TreeMap<Integer, Integer> invertedFragments2) {
+  private LineNumberConvertor(@NotNull TreeMap<Integer, Integer> fragments1,
+                              @NotNull TreeMap<Integer, Integer> fragments2,
+                              @NotNull TreeMap<Integer, Integer> invertedFragments1,
+                              @NotNull TreeMap<Integer, Integer> invertedFragments2) {
     myFragments1 = fragments1;
     myFragments2 = fragments2;
     myInvertedFragments1 = invertedFragments1;
@@ -103,37 +103,29 @@ public class LineNumberConvertor {
   }
 
 
-  private static int convert(@NotNull final TreeMap<Integer, Integer> fragments, int value, boolean approximate) {
-    return approximate ? convertApproximate(fragments, value) : convert(fragments, value);
-  }
-
-  /*
-   * This convertor returns exact matching between lines, and -1 if it's impossible
+  /**
+   * @param approximate false: return exact matching between lines, and -1 if it's impossible
+   *                    true: return 'good enough' position, even if exact matching is impossible
    */
-  private static int convert(@NotNull final TreeMap<Integer, Integer> fragments, int value) {
-    Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-    if (floor == null || floor.getValue() == -1) return -1;
-    return floor.getValue() - floor.getKey() + value;
-  }
+  private int convertRaw(@NotNull Side side, boolean fromOneside, int value, boolean approximate) {
+    TreeMap<Integer, Integer> fragments = fromOneside ? side.select(myFragments1, myFragments2)
+                                                      : side.select(myInvertedFragments1, myInvertedFragments2);
 
-  /*
-   * This convertor returns 'good enough' position, even if exact matching is impossible
-   */
-  private static int convertApproximate(@NotNull final TreeMap<Integer, Integer> fragments, int value) {
-    Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-    if (floor == null) return 0;
-    if (floor.getValue() != -1) return floor.getValue() - floor.getKey() + value;
+    if (approximate) {
+      Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
+      if (floor == null) return 0;
+      if (floor.getValue() != -1) return floor.getValue() - floor.getKey() + value;
 
-    Map.Entry<Integer, Integer> floorHead = fragments.floorEntry(floor.getKey() - 1);
-    assert floorHead != null && floorHead.getValue() != -1;
+      Map.Entry<Integer, Integer> floorHead = fragments.floorEntry(floor.getKey() - 1);
+      assert floorHead != null && floorHead.getValue() != -1;
 
-    return floorHead.getValue() - floorHead.getKey() + floor.getKey();
-  }
-
-  @NotNull
-  private TreeMap<Integer, Integer> getFragments(@NotNull Side side, boolean fromOneside) {
-    return fromOneside ? side.select(myFragments1, myFragments2)
-                       : side.select(myInvertedFragments1, myInvertedFragments2);
+      return floorHead.getValue() - floorHead.getKey() + floor.getKey();
+    }
+    else {
+      Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
+      if (floor == null || floor.getValue() == -1) return -1;
+      return floor.getValue() - floor.getKey() + value;
+    }
   }
 
   public static class Builder {
@@ -234,7 +226,7 @@ public class LineNumberConvertor {
 
     private int convertFromTwoside(int value, @NotNull Side side, boolean approximate, int index) {
       if (index < 0) {
-        return convert(getFragments(side, false), value, approximate);
+        return convertRaw(side, false, value, approximate);
       }
 
       CorrectedChange change = myChanges.get(index);
@@ -280,7 +272,7 @@ public class LineNumberConvertor {
 
     private int convertFromOneside(int value, @NotNull Side side, boolean approximate, int index) {
       if (index < 0) {
-        return convert(getFragments(side, true), value, approximate);
+        return convertRaw(side, true, value, approximate);
       }
 
       CorrectedChange change = myChanges.get(index);
