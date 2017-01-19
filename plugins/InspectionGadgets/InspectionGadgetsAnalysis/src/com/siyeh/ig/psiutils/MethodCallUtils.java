@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,30 @@ public class MethodCallUtils {
     final PsiExpression[] arguments = copyArgumentList.getExpressions();
     arguments[index].replace(replacement);
     return copy.resolveMethod();
+  }
+
+  /**
+   * Checks if the specified expression is an argument for any method call (skipping parentheses in between).
+   * If the method call is found, checks if same method is called when argument is replaced with replacement.
+   * @param expression  the expression to check
+   * @param replacement  the replacement to replace expression with
+   * @return true, if method was found and a different method was called with replacement. false, otherwise.
+   */
+  public static boolean isNecessaryForSurroundingMethodCall(PsiExpression expression, PsiExpression replacement) {
+    PsiElement parent = expression.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      expression = (PsiExpression)parent;
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCall)) {
+      return false;
+    }
+    final PsiCall call = (PsiCall)grandParent;
+    return call.resolveMethod() != findMethodWithReplacedArgument(call, expression, replacement);
   }
 
   public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
