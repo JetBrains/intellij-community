@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-// This class works incorrectly with non-fair differences (when chunk of matched lines has different length in left/right files)
 class UnifiedFragmentBuilder {
   @NotNull private final List<LineFragment> myFragments;
   @NotNull private final Document myDocument1;
@@ -89,21 +88,15 @@ class UnifiedFragmentBuilder {
     int linesBefore = totalLines;
     int linesAfter;
 
-    if (lines1 >= 0) {
-      int startOffset = myDocument1.getLineStartOffset(startLine1);
-      int endOffset = myDocument1.getLineEndOffset(endLine1);
-
-      appendTextSide(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
-    }
+    int startOffset1 = myDocument1.getLineStartOffset(startLine1);
+    int endOffset1 = myDocument1.getLineEndOffset(endLine1);
+    appendTextSide(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
 
     int linesBetween = totalLines;
 
-    if (lines2 >= 0) {
-      int startOffset = myDocument2.getLineStartOffset(startLine2);
-      int endOffset = myDocument2.getLineEndOffset(endLine2);
-
-      appendTextSide(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
-    }
+    int startOffset2 = myDocument2.getLineStartOffset(startLine2);
+    int endOffset2 = myDocument2.getLineEndOffset(endLine2);
+    appendTextSide(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
 
     linesAfter = totalLines;
 
@@ -122,43 +115,50 @@ class UnifiedFragmentBuilder {
   }
 
   private void appendTextMaster(int startLine1, int startLine2, int endLine1, int endLine2) {
-    int lines = myMasterSide.isLeft() ? endLine1 - startLine1 : endLine2 - startLine2;
+    // The slave-side line matching might be incomplete for non-fair line fragments (@see FairDiffIterable)
+    // If it ever became an issue, it could be fixed by explicit fair by-line comparing of "equal" regions
 
-    if (lines >= 0) {
-      int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
-      int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
+    int lines1 = endLine1 - startLine1;
+    int lines2 = endLine2 - startLine2;
+    int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
+    int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
 
-      appendText(myMasterSide, startOffset, endOffset, lines, startLine1, startLine2);
-    }
+    appendText(myMasterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2);
   }
 
-  private void appendTextSide(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
+  private void appendTextSide(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
     int linesBefore = totalLines;
-    appendText(side, offset1, offset2, lines, startLine1, startLine2);
+    appendText(side, offset1, offset2, lines1, lines2, startLine1, startLine2);
     int linesAfter = totalLines;
 
-    myChangedLines.add(new LineRange(linesBefore, linesAfter));
+    if (linesBefore != linesAfter) myChangedLines.add(new LineRange(linesBefore, linesAfter));
   }
 
-  private void appendText(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
-    Document document = side.select(myDocument1, myDocument2);
+  private void appendText(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
+    int lines = side.select(lines1, lines2);
+    boolean notEmpty = lines >= 0;
 
-    int newline = document.getTextLength() > offset2 + 1 ? 1 : 0;
-    TextRange base = new TextRange(myBuilder.length(), myBuilder.length() + offset2 - offset1 + newline);
-    TextRange changed = new TextRange(offset1, offset2 + newline);
-    myRanges.add(new HighlightRange(side, base, changed));
-
-    myBuilder.append(document.getCharsSequence().subSequence(offset1, offset2));
-    myBuilder.append('\n');
-
+    int appendix = notEmpty ? 1 : 0;
     if (startLine1 != -1) {
-      myConvertor1.put(totalLines, startLine1, lines + 1);
+      myConvertor1.put(totalLines, startLine1, lines + appendix, lines1 + appendix);
     }
     if (startLine2 != -1) {
-      myConvertor2.put(totalLines, startLine2, lines + 1);
+      myConvertor2.put(totalLines, startLine2, lines + appendix, lines2 + appendix);
     }
 
-    totalLines += lines + 1;
+    if (notEmpty) {
+      Document document = side.select(myDocument1, myDocument2);
+
+      int newline = document.getTextLength() > offset2 + 1 ? 1 : 0;
+      TextRange base = new TextRange(myBuilder.length(), myBuilder.length() + offset2 - offset1 + newline);
+      TextRange changed = new TextRange(offset1, offset2 + newline);
+      myRanges.add(new HighlightRange(side, base, changed));
+
+      myBuilder.append(document.getCharsSequence().subSequence(offset1, offset2));
+      myBuilder.append('\n');
+
+      totalLines += lines + 1;
+    }
   }
 
   private static int getLineCount(@NotNull Document document) {

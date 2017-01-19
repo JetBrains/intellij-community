@@ -25,15 +25,15 @@ import java.util.TreeMap;
 
 public class LineNumberConvertor {
   // Master -> Slave
-  @NotNull private final TreeMap<Integer, Integer> myFragments;
+  @NotNull private final TreeMap<Integer, Data> myFragments;
 
   // Slave -> Master
-  @NotNull private final TreeMap<Integer, Integer> myInvertedFragments;
+  @NotNull private final TreeMap<Integer, Data> myInvertedFragments;
 
   @NotNull private final Corrector myCorrector = new Corrector();
 
-  private LineNumberConvertor(@NotNull TreeMap<Integer, Integer> fragments,
-                              @NotNull TreeMap<Integer, Integer> invertedFragments) {
+  private LineNumberConvertor(@NotNull TreeMap<Integer, Data> fragments,
+                              @NotNull TreeMap<Integer, Data> invertedFragments) {
     myFragments = fragments;
     myInvertedFragments = invertedFragments;
   }
@@ -83,40 +83,57 @@ public class LineNumberConvertor {
    *                    true: return 'good enough' position, even if exact matching is impossible
    */
   private int convertRaw(boolean fromMaster, int value, boolean approximate) {
-    TreeMap<Integer, Integer> fragments = fromMaster ? myFragments : myInvertedFragments;
+    TreeMap<Integer, Data> fragments = fromMaster ? myFragments : myInvertedFragments;
 
     if (approximate) {
-      Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-      if (floor == null) return 0;
-      if (floor.getValue() != -1) return floor.getValue() - floor.getKey() + value;
+      Map.Entry<Integer, Data> prevEntry = fragments.floorEntry(value);
+      if (prevEntry == null) return 0;
+      int start = prevEntry.getKey();
+      Data data = prevEntry.getValue();
 
-      Map.Entry<Integer, Integer> floorHead = fragments.floorEntry(floor.getKey() - 1);
-      assert floorHead != null && floorHead.getValue() != -1;
-
-      return floorHead.getValue() - floorHead.getKey() + floor.getKey();
+      return Math.min(data.otherStart - start + value, data.otherStart + data.otherLength);
     }
     else {
-      Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
-      if (floor == null || floor.getValue() == -1) return -1;
-      return floor.getValue() - floor.getKey() + value;
+      Map.Entry<Integer, Data> prevEntry = fragments.floorEntry(value);
+      if (prevEntry == null) return -1;
+      int start = prevEntry.getKey();
+      Data data = prevEntry.getValue();
+
+      if (value >= start + data.length) return -1;
+      if (data.length != data.otherLength) return -1;
+
+      return data.otherStart - start + value;
     }
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Integer> myFragments = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Data> myFragments = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
 
-    public void put(int start, int newStart, int length) {
-      myFragments.put(start, newStart);
-      myFragments.put(start + length, -1);
+    public void put(int masterStart, int slaveStart, int length) {
+      put(masterStart, slaveStart, length, length);
+    }
 
-      myInvertedFragments.put(newStart, start);
-      myInvertedFragments.put(newStart + length, -1);
+    public void put(int masterStart, int slaveStart, int masterLength, int slaveLength) {
+      myFragments.put(masterStart, new Data(masterLength, slaveStart, slaveLength));
+      myInvertedFragments.put(slaveStart, new Data(slaveLength, masterStart, masterLength));
     }
 
     @NotNull
     public LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments, myInvertedFragments);
+    }
+  }
+
+  private static class Data {
+    public final int length;
+    public final int otherStart;
+    public final int otherLength;
+
+    public Data(int length, int otherStart, int otherLength) {
+      this.length = length;
+      this.otherStart = otherStart;
+      this.otherLength = otherLength;
     }
   }
 

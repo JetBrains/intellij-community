@@ -112,18 +112,79 @@ class LineNumberConvertorTest : UsefulTestCase() {
         put(6, 5, 2)
       },
       {
-        assertEquals(0, convertor.convertApproximate(0))
-        assertEquals(2, convertor.convertApproximate(1))
-        assertEquals(3, convertor.convertApproximate(2))
-        assertEquals(3, convertor.convertApproximate(3))
-        assertEquals(3, convertor.convertApproximate(4))
-        assertEquals(3, convertor.convertApproximate(5))
-        assertEquals(5, convertor.convertApproximate(6))
-        assertEquals(6, convertor.convertApproximate(7))
-        assertEquals(7, convertor.convertApproximate(8))
-        assertEquals(7, convertor.convertApproximate(9))
+        checkEmpty(-5, 0)
+        checkMatch(1, 2, 1)
+        checkEmpty(3, 5)
+        checkMatch(6, 5, 2)
+        checkEmpty(8, 20)
+
+        checkApproximate(0, 0)
+        checkApproximate(1, 2)
+        checkApproximate(2, 3)
+        checkApproximate(3, 3)
+        checkApproximate(4, 3)
+        checkApproximate(5, 3)
+        checkApproximate(6, 5)
+        checkApproximate(7, 6)
+        checkApproximate(8, 7)
+        checkApproximate(9, 7)
+        checkApproximate(10, 7)
+        checkApproximate(11, 7)
+
+        checkApproximateInv(0, 0)
+        checkApproximateInv(0, 1)
+        checkApproximateInv(1, 2)
+        checkApproximateInv(2, 3)
+        checkApproximateInv(2, 4)
+        checkApproximateInv(6, 5)
+        checkApproximateInv(7, 6)
+        checkApproximateInv(8, 7)
+        checkApproximateInv(8, 8)
+        checkApproximateInv(8, 9)
+        checkApproximateInv(8, 10)
+        checkApproximateInv(8, 11)
       }
     )
+  }
+
+  fun testNonFairRange() {
+    doTest(
+      {
+        put(1, 2, 1)
+        put(6, 5, 2, 4)
+      },
+      {
+        checkEmpty(-5, 0)
+        checkMatch(1, 2, 1)
+        checkEmpty(3, 20)
+
+        checkApproximate(0, 0)
+        checkApproximate(1, 2)
+        checkApproximate(2, 3)
+        checkApproximate(3, 3)
+        checkApproximate(4, 3)
+        checkApproximate(5, 3)
+        checkApproximate(6, 5)
+        checkApproximate(7, 6)
+        checkApproximate(8, 7)
+        checkApproximate(9, 8)
+        checkApproximate(10, 9)
+        checkApproximate(11, 9)
+        checkApproximate(12, 9)
+
+        checkApproximateInv(0, 0)
+        checkApproximateInv(0, 1)
+        checkApproximateInv(1, 2)
+        checkApproximateInv(2, 3)
+        checkApproximateInv(2, 4)
+        checkApproximateInv(6, 5)
+        checkApproximateInv(7, 6)
+        checkApproximateInv(8, 7)
+        checkApproximateInv(8, 8)
+        checkApproximateInv(8, 9)
+        checkApproximateInv(8, 10)
+        checkApproximateInv(8, 11)
+      })
   }
 
   //
@@ -144,25 +205,37 @@ class LineNumberConvertorTest : UsefulTestCase() {
       builder.put(left, right, length)
     }
 
+    fun put(left: Int, right: Int, lengthLeft: Int, lengthRight: Int) {
+      builder.put(left, right, lengthLeft, lengthRight)
+    }
+
     fun finish(): Test = Test(builder.build())
   }
 
   private class Test(val convertor: LineNumberConvertor) {
-    fun checkMatch(left: Int, right: Int, length: Int) {
+    fun checkMatch(left: Int, right: Int, length: Int = 1) {
       for (i in 0..length - 1) {
         assertEquals(right + i, convertor.convert(left + i))
         assertEquals(left + i, convertor.convertInv(right + i))
       }
     }
 
-    fun checkEmpty(start: Int, end: Int) {
-      for (i in start..end) {
+    fun checkApproximate(left: Int, right: Int) {
+      assertEquals(right, convertor.convertApproximate(left))
+    }
+
+    fun checkApproximateInv(left: Int, right: Int) {
+      assertEquals(left, convertor.convertApproximateInv(right))
+    }
+
+    fun checkEmpty(startLeft: Int, endLeft: Int) {
+      for (i in startLeft..endLeft) {
         assertEquals(-1, convertor.convert(i))
       }
     }
 
-    fun checkEmptyInv(start: Int, end: Int) {
-      for (i in start..end) {
+    fun checkEmptyInv(startRight: Int, endRight: Int) {
+      for (i in startRight..endRight) {
         assertEquals(-1, convertor.convertInv(i))
       }
     }

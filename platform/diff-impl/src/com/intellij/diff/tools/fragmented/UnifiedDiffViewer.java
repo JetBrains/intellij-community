@@ -790,20 +790,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getIgnorePolicy(), getHighlightPolicy());
+    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
   }
 
   @NotNull
   private HighlightPolicy getHighlightPolicy() {
     HighlightPolicy policy = getTextSettings().getHighlightPolicy();
     if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
-    return policy;
-  }
-
-  @NotNull
-  private IgnorePolicy getIgnorePolicy() {
-    IgnorePolicy policy = getTextSettings().getIgnorePolicy();
-    if (policy == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) return IgnorePolicy.IGNORE_WHITESPACES;
     return policy;
   }
 
@@ -1030,20 +1023,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
     public MyIgnorePolicySettingAction() {
       super(getTextSettings());
-    }
-
-    @NotNull
-    @Override
-    protected IgnorePolicy getCurrentSetting() {
-      return getIgnorePolicy();
-    }
-
-    @NotNull
-    @Override
-    protected List<IgnorePolicy> getAvailableSettings() {
-      ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
-      settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
-      return settings;
     }
 
     @Override
