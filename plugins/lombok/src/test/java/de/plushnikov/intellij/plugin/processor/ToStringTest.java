@@ -10,22 +10,22 @@ import java.io.IOException;
 public class ToStringTest extends AbstractLombokParsingTestCase {
 
   public void testTostring$ToStringInner() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testTostring$ToStringPlain() throws IOException {
-    doTest();
+    doTest(true);
   }
 
   public void testTostring$ToStringExplicitEmptyOf() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testTostring$ToStringExplicitOfAndExclude() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testTostring$ToStringSimpleClassName() throws IOException {
-    doTest();
+    doTest(true);
   }
 }

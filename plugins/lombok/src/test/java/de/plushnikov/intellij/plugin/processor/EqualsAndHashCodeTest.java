@@ -8,22 +8,22 @@ import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 public class EqualsAndHashCodeTest extends AbstractLombokParsingTestCase {
 
   public void testEqualsandhashcode$EqualsAndHashCode() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testEqualsandhashcode$EqualsAndHashCodeWithExistingMethods() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testEqualsandhashcode$EqualsAndHashCodeWithSomeExistingMethods() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testEqualsandhashcode$EqualsAndHashCodeExplicitEmptyOf() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testEqualsandhashcode$EqualsAndHashCodeExplicitOfAndExclude() throws Exception {
-    doTest();
+    doTest(true);
   }
 }
