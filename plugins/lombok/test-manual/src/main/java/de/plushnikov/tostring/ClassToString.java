@@ -16,4 +16,20 @@ public class ClassToString extends Date {
 
   private static String staticStringProperty;
   private static String[] staticStringPropertyArray;
+
+  @ToString
+  static class InnerStaticClass {
+    String  someProperty;
+  }
+
+  @ToString
+  class InnerClass {
+    String someProperty;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(new ClassToString());
+    System.out.println(new InnerStaticClass());
+    System.out.println(new ClassToString().new InnerClass());
+  }
 }

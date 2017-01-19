@@ -24,4 +24,8 @@ public class ToStringTest extends AbstractLombokParsingTestCase {
   public void testTostring$ToStringExplicitOfAndExclude() throws Exception {
     doTest();
   }
+
+  public void testTostring$ToStringSimpleClassName() throws IOException {
+    doTest();
+  }
 }
