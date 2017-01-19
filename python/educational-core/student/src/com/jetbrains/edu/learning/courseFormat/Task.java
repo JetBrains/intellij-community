@@ -249,6 +249,9 @@ public class Task implements StudyItem {
       }
     }
     if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+      if (myStatus == StudyStatus.Failed) {
+        myStatus = StudyStatus.Unchecked;
+      }
       return;
     }
     myStatus = status;
