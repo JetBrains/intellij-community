@@ -578,8 +578,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
         LineNumberConvertor masterConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide);
         LineNumberConvertor slaveConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide.other());
-        masterConvertor.handleOnesideChange(line1, line2, shift, true);
-        slaveConvertor.handleOnesideChange(line1, line2, shift, false);
+        masterConvertor.handleMasterChange(line1, line2, shift, true);
+        slaveConvertor.handleMasterChange(line1, line2, shift, false);
       }
       finally {
         // TODO: we can avoid marking state out-of-date in some simple cases (like in SimpleDiffViewer)

@@ -145,8 +145,8 @@ class LineNumberConvertorCorrectorTest : UsefulTestCase() {
 
   private class Test(val convertor1: LineNumberConvertor, val convertor2: LineNumberConvertor, var length: Int) {
     fun change(onesideLine: Int, oldLength: Int, newLength: Int, side: Side) {
-      convertor1.handleOnesideChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.LEFT)
-      convertor2.handleOnesideChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.RIGHT)
+      convertor1.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.LEFT)
+      convertor2.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.RIGHT)
       length = Math.max(length, length + newLength - oldLength)
     }
 
