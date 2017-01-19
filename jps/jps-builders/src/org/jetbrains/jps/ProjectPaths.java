@@ -48,7 +48,12 @@ public class ProjectPaths {
 
   @NotNull
   public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
+    return getPlatformCompilationClasspath(chunk, excludeMainModuleOutput, true);
+  }
+
+  @NotNull
+  public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput, boolean exportedOnly) {
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, exportedOnly);
   }
 
   @NotNull
