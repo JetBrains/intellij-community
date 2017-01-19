@@ -939,7 +939,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  public void rehighlightHyperlinksAndFoldings() {
+  private void rehighlightHyperlinksAndFoldings() {
     if (myEditor == null || myProject.isDisposed()) return;
 
     clearHyperlinkAndFoldings();
