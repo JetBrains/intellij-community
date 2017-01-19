@@ -479,7 +479,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myConfiguration;
   }
 
-  public static SvnVcs getInstance(Project project) {
+  public static SvnVcs getInstance(@NotNull Project project) {
     return (SvnVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
