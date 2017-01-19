@@ -71,7 +71,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     try {
       buildColorMap();
       myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>")
-                    .append("<div style=\"white-space:pre;background-color:");
+                    .append("<pre style=\"background-color:");
       appendColor(myResultBuffer, myDefaultBackground);
       myResultBuffer.append(";color:");
       appendColor(myResultBuffer, myDefaultForeground);
