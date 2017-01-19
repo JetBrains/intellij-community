@@ -693,7 +693,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     for (ProjectManagerListener listener : myListeners) {
       try {
-        if (!listener.canCloseProject(project)) return false;
+        if (!listener.canCloseProject(project)) {
+          LOG.debug("close canceled by " + listener);
+          return false;
+        }
       }
       catch (Throwable e) {
         LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception
