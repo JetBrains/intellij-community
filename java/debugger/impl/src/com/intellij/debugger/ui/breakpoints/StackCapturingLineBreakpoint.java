@@ -97,7 +97,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           }
           Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myParamNo, null);
           if (key instanceof ObjectReference) {
-            stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread()));
+            stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread(), process, true));
           }
         }
       }

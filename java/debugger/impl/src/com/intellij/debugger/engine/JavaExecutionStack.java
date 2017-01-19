@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,18 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.Location;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author egor
@@ -184,7 +190,16 @@ public class JavaExecutionStack extends XExecutionStack {
           myStackFramesIterator.next();
         }
         else {
-          frame = createStackFrame(myStackFramesIterator.next(), myTracker);
+          StackFrameProxyImpl frameProxy = myStackFramesIterator.next();
+
+          // replace the rest with the related stack
+          List<? extends XStackFrame> relatedStack = getRelatedStack(frameProxy, myDebugProcess);
+          if (!ContainerUtil.isEmpty(relatedStack)) {
+            myContainer.addStackFrames(relatedStack, true);
+            return;
+          }
+
+          frame = createStackFrame(frameProxy, myTracker);
           if (first && !myTopFrameReady) {
             myTopFrame = frame;
             myTopFrameReady = true;
@@ -202,6 +217,22 @@ public class JavaExecutionStack extends XExecutionStack {
         myContainer.addStackFrames(Collections.<JavaStackFrame>emptyList(), true);
       }
     }
+  }
+
+  @Nullable
+  static List<? extends XStackFrame> getRelatedStack(StackFrameProxyImpl frame, DebugProcessImpl process) {
+    Map<ObjectReference, List<StackFrameItem>> data = process.getUserData(StackCapturingLineBreakpoint.CAPTURED_STACKS);
+    if (data != null) {
+      try {
+        ObjectReference thisObject = frame.thisObject();
+        if (thisObject != null) {
+          return data.get(thisObject);
+        }
+      }
+      catch (EvaluateException ignore) {
+      }
+    }
+    return null;
   }
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
