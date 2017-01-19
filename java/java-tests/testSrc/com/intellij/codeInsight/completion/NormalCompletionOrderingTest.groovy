@@ -705,6 +705,10 @@ class ContainerUtil extends ContainerUtilRt {
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
   }
 
+  void testPreferExpectedMethodTypeArg() {
+    checkPreferredItems 0, 'String'
+  }
+
   void testMethodStatisticsPerQualifierType() {
     checkPreferredItems 0, 'charAt'
     myFixture.type('eq\n);\n')

@@ -286,7 +286,7 @@ public class JavaCompletionSorting {
       });
       myParameters = parameters;
 
-      final Pair<PsiClass,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
+      final Pair<PsiTypeParameterListOwner,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
       myTypeParameter = pair == null ? null : pair.first.getTypeParameters()[pair.second.intValue()];
       myLocation = new CompletionLocation(myParameters);
     }
