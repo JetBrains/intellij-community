@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.util.Side;
 import com.intellij.util.SmartList;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
@@ -27,54 +26,32 @@ import java.util.TreeMap;
 public class LineNumberConvertor {
   // Oneside -> Twoside
   @NotNull private final TreeMap<Integer, Integer> myFragments1;
-  @NotNull private final TreeMap<Integer, Integer> myFragments2;
 
   // Twoside -> Oneside
   @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1;
-  @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2;
 
   @NotNull private final Corrector myCorrector = new Corrector();
 
   private LineNumberConvertor(@NotNull TreeMap<Integer, Integer> fragments1,
-                              @NotNull TreeMap<Integer, Integer> fragments2,
-                              @NotNull TreeMap<Integer, Integer> invertedFragments1,
-                              @NotNull TreeMap<Integer, Integer> invertedFragments2) {
+                              @NotNull TreeMap<Integer, Integer> invertedFragments1) {
     myFragments1 = fragments1;
-    myFragments2 = fragments2;
     myInvertedFragments1 = invertedFragments1;
-    myInvertedFragments2 = invertedFragments2;
   }
 
-  public int convert1(int value) {
-    return convert(value, Side.LEFT, true, false);
+  public int convert(int value) {
+    return convert(value, true, false);
   }
 
-  public int convert2(int value) {
-    return convert(value, Side.RIGHT, true, false);
+  public int convertInv(int value) {
+    return convert(value, false, false);
   }
 
-  public int convertInv1(int value) {
-    return convert(value, Side.LEFT, false, false);
+  public int convertApproximate(int value) {
+    return convert(value, true, true);
   }
 
-  public int convertInv2(int value) {
-    return convert(value, Side.RIGHT, false, false);
-  }
-
-  public int convertApproximate1(int value) {
-    return convert(value, Side.LEFT, true, true);
-  }
-
-  public int convertApproximate2(int value) {
-    return convert(value, Side.RIGHT, true, true);
-  }
-
-  public int convertApproximateInv1(int value) {
-    return convert(value, Side.LEFT, false, true);
-  }
-
-  public int convertApproximateInv2(int value) {
-    return convert(value, Side.RIGHT, false, true);
+  public int convertApproximateInv(int value) {
+    return convert(value, false, true);
   }
 
   //
@@ -82,24 +59,22 @@ public class LineNumberConvertor {
   //
 
   @NotNull
-  public TIntFunction createConvertor1() {
-    return this::convert1;
+  public TIntFunction createConvertor() {
+    return this::convert;
   }
 
-  @NotNull
-  public TIntFunction createConvertor2() {
-    return this::convert2;
+  public int convert(int value, boolean fromOneside, boolean approximate) {
+    return myCorrector.convertCorrected(value, fromOneside, approximate);
   }
 
-  private int convert(int value, @NotNull Side side, boolean fromOneside, boolean approximate) {
-    return myCorrector.convertCorrected(value, side, fromOneside, approximate);
-  }
-
-  /*
-   * Both oneside and one of the sides were changed in a same way. We should update converters, because of changed shift.
+  /**
+   * Oneside was changed. We should update converters, because of changed shift.
+   *
+   * @param synchronous true - twoside were changed in a same way
+   *                    false - twoside was not changed
    */
-  public void handleOnesideChange(int startLine, int endLine, int shift, @NotNull Side masterSide) {
-    myCorrector.handleOnesideChange(startLine, endLine, shift, masterSide);
+  public void handleOnesideChange(int startLine, int endLine, int shift, boolean synchronous) {
+    myCorrector.handleOnesideChange(startLine, endLine, shift, synchronous);
   }
 
 
@@ -107,9 +82,8 @@ public class LineNumberConvertor {
    * @param approximate false: return exact matching between lines, and -1 if it's impossible
    *                    true: return 'good enough' position, even if exact matching is impossible
    */
-  private int convertRaw(@NotNull Side side, boolean fromOneside, int value, boolean approximate) {
-    TreeMap<Integer, Integer> fragments = fromOneside ? side.select(myFragments1, myFragments2)
-                                                      : side.select(myInvertedFragments1, myInvertedFragments2);
+  private int convertRaw(boolean fromOneside, int value, boolean approximate) {
+    TreeMap<Integer, Integer> fragments = fromOneside ? myFragments1 : myInvertedFragments1;
 
     if (approximate) {
       Map.Entry<Integer, Integer> floor = fragments.floorEntry(value);
@@ -130,12 +104,9 @@ public class LineNumberConvertor {
 
   public static class Builder {
     @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<>();
-
     @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<>();
 
-    public void put1(int start, int newStart, int length) {
+    public void put(int start, int newStart, int length) {
       myFragments1.put(start, newStart);
       myFragments1.put(start + length, -1);
 
@@ -143,17 +114,9 @@ public class LineNumberConvertor {
       myInvertedFragments1.put(newStart + length, -1);
     }
 
-    public void put2(int start, int newStart, int length) {
-      myFragments2.put(start, newStart);
-      myFragments2.put(start + length, -1);
-
-      myInvertedFragments2.put(newStart, start);
-      myInvertedFragments2.put(newStart + length, -1);
-    }
-
     @NotNull
     public LineNumberConvertor build() {
-      return new LineNumberConvertor(myFragments1, myFragments2, myInvertedFragments1, myInvertedFragments2);
+      return new LineNumberConvertor(myFragments1, myInvertedFragments1);
     }
   }
 
@@ -204,36 +167,40 @@ public class LineNumberConvertor {
     private final List<CorrectedChange> myChanges = new SmartList<>();
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public void handleOnesideChange(int startLine, int endLine, int shift, @NotNull Side masterSide) {
-      int oldOnesideStart = startLine;
-      int oldTwosideStart = convert(startLine, masterSide, true, false);
-      assert oldTwosideStart != -1;
-
+    public void handleOnesideChange(int startLine, int endLine, int shift, boolean synchronous) {
       int oldLength = endLine - startLine;
       int newLength = oldLength + shift;
 
-      myChanges.add(new CorrectedChange(oldOnesideStart, oldTwosideStart, oldLength, newLength, masterSide));
-    }
+      if (synchronous) {
+        int oldTwosideStart = convert(startLine, true, false);
+        assert oldTwosideStart != -1;
 
-    public int convertCorrected(int value, @NotNull Side side, boolean fromOneside, boolean approximate) {
-      if (fromOneside) {
-        return convertFromOneside(value, side, approximate, myChanges.size() - 1);
+        myChanges.add(new CorrectedChange(startLine, oldTwosideStart, oldLength, newLength));
       }
       else {
-        return convertFromTwoside(value, side, approximate, myChanges.size() - 1);
+        myChanges.add(new CorrectedChange(startLine, oldLength, newLength));
       }
     }
 
-    private int convertFromTwoside(int value, @NotNull Side side, boolean approximate, int index) {
+    public int convertCorrected(int value, boolean fromOneside, boolean approximate) {
+      if (fromOneside) {
+        return convertFromOneside(value, approximate, myChanges.size() - 1);
+      }
+      else {
+        return convertFromTwoside(value, approximate, myChanges.size() - 1);
+      }
+    }
+
+    private int convertFromTwoside(int value, boolean approximate, int index) {
       if (index < 0) {
-        return convertRaw(side, false, value, approximate);
+        return convertRaw(false, value, approximate);
       }
 
       CorrectedChange change = myChanges.get(index);
       int shift = change.newLength - change.oldLength;
 
-      if (change.side != side) { // ?u' -> ?o'
-        int converted = convertFromTwoside(value, side, approximate, index - 1);
+      if (!change.synchronous) { // ?u' -> ?o'
+        int converted = convertFromTwoside(value, approximate, index - 1);
         if (converted < change.startOneside) { // Su' -> So'
           // Su' == Su; So' == So
           // value == Su'; converted == So
@@ -253,26 +220,26 @@ public class LineNumberConvertor {
       }
       else { // ?m '-> ?o'
         if (value < change.startTwoside) { // Sm' -> So'
-          return convertFromTwoside(value, side, approximate, index - 1);
+          return convertFromTwoside(value, approximate, index - 1);
         }
         if (value >= change.startTwoside + change.newLength) { // Em' -> Eo'
           // Em' == Em + shift; Eo' == Eo + shift
           // value == Em'; converted == Eo
-          int converted = convertFromTwoside(value - shift, side, approximate, index - 1);
+          int converted = convertFromTwoside(value - shift, approximate, index - 1);
           return append(converted, shift);
         }
 
         // Mm' -> Mo'
         // Ao == Ao'; Am == Am'; Mo' - Ao' == Mm' - Am'
         // convertedStart == Ao; value - change.startOneside == Mm' - Am'
-        int convertedStart = convertFromTwoside(change.startTwoside, side, approximate, index - 1);
+        int convertedStart = convertFromTwoside(change.startTwoside, approximate, index - 1);
         return append(convertedStart, value - change.startTwoside);
       }
     }
 
-    private int convertFromOneside(int value, @NotNull Side side, boolean approximate, int index) {
+    private int convertFromOneside(int value, boolean approximate, int index) {
       if (index < 0) {
-        return convertRaw(side, true, value, approximate);
+        return convertRaw(true, value, approximate);
       }
 
       CorrectedChange change = myChanges.get(index);
@@ -281,25 +248,25 @@ public class LineNumberConvertor {
       if (value < change.startOneside) { // So' -> Sm', So' -> Su'
         // So' == So; Sm' == Sm; Su' == Su
         // value = So'
-        return convertFromOneside(value, side, approximate, index - 1);
+        return convertFromOneside(value, approximate, index - 1);
       }
       if (value >= change.startOneside + change.newLength) { // Eo' -> Em', Eo' -> Eu'
         // Eo' == Eo + shift; Em' == Em + shift; Eu' == Eu
         // value = Eo'
-        int converted = convertFromOneside(value - shift, side, approximate, index - 1);
-        return append(converted, side == change.side ? shift : 0);
+        int converted = convertFromOneside(value - shift, approximate, index - 1);
+        return append(converted, change.synchronous ? shift : 0);
       }
 
-      if (side != change.side) { // Mo' -> Mu'
+      if (!change.synchronous) { // Mo' -> Mu'
         if (!approximate) return -1;
         // we can't convert Mo' into Mo. And thus get valid Mu/Mu'.
         // return: Au'
-        return convertFromOneside(change.startOneside, side, approximate, index - 1);
+        return convertFromOneside(change.startOneside, approximate, index - 1);
       }
       else { // Mo' -> Mm'
         // Ao == Ao'; Am == Am'; Mo' - Ao' == Mm' - Am'
         // value = Mo'
-        int convertedStart = convertFromOneside(change.startOneside, side, approximate, index - 1);
+        int convertedStart = convertFromOneside(change.startOneside, approximate, index - 1);
         return append(convertedStart, value - change.startOneside);
       }
     }
@@ -310,18 +277,29 @@ public class LineNumberConvertor {
   }
 
   private static class CorrectedChange {
+    public final boolean synchronous;
+
     public final int startOneside;
     public final int startTwoside;
     public final int oldLength;
     public final int newLength;
-    @NotNull public final Side side;
 
-    public CorrectedChange(int startOneside, int startTwoside, int oldLength, int newLength, @NotNull Side side) {
+    public CorrectedChange(int startOneside, int oldLength, int newLength) {
+      this.synchronous = false;
+      this.startTwoside = -1;
+
+      this.startOneside = startOneside;
+      this.oldLength = oldLength;
+      this.newLength = newLength;
+    }
+
+    public CorrectedChange(int startOneside, int startTwoside, int oldLength, int newLength) {
+      this.synchronous = true;
+
       this.startOneside = startOneside;
       this.startTwoside = startTwoside;
       this.oldLength = oldLength;
       this.newLength = newLength;
-      this.side = side;
     }
   }
 }

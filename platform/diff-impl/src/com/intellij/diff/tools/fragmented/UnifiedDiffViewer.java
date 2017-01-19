@@ -286,14 +286,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
-      LineNumberConvertor convertor = builder.getConvertor();
+      LineNumberConvertor convertor1 = builder.getConvertor1();
+      LineNumberConvertor convertor2 = builder.getConvertor2();
       List<LineRange> changedLines = builder.getChangedLines();
       boolean isContentsEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
-                                                             convertor.createConvertor1(), convertor.createConvertor2());
+                                                             convertor1.createConvertor(), convertor2.createConvertor());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isContentsEqual);
+      return apply(editorData, builder.getBlocks(), convertor1, convertor2, changedLines, isContentsEqual);
     }
     catch (DiffTooBigException e) {
       return () -> {
@@ -360,7 +361,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   private Runnable apply(@NotNull final CombinedEditorData data,
                          @NotNull final List<ChangedBlock> blocks,
-                         @NotNull final LineNumberConvertor convertor,
+                         @NotNull final LineNumberConvertor convertor1,
+                         @NotNull final LineNumberConvertor convertor2,
                          @NotNull final List<LineRange> changedLines,
                          final boolean isContentsEqual) {
     return () -> {
@@ -417,7 +419,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       }
 
 
-      myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
+      myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor1, convertor2, isContentsEqual);
 
 
       int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
@@ -454,9 +456,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
-
-    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
-    return side.isLeft() ? lineConvertor.convertInv1(line) : lineConvertor.convertInv2(line);
+    return myChangedBlockData.getLineNumberConvertor(side).convertInv(line);
   }
 
   /*
@@ -465,9 +465,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
-
-    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
-    return side.isLeft() ? lineConvertor.convert1(line) : lineConvertor.convert2(line);
+    return myChangedBlockData.getLineNumberConvertor(side).convert(line);
   }
 
   /*
@@ -476,9 +474,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   public int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
-
-    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
-    return side.isLeft() ? lineConvertor.convertApproximateInv1(line) : lineConvertor.convertApproximateInv2(line);
+    return myChangedBlockData.getLineNumberConvertor(side).convertApproximateInv(line);
   }
 
   /*
@@ -495,22 +491,23 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return Pair.create(lines, myMasterSide);
     }
 
-    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    LineNumberConvertor lineConvertor1 = myChangedBlockData.getLineNumberConvertor(Side.LEFT);
+    LineNumberConvertor lineConvertor2 = myChangedBlockData.getLineNumberConvertor(Side.RIGHT);
 
     Side side = myMasterSide;
-    lines[0] = lineConvertor.convert1(line);
-    lines[1] = lineConvertor.convert2(line);
+    lines[0] = lineConvertor1.convert(line);
+    lines[1] = lineConvertor2.convert(line);
 
     if (lines[0] == -1 && lines[1] == -1) {
-      lines[0] = lineConvertor.convertApproximate1(line);
-      lines[1] = lineConvertor.convertApproximate2(line);
+      lines[0] = lineConvertor1.convertApproximate(line);
+      lines[1] = lineConvertor2.convertApproximate(line);
     }
     else if (lines[0] == -1) {
-      lines[0] = lineConvertor.convertApproximate1(line);
+      lines[0] = lineConvertor1.convertApproximate(line);
       side = Side.RIGHT;
     }
     else if (lines[1] == -1) {
-      lines[1] = lineConvertor.convertApproximate2(line);
+      lines[1] = lineConvertor2.convertApproximate(line);
       side = Side.LEFT;
     }
 
@@ -579,8 +576,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           change.processChange(line1, line2, shift);
         }
 
-        LineNumberConvertor lineNumberConvertor = myChangedBlockData.getLineNumberConvertor();
-        lineNumberConvertor.handleOnesideChange(line1, line2, shift, myMasterSide);
+        LineNumberConvertor masterConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide);
+        LineNumberConvertor slaveConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide.other());
+        masterConvertor.handleOnesideChange(line1, line2, shift, true);
+        slaveConvertor.handleOnesideChange(line1, line2, shift, false);
       }
       finally {
         // TODO: we can avoid marking state out-of-date in some simple cases (like in SimpleDiffViewer)
@@ -1185,16 +1184,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   private static class ChangedBlockData {
     @NotNull private final List<UnifiedDiffChange> myDiffChanges;
     @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
-    @NotNull private final LineNumberConvertor myLineNumberConvertor;
+    @NotNull private final LineNumberConvertor myLineNumberConvertor1;
+    @NotNull private final LineNumberConvertor myLineNumberConvertor2;
     private final boolean myIsContentsEqual;
 
     public ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                             @NotNull List<RangeMarker> guarderRangeBlocks,
-                            @NotNull LineNumberConvertor lineNumberConvertor,
+                            @NotNull LineNumberConvertor lineNumberConvertor1,
+                            @NotNull LineNumberConvertor lineNumberConvertor2,
                             boolean isContentsEqual) {
       myDiffChanges = diffChanges;
       myGuardedRangeBlocks = guarderRangeBlocks;
-      myLineNumberConvertor = lineNumberConvertor;
+      myLineNumberConvertor1 = lineNumberConvertor1;
+      myLineNumberConvertor2 = lineNumberConvertor2;
       myIsContentsEqual = isContentsEqual;
     }
 
@@ -1209,8 +1211,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    public LineNumberConvertor getLineNumberConvertor() {
-      return myLineNumberConvertor;
+    public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
+      return side.select(myLineNumberConvertor1, myLineNumberConvertor2);
     }
 
     public boolean isContentsEqual() {

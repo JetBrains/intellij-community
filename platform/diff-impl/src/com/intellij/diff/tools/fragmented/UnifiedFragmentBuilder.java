@@ -35,7 +35,8 @@ class UnifiedFragmentBuilder {
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
   @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<>();
-  @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
+  @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
+  @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
   @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
 
   public UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
@@ -151,10 +152,10 @@ class UnifiedFragmentBuilder {
     myBuilder.append('\n');
 
     if (startLine1 != -1) {
-      myConvertor.put1(totalLines, startLine1, lines + 1);
+      myConvertor1.put(totalLines, startLine1, lines + 1);
     }
     if (startLine2 != -1) {
-      myConvertor.put2(totalLines, startLine2, lines + 1);
+      myConvertor2.put(totalLines, startLine2, lines + 1);
     }
 
     totalLines += lines + 1;
@@ -189,8 +190,13 @@ class UnifiedFragmentBuilder {
   }
 
   @NotNull
-  public LineNumberConvertor getConvertor() {
-    return myConvertor.build();
+  public LineNumberConvertor getConvertor1() {
+    return myConvertor1.build();
+  }
+
+  @NotNull
+  public LineNumberConvertor getConvertor2() {
+    return myConvertor2.build();
   }
 
   @NotNull

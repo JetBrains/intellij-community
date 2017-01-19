@@ -112,16 +112,16 @@ class LineNumberConvertorTest : UsefulTestCase() {
         put(6, 5, 2)
       },
       {
-        assertEquals(0, convertor.convertApproximate1(0))
-        assertEquals(2, convertor.convertApproximate1(1))
-        assertEquals(3, convertor.convertApproximate1(2))
-        assertEquals(3, convertor.convertApproximate1(3))
-        assertEquals(3, convertor.convertApproximate1(4))
-        assertEquals(3, convertor.convertApproximate1(5))
-        assertEquals(5, convertor.convertApproximate1(6))
-        assertEquals(6, convertor.convertApproximate1(7))
-        assertEquals(7, convertor.convertApproximate1(8))
-        assertEquals(7, convertor.convertApproximate1(9))
+        assertEquals(0, convertor.convertApproximate(0))
+        assertEquals(2, convertor.convertApproximate(1))
+        assertEquals(3, convertor.convertApproximate(2))
+        assertEquals(3, convertor.convertApproximate(3))
+        assertEquals(3, convertor.convertApproximate(4))
+        assertEquals(3, convertor.convertApproximate(5))
+        assertEquals(5, convertor.convertApproximate(6))
+        assertEquals(6, convertor.convertApproximate(7))
+        assertEquals(7, convertor.convertApproximate(8))
+        assertEquals(7, convertor.convertApproximate(9))
       }
     )
   }
@@ -141,7 +141,7 @@ class LineNumberConvertorTest : UsefulTestCase() {
     private val builder = LineNumberConvertor.Builder()
 
     fun put(left: Int, right: Int, length: Int) {
-      builder.put1(left, right, length)
+      builder.put(left, right, length)
     }
 
     fun finish(): Test = Test(builder.build())
@@ -150,20 +150,20 @@ class LineNumberConvertorTest : UsefulTestCase() {
   private class Test(val convertor: LineNumberConvertor) {
     fun checkMatch(left: Int, right: Int, length: Int) {
       for (i in 0..length - 1) {
-        assertEquals(right + i, convertor.convert1(left + i))
-        assertEquals(left + i, convertor.convertInv1(right + i))
+        assertEquals(right + i, convertor.convert(left + i))
+        assertEquals(left + i, convertor.convertInv(right + i))
       }
     }
 
     fun checkEmpty(start: Int, end: Int) {
       for (i in start..end) {
-        assertEquals(-1, convertor.convert1(i))
+        assertEquals(-1, convertor.convert(i))
       }
     }
 
     fun checkEmptyInv(start: Int, end: Int) {
       for (i in start..end) {
-        assertEquals(-1, convertor.convertInv1(i))
+        assertEquals(-1, convertor.convertInv(i))
       }
     }
   }
