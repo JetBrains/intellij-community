@@ -953,6 +953,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return myModuleModel.getModuleGroupPath(module);
   }
 
+  @Override
+  public boolean hasModuleGroups() {
+    return myModuleModel.hasModuleGroups();
+  }
+
   public void setModuleGroupPath(Module module, String[] groupPath) {
     myModuleModel.setModuleGroupPath(module, groupPath);
   }

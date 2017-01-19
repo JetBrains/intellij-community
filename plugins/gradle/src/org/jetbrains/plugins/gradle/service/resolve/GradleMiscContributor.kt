@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
@@ -92,12 +89,12 @@ class GradleMiscContributor : GradleMethodContextContributor {
 
     val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
     val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-    val psiManager = GroovyPsiManager.getInstance(place.project)
+    val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
     val resolveScope = place.resolveScope
 
     if (shouldProcessMethods && place.parent?.parent is GroovyFile && place.text == "plugins") {
-      val pluginsDependenciesClass = psiManager.findClassWithCache(pluginDependenciesSpecFqn, resolveScope) ?: return true
-      val returnClass = psiManager.createTypeByFQClassName(pluginDependenciesSpecFqn, resolveScope) ?: return true
+      val pluginsDependenciesClass = JavaPsiFacade.getInstance(place.project).findClass(pluginDependenciesSpecFqn, resolveScope) ?: return true
+      val returnClass = groovyPsiManager.createTypeByFQClassName(pluginDependenciesSpecFqn, resolveScope) ?: return true
       val methodBuilder = GrLightMethodBuilder(place.manager, "plugins").apply {
         containingClass = pluginsDependenciesClass
         returnType = returnClass

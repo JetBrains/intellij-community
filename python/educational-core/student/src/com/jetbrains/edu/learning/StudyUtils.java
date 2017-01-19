@@ -215,7 +215,10 @@ public class StudyUtils {
     return null;
   }
 
-  public static void deleteFile(@NotNull final VirtualFile file) {
+  public static void deleteFile(@Nullable final VirtualFile file) {
+    if (file == null) {
+      return;
+    }
     try {
       file.delete(StudyUtils.class);
     }

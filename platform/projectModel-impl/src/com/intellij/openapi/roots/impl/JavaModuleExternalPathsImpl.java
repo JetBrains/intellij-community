@@ -93,6 +93,8 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     if (container == null) {
       if (urls.length == 0) {
         // do not store if no container and nothing to store
+        // otherwise our module extension model will be changed and it can leads to unnecessary model commit
+        // (that in turn can mask issues like https://youtrack.jetbrains.com/issue/IDEA-166461)
         return;
       }
 

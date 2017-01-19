@@ -178,7 +178,9 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
       final PsiClass arrayClass = factory.getArrayClass(PsiUtil.getLanguageLevel(this));
       if (arrayClass == containingClass) {
-        final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(arrayClass.getTypeParameters()[0]);
+        final PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
+        if (typeParameters.length != 1) return null;
+        final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(typeParameters[0]);
         LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
         //15.13.1 A method reference expression of the form ArrayType :: new is always exact.
         return factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this);

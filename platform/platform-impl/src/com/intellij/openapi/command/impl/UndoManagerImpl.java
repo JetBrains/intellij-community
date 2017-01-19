@@ -614,4 +614,9 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void clearUndoRedoQueueInTests(@NotNull Document document) {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
   }
+
+  @Override
+  public String toString() {
+    return "UndoManager for "+myProject;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Point2D;
 import java.text.Bidi;
 
 /**
@@ -209,7 +210,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
   
   @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull Point p) {
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -217,7 +218,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @NotNull
-  public Point visualPositionToXY(@NotNull VisualPosition pos) {
+  public Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -225,7 +226,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @NotNull
-  public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+  public Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();

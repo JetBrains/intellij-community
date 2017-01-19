@@ -378,7 +378,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     RefClass toOwner = refUtil.getOwnerClass(to);
 
     if (accessModifier == PsiModifier.PROTECTED) {
-      if (from instanceof RefJavaElementImpl && ((RefJavaElementImpl)from).isUsedQualifiedOutsidePackage()) {
+      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isUsedQualifiedOutsidePackage()) {
         return false;
       }
       if (SUGGEST_PRIVATE_FOR_INNERS) {

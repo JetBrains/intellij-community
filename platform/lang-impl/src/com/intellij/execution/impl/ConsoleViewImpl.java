@@ -97,6 +97,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
+  private static final Key<Boolean> MANUAL_HYPERLINK = Key.create("MANUAL_HYPERLINK");
 
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -253,8 +254,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
           DocumentEx document = myEditor.getDocument();
           if (myLastStamp != document.getModificationStamp()) {
-            clearHyperlinkAndFoldings();
-            highlightHyperlinksAndFoldings(0);
+            rehighlightHyperlinksAndFoldings();
           }
         });
       }
@@ -701,7 +701,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           int start = Math.max(0, offset - tokenLength);
           if (start == offset) break;
           if (info != null) {
-            myHyperlinks.createHyperlink(start, offset, null, info);
+            myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
           }
           createTokenRangeHighlighter(token.contentType, start, offset);
           offset = start;
@@ -776,7 +776,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void clearHyperlinkAndFoldings() {
-    myEditor.getMarkupModel().removeAllHighlighters();
+    for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
+      if (highlighter.getUserData(MANUAL_HYPERLINK) == null) {
+        myEditor.getMarkupModel().removeHighlighter(highlighter);
+      }
+    }
 
     myFolding.clear();
     myEditor.getFoldingModel().runBatchFoldingOperation(() -> myEditor.getFoldingModel().clearFoldRegions());
@@ -933,6 +937,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myUpdateFoldingsEnabled) {
       updateFoldings(startLine, endLine);
     }
+  }
+
+  public void rehighlightHyperlinksAndFoldings() {
+    if (myEditor == null || myProject.isDisposed()) return;
+
+    clearHyperlinkAndFoldings();
+    highlightHyperlinksAndFoldings(0);
   }
 
   private void runHeavyFilters(int line1, int endLine) {

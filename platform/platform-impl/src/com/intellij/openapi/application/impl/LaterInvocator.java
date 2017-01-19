@@ -45,6 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("SSBasedInspection")
@@ -83,8 +84,8 @@ public class LaterInvocator {
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // Per-project modal entities
-  private static WeakHashMap<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>();
-  private static WeakHashMap<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>();
+  private static final Map<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>();
+  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>();
 
   private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK

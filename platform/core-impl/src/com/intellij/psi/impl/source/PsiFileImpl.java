@@ -703,7 +703,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    if (myAstLoaded) return null;
+    if (myAstLoaded && !mayReloadStub()) return null;
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB))) return null;
 
     final StubTree derefd = derefStub();
@@ -763,7 +763,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         } else {
           stubTree.setDebugInfo("created in getStubTree(), no AST");
           if (eachPsiRoot == this) stubHolder = stubTree;
-          eachPsiRoot.myStub = new SoftReference<StubTree>(stubTree);
+          eachPsiRoot.setStubTree(stubTree);
         }
         eachPsiRoot.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
       }
@@ -772,9 +772,29 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  private boolean mayReloadStub() {
+    StubTreeLoader loader = StubTreeLoader.getInstance();
+    if (loader != null && loader.isStubReloadingProhibited()) {
+      return false;
+    }
+    return getTreeElement() == null && !useStrongRefs();
+  }
+
   @Nullable
   private StubTree derefStub() {
     return SoftReference.dereference(myStub);
+  }
+
+  private void setStubTree(StubTree stubTree) {
+    for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
+      int index = psi.getStubIndex();
+      if (index >= 0) {
+        //noinspection unchecked
+        ((StubBase)stubTree.getPlainList().get(index)).setPsi(psi);
+      }
+    }
+    myStub = new SoftReference<StubTree>(stubTree);
+    myAstLoaded = false;
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {

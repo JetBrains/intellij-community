@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,13 +54,16 @@ public class MoveModuleToGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
+    Project project = getEventProject(e);
+    if (project == null) return EMPTY_ARRAY;
 
     ModifiableModuleModel modifiableModuleModel = LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(e.getDataContext());
     List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
     result.add(Separator.getInstance());
-    result.addAll(myModuleGroup.childGroups(modifiableModuleModel, getEventProject(e)).stream().sorted((moduleGroup1, moduleGroup2) -> {
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(project, modifiableModuleModel);
+    result.addAll(myModuleGroup.childGroups(grouper).stream().sorted((moduleGroup1, moduleGroup2) -> {
           assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
           return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
     }).map(MoveModuleToGroup::new).collect(Collectors.toList()));

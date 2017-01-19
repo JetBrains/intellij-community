@@ -41,6 +41,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
   @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
+  @NonNls private static final String SUPER_PARAM_NAME = "superParamName";
   @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
   @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
   @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
@@ -154,6 +155,7 @@ public class GenerateEqualsHelper implements Runnable {
                                                : PsiType.NULL;
     map.put(INSTANCE_NAME, stringType);
     map.put(BASE_PARAM_NAME, stringType);
+    map.put(SUPER_PARAM_NAME, stringType);
     map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiType.BOOLEAN);
     map.put(SUPER_HAS_EQUALS, PsiType.BOOLEAN);
     return map;
@@ -186,6 +188,12 @@ public class GenerateEqualsHelper implements Runnable {
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
     contextMap.put(BASE_PARAM_NAME, objectBaseName);
     final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
+
+    PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
+    if (superEquals != null) {
+      contextMap.put(SUPER_PARAM_NAME, superEquals.getParameterList().getParameters()[0].getName());
+    }
+    
     contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
     contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);
 
@@ -206,7 +214,6 @@ public class GenerateEqualsHelper implements Runnable {
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
-    final PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
     if (superEquals != null) {
       OverrideImplementUtil.annotateOnOverrideImplement(method, myClass, superEquals);
     }

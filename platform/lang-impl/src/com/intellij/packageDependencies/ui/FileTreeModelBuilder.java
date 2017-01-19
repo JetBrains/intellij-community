@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +53,7 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,6 +76,7 @@ public class FileTreeModelBuilder {
   private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<>();
   private final Map<Module, ModuleNode> myModuleNodes = new HashMap<>();
   private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<>();
+  private final ModuleGrouper myGrouper;
   private GeneralGroupNode myExternalNode;
 
   private int myScannedFileCount = 0;
@@ -84,12 +87,13 @@ public class FileTreeModelBuilder {
   protected final VirtualFile myBaseDir;
   protected VirtualFile[] myContentRoots;
 
-  public FileTreeModelBuilder(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+  public FileTreeModelBuilder(@NotNull Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     myBaseDir = myProject.getBaseDir();
     myContentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
     final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
     myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
+    myGrouper = ModuleGrouper.instanceFor(project);
     final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(myProject);
     myFlattenPackages = directoryHelper.supportsFlattenPackages() && settings.UI_FLATTEN_PACKAGES;
     myCompactEmptyMiddlePackages = directoryHelper.supportsHideEmptyMiddlePackages() && settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
@@ -555,10 +559,9 @@ public class FileTreeModelBuilder {
     }
     ModuleNode node = myModuleNodes.get(module);
     if (node != null) return node;
-    node = new ModuleNode(module);
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    final String[] groupPath = moduleManager.getModuleGroupPath(module);
-    if (groupPath == null) {
+    node = new ModuleNode(module, myShowModuleGroups ? myGrouper : null);
+    final List<String> groupPath = myGrouper.getGroupPath(module);
+    if (groupPath.isEmpty()) {
       myModuleNodes.put(module, node);
       myRoot.add(node);
       return node;
@@ -572,18 +575,16 @@ public class FileTreeModelBuilder {
     return node;
   }
 
-  private PackageDependenciesNode getParentModuleGroup(String[] groupPath){
-    final String key = StringUtil.join(groupPath);
+  private PackageDependenciesNode getParentModuleGroup(List<String> groupPath){
+    final String key = StringUtil.join(groupPath, "");
     ModuleGroupNode groupNode = myModuleGroupNodes.get(key);
     if (groupNode == null) {
       groupNode = new ModuleGroupNode(new ModuleGroup(groupPath), myProject);
       myModuleGroupNodes.put(key, groupNode);
       myRoot.add(groupNode);
     }
-    if (groupPath.length > 1) {
-      String [] path = new String[groupPath.length - 1];
-      System.arraycopy(groupPath, 0, path, 0, groupPath.length - 1);
-      final PackageDependenciesNode node = getParentModuleGroup(path);
+    if (groupPath.size() > 1) {
+      final PackageDependenciesNode node = getParentModuleGroup(groupPath.subList(0, groupPath.size() - 1));
       node.add(groupNode);
     }
     return groupNode;

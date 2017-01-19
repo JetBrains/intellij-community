@@ -1520,10 +1520,24 @@ public class BuildManager implements Disposable {
       });
       conn.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
-        public void processTerminated(@NotNull String executorId,
-                                      @NotNull ExecutionEnvironment env,
-                                      @NotNull ProcessHandler handler,
-                                      int exitCode) {
+        public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
+          cancelAutoMakeTasks(env.getProject()); // make sure to cancel all automakes waiting in the build queue
+        }
+
+        @Override
+        public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+          // make sure to cancel all automakes added to the build queue after processStaring and before this event
+          cancelAutoMakeTasks(env.getProject());
+        }
+
+        @Override
+        public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
+          // augmenting reaction to processTerminated(): in case any automakes were canceled before process start
+          scheduleAutoMake();
+        }
+
+        @Override
+        public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
           scheduleAutoMake();
         }
       });

@@ -810,8 +810,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public boolean isPerformanceTest() {
-    String name = getName();
-    return name != null && name.contains("Performance") || getClass().getName().contains("Performance");
+    String testName = getName();
+    String className = getClass().getName();
+    return isPerformanceTest(testName, className);
+  }
+
+  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
+    return testName != null && (testName.contains("Performance") || testName.contains("Stress"))
+        || className != null && (className.contains("Performance") || className.contains("Stress"));
   }
 
   public static void doPostponedFormatting(final Project project) {

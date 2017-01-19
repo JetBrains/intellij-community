@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -43,6 +44,7 @@ import java.util.List;
  */
 public class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTreeLoaderImpl");
+  private static volatile boolean ourStubReloadingProhibited = false;
 
   @Override
   @Nullable
@@ -114,8 +116,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       catch (SerializerNotFoundException e) {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
-      ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+      ObjectStubTree<?> tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
       tree.setDebugInfo("created from index");
+      checkDeserializationCreatesNoPsi(tree);
       return tree;
     }
     else if (size != 0) {
@@ -124,6 +127,25 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     return null;
+  }
+
+  private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
+    if (ourStubReloadingProhibited) return;
+
+    for (Stub each : tree.getPlainListFromAllRoots()) {
+      if (each instanceof StubBase) {
+        PsiElement cachedPsi = ((StubBase)each).getCachedPsi();
+        if (cachedPsi != null) {
+          ourStubReloadingProhibited = true;
+          throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+        }
+      }
+    }
+  }
+
+  @Override
+  public boolean isStubReloadingProhibited() {
+    return ourStubReloadingProhibited;
   }
 
   private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document) {

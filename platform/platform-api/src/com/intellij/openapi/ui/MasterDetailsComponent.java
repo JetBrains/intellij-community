@@ -100,7 +100,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
         myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
         myDetails.setText(node.getConfigurable().getBannerSlogan());
-        ((DefaultTreeModel)myTree.getModel()).reload(node);
+        node.reloadNode((DefaultTreeModel)MasterDetailsComponent.this.myTree.getModel());
         fireItemsChangedExternally();
       }
     };
@@ -868,6 +868,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         return configurable.getIcon(expanded);
       }
       return null;
+    }
+
+    protected void reloadNode(DefaultTreeModel treeModel) {
+      treeModel.reload(this);
     }
   }
 

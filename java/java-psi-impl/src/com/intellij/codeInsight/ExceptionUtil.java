@@ -515,16 +515,14 @@ public class ExceptionUtil {
         } else if (classType.isAssignableFrom(psiClassType)) {
           if (isUncheckedException(classType) == isUncheckedException(psiClassType)) {
             replacement.add(psiClassType);
-            iterator.remove();
           }
-          found = true;
-          break;
         }
       }
       if (!found) {
         iterator.remove();
       }
     }
+    ex.removeAll(replacement);
     ex.addAll(replacement);
   }
 

@@ -128,7 +128,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
-        LocalDeploymentImpl deployment = new LocalDeploymentImpl(instance,
+        LocalDeploymentImpl<?> deployment = new LocalDeploymentImpl<>(instance,
                                                                  ServerConnectionImpl.this,
                                                                  DeploymentStatus.DEPLOYING,
                                                                  null,

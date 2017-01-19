@@ -46,7 +46,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int IS_FINAL_MASK = 0x08;
   private static final int IS_USES_DEPRECATION_MASK = 0x200;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
-  private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x400;
+  private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x800;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);

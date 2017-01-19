@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -235,9 +236,9 @@ class EditorPainter implements TextDrawingCallback {
                                                 int y) {
     Couple<Integer> selectionRange = virtualSelectionMap.get(visualLine);
     if (selectionRange == null || selectionRange.second <= columnStart) return;
-    float startX = selectionRange.first <= columnStart ? xStart : 
-                   myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.first)).x;
-    float endX = Math.min(xEnd, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).x);
+    float startX = selectionRange.first <= columnStart ? xStart :
+                   (float)myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.first)).getX();
+    float endX = (float)Math.min(xEnd, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
 
@@ -250,10 +251,10 @@ class EditorPainter implements TextDrawingCallback {
       return;
     }
 
-    float startX = (selectionStartPosition.line == visualLine && selectionStartPosition.column > 0) ? 
-                   myView.visualPositionToXY(selectionStartPosition).x : getMinX();
-    float endX = (selectionEndPosition.line == visualLine && selectionEndPosition.column < columnEnd) ? 
-                 myView.visualPositionToXY(selectionEndPosition).x : xEnd;
+    float startX = (selectionStartPosition.line == visualLine && selectionStartPosition.column > 0) ?
+                   (float)myView.visualPositionToXY(selectionStartPosition).getX() : getMinX();
+    float endX = (selectionEndPosition.line == visualLine && selectionEndPosition.column < columnEnd) ?
+                 (float)myView.visualPositionToXY(selectionEndPosition).getX() : xEnd;
     
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
@@ -267,10 +268,10 @@ class EditorPainter implements TextDrawingCallback {
       return;
     }
 
-    float startX = selectionStartPosition.line == visualLine && selectionStartPosition.column > columnStart ? 
-                   myView.visualPositionToXY(selectionStartPosition).x : xStart;
+    float startX = selectionStartPosition.line == visualLine && selectionStartPosition.column > columnStart ?
+                   (float)myView.visualPositionToXY(selectionStartPosition).getX() : xStart;
     float endX = selectionEndPosition.line == visualLine ?
-                 myView.visualPositionToXY(selectionEndPosition).x : xEnd;
+                 (float)myView.visualPositionToXY(selectionEndPosition).getX() : xEnd;
 
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);  
   }
@@ -564,9 +565,9 @@ class EditorPainter implements TextDrawingCallback {
     int startOffset = highlighter.getStartOffset();
     int lineEndOffset = myDocument.getLineEndOffset(myDocument.getLineNumber(startOffset));
     if (myEditor.getFoldingModel().isOffsetCollapsed(lineEndOffset)) return;
-    Point lineEnd = myView.offsetToXY(lineEndOffset, true, false);
-    int x = lineEnd.x;
-    int y = lineEnd.y;
+    Point2D lineEnd = myView.offsetToXY(lineEndOffset, true, false);
+    float x = (float)lineEnd.getX();
+    int y = (int)lineEnd.getY();
     TextAttributes attributes = highlighter.getTextAttributes();
     paintBackground(g, attributes, x, y, myView.getPlainSpaceWidth());
     if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), false)) {
@@ -804,14 +805,14 @@ class EditorPainter implements TextDrawingCallback {
   private void paintComposedTextDecoration(Graphics2D g) {
     TextRange composedTextRange = myEditor.getComposedTextRange();
     if (composedTextRange != null) {
-      Point p1 = myView.offsetToXY(Math.min(composedTextRange.getStartOffset(), myDocument.getTextLength()), true, false);
-      Point p2 = myView.offsetToXY(Math.min(composedTextRange.getEndOffset(), myDocument.getTextLength()), false, true);
+      Point2D p1 = myView.offsetToXY(Math.min(composedTextRange.getStartOffset(), myDocument.getTextLength()), true, false);
+      Point2D p2 = myView.offsetToXY(Math.min(composedTextRange.getEndOffset(), myDocument.getTextLength()), false, true);
   
-      int y = p1.y + myView.getAscent() + 1;
+      int y = (int)p1.getY() + myView.getAscent() + 1;
      
       g.setStroke(IME_COMPOSED_TEXT_UNDERLINE_STROKE);
       g.setColor(myEditor.getColorsScheme().getDefaultForeground());
-      UIUtil.drawLine(g, p1.x, y, p2.x, y);
+      UIUtil.drawLine(g, (int)p1.getX(), y, (int)p2.getX(), y);
     }
   }
 

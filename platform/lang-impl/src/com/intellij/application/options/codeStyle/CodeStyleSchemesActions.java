@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -29,6 +30,9 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -135,20 +139,18 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   }
 
   private void exportProjectScheme() {
-    String name = Messages.showInputDialog(ApplicationBundle.message("settings.editor.scheme.copy.to.ide.label"), 
-                                           ApplicationBundle.message("settings.editor.scheme.copy.to.ide.title"),
-                                           Messages.getQuestionIcon());
-    if (name != null && !CodeStyleSchemesModel.PROJECT_SCHEME_NAME.equals(name)) {
-      CodeStyleScheme newScheme = getSchemesModel().exportProjectScheme(name);
-      int switchToGlobal = Messages
-        .showYesNoDialog("Project scheme was copied to global scheme list as '" + newScheme.getName() + "'.\n" +
-                         "Switch to this created scheme?",
-                         "Copy Project Scheme to Global List", Messages.getQuestionIcon());
-      if (switchToGlobal == Messages.YES) {
-        getSchemesModel().setUsePerProjectSettings(false);
-        getSchemesModel().selectScheme(newScheme, null);
-      }
-    }
+    String name =
+      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getSchemesModel().nameExists(schemeName));
+    CodeStyleScheme newScheme = getSchemesModel().exportProjectScheme(name);
+    getSchemesModel().setUsePerProjectSettings(false);
+    getSchemesModel().selectScheme(newScheme, null);
+    getSchemesPanel().startEdit();
+  }
+
+  @NotNull
+  private String getProjectName() {
+    Project project = ProjectUtil.guessCurrentProject(getSchemesPanel());
+    return project.getName();
   }
   
   private void chooseAndImport(@NotNull CodeStyleScheme currentScheme, @NotNull String importerName) {

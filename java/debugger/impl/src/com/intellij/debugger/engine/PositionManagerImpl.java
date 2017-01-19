@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -411,7 +411,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  private static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
+  public static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
     PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
     if (psiClass == null) {
       int dollar = originalQName.indexOf('$');
@@ -684,7 +684,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  private static class ClsSourcePosition extends RemappedSourcePosition {
+  public static class ClsSourcePosition extends RemappedSourcePosition {
     private final int myOriginalLine;
 
     public ClsSourcePosition(SourcePosition delegate, int originalLine) {

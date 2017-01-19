@@ -42,7 +42,7 @@ public class JavaSdkUtil {
     File[] jarDirs;
     if (SystemInfo.isMac && !home.getName().startsWith("mockJDK")) {
       File openJdkRtJar = new File(home, "jre/lib/rt.jar");
-      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
+      if (openJdkRtJar.isFile()) {
         File libDir = new File(home, "lib");
         File classesDir = openJdkRtJar.getParentFile();
         File libExtDir = new File(openJdkRtJar.getParentFile(), "ext");

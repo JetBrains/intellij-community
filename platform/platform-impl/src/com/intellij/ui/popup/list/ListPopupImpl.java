@@ -156,6 +156,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return false;
   }
 
+  protected boolean shouldUseStatistics() {
+    return true;
+  }
+
   private boolean autoSelectUsingStatistics() {
     final String filter = getSpeedSearch().getFilter();
     if (!StringUtil.isEmpty(filter)) {
@@ -405,11 +409,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   private void valuesSelected(final Object[] values) {
-    final String filter = getSpeedSearch().getFilter();
-    if (!StringUtil.isEmpty(filter)) {
-      for (Object value : values) {
-        final String text = getListStep().getTextFor(value);
-        StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
+    if (shouldUseStatistics()) {
+      final String filter = getSpeedSearch().getFilter();
+      if (!StringUtil.isEmpty(filter)) {
+        for (Object value : values) {
+          final String text = getListStep().getTextFor(value);
+          StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
+        }
       }
     }
   }
@@ -588,16 +594,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   protected void onSpeedSearchPatternChanged() {
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
-      if (!autoSelectUsingStatistics()) {
-        int fullMatchIndex = myListModel.getClosestMatchIndex();
-        if (fullMatchIndex != -1) {
-          myList.setSelectedIndex(fullMatchIndex);
-        }
-
-        if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
-          myList.setSelectedIndex(0);
-        }
+      if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
+        selectBestMatch();
       }
+    }
+  }
+
+  private void selectBestMatch() {
+    int fullMatchIndex = myListModel.getClosestMatchIndex();
+    if (fullMatchIndex != -1) {
+      myList.setSelectedIndex(fullMatchIndex);
+    }
+
+    if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
+      myList.setSelectedIndex(0);
     }
   }
 

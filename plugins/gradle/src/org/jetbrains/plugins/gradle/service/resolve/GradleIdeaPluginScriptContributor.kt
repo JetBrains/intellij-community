@@ -80,7 +80,7 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
 
     val psiManager = GroovyPsiManager.getInstance(place.project)
     if (psiElement().inside(ideaIprClosure).inside(ideaProjectClosure).accepts(place)) {
-        if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place, IDE_XML_MERGER_FQN)) return false
+        if (GradleResolverUtil.processDeclarations(processor, state, place, IDE_XML_MERGER_FQN)) return false
     }
     return true
   }
