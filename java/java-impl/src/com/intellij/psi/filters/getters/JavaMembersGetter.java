@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.codeInspection.magicConstant.MagicCompletionContributor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,13 +38,19 @@ import java.util.Set;
  */
 public class JavaMembersGetter extends MembersGetter {
   private final PsiType myExpectedType;
+  private final CompletionParameters myParameters;
 
   public JavaMembersGetter(@NotNull PsiType expectedType, CompletionParameters parameters) {
     super(new JavaStaticMemberProcessor(parameters), parameters.getPosition());
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
+    myParameters = parameters;
   }
 
   public void addMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+    if (MagicCompletionContributor.getAllowedValues(myParameters.getPosition()) != null) {
+      return;
+    }
+
     addConstantsFromTargetClass(results, searchInheritors);
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
       addConstantsFromReferencedClassesInSwitch(results);
