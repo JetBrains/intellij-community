@@ -81,6 +81,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     addContent((UsageViewImpl)usageView, presentation);
     showToolWindow(true);
+    UIUtil.invokeLaterIfNeeded(((UsageViewImpl)usageView)::expandRoot);
     return usageView;
   }
 
