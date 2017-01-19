@@ -29,4 +29,10 @@ public abstract class XValueContainer {
   public void computeChildren(@NotNull XCompositeNode node) {
     node.addChildren(XValueChildrenList.EMPTY, true);
   }
+
+  /**
+   * Will be executed on node expand or collapse. Can be used to track node state between debug sessions.
+   * @param expanded {@code true} if node was expanded {@code false} otherwise.
+   */
+  public void onContainerExpand(boolean expanded) { }
 }
