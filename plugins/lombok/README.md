@@ -37,8 +37,8 @@ Features / Supports
 - [@Accessors](https://projectlombok.org/features/experimental/Accessors.html)
 - [@Wither](https://projectlombok.org/features/experimental/Wither.html)
 - [@SneakyThrows](https://projectlombok.org/features/SneakyThrows.html)
-- [@val](https://projectlombok.org/features/val.html) with IntelliJ 14.1 (improved in 2016.2)
-- [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) with IntelliJ 2016.2
+- [@val](https://projectlombok.org/features/val.html) available from IntelliJ 14.1 (improved in 2016.2)
+- [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) available from IntelliJ 2016.2
 - [lombok config files syntax highlighting](https://projectlombok.org/features/configuration.html)
 - code inspections
 - refactoring actions (lombok and delombok)
