@@ -96,7 +96,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
@@ -470,22 +469,8 @@ public abstract class ChooseByNameBase {
 
     myTextFieldPanel.add(caption2Tools);
 
-    final ActionMap actionMap = new ActionMap();
-    actionMap.setParent(myTextField.getActionMap());
-    actionMap.put(DefaultEditorKit.copyAction, new AbstractAction() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (myTextField.getSelectedText() != null) {
-          actionMap.getParent().get(DefaultEditorKit.copyAction).actionPerformed(e);
-          return;
-        }
-        final Object chosenElement = getChosenElement();
-        if (chosenElement instanceof PsiElement) {
-          CopyReferenceAction.doCopy((PsiElement)chosenElement, myProject);
-        }
-      }
-    });
-    myTextField.setActionMap(actionMap);
+    new MyCopyReferenceAction()
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY).getShortcutSet(), myTextField);
 
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
@@ -1824,5 +1809,17 @@ public abstract class ChooseByNameBase {
 
   public JTextField getTextField() {
     return myTextField;
+  }
+
+  private class MyCopyReferenceAction extends DumbAwareAction {
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      CopyReferenceAction.doCopy((PsiElement)getChosenElement(), myProject);
+    }
   }
 }
