@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -56,7 +56,8 @@ public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionToo
         combinedCollector = combinedCollector.tryUnwrap().tryUnwrap();
         PsiMethodCallExpression downstream = ObjectUtils.tryCast(combinedCollector.myDownstream, PsiMethodCallExpression.class);
         if (downstream == null ||
-            !MethodCallUtils.isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
+            !FunctionalExpressionUtils
+              .isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
           return;
         }
         if (isCollectorMethod(downstream, "maxBy", "minBy", "reducing") &&
@@ -142,7 +143,7 @@ public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionToo
       combinedCollector = combinedCollector.tryUnwrap().tryUnwrap();
       PsiMethodCallExpression downstream = ObjectUtils.tryCast(combinedCollector.myDownstream, PsiMethodCallExpression.class);
       if (downstream == null ||
-          !MethodCallUtils.isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
+          !FunctionalExpressionUtils.isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
         return;
       }
       PsiExpression[] downstreamArgs = downstream.getArgumentList().getExpressions();
