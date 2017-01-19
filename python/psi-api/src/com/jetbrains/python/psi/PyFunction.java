@@ -64,6 +64,9 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   @Nullable
   String getDeprecationMessage();
 
+  @Nullable
+  String getDeprecationMessage(TypeEvalContext typeEvalContext);
+
   /**
    * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
    *

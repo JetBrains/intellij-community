@@ -634,13 +634,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return enabled;
   }
 
+  @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public String getDeprecationMessage(TypeEvalContext typeEvalContext) {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
       return ((PyFileStub)stub).getDeprecationMessage();
     }
-    return extractDeprecationMessage();
+    return extractDeprecationMessage(typeEvalContext);
+  }
+
+  @Nullable
+  @Override
+  public String getDeprecationMessage() {
+    return getDeprecationMessage(null);
   }
 
   @Override
@@ -666,8 +673,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public String extractDeprecationMessage() {
+    return extractDeprecationMessage(null);
+  }
+
+  public String extractDeprecationMessage(TypeEvalContext typeEvalContext) {
     if (canHaveDeprecationMessage(getText())) {
-      return PyFunctionImpl.extractDeprecationMessage(getStatements());
+      return PyFunctionImpl.extractDeprecationMessage(getStatements(), typeEvalContext);
     }
     else {
       return null;
