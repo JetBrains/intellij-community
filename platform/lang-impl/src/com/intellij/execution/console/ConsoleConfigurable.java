@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -106,8 +107,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    boolean isModified = !Arrays.asList(myNegativePanel.getListItems()).equals(mySettings.getNegativePatterns());
-    isModified |= !Arrays.asList(myPositivePanel.getListItems()).equals(mySettings.getPositivePatterns());
+    boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getNegativePatterns()));
+    isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getPositivePatterns()));
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT);
     if (ConsoleBuffer.useCycleBuffer()) {
@@ -206,6 +207,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     MyAddDeleteListPanel(String title, String query) {
       super(title, new ArrayList<>());
       myQuery = query;
+      new ListSpeedSearch(myList);
     }
 
     @Override
@@ -240,9 +242,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     void resetFrom(List<String> patterns) {
       myListModel.clear();
-      for (String pattern : patterns) {
-        myListModel.addElement(pattern);
-      }
+      patterns.stream().sorted(String.CASE_INSENSITIVE_ORDER).forEach(myListModel::addElement);
     }
 
     void applyTo(List<String> patterns) {
