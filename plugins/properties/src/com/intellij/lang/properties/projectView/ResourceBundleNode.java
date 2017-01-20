@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,21 +42,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode {
   public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
     super(project, resourceBundle, settings);
   }
+
+
 
   @Override
   @NotNull
@@ -128,12 +129,12 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     if (!Comparing.equal(newBundle, currentBundle)) {
       return false;
     }
-    return !(currentBundle instanceof ResourceBundleImpl) || ((ResourceBundleImpl)currentBundle).isValid();
+    return ObjectUtils.notNull(currentBundle).isValid();
   }
 
   @Override
   public boolean isValid() {
-    return getValue().getDefaultPropertiesFile().getContainingFile().isValid();
+    return ObjectUtils.notNull(getValue()).isValid();
   }
 
   @Override
