@@ -52,7 +52,7 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode {
-  public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
+  public ResourceBundleNode(Project project, @NotNull ResourceBundle resourceBundle, final ViewSettings settings) {
     super(project, resourceBundle, settings);
   }
 
@@ -61,7 +61,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
+    List<PropertiesFile> propertiesFiles = ObjectUtils.notNull(getValue()).getPropertiesFiles();
     Collection<AbstractTreeNode> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
@@ -75,12 +75,12 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
-    return propertiesFile != null && getValue().getPropertiesFiles().contains(propertiesFile);
+    return propertiesFile != null && ObjectUtils.notNull(getValue()).getPropertiesFiles().contains(propertiesFile);
   }
 
   @Override
   public VirtualFile getVirtualFile() {
-    final List<PropertiesFile> list = getValue().getPropertiesFiles();
+    final List<PropertiesFile> list = ObjectUtils.notNull(getValue()).getPropertiesFiles();
     if (!list.isEmpty()) {
       return list.get(0).getVirtualFile();
     }
@@ -90,7 +90,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @Override
   public void update(PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
-    presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
+    presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", ObjectUtils.notNull(getValue()).getBaseName()));
   }
 
   @Override
@@ -105,7 +105,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
 
   @Override
   public void navigate(final boolean requestFocus) {
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(ObjectUtils.notNull(getValue())));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
   }
 
@@ -124,7 +124,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     if (!super.validate()) {
       return false;
     }
-    final ResourceBundle newBundle = getValue().getDefaultPropertiesFile().getResourceBundle();
+    final ResourceBundle newBundle = ObjectUtils.notNull(getValue()).getDefaultPropertiesFile().getResourceBundle();
     final ResourceBundle currentBundle = getValue();
     if (!Comparing.equal(newBundle, currentBundle)) {
       return false;
@@ -153,7 +153,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
       if (propertiesFile == null) return;
       bundleGrouping.putValue(propertiesFile.getResourceBundle(), propertiesFile);
     }
-    final ResourceBundle resourceBundle = getValue();
+    final ResourceBundle resourceBundle = ObjectUtils.notNull(getValue());
     bundleGrouping.remove(resourceBundle);
 
     final ResourceBundleManager resourceBundleManager = ResourceBundleManager.getInstance(myProject);
@@ -178,8 +178,8 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
     resourceBundleManager.dissociateResourceBundle(resourceBundle);
     final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
-    FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
-    ProjectView.getInstance(myProject).refresh();
+    FileEditorManager.getInstance(getProject()).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
+    ProjectView.getInstance(getProject()).refresh();
   }
 
   @Override
