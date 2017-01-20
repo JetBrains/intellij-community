@@ -275,6 +275,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
+    myItems = Collections.emptyList();
+    myCounts.clear();
   }
 
   @Nullable
