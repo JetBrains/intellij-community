@@ -51,8 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -150,7 +148,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XValueMarkers<?,?> myValueMarkers;
-  private final TreeExpansionListener myTreeExpansionListener;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -216,27 +213,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
 
     addComponentListener(myMoveListener);
-
-    myTreeExpansionListener = new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        handleExpansion(event, true);
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        handleExpansion(event, false);
-      }
-
-      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
-        final TreePath path = event.getPath();
-        final Object component = path != null ? path.getLastPathComponent() : null;
-        if (component instanceof XValueContainerNode) {
-          ((XValueContainerNode)component).getValueContainer().onContainerExpand(expanded);
-        }
-      }
-    };
-    addTreeExpansionListener(myTreeExpansionListener);
   }
 
   public void updateEditor() {
@@ -370,7 +346,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
     removeComponentListener(myMoveListener);
-    removeTreeExpansionListener(myTreeExpansionListener);
     myListeners.clear();
   }
 

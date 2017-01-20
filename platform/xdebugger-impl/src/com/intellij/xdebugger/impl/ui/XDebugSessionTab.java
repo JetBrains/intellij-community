@@ -202,6 +202,26 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       variablesView = new XVariablesView(session);
     }
 
+    variablesView.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        handleExpansion(event, true);
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        handleExpansion(event, false);
+      }
+
+      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
+        final TreePath path = event.getPath();
+        final Object component = path != null ? path.getLastPathComponent() : null;
+        if (component instanceof XValueContainerNode) {
+          ((XValueContainerNode)component).getValueContainer().onContainerExpand(expanded);
+        }
+      }
+    });
+
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
