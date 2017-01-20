@@ -792,9 +792,9 @@ public class StudyUtils {
     final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getActivePlaceholders();
     if (placeholders.isEmpty()) return;
     final AnswerPlaceholder placeholder = placeholders.get(0);
-    int startOffset = placeholder.getOffset();
-    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
-    editor.getCaretModel().moveToOffset(startOffset);
+    Pair<Integer, Integer> offsets = getPlaceholderOffsets(placeholder, editor.getDocument());
+    editor.getSelectionModel().setSelection(offsets.first, offsets.second);
+    editor.getCaretModel().moveToOffset(offsets.first);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
