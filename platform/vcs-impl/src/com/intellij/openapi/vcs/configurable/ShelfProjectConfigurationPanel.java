@@ -84,7 +84,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     }
   }
 
-  void layoutComponents() {
+  private void layoutComponents() {
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, NORTHWEST, NONE,
                                                          JBUI.insets(0), 0, 0);
