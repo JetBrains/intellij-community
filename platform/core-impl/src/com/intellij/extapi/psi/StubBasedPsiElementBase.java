@@ -371,7 +371,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public T getStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     //noinspection unchecked
-    return (T)mySubstrateRef.getStub();
+    return (T)mySubstrateRef.getStub(myStubIndex);
   }
 
   /**

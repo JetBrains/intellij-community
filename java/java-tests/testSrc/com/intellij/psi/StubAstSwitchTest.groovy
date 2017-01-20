@@ -19,7 +19,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -233,6 +235,17 @@ class B {
 
     assert stubTree.is(file.greenStubTree)
     assert !file.node.parsed
+  }
+
+  void "test load stub from non-file PSI after AST is unloaded"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    def cls = file.classes[0]
+    assert cls.nameIdentifier
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert ((PsiClassImpl) cls).stub
   }
 
 }

@@ -59,6 +59,18 @@ public abstract class AstPath extends SubstrateRef {
 
   @Nullable
   @Override
+  public Stub getStub(int stubIndex) {
+    if (stubIndex < 0) return null;
+
+    StubTree stubTree = getFileStubTree();
+    return stubTree == null ? null : stubTree.getPlainList().get(stubIndex);
+  }
+
+  @Nullable
+  protected abstract StubTree getFileStubTree();
+
+  @Nullable
+  @Override
   public Stub getGreenStub(int stubIndex) {
     if (stubIndex < 0) return null;
 
@@ -166,6 +178,11 @@ public abstract class AstPath extends SubstrateRef {
     }
 
     @Override
+    protected StubTree getFileStubTree() {
+      return myParent.getFileStubTree();
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ChildPath)) return false;
@@ -202,6 +219,11 @@ public abstract class AstPath extends SubstrateRef {
         }
       }
       return node;
+    }
+
+    @Override
+    protected StubTree getFileStubTree() {
+      return SoftReference.dereference(myNode) == null ? myFile.getStubTree() : null;
     }
 
     @NotNull
@@ -248,6 +270,11 @@ public abstract class AstPath extends SubstrateRef {
     @Override
     protected int getDepth() {
       return 0;
+    }
+
+    @Override
+    protected StubTree getFileStubTree() {
+      return myFile.getStubTree();
     }
   }
 
