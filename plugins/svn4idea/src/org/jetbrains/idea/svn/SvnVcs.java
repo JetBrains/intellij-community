@@ -46,7 +46,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
@@ -96,6 +95,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
@@ -887,7 +888,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
-    ClientFactory factory = getFactory(VfsUtilCore.virtualToIoFile(root));
+    ClientFactory factory = getFactory(virtualToIoFile(root));
 
     return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null));
   }
@@ -916,7 +917,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   private WorkingCopyFormat getProjectRootFormat() {
-    return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
+    VirtualFile baseDir = myProject.getBaseDir();
+
+    return baseDir != null ? getWorkingCopyFormat(virtualToIoFile(baseDir)) : WorkingCopyFormat.UNKNOWN;
   }
 
   /**
