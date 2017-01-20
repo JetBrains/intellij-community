@@ -16,6 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.checkin.CheckinPushHandler;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,6 +31,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,8 +124,7 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myController.push(false);
-    close(OK_EXIT_CODE);
+    push(false);
   }
 
   @Override
@@ -171,6 +172,22 @@ public class VcsPushDialog extends DialogWrapper {
     return ID;
   }
 
+  @CalledInAwt
+  private void push(boolean forcePush) {
+    CheckinPushHandler.HandlerResult result = myController.executeHandlers();
+    switch (result) {
+      case OK:
+        myController.push(forcePush);
+        close(OK_EXIT_CODE);
+        break;
+      case ABORT:
+        break;
+      case ABORT_AND_CLOSE:
+        doCancelAction();
+        break;
+    }
+  }
+
   public void updateOkActions() {
     myPushAction.setEnabled(canPush());
     if (myForcePushAction != null) {
@@ -205,8 +222,7 @@ public class VcsPushDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myController.ensureForcePushIsNeeded()) {
-        myController.push(true);
-        close(OK_EXIT_CODE);
+        push(true);
       }
     }
   }
@@ -221,8 +237,7 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myController.push(false);
-      close(OK_EXIT_CODE);
+      push(false);
     }
 
     @Override

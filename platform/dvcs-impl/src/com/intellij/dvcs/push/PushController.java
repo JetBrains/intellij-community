@@ -17,12 +17,17 @@ package com.intellij.dvcs.push;
 
 import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.checkin.CheckinPushHandler;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -31,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
@@ -39,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +65,7 @@ import static com.intellij.openapi.ui.Messages.OK;
 
 public class PushController implements Disposable {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.dvcs.push.PushController");
   @NotNull private final Project myProject;
   @NotNull private final List<? extends Repository> myPreselectedRepositories;
   @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
@@ -67,6 +75,7 @@ public class PushController implements Disposable {
   @NotNull private final PushSettings myPushSettings;
   @NotNull private final Set<String> myExcludedRepositoryRoots;
   @Nullable private final Repository myCurrentlyOpenedRepository;
+  private final List<CheckinPushHandler> myHandlers = ContainerUtil.newArrayList();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
@@ -78,6 +87,7 @@ public class PushController implements Disposable {
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myPushSettings = ServiceManager.getService(project, PushSettings.class);
+    ContainerUtil.addAll(myHandlers, CheckinPushHandler.EP_NAME.getExtensions(project));
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
@@ -477,6 +487,89 @@ public class PushController implements Disposable {
 
   public PushLog getPushPanelLog() {
     return myPushLog;
+  }
+
+  @NotNull
+  @CalledInAwt
+  public CheckinPushHandler.HandlerResult executeHandlers() {
+    if (myHandlers.isEmpty()) {
+      return CheckinPushHandler.HandlerResult.OK;
+    }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    List<Change> selectedChanges = myPushLog.getSelectedChanges();
+
+    AtomicReference<CheckinPushHandler.HandlerResult> resultRef = new AtomicReference<>(CheckinPushHandler.HandlerResult.OK);
+
+    Task.Modal task = new Task.Modal(myProject, "Checking Commits...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        indicator.setFraction(0);
+        for (int i = 0; i < myHandlers.size(); i++) {
+          if (indicator.isCanceled()) {
+            resultRef.set(CheckinPushHandler.HandlerResult.ABORT);
+            return;
+          }
+
+          CheckinPushHandler handler = myHandlers.get(i);
+          indicator.setText(handler.getPresentableName());
+          try {
+            CheckinPushHandler.HandlerResult handlerResult = handler.beforePushCheckin(selectedChanges, indicator);
+
+            if (handlerResult != CheckinPushHandler.HandlerResult.OK) {
+              resultRef.set(handlerResult);
+              return;
+            }
+          }
+          catch (ProcessCanceledException ignored) {
+            //this handler has been cancelled
+          }
+          catch (Throwable e) {
+            boolean abort = shouldAbort(e, handler, indicator);
+            if (abort) {
+              resultRef.set(CheckinPushHandler.HandlerResult.ABORT);
+              return;
+            }
+            //otherwise skip this handler.
+          }
+          finally {
+            //the handler could change an indeterminate flag
+            indicator.setIndeterminate(false);
+            indicator.setFraction((double)i / myHandlers.size());
+          }
+
+          if (indicator.isCanceled()) {
+            resultRef.set(CheckinPushHandler.HandlerResult.ABORT);
+          }
+        }
+      }
+    };
+
+    //the handlers will run in a pooled thread
+    task.queue();
+
+    return resultRef.get();
+  }
+
+  private boolean shouldAbort(Throwable exception, CheckinPushHandler handler, ProgressIndicator indicator) {
+    LOG.error("Checkin Push Handler " + handler.getPresentableName() + " has failed", exception);
+
+    AtomicReference<Integer> dialogAnswer = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      int option =
+        Messages.showOkCancelDialog(myProject,
+                                    handler.getPresentableName() + " has failed. See log for more details.\n" +
+                                    "You can skip this step or cancel the push completely.",
+                                    "Checking Commits Fail",
+                                    "&Skip",
+                                    "&Cancel",
+                                    UIUtil.getErrorIcon());
+
+      dialogAnswer.set(option);
+    }, indicator.getModalityState());
+    return dialogAnswer.get() == Messages.CANCEL;
   }
 
   public void push(final boolean force) {

@@ -498,6 +498,11 @@ public class PushLog extends JPanel implements DataProvider {
     return myTree;
   }
 
+  @NotNull
+  public List<Change> getSelectedChanges() {
+    return myChangesBrowser.getSelectedChanges();
+  }
+
   public void selectIfNothingSelected(@NotNull TreeNode node) {
     if (myTree.isSelectionEmpty()) {
       myTree.setSelectionPath(TreeUtil.getPathFromRoot(node));
