@@ -56,23 +56,20 @@ public class ShowHistoryAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     if (!Registry.is("vcs.log.graph.history")) {
       presentation.setEnabledAndVisible(false);
+      return;
     }
-    else {
-      VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      Project project = e.getProject();
-      if (file == null || project == null) {
-        presentation.setEnabledAndVisible(false);
-      }
-      else {
-        VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-        VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
-        if (root == null || dataManager == null) {
-          presentation.setEnabledAndVisible(false);
-        }
-        else {
-          presentation.setEnabledAndVisible(dataManager.getRoots().contains(root));
-        }
-      }
+
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Project project = e.getProject();
+    if (file == null || project == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
     }
+
+    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
+    presentation.setEnabledAndVisible(root != null &&
+                                      dataManager != null &&
+                                      dataManager.getRoots().contains(root));
   }
 }
