@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
 import java.util.Set;
 
 
@@ -34,7 +35,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   private final Set<PostfixTemplate> templates;
 
 
-  public JavaPostfixTemplateProvider() {
+  public JavaPostfixTemplateProvider() throws IOException {
     templates = ContainerUtil.newHashSet(new AssertStatementPostfixTemplate(),
                                          new CastExpressionPostfixTemplate(),
                                          new ElseStatementPostfixTemplate(),
@@ -65,6 +66,28 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
                                          new StreamPostfixTemplate(),
                                          new OptionalPostfixTemplate(),
                                          new LambdaPostfixTemplate());
+
+    loadTemplatesFromFile();
+  }
+
+  private void loadTemplatesFromFile() throws IOException {
+    File postfixTemplateFile = new File(System.getProperty("user.home") + "/.ideaPostfixTemplates");
+
+    if (postfixTemplateFile.exists()) {
+      try (BufferedReader reader = new BufferedReader(new FileReader(postfixTemplateFile))) {
+        String line;
+        while((line = reader.readLine()) != null) {
+          if (!line.trim().isEmpty()) {
+            String[] split = line.split("→");
+            if (split.length == 3) {
+              templates.add(new CustomStringPostfixTemplate(split[0].trim(), split[1].trim(), split[2].trim()));
+            }
+          }
+        }
+      }
+      catch (FileNotFoundException ignored) {
+      }
+    }
   }
 
   @NotNull
