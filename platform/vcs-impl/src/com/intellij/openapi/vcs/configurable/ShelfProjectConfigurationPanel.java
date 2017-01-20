@@ -36,18 +36,20 @@ import static java.awt.GridBagConstraints.*;
 
 public class ShelfProjectConfigurationPanel extends JPanel {
   @NotNull private final VcsConfiguration myVcsConfiguration;
-  private final String myDefaultPresentationPathString;
+  @NotNull private Project myProject;
+  @NotNull private final String myDefaultPresentationPathString;
   @NotNull private JBCheckBox myUseCustomShelfDirectory;
+  @NotNull private JBLabel myShelfDirectoryLabel;
   @NotNull private TextFieldWithBrowseButton myShelfDirectoryPath;
   @NotNull private final JCheckBox myBaseRevisionTexts;
-  private JComponent myCustomShelfDirectoryPanel;
 
   public ShelfProjectConfigurationPanel(@NotNull Project project) {
     super(new BorderLayout());
+    myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
     myUseCustomShelfDirectory = new JBCheckBox("Use custom shelf storage directory");
+    myShelfDirectoryLabel = new JBLabel("Shelf directory:");
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myCustomShelfDirectoryPanel = createCustomShelfDirectoryPanel();
     myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myDefaultPresentationPathString = ShelveChangesManager.getDefaultShelfPresentationPath(project);
     initComponents();
@@ -56,17 +58,30 @@ public class ShelfProjectConfigurationPanel extends JPanel {
 
   private void initComponents() {
     myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
+    myUseCustomShelfDirectory.setMnemonic('U');
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
+    myBaseRevisionTexts.setMnemonic('b');
+    setEnabledCustomShelfDirectoryComponents();
     myUseCustomShelfDirectory.addActionListener(e -> {
       boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
-      myCustomShelfDirectoryPanel.setEnabled(useCustomDir);
       if (useCustomDir) {
         IdeFocusManager.findInstance().requestFocus(myShelfDirectoryPath, true);
       }
-      else {
-        myShelfDirectoryPath.setText(myDefaultPresentationPathString);
-      }
+      setEnabledCustomShelfDirectoryComponents();
     });
+  }
+
+  private void setEnabledCustomShelfDirectoryComponents() {
+    boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
+    myShelfDirectoryPath.setEnabled(useCustomDir);
+    myShelfDirectoryPath.setEditable(useCustomDir);
+    myShelfDirectoryLabel.setEnabled(useCustomDir);
+    if (!useCustomDir) {
+      myShelfDirectoryPath.setText(myDefaultPresentationPathString);
+    }
+    else if (myProject.isDefault()) {
+      myShelfDirectoryPath.setText("");
+    }
   }
 
   void layoutComponents() {
@@ -76,7 +91,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     contentPanel.add(myUseCustomShelfDirectory, gb);
     gb.gridy++;
     gb.fill = HORIZONTAL;
-    contentPanel.add(myCustomShelfDirectoryPanel, gb);
+    contentPanel.add(createCustomShelfDirectoryPanel(), gb);
     gb.gridy++;
     gb.fill = NONE;
     contentPanel.add(createStoreBaseRevisionOption(), gb);
@@ -85,10 +100,9 @@ public class ShelfProjectConfigurationPanel extends JPanel {
 
   private JComponent createCustomShelfDirectoryPanel() {
     JPanel pathPanel = new JPanel(new BorderLayout());
-    JBLabel label = new JBLabel("Shelf directory:");
-    label.setLabelFor(myShelfDirectoryPath);
-    label.setBorder(JBUI.Borders.emptyLeft(25));
-    pathPanel.add(label, BorderLayout.WEST);
+    myShelfDirectoryLabel.setLabelFor(myShelfDirectoryPath);
+    myShelfDirectoryLabel.setBorder(JBUI.Borders.emptyLeft(25));
+    pathPanel.add(myShelfDirectoryLabel, BorderLayout.WEST);
     pathPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
     return pathPanel;
   }
