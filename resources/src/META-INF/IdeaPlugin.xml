@@ -860,6 +860,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExcessiveLambdaUsageInspection"
                      displayName="Excessive lambda usage"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantStreamOptionalCall"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
+                     displayName="Redundant step in Stream or Optional call chain"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
