@@ -52,7 +52,7 @@ public class InspectionNodeInfo extends JPanel {
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final ToolsImpl tools = currentProfile.getTools(toolWrapper.getShortName(), project);
-    LOG.assertTrue(tools == null, "Can't find tools for: " + toolWrapper.getShortName());
+    LOG.assertTrue(tools != null, "Can't find tools for: " + toolWrapper.getShortName());
     boolean enabled = tools.isEnabled();
 
     JPanel titlePanel = new JPanel();
