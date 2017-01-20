@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -90,7 +91,21 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
   }
 
   private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
-    return builder != null && (DumbService.isDumbAware(builder) || !DumbService.isDumb(node.getPsi().getProject()));
+    if (builder == null) return false;
+    if (DumbService.isDumbAware(builder)) return true;
+
+    Project project = getProjectByNode(node);
+    return project == null || !DumbService.isDumb(project);
+  }
+
+  @Nullable
+  private static Project getProjectByNode(@NotNull ASTNode node) {
+    PsiElement psi = node.getPsi();
+    if (psi == null) {
+      ASTNode parent = node.getTreeParent();
+      psi = parent == null ? null : parent.getPsi();
+    }
+    return psi == null ? null : psi.getProject();
   }
 
   @Override
