@@ -337,7 +337,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       // run after commit actions outside write action
       runAfterCommitActions(document);
-      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInPerformanceTest()) {
+      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInStressTest()) {
         checkAllElementsValid(document, reason);
       }
     }

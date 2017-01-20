@@ -199,7 +199,7 @@ class PassExecutorService implements Disposable {
       createScheduledPass(fileEditor, pass, toBeSubmitted, ContainerUtil.emptyList(), freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
-    if (CHECK_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest()) {
+    if (CHECK_CONSISTENCY && !ApplicationInfoImpl.isInStressTest()) {
       assertConsistency(freePasses, toBeSubmitted, threadsToStartCountdown);
     }
 

@@ -134,7 +134,7 @@ class FilePointerPartNode {
 
   private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   void checkConsistency() {
-    if (UNIT_TEST && !ApplicationInfoImpl.isInPerformanceTest()) {
+    if (UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       doCheckConsistency(false);
     }
   }

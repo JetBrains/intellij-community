@@ -134,6 +134,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * @author cdr
@@ -165,6 +166,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
     finally {
+      myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
   }
@@ -281,7 +283,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    if (isPerformanceTest() && !getTestName(false).equals("TypingCurliesClearsEndOfFileErrorsInPhp_ItIsPerformanceTestBecauseItRunsTooLong")) {
+    if (isStressTest() && !getTestName(false).equals("TypingCurliesClearsEndOfFileErrorsInPhp_ItIsPerformanceTestBecauseItRunsTooLong")) {
       // all possible inspections
       List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
       List<LocalInspectionTool> locals = new ArrayList<>();
@@ -1577,7 +1579,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     highlightErrors();
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
+    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
     System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
@@ -1687,7 +1689,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     //System.out.println("Hi elapsed: "+(e-s));
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
+    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
     System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
@@ -1732,6 +1734,175 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
     assertTrue(mean < 10);
   }
+
+  @NotNull
+  private static Collection<LocalInspectionTool> getInspectionsFor(@NotNull com.intellij.lang.Language language) {
+    List<InspectionToolWrapper> allInspections = InspectionToolRegistrar.getInstance().createTools();
+    Collection<LocalInspectionTool> filtered = allInspections.stream().
+      map(wrapper -> wrapper instanceof LocalInspectionToolWrapper ? (LocalInspectionToolWrapper)wrapper :
+                   //wrapper instanceof GlobalInspectionToolWrapper
+                   //? ((GlobalInspectionToolWrapper)wrapper).getSharedLocalInspectionToolWrapper() :
+                   null)
+      .filter(wrapper -> wrapper != null && wrapper.isApplicable(language))
+      .map(InspectionToolWrapper::getTool)
+      .collect(Collectors.toSet());
+    System.out.println("All inspections: " + allInspections.size() + "; filtered for " + language+": "+filtered.size());
+    return filtered;
+  }
+
+  /*
+  private void inspect(LocalInspectionToolWrapper wrapper) {
+    PsiFile file = getFile();
+    TextRange range = file.getTextRange();
+
+    List<Divider.DividedElements> allDivided = new ArrayList<>();
+    Divider.divideInsideAndOutsideAllRoots(file, range, range, Conditions.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
+
+    List<PsiElement> elements = ContainerUtil.concat(
+      (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
+
+    PsiErrorElement errorElement = ContainerUtil.findInstance(elements, PsiErrorElement.class);
+    assertNull(file.getText(), errorElement);
+
+    Set<String> elementDialectIds = InspectionEngine.calcElementDialectIds(elements);
+
+    //List<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.ERROR);// warmup
+    //assertEmpty(errors);
+
+    timeInspection(wrapper, elements, elementDialectIds); // warmup
+  }
+
+  private int timeInspection(@NotNull LocalInspectionToolWrapper wrapper, @NotNull List<PsiElement> elements, @NotNull Set<String> elementDialectIds) {
+    long start = System.currentTimeMillis();
+    InspectionEngine.inspectElements(Collections.singletonList(wrapper), getFile(), InspectionManager.getInstance(getProject()), true, true, new EmptyProgressIndicator(), elements,
+                                     elementDialectIds);
+    return (int)(System.currentTimeMillis() - start);
+  }
+
+  public void testTypingLatencyForAllInspectionsPerformance() throws Throwable {
+    @NonNls String filePath = "/psi/resolve/ThinletBig.java";
+
+    //Collection<LocalInspectionTool> tools = getInspectionsFor(JavaLanguage.INSTANCE);
+    //enableInspectionTools(tools.toArray(new InspectionProfileEntry[tools.size()]));
+
+    configureByFile(filePath);
+
+    //type(' ');
+    //CompletionContributor.forLanguage(getFile().getLanguage());
+    //long s = System.currentTimeMillis();
+    //highlightErrors();
+    //long e = System.currentTimeMillis();
+    //System.out.println("Hi elapsed: "+(e-s));
+
+    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
+    System.out.println("N = " + N);
+    final long[] interruptTimes = new long[N];
+    LossyEncodingInspection encodingInspection = new LossyEncodingInspection();
+    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(encodingInspection);
+    codeAnalyzer.setUpdateByTimerEnabled(false);
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
+
+    // position caret away from line start to disable smart backspace heuristics which does commit document
+    int offset = getEditor().getDocument().getText().indexOf("{ ")+1;
+    getEditor().getCaretModel().moveToOffset(offset);
+
+    for (int i = 0; i < N; i++) {
+      type(' ');
+
+      System.out.println("i = " + i);
+      //codeAnalyzer.restart();
+      //final int finalI = i;
+      //final long start = System.currentTimeMillis();
+      try {
+        //PsiFile file = getFile();
+        //Editor editor = getEditor();
+        //Project project = file.getProject();
+        //CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+        //TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        //PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+        inspect(wrapper);
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      backspace();
+    }
+
+    //long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
+    //long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
+    //long max = Arrays.stream(interruptTimes).max().getAsLong();
+    //long min = Arrays.stream(interruptTimes).min().getAsLong();
+    //System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
+    //assertTrue(mean < 10);
+  }
+
+  public void testResolveAllAfterTypingLatencyPerformance() throws Throwable {
+    @NonNls String filePath = "/psi/resolve/ThinletBig.java";
+
+    //Collection<LocalInspectionTool> tools = getInspectionsFor(JavaLanguage.INSTANCE);
+    //enableInspectionTools(tools.toArray(new InspectionProfileEntry[tools.size()]));
+
+    configureByFile(filePath);
+
+    //type(' ');
+    //CompletionContributor.forLanguage(getFile().getLanguage());
+    //long s = System.currentTimeMillis();
+    //highlightErrors();
+    //long e = System.currentTimeMillis();
+    //System.out.println("Hi elapsed: "+(e-s));
+
+    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
+    System.out.println("N = " + N);
+    final long[] interruptTimes = new long[N];
+    LossyEncodingInspection encodingInspection = new LossyEncodingInspection();
+    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(encodingInspection);
+    codeAnalyzer.setUpdateByTimerEnabled(false);
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
+
+    // position caret away from line start to disable smart backspace heuristics which does commit document
+    int offset = getEditor().getDocument().getText().indexOf("{ ")+1;
+    getEditor().getCaretModel().moveToOffset(offset);
+
+    for (int i = 0; i < N; i++) {
+      type(' ');
+
+      System.out.println("i = " + i);
+      //codeAnalyzer.restart();
+      //final int finalI = i;
+      //final long start = System.currentTimeMillis();
+      try {
+        //PsiFile file = getFile();
+        //Editor editor = getEditor();
+        //Project project = file.getProject();
+        //CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+        //TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        //PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        //getFile().accept(new PsiRecursiveElementWalkingVisitor() {
+        //  @Override
+        //  public void visitElement(PsiElement element) {
+        //    for (PsiReference reference : element.getReferences()) {
+        //      reference.resolve();
+        //    }
+        //    super.visitElement(element);
+        //  }
+        //});
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      backspace();
+    }
+
+    //long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
+    //long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
+    //long max = Arrays.stream(interruptTimes).max().getAsLong();
+    //long min = Arrays.stream(interruptTimes).min().getAsLong();
+    //System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
+    //assertTrue(mean < 10);
+  }
+  */
 
   private static void startCPUProfiling() {
     try {

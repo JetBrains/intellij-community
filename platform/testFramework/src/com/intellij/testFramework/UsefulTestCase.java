@@ -144,10 +144,10 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    boolean isPerformanceTest = isPerformanceTest();
-    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
+    boolean isStressTest = isStressTest();
+    ApplicationInfoImpl.setInStressTest(isStressTest);
     // turn off Disposer debugging for performance tests
-    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
+    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isStressTest);
   }
 
   @Override
@@ -240,7 +240,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void checkForSettingsDamage() {
     Application app = ApplicationManager.getApplication();
-    if (isPerformanceTest() || app == null || app instanceof MockApplication) {
+    if (isStressTest() || app == null || app instanceof MockApplication) {
       return;
     }
 
@@ -291,7 +291,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   void storeSettings() {
-    if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
+    if (!isStressTest() && ApplicationManager.getApplication() != null) {
       myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
       myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     }
@@ -816,8 +816,28 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && (testName.contains("Performance") || testName.contains("Stress"))
-        || className != null && (className.contains("Performance") || className.contains("Stress"));
+    return testName != null && testName.contains("Performance") ||
+           className != null && className.contains("Performance");
+  }
+
+  /**
+   * @return true for a test which performs A LOT of computations.
+   * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
+   * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
+   * For example: {@code public void testStressPSIFromDifferentThreads()}
+   */
+  public boolean isStressTest() {
+    return isStressTest(getName(), getClass().getName());
+  }
+
+  private static boolean isStressTest(String testName, String className) {
+    return isPerformanceTest(testName, className) ||
+           containsStressWords(testName) ||
+           containsStressWords(className);
+  }
+
+  private static boolean containsStressWords(@Nullable String name) {
+    return name != null && (name.contains("Stress") || name.contains("Slow"));
   }
 
   public static void doPostponedFormatting(final Project project) {

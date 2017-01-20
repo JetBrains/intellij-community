@@ -325,7 +325,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
-    DaemonProgressIndicator.setDebug(!ApplicationInfoImpl.isInPerformanceTest());
+    DaemonProgressIndicator.setDebug(!ApplicationInfoImpl.isInStressTest());
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
