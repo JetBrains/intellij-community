@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -34,7 +33,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.intellij.util.net.ssl.ConfirmingTrustManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -421,19 +419,8 @@ public final class HttpRequests {
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     try (RequestImpl request = new RequestImpl(builder)) {
-      return runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
-    }
-  }
-
-  private static <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
-                                                                                final UntrustedCertificateStrategy strategy) throws E {
-    ConfirmingTrustManager trustManager = CertificateManager.getInstance().getTrustManager();
-    trustManager.untrustedCertificateStrategy.set(strategy);
-    try {
-      return computable.compute();
-    }
-    finally {
-      trustManager.untrustedCertificateStrategy.remove();
+      return CertificateManager.getInstance()
+        .runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
     }
   }
 
