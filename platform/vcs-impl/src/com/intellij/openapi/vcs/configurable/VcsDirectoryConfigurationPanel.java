@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -533,10 +532,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
-    createShowUnversionedFilesOption();
-    if (Registry.is("vcs.unversioned.files.in.commit")) {
-      panel.add(myShowUnversionedFiles, gb.nextLine().next());
-    }
+    panel.add(createShowUnversionedFilesOption(), gb.nextLine().next());
     panel.add(createCheckCommitMessageSpelling(), gb.nextLine().next());
     return panel;
   }
