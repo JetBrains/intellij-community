@@ -41,7 +41,7 @@ public interface VcsLogIndex {
   @Nullable
   String getFullMessage(int index);
 
-  Set<FilePath> getAllRenames(@NotNull FilePath path);
+  Set<FilePath> getFileNames(@NotNull FilePath path, int commit);
 
   void markCorrupted();
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -47,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -152,7 +152,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private VcsLogFileRevision createRevisionForFirstSelectedCommit() {
     VcsFullCommitDetails details = ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails());
     if (details != null && !(details instanceof LoadingDetails)) {
-      List<Change> changes = collectRelevantChanges(details.getChanges());
+      List<Change> changes = collectRelevantChanges(details);
       Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
       if (change.getAfterRevision() == null) {
         LOG.error("After revision for commit " + details.getId() + " change " + change + " is null.");
@@ -164,13 +164,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   @NotNull
-  private List<Change> collectRelevantChanges(@NotNull Collection<Change> changes) {
-    Set<FilePath> renames = myLogData.getIndex().getAllRenames(myFilePath);
+  private List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
+    Set<FilePath> fileNames =
+      myLogData.getIndex().getFileNames(myFilePath, myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot()));
     if (myFilePath.isDirectory()) {
-      return ContainerUtil.filter(changes, change -> affectsDirectories(change, renames));
+      return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
     }
     else {
-      return ContainerUtil.filter(changes, change -> affectsFiles(change, renames));
+      return ContainerUtil.filter(details.getChanges(), change -> affectsFiles(change, fileNames));
     }
   }
 
@@ -208,8 +209,19 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }
 
     @Override
+    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+      List<Change> changes = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+      for (VcsFullCommitDetails details : detailsListReversed) {
+        changes.addAll(collectRelevantChanges(details));
+      }
+      changes = CommittedChangesTreeBrowser.zipChanges(changes);
+      setChangesToDisplay(changes);
+    }
+
+    @Override
     protected void setChangesToDisplay(@NotNull List<Change> changes) {
-      mySelectedChanges = collectRelevantChanges(changes);
+      mySelectedChanges = changes;
     }
 
     @Override

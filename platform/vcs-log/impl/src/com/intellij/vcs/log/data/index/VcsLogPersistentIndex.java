@@ -373,11 +373,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull
   @Override
-  public Set<FilePath> getAllRenames(@NotNull FilePath path) {
+  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myIndexStorage != null && myRoots.contains(root)) {
       try {
-        return myIndexStorage.paths.getAllRenames(path);
+        return myIndexStorage.paths.getFileNames(path, commit);
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);

@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.ObjIntConsumer;
 
 import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
@@ -99,6 +100,10 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
       consumer.accept(value, id);
       return true;
     });
+  }
+
+  protected boolean iterateCommitIdsAndValues(int key, @NotNull BiPredicate<T, Integer> consumer) throws StorageException {
+    return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
   public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {

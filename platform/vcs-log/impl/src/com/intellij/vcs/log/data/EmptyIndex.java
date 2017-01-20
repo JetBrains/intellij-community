@@ -57,7 +57,7 @@ public class EmptyIndex implements VcsLogIndex {
 
   @NotNull
   @Override
-  public Set<FilePath> getAllRenames(@NotNull FilePath path) {
+  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     throw new UnsupportedOperationException();
   }
 

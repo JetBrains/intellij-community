@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -100,25 +99,40 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   }
 
   @NotNull
-  public Set<FilePath> getAllRenames(@NotNull FilePath path) throws IOException, StorageException {
-    Ref<Integer> pathId = new Ref<>(myPathsIndexer.myPathsEnumerator.enumerate(path.getPath()));
+  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) throws IOException, StorageException {
+    int startId = myPathsIndexer.myPathsEnumerator.enumerate(path.getPath());
 
-    Set<Integer> allPathIds = ContainerUtil.newHashSet();
-    allPathIds.add(pathId.get());
+    Set<Integer> startIds = ContainerUtil.newHashSet();
+    startIds.add(startId);
+    Set<Integer> allIds = ContainerUtil.newHashSet(startIds);
+    Set<Integer> newIds = ContainerUtil.newHashSet();
 
-    while (!pathId.isNull()) {
-      Integer key = pathId.get();
-      pathId.set(null);
-      iterateCommitIdsAndValues(key, (value, commit) -> {
-        if (value != null && !allPathIds.contains(value)) {
-          pathId.set(value);
-          allPathIds.add(value);
+    Set<Integer> resultIds = ContainerUtil.newHashSet();
+
+    outer:
+    while (!startIds.isEmpty()) {
+      for (int currentPathId : startIds) {
+        if (!iterateCommitIdsAndValues(currentPathId, (renamedPathId, commitId) -> {
+          if (commitId == commit) {
+            resultIds.add(currentPathId);
+            if (renamedPathId != null) resultIds.add(renamedPathId);
+            return false;
+          }
+          if (renamedPathId != null && !allIds.contains(renamedPathId)) {
+            newIds.add(renamedPathId);
+          }
+          return true;
+        })) {
+          break outer;
         }
-      });
+      }
+      startIds = ContainerUtil.newHashSet(newIds);
+      allIds.addAll(startIds);
+      newIds.clear();
     }
 
     Set<FilePath> result = ContainerUtil.newHashSet();
-    for (Integer id : allPathIds) {
+    for (Integer id : resultIds) {
       result.add(VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(id)));
     }
     return result;
