@@ -79,8 +79,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         while((line = reader.readLine()) != null) {
           if (!line.trim().isEmpty()) {
             String[] split = line.split("→");
-            if (split.length == 3) {
-              templates.add(new CustomStringPostfixTemplate(split[0].trim(), split[1].trim(), split[2].trim()));
+            if (split.length == 4) {
+              templates.add(new CustomStringPostfixTemplate(split[0].trim(), split[1].trim(), split[2].trim(), split[3].trim()));
             }
           }
         }

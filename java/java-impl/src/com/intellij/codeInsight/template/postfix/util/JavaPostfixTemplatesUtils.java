@@ -140,6 +140,10 @@ public abstract class JavaPostfixTemplatesUtils {
     }
   };
 
+  public static Condition<PsiElement> isCustomClass(String clazz) {
+    return element -> element instanceof PsiExpression && isCustomClass(((PsiExpression) element).getType(), clazz);
+  }
+
   public static final Condition<PsiElement> IS_NUMBER =
     element -> element instanceof PsiExpression && isNumber(((PsiExpression)element).getType());
 
@@ -186,6 +190,11 @@ public abstract class JavaPostfixTemplatesUtils {
   @Contract("null -> false")
   public static boolean isThrowable(@Nullable PsiType type) {
     return type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
+  }
+
+  @Contract("null -> false")
+  public static boolean isCustomClass(@Nullable PsiType type, String clazz) {
+    return type != null && InheritanceUtil.isInheritor(type, clazz);
   }
 
   @Contract("null -> false")
