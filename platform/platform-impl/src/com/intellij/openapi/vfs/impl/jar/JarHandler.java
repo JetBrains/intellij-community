@@ -156,7 +156,7 @@ public class JarHandler extends ZipHandler {
           sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
           sha1.update((byte)0);
 
-          byte[] buffer = new byte[Math.min(1024 * 1024, (int)originalAttributes.length)];
+          byte[] buffer = new byte[8192];
           long totalBytes = 0;
           while (true) {
             int read = is.read(buffer);
