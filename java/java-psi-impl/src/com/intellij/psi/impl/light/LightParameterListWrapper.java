@@ -54,7 +54,7 @@ public class LightParameterListWrapper extends LightElement implements PsiParame
   }
 
   @Override
-  public int getParameterIndex(PsiParameter parameter) {
+  public int getParameterIndex(@NotNull PsiParameter parameter) {
     if (parameter instanceof LightParameterWrapper) {
       parameter = ((LightParameterWrapper)parameter).getPrototype();
     }
