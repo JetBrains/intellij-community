@@ -23,8 +23,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,17 +42,15 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final Set<String> INTERESTING_NAMES =
-    StreamEx.of("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered").toSet();
-  private static final Set<String> CALLS_MAKING_SORT_USELESS = StreamEx.of("sorted", "anyMatch", "allMatch", "noneMatch", "count").toSet();
+    ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered");
+  private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
-    StreamEx.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream").toSet();
+    ContainerUtil.set("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
-    StreamEx.of("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile").toSet();
-  private static final Set<String> CALLS_AFFECTING_PARALLELIZATION =
-    StreamEx.of("sequential", "parallel").toSet();
-  private static final Set<String> BOX_UNBOX_NAMES =
-    StreamEx.of("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue")
-      .toSet();
+    ContainerUtil.set("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
+  private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = ContainerUtil.set("sequential", "parallel");
+  private static final Set<String> BOX_UNBOX_NAMES = ContainerUtil
+    .set("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue");
 
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
 
@@ -235,7 +233,7 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
   }
 
   private static class RemoveCallFix implements LocalQuickFix {
-    private String myMethodName;
+    private final String myMethodName;
 
     public RemoveCallFix(String methodName) {myMethodName = methodName;}
 
