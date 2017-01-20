@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tree;
+package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Expirable;
-import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
-import javax.swing.SwingUtilities;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.util.Disposer.register;
+import static javax.swing.SwingUtilities.isEventDispatchThread;
 
 /**
  * @author Sergey.Malenkov
  */
-abstract class Invoker implements Disposable {
+public abstract class Invoker implements Disposable {
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
   private final AtomicInteger count = new AtomicInteger();
@@ -41,7 +39,7 @@ abstract class Invoker implements Disposable {
 
   private Invoker(String prefix, Disposable parent) {
     description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
-    Disposer.register(parent, this);
+    register(parent, this);
   }
 
   @Override
@@ -134,7 +132,7 @@ abstract class Invoker implements Disposable {
    * This class is the {@code Invoker} in the Event Dispatch Thread,
    * which is the only one valid thread for this invoker.
    */
-  public static class EDT extends Invoker {
+  public static final class EDT extends Invoker {
     private final TransferToEDTQueue<Runnable> queue;
 
     public EDT(@NotNull Disposable parent) {
@@ -154,7 +152,7 @@ abstract class Invoker implements Disposable {
 
     @Override
     public boolean isValidThread() {
-      return SwingUtilities.isEventDispatchThread();
+      return isEventDispatchThread();
     }
 
     @Override
@@ -169,55 +167,53 @@ abstract class Invoker implements Disposable {
    * It allows to run background tasks in parallel,
    * but requires a good synchronization.
    */
-  public static class Background extends Invoker {
-    public Background(@NotNull Disposable parent) {
-      super("Background", parent);
+  public static final class BackgroundPool extends Invoker {
+    public BackgroundPool(@NotNull Disposable parent) {
+      super("Background.Pool", parent);
     }
 
     @Override
     public boolean isValidThread() {
-      return !SwingUtilities.isEventDispatchThread();
+      return !isEventDispatchThread();
     }
 
     @Override
     void offer(Runnable runnable) {
-      Application application = ApplicationManager.getApplication();
-      if (application != null) {
-        application.executeOnPooledThread(runnable);
-      }
-      else {
-        PooledThreadExecutor.INSTANCE.submit(runnable);
-      }
+      AppExecutorUtil.getAppExecutorService().submit(runnable);
     }
   }
 
   /**
-   * This class is the {@code Invoker} in a random background thread.
-   * No thread is valid for this invoker, because it adds tasks to the queue.
+   * This class is the {@code Invoker} in a single background thread.
    * This invoker does not need additional synchronization.
    */
-  public static class BackgroundQueue extends Invoker {
-    private final QueueProcessor<Runnable> queue;
+  public static final class BackgroundThread extends Invoker {
+    private final ExecutorService executor;
+    private volatile Thread thread;
 
-    public BackgroundQueue(@NotNull Disposable parent) {
-      super("Background.Queue", parent);
-      queue = QueueProcessor.createRunnableQueueProcessor();
+    public BackgroundThread(@NotNull Disposable parent) {
+      super("Background.Thread", parent);
+      executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(toString(), 1);
     }
 
     @Override
     public void dispose() {
       super.dispose();
-      queue.clear();
+      executor.shutdown();
     }
 
     @Override
     public boolean isValidThread() {
-      return false;
+      return thread == Thread.currentThread();
     }
 
     @Override
     void offer(Runnable runnable) {
-      queue.add(runnable);
+      executor.execute(() -> {
+        thread = Thread.currentThread();
+        runnable.run();
+        thread = null;
+      });
     }
   }
 }

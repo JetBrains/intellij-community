@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.tree.MapBasedTree.Entry;
+import com.intellij.util.concurrency.Command;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +41,7 @@ import static java.util.Collections.unmodifiableList;
 /**
  * @author Sergey.Malenkov
  */
-public class AsyncTreeModel extends InvokableTreeModel {
+public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final CmdGetRoot rootLoader = new CmdGetRoot("Load root", null);
   private final AtomicBoolean rootLoaded = new AtomicBoolean();
@@ -80,17 +84,17 @@ public class AsyncTreeModel extends InvokableTreeModel {
     }
   };
 
-  public AsyncTreeModel(TreeModel model) {
+  public AsyncTreeModel(@NotNull TreeModel model) {
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);
     }
-    if (model instanceof InvokableTreeModel) {
-      InvokableTreeModel invokable = (InvokableTreeModel)model;
-      processor = new Command.Processor(super.invoker, invokable.invoker);
+    Invoker foreground = new Invoker.EDT(this);
+    Invoker background = foreground;
+    if (model instanceof InvokerSupplier) {
+      InvokerSupplier supplier = (InvokerSupplier)model;
+      background = supplier.getInvoker();
     }
-    else {
-      processor = new Command.Processor(super.invoker, new Invoker.BackgroundQueue(this));
-    }
+    this.processor = new Command.Processor(foreground, background);
     this.model = model;
     this.model.addTreeModelListener(listener);
   }
@@ -135,12 +139,6 @@ public class AsyncTreeModel extends InvokableTreeModel {
   public int getIndexOfChild(Object object, Object child) {
     Entry<Object> entry = getEntry(object, true);
     return entry == null ? -1 : entry.getIndexOf(child);
-  }
-
-  @NotNull
-  @Override
-  protected Invoker createInvoker() {
-    return new Invoker.EDT(this);
   }
 
   protected Object createLoadingNode() {
