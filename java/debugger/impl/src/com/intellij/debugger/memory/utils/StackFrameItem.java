@@ -154,7 +154,7 @@ public class StackFrameItem extends XStackFrame {
               }
             }
             catch (EvaluateException e) {
-              LOG.error(e);
+              LOG.debug(e);
             }
 
             try {
@@ -171,17 +171,18 @@ public class StackFrameItem extends XStackFrame {
                   frameItem.addVariable(createVariable(value, v.name(), varType));
                 }
                 catch (EvaluateException e) {
-                  LOG.error(e);
+                  LOG.debug(e);
                 }
               });
             }
-            catch (EvaluateException ignore) {
+            catch (EvaluateException e) {
+              LOG.debug(e);
             }
           }
           return frameItem;
         }
         catch (EvaluateException e) {
-          LOG.error(e);
+          LOG.debug(e);
           return null;
         }
       }).nonNull().toList();
