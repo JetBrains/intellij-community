@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressio
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -61,7 +62,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   @NotNull
   public GrExpression getLValue() {
-    return findExpressionChild(this);
+    return Objects.requireNonNull(findExpressionChild(this));
   }
 
   @Override
@@ -161,6 +162,16 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     return rValue == null ? null : rValue.getType();
   }
 
+  @Nullable
+  @Override
+  public PsiType getType() {
+    if (TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(getOperationTokenType())) {
+      return super.getType();
+    } else {
+      return getRightType();
+    }
+  }
+
   private static final ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl> RESOLVER = new ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl>() {
     @NotNull
     @Override
@@ -176,6 +187,9 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
           by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
            */
         lType = ((GrIndexProperty)lValue).getGetterType();
+      }
+      else if (lValue instanceof GrReferenceExpression) {
+        lType = ((GrReferenceExpression)lValue).getType(true);
       }
       else {
         lType = lValue.getType();
