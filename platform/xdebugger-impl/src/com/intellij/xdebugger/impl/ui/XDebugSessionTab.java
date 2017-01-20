@@ -53,16 +53,12 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.tree.TreePath;
 import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
@@ -201,27 +197,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     else {
       variablesView = new XVariablesView(session);
     }
-
-    variablesView.getTree().addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        handleExpansion(event, true);
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        handleExpansion(event, false);
-      }
-
-      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
-        final TreePath path = event.getPath();
-        final Object component = path != null ? path.getLastPathComponent() : null;
-        if (component instanceof XValueContainerNode) {
-          ((XValueContainerNode)component).getValueContainer().onContainerExpand(expanded);
-        }
-      }
-    });
-
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
