@@ -235,7 +235,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);
 
     myDebugSessionListener = new MyDebuggerSessionListener();
-    debugSession.addSessionListener(myDebugSessionListener);
+    debugSession.addSessionListener(myDebugSessionListener, this);
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
