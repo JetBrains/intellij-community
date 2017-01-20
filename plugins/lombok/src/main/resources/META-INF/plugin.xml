@@ -262,6 +262,7 @@
 		<ul>
 		<li>0.15
 				<ol>
+            <li>Fixed #162: @Data/@XConstructor bug with default constructor</li>
             <li>Fixed #290: Getter and FieldDefaults with parameter AccessLevel in Enum shows "cannot access"</li>
             <li>Fixed #337: Component name collision: 'UpdateComponent'</li>
             <li>Fixed #339: Delombok for @ToString should use simpleName for class</li>
