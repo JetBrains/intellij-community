@@ -17,7 +17,6 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,6 +31,8 @@ public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ClassEscapesItsScopeInspection();
+    ClassEscapesItsScopeInspection inspection = new ClassEscapesItsScopeInspection();
+    inspection.onlyJava9Modules = false;
+    return inspection;
   }
 }
