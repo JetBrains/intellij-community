@@ -24,11 +24,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PatchTest extends PatchTestCase {
@@ -208,13 +208,6 @@ public class PatchTest extends PatchTestCase {
     assertThat(recreated.getActions()).isEqualTo(original.getActions());
   }
 
-  private Patch createPatch() throws IOException, OperationCancelledException {
-    PatchSpec spec = new PatchSpec()
-      .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath());
-    return new Patch(spec, TEST_UI);
-  }
-
   private Patch createCaseOnlyRenamePatch() throws IOException, OperationCancelledException {
     Patch patch = createPatch();
     assertThat(patch.getActions().get(0))
@@ -222,26 +215,5 @@ public class PatchTest extends PatchTestCase {
       .hasFieldOrPropertyWithValue("path", "bin/idea.bat");
     patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
     return patch;
-  }
-
-  private static List<PatchAction> sortActions(List<PatchAction> actions) {
-    return sort(actions, a -> a.getClass().getSimpleName().charAt(0), Comparator.comparing(PatchAction::getPath));
-  }
-
-  private static List<ValidationResult> sortResults(List<ValidationResult> results) {
-    return sort(results, r -> r.action, Comparator.comparing(r -> r.path));
-  }
-
-  private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
-    // splits the list into groups
-    Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
-    // verifies the list is monotonic
-    List<T> joined = groups.stream().reduce(new ArrayList<>(list.size()), (acc, elements) -> { acc.addAll(elements); return acc; });
-    assertThat(list).isEqualTo(joined);
-    // sorts group elements and concatenates groups into a list
-    return groups.stream()
-      .map(elements -> elements.stream().sorted(sorter))
-      .flatMap(stream -> stream)
-      .collect(toList());
   }
 }

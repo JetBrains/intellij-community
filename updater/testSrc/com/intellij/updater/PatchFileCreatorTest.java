@@ -27,6 +27,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class PatchFileCreatorTest extends PatchTestCase {
   private File myFile;
@@ -44,16 +45,13 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
   @Test
   public void testCreatingAndApplying() throws Exception {
-    Patch patch = createPatch();
-
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
   public void testCreatingAndApplyingStrict() throws Exception {
     myPatchSpec.setStrict(true);
-    Patch patch = createPatch();
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
@@ -91,7 +89,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
   @Test
   public void testRevertedWhenFileToDeleteIsProcessLocked() throws Exception {
-    if (!UtilsTest.IS_WINDOWS) return;
+    assumeTrue(UtilsTest.IS_WINDOWS);
 
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
 
@@ -373,8 +371,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     assertTrue(update.isMove());
     assertEquals("a/deleted/file/that/is/a/copy/move.me", update.getSourcePath());
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }
 
   @Test
@@ -390,8 +387,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     PatchAction action = getAction(patch, "move/to/this/directory/move.me");
     assertTrue(action instanceof CreateAction);
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }
 
   @Test
@@ -425,8 +421,49 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     assertTrue(!update.isMove());
     assertEquals("move/from/this/directory/move.me", update.getSourcePath());
 
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+  }
+
+  @Test
+  public void testSymlinkAdded() throws Exception {
+    assumeTrue(!UtilsTest.IS_WINDOWS);
+
+    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
+  @Test
+  public void testSymlinkRemoved() throws Exception {
+    assumeTrue(!UtilsTest.IS_WINDOWS);
+
+    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
+  @Test
+  public void testSymlinkRenamed() throws Exception {
+    assumeTrue(!UtilsTest.IS_WINDOWS);
+
+    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
+    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.lnk"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
+  @Test
+  public void testSymlinkRetargeted() throws Exception {
+    assumeTrue(!UtilsTest.IS_WINDOWS);
+
+    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
+    Utils.createLink("./Readme.txt", new File(myNewerDir, "Readme.link"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
+  private void assertAppliedAndRevertedCorrectly() throws Exception {
+    assertAppliedAndRevertedCorrectly(createPatch(), PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }
 
   protected PatchAction getAction(Patch patch, String path) {
@@ -457,7 +494,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     Map<String, Long> target = patch.digestFiles(myNewerDir, Collections.emptyList(), false, TEST_UI);
     File backup = getTempFile("backup");
 
-    HashMap<String, ValidationResult.Option> options = new HashMap<>();
+    Map<String, ValidationResult.Option> options = new HashMap<>();
     for (ValidationResult each : preparationResult.validationResults) {
       if (patch.isStrict()) {
         assertFalse(each.options.contains(ValidationResult.Option.NONE));
@@ -469,8 +506,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
       }
     }
 
-    List<PatchAction> appliedActions =
-      PatchFileCreator.apply(preparationResult, options, backup, TEST_UI).appliedActions;
+    List<PatchAction> appliedActions = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI).appliedActions;
     Map<String, Long> patched = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
 
     if (patch.isStrict()) {

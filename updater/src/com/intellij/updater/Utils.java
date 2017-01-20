@@ -119,6 +119,10 @@ public class Utils {
     return Files.isSymbolicLink(file.toPath());
   }
 
+  public static String readLink(File link) throws IOException {
+    return Files.readSymbolicLink(link.toPath()).toString();
+  }
+
   public static void createLink(String target, File link) throws IOException {
     Path path = link.toPath();
     Files.deleteIfExists(path);
@@ -126,34 +130,35 @@ public class Utils {
   }
 
   public static void copy(File from, File to) throws IOException {
-    if (from.isDirectory()) {
-      if (!to.exists()) {
-        Runner.logger().info("Dir: " + from.getPath() + " to " + to.getPath());
-        if (!to.mkdirs()) throw new IOException("Cannot create: " + to);
-        File[] files = from.listFiles();
-        if (files == null) throw new IOException("Cannot list directory: " + from);
-        for (File each : files) {
-          copy(each, new File(to, each.getName()));
-        }
-      }
+    if (!from.exists()) throw new IOException("Source does not exist: " + from);
+
+    if (isLink(from)) {
+      if (to.exists()) throw new IOException("Target already exists: " + to);
+      Runner.logger().info("Link: " + from.getPath() + " to " + to.getPath());
+
+      File dir = to.getParentFile();
+      if (!(dir.isDirectory() || dir.mkdirs())) throw new IOException("Cannot create: " + dir);
+
+      createLink(readLink(from), to);
     }
-    else if (from.exists() && !isLink(from)) {
+    else if (from.isDirectory()) {
+      Runner.logger().info("Dir: " + from.getPath() + " to " + to.getPath());
+      if (!(to.mkdirs() || to.isDirectory())) throw new IOException("Cannot create: " + to);
+    }
+    else {
+      if (to.exists()) throw new IOException("Target already exists: " + to);
       Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
+
+      File dir = to.getParentFile();
+      if (!(dir.isDirectory() || dir.mkdirs())) throw new IOException("Cannot create: " + dir);
+
       try (InputStream in = new BufferedInputStream(new FileInputStream(from))) {
         copyStreamToFile(in, to);
       }
+
       if (isExecutable(from)) {
         setExecutable(to);
       }
-    }
-  }
-
-  public static void mirror(File from, File to) throws IOException {
-    if (from.exists()) {
-      copy(from, to);
-    }
-    else {
-      delete(to);
     }
   }
 
@@ -177,6 +182,17 @@ public class Utils {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     copyStream(in, byteOut);
     return byteOut.toByteArray();
+  }
+
+  public static byte[] readBytes(InputStream in, int count) throws IOException {
+    byte[] bytes = new byte[count];
+    int offset = 0;
+    while (offset < count) {
+      int n = in.read(bytes, offset, count - offset);
+      if (n < 0) throw new IOException("Premature end of stream");
+      offset += n;
+    }
+    return bytes;
   }
 
   public static void writeBytes(byte[] from, int length, OutputStream to) throws IOException {

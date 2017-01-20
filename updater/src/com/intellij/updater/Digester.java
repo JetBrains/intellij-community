@@ -16,6 +16,10 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -24,13 +28,30 @@ import java.util.zip.ZipFile;
 
 public class Digester {
   // CRC32 will only use the lower 32bits of long, never returning negative values.
-  public static final long INVALID = -1;
-  public static final long DIRECTORY = -2;
+  public static final long INVALID    = 0x8000_0000_0000_0000L;
+  public static final long DIRECTORY  = 0x4000_0000_0000_0000L;
+  private static final long LINK_MASK = 0x2000_0000_0000_0000L;
+  private static final long FLAG_MASK = 0xFFFF_FFFF_0000_0000L;
+
+  public static boolean isFile(long digest) {
+    return (digest & FLAG_MASK) == 0;
+  }
+
+  public static boolean isSymlink(long digest) {
+    return (digest & LINK_MASK) == LINK_MASK;
+  }
 
   public static long digestRegularFile(File file, boolean normalize) throws IOException {
-    if (file.isDirectory()) {
-      return DIRECTORY;
+    Path path = file.toPath();
+    BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+
+    if (attrs.isSymbolicLink()) {
+      Path target = Files.readSymbolicLink(path);
+      if (target.isAbsolute()) throw new IOException("Absolute link: " + file + " -> " + target);
+      return digestStream(new ByteArrayInputStream(target.toString().getBytes("UTF-8"))) | LINK_MASK;
     }
+
+    if (attrs.isDirectory()) return DIRECTORY;
 
     try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize))) {
       return digestStream(in);

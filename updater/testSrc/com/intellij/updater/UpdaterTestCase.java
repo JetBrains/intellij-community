@@ -71,6 +71,8 @@ public abstract class UpdaterTestCase {
     public final long BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM;
     public final long BOOTSTRAP_JAR_NORM;
     public final long BOOTSTRAP_DELETED_JAR_NORM;
+    public final long LINK_TO_README_TXT;
+    public final long LINK_TO_DOT_README_TXT;
 
     public CheckSums(boolean windowsLineEnds) {
       README_TXT = windowsLineEnds ? 1272723667L : 7256327L;
@@ -87,6 +89,8 @@ public abstract class UpdaterTestCase {
       BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM = 1972168924;
       BOOTSTRAP_JAR_NORM = 2082851308;
       BOOTSTRAP_DELETED_JAR_NORM = 544883981L;
+      LINK_TO_README_TXT = 2305843011042707672L;
+      LINK_TO_DOT_README_TXT = 2305843009503057206L;
     }
   }
 }

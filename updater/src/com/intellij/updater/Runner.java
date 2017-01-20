@@ -190,12 +190,12 @@ public class Runner {
 
   public static List<String> extractArguments(String[] args, String paramName) {
     List<String> result = new ArrayList<>();
+    String prefix = paramName + '=';
     for (String param : args) {
-      if (param.startsWith(paramName + "=")) {
-        param = param.substring((paramName + "=").length());
-        for (StringTokenizer tokenizer = new StringTokenizer(param, ";"); tokenizer.hasMoreTokens();) {
-          String each = tokenizer.nextToken();
-          result.add(each);
+      if (param.startsWith(prefix)) {
+        StringTokenizer tokenizer = new StringTokenizer(param.substring(prefix.length()), ";");
+        while (tokenizer.hasMoreTokens()) {
+          result.add(tokenizer.nextToken());
         }
       }
     }

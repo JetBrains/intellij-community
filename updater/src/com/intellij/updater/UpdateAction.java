@@ -39,13 +39,9 @@ public class UpdateAction extends BaseUpdateAction {
       patchOutput.putNextEntry(new ZipEntry(getPath()));
 
       FileType type = getFileType(newerFile);
+      if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
       writeFileType(patchOutput, type);
-      if (type == FileType.SYMLINK) {
-        writeLinkInfo(newerFile, patchOutput);
-      }
-      else {
-        writeDiff(olderFile, newerFile, patchOutput);
-      }
+      writeDiff(olderFile, newerFile, patchOutput);
 
       patchOutput.closeEntry();
     }
@@ -53,10 +49,9 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    File source = getSource(backupDir);
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
 
-    File updated;
+    File source = getSource(backupDir);
     if (!isMove()) {
       try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {
@@ -64,26 +59,20 @@ public class UpdateAction extends BaseUpdateAction {
         }
 
         FileType type = readFileType(in);
-        if (type == FileType.SYMLINK) {
-          Utils.createLink(readLinkInfo(in), toFile);
-          return;
-        }
-
-        updated = Utils.getTempFile(toFile.getName());
-        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
+        File tempFile = Utils.getTempFile(toFile.getName());
+        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
              InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized())) {
           applyDiff(in, oldFileIn, out);
         }
 
         if (type == FileType.EXECUTABLE_FILE) {
-          Utils.setExecutable(updated);
+          Utils.setExecutable(tempFile);
         }
+
+        source = tempFile;
       }
     }
-    else {
-      updated = source;
-    }
 
-    replaceUpdated(updated, toFile);
+    replaceUpdated(source, toFile);
   }
 }

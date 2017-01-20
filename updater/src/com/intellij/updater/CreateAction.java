@@ -15,10 +15,7 @@
  */
 package com.intellij.updater;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -39,7 +36,7 @@ public class CreateAction extends PatchAction {
     if (!newerFile.isDirectory()) {
       FileType type = getFileType(newerFile);
       writeFileType(patchOutput, type);
-      if (Utils.isLink(newerFile)) {
+      if (type == FileType.SYMLINK) {
         writeLinkInfo(newerFile, patchOutput);
       }
       else {
@@ -48,6 +45,14 @@ public class CreateAction extends PatchAction {
     }
 
     patchOutput.closeEntry();
+  }
+
+  private static void writeLinkInfo(File file, OutputStream out) throws IOException {
+    String target = Utils.readLink(file);
+    if (target.isEmpty()) throw new IOException("Invalid link: " + file);
+    byte[] bytes = target.getBytes("UTF-8");
+    out.write(bytes.length);
+    out.write(bytes);
   }
 
   @Override
@@ -116,6 +121,13 @@ public class CreateAction extends PatchAction {
     if (file != null && !file.isDirectory()) {
       Utils.delete(file);
     }
+  }
+
+  private static String readLinkInfo(InputStream in) throws IOException {
+    int length = in.read();
+    if (length <= 0) throw new IOException("Stream format error");
+    byte[] bytes = Utils.readBytes(in, length);
+    return new String(bytes, "UTF-8");
   }
 
   protected void doBackup(File toFile, File backupFile) {

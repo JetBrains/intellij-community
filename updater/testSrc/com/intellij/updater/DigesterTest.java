@@ -18,8 +18,11 @@ package com.intellij.updater;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public class DigesterTest extends UpdaterTestCase {
   @Test
@@ -42,5 +45,41 @@ public class DigesterTest extends UpdaterTestCase {
     assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR_NORM, Digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
 
     assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestZipFile(new File(libDir, "bootstrap.jar")));
+  }
+
+  @Test
+  public void testHelpers() throws Exception {
+    assertTrue(Digester.isFile(CHECKSUMS.README_TXT));
+    assertTrue(Digester.isFile(CHECKSUMS.ANNOTATIONS_JAR));
+    assertFalse(Digester.isFile(Digester.INVALID));
+    assertFalse(Digester.isFile(Digester.DIRECTORY));
+
+    assertTrue(Digester.isSymlink(CHECKSUMS.LINK_TO_README_TXT));
+    assertFalse(Digester.isSymlink(CHECKSUMS.README_TXT));
+    assertFalse(Digester.isSymlink(Digester.INVALID));
+    assertFalse(Digester.isSymlink(Digester.DIRECTORY));
+  }
+
+  @Test
+  public void testSymlinks() throws Exception {
+    assumeTrue(!UtilsTest.IS_WINDOWS);
+
+    File simpleLink = getTempFile("Readme.simple.link");
+    Utils.createLink("Readme.txt", simpleLink);
+    File relativeLink = getTempFile("Readme.relative.link");
+    Utils.createLink("./Readme.txt", relativeLink);
+    File absoluteLink = getTempFile("Readme.absolute.link");
+    Utils.createLink(dataDir.getPath() + "/Readme.txt", absoluteLink);
+
+    assertEquals(CHECKSUMS.LINK_TO_README_TXT, Digester.digestRegularFile(simpleLink, false));
+    assertEquals(CHECKSUMS.LINK_TO_DOT_README_TXT, Digester.digestRegularFile(relativeLink, false));
+
+    try {
+      Digester.digestRegularFile(absoluteLink, false);
+      fail("Absolute links should cause indigestion");
+    }
+    catch (IOException e) {
+      assertThat(e.getMessage()).startsWith("Absolute link");
+    }
   }
 }

@@ -19,7 +19,6 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -103,22 +102,6 @@ public abstract class PatchAction {
     FileType[] types = FileType.values();
     if (value < 0 || value >= types.length) throw new IOException("Stream format error");
     return types[value];
-  }
-
-  protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
-    String target = Files.readSymbolicLink(file.toPath()).toString();
-    if (target.isEmpty()) throw new IOException("Invalid link: " + file);
-    byte[] bytes = target.getBytes("UTF-8");
-    out.write(bytes.length);
-    out.write(bytes);
-  }
-
-  protected static String readLinkInfo(InputStream in) throws IOException {
-    int length = in.read();
-    if (length <= 0) throw new IOException("Stream format error");
-    byte[] bytes = new byte[length];
-    if (in.read(bytes) != length) throw new IOException("Stream format error");
-    return new String(bytes, "UTF-8");
   }
 
   public boolean calculate(File olderDir, File newerDir) throws IOException {

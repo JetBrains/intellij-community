@@ -22,23 +22,46 @@ import ie.wombat.jbdiff.JBPatch;
 import java.io.*;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * <p>
+ *   <i>In-place update (standard mode)</i><br/>
+ *   Backup: the file is copied to a temporary directory.<br/>
+ *   Apply: the file is patched in-place.<br/>
+ *   Revert: the file is copied from a temporary directory.<br/>
+ * </p>
+ * <p>
+ *   <i>Move without a change</i><br/>
+ *   Backup: - (the file does not exist; the source is backed by a companion DeleteAction).<br/>
+ *   Apply: the file is copied from the companion backup.<br/>
+ *   Revert: the file is removed (the source is restored by the companion action).<br/>
+ * </p>
+ * <p>
+ *   <i>Move with a change</i><br/>
+ *   Backup: - (the file does not exist; the source is backed by a companion DeleteAction).<br/>
+ *   Apply: the file is copied from the companion backup and patched.<br/>
+ *   Revert: the file is removed (the source is restored by the companion action).<br/>
+ * </p>
+ */
 public abstract class BaseUpdateAction extends PatchAction {
   private static final byte RAW = 0;
   private static final byte COMPRESSED = 1;
 
   private final String mySource;
   private final boolean myIsMove;
+  private final boolean myInPlace;
 
   public BaseUpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, checksum);
-    myIsMove = move;
     mySource = source;
+    myIsMove = move;
+    myInPlace = !myIsMove && mySource.equals(getPath());
   }
 
   public BaseUpdateAction(Patch patch, DataInputStream in) throws IOException {
     super(patch, in);
     mySource = in.readUTF();
     myIsMove = in.readBoolean();
+    myInPlace = !myIsMove && mySource.equals(getPath());
   }
 
   @Override
@@ -85,7 +108,9 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
-    Utils.mirror(toFile, backupFile);
+    if (myInPlace) {
+      Utils.copy(toFile, backupFile);
+    }
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
@@ -96,8 +121,9 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    if (!toFile.exists() || isModified(toFile)) {
-      Utils.mirror(backupFile, toFile);
+    Utils.delete(toFile);
+    if (myInPlace) {
+      Utils.copy(backupFile, toFile);
     }
   }
 
@@ -139,10 +165,10 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   public String toString() {
-    String moveInfo = "";
-    if (!mySource.equals(getPath())) {
-      moveInfo = "[" + (myIsMove ? "= " : "~ ") + mySource + "]";
+    String text = super.toString();
+    if (!myInPlace) {
+      text = text.substring(0, text.length() - 1) + ", " + (myIsMove ? '=' : '~') + mySource + ')';
     }
-    return super.toString() + moveInfo;
+    return text;
   }
 }
