@@ -25,7 +25,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,14 +60,24 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
       if (myHelper.isElementFullyInRange(node)) {
-        final PyImportElement[] importedNames = node.getImportElements();
-        final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
-        final PsiElement leftParen = node.getLeftParen();
-        final boolean enabledInSettings = pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
-                                          pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE &&
-                                          PostFormatProcessorHelper.isMultiline(node);
-        if (enabledInSettings && importedNames.length > 1 && leftParen == null) {
-          myImportStatements.add(node);
+        // If non-parenthesized "from" import ends with one or more of trailing commas, the array returned by getImportElements()
+        // contains empty import elements at the end
+        final List<PyImportElement> importedNames = ContainerUtil.filter(node.getImportElements(), elem -> elem.getTextLength() != 0);
+        if (importedNames.size() > 1) {
+
+          final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
+          final boolean forcedParentheses = pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
+                                            pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE &&
+                                            PostFormatProcessorHelper.isMultiline(node);
+          final boolean forcedComma = pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
+          final PyImportElement lastImportedName = importedNames.get(importedNames.size() - 1);
+          final PsiElement afterLastName = PyPsiUtils.getNextNonCommentSibling(lastImportedName, true);
+          final PsiElement openingParen = node.getLeftParen();
+          final boolean missingComma = afterLastName == null || afterLastName.getNode().getElementType() != PyTokenTypes.COMMA;
+          // Trailing comma is allowed only in "from" imports wrapped in parentheses 
+          if (forcedParentheses && openingParen == null || forcedComma && missingComma && openingParen != null) {
+            myImportStatements.add(node);
+          }
         }
       }
     }
@@ -94,34 +107,55 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
 
     @NotNull
     private PyFromImportStatement replaceFromImport(@NotNull PyFromImportStatement fromImport) {
-      final PyImportElement firstName = fromImport.getImportElements()[0];
-      final String beforeFirstName = fromImport.getText().substring(0, firstName.getStartOffsetInParent());
-      final StringBuilder newStatementText = new StringBuilder(beforeFirstName);
-      newStatementText.append("(");
-      boolean lastElementWasComment = false;
-      for (PsiElement cur = firstName; cur != null; cur = cur.getNextSibling()) {
-        if (cur instanceof PsiWhiteSpace) {
-          newStatementText.append(cur.getText().replace("\\", ""));
-        }
-        else {
-          newStatementText.append(cur.getText());
-        }
-        lastElementWasComment = cur instanceof PsiComment;
-      }
-      if (lastElementWasComment) {
-        newStatementText.append("\n");
-      }
-      newStatementText.append(")");
-      
+      final PyImportElement[] allNames = fromImport.getImportElements();
+      final PyImportElement firstName = allNames[0];
       final PyElementGenerator generator = PyElementGenerator.getInstance(fromImport.getProject());
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(fromImport.getProject());
-      
-      final LanguageLevel level = LanguageLevel.forElement(fromImport);
-      PyFromImportStatement newFromImport = generator.createFromText(level, PyFromImportStatement.class, newStatementText.toString());
-      newFromImport = (PyFromImportStatement)fromImport.replace(newFromImport);
-      newFromImport = (PyFromImportStatement)codeStyleManager.reformat(newFromImport);
-      myHelper.updateResultRange(fromImport.getTextLength(), newFromImport.getTextLength());
-      return newFromImport;
+
+      if (fromImport.getLeftParen() == null) {
+        // Surround with parentheses stripping obsolete continuation backslashes and added trailing comma if necessary
+        final String beforeFirstName = fromImport.getText().substring(0, firstName.getStartOffsetInParent());
+        final StringBuilder newStatementText = new StringBuilder(beforeFirstName);
+        newStatementText.append("(");
+        boolean lastElementWasComment = false;
+        int lastVisibleNameCommaOffset = -1;
+        for (PsiElement cur = firstName; cur != null; cur = cur.getNextSibling()) {
+          if (cur instanceof PsiWhiteSpace) {
+            newStatementText.append(cur.getText().replace("\\", ""));
+          }
+          else {
+            newStatementText.append(cur.getText());
+          }
+          if (cur instanceof PyImportElement && cur.getTextLength() != 0) {
+            lastVisibleNameCommaOffset = newStatementText.length();
+          }
+          else if (lastVisibleNameCommaOffset != -1 && cur.getNode().getElementType() == PyTokenTypes.COMMA) {
+            lastVisibleNameCommaOffset = -1;
+          }
+          lastElementWasComment = cur instanceof PsiComment;
+        }
+        final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
+        if (lastVisibleNameCommaOffset != -1 && pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE) {
+          newStatementText.insert(lastVisibleNameCommaOffset, ",");
+        }
+        if (lastElementWasComment) {
+          newStatementText.append("\n");
+        }
+        newStatementText.append(")");
+
+        final LanguageLevel level = LanguageLevel.forElement(fromImport);
+        PyFromImportStatement newFromImport = generator.createFromText(level, PyFromImportStatement.class, newStatementText.toString());
+        newFromImport = (PyFromImportStatement)fromImport.replace(newFromImport);
+        newFromImport = (PyFromImportStatement)codeStyleManager.reformat(newFromImport, true);
+        myHelper.updateResultRange(fromImport.getTextLength(), newFromImport.getTextLength());
+        return newFromImport;
+      }
+      else {
+        // Add only trailing comma
+        final PsiElement comma = fromImport.addAfter(generator.createComma().getPsi(), allNames[allNames.length - 1]);
+        codeStyleManager.reformat(comma);
+        return fromImport;
+      }
     }
   }
   

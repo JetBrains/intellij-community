@@ -135,6 +135,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 PyBundle.message("formatter.from.import.statements.force.parentheses"),
                                 PyBundle.message("formatter.from.import.statements"),
                                 BRACE_OPTIONS, BRACE_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE",
+                                PyBundle.message("formatter.from.import.statements.force.comma.if.multline"),
+                                PyBundle.message("formatter.from.import.statements"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PyBundle.message("formatter.dictionary.literals"), null, WRAP_OPTIONS, WRAP_VALUES);

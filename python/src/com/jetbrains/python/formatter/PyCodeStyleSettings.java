@@ -120,6 +120,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS}
   )
   public int FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
+  public boolean FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = false;
 
   /**
    * Corresponds to the option of pycodestyle.py "--hang-closing". Basically, it means that the closing brace of a collection literal, 
