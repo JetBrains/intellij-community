@@ -38,7 +38,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
@@ -137,13 +136,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   @Override
   public void hierarchyChanged(HierarchyEvent e) {
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
-      checkFontRenderContext();
+      checkFontRenderContext(null);
     }
   }
 
   @Override
   public void visibleAreaChanged(VisibleAreaEvent e) {
-    checkFontRenderContext();
+    checkFontRenderContext(null);
   }
   public int yToVisualLine(int y) {
     return myMapper.yToVisualLine(y);
@@ -263,6 +262,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   public void paint(Graphics2D g) {
     assertIsDispatchThread();
     myEditor.getSoftWrapModel().prepareToMapping();
+    checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
   }
 
@@ -338,7 +338,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       default:
         myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     }
-    setFontRenderContext();
+    setFontRenderContext(null);
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -517,14 +517,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  private void setFontRenderContext() {
-    JComponent component = myEditor.getContentComponent();
-    myFontRenderContext = FontInfo.getFontRenderContext(component);
+  private void setFontRenderContext(FontRenderContext context) {
+    myFontRenderContext = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
   }
 
-  private void checkFontRenderContext() {
+  private void checkFontRenderContext(FontRenderContext context) {
     FontRenderContext oldContext = myFontRenderContext;
-    setFontRenderContext();
+    setFontRenderContext(context);
     if (!myFontRenderContext.equals(oldContext)) {
       myTextLayoutCache.resetToDocumentSize(false);
     }
