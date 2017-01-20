@@ -990,9 +990,9 @@ public class UsageViewImpl implements UsageView {
   }
 
   protected void doReRun() {
-    close();
+    myChangesDetected = false;
     com.intellij.usages.UsageViewManager.getInstance(getProject()).
-      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, true, myPresentation, null);
+      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
   }
 
   private void reset() {
