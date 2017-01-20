@@ -69,7 +69,8 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   };
 
-  public static final ThreadLocal<Boolean> askUserAboutUntrustedCertificates = ThreadLocal.withInitial(() -> true);
+  public final ThreadLocal<UntrustedCertificateStrategy> untrustedCertificateStrategy =
+    ThreadLocal.withInitial(() -> UntrustedCertificateStrategy.ASK_USER);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemDefault(), new MutableTrustManager(path, password));
@@ -112,7 +113,8 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] certificates, String s) throws CertificateException {
-    checkServerTrusted(certificates, s, true, askUserAboutUntrustedCertificates.get());
+    boolean askUser = untrustedCertificateStrategy.get() == UntrustedCertificateStrategy.ASK_USER;
+    checkServerTrusted(certificates, s, true, askUser);
   }
 
   public void checkServerTrusted(final X509Certificate[] certificates, String s, boolean addToKeyStore, boolean askUser)
