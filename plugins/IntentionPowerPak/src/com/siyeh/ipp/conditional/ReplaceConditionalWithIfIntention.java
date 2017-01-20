@@ -158,7 +158,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
                                         @Nullable PsiExpression replacementExpression, boolean insertCast, @NotNull StringBuilder out) {
     if (element.equals(elementToReplace)) {
       final String replacementText = (replacementExpression == null) ? "" : replacementExpression.getText();
-      final PsiType type = ExpectedTypeUtils.findExpectedType(elementToReplace, true);
+      final PsiType type = GenericsUtil.getVariableTypeByExpressionType(ExpectedTypeUtils.findExpectedType(elementToReplace, true));
       if (insertCast && type != null) {
         out.append('(').append(type.getCanonicalText()).append(')');
       }
