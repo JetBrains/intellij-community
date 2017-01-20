@@ -506,6 +506,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     putUserData(LANGUAGE_LEVEL_KEY, null);
   }
 
+  @Override
+  public void setOriginalFile(@NotNull PsiFile originalFile) {
+    super.setOriginalFile(originalFile);
+    clearCaches();
+  }
+
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
