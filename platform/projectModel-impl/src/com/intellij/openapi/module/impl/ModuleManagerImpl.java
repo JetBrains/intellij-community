@@ -100,17 +100,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        fireModulesAdded();
+        if (project == myProject) {
+          fireModulesAdded();
 
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectOpened();
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectOpened();
+          }
         }
       }
 
       @Override
       public void projectClosed(Project project) {
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectClosed();
+        if (project == myProject) {
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectClosed();
+          }
         }
       }
     });

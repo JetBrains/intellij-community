@@ -419,14 +419,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     @Override
     public void projectOpened(Project project) {
-      LOG.assertTrue(project == ProjectImpl.this);
-      ProjectImpl.this.projectOpened();
+      if (project == ProjectImpl.this) {
+        ProjectImpl.this.projectOpened();
+      }
     }
 
     @Override
     public void projectClosed(Project project) {
-      LOG.assertTrue(project == ProjectImpl.this);
-      ProjectImpl.this.projectClosed();
+      if (project == ProjectImpl.this) {
+        ProjectImpl.this.projectClosed();
+      }
     }
   }
 
