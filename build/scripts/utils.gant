@@ -1152,7 +1152,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
       zipfileset(dir: it, prefix: "$zipRoot/Resources") {
         include(name: "build.txt")
         include(name: "NOTICE.txt")
-        exclude(name: "LICENSE.txt")
+        include(name: "LICENSE.txt")
       }
     }
 
