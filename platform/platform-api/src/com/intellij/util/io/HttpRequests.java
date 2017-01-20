@@ -251,7 +251,7 @@ public final class HttpRequests {
     }
 
     @Override
-    public RequestBuilder untrustedCertificateStrategy(UntrustedCertificateStrategy strategy) {
+    public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
       myUntrustedCertificateStrategy = strategy;
       return this;
     }

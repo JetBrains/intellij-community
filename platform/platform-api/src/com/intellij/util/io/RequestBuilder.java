@@ -39,7 +39,7 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder productNameAsUserAgent();
   public abstract RequestBuilder accept(@Nullable String mimeType);
   public abstract RequestBuilder tuner(@Nullable HttpRequests.ConnectionTuner tuner);
-  public abstract RequestBuilder untrustedCertificateStrategy(UntrustedCertificateStrategy strategy);
+  public abstract RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy);
 
   public abstract <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException;
 

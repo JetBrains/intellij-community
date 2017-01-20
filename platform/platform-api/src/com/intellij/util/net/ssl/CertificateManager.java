@@ -343,7 +343,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   }
 
   public <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
-                                                                                final UntrustedCertificateStrategy strategy) throws E {
+                                                                        @NotNull final UntrustedCertificateStrategy strategy) throws E {
     myTrustManager.untrustedCertificateStrategy.set(strategy);
     try {
       return computable.compute();
