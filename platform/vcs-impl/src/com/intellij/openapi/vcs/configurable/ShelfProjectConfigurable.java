@@ -31,7 +31,7 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
   public static final String DISPLAY_NAME = VcsBundle.message("shelf.tab");
   public static final String HELP_ID = "project.propVCSSupport.Shelf";
 
-  private Project myProject;
+  private final Project myProject;
   private ShelfProjectConfigurationPanel myShelfConfigPanel;
 
 
@@ -54,7 +54,7 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    return myShelfConfigPanel != null && myShelfConfigPanel.isModified();
+    return ObjectUtils.assertNotNull(myShelfConfigPanel).isModified();
   }
 
   @Override
@@ -64,7 +64,7 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-
+    ObjectUtils.assertNotNull(myShelfConfigPanel).restoreFromSettings();
   }
 
   @Nls

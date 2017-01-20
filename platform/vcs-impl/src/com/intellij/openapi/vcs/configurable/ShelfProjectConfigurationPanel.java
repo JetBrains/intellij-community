@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -36,11 +37,11 @@ import static java.awt.GridBagConstraints.*;
 
 public class ShelfProjectConfigurationPanel extends JPanel {
   @NotNull private final VcsConfiguration myVcsConfiguration;
-  @NotNull private Project myProject;
+  @NotNull private final Project myProject;
   @NotNull private final String myDefaultPresentationPathString;
-  @NotNull private JBCheckBox myUseCustomShelfDirectory;
-  @NotNull private JBLabel myShelfDirectoryLabel;
-  @NotNull private TextFieldWithBrowseButton myShelfDirectoryPath;
+  @NotNull private final JBCheckBox myUseCustomShelfDirectory;
+  @NotNull private final JBLabel myShelfDirectoryLabel;
+  @NotNull private final TextFieldWithBrowseButton myShelfDirectoryPath;
   @NotNull private final JCheckBox myBaseRevisionTexts;
 
   public ShelfProjectConfigurationPanel(@NotNull Project project) {
@@ -57,26 +58,24 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   private void initComponents() {
-    myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
+    restoreFromSettings();
     myUseCustomShelfDirectory.setMnemonic('U');
-    myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myBaseRevisionTexts.setMnemonic('b');
-    setEnabledCustomShelfDirectoryComponents();
+    setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
     myUseCustomShelfDirectory.addActionListener(e -> {
       boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
       if (useCustomDir) {
         IdeFocusManager.findInstance().requestFocus(myShelfDirectoryPath, true);
       }
-      setEnabledCustomShelfDirectoryComponents();
+      setEnabledCustomShelfDirectoryComponents(useCustomDir);
     });
   }
 
-  private void setEnabledCustomShelfDirectoryComponents() {
-    boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
-    myShelfDirectoryPath.setEnabled(useCustomDir);
-    myShelfDirectoryPath.setEditable(useCustomDir);
-    myShelfDirectoryLabel.setEnabled(useCustomDir);
-    if (!useCustomDir) {
+  private void setEnabledCustomShelfDirectoryComponents(boolean enabled) {
+    myShelfDirectoryPath.setEnabled(enabled);
+    myShelfDirectoryPath.setEditable(enabled);
+    myShelfDirectoryLabel.setEnabled(enabled);
+    if (!enabled) {
       myShelfDirectoryPath.setText(myDefaultPresentationPathString);
     }
     else if (myProject.isDefault()) {
@@ -120,14 +119,24 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     return panel;
   }
 
+  public void restoreFromSettings() {
+    myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
+    myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
+    myShelfDirectoryPath
+      .setText(myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? myVcsConfiguration.CUSTOM_SHELF_PATH : myDefaultPresentationPathString);
+  }
+
   public boolean isModified() {
     if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
+    if (!StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, myShelfDirectoryPath.getText())) return true;
     return false;
   }
 
   public void apply() {
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
-    myVcsConfiguration.USE_CUSTOM_SHELF_PATH = myUseCustomShelfDirectory.isSelected();
+    boolean customShelfDir = myUseCustomShelfDirectory.isSelected();
+    myVcsConfiguration.USE_CUSTOM_SHELF_PATH = customShelfDir;
+    myVcsConfiguration.CUSTOM_SHELF_PATH = customShelfDir ? myShelfDirectoryPath.getText() : null;
   }
 }
