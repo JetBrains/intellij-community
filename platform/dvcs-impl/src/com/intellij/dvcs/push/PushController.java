@@ -59,6 +59,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.Messages.OK;
@@ -556,7 +557,7 @@ public class PushController implements Disposable {
   private boolean shouldAbort(Throwable exception, CheckinPushHandler handler, ProgressIndicator indicator) {
     LOG.error("Checkin Push Handler " + handler.getPresentableName() + " has failed", exception);
 
-    AtomicReference<Integer> dialogAnswer = new AtomicReference<>();
+    AtomicInteger dialogAnswer = new AtomicInteger();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       int option =
         Messages.showOkCancelDialog(myProject,

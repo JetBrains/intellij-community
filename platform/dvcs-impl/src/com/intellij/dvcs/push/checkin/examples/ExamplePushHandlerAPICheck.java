@@ -46,7 +46,7 @@ public class ExamplePushHandlerAPICheck implements CheckinPushHandler {
 
   private final Project myProject;
 
-  private static int nextAction = 0;
+  private int nextAction = 0;
 
   public ExamplePushHandlerAPICheck(@NotNull Project project) {
     myProject = project;
@@ -70,7 +70,7 @@ public class ExamplePushHandlerAPICheck implements CheckinPushHandler {
       ApplicationManager.getApplication().invokeAndWait(
         () -> {
           int option =
-            Messages.showOkCancelDialog(myProject, "No internet", "Failed to Check Usages", "Wait for internet", "Push", null);
+            Messages.showOkCancelDialog(myProject, "No internet", "Failed to Check Usages", "&Wait for internet", "&Push anyway", null);
           answer.set(option);
         }
       , indicator.getModalityState());
