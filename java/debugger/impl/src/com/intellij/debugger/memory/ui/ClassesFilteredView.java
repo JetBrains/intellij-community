@@ -329,6 +329,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   @Override
   public void dispose() {
     myLastSuspendContext = null;
+    myConstructorTrackedClasses.clear();
   }
 
   public void setActive(boolean active) {

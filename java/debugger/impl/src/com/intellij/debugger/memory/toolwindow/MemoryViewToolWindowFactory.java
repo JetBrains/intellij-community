@@ -209,6 +209,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
         final MemoryViewDebugProcessData data = process.getUserData(MemoryViewDebugProcessData.KEY);
         if (data != null) {
+          data.getTrackedStacks().release();
           Disposer.dispose(data.getClassesFilteredView());
         }
       }
