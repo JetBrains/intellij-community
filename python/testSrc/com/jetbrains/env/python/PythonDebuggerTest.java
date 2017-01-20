@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -31,7 +29,6 @@ import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -1097,6 +1094,39 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         eval("x").hasValue("2");
+        resume();
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testResumeAfterStepping() throws Exception {
+    // This test case is important for frame evaluation debugging, because we reuse old tracing function for stepping and there were
+    // some problems with switching between frame evaluation and tracing
+    runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 5);
+        toggleBreakpoint(getScriptName(), 12);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        stepOver();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("c").hasValue("3");
+        resume();
+        waitForPause();
+        eval("d").hasValue("4");
+        resume();
+        waitForPause();
+        eval("t").hasValue("1");
         resume();
       }
     });
