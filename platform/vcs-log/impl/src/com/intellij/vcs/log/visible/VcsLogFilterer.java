@@ -38,9 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class VisiblePackBuilder {
+class VcsLogFilterer {
 
-  private static final Logger LOG = Logger.getInstance(VisiblePackBuilder.class);
+  private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
@@ -48,11 +48,11 @@ class VisiblePackBuilder {
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsLogIndex myIndex;
 
-  VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                     @NotNull VcsLogStorage hashMap,
-                     @NotNull TopCommitsCache topCommitsDetailsCache,
-                     @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
-                     @NotNull VcsLogIndex index) {
+  VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
+                 @NotNull VcsLogStorage hashMap,
+                 @NotNull TopCommitsCache topCommitsDetailsCache,
+                 @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
+                 @NotNull VcsLogIndex index) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
@@ -61,10 +61,10 @@ class VisiblePackBuilder {
   }
 
   @NotNull
-  Pair<VisiblePack, CommitCountStage> build(@NotNull DataPack dataPack,
-                                            @NotNull PermanentGraph.SortType sortType,
-                                            @NotNull VcsLogFilterCollection filters,
-                                            @NotNull CommitCountStage commitCount) {
+  Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
+                                             @NotNull PermanentGraph.SortType sortType,
+                                             @NotNull VcsLogFilterCollection filters,
+                                             @NotNull CommitCountStage commitCount) {
     long start = System.currentTimeMillis();
 
     VcsLogHashFilter hashFilter = filters.getHashFilter();

@@ -155,9 +155,9 @@ class VisiblePackBuilderTest {
           return null
         }
       }
-      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
+      val builder = VcsLogFilterer(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
-      return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
+      return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
     fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {

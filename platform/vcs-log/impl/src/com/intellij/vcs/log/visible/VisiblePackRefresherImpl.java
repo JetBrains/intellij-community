@@ -40,7 +40,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
-  @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
+  @NotNull private final VcsLogFilterer myVisiblePackBuilder;
   @NotNull private final VcsLogData myLogData;
 
   @NotNull private VcsLogFilterCollection myFilters;
@@ -56,9 +56,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
                                   @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
     myVisiblePackBuilder =
-      new VisiblePackBuilder(myLogData.getLogProviders(), myLogData.getHashMap(), myLogData.getTopCommitsCache(),
-                             myLogData.getCommitDetailsGetter(),
-                             myLogData.getIndex());
+      new VcsLogFilterer(myLogData.getLogProviders(), myLogData.getHashMap(), myLogData.getTopCommitsCache(),
+                         myLogData.getCommitDetailsGetter(),
+                         myLogData.getIndex());
     myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 
@@ -229,7 +229,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
         myCommitCount = myCommitCount.next();
       }
 
-      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(dataPack, mySortType, myFilters, myCommitCount);
+      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.filter(dataPack, mySortType, myFilters, myCommitCount);
       visiblePack = pair.first;
       myCommitCount = pair.second;
       return visiblePack;
