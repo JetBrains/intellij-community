@@ -61,10 +61,17 @@ def handle_breakpoint(frame, info, global_debugger, breakpoint):
     return True
 
 
+def _get_line_for_frame(frame):
+    # it's absolutely necessary to reset tracing function for frame in order to get the real line number
+    tracing_func = frame.f_trace
+    frame.f_trace = None
+    line = frame.f_lineno
+    frame.f_trace = tracing_func
+    return line
+
+
 def _pydev_stop_at_break():
     frame = sys._getframe(1)
-    # it's absolutely necessary to reset tracing function for frame in order to get the real line number
-    frame.f_trace = None
     t = threading.currentThread()
     if t.additional_info.is_tracing:
         return
@@ -81,14 +88,14 @@ def _pydev_stop_at_break():
         filename = abs_path_real_path_and_base[1]
 
         breakpoints_for_file = debugger.breakpoints.get(filename)
-        line = frame.f_lineno
+        line = _get_line_for_frame(frame)
         try:
             breakpoint = breakpoints_for_file[line]
         except KeyError:
-            pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, frame.f_lineno))
+            pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, line))
             return
         if breakpoint and handle_breakpoint(frame, t.additional_info, debugger, breakpoint):
-            pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, frame.f_lineno))
+            pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
             debugger.set_suspend(t, CMD_SET_BREAK)
             debugger.do_wait_suspend(t, frame, 'line', None)
 
