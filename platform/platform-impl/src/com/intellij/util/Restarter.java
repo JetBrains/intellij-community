@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,10 @@ public class Restarter {
     }
 
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath().contains(".app") &&
+      File appDir = new File(PathManager.getHomePath()).getParentFile();
+      return appDir != null &&
+             appDir.getName().endsWith(".app") &&
+             appDir.isDirectory() &&
              new File(PathManager.getBinPath(), "restarter").canExecute();
     }
 
@@ -134,10 +137,12 @@ public class Restarter {
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
     String homePath = PathManager.getHomePath();
-    int p = homePath.indexOf(".app");
-    if (p < 0) throw new IOException("Application bundle not found: " + homePath);
+    File appDir = new File(PathManager.getHomePath()).getParentFile();
+    if (appDir == null || !appDir.getName().endsWith(".app") || !appDir.isDirectory()) {
+      throw new IOException("Application bundle not found: " + homePath);
+    }
     List<String> args = new ArrayList<>();
-    args.add(homePath.substring(0, p + 4));
+    args.add(appDir.getPath());
     Collections.addAll(args, beforeRestart);
     runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
   }
