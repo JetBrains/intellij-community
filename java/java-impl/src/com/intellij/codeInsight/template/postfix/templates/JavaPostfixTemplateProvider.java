@@ -113,7 +113,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
       if (theseTemplates.size() == 1) {
         templates.add(theseTemplates.get(0));
       } else {
-        templates.add(new CombinedPostfixTemplate(theseTemplates.get(0).getKey(), theseTemplates));
+        String example = templates.stream().distinct().count() > 1 ? theseTemplates.get(0).getExample() : "";
+        templates.add(new CombinedPostfixTemplate(theseTemplates.get(0).getKey(), example, theseTemplates));
       }
     }
   }

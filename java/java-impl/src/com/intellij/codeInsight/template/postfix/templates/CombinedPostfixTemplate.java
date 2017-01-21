@@ -30,8 +30,9 @@ public class CombinedPostfixTemplate extends PostfixTemplate {
   private Optional<PostfixTemplate> myApplicableTemplate;
 
   public CombinedPostfixTemplate(@NotNull String name,
+                                 @NotNull String example,
                                  List<PostfixTemplate> templates) {
-    super(name, "");
+    super(name, name, example);
     this.myTemplates = templates;
   }
 

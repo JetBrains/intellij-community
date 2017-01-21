@@ -44,7 +44,7 @@ public class CustomStringPostfixTemplate extends StringBasedPostfixTemplate {
     } if (clazz.equals("NOT_PRIMITIVE")) {
       return IS_NOT_PRIMITIVE;
     } if (clazz.equals("NUMBER")) {
-      return IS_NUMBER;
+      return IS_DECIMAL_NUMBER;
     } else {
       return isCustomClass(clazz);
     }
