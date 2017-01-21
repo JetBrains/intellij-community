@@ -186,7 +186,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   private void configureElementsVisibility() {
     final TestTargetType targetType = getTargetType();
     myTargetText.setVisible(targetType != TestTargetType.CUSTOM);
-    myTargetText.getButton().setVisible(targetType == TestTargetType.FOLDER);
+    myTargetText.getButton().setVisible(targetType == TestTargetType.PATH);
   }
 
   @SuppressWarnings("WeakerAccess") // Accessor for property
