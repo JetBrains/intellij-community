@@ -75,6 +75,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     private final JCheckBox myDontReportTrueAsserts;
     private final JCheckBox myTreatUnknownMembersAsNullable;
     private final JCheckBox myReportNullArguments;
+    private final JCheckBox myReportNullableMethodsReturningNotNull;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -141,6 +142,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
+      myReportNullableMethodsReturningNotNull = new JCheckBox("Report nullable methods that always return a non-null value");
+      myReportNullableMethodsReturningNotNull.setSelected(REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL);
+      myReportNullableMethodsReturningNotNull.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = myReportNullableMethodsReturningNotNull.isSelected();
+        }
+      });
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
@@ -169,6 +179,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myReportNullArguments, gc);
+
+      gc.gridy++;
+      add(myReportNullableMethodsReturningNotNull, gc);
     }
   }
 
