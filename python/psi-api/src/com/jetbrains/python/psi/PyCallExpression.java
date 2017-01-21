@@ -254,9 +254,24 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @NotNull
   List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
+  /**
+   * Resolves the callee down to particular function (standalone, method, or constructor) and maps arguments to parameters.
+   *
+   * @param resolveContext resolve context
+   * @return an object which contains callable and mappings.
+   */
   @NotNull
-  PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext);
+  default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
+    return mapArguments(resolveContext, 0);
+  }
 
+  /**
+   * Resolves the callee down to particular function (standalone, method, or constructor) and maps arguments to parameters.
+   *
+   * @param resolveContext resolve context
+   * @param implicitOffset implicit offset which is known from the context
+   * @return an object which contains callable and mappings.
+   */
   @NotNull
   PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
