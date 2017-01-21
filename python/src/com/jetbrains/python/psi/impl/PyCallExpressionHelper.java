@@ -700,29 +700,34 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallExpression callExpression,
-                                                                 @NotNull PyResolveContext resolveContext, int implicitOffset) {
-
+  public static List<PyCallExpression.PyArgumentsMapping> multiMapArguments(@NotNull PyCallExpression callExpression,
+                                                                            @NotNull PyResolveContext resolveContext,
+                                                                            int implicitOffset) {
     final PyArgumentList argumentList = callExpression.getArgumentList();
-    final PyCallExpression.PyMarkedCallee markedCallee = callExpression.resolveCallee(resolveContext, implicitOffset);
-
-    if (markedCallee == null || argumentList == null) {
-      return new PyCallExpression.PyArgumentsMapping(callExpression, null, Collections.emptyMap(),
-                                                     Collections.emptyList(), Collections.emptyList(),
-                                                     Collections.emptyList(), Collections.emptyList(),
-                                                     Collections.emptyMap());
+    if (argumentList == null) {
+      return Collections.emptyList();
     }
+
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
-    final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
-    final List<PyExpression> arguments = new ArrayList<>(Arrays.asList(argumentList.getArguments()));
-    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
-    return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee,
-                                                   mappingResults.getMappedParameters(), mappingResults.getUnmappedParameters(),
-                                                   mappingResults.getUnmappedArguments(),
-                                                   mappingResults.getParametersMappedToVariadicPositionalArguments(),
-                                                   mappingResults.getParametersMappedToVariadicKeywordArguments(),
-                                                   mappingResults.getMappedTupleParameters());
+    final List<PyCallExpression.PyArgumentsMapping> result = new ArrayList<>();
+
+    for (PyCallExpression.PyMarkedCallee markedCallee : callExpression.multiResolveCallee(resolveContext, implicitOffset)) {
+      final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
+      final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+      final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
+      final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
+
+      result.add(new PyCallExpression.PyArgumentsMapping(callExpression,
+                                                         markedCallee,
+                                                         mappingResults.getMappedParameters(),
+                                                         mappingResults.getUnmappedParameters(),
+                                                         mappingResults.getUnmappedArguments(),
+                                                         mappingResults.getParametersMappedToVariadicPositionalArguments(),
+                                                         mappingResults.getParametersMappedToVariadicKeywordArguments(),
+                                                         mappingResults.getMappedTupleParameters()));
+    }
+
+    return result;
   }
 
   @NotNull

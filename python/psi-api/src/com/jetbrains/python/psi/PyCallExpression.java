@@ -27,8 +27,10 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -173,9 +175,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * Returns null if the callee cannot be resolved.
-   * @see PyCallExpression#multiResolveCallee(PyResolveContext, int)
+   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
+   * This method will be removed in 2018.1.
    */
   @Nullable
+  @Deprecated
   default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
     final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, implicitOffset));
     return first == null ? null : first.getMarkedCallee();
@@ -259,10 +263,14 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return an object which contains callable and mappings.
+   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallExpression)} if the callee cannot be resolved.
    */
   @NotNull
   default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
-    return mapArguments(resolveContext, 0);
+    return Optional
+      .of(multiMapArguments(resolveContext, 0))
+      .map(ContainerUtil::getFirstItem)
+      .orElseGet(() -> PyArgumentsMapping.empty(this));
   }
 
   /**
@@ -271,9 +279,40 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @param implicitOffset implicit offset which is known from the context
    * @return an object which contains callable and mappings.
+   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallExpression)} if the callee cannot be resolved.
    */
   @NotNull
-  PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
+  default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return Optional
+      .of(multiMapArguments(resolveContext, implicitOffset))
+      .map(ContainerUtil::getFirstItem)
+      .orElseGet(() -> PyArgumentsMapping.empty(this));
+  }
+
+  /**
+   * Resolves the callee to possible functions and maps arguments to parameters for all of them.
+   *
+   * @param resolveContext resolve context
+   * @return objects which contains callable and mappings.
+   * Returned list is empty if the callee couldn't be resolved.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  default List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+    return multiMapArguments(resolveContext, 0);
+  }
+
+  /**
+   * Resolves the callee to possible functions and maps arguments to parameters for all of them.
+   *
+   * @param resolveContext resolve context
+   * @param implicitOffset implicit offset which is known from the context
+   * @return objects which contains callable and mappings.
+   * Returned list is empty if the callee couldn't be resolved.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**
    * Checks if the unqualified name of the callee matches any of the specified names
@@ -329,6 +368,18 @@ public interface PyCallExpression extends PyCallSiteExpression {
       myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
       myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
       myMappedTupleParameters = tupleMappedParameters;
+    }
+
+    @NotNull
+    public static PyArgumentsMapping empty(@NotNull PyCallExpression callExpression) {
+      return new PyCallExpression.PyArgumentsMapping(callExpression,
+                                                     null,
+                                                     Collections.emptyMap(),
+                                                     Collections.emptyList(),
+                                                     Collections.emptyList(),
+                                                     Collections.emptyList(),
+                                                     Collections.emptyList(),
+                                                     Collections.emptyMap());
     }
 
     @NotNull
