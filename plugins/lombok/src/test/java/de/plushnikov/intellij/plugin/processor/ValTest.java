@@ -71,15 +71,36 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
     verifyLocalVariableType("java.util.List<java.lang.Integer>");
   }
 
+  public void testConditionalExpressionThen260() throws Exception {
+    configureClass("TYPE_ID_MAPPINGS.containsKey(\"key\") ? newHashSet(TYPE_ID_MAPPINGS.get(\"key\")) : MULTIPLE_SEARCH_TYPES",
+      "private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();\n" +
+        " private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();\n" +
+        " public static <E> java.util.Collection<E> newHashSet(E foo) {\n" +
+        "    return new java.util.HashSet<>();\n" +
+        "  }");
+    verifyLocalVariableType("java.util.Collection<java.lang.String>");
+  }
+
+  public void testConditionalExpressionElse260() throws Exception {
+    configureClass("TYPE_ID_MAPPINGS.containsKey(\"key\") ? newHashSet(TYPE_ID_MAPPINGS.get(\"key\")) : MULTIPLE_SEARCH_TYPES",
+      "private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();\n" +
+        " private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();\n" +
+        " public static <E> java.util.SortedSet<E> newHashSet(E foo) {\n" +
+        "    return new java.util.TreeSet<>();\n" +
+        "  }");
+    verifyLocalVariableType("java.util.Set<java.lang.String>");
+  }
+
   private void configureClass(String valDefinition) {
     configureClass(valDefinition, "");
   }
 
   private void configureClass(String valDefinition, String extraDefinition) {
     myFixture.configureByText("a.java", "import lombok.val;\n" +
-      "abstract class Test {\n" +
+      "abstract static class Test {\n" +
       "    private void test() {\n" +
       "       val my<caret>Var = " + valDefinition + "; \n" +
+      "       myVar.toString(); \n" +
       "    } \n" +
       extraDefinition +
       "}\n");
@@ -92,6 +113,6 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
     assertTrue(localVariable.toString(), localVariable instanceof PsiLocalVariable);
     final PsiType type = ((PsiLocalVariable) localVariable).getType();
     assertNotNull(localVariable.toString(), type);
-    assertEquals(type.getCanonicalText(), true, type.equalsToText(expectedType));
+    assertTrue(type.getCanonicalText(), type.equalsToText(expectedType));
   }
 }

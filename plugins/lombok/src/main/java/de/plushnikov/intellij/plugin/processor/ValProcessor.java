@@ -10,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDiamondType;
 import com.intellij.psi.PsiElement;
@@ -154,12 +155,40 @@ public class ValProcessor extends AbstractProcessor {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
 
-      result = RecursionManager.doPreventingRecursion(psiExpression, true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return psiExpression.getType();
-        }
-      });
+      if (psiExpression instanceof PsiConditionalExpression) {
+        result = RecursionManager.doPreventingRecursion(psiExpression, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            final PsiExpression thenExpression = ((PsiConditionalExpression) psiExpression).getThenExpression();
+            final PsiExpression elseExpression = ((PsiConditionalExpression) psiExpression).getElseExpression();
+
+            final PsiType thenType = null != thenExpression ? thenExpression.getType() : null;
+            final PsiType elseType = null != elseExpression ? elseExpression.getType() : null;
+
+            if (thenType == null) {
+              return elseType;
+            }
+            if (elseType == null) {
+              return thenType;
+            }
+
+            if (TypeConversionUtil.isAssignable(thenType, elseType, false)) {
+              return thenType;
+            }
+            if (TypeConversionUtil.isAssignable(elseType, thenType, false)) {
+              return elseType;
+            }
+            return thenType;
+          }
+        });
+      } else {
+        result = RecursionManager.doPreventingRecursion(psiExpression, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            return psiExpression.getType();
+          }
+        });
+      }
 
       if (psiExpression instanceof PsiNewExpression) {
         final PsiJavaCodeReferenceElement reference = ((PsiNewExpression) psiExpression).getClassOrAnonymousClassReference();
