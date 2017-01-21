@@ -135,7 +135,7 @@ abstract class PyUniversalTestSettingsEditor(private val form: PyUniversalTestFo
 }
 
 enum class TestTargetType(val optionName: String) {
-  PYTHON("--target"), FOLDER("--path"), CUSTOM("")
+  PYTHON("--target"), PATH("--path"), CUSTOM("")
 }
 
 
@@ -161,7 +161,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
                                             private val runBareFunctions: Boolean = true)
   : AbstractPythonTestRunConfiguration<PyUniversalTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration {
   @DelegationProperty
-  val target = ConfigurationTarget(".", TestTargetType.FOLDER)
+  val target = ConfigurationTarget(".", TestTargetType.PATH)
   @ConfigField
   var additionalArguments = ""
 
@@ -216,7 +216,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
 
   fun reset() {
     target.target = "."
-    target.targetType = TestTargetType.FOLDER
+    target.targetType = TestTargetType.PATH
     additionalArguments = ""
   }
 
@@ -260,7 +260,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
    * Function is used to create tests by context.
    *
    * If yes, and element is [PsiElement] then it is [TestTargetType.PYTHON].
-   * If file then [TestTargetType.FOLDER]
+   * If file then [TestTargetType.PATH]
    */
   fun couldBeTestTarget(element: PsiElement) =
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
@@ -341,7 +341,7 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
             }
             return Pair(qualifiedName, ConfigurationTarget(qualifiedName, TestTargetType.PYTHON))
           }
-          is PsiFile -> return Pair(element.virtualFile.name, ConfigurationTarget(element.virtualFile.path, TestTargetType.FOLDER))
+          is PsiFile -> return Pair(element.virtualFile.name, ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH))
         }
       }
       element = element.parent
