@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,20 +107,23 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @NotNull
   @Override
-  public List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    final Function<PyMarkedCallee, PyMarkedCallee> mapping = callee -> {
+  public List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    final Function<PyRatedMarkedCallee, PyRatedMarkedCallee> mapping = ratedMarkedCallee -> {
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
-        return new PyMarkedCallee(callee.getCallable(),
-                                  callee.getModifier(),
-                                  callee.getImplicitOffset() + 1,
-                                  callee.isImplicitlyResolved());
+        final PyMarkedCallee oldMarkedCallee = ratedMarkedCallee.getMarkedCallee();
+        final PyMarkedCallee newMarkedCallee = new PyMarkedCallee(oldMarkedCallee.getCallable(),
+                                                                  oldMarkedCallee.getModifier(),
+                                                                  oldMarkedCallee.getImplicitOffset() + 1,
+                                                                  oldMarkedCallee.isImplicitlyResolved());
+
+        return new PyRatedMarkedCallee(newMarkedCallee, ratedMarkedCallee.getRate());
       }
 
-      return callee;
+      return ratedMarkedCallee;
     };
 
-    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset), mapping);
+    return ContainerUtil.map(PyCallExpressionHelper.multiResolveRatedCallee(this, resolveContext, implicitOffset), mapping);
   }
 
   @NotNull

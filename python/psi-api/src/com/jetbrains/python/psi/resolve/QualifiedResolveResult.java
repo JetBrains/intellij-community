@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,33 +65,4 @@ public interface QualifiedResolveResult extends ResolveResult {
    * @return true iff the resolve result is implicit, that is, not exact but by divination and looks reasonable. 
    */
   boolean isImplicit();
-
-  @NotNull
-  static QualifiedResolveResult create(@NotNull PsiElement element, @NotNull List<PyExpression> qualifiers, boolean isImplicit) {
-    class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
-
-      @NotNull
-      private final List<PyExpression> myQualifiers;
-      private final boolean myIsImplicit;
-
-      private QualifiedResolveResultImpl(@NotNull PsiElement element, @NotNull List<PyExpression> qualifiers, boolean isImplicit) {
-        super(isImplicit ? RATE_LOW : RATE_NORMAL, element);
-        myQualifiers = qualifiers;
-        myIsImplicit = isImplicit;
-      }
-
-      @Override
-      @NotNull
-      public List<PyExpression> getQualifiers() {
-        return myQualifiers;
-      }
-
-      @Override
-      public boolean isImplicit() {
-        return myIsImplicit;
-      }
-    }
-
-    return new QualifiedResolveResultImpl(element, qualifiers, isImplicit);
-  }
 }

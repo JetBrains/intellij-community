@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
    * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<QualifiedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext);
+  List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext);
 
   @NotNull
   PsiPolyVariantReference getReference();

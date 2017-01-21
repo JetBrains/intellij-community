@@ -38,10 +38,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,19 +128,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @NotNull
   public QualifiedResolveResult followAssignmentsChain(@NotNull PyResolveContext resolveContext) {
-    final List<QualifiedResolveResult> resolveResults = multiFollowAssignmentsChain(resolveContext);
+    final List<QualifiedRatedResolveResult> resolveResults = multiFollowAssignmentsChain(resolveContext);
 
     return resolveResults
       .stream()
       .filter(result -> !result.isImplicit())
       .findFirst()
-      .orElseGet(() -> ContainerUtil.getFirstItem(resolveResults, QualifiedResolveResult.EMPTY));
+      .map(QualifiedResolveResult.class::cast)
+      .orElseGet(
+        () -> {
+          final QualifiedResolveResult first = ContainerUtil.getFirstItem(resolveResults);
+          return first == null ? QualifiedResolveResult.EMPTY : first;
+        }
+      );
   }
 
   @NotNull
   @Override
-  public List<QualifiedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
-    final List<QualifiedResolveResult> result = new ArrayList<>();
+  public List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
+    final List<QualifiedRatedResolveResult> result = new ArrayList<>();
     final Queue<MultiFollowQueueNode> queue = new LinkedList<>();
     final Set<PyReferenceExpression> visited = new HashSet<>();
 
@@ -175,11 +178,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             queue.add(MultiFollowQueueNode.create(node, assignedReference));
           }
           else if (assignedFrom != null) {
-            result.add(QualifiedResolveResult.create(assignedFrom, node.myQualifiers, false));
+            result.add(
+              new QualifiedRatedResolveResult(
+                assignedFrom,
+                node.myQualifiers,
+                resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0,
+                resolveResult instanceof ImplicitResolveResult
+              )
+            );
           }
         }
         else if (element instanceof PyElement && resolveResult.isValidResult()) {
-          result.add(QualifiedResolveResult.create(element, node.myQualifiers, resolveResult instanceof ImplicitResolveResult));
+          result.add(
+            new QualifiedRatedResolveResult(
+              element,
+              node.myQualifiers,
+              resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0,
+              resolveResult instanceof ImplicitResolveResult
+            )
+          );
         }
       }
     }

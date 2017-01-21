@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -145,9 +147,9 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static List<PyCallExpression.PyMarkedCallee> multiResolveCallee(@NotNull PyCallExpression call,
-                                                                         @NotNull PyResolveContext resolveContext,
-                                                                         int implicitOffset) {
+  public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
+                                                                                   @NotNull PyResolveContext resolveContext,
+                                                                                   int implicitOffset) {
     return multiResolveCallee(call.getCallee(), resolveContext)
       .stream()
       .map(resolveResult -> clarifyResolveResult(resolveResult, resolveContext, call))
@@ -158,19 +160,19 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<QualifiedResolveResult> multiResolveCallee(@Nullable PyExpression callee, @NotNull PyResolveContext resolveContext) {
+  private static List<QualifiedRatedResolveResult> multiResolveCallee(@Nullable PyExpression callee, @NotNull PyResolveContext resolveContext) {
     if (callee instanceof PyReferenceExpression) {
       return ((PyReferenceExpression)callee).multiFollowAssignmentsChain(resolveContext);
     }
     else if (callee instanceof PyLambdaExpression) {
-      return Collections.singletonList(QualifiedResolveResult.create(callee, Collections.emptyList(), false));
+      return Collections.singletonList(new QualifiedRatedResolveResult(callee, Collections.emptyList(), RatedResolveResult.RATE_NORMAL, false));
     }
 
     return Collections.emptyList();
   }
 
   @Nullable
-  private static ClarifiedResolveResult clarifyResolveResult(@NotNull QualifiedResolveResult resolveResult,
+  private static ClarifiedResolveResult clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
                                                              @NotNull PyResolveContext resolveContext,
                                                              @NotNull PsiElement anchor) {
     final PsiElement resolved = resolveResult.getElement();
@@ -209,9 +211,9 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyCallExpression.PyMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
-                                                                   @NotNull TypeEvalContext context,
-                                                                   int implicitOffset) {
+  private static PyCallExpression.PyRatedMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        int implicitOffset) {
     if (resolveResult.myClarifiedResolved instanceof PyCallable) {
       final PyCallable callable = (PyCallable)resolveResult.myClarifiedResolved;
 
@@ -232,10 +234,14 @@ public class PyCallExpressionHelper {
       final int resolvedImplicitOffset =
         implicitOffset + getImplicitArgumentCount(callable, resolvedModifier, isConstructorCall, isByInstance, isByClass);
 
-      return new PyCallExpression.PyMarkedCallee(callable,
-                                                 resolvedModifier,
-                                                 Math.max(0, resolvedImplicitOffset), // wrong source can trigger strange behaviour
-                                                 resolveResult.myOriginalResolveResult.isImplicit());
+      final PyCallExpression.PyMarkedCallee markedCallee = new PyCallExpression.PyMarkedCallee(
+        callable,
+        resolvedModifier,
+        Math.max(0, resolvedImplicitOffset), // wrong source can trigger strange behaviour
+        resolveResult.myOriginalResolveResult.isImplicit()
+      );
+
+      return new PyCallExpression.PyRatedMarkedCallee(markedCallee, resolveResult.myOriginalResolveResult.getRate());
     }
 
     return null;
@@ -1121,7 +1127,7 @@ public class PyCallExpressionHelper {
   private static class ClarifiedResolveResult {
 
     @NotNull
-    private final QualifiedResolveResult myOriginalResolveResult;
+    private final QualifiedRatedResolveResult myOriginalResolveResult;
 
     @NotNull
     private final PsiElement myClarifiedResolved;
@@ -1131,7 +1137,7 @@ public class PyCallExpressionHelper {
 
     private final boolean myIsConstructor;
 
-    public ClarifiedResolveResult(@NotNull QualifiedResolveResult originalResolveResult,
+    public ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
                                   @NotNull PsiElement clarifiedResolved,
                                   @Nullable PyFunction.Modifier wrappedModifier,
                                   boolean isConstructor) {

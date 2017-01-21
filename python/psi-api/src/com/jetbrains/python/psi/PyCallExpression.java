@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +148,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @Nullable
   default PyCallable resolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.getFirstItem(multiResolveCalleeFunction(resolveContext));
+    final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, 0));
+    return first == null ? null : first.getElement();
   }
 
   /**
@@ -160,7 +162,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @Nullable
   default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext));
+    final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, 0));
+    return first == null ? null : first.getMarkedCallee();
   }
 
   /**
@@ -174,7 +177,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @Nullable
   default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, implicitOffset));
+    final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, implicitOffset));
+    return first == null ? null : first.getMarkedCallee();
   }
 
   /**
@@ -186,7 +190,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.map(multiResolveCallee(resolveContext), PyMarkedCallee::getCallable);
+    return ContainerUtil.map(multiResolveRatedCallee(resolveContext, 0), PyRatedMarkedCallee::getElement);
   }
 
   /**
@@ -198,7 +202,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
-    return multiResolveCallee(resolveContext, 0);
+    return ContainerUtil.map(multiResolveRatedCallee(resolveContext, 0), PyRatedMarkedCallee::getMarkedCallee);
   }
 
   /**
@@ -210,7 +214,45 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
+  default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return ContainerUtil.map(multiResolveRatedCallee(resolveContext, implicitOffset), PyRatedMarkedCallee::getMarkedCallee);
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @return the rated resolved callees or an empty list.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  default List<PyRatedCallee> multiResolveRatedCalleeFunction(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.map(multiResolveRatedCallee(resolveContext, 0),
+                             markedCallee -> new PyRatedCallee(markedCallee.getElement(), markedCallee.getRate()));
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @return rated objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  default List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext) {
+    return multiResolveRatedCallee(resolveContext, 0);
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @param implicitOffset implicit offset which is known from the context
+   * @return rated objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   @NotNull
   PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext);
@@ -363,6 +405,43 @@ public interface PyCallExpression extends PyCallSiteExpression {
      */
     public boolean isImplicitlyResolved() {
       return myImplicitlyResolved;
+    }
+  }
+
+  class PyRatedCallee extends RatedResolveResult {
+
+    public PyRatedCallee(@NotNull PyCallable callable, int rate) {
+      super(rate, callable);
+    }
+
+    @Override
+    @NotNull
+    public PyCallable getElement() {
+      //noinspection ConstantConditions
+      return (PyCallable)super.getElement();
+    }
+  }
+
+  class PyRatedMarkedCallee extends RatedResolveResult {
+
+    @NotNull
+    private final PyMarkedCallee myMarkedCallee;
+
+    public PyRatedMarkedCallee(@NotNull PyMarkedCallee markedCallee, int rate) {
+      super(rate, markedCallee.getCallable());
+      myMarkedCallee = markedCallee;
+    }
+
+    @NotNull
+    public PyMarkedCallee getMarkedCallee() {
+      return myMarkedCallee;
+    }
+
+    @Override
+    @NotNull
+    public PyCallable getElement() {
+      //noinspection ConstantConditions
+      return (PyCallable)super.getElement();
     }
   }
 }
