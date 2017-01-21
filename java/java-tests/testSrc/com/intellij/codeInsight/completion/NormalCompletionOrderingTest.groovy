@@ -706,7 +706,7 @@ class ContainerUtil extends ContainerUtilRt {
   }
 
   void testPreferExpectedMethodTypeArg() {
-    checkPreferredItems 0, 'String'
+    checkPreferredItems 0, 'String', 'Usage'
   }
 
   void testMethodStatisticsPerQualifierType() {
