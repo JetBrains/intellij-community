@@ -35,7 +35,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   private final Set<PostfixTemplate> templates;
 
 
-  public JavaPostfixTemplateProvider() throws IOException {
+  public JavaPostfixTemplateProvider() {
     templates = ContainerUtil.newHashSet(new AssertStatementPostfixTemplate(),
                                          new CastExpressionPostfixTemplate(),
                                          new ElseStatementPostfixTemplate(),
@@ -70,7 +70,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     loadTemplatesFromFile();
   }
 
-  private void loadTemplatesFromFile() throws IOException {
+  private void loadTemplatesFromFile() {
     File postfixTemplateFile = new File(System.getProperty("user.home") + "/.ideaPostfixTemplates");
 
     if (postfixTemplateFile.exists()) {
@@ -85,7 +85,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
           }
         }
       }
-      catch (FileNotFoundException ignored) {
+      catch (IOException ignored) {
       }
     }
   }
