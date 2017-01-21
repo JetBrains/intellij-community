@@ -27,8 +27,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
@@ -68,6 +76,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
                                          new LambdaPostfixTemplate());
 
     loadTemplatesFromFile();
+    combineTemplatesWithSameName();
   }
 
   private void loadTemplatesFromFile() {
@@ -86,6 +95,25 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         }
       }
       catch (IOException ignored) {
+      }
+    }
+  }
+
+  private void combineTemplatesWithSameName() {
+    // group templates by name
+    Map<String, List<PostfixTemplate>> key2templates = templates.stream().collect(
+      Collectors.groupingBy(
+        PostfixTemplate::getKey, toList()
+      )
+    );
+
+    // combine templates with the same name
+    templates.clear();
+    for (List<PostfixTemplate> theseTemplates : key2templates.values()) {
+      if (theseTemplates.size() == 1) {
+        templates.add(theseTemplates.get(0));
+      } else {
+        templates.add(new CombinedPostfixTemplate(theseTemplates.get(0).getKey(), theseTemplates));
       }
     }
   }
