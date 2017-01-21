@@ -118,11 +118,11 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
     val klass = instance.javaClass.kotlin
     val allKotlinProperties = LinkedHashSet(klass.memberProperties.filterIsInstance(KProperty::class.java))
 
-    var delegatedProperties = listOf<Property>() // See DelegationProperty doc
+    val delegatedProperties = ArrayList<Property>() // See DelegationProperty doc
     allKotlinProperties.filter { it.isAnnotated(DelegationProperty::class) }.forEach {
       val delegatedInstance = it.getter.call(instance)
       if (delegatedInstance != null) {
-        delegatedProperties = getProperties(delegatedInstance, annotationToFilterBy?.java, false).properties
+        delegatedProperties.addAll(getProperties(delegatedInstance, annotationToFilterBy?.java, false).properties)
         allKotlinProperties.remove(it)
       }
     }
