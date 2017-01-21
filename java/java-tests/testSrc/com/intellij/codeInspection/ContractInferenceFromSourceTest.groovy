@@ -563,6 +563,20 @@ class Foo {{
     assert c == ['!null, _ -> false', 'null, _ -> true']
   }
 
+  void "test no universal contradictory contracts for nullable method delegating to notNull"() {
+    def c = inferContracts("""
+  @org.jetbrains.annotations.Nullable 
+  Object delegating() {
+    return smth();
+  }
+  @org.jetbrains.annotations.NotNull 
+  Object smth() {
+    return this;
+  }
+""")
+    assert c == []
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
