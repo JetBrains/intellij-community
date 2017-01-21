@@ -1,5 +1,7 @@
 class Fun {
   public static final boolean isDebug = true;
+  public static final boolean isProduction = false;
+  public static final boolean isDebugInProduction = isDebug && isProduction;
 
   void foo() {
     if (isDebug) {

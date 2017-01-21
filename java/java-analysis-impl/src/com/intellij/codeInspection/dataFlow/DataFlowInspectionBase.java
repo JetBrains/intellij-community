@@ -402,7 +402,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         PsiExpression place = ((PushInstruction)instruction).getPlace();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
-        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && reportedAnchors.add(place)) {
+        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && !isFlagCheck(place) && reportedAnchors.add(place)) {
           reportConstantCondition(holder, visitor, place, (Boolean)constant);
         }
       }
@@ -739,15 +739,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isFlagCheck(PsiElement element) {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (!(statement instanceof PsiIfStatement)) return false;
+    PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiVariable.class);
+    PsiExpression topExpression = scope instanceof PsiIfStatement ? ((PsiIfStatement)scope).getCondition() :
+                                  scope instanceof PsiVariable ? ((PsiVariable)scope).getInitializer() :
+                                  null;
+    if (!PsiTreeUtil.isAncestor(topExpression, element, false)) return false;
 
-    PsiExpression condition = ((PsiIfStatement)statement).getCondition();
-    if (!PsiTreeUtil.isAncestor(condition, element, false)) return false;
+    if (isCompileTimeFlagReference(topExpression)) return true;
 
-    if (isCompileTimeFlagReference(condition)) return true;
-
-    Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(condition, PsiReferenceExpression.class);
+    Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(topExpression, PsiReferenceExpression.class);
     return ContainerUtil.or(refs, DataFlowInspectionBase::isCompileTimeFlagReference);
   }
 

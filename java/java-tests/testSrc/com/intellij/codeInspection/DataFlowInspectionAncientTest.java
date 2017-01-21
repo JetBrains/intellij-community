@@ -100,7 +100,6 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testForEachNPE() { doTest15(); }
   public void testArrayAccessNPE() { doTest15(); }
   public void testArrayAccessDoesntCancelAnalysis() { doTest15(); }
-  public void testCompileTimeConst() { doTest15(true); }
   public void testAutoboxing() { doTest15(true); }
   public void testUnboxingNPE() { doTest15(true); }
   public void testStrangeArrayIndexOutOfBounds() { doTest15(); }
