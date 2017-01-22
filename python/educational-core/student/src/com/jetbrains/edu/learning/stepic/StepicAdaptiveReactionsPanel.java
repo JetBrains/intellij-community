@@ -19,13 +19,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import static com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector.TOO_BORING_RECOMMENDATION_REACTION;
+import static com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector.TOO_HARD_RECOMMENDATION_REACTION;
+
 
 public class StepicAdaptiveReactionsPanel extends JPanel {
   private final ReactionButtonPanel myHardPanel;
   private final ReactionButtonPanel myBoringPanel;
   @NotNull private final Project myProject;
-  private static final int TOO_HARD_REACTION = 0;
-  private static final int TOO_BORING_REACTION = -1;
   private static final String HARD_REACTION = "Too Hard";
   private static final String BORING_REACTION = "Too Boring";
   private static final String SOLVED_TASK_TOOLTIP = "Reaction Disabled Due To Task Is Solved";
@@ -37,8 +38,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     setLayout(new GridBagLayout());
     setBackground(UIUtil.getTextFieldBackground());
 
-    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, TOO_HARD_REACTION);
-    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, TOO_BORING_REACTION);
+    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, TOO_HARD_RECOMMENDATION_REACTION);
+    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, TOO_BORING_RECOMMENDATION_REACTION);
     addFileListener();
 
     final GridBagConstraints c = new GridBagConstraints();
