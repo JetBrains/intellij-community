@@ -1,6 +1,9 @@
 <idea-plugin>
 
   <vendor>JetBrains</vendor>
+  <extensionPoints>
+    <extensionPoint name="images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
@@ -123,6 +126,12 @@
               icon="AllIcons.Actions.ShowImportStatements">
       </action>
       <separator/>
+      
+      <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
+              internal="true"
+              id="Images.Thumbnails.FilterByTheme"
+              description="Filter images by theme"/>
+      
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
               text="Hide"

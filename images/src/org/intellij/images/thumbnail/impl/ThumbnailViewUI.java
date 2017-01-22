@@ -41,6 +41,7 @@ import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.ui.ThumbnailComponent;
@@ -171,8 +172,11 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 Arrays.sort(virtualFiles, VIRTUAL_FILE_COMPARATOR);
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);
+                ThemeFilter filter = thumbnailView.getFilter();
                 for (VirtualFile virtualFile : virtualFiles) {
-                    model.addElement(virtualFile);
+                    if (filter == null || filter.accepts(virtualFile)) {
+                        model.addElement(virtualFile);
+                    }
                 }
                 if (model.size() > 0) {
                     list.setSelectedIndex(0);

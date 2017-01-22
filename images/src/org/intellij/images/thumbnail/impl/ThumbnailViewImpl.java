@@ -28,6 +28,7 @@ import icons.ImagesIcons;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private boolean recursive = false;
   private VirtualFile root = null;
   private final ThumbnailViewUI myThubmnailViewUi;
+  private ThemeFilter myFilter;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;
@@ -116,6 +118,17 @@ final class ThumbnailViewImpl implements ThumbnailView {
     if (isVisible() && !toolWindow.isActive()) {
       toolWindow.activate(null);
     }
+  }
+
+  @Override
+  public void setFilter(ThemeFilter filter) {
+    myFilter = filter;
+    updateUI();
+  }
+
+  @Override
+  public ThemeFilter getFilter() {
+    return myFilter;
   }
 
   public void setVisible(boolean visible) {
