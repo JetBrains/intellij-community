@@ -41,14 +41,16 @@ import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.TroveUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -67,7 +69,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Set<VirtualFile> myRoots;
 
-  @Nullable private final MyIndexStorage myIndexStorage;
+  @Nullable private final IndexStorage myIndexStorage;
+  @Nullable private final IndexDataGetter myDataGetter;
 
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController = new MySingleTaskController();
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
@@ -98,6 +101,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
 
     myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers));
+    if (myIndexStorage != null) {
+      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myFatalErrorsConsumer);
+    }
+    else {
+      myDataGetter = null;
+    }
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());
@@ -106,10 +115,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     Disposer.register(disposableParent, this);
   }
 
-  protected MyIndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
+  protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new MyIndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
-                                           () -> MyIndexStorage.cleanup(logId));
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
+                                           () -> IndexStorage.cleanup(logId));
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -359,32 +368,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Nullable
   @Override
-  public String getFullMessage(int index) {
-    if (myIndexStorage != null) {
-      try {
-        return myIndexStorage.messages.get(index);
-      }
-      catch (IOException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
-    if (myIndexStorage != null && myRoots.contains(root)) {
-      try {
-        return myIndexStorage.paths.getFileNames(path, commit);
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
-    }
-
-    return Collections.emptySet();
+  public IndexDataGetter getDataGetter() {
+    if (myIndexStorage == null) return null;
+    return myDataGetter;
   }
 
   @Override
@@ -401,22 +387,22 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public void dispose() {
   }
 
-  private static class MyIndexStorage {
+  static class IndexStorage {
+    private static final String INPUTS = "inputs";
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
     private static final int MESSAGES_VERSION = 0;
-    @NotNull private final PersistentSet<Integer> commits;
-    @NotNull private final PersistentMap<Integer, String> messages;
-    @NotNull private final VcsLogMessagesTrigramIndex trigrams;
-    @NotNull private final VcsLogUserIndex users;
-    @NotNull private final VcsLogPathsIndex paths;
-    private static final String INPUTS = "inputs";
+    @NotNull public final PersistentSet<Integer> commits;
+    @NotNull public final PersistentMap<Integer, String> messages;
+    @NotNull public final VcsLogMessagesTrigramIndex trigrams;
+    @NotNull public final VcsLogUserIndex users;
+    @NotNull public final VcsLogPathsIndex paths;
 
-    public MyIndexStorage(@NotNull String logId,
-                          @NotNull VcsUserRegistryImpl userRegistry,
-                          @NotNull Set<VirtualFile> roots,
-                          @NotNull FatalErrorHandler fatalErrorHandler,
-                          @NotNull Disposable parentDisposable)
+    public IndexStorage(@NotNull String logId,
+                        @NotNull VcsUserRegistryImpl userRegistry,
+                        @NotNull Set<VirtualFile> roots,
+                        @NotNull FatalErrorHandler fatalErrorHandler,
+                        @NotNull Disposable parentDisposable)
       throws IOException {
       Disposable disposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, disposable);

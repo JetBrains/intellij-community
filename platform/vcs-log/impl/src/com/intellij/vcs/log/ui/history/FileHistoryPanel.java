@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -62,6 +63,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final FileHistoryUi myUi;
 
   @NotNull private List<Change> mySelectedChanges = Collections.emptyList();
+  @NotNull private IndexDataGetter myIndexDataGetter;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
                           @NotNull VcsLogData logData,
@@ -69,6 +71,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                           @NotNull FilePath filePath) {
     myUi = ui;
     myLogData = logData;
+    myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
     myFilePath = filePath;
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack) {
       @Override
@@ -165,8 +168,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @NotNull
   private List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
-    Set<FilePath> fileNames =
-      myLogData.getIndex().getFileNames(myFilePath, myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot()));
+    Set<FilePath> fileNames = myIndexDataGetter.getFileNames(myFilePath,
+                                                             myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot()));
     if (myFilePath.isDirectory()) {
       return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
     }

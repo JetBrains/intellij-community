@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -93,10 +94,13 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
 
   @Nullable
   private String getCommitSubject(@NotNull Integer row) {
-    Integer id = myComponent.getModel().getIdAtRow(row);
-    String message = myIndex.getFullMessage(id);
-    if (message == null) return super.getElementText(row);
-    return IndexedDetails.getSubject(message);
+    IndexDataGetter dataGetter = myIndex.getDataGetter();
+    if (dataGetter != null) {
+      Integer id = myComponent.getModel().getIdAtRow(row);
+      String message = dataGetter.getFullMessage(id);
+      if (message != null) return IndexedDetails.getSubject(message);
+    }
+    return super.getElementText(row);
   }
 
   @Override

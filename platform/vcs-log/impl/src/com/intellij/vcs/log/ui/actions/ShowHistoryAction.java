@@ -70,6 +70,7 @@ public class ShowHistoryAction extends DumbAwareAction {
     VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
     presentation.setEnabledAndVisible(root != null &&
                                       dataManager != null &&
-                                      dataManager.getRoots().contains(root));
+                                      dataManager.getRoots().contains(root) &&
+                                      dataManager.getIndex().getDataGetter() != null);
   }
 }
