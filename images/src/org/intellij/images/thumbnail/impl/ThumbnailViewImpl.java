@@ -160,6 +160,30 @@ final class ThumbnailViewImpl implements ThumbnailView {
     return isVisible() && !ImageEditorActions.ACTION_PLACE.equals(place);
   }
 
+  @Override
+  public boolean isFileSizeVisible() {
+    return isVisible() && getUI().isFileSizeVisible();
+  }
+
+  @Override
+  public void setFileSizeVisible(boolean visible) {
+    if (isVisible()) {
+      getUI().setFileSizeVisible(visible);
+    }
+  }
+
+  @Override
+  public boolean isFileNameVisible() {
+    return isVisible() && getUI().isFileNameVisible();
+  }
+
+  @Override
+  public void setFileNameVisible(boolean visible) {
+    if (isVisible()) {
+      getUI().setFileNameVisible(visible);
+    }
+  }
+
   public void dispose() {
     // Dispose UI
     Disposer.dispose(getUI());

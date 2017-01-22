@@ -110,6 +110,18 @@
       </action>
       <separator/>
       <reference id="Images.ToggleTransparencyChessboard"/>
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
+              id="Images.Thumbnails.ToggleFileSize"
+              text="File Size"
+              description="Toggle whether to show the image size information"
+              icon="AllIcons.FileTypes.Any_type">
+      </action> 
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
+              id="Images.Thumbnails.ToggleFileName"
+              text="File Size"
+              description="Toggle whether to show the image name"
+              icon="AllIcons.Actions.ShowImportStatements">
+      </action>
       <separator/>
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"

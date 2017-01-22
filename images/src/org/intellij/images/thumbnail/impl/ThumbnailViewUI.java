@@ -113,6 +113,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setTransparencyChessboardCellSize(chessboardOptions.getCellSize());
             imageComponent.setTransparencyChessboardWhiteColor(chessboardOptions.getWhiteColor());
             imageComponent.setTransparencyChessboardBlankColor(chessboardOptions.getBlackColor());
+            imageComponent.setFileNameVisible(editorOptions.isFileNameVisible());
+            imageComponent.setFileSizeVisible(editorOptions.isFileSizeVisible());
 
             options.addPropertyChangeListener(optionsListener);
 
@@ -190,6 +192,28 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         createUI();
         cellRenderer.getImageComponent().setTransparencyChessboardVisible(visible);
         list.repaint();
+    }
+    
+    public void setFileNameVisible(boolean visible) {
+        createUI();
+        cellRenderer.getImageComponent().setFileNameVisible(visible);
+        list.repaint();
+    }
+    
+    public boolean isFileNameVisible() {
+        createUI();
+        return cellRenderer.getImageComponent().isFileNameVisible();
+    }
+    
+    public void setFileSizeVisible(boolean visible) {
+        createUI();
+        cellRenderer.getImageComponent().setFileSizeVisible(visible);
+        list.repaint();
+    }
+    
+    public boolean isFileSizeVisible() {
+        createUI();
+        return cellRenderer.getImageComponent().isFileSizeVisible();
     }
 
     public void setSelected(VirtualFile file, boolean selected) {
