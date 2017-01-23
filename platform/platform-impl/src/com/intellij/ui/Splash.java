@@ -47,7 +47,6 @@ public class Splash extends JDialog implements StartupProgress {
   private final ApplicationInfoEx myInfo;
   private int myProgressHeight;
   private Color myProgressColor = null;
-  private Color myProgressBackgroundColor = null;
   private int myProgressX;
   private int myProgressY;
   private float myProgress;
@@ -64,7 +63,6 @@ public class Splash extends JDialog implements StartupProgress {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
       myProgressHeight = appInfo.getProgressHeight();
       myProgressColor = appInfo.getProgressColor();
-      myProgressBackgroundColor = appInfo.getProgressBackgroundColor();
       myProgressX = appInfo.getProgressX();
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
@@ -147,11 +145,6 @@ public class Splash extends JDialog implements StartupProgress {
     }
     final int progressWidth = (int)(totalWidth * myProgress);
     final int width = progressWidth - myProgressLastPosition;
-    if (getProgressBackgroundColor() != null) {
-      g.setColor(getProgressBackgroundColor());
-      g.fillRect(getProgressX(), getProgressY(), totalWidth, getProgressHeight());
-    }
-
     g.setColor(color);
     g.fillRect(getProgressX(), getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
@@ -163,10 +156,6 @@ public class Splash extends JDialog implements StartupProgress {
 
   private Color getProgressColor() {
     return myProgressColor;
-  }
-
-  private Color getProgressBackgroundColor() {
-    return myProgressBackgroundColor;
   }
 
   private int getProgressHeight() {
