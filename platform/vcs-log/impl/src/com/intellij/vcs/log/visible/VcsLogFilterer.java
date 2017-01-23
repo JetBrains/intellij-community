@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class VcsLogFilterer {
+public class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
@@ -48,11 +48,11 @@ class VcsLogFilterer {
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsLogIndex myIndex;
 
-  VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                 @NotNull VcsLogStorage storage,
-                 @NotNull TopCommitsCache topCommitsDetailsCache,
-                 @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
-                 @NotNull VcsLogIndex index) {
+  public VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
+                        @NotNull VcsLogStorage storage,
+                        @NotNull TopCommitsCache topCommitsDetailsCache,
+                        @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
+                        @NotNull VcsLogIndex index) {
     myStorage = storage;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;

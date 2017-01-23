@@ -57,12 +57,10 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
-                                  @NotNull PermanentGraph.SortType initialSortType) {
+                                  @NotNull PermanentGraph.SortType initialSortType,
+                                  @NotNull VcsLogFilterer builder) {
     myLogData = logData;
-    myVisiblePackBuilder =
-      new VcsLogFilterer(myLogData.getLogProviders(), myLogData.getStorage(), myLogData.getTopCommitsCache(),
-                         myLogData.getCommitDetailsGetter(),
-                         myLogData.getIndex());
+    myVisiblePackBuilder = builder;
     myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 
