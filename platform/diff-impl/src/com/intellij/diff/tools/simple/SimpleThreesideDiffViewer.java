@@ -19,7 +19,6 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -29,6 +28,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
+import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
@@ -113,13 +113,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     try {
       indicator.checkCanceled();
 
-      final List<DiffContent> contents = myRequest.getContents();
-      final List<Document> documents = ContainerUtil.map(contents, content -> ((DocumentContent)content).getDocument());
-
-      final List<CharSequence> sequences = ReadAction.compute(() -> {
+      List<? extends DocumentContent> contents = getContents();
+      List<CharSequence> sequences = ReadAction.compute(() -> {
         indicator.checkCanceled();
-        return ContainerUtil.map(documents, Document::getImmutableCharSequence);
+        return ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence());
       });
+      List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsets::create);
 
       final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
 
@@ -127,9 +126,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                    comparisonPolicy, indicator);
 
-      List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
-        indicator.checkCanceled();
-        return ContainerUtil.map(lineFragments, (fragment) -> DiffUtil.getLineMergeType(fragment, documents, comparisonPolicy));
+      List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> {
+        return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, comparisonPolicy);
       });
 
       List<MergeInnerDifferences> innerFragments = null;
@@ -140,12 +138,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
           final MergeLineFragment fragment = lineFragments.get(i);
           final MergeConflictType conflictType = conflictTypes.get(i);
 
-          List<CharSequence> chunks = ReadAction.compute(() -> {
-            indicator.checkCanceled();
-            return ThreeSide.map(side -> {
-              if (!conflictType.isChange(side)) return null;
-              return getChunkContent(fragment, documents, side);
-            });
+          indicator.checkCanceled();
+          List<CharSequence> chunks = ThreeSide.map(side -> {
+            if (!conflictType.isChange(side)) return null;
+            return getChunkContent(fragment, sequences, lineOffsets, side);
           });
 
           innerFragments.add(DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator));
@@ -168,11 +164,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
   @Nullable
   private static CharSequence getChunkContent(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<Document> documents,
+                                              @NotNull List<CharSequence> sequences,
+                                              @NotNull List<LineOffsets> lineOffsets,
                                               @NotNull ThreeSide side) {
     int startLine = fragment.getStartLine(side);
     int endLine = fragment.getEndLine(side);
-    return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
+    if (startLine == endLine) return null;
+    return DiffUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
   }
 
   @NotNull

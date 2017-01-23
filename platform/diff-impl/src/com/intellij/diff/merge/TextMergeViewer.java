@@ -35,6 +35,7 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -387,18 +388,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         indicator.checkCanceled();
 
         List<DocumentContent> contents = myMergeRequest.getContents();
-        List<Document> documents = ContainerUtil.map(contents, DocumentContent::getDocument);
         List<CharSequence> sequences = ReadAction.compute(() -> {
-          return ContainerUtil.map(documents, Document::getImmutableCharSequence);
+          indicator.checkCanceled();
+          return ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence());
         });
+        List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsets::create);
 
         ComparisonManager manager = ComparisonManager.getInstance();
         List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                      ComparisonPolicy.DEFAULT, indicator);
 
-        List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
-          indicator.checkCanceled();
-          return ContainerUtil.map(lineFragments, (fragment -> DiffUtil.getLineMergeType(fragment, documents, ComparisonPolicy.DEFAULT)));
+        List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> {
+          return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT);
         });
 
         return apply(lineFragments, conflictTypes);
@@ -1422,7 +1423,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
                                                 @NotNull ThreeSide side) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
-      return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
+      if (startLine == endLine) return null;
+      return DiffUtil.getLinesContent(side.select(documents), startLine, endLine);
     }
   }
 }
