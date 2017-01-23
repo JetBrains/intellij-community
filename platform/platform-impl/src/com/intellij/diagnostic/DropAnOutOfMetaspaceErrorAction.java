@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnOutOfPermGenMemoryErrorAction extends DumbAwareAction {
-  public DropAnOutOfPermGenMemoryErrorAction() {
-    super ("Drop an perm gen OutOfMemoryError");
+public class DropAnOutOfMetaspaceErrorAction extends DumbAwareAction {
+  public DropAnOutOfMetaspaceErrorAction() {
+    super ("Drop an OutOfMemoryError in Metaspace");
   }
 
   public void actionPerformed(AnActionEvent e) {
-    throw new OutOfMemoryError("foo PermGen foo");
+    throw new OutOfMemoryError("foo Metaspace foo");
   }
 }

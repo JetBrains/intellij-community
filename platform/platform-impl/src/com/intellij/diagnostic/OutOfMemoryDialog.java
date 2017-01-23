@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Arrays;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   private final MemoryKind myMemoryKind;
@@ -44,10 +43,10 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JTextField myHeapSizeField;
   private JBLabel myHeapUnitsLabel;
   private JBLabel myHeapCurrentValueLabel;
-  private JBLabel myPermGenSizeLabel;
-  private JTextField myPermGenSizeField;
-  private JBLabel myPermGenUnitsLabel;
-  private JBLabel myPermGenCurrentValueLabel;
+  private JBLabel myMetaspaceSizeLabel;
+  private JTextField myMetaspaceSizeField;
+  private JBLabel myMetaspaceUnitsLabel;
+  private JBLabel myMetaspaceCurrentValueLabel;
   private JBLabel myCodeCacheSizeLabel;
   private JTextField myCodeCacheSizeField;
   private JBLabel myCodeCacheUnitsLabel;
@@ -75,11 +74,9 @@ public class OutOfMemoryDialog extends DialogWrapper {
     else {
       mySettingsFileHintLabel.setVisible(false);
       myHeapSizeField.setEnabled(false);
-      myPermGenSizeField.setEnabled(false);
+      myMetaspaceSizeField.setEnabled(false);
       myCodeCacheSizeField.setEnabled(false);
     }
-
-    Arrays.asList(myPermGenSizeLabel, myPermGenSizeField, myPermGenUnitsLabel, myPermGenCurrentValueLabel).forEach(c -> c.setVisible(false));
 
     myContinueAction = new DialogWrapperAction(DiagnosticBundle.message("diagnostic.out.of.memory.continue")) {
       @Override
@@ -107,7 +104,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     };
 
     configControls(MemoryKind.HEAP, myHeapSizeLabel, myHeapSizeField, myHeapUnitsLabel, myHeapCurrentValueLabel);
-    configControls(MemoryKind.PERM_GEN, myPermGenSizeLabel, myPermGenSizeField, myPermGenUnitsLabel, myPermGenCurrentValueLabel);
+    configControls(MemoryKind.METASPACE, myMetaspaceSizeLabel, myMetaspaceSizeField, myMetaspaceUnitsLabel, myMetaspaceCurrentValueLabel);
     configControls(MemoryKind.CODE_CACHE, myCodeCacheSizeLabel, myCodeCacheSizeField, myCodeCacheUnitsLabel, myCodeCacheCurrentValueLabel);
 
     init();
@@ -138,6 +135,12 @@ public class OutOfMemoryDialog extends DialogWrapper {
     try {
       int heapSize = Integer.parseInt(myHeapSizeField.getText());
       VMOptions.writeOption(MemoryKind.HEAP, heapSize);
+    }
+    catch (NumberFormatException ignored) { }
+
+    try {
+      int codeCacheSize = Integer.parseInt(myMetaspaceSizeField.getText());
+      VMOptions.writeOption(MemoryKind.METASPACE, codeCacheSize);
     }
     catch (NumberFormatException ignored) { }
 
@@ -180,7 +183,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
   @SuppressWarnings("Duplicates")
   private void enableControls(boolean enabled) {
     myHeapSizeField.setEnabled(enabled);
-    myPermGenSizeField.setEnabled(enabled);
+    myMetaspaceSizeField.setEnabled(enabled);
     myCodeCacheSizeField.setEnabled(enabled);
     myShutdownAction.setEnabled(enabled);
     myContinueAction.setEnabled(enabled);
@@ -201,7 +204,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField :
+    return myMemoryKind == MemoryKind.METASPACE ? myMetaspaceSizeField :
            myMemoryKind == MemoryKind.CODE_CACHE ? myCodeCacheSizeField :
            myHeapSizeField;
   }
