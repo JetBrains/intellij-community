@@ -20,28 +20,25 @@ import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 public class DfsUtil {
-  public DfsUtil() {
-  }
-
   public interface NextNode {
     int NODE_NOT_FOUND = -1;
 
     int fun(int currentNode);
   }
 
-  public void nodeDfsIterator(int startRowIndex, @NotNull NextNode nextNodeFun) {
-    IntStack myStack = new IntStack();
-    myStack.push(startRowIndex);
+  public static void walk(int startRowIndex, @NotNull NextNode nextNodeFun) {
+    IntStack stack = new IntStack();
+    stack.push(startRowIndex);
 
-    while (!myStack.empty()) {
-      int nextNode = nextNodeFun.fun(myStack.peek());
+    while (!stack.empty()) {
+      int nextNode = nextNodeFun.fun(stack.peek());
       if (nextNode != NextNode.NODE_NOT_FOUND) {
-        myStack.push(nextNode);
+        stack.push(nextNode);
       }
       else {
-        myStack.pop();
+        stack.pop();
       }
     }
-    myStack.clear();
+    stack.clear();
   }
 }

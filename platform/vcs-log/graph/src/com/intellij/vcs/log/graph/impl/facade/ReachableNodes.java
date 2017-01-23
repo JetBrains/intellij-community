@@ -34,7 +34,6 @@ import java.util.Set;
 
 public class ReachableNodes {
   @NotNull private final LiteLinearGraph myGraph;
-  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
   @NotNull private final Flags myTempFlags;
 
   public ReachableNodes(@NotNull LiteLinearGraph graph) {
@@ -82,7 +81,7 @@ public class ReachableNodes {
         myTempFlags.set(start, true);
         consumer.consume(start);
 
-        myDfsUtil.nodeDfsIterator(start, currentNode -> {
+        DfsUtil.walk(start, currentNode -> {
           for (int downNode : myGraph.getNodes(currentNode, goDown ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
             if (!myTempFlags.get(downNode)) {
               myTempFlags.set(downNode, true);
