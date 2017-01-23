@@ -192,7 +192,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    def foo(self):\n" +
                                                        "        pass";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String WRAP_SETTINGS_PREVIEW = "from module import (foo, bar, baz, quux,)\n" +
+  private static String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
                                                 "\n" +
                                                 "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
                                                 "\n" +
