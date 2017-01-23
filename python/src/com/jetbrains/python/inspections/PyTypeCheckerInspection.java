@@ -117,8 +117,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyClassType classType = as(returnType, PyClassType.class);
 
       if (function.isAsync()) {
-        if (genericType != null && PyNames.FAKE_COROUTINE.equals(genericType.getName())) {
-          return genericType.getIteratedItemType();
+        if (genericType != null && classType != null && PyTypingTypeProvider.COROUTINE.equals(classType.getClassQName())) {
+          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
         }
         // Async generators are not allowed to return anything anyway
         return null;

@@ -402,8 +402,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
-    final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);
-    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Collections.singletonList(returnType)) : null;
+    final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.COROUTINE),
+                                                                           PyResolveImportUtil.fromFoothold(this)), PyClass.class);
+    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
   }
 
   public PyFunction asMethod() {

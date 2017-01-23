@@ -145,11 +145,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
       final String classQName = ((PyClassLikeType)type).getClassQName();
       final PyCollectionType collectionType = (PyCollectionType)type;
-      if (PyTypingTypeProvider.GENERATOR.equals(classQName)) {
+      if (PyTypingTypeProvider.GENERATOR.equals(classQName) || PyTypingTypeProvider.COROUTINE.equals(classQName)) {
         return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 2, null);
       }
-      else if (PyNames.FAKE_COROUTINE.equals(classQName) ||
-               type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
+      else if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
         return collectionType.getIteratedItemType();
       }
     }
