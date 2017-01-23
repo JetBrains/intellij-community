@@ -42,14 +42,23 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
             breakpoints = get_breakpoints_for_file(filepath)
             if breakpoints:
                 was_break = False
-                for offset, line in dis.findlinestarts(<object> frame.f_code):
+                breakpoints_to_update = []
+                code_object = <object> frame.f_code
+                for offset, line in dis.findlinestarts(code_object):
                     if line in breakpoints:
-                        was_break = True
-                        new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
-                        Py_INCREF(new_code)
-                        frame.f_code = <PyCodeObject *> new_code
+                        breakpoint = breakpoints[line]
+                        if code_object not in breakpoint.code_objects:
+                            # This check is needed for generator functions, because after each yield the new frame is created
+                            # but the former code object is used
+                            breakpoints_to_update.append(breakpoint)
+                            new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                            Py_INCREF(new_code)
+                            frame.f_code = <PyCodeObject *> new_code
+                            was_break = True
                 if was_break:
                     update_globals_dict(<object> frame.f_globals)
+                    for bp in breakpoints_to_update:
+                        bp.code_objects.append(<object> frame.f_code)
             additional_info.is_tracing = False
     return _PyEval_EvalFrameDefault(frame, exc)
 
