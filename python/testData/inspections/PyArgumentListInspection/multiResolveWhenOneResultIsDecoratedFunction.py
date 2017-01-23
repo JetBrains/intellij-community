@@ -4,6 +4,7 @@ class C1:
 
 
 class C2:
+    @decorated
     def foo(self, x, y):
         return self
 
@@ -15,7 +16,7 @@ def f():
     pass
 
 
-f().foo()  # XXX: Ignore this false negative as for now
+f().foo()
 f().foo(1)
 f().foo(1, 2)
-f().foo(1, 2, 3)  # XXX: Ignore this false negative as well
+f().foo(1, 2, 3)

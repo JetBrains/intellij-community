@@ -280,8 +280,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return an object which contains callable and mappings.
    * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallExpression)} if the callee cannot be resolved.
+   * @deprecated Use {@link PyCallExpression#multiMapArguments(PyResolveContext, int)} instead.
+   * This method will be removed in 2018.1.
    */
   @NotNull
+  @Deprecated
   default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
     return Optional
       .of(multiMapArguments(resolveContext, implicitOffset))
