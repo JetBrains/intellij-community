@@ -1737,7 +1737,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @NotNull
-  CaptionPanel getTitle() {
+  public CaptionPanel getTitle() {
     return myCaption;
   }
 
@@ -1889,7 +1889,7 @@ public class AbstractPopup implements JBPopup {
     return location;
   }
 
-  private boolean isBusy() {
+  protected boolean isBusy() {
     return myResizeListener != null && myResizeListener.isBusy() || myMoveListener != null && myMoveListener.isBusy();
   }
 
