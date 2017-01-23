@@ -183,6 +183,19 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(10)\n");
   }
 
+  public void testParameterizedClassWithConstructorNone() {
+    doTest("C[int]",
+           "from typing import Generic, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C(Generic[T]):\n" +
+           "    def __init__(self, x: T) -> None:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(10)\n");
+  }
+
   public void testParameterizedClassMethod() {
     doTest("int",
            "from typing import Generic, TypeVar\n" +

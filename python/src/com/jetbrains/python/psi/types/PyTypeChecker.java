@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
@@ -23,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import one.util.streamex.StreamEx;
@@ -30,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -515,26 +519,31 @@ public class PyTypeChecker {
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
-    // Unify generics in constructor
     if (qualifierType != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      // TODO: Resolve to __new__ as well
-      final List<? extends RatedResolveResult> results = qualifierType.resolveMember(PyNames.INIT, null, AccessDirection.READ,
-                                                                                     resolveContext);
-      if (results != null && !results.isEmpty()) {
-        final PsiElement init = results.get(0).getElement();
-        if (init instanceof PyTypedElement) {
-          final PyType initType = context.getType((PyTypedElement)init);
-          if (initType instanceof PyCallableType) {
-            final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
-            if (initReturnType != null) {
-              match(initReturnType, qualifierType, context, substitutions);
-            }
+      for (PyClassType type : toPossibleClassTypes(qualifierType)) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType genericType = provider.getGenericType(type.getPyClass(), context);
+          if (genericType != null) {
+            match(genericType, qualifierType, context, substitutions);
+            break;
           }
         }
       }
     }
     return substitutions;
+  }
+
+  @NotNull
+  private static List<PyClassType> toPossibleClassTypes(@NotNull PyType type) {
+    final PyClassType classType = as(type, PyClassType.class);
+    if (classType != null) {
+      return Collections.singletonList(classType);
+    }
+    final PyUnionType unionType = as(type, PyUnionType.class);
+    if (unionType != null) {
+      return StreamEx.of(unionType.getMembers()).nonNull().flatMap(t -> toPossibleClassTypes(t).stream()).toList();
+    }
+    return Collections.emptyList();
   }
 
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
