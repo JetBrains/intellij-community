@@ -364,7 +364,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     }
   }
 
-  private void stateChanged() {
+  void stateChanged() {
     if (Registry.is("store.track.module.root.manager.changes", false)) {
       LOG.error("ModelRootManager state changed");
     }
