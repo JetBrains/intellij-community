@@ -20,7 +20,7 @@ import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionProcessor;
 import com.intellij.conversion.RunManagerSettings;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.PythonTestOldConfigurationType;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jdom.Element;
 
 /**
@@ -50,7 +50,7 @@ public class PythonTestRunConfigurationsConverter extends ConversionProcessor<Ru
       final String confType = element.getAttributeValue("type");
       final String factoryName = ourTypeToFactoryNameMap.get(confType);
       if (factoryName != null) {
-        element.setAttribute("type", PythonTestOldConfigurationType.ID);
+        element.setAttribute("type", PythonTestConfigurationType.ID);
         element.setAttribute("factoryName", factoryName);
       }
     }

@@ -24,7 +24,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestRunConfiguration extends
-                                            AbstractPythonOldTestRunConfiguration<PythonUnitTestRunConfiguration>
+                                            AbstractPythonLegacyTestRunConfiguration<PythonUnitTestRunConfiguration>
                                               implements PythonUnitTestRunConfigurationParams {
   private boolean myIsPureUnittest = true;
   protected String myTitle = "Unittest";

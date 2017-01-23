@@ -17,7 +17,7 @@ package com.jetbrains.python.testing.unittest;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
@@ -45,7 +45,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
 
     final ActionListener testTypeListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myIsPureUnittest.setVisible(myTestRunConfigurationForm.getTestType() != AbstractPythonOldTestRunConfiguration.TestType.TEST_FUNCTION);
+        myIsPureUnittest.setVisible(myTestRunConfigurationForm.getTestType() != AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FUNCTION);
       }
     };
     myTestRunConfigurationForm.addTestTypeListener(testTypeListener);

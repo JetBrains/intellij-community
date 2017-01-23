@@ -52,7 +52,7 @@ import java.io.File;
  * For new style see {@link com.jetbrains.python.testing.universalTests}
  * User: catherine
  */
-public abstract class AbstractPythonOldTestRunConfiguration<T extends AbstractPythonTestRunConfiguration<T>>
+public abstract class AbstractPythonLegacyTestRunConfiguration<T extends AbstractPythonTestRunConfiguration<T>>
   extends AbstractPythonTestRunConfiguration<T>
   implements AbstractPythonRunConfigurationParams,
              AbstractPythonTestRunConfigurationParams,
@@ -66,7 +66,7 @@ public abstract class AbstractPythonOldTestRunConfiguration<T extends AbstractPy
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
-  protected AbstractPythonOldTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
+  protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
   }
 
@@ -214,7 +214,7 @@ public abstract class AbstractPythonOldTestRunConfiguration<T extends AbstractPy
     }
   }
 
-  public boolean compareSettings(AbstractPythonOldTestRunConfiguration cfg) {
+  public boolean compareSettings(AbstractPythonLegacyTestRunConfiguration cfg) {
     if (cfg == null) return false;
 
     if (getTestType() != cfg.getTestType()) return false;
