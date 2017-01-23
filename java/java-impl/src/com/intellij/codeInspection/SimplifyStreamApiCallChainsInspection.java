@@ -32,6 +32,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -124,6 +125,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
                                "!" + psiClass.getName() + (argNegated ? ".anyMatch(x -> !(...))" : ".anyMatch(...)"),
                                                           argNegated ? ALL_MATCH_METHOD : NONE_MATCH_METHOD));
           }
+          handleBooleanIdentity(methodCall);
         }
         else if (isStreamCall(method, NONE_MATCH_METHOD, true)) {
           if(isParentNegated(methodCall)) {
@@ -132,6 +134,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if(isArgumentLambdaNegated(methodCall)) {
             registerMatchFix(methodCall, new SimplifyMatchNegationFix(psiClass.getName()+".noneMatch(x -> !(...))", ALL_MATCH_METHOD));
           }
+          handleBooleanIdentity(methodCall);
         }
         else if (isStreamCall(method, ALL_MATCH_METHOD, true)) {
           if(isArgumentLambdaNegated(methodCall)) {
@@ -140,11 +143,33 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
                              new SimplifyMatchNegationFix((parentNegated ? "!" : "") + psiClass.getName() + ".allMatch(x -> !(...))",
                                                           parentNegated ? ANY_MATCH_METHOD : NONE_MATCH_METHOD));
           }
+          handleBooleanIdentity(methodCall);
         }
         else {
           handleMapToObj(methodCall);
           handleIndexedIteration(methodCall);
           handleStreamForEach(methodCall, method);
+        }
+      }
+
+      private void handleBooleanIdentity(PsiMethodCallExpression call) {
+        PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+        if (nameElement == null) return;
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length != 1 || !isBooleanIdentity(args[0])) return;
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        if (!(qualifier instanceof PsiMethodCallExpression)) return;
+        PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression)qualifier;
+        if (MethodCallUtils.isCallToMethod(qualifierCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, null,
+                                           "map", new PsiType[]{null})) {
+          PsiExpression[] qualifierArgs = qualifierCall.getArgumentList().getExpressions();
+          if(qualifierArgs.length != 1) return;
+          PsiExpression qualifierArg = qualifierArgs[0];
+
+          if(canBePredicate(qualifierArg) != ThreeState.NO) {
+            holder.registerProblem(nameElement, "Can be merged with previous 'map' call",
+                                   new SimplifyCallChainFix(new RemoveBooleanIdentityFix()));
+          }
         }
       }
 
@@ -344,6 +369,54 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         }
       }
     };
+  }
+
+  /**
+   * Returns yes if expression can be used as j.u.f.Predicate, no if cannot,
+   * unsure if can be used as Predicate after wrapping with (expression)::apply.
+   *
+   * @param expression expression to test
+   * @return yes, no or unsure
+   */
+  @NotNull
+  private static ThreeState canBePredicate(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if(expression instanceof PsiFunctionalExpression) return ThreeState.YES;
+    if(expression == null) return ThreeState.NO;
+    PsiType type = expression.getType();
+    PsiType inType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, 0, false);
+    if(inType == null) return ThreeState.NO;
+    Project project = expression.getProject();
+    PsiClass predicateClass =
+      JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, expression.getResolveScope());
+    if(predicateClass == null) return ThreeState.NO;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiType wantedType = factory.createType(predicateClass, inType);
+    PsiExpression copy = factory.createExpressionFromText(expression.getText(), expression);
+    PsiType copyType = copy.getType();
+    if(copyType != null && wantedType.isAssignableFrom(copyType)) return ThreeState.YES;
+    PsiMethodReferenceExpression methodRef =
+      (PsiMethodReferenceExpression)factory.createExpressionFromText("(" + expression.getText() + ")::apply", expression);
+    PsiType methodRefType = methodRef.getType();
+    if(methodRefType != null && wantedType.isAssignableFrom(methodRefType)) return ThreeState.UNSURE;
+    return ThreeState.NO;
+  }
+
+  private static boolean isBooleanIdentity(PsiExpression arg) {
+    arg = PsiUtil.skipParenthesizedExprDown(arg);
+    if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN,
+                                                          "booleanValue", PsiType.EMPTY_ARRAY) ||
+        FunctionalExpressionUtils.isFunctionalReferenceTo(arg, CommonClassNames.JAVA_LANG_BOOLEAN, null,
+                                                          "valueOf", PsiType.BOOLEAN)) {
+      return true;
+    }
+    if (arg instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+      PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+      PsiParameterList parameters = lambda.getParameterList();
+      return parameters.getParametersCount() == 1 && ExpressionUtils.isReferenceTo(body, parameters.getParameters()[0]);
+    }
+    return false;
   }
 
   @Nullable
@@ -1131,6 +1204,38 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       return CodeStyleManager.getInstance(project).reformat(result);
+    }
+  }
+
+  private static class RemoveBooleanIdentityFix implements CallChainFix {
+    @Override
+    public String getName() {
+      return "Merge with previous 'map' call";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, PsiElement element) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (call == null) return;
+      PsiMethodCallExpression qualifier = ObjectUtils
+        .tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
+      if (qualifier == null) return;
+      String name = call.getMethodExpression().getReferenceName();
+      if (name == null) return;
+      PsiExpression[] args = qualifier.getArgumentList().getExpressions();
+      if (args.length == 1) {
+        PsiExpression arg = args[0];
+        PsiType argType = arg.getType();
+        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(argType);
+        if (canBePredicate(arg) == ThreeState.UNSURE && method != null) {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+          String text = ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + "::" + method.getName();
+          arg.replace(factory.createExpressionFromText(text, arg));
+        }
+      }
+      qualifier.getMethodExpression().handleElementRename(name);
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
     }
   }
 }
