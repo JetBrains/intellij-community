@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class GroovyFileIconProvider implements FileIconProvider {
       final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
       icon = typeDefinitions.length > 0
              ? typeDefinitions[0].getIcon(flags)
-             : JetgroovyIcons.Groovy.Groovy_16x16;
+             : JetgroovyIcons.Groovy.GroovyFile;
     }
     else {
       icon = JetgroovyIcons.Groovy.Groovy_outsideSources;
