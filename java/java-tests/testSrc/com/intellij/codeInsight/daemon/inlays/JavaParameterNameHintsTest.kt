@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.inlays
 import com.intellij.codeInsight.hints.JavaInlayHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 
 class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
 
@@ -235,10 +234,6 @@ public class CharSymbol {
   }
 
   fun `test inline literal arguments with crazy settings`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
@@ -288,10 +283,6 @@ public class Test {
   }
 
   fun `test hints for generic arguments`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 
 class QList<E> {
