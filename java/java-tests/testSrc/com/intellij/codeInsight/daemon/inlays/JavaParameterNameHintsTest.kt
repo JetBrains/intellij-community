@@ -584,7 +584,7 @@ class Key {
 class Test {
   void test() {
     xxx(<hint text="followTheSum"/>100);
-    check(<hint text="isShow">1 + 1);
+    check(<hint text="isShow"/>1 + 1);
     check(<hint text="isShow"/>1 + 1 + 1);
     yyy(<hint text="followTheSum"/>200);
   }
