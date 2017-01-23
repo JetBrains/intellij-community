@@ -18,7 +18,6 @@ package com.intellij.util.net.ssl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +41,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -69,7 +67,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   };
 
-  public final ThreadLocal<UntrustedCertificateStrategy> untrustedCertificateStrategy =
+  final ThreadLocal<UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
     ThreadLocal.withInitial(() -> UntrustedCertificateStrategy.ASK_USER);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
@@ -113,7 +111,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] certificates, String s) throws CertificateException {
-    boolean askUser = untrustedCertificateStrategy.get() == UntrustedCertificateStrategy.ASK_USER;
+    boolean askUser = myUntrustedCertificateStrategy.get() == UntrustedCertificateStrategy.ASK_USER;
     checkServerTrusted(certificates, s, true, askUser);
   }
 
