@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -180,7 +181,10 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       if (m != null) dirtyModules.add(m);
     }
     for (Document document : myPsiDocManager.getUncommittedDocuments()) {
-      final Module m = getModuleForSourceContentFile(ObjectUtils.notNull(myPsiDocManager.getPsiFile(document)).getVirtualFile());
+      final PsiFile psiFile = ObjectUtils.notNull(myPsiDocManager.getPsiFile(document));
+      final VirtualFile file = psiFile.getVirtualFile();
+      if (file == null) continue;
+      final Module m = getModuleForSourceContentFile(file);
       if (m != null) dirtyModules.add(m);
     }
     return dirtyModules;
