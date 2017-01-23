@@ -263,7 +263,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("__asyncgenerator[int, Any]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen()"));
@@ -271,7 +271,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncIterator[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen().__aiter__()"));

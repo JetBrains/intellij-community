@@ -25,6 +25,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -142,10 +143,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   @Nullable
   private static PyType getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
-      // TODO: Understand typing.Generator as well
       final String classQName = ((PyClassLikeType)type).getClassQName();
       final PyCollectionType collectionType = (PyCollectionType)type;
-      if (PyNames.FAKE_GENERATOR.equals(classQName)) {
+      if (PyTypingTypeProvider.GENERATOR.equals(classQName)) {
         return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 2, null);
       }
       else if (PyNames.FAKE_COROUTINE.equals(classQName) ||

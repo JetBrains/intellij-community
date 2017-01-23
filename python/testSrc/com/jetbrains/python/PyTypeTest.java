@@ -535,7 +535,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorFunctionType() {
-    doTest("__generator[str, Any, int]",
+    doTest("Generator[str, Any, int]",
            "def f():\n" +
            "    yield 'foo'\n" +
            "    return 0\n" +
@@ -550,7 +550,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7021
   public void testGeneratorComprehensionType() {
-    doTest("__generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
+    doTest("Generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
   }
 
   // PY-7021

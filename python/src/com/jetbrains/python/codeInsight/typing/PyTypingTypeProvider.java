@@ -50,6 +50,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author vlan
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
+  public static final String GENERATOR = "typing.Generator";
+  public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
+
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
   private static final ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()

@@ -29,6 +29,7 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
@@ -123,8 +124,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         return null;
       }
       else if (function.isGenerator()) {
-        if (genericType != null && classType != null &&
-            (PyNames.FAKE_GENERATOR.equals(genericType.getName()) || "typing.Generator".equals(classType.getClassQName()))) {
+        if (genericType != null && classType != null && PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
           // Generator's type is parametrized as [YieldType, SendType, ReturnType]
           return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
         }
