@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/** $Id$ */
-
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
