@@ -28,11 +28,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -68,18 +65,8 @@ public class CleanupWorker {
             final File path = new File(root.getPath());
 
             indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path));
-            ProgressTracker handler = new ProgressTracker() {
-              @Override
-              public void consume(ProgressEvent event) throws SVNException {
-              }
 
-              @Override
-              public void checkCancelled() throws SVNCancelException {
-                if (indicator.isCanceled()) throw new SVNCancelException();
-              }
-            };
-
-            vcs.getFactory(path).createCleanupClient().cleanup(path, handler);
+            vcs.getFactory(path).createCleanupClient().cleanup(path, new SvnProgressCanceller(indicator));
           }
           catch (VcsException ex) {
             exceptions.add(Pair.create(ex, currentRoot));
