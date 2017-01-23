@@ -128,7 +128,7 @@ public class RecentProjectPanel extends JPanel {
 
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
-                if (((ReopenProjectAction)selectedAction).IsRemoved) {
+                if (((ReopenProjectAction)selectedAction).isRemoved()) {
                   ListUtil.removeSelectedItems(myList);
                 }
               }
