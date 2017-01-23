@@ -42,10 +42,6 @@ public class CleanupAction extends BasicAction {
     return SvnStatusUtil.isUnderControl(project, file);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   @Override
   protected void execute(final Project project,
                          final SvnVcs activeVcs, final VirtualFile file, final DataContext context, final AbstractVcsHelper helper)

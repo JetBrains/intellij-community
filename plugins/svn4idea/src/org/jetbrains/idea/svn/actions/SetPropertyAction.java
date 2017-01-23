@@ -49,10 +49,6 @@ public class SetPropertyAction extends BasicAction {
     return (! FileStatus.IGNORED.equals(status)) && (! FileStatus.UNKNOWN.equals(status));
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     batchPerform(project, activeVcs, new VirtualFile[]{file}, context);

@@ -47,10 +47,6 @@ public class ResolveAction extends BasicAction {
     return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException {
     batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
   }

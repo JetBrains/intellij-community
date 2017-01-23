@@ -65,10 +65,6 @@ public class CreateBranchOrTagAction extends BasicAction {
     return SvnStatusUtil.isUnderControl(project, file);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(project, true, new File(file.getPath()));

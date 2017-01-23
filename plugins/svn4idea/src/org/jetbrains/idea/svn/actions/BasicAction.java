@@ -46,7 +46,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     if (LOG.isDebugEnabled() && files != null) {
       LOG.debug("files='" + Arrays.asList(files) + "'");
     }
-    if ((files == null || files.length == 0) && needsFiles()) return;
+    if (files == null || files.length == 0) return;
 
     final SvnVcs vcs = SvnVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
@@ -113,13 +113,6 @@ public abstract class BasicAction extends AnAction implements DumbAware {
       return;
     }
 
-
-    if (!needsFiles()) {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-      return;
-    }
-
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null || files.length == 0) {
       presentation.setEnabled(false);
@@ -171,7 +164,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   }
 
   protected boolean needsAllFiles() {
-    return needsFiles();
+    return true;
   }
 
   protected void execute(Project project,
@@ -226,8 +219,6 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   protected abstract String getActionName(AbstractVcs vcs);
 
   protected abstract boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file);
-
-  protected abstract boolean needsFiles();
 
   protected abstract void perform(Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException;
 

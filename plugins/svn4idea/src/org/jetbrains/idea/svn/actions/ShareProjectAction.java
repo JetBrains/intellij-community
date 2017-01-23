@@ -84,10 +84,6 @@ public class ShareProjectAction extends BasicAction {
     return false;
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   public static boolean share(final Project project, final VirtualFile file) throws VcsException {
     return performImpl(project, SvnVcs.getInstance(project), file);
   }

@@ -44,10 +44,6 @@ public class RelocateAction extends BasicAction {
     return SvnStatusUtil.isUnderControl(project, file);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
     Info info = activeVcs.getInfo(file);
     assert info != null;

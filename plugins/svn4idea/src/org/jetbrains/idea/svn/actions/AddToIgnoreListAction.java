@@ -68,10 +68,6 @@ public class AddToIgnoreListAction extends BasicAction {
     return true;
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
   protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
       throws VcsException {
 
