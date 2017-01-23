@@ -150,8 +150,7 @@
     <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
     <xdebugger.localAttachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.PythonTestOldConfigurationType"/>
-    <configurationType implementation="com.jetbrains.python.testing.universalTests.PyUniversalTestsConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
 
     <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>

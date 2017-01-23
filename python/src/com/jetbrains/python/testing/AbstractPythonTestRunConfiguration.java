@@ -46,7 +46,7 @@ public abstract class AbstractPythonTestRunConfiguration<T extends AbstractPytho
   }
 
   /**
-   * Create test spec (string to be passed to runner, probably glued with {@link AbstractPythonOldTestRunConfiguration#TEST_NAME_PARTS_SPLITTER})
+   * Create test spec (string to be passed to runner, probably glued with {@link AbstractPythonLegacyTestRunConfiguration#TEST_NAME_PARTS_SPLITTER})
    *
    * @param location   test location as reported by runner
    * @param failedTest failed test

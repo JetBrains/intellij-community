@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.PythonTestOldConfigurationProducer;
+import com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -43,13 +43,13 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
   @NotNull
   private final String myTestRunnerName;
   @NotNull
-  private final Class<? extends PythonTestOldConfigurationProducer> myProducer;
+  private final Class<? extends PythonTestLegacyConfigurationProducer> myProducer;
 
   /**
    * @param producer       class of configuration producer to check
    * @param testRunnerName test runner name (to set as default to make sure producer launched)
    */
-  CreateConfigurationTestTask(@NotNull final Class<? extends PythonTestOldConfigurationProducer> producer,
+  CreateConfigurationTestTask(@NotNull final Class<? extends PythonTestLegacyConfigurationProducer> producer,
                               @NotNull final String testRunnerName) {
     super("/testRunner/env/createConfigurationTest/");
     myProducer = producer;
@@ -74,7 +74,7 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
 
   private void checkConfigurationCreatedFrom(@NotNull final PsiElement element) {
 
-    final PythonTestOldConfigurationProducer producer = createProducer();
+    final PythonTestLegacyConfigurationProducer producer = createProducer();
     final ConfigurationFromContext context =
       producer.createConfigurationFromContext(new ConfigurationContext(element));
     Assert.assertNotNull(String.format("Failed to create context for %s", myTestRunnerName), context);
@@ -82,7 +82,7 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
   }
 
   @NotNull
-  private PythonTestOldConfigurationProducer createProducer() {
+  private PythonTestLegacyConfigurationProducer createProducer() {
     try {
       return myProducer.getConstructor().newInstance();
     }

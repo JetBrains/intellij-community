@@ -68,7 +68,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   private boolean myPatternIsVisible = true;
 
   public PythonTestRunConfigurationForm(final Project project,
-                                        final AbstractPythonOldTestRunConfiguration configuration) {
+                                        final AbstractPythonLegacyTestRunConfiguration configuration) {
     myProject = project;
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
@@ -243,8 +243,8 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     myTestMethodComponent.getLabel().setText(testType == TestType.TEST_METHOD? PyBundle.message("runcfg.unittest.dlg.method_label")
                                                                              : PyBundle.message("runcfg.unittest.dlg.function_label"));
     if (myPatternIsVisible) {
-      myPatternTextField.setVisible(getTestType() == AbstractPythonOldTestRunConfiguration.TestType.TEST_FOLDER);
-      myPatternCheckBox.setVisible(getTestType() == AbstractPythonOldTestRunConfiguration.TestType.TEST_FOLDER);
+      myPatternTextField.setVisible(getTestType() == AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FOLDER);
+      myPatternCheckBox.setVisible(getTestType() == AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FOLDER);
     }
   }
 

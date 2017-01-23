@@ -38,7 +38,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -56,6 +55,7 @@ import com.jetbrains.python.run.PythonConfigurationFactoryBase
 import com.jetbrains.python.testing.*
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
+import com.jetbrains.reflection.Property
 import com.jetbrains.reflection.getProperties
 import org.jdom.Element
 import java.io.File
@@ -64,13 +64,11 @@ import javax.swing.JComponent
 
 
 /**
- * New (universal) API for test runners.
- *
- * @author Ilya.Kazakevich
+ * New configuration factories
  */
-
-
-fun isUniversalModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests")
+val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTestFactory,
+                                                               PyUniversalPyTestFactory,
+                                                               PyUniversalNoseTestFactory)
 
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
 
@@ -79,7 +77,7 @@ internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration
  */
 private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
   val name = TestRunnerService.getInstance(module).projectConfiguration
-  val factories = PyUniversalTestsConfigurationType.configurationFactories
+  val factories = PythonTestConfigurationType.getInstance().configurationFactories
   val configurationFactory = factories.find { it.name == name }
   return configurationFactory ?: factories.first()
 }
@@ -150,6 +148,14 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
   }
 }
 
+
+/**
+ * To prevent legacy configuration options  from clashing with new names, we add prefix
+ * to use for writing/reading xml
+ */
+private val Property.prefixedName: String
+  get() = "_new_" + this.getName()
+
 /**
  * Parent of all new test configurations.
  * All config-specific fields are implemented as properties. They are saved/restored automatically and passed to GUI form.
@@ -166,6 +172,10 @@ abstract class PyUniversalTestConfiguration(project: Project,
   var additionalArguments = ""
 
   val testFrameworkName = configurationFactory.name!!
+
+  @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
+  @DelegationProperty
+  val legacyConfigurationAdapter = PyUniversalTestLegacyConfigurationAdapter(this)
 
 
   private fun getTestSpecForPythonTarget(location: Location<*>): List<String> {
@@ -230,12 +240,18 @@ abstract class PyUniversalTestConfiguration(project: Project,
 
 
   override fun writeExternal(element: Element) {
+    // Write legacy config to preserve it
+    legacyConfigurationAdapter.writeExternal(element)
     super.writeExternal(element)
 
     val gson = Gson()
 
     getConfigFields().properties.forEach {
-      JDOMExternalizerUtil.writeField(element, it.getName(), gson.toJson(it.get()))
+      val value = it.get()
+      if (value != null) {
+        // No need to write null since null is default value
+        JDOMExternalizerUtil.writeField(element, it.prefixedName, gson.toJson(value))
+      }
     }
   }
 
@@ -245,11 +261,12 @@ abstract class PyUniversalTestConfiguration(project: Project,
     val gson = Gson()
 
     getConfigFields().properties.forEach {
-      val fromJson: Any? = gson.fromJson(JDOMExternalizerUtil.readField(element, it.getName()), it.getType())
+      val fromJson: Any? = gson.fromJson(JDOMExternalizerUtil.readField(element, it.prefixedName), it.getType())
       if (fromJson != null) {
         it.set(fromJson)
       }
     }
+    legacyConfigurationAdapter.readExternal(element)
   }
 
 
@@ -273,37 +290,23 @@ abstract class PyUniversalTestConfiguration(project: Project,
     }
 }
 
-object PyUniversalTestsConfigurationType : PythonTestConfigurationType() {
-  override fun getId() = "py_universal_tests"
-
-  override fun getConfigurationFactories(): Array<PyUniversalTestFactory<*>> {
-    if (isUniversalModeEnabled()) {
-      return arrayOf(PyUniversalUnitTestFactory,
-                     PyUniversalPyTestFactory,
-                     PyUniversalNoseTestFactory)
-    }
-    // Array can't be empty according to contract (type is fetched from first element)
-    return arrayOf(PyUniversalUnitTestFactory)
-  }
-}
-
-// TODO: DOC
 abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration> : PythonConfigurationFactoryBase(
-  PyUniversalTestsConfigurationType) {
+  PythonTestConfigurationType.getInstance()) {
   override abstract fun createTemplateConfiguration(project: Project): CONF_T
 }
 
 /**
  * Only one producer is registered with EP, but it uses factory configured by user to prdouce different configs
  */
-object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniversalTestConfiguration>(PyUniversalTestsConfigurationType) {
+object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniversalTestConfiguration>(
+  PythonTestConfigurationType.getInstance()) {
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
   }
 
   override fun findOrCreateConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
-    if (!isUniversalModeEnabled()) {
+    if (!isNewTestsModeEnabled()) {
       return null
     }
     return super.findOrCreateConfigurationFromContext(context)
@@ -323,7 +326,10 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
   }
 
 
-  // TODO: DOC
+  /**
+   * Find concrete element to be used as test target.
+   * @return configuration name and its target
+   */
   private fun getNameAndTargetForConfig(configuration: PyUniversalTestConfiguration,
                                         baseElement: PsiElement): Pair<String, ConfigurationTarget>? {
     var element = baseElement

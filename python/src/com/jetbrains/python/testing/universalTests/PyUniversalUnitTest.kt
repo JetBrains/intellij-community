@@ -29,6 +29,7 @@ import com.jetbrains.python.testing.PythonTestConfigurationsModel
  * unittest
  */
 
+//TODO: Support pattern
 class PyUniversalUnitTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
   PyUniversalTestSettingsEditor(PyUniversalTestForm.create(configuration))
 

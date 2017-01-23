@@ -18,6 +18,7 @@ package com.jetbrains.python.testing.universalTests;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -85,13 +86,16 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   }
 
   @Override
-  public void setPropertyValue(@NotNull final String propertyName, @Nullable final String propertyValue) {
+  public void setPropertyValue(@NotNull
+                               final String propertyName, @Nullable
+                               final String propertyValue) {
     myCustomOptions.get(propertyName).setText(propertyValue != null ? propertyValue : "");
   }
 
   @Nullable
   @Override
-  public String getPropertyValue(@NotNull final String propertyName) {
+  public String getPropertyValue(@NotNull
+                                 final String propertyName) {
     return myCustomOptions.get(propertyName).getText();
   }
 
@@ -103,8 +107,10 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
   @NotNull
-  public static PyUniversalTestForm create(@NotNull final PyUniversalTestConfiguration configuration,
-                                           @NotNull final String... customOptions) { // TODO: DOC
+  public static PyUniversalTestForm create(@NotNull
+                                           final PyUniversalTestConfiguration configuration,
+                                           @NotNull
+                                           final String... customOptions) { // TODO: DOC
 
 
     final PyUniversalTestForm form = new PyUniversalTestForm();
@@ -134,7 +140,8 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
     return form;
   }
 
-  private void addCustomOptions(@NotNull final String... optionNames) {
+  private void addCustomOptions(@NotNull
+                                final String... optionNames) {
     if (optionNames.length == 0) {
       return;
     }
@@ -175,11 +182,15 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
 
   @NotNull
   public String getTarget() {
-    return myTargetText.getText();
+    // We should always use system-independent path because only this type of path is processed correctly
+    // when stored (folder changed to macros to prevent hard code)
+    final String targetText = myTargetText.getText().trim();
+    return getTargetType() == TestTargetType.PATH ? FileUtil.toSystemIndependentName(targetText) : targetText;
   }
 
 
-  public void setTarget(@NotNull final String targetText) {
+  public void setTarget(@NotNull
+                        final String targetText) {
     myTargetText.setText(targetText);
   }
 
@@ -196,7 +207,8 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   }
 
   @SuppressWarnings("unused") // Mutator for property
-  public void setTargetType(@NotNull final TestTargetType target) {
+  public void setTargetType(@NotNull
+                            final TestTargetType target) {
     final Enumeration<AbstractButton> elements = myButtonGroup.getElements();
     while (elements.hasMoreElements()) {
       final AbstractButton button = elements.nextElement();
