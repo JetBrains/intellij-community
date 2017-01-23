@@ -360,6 +360,9 @@ public class Task implements StudyItem {
       setChoiceVariants(task.getChoiceVariants());
       setMultipleChoice(task.isMultipleChoice());
     }
+    else {
+      setChoiceParameters(null);
+    }
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {
       addTestsTexts(testName, testsText.get(testName));

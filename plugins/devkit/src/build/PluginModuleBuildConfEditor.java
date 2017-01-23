@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,13 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myBuildProperties = PluginBuildConfiguration.getInstance(myModule);
   }
 
+  @Override
   public JComponent createComponent() {
     myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), DevKitBundle.message("deployment.directory.location", META_INF), DevKitBundle.message("saved.message.common", META_INF + File.separator + PLUGIN_XML), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
     myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", MANIFEST_MF), DevKitBundle.message("manifest.selection", MANIFEST_MF), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
     myManifest.setEnabled(myBuildProperties.isUseUserManifest());
     myUseUserManifest.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final boolean selected = myUseUserManifest.isSelected();
 
@@ -87,6 +89,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     return myWholePanel;
   }
 
+  @Override
   public boolean isModified() {
     final String pluginXmlPath = new File(myBuildProperties.getPluginXmlPath()).getParentFile().getParent(); //parent for meta-inf
     boolean modified = !Comparing.strEqual(myPluginXML.getText(), pluginXmlPath);
@@ -98,6 +101,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     return modified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myUseUserManifest.isSelected() && myManifest.getText() != null && !new File(myManifest.getText()).exists()){
       throw new ConfigurationException(DevKitBundle.message("error.file.not.found.message", myManifest.getText()));
@@ -118,24 +122,24 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
   }
 
+  @Override
   public void reset() {
     myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - META_INF.length() - PLUGIN_XML.length() - 2));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
   }
 
-  public void disposeUIResources() {}
-
-  public void saveData() {}
-
+  @Override
   public String getDisplayName() {
     return DevKitBundle.message("deployment.title");
   }
 
+  @Override
   public String getHelpTopic() {
     return "plugin.configuring";
   }
 
+  @Override
   public void moduleStateChanged() {
   }
 

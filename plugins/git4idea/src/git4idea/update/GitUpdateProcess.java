@@ -17,7 +17,6 @@ package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -84,7 +83,7 @@ public class GitUpdateProcess {
     myProject = project;
     myRepositories = repositories;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);

@@ -23,7 +23,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -366,7 +365,7 @@ public class GitUnstashDialog extends DialogWrapper {
         @Override
         public void run() {
           h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
-          Git git = ServiceManager.getService(Git.class);
+          Git git = Git.getInstance();
           result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
         }
       }, GitBundle.getString("unstash.unstashing"), true, myProject);
@@ -404,7 +403,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, ServiceManager.getService(Git.class),
+      super(project, Git.getInstance(),
             Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;

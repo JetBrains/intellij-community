@@ -37,7 +37,7 @@ class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtur
   }
 
   fun testOnlySelfModule() {
-    val message = InspectionsBundle.message("inspection.module.exports.package.to.itself.only.message")
+    val message = InspectionsBundle.message("inspection.module.exports.package.to.itself.message")
     highlight("module M { exports pkg.main to <warning descr=\"$message\">M</warning>; }")
   }
 

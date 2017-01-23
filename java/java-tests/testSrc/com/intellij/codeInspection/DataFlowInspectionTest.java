@@ -412,4 +412,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public void testCapturedWildcardNotNull() { doTest(); }
+
+  public void testNullableMethodReturningNotNull() { doTest(); }
+
 }

@@ -124,5 +124,6 @@
     <orderEntry type="module" module-name="remote-servers-git-java" />
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="javac-ref-scanner-8" scope="RUNTIME" />
+    <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
   </component>
 </module>

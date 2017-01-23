@@ -128,7 +128,12 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (c == myCurrentComponent || c == myQueuedComponent) {
+      //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+      if (c == myCurrentComponent && myCurrentTooltip != null && !myCurrentTooltip.isHint() && myCurrentTipUi != null) {
+        myCurrentTipUi.setAnimationEnabled(false);
+        hideCurrent(null, null, null, null, false);
+      }
+      else if (c == myCurrentComponent || c == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
     }

@@ -525,7 +525,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     if (!isDefault) {
       size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
     }
-    return JBUI.scaleFontSize(size);
+    return (int)JBUI.scale(size);
   }
 
   private void readFontSettings(@NotNull Element element,

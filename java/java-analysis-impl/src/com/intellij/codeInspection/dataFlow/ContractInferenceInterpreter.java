@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
@@ -37,6 +36,7 @@ import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildr
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.getChildrenOfType;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 class ContractInferenceInterpreter {
@@ -53,29 +53,32 @@ class ContractInferenceInterpreter {
   @NotNull
   private List<LighterASTNode> getParameters() {
     LighterASTNode paramList = firstChildOfType(myTree, myMethod, PARAMETER_LIST);
-    return paramList != null ? getChildrenOfType(myTree, paramList, PARAMETER) : Collections.emptyList();
+    return paramList != null ? getChildrenOfType(myTree, paramList, PARAMETER) : emptyList();
   }
 
   @NotNull
   List<PreContract> inferContracts(List<LighterASTNode> statements) {
-    if (statements.isEmpty()) return Collections.emptyList();
+    if (statements.isEmpty()) return emptyList();
 
     if (statements.size() == 1) {
-      LighterASTNode statement = statements.get(0);
-      if (statement.getTokenType() == RETURN_STATEMENT) {
-        List<PreContract> result = handleDelegation(findExpressionChild(myTree, statement), false);
-        if (result != null) {
-          return result;
-        }
-      }
-      else if (statement.getTokenType() == EXPRESSION_STATEMENT) {
-        LighterASTNode expr = findExpressionChild(myTree, statement);
-        List<PreContract> result = expr != null && expr.getTokenType() == METHOD_CALL_EXPRESSION ? handleDelegation(expr, false) : null;
-        if (result != null) return result;
-      }
+      List<PreContract> result = handleSingleStatement(statements.get(0));
+      if (result != null) return result;
     }
 
     return visitStatements(singletonList(MethodContract.createConstraintArray(getParameters().size())), statements);
+  }
+
+  @Nullable
+  private List<PreContract> handleSingleStatement(LighterASTNode statement) {
+    if (statement.getTokenType() == RETURN_STATEMENT) {
+      LighterASTNode returned = findExpressionChild(myTree, statement);
+      return getLiteralConstraint(returned) != null ? emptyList() : handleDelegation(returned, false);
+    }
+    if (statement.getTokenType() == EXPRESSION_STATEMENT) {
+      LighterASTNode expr = findExpressionChild(myTree, statement);
+      return expr != null && expr.getTokenType() == METHOD_CALL_EXPRESSION ? handleDelegation(expr, false) : null;
+    }
+    return null;
   }
 
   @Nullable
@@ -85,7 +88,7 @@ class ContractInferenceInterpreter {
 
   @NotNull
   static List<LighterASTNode> getStatements(@Nullable LighterASTNode codeBlock, LighterAST tree) {
-    return codeBlock == null ? Collections.emptyList() : getChildrenOfType(tree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET);
+    return codeBlock == null ? emptyList() : getChildrenOfType(tree, codeBlock, ElementType.JAVA_STATEMENT_BIT_SET);
   }
 
   @Nullable
@@ -112,9 +115,9 @@ class ContractInferenceInterpreter {
 
   @NotNull
   private List<PreContract> visitExpression(final List<ValueConstraint[]> states, @Nullable LighterASTNode expr) {
-    if (expr == null) return Collections.emptyList();
-    if (states.isEmpty()) return Collections.emptyList();
-    if (states.size() > 300) return Collections.emptyList(); // too complex
+    if (expr == null) return emptyList();
+    if (states.isEmpty()) return emptyList();
+    if (states.size() > 300) return emptyList(); // too complex
 
     IElementType type = expr.getTokenType();
     if (type == POLYADIC_EXPRESSION || type == BINARY_EXPRESSION) {
@@ -123,7 +126,7 @@ class ContractInferenceInterpreter {
 
     if (type == CONDITIONAL_EXPRESSION) {
       List<LighterASTNode> children = getExpressionChildren(myTree, expr);
-      if (children.size() != 3) return Collections.emptyList();
+      if (children.size() != 3) return emptyList();
 
       List<PreContract> conditionResults = visitExpression(states, children.get(0));
       return ContainerUtil.concat(
@@ -150,7 +153,7 @@ class ContractInferenceInterpreter {
       }
     }
 
-    if (type == NEW_EXPRESSION) {
+    if (type == NEW_EXPRESSION || type == THIS_EXPRESSION) {
       return asPreContracts(toContracts(states, NOT_NULL_VALUE));
     }
     if (type == METHOD_CALL_EXPRESSION) {
@@ -179,7 +182,7 @@ class ContractInferenceInterpreter {
       return asPreContracts(result);
     }
 
-    return Collections.emptyList();
+    return emptyList();
   }
 
   @NotNull
@@ -199,7 +202,7 @@ class ContractInferenceInterpreter {
     if (logicalAnd || firstChildOfType(myTree, expr, JavaTokenType.OROR) != null) {
       return asPreContracts(visitLogicalOperation(operands, logicalAnd, states));
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 
   @NotNull
@@ -240,7 +243,7 @@ class ContractInferenceInterpreter {
       }
       return result;
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 
   @Nullable

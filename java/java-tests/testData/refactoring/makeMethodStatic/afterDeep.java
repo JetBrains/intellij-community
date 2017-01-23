@@ -8,4 +8,13 @@ class P {
         bazz(k);
         bazz(k);
     }
+    
+    void m(int k) {
+        new Runnable() {
+          public void run() {}
+          void mm() {
+              bazz(k);
+          }
+        };
+    }
 }

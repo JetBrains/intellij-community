@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -90,10 +89,13 @@ public class PyBlock implements ASTBlock {
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
   private Map<ASTNode, PyBlock> mySubBlockByNode = null;
-  private Alignment myChildAlignment;
-  private final Alignment myDictAlignment;
-  private final Wrap myDictWrapping;
   private final boolean myEmptySequence;
+  
+  // Shared among multiple children sub-blocks
+  private Alignment myChildAlignment = null;
+  private Alignment myDictAlignment = null;
+  private Wrap myDictWrapping = null;
+  private Wrap myFromImportWrapping = null;
 
   public PyBlock(@Nullable PyBlock parent, 
                  @NotNull ASTNode node, 
@@ -109,13 +111,13 @@ public class PyBlock implements ASTBlock {
     myContext = context;
     myEmptySequence = isEmptySequence(node);
 
+    final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
       myDictAlignment = Alignment.createAlignment(true);
-      myDictWrapping = Wrap.createWrap(myContext.getPySettings().DICT_WRAPPING, true);
+      myDictWrapping = Wrap.createWrap(pySettings.DICT_WRAPPING, true);
     }
-    else {
-      myDictAlignment = null;
-      myDictWrapping = null;
+    else if (node.getElementType() == PyElementTypes.FROM_IMPORT_STATEMENT) {
+      myFromImportWrapping = Wrap.createWrap(pySettings.FROM_IMPORT_WRAPPING, false);
     }
   }
 
@@ -184,9 +186,11 @@ public class PyBlock implements ASTBlock {
     final IElementType grandparentType = grandParentNode == null ? null : grandParentNode.getElementType();
 
     final IElementType childType = child.getElementType();
-    Wrap wrap = null;
+    Wrap childWrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
+    
+    final PyCodeStyleSettings settings = myContext.getPySettings();
 
     if (parentType == PyElementTypes.BINARY_EXPRESSION && !isInControlStatement()) {
       //Setup alignments for binary expression
@@ -220,7 +224,12 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (childType == PyElementTypes.IMPORT_ELEMENT) {
-      wrap = Wrap.createWrap(WrapType.NORMAL, true);
+      if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
+        childWrap = myFromImportWrapping;
+      }
+      else {
+        childWrap = Wrap.createWrap(WrapType.NORMAL, true);
+      }
       childIndent = Indent.getNormalIndent();
     }
     if (childType == PyTokenTypes.END_OF_LINE_COMMENT && parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
@@ -232,7 +241,7 @@ public class PyBlock implements ASTBlock {
           !ourBrackets.contains(childType) &&
           childType != PyTokenTypes.COMMA &&
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
-        wrap = Wrap.createWrap(WrapType.NORMAL, true);
+        childWrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !myEmptySequence) {
         childAlignment = getAlignmentForChildren();
@@ -251,7 +260,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
+    
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -286,7 +295,8 @@ public class PyBlock implements ASTBlock {
         }
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
-          if (!hasHangingIndent(myNode.getPsi())) {
+          // Don't have hanging indent and is not going to have it due to the setting about opening parenthesis
+          if (!hasHangingIndent(myNode.getPsi()) && !settings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS) {
             childAlignment = getAlignmentForChildren();
           }
           else if (settings.HANG_CLOSING_BRACKETS) {
@@ -370,7 +380,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
-      wrap = myDictWrapping;
+      childWrap = myDictWrapping;
       childIndent = Indent.getNormalIndent();
     }
 
@@ -406,7 +416,7 @@ public class PyBlock implements ASTBlock {
       prev = prev.getTreePrev();
     }
 
-    return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+    return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
   private static boolean isValueOfKeyValuePairOfDictLiteral(@NotNull ASTNode node) {
@@ -607,7 +617,8 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return !hasHangingIndent(myNode.getPsi());
+      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION && 
+                                                     myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
       if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(myNode.getPsi())) {

@@ -154,6 +154,10 @@ class FTManager {
     final FileTemplateBase template = getTemplates().get(qName);
     if (template instanceof CustomFileTemplate) {
       getTemplates().remove(qName);
+      File file = new File(getConfigRoot(false), qName);
+      if (file.exists()) {
+        file.delete();
+      }
       mySortedTemplates = null;
     }
     else if (template instanceof BundledFileTemplate){
@@ -176,6 +180,7 @@ class FTManager {
       _template.setReformatCode(template.isReformatCode());
       _template.setLiveTemplateEnabled(template.isLiveTemplateEnabled());
     }
+    saveTemplates(true);
   }
 
   private void restoreDefaults(Set<String> toDisable) {
@@ -257,6 +262,10 @@ class FTManager {
   }
 
   public void saveTemplates() {
+    saveTemplates(false);
+  }
+
+  private void saveTemplates(boolean removeDeleted) {
     final File configRoot = getConfigRoot(true);
 
     final File[] files = configRoot.listFiles();
@@ -300,7 +309,9 @@ class FTManager {
         }
         else if (templateToSave == null) {
           // template was removed
-          FileUtil.delete(customizedTemplateFile);
+          if (removeDeleted) {
+            FileUtil.delete(customizedTemplateFile);
+          }
         }
         else {
           // both customized content on disk and corresponding template are present

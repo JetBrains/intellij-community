@@ -84,7 +84,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection extends BaseInspection {
       if (otherOperand == null) return false;
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(otherOperand), PsiReferenceExpression.class);
       if (ref == null) return false;
-      PsiLocalVariable indexVar = tryCast(ref.resolve(), PsiLocalVariable.class);
+      PsiVariable indexVar = tryCast(ref.resolve(), PsiVariable.class);
       if (indexVar == null) return false;
       PsiStatement update = statement.getUpdate();
       return VariableAccessUtils.variableIsIncremented(indexVar, update) || VariableAccessUtils.variableIsDecremented(indexVar, update);

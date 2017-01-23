@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,6 @@ class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
 
   public ModuleConfigurableWrapper(Configurable moduleConfigurable) {
     myModuleConfigurable = moduleConfigurable;
-  }
-
-  @Override
-  public void saveData() {
-
-  }
-
-  @Override
-  public void moduleStateChanged() {
   }
 
   @Override

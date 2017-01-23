@@ -15,18 +15,15 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.ui.render.LabelIcon;
-import com.intellij.vcs.log.ui.render.RectanglePainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,44 +153,5 @@ public class ReferencesPanel extends JPanel {
   @Override
   public Color getBackground() {
     return getCommitDetailsBackground();
-  }
-
-  @NotNull
-  public static Color getLabelColor(@NotNull Color color) {
-    if (UIUtil.isUnderDarcula()) {
-      color = ColorUtil.darker(color, 6);
-    }
-    else {
-      color = ColorUtil.brighter(color, 6);
-    }
-    return ColorUtil.desaturate(color, 3);
-  }
-
-  private static class ReferencePanel extends JPanel {
-    @NotNull private final RectanglePainter myLabelPainter;
-    @NotNull private final VcsRef myReference;
-
-    private ReferencePanel(@NotNull VcsRef reference) {
-      myReference = reference;
-      myLabelPainter = new RectanglePainter(false);
-      setOpaque(false);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      myLabelPainter.paint((Graphics2D)g, myReference.getName(), 0, 0,
-                           getLabelColor(myReference.getType().getBackgroundColor()));
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension dimension = myLabelPainter.calculateSize(myReference.getName(), getFontMetrics(RectanglePainter.getFont()));
-      return new Dimension(dimension.width, dimension.height + JBUI.scale(PADDING));
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
   }
 }

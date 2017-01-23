@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiAnonymousClass;
@@ -131,7 +132,7 @@ public class CompilerPathsEx extends CompilerPaths {
         // compiled class; looking for a right .class file
         VirtualFile file = originalClass.getContainingFile().getVirtualFile();
         if (file != null) {
-          String classFileName = jvmClassName.substring(jvmClassName.lastIndexOf('.') + 1) + ".class";
+          String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
           if (index.isInLibraryClasses(file)) {
             VirtualFile classFile = file.getParent().findChild(classFileName);
             if (classFile != null) {

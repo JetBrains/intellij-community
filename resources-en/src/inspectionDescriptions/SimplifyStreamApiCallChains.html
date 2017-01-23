@@ -36,6 +36,9 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>stream.noneMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
   <li><code>stream.allMatch(x -> !(...))</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.allMatch(x -> !(...))</code> &rarr; <code>stream.anyMatch()</code></li>
+  <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> -> <code>stream.anyMatch()</code></li>
+  <li><code>stream.map().allMatch(Boolean::booleanValue)</code> -> <code>stream.allMatch()</code></li>
+  <li><code>stream.map().noneMatch(Boolean::booleanValue)</code> -> <code>stream.noneMatch()</code></li>
 </ul>
 <p>
   Note that the replacements semantic may have minor difference in some cases.
