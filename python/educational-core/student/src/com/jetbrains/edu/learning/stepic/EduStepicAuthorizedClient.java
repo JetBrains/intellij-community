@@ -170,6 +170,10 @@ public class EduStepicAuthorizedClient {
       final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
       if (tokenInfo != null) {
         user.setupTokenInfo(tokenInfo);
+        final StepicUser currentUser = getCurrentUser(getHttpClient());
+        if (currentUser != null) {
+          user.setId(currentUser.getId());
+        }
         return user;
       }
     }
@@ -188,6 +192,7 @@ public class EduStepicAuthorizedClient {
 
   @Nullable
   public static StepicUser login(@NotNull final String email, @NotNull final String password) {
+    invalidateClient();
     final List<NameValuePair> parameters = new ArrayList<>();
     if (password.isEmpty()) return null;
     parameters.add(new BasicNameValuePair("client_id", ourClientId));
@@ -270,6 +275,6 @@ public class EduStepicAuthorizedClient {
   
   private static boolean isTokenUpToDate(@NotNull CloseableHttpClient client, int userId) {
     final StepicUser user = getCurrentUser(client);
-    return user != null && userId == user.getId();
+    return user != null && userId == user.getId() && userId != -1;
   }
 }
