@@ -611,6 +611,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
+      Window window = UIUtil.getWindow(this);
+      if (window != null) {
+        Point point = SwingUtilities.convertPoint(this, p, window);
+        Component component = SwingUtilities.getDeepestComponentAt(window, point.x, point.y);
+        if (UIUtil.findParentByCondition(component, c -> c == ThreeComponentsSplitter.this) == null) return false;
+      }
 
       int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
       if (myVerticalSplit) {
