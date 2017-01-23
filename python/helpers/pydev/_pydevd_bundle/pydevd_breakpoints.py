@@ -50,6 +50,8 @@ class LineBreakpoint(object):
         self.func_name = func_name
         self.expression = expression
         self.suspend_policy = suspend_policy
+        # need for frame evaluation: list of code objects, which bytecode was modified by this breakpoint
+        self.code_objects = []
 
 def get_exception_full_qname(exctype):
     if not exctype:
