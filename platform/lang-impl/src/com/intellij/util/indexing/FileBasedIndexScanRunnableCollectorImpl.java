@@ -44,7 +44,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
   }
 
   @Override
-  public Boolean shouldCollect(@NotNull VirtualFile file) {
+  public boolean shouldCollect(@NotNull VirtualFile file) {
     if (myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibraryClasses(file) || myProjectFileIndex.isInLibrarySource(file)) {
       return !myFileTypeManager.isFileIgnored(file);
     }

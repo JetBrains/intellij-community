@@ -30,6 +30,9 @@ public abstract class FileBasedIndexScanRunnableCollector {
     return ServiceManager.getService(project, FileBasedIndexScanRunnableCollector.class);
   }
 
-  public abstract Boolean shouldCollect(@NotNull final VirtualFile file);
+  // Returns true if file should be indexed
+  public abstract boolean shouldCollect(@NotNull final VirtualFile file);
+
+  // Collect all roots for indexing
   public abstract List<Runnable> collectScanRootRunnables(@NotNull final ContentIterator processor, final ProgressIndicator indicator);
 }
