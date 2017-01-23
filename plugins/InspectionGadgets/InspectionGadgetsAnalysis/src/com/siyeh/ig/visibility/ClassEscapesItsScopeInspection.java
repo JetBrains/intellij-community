@@ -18,7 +18,7 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -42,10 +42,9 @@ import java.util.Set;
 
 public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspectionTool {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean onlyJava9Modules = true;
+  @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within expoted packages
+  @SuppressWarnings("PublicField") public boolean checkPublicApi; // All public & protected fields & methods
+  @SuppressWarnings("PublicField") public boolean checkPackageLocal;
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -63,38 +62,43 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("class.escapes.defined.scope.java9.modules.option"), this, "onlyJava9Modules");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Module's API exposes not exported classes (Java 9+)", "checkModuleApi");
+    panel.addCheckbox("Public API exposes non-accessible classes", "checkPublicApi");
+    panel.addCheckbox("Package-local API exposes private classes", "checkPackageLocal");
+    return panel;
   }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     List<VisibilityChecker> checkers = new ArrayList<>(2);
-    PsiFile file = holder.getFile();
-    if (file instanceof PsiJavaFile) {
-      PsiJavaFile javaFile = (PsiJavaFile)file;
-      if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
-        PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
-        if (psiModule != null) {
-          VirtualFile vFile = file.getVirtualFile();
-          if (vFile != null) {
-            Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
-            if (module != null) {
-              Set<String> exportedPackageNames =
-                new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiExportsStatement::getPackageName));
-              if (exportedPackageNames.contains(javaFile.getPackageName())) {
-                checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, exportedPackageNames));
+    if (checkModuleApi) {
+      PsiFile file = holder.getFile();
+      if (file instanceof PsiJavaFile) {
+        PsiJavaFile javaFile = (PsiJavaFile)file;
+        if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
+          PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
+          if (psiModule != null) {
+            VirtualFile vFile = file.getVirtualFile();
+            if (vFile != null) {
+              Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
+              if (module != null) {
+                Set<String> exportedPackageNames =
+                  new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiExportsStatement::getPackageName));
+                if (exportedPackageNames.contains(javaFile.getPackageName())) {
+                  checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, exportedPackageNames));
+                }
               }
             }
           }
         }
       }
     }
-    if (!onlyJava9Modules) {
+    if (checkPublicApi || checkPackageLocal) {
       checkers.add(new ClassEscapesItsScopeVisitor(holder));
     }
-    return new VisibilityVisitor(checkers.toArray(VisibilityChecker.EMPTY_ARRAY));
+    return !checkers.isEmpty() ? new VisibilityVisitor(checkers.toArray(VisibilityChecker.EMPTY_ARRAY)) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
   private static class VisibilityVisitor extends JavaElementVisitor {
@@ -153,21 +157,26 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
     abstract boolean checkVisibilityIssue(PsiMember member, PsiClass psiClass, PsiJavaCodeReferenceElement reference);
   }
 
-  private static class ClassEscapesItsScopeVisitor extends VisibilityChecker {
+  private class ClassEscapesItsScopeVisitor extends VisibilityChecker {
     public ClassEscapesItsScopeVisitor(ProblemsHolder holder) {
       super(holder);
     }
 
     @Override
     boolean checkVisibilityIssue(PsiMember member, PsiClass psiClass, PsiJavaCodeReferenceElement reference) {
-      if (isLessRestrictiveScope(member, psiClass)) {
+      if (needToCheck(member) && isLessRestrictiveScope(member, psiClass)) {
         myHolder.registerProblem(reference, InspectionGadgetsBundle.message("class.escapes.defined.scope.problem.descriptor"));
         return true;
       }
       return false;
     }
 
-    private static boolean isLessRestrictiveScope(@NotNull PsiMember member, @NotNull PsiClass aClass) {
+    private boolean needToCheck(PsiMember member) {
+      return checkPublicApi && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED)) ||
+             checkPackageLocal && member.hasModifierProperty(PsiModifier.PACKAGE_LOCAL);
+    }
+
+    private boolean isLessRestrictiveScope(@NotNull PsiMember member, @NotNull PsiClass aClass) {
       final int methodScopeOrder = getScopeOrder(member);
       final int classScopeOrder = getScopeOrder(aClass);
       final PsiClass containingClass = member.getContainingClass();
@@ -179,7 +188,7 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
       return methodScopeOrder > classScopeOrder && containingClassScopeOrder > classScopeOrder;
     }
 
-    private static int getScopeOrder(@NotNull PsiModifierListOwner element) {
+    private int getScopeOrder(@NotNull PsiModifierListOwner element) {
       if (element.hasModifierProperty(PsiModifier.PUBLIC)) {
         return 4;
       }
@@ -187,10 +196,10 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
         return 1;
       }
       else if (element.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return 2;
+        return 3;
       }
       else {
-        return 3;
+        return 2;
       }
     }
   }
