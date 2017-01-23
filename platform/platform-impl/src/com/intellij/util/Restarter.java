@@ -48,10 +48,7 @@ public class Restarter {
     }
 
     if (SystemInfo.isMac) {
-      File appDir = new File(PathManager.getHomePath()).getParentFile();
-      return appDir != null &&
-             appDir.getName().endsWith(".app") &&
-             appDir.isDirectory() &&
+      return getMacOsAppDir() != null &&
              new File(PathManager.getBinPath(), "restarter").canExecute();
     }
 
@@ -136,15 +133,17 @@ public class Restarter {
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
-    String homePath = PathManager.getHomePath();
-    File appDir = new File(PathManager.getHomePath()).getParentFile();
-    if (appDir == null || !appDir.getName().endsWith(".app") || !appDir.isDirectory()) {
-      throw new IOException("Application bundle not found: " + homePath);
-    }
+    File appDir = getMacOsAppDir();
+    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     List<String> args = new ArrayList<>();
     args.add(appDir.getPath());
     Collections.addAll(args, beforeRestart);
     runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
+  }
+
+  private static File getMacOsAppDir() {
+    File appDir = new File(PathManager.getHomePath()).getParentFile();
+    return appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory() ? appDir : null;
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
