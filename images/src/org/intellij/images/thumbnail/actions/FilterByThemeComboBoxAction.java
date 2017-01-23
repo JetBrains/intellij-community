@@ -37,10 +37,8 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
           Arrays.stream(ThemeFilter.EP_NAME.getExtensions())
             .allMatch(filter -> project != null && filter.isApplicableToProject(project));
         e.getPresentation().setVisible(view != null && hasApplicableExtension);
-        if (view != null) {
-            ThemeFilter filter = view.getFilter();
-            e.getPresentation().setText(filter == null ? "All" : filter.getDisplayName());
-        }
+        ThemeFilter filter = view != null ? view.getFilter() : null;
+        e.getPresentation().setText(filter == null ? "All" : filter.getDisplayName());
     }
 
     @NotNull

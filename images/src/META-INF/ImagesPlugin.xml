@@ -130,6 +130,7 @@
       <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
               internal="true"
               id="Images.Thumbnails.FilterByTheme"
+              text="Filter by Theme"
               description="Filter images by theme"/>
       
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
