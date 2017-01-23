@@ -119,7 +119,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS}
   )
-  public int FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
+  public boolean FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = false;
   public boolean FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = false;
 
   /**

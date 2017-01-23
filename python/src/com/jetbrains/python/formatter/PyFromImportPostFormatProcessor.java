@@ -66,16 +66,14 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
         if (importedNames.size() > 1) {
 
           final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
-          final boolean forcedParentheses = pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
-                                            pySettings.FROM_IMPORT_PARENTHESES_FORCE == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE &&
-                                            PostFormatProcessorHelper.isMultiline(node);
+          final boolean forcedParens = pySettings.FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
           final boolean forcedComma = pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
           final PyImportElement lastImportedName = importedNames.get(importedNames.size() - 1);
           final PsiElement afterLastName = PyPsiUtils.getNextNonCommentSibling(lastImportedName, true);
           final PsiElement openingParen = node.getLeftParen();
           final boolean missingComma = afterLastName == null || afterLastName.getNode().getElementType() != PyTokenTypes.COMMA;
           // Trailing comma is allowed only in "from" imports wrapped in parentheses 
-          if (forcedParentheses && openingParen == null || forcedComma && missingComma && openingParen != null) {
+          if (forcedParens && openingParen == null || forcedComma && missingComma && openingParen != null) {
             myImportStatements.add(node);
           }
         }

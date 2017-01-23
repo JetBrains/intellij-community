@@ -20,7 +20,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -766,23 +765,16 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   // PY-20633
-  public void testFromImportForceParenthesesAlways() {
-    getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
-    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-    doTest();
-  }
-
-  // PY-20633
   public void testFromImportForceParenthesesIfMultiline() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
-    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = true;
     doTest();
   }
 
   // PY-20633
   // See http://docs.pylonsproject.org/en/latest/community/codestyle.html
   public void testPyramidFromImportFormatting() {
-    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = true;
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
     getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = WrapType.ALWAYS.getLegacyRepresentation();
@@ -794,7 +786,7 @@ public class PyFormatterTest extends PyTestCase {
   // PY-9764
   public void testFromImportTrailingCommaWithParentheses() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
-    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = true;
     getPythonCodeStyleSettings().FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = true;
     doTest();
   }
@@ -802,7 +794,7 @@ public class PyFormatterTest extends PyTestCase {
   // PY-9764
   public void testFromImportTrailingCommaWithoutParentheses() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
-    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = false;
     getPythonCodeStyleSettings().FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = true;
     doTest();
   }
