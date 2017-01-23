@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.hints.JavaInlayHintsProvider
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
 
@@ -573,7 +573,7 @@ class Key {
 
   fun `test poly and binary expressions`() {
     try {
-      JavaInlayHintsProvider.isDebug = true
+      ParameterHintsPassFactory.setDebug(true)
       check("""
 class Test {
   void test() {
@@ -589,7 +589,7 @@ class Test {
 """)
     }
     finally {
-      JavaInlayHintsProvider.isDebug = false
+      ParameterHintsPassFactory.setDebug(false)
     }
   }
 

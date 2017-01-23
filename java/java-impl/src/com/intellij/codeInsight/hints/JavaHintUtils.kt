@@ -25,8 +25,6 @@ import com.intellij.psi.util.TypeConversionUtil
 
 object JavaInlayHintsProvider {
 
-  var isDebug = false
-  
   fun createHints(callExpression: PsiCallExpression): Set<InlayInfo> {
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = createHintsForResolvedMethod(callExpression, resolveResult)
@@ -181,8 +179,8 @@ object JavaInlayHintsProvider {
       else -> false
     }
 
-    if (isDebug) {
-      println("${callArgument.text} : ${callArgument.javaClass} : isShowHint->$isShowHint")
+    if (ParameterHintsPassFactory.isDebug()) {
+      println("${System.nanoTime()}: ${callArgument.text} : ${callArgument.javaClass} : isShowHint->$isShowHint")
     }
     
     return isShowHint

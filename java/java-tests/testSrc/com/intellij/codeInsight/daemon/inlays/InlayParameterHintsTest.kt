@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -87,6 +88,11 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
     myFixture.doHighlighting()
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+
+    if (ParameterHintsPassFactory.isDebug()) {
+      println("${System.nanoTime()}: [HintTests] inlays extracted")
+    }
+    
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
       .filter { hintManager.isParameterHint(it) }
