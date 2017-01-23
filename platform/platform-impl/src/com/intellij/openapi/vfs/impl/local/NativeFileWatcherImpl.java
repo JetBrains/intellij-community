@@ -59,7 +59,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
-  private static final File PLATFORM_NOT_SUPPORTED = new File("_platform_not_supported");
+  private static final File PLATFORM_NOT_SUPPORTED = new File("(platform not supported)");
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
@@ -145,28 +145,28 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (execPath != null) return new File(execPath);
 
     String[] names = null;
-    String prefix = null;
+    String subdir = null;
     if (SystemInfo.isWindows) {
       if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier.exe"};
-      if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
-      prefix = "win";
+      else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
+      subdir = "win";
     }
     else if (SystemInfo.isMac) {
       names = new String[]{"fsnotifier"};
-      prefix = "mac";
+      subdir = "mac";
     }
     else if (SystemInfo.isLinux) {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier"};
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64"};
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier-arm"};
-      prefix = "linux";
+      subdir = "linux";
     }
     if (names == null) return PLATFORM_NOT_SUPPORTED;
 
     String[] dirs = {PathManager.getBinPath(),
-                     PathManager.getHomePath() + "/ultimate/community/bin/" + prefix,
-                     PathManager.getHomePath() + "/community/bin/" + prefix,
-                     PathManager.getBinPath() + '/' + prefix};
+                     PathManager.getHomePath() + "/ultimate/community/bin/" + subdir,
+                     PathManager.getHomePath() + "/community/bin/" + subdir,
+                     PathManager.getBinPath() + '/' + subdir};
     for (String dir : dirs) {
       for (String name : names) {
         File candidate = new File(dir, name);
