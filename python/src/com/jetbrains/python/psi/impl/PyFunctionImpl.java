@@ -44,6 +44,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -354,7 +355,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       elementType = Ref.create(PyUnionType.union(types));
     }
     if (elementType != null) {
-      final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
+      final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.GENERATOR),
+                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
       if (generator != null) {
         final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
         return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
@@ -384,14 +386,20 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   private PyType createCoroutineType(@Nullable PyType returnType) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
 
-    if (returnType instanceof PyCollectionType && PyNames.FAKE_GENERATOR.equals(returnType.getName())) {
-      final PyClass asyncGenerator = cache.getClass(PyNames.FAKE_ASYNC_GENERATOR);
-
-      if (asyncGenerator == null) {
-        return null;
+    if (returnType instanceof PyCollectionType) {
+      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
+      if (classType != null) {
+        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
+          final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
+          final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
+                                                                                         PyResolveImportUtil.fromFoothold(this));
+          final PyClass asyncGenerator = as(resolvedGenerator, PyClass.class);
+          if (asyncGenerator != null) {
+            return new PyCollectionTypeImpl(asyncGenerator, false,
+                                            Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
+          }
+        }
       }
-
-      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
     }
 
     final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);

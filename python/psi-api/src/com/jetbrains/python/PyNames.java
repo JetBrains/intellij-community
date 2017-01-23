@@ -91,12 +91,10 @@ public class PyNames {
   public static final String FALSE = "False";
 
   public static final String FAKE_OLD_BASE = "___Classobj";
-  public static final String FAKE_GENERATOR = "__generator";
   public static final String FAKE_FUNCTION = "__function";
   public static final String FAKE_METHOD = "__method";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
   public static final String FAKE_COROUTINE = "__coroutine";
-  public static final String FAKE_ASYNC_GENERATOR = "__asyncgenerator";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
