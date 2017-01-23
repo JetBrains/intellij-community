@@ -49,7 +49,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyBuiltinCache {
   public static final String BUILTIN_FILE = "__builtin__.py";
   public static final String BUILTIN_FILE_3K = "builtins.py";
-  public static final String EXCEPTIONS_FILE = "exceptions.py";
+  private static final String EXCEPTIONS_FILE = "exceptions.py";
 
   private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
 
