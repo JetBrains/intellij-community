@@ -44,14 +44,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public class PyTestConfigurationProducer extends PythonTestOldConfigurationProducer<PyTestRunConfiguration> {
+public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
 
   public PyTestConfigurationProducer() {
-    super(PythonTestOldConfigurationType.getInstance().PY_PYTEST_FACTORY);
+    super(PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY);
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonOldTestRunConfiguration<PyTestRunConfiguration> configuration,
+  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();
@@ -144,7 +144,7 @@ public class PyTestConfigurationProducer extends PythonTestOldConfigurationProdu
   }
 
   @Override
-  public boolean isConfigurationFromContext(AbstractPythonOldTestRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration configuration, ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null) return false;
     if (!(configuration instanceof PyTestRunConfiguration)) return false;

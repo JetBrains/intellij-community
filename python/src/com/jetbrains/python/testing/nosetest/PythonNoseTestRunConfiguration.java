@@ -26,7 +26,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  */
-public class PythonNoseTestRunConfiguration extends AbstractPythonOldTestRunConfiguration<PythonNoseTestRunConfiguration>
+public class PythonNoseTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonNoseTestRunConfiguration>
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
   protected String myTitle = "Nosetest";
@@ -80,7 +80,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonOldTestRunConf
   }
 
   public static void copyParams(PythonNoseTestRunConfigurationParams source, PythonNoseTestRunConfigurationParams target) {
-    AbstractPythonOldTestRunConfiguration.copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
+    AbstractPythonLegacyTestRunConfiguration.copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
     target.setParams(source.getParams());
     target.useParam(source.useParam());
   }
