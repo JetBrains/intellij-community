@@ -81,7 +81,6 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return filePointerManager.duplicate(pointer, this, null);
   }
 
-
   @Override
   public void readExternal(@NotNull Element element) {
     assert !myDisposed;
