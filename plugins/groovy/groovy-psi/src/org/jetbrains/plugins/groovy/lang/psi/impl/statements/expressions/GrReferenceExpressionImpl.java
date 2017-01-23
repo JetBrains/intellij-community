@@ -78,10 +78,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     () -> new GrReferenceExpressionReference(this, true)
   );
 
-  private final NotNullLazyValue<GrFakeReferenceExpressionElement> myFakeGetterElement = AtomicNotNullLazyValue.createValue(
-    () -> new GrFakeReferenceExpressionElement(this)
-  );
-
   private final NotNullLazyValue<GrReferenceExpressionReference> myFakeReference = AtomicNotNullLazyValue.createValue(
     () -> new GrReferenceExpressionReference(this, false)
   );
@@ -372,7 +368,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return null;
   }
 
-  private static PsiType calculate(GrReferenceExpressionImpl refExpr, boolean forceRValue) {
+  @Nullable
+  private static PsiType calculate(@NotNull GrReferenceExpressionImpl refExpr, boolean forceRValue) {
     final GroovyResolveResult[] results = refExpr.multiResolve(false, forceRValue);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
@@ -457,12 +454,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return null;
   }
 
+  @Nullable
   @Override
   public PsiType getType(boolean forceRValue) {
     if (forceRValue) {
-      return TypeInferenceHelper.getCurrentContext().getExpressionType(
-        myFakeGetterElement.getValue(), e -> calculate(e.getOriginal(), true)
-      );
+      return calculate(this, true);
     }
     else {
       return TypeInferenceHelper.getCurrentContext().getExpressionType(
