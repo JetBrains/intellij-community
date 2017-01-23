@@ -1,3 +1,4 @@
-This software includes code from IntelliJ IDEA Community Edition
+Android Studio includes proprietary code subject to separate license, including
+JetBrains CLion and IntelliJ IDEA Community Edition
 Copyright (C) JetBrains s.r.o.
 https://www.jetbrains.com/idea/
