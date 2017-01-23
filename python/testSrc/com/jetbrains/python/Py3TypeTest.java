@@ -161,7 +161,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("__coroutine[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("Coroutine[Any, Any, int]",
            "async def foo(x):\n" +
            "    await x\n" +
            "    return 0\n" +
