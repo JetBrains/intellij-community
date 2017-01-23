@@ -68,7 +68,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(true)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(false, true)
     }
   }
 }
@@ -97,8 +97,8 @@ abstract class ImageResourcesTestBase {
 
     @JvmStatic
     @JvmOverloads
-    fun collectIconsWithNonOptimumSize(ignoreSkipTag: Boolean = false): List<Array<Any>> {
-      val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+    fun collectIconsWithNonOptimumSize(iconsOnly: Boolean = true, ignoreSkipTag: Boolean = false): List<Array<Any>> {
+      val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
       forEachModule {
         checker.checkOptimumSizes(it)
       }
@@ -137,11 +137,11 @@ private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : Image
   }
 }
 
-private class MyOptimumSizeChecker(val projectHome: File, val ignoreSkipTag: Boolean) {
+private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean, val ignoreSkipTag: Boolean) {
   val failures = ArrayList<FailedTest>()
 
   fun checkOptimumSizes(module: JpsModule) {
-    val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
+    val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag).collect(module)
     val images = allImages.filter { it.file != null }
 
     images.forEach { image ->
