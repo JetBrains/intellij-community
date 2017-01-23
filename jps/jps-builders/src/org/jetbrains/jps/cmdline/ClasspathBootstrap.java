@@ -132,17 +132,13 @@ public class ClasspathBootstrap {
     }
 
     try {
+      final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
       // sdkHome is not the same as the sdk used to run this process
-      File sdkHomeFile = new File(sdkHome);
-      if ("jre".equals(sdkHomeFile.getName())) {
-        sdkHomeFile = sdkHomeFile.getParentFile();
-      }
-      final File candidate = new File(sdkHomeFile, "lib/tools.jar");
+      final File candidate = new File(sdkHome, "lib/tools.jar");
       if (candidate.exists()) {
         cp.add(candidate);
       }
       else {
-        final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
         // last resort
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
         if (systemCompiler != null) {
