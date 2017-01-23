@@ -58,15 +58,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.Set", PyNames.SET)
     .put("typing.FrozenSet", "frozenset")
     .put("typing.Tuple", PyNames.TUPLE)
-    .put("typing.Iterable", PyNames.COLLECTIONS + "." + PyNames.ITERABLE)
-    .put("typing.Iterator", PyNames.COLLECTIONS + "." + PyNames.ITERATOR)
-    .put("typing.Container", PyNames.COLLECTIONS + "." + PyNames.CONTAINER)
-    .put("typing.Sequence", PyNames.COLLECTIONS + "." + PyNames.SEQUENCE)
-    .put("typing.MutableSequence", PyNames.COLLECTIONS + "." + "MutableSequence")
-    .put("typing.Mapping", PyNames.COLLECTIONS + "." + PyNames.MAPPING)
-    .put("typing.MutableMapping", PyNames.COLLECTIONS + "." + "MutableMapping")
-    .put("typing.AbstractSet", PyNames.COLLECTIONS + "." + "Set")
-    .put("typing.MutableSet", PyNames.COLLECTIONS + "." + "MutableSet")
     .build();
 
   public static final ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
@@ -228,14 +219,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
+      // We model generic classes as return types of their constructors here
+      if (PyUtil.isInit(function)) {
+        final PyClass cls = function.getContainingClass();
+        if (cls != null) {
+          final PyType genericType = getGenericType(cls, context);
+          if (genericType != null) {
+            return Ref.create(genericType);
+          }
+        }
+      }
       final PyExpression value = getReturnTypeAnnotation(function);
       if (value != null) {
         final PyType type = getType(value, new Context(context));
         return type != null ? Ref.create(type) : null;
-      }
-      final PyType constructorType = getGenericConstructorType(function, new Context(context));
-      if (constructorType != null) {
-        return Ref.create(constructorType);
       }
     }
     return null;
@@ -329,23 +326,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private static boolean isAny(@NotNull PyType type) {
-    return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
+  @Nullable
+  @Override
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final List<PyGenericType> genericTypes = collectGenericTypes(cls, new Context(context));
+    final List<PyType> elementTypes = new ArrayList<>(genericTypes);
+    if (elementTypes.isEmpty()) {
+      return null;
+    }
+    return new PyCollectionTypeImpl(cls, false, elementTypes);
   }
 
-  @Nullable
-  private static PyType getGenericConstructorType(@NotNull PyFunction function, @NotNull Context context) {
-    if (PyUtil.isInit(function)) {
-      final PyClass cls = function.getContainingClass();
-      if (cls != null) {
-        final List<PyGenericType> genericTypes = collectGenericTypes(cls, context);
-        final List<PyType> elementTypes = new ArrayList<>(genericTypes);
-        if (!elementTypes.isEmpty()) {
-          return new PyCollectionTypeImpl(cls, false, elementTypes);
-        }
-      }
-    }
-    return null;
+  private static boolean isAny(@NotNull PyType type) {
+    return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
   }
 
   @NotNull

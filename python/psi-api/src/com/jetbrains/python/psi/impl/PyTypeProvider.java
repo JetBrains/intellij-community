@@ -50,4 +50,10 @@ public interface PyTypeProvider {
 
   @Nullable
   PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context);
+
+  /**
+   * Returns a parameterized version of the class type.
+   */
+  @Nullable
+  PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context);
 }
