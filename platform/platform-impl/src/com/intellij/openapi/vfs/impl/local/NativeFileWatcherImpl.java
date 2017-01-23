@@ -90,7 +90,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (myExecutable == PLATFORM_NOT_SUPPORTED) {
-      LOG.info("Native file watcher is not supported on this platform");
+      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exists"), null);
     }
     else if (!myExecutable.canExecute()) {
       String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
