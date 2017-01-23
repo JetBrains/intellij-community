@@ -83,6 +83,13 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
     }
     finally {
+      myLogData = null;
+      myLoader = null;
+      myLogProvider = null;
+      myCommits = null;
+      myDataWaiter = null;
+      myStartedTasks.clear();
+      changeListManager = null;
       super.tearDown();
     }
   }

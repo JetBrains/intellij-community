@@ -49,6 +49,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
     }
     finally {
+      myTaskManager = null;
       super.tearDown();
     }
   }

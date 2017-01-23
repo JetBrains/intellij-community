@@ -179,6 +179,15 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFileManager.getInstance().syncRefresh();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFileIndex = null;
+    myIndex = null;
+    myModule2 = null;
+    myModule3 = null;
+    super.tearDown();
+  }
+
   private CompilerProjectExtension getCompilerProjectExtension() {
     final CompilerProjectExtension instance = CompilerProjectExtension.getInstance(myProject);
     assertNotNull(instance);
