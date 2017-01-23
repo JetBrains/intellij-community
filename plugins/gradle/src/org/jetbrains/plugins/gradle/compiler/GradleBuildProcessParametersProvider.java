@@ -45,7 +45,7 @@ import java.util.List;
 public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
   @NotNull private final Project myProject;
 
-  private List<String> myClasspath;
+  private List<String> myGradleClasspath;
 
   public GradleBuildProcessParametersProvider(@NotNull Project project) {
     myProject = project;
@@ -54,38 +54,40 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   @Override
   @NotNull
   public List<String> getClassPath() {
-    if (myClasspath == null) {
-      myClasspath = ContainerUtil.newArrayList();
-      addGradleClassPath(myClasspath);
-      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      for (Module module : moduleManager.getModules()) {
-        if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-          addOtherClassPath(myClasspath);
-          break;
+    List<String> result = ContainerUtil.newArrayList();
+    addGradleClassPath(result);
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    for (Module module : moduleManager.getModules()) {
+      if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+        addOtherClassPath(result);
+        break;
+      }
+    }
+    return result;
+  }
+
+  private void addGradleClassPath(@NotNull final List<String> classpath) {
+    if (myGradleClasspath == null) {
+      myGradleClasspath = ContainerUtil.newArrayList();
+      String gradleLibDirPath = null;
+      String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
+      if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
+        gradleLibDirPath = PathUtil.getParentPath(gradleToolingApiJarPath);
+      }
+      if (gradleLibDirPath == null || gradleLibDirPath.isEmpty()) return;
+
+      File gradleLibDir = new File(gradleLibDirPath);
+      if (!gradleLibDir.isDirectory()) return;
+
+      File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
+      for (File child : children) {
+        final String fileName = child.getName();
+        if (fileName.endsWith(".jar") && child.isFile()) {
+          myGradleClasspath.add(child.getAbsolutePath());
         }
       }
     }
-    return myClasspath;
-  }
-
-  private static void addGradleClassPath(@NotNull final List<String> classpath) {
-    String gradleLibDirPath = null;
-    String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
-    if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
-      gradleLibDirPath = PathUtil.getParentPath(gradleToolingApiJarPath);
-    }
-    if (gradleLibDirPath == null || gradleLibDirPath.isEmpty()) return;
-
-    File gradleLibDir = new File(gradleLibDirPath);
-    if (!gradleLibDir.isDirectory()) return;
-
-    File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
-    for (File child : children) {
-      final String fileName = child.getName();
-      if (fileName.endsWith(".jar") && child.isFile()) {
-        classpath.add(child.getAbsolutePath());
-      }
-    }
+    ContainerUtil.addAll(classpath, myGradleClasspath);
   }
 
   private static void addOtherClassPath(@NotNull final List<String> classpath) {
