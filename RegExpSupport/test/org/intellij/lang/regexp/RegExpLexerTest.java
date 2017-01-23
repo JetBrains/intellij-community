@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.intellij.lang.regexp;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 
+import java.io.File;
 import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.*;
@@ -583,6 +584,9 @@ public class RegExpLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return "community/RegExpSupport/testData/lexer";
+    if (new File(getHomePath(), "community/RegExpSupport").isDirectory()) {
+      return "/community/RegExpSupport/testData/lexer";
+    }
+    return "/RegExpSupport/testData/lexer";
   }
 }
