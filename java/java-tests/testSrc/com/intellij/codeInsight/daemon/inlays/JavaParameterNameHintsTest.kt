@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.JavaInlayHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -580,7 +581,9 @@ class Key {
   }
 
   fun `test poly and binary expressions`() {
-    check("""
+    try {
+      JavaInlayHintsProvider.isDebug = true
+      check("""
 class Test {
   void test() {
     xxx(<hint text="followTheSum"/>100);
@@ -593,6 +596,10 @@ class Test {
   void yyy(int followTheSum) {}
 }
 """)
+    }
+    finally {
+      JavaInlayHintsProvider.isDebug = false
+    }
   }
 
   fun `test incorrect pattern`() {

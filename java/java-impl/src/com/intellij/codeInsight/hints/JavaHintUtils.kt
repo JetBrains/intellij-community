@@ -25,6 +25,7 @@ import com.intellij.psi.util.TypeConversionUtil
 
 object JavaInlayHintsProvider {
 
+  var isDebug = false
   
   fun createHints(callExpression: PsiCallExpression): Set<InlayInfo> {
     val resolveResult = callExpression.resolveMethodGenerics()
@@ -165,9 +166,9 @@ object JavaInlayHintsProvider {
     val varargExpressions = arguments.drop(regularParamsCount)
     return CallInfo(regularArgInfos, varargParam, varargExpressions)
   }
-
+  
   private fun isUnclearExpression(callArgument: PsiElement): Boolean {
-    return when (callArgument) {
+    val isShowHint = when (callArgument) {
       is PsiLiteralExpression -> true
       is PsiThisExpression -> true
       is PsiBinaryExpression -> true
@@ -179,6 +180,12 @@ object JavaInlayHintsProvider {
       }
       else -> false
     }
+
+    if (isDebug) {
+      println("${callArgument.text} : ${callArgument.javaClass} : isShowHint->$isShowHint")
+    }
+    
+    return isShowHint
   }
 }
 
