@@ -36,7 +36,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectBadIcons(false)
+      return ImageResourcesTestBase.collectBadIcons()
     }
   }
 }
@@ -46,7 +46,7 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(false)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize()
     }
   }
 }
@@ -86,7 +86,8 @@ abstract class ImageResourcesTestBase {
 
   companion object {
     @JvmStatic
-    fun collectBadIcons(ignoreSkipTag: Boolean): List<Array<Any>> {
+    @JvmOverloads
+    fun collectBadIcons(ignoreSkipTag: Boolean = false): List<Array<Any>> {
       val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
       forEachModule {
         checker.check(it)
@@ -95,7 +96,8 @@ abstract class ImageResourcesTestBase {
     }
 
     @JvmStatic
-    fun collectIconsWithNonOptimumSize(ignoreSkipTag: Boolean): List<Array<Any>> {
+    @JvmOverloads
+    fun collectIconsWithNonOptimumSize(ignoreSkipTag: Boolean = false): List<Array<Any>> {
       val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), ignoreSkipTag)
       forEachModule {
         checker.checkOptimumSizes(it)
