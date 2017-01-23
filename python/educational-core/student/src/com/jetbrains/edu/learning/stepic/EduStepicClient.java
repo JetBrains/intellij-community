@@ -55,9 +55,6 @@ public class EduStepicClient {
   static <T> T getFromStepic(String link, final Class<T> container, @NotNull final CloseableHttpClient client) throws IOException {
     if (!link.startsWith("/")) link = "/" + link;
     final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
-    if (ourClient == null) {
-      initializeClient();
-    }
 
     final CloseableHttpResponse response = client.execute(request);
     final StatusLine statusLine = response.getStatusLine();
