@@ -17,8 +17,10 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.jetbrains.python.PyBundle;
+import org.intellij.lang.annotations.MagicConstant;
 
 /**
  * @author yole
@@ -74,6 +76,12 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
 
   public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
+  @MagicConstant(intValues = {
+    CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_ALWAYS,
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+  })
   public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
   public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
@@ -92,6 +100,27 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = false;
   public boolean OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = true;
   public boolean OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = false;
+
+  /**
+   * Affects wrapping of multiple imported names in a single "from" import.
+   */
+  @MagicConstant(intValues = {
+    CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_ALWAYS,
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+  })
+  public int FROM_IMPORT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+  public boolean FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
+  public boolean FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
+  
+  @MagicConstant(intValues = {
+    CommonCodeStyleSettings.DO_NOT_FORCE,
+    CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
+    CommonCodeStyleSettings.FORCE_BRACES_ALWAYS}
+  )
+  public boolean FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = false;
+  public boolean FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = false;
 
   /**
    * Corresponds to the option of pycodestyle.py "--hang-closing". Basically, it means that the closing brace of a collection literal, 
