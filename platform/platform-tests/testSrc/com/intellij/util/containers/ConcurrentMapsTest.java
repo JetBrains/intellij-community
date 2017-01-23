@@ -15,9 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.junit.Test;
@@ -53,21 +51,7 @@ public class ConcurrentMapsTest {
   @Test(timeout = TIMEOUT)
   public void testWeakHashMapWithIdentityStrategy() {
     WeakHashMap<Object, Object> map = new WeakHashMap<>(10,0.5f,ContainerUtil.identityStrategy());
-    Ref<Object> key = Ref.create(new Object());
-    Ref<Object> value = Ref.create(new Object());
-    map.put(key.get(), value.get());
-
-    assertSame(value.get(), map.get(key.get()));
-    value.set(null);
-    key.set(null);
-    do {
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    UsefulTestCase.assertEmpty(map.keySet());
-    assertTrue(map.isEmpty());
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -112,7 +96,7 @@ public class ConcurrentMapsTest {
     checkKeyIsTossedAfterGCPressure(map);
   }
 
-  private void checkKeyIsTossedAfterGCPressure(ConcurrentMap<Object, Object> map) {
+  private void checkKeyIsTossedAfterGCPressure(Map<Object, Object> map) {
     map.put(new Object(), new Object());
 
     //noinspection SizeReplaceableByIsEmpty
