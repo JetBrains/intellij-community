@@ -35,6 +35,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -615,7 +617,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       if (window != null) {
         Point point = SwingUtilities.convertPoint(this, p, window);
         Component component = SwingUtilities.getDeepestComponentAt(window, point.x, point.y);
-        if (UIUtil.findParentByCondition(component, c -> c == ThreeComponentsSplitter.this) == null) return false;
+        List<Component> components = Arrays.asList(myFirstComponent, myFirstDivider, myInnerComponent, myLastDivider, myLastComponent);
+        if (UIUtil.findParentByCondition(component, c -> c != null && components.contains(c)) == null) return false;
       }
 
       int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
