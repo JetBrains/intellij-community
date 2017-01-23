@@ -16,6 +16,7 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public interface ThemeFilter {
@@ -23,4 +24,5 @@ public interface ThemeFilter {
   
   String getDisplayName();
   boolean accepts(VirtualFile file);
+  boolean isApplicableToProject(Project project);
 }

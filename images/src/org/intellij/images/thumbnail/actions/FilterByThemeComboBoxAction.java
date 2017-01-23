@@ -21,19 +21,24 @@ package org.intellij.images.thumbnail.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public final class FilterByThemeComboBoxAction extends ComboBoxAction {
     
     public void update(final AnActionEvent e) {
+        Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-        ThemeFilter[] extensions = ThemeFilter.EP_NAME.getExtensions();
-        e.getPresentation().setVisible(view != null && extensions.length > 0);
+        boolean hasApplicableExtension = 
+          Arrays.stream(ThemeFilter.EP_NAME.getExtensions())
+            .allMatch(filter -> project != null && filter.isApplicableToProject(project));
+        e.getPresentation().setVisible(view != null && hasApplicableExtension);
         if (view != null) {
             ThemeFilter filter = view.getFilter();
             e.getPresentation().setText(filter == null ? "All" : filter.getDisplayName());
@@ -52,6 +57,11 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
             @Override
             public boolean accepts(VirtualFile file) {
+                return true;
+            }
+
+            @Override
+            public boolean isApplicableToProject(Project project) {
                 return true;
             }
         }));

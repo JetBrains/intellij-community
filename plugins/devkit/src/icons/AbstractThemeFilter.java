@@ -15,8 +15,10 @@
  */
 package org.jetbrains.idea.devkit.icons;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 public abstract class AbstractThemeFilter implements ThemeFilter {
   private final Theme myTheme;
@@ -33,5 +35,10 @@ public abstract class AbstractThemeFilter implements ThemeFilter {
   @Override
   public boolean accepts(VirtualFile file) {
     return myTheme.accepts(file);
+  }
+
+  @Override
+  public boolean isApplicableToProject(Project project) {
+    return PsiUtil.isIdeaProject(project) || PsiUtil.isPluginProject(project);
   }
 }
