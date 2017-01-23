@@ -24,6 +24,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -55,19 +56,21 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-    final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
-    for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
-      boolean allAreDummyOrCompiled = true;
-      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
-        if (target instanceof ModuleBuildTarget && !myCompiledTargets.contains(target) && !targetIndex.isDummy(target)) {
-          allAreDummyOrCompiled = false;
+    if (JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+      final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
+      for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
+        boolean allAreDummyOrCompiled = true;
+        for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+          if (target instanceof ModuleBuildTarget && !myCompiledTargets.contains(target) && !targetIndex.isDummy(target)) {
+            allAreDummyOrCompiled = false;
+          }
+        }
+        if (allAreDummyOrCompiled) {
+          context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, module.getName()));
         }
       }
-      if (allAreDummyOrCompiled) {
-        context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, module.getName()));
-      }
+      myCompiledTargets.clear();
     }
-    myCompiledTargets.clear();
 
     BackwardReferenceIndexWriter.closeIfNeed();
   }
@@ -92,11 +95,14 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
       }
     }
 
-    for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (context.getScope().isWholeTargetAffected(target)) {
-        myCompiledTargets.add(target);
+    if (JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (context.getScope().isWholeTargetAffected(target)) {
+          myCompiledTargets.add(target);
+        }
       }
     }
+
     return null;
   }
 }
