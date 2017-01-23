@@ -20,9 +20,11 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
@@ -707,6 +709,23 @@ class ContainerUtil extends ContainerUtilRt {
 
   void testPreferExpectedMethodTypeArg() {
     checkPreferredItems 0, 'String', 'Usage'
+
+    def typeArgOffset = myFixture.editor.caretModel.offset
+
+    // increase usage stats of ArrayList
+    LookupManager.getInstance(project).hideActiveLookup()
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    myFixture.type('\nArrayLi')
+    myFixture.completeBasic()
+    myFixture.type(' l')
+    myFixture.completeBasic()
+    myFixture.type('\n;')
+    assert myFixture.editor.document.text.contains('ArrayList list;')
+
+    // check String is still preferred
+    myFixture.editor.caretModel.moveToOffset(typeArgOffset)
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'String', "Usage"
   }
 
   void testMethodStatisticsPerQualifierType() {
