@@ -39,6 +39,14 @@ java_library(
 )
 
 java_library(
+    name = "equalsverifier",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
+)
+
+java_library(
     name = "easymock-tools",
     tags = ["managed"],
     visibility = ["//visibility:public"],
