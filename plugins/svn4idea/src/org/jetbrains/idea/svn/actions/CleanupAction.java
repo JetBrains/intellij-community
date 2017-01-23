@@ -27,6 +27,8 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import static java.util.Collections.singletonList;
+
 public class CleanupAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
     return SvnBundle.message("cleanup.action.name");
@@ -51,9 +53,9 @@ public class CleanupAction extends BasicAction {
     perform(project, activeVcs, file, context);
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
-    new CleanupWorker(new VirtualFile[]{file}, project, "action.Subversion.cleanup.progress.title").execute();
+  @Override
+  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException {
+    new CleanupWorker(activeVcs, singletonList(file)).execute();
   }
 
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context)

@@ -19,12 +19,14 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+
+import static com.intellij.util.containers.ContainerUtil.immutableList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 /**
  * @author yole
@@ -32,8 +34,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 public class CleanupProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
-    new CleanupWorker(roots, project, "action.Subversion.cleanup.project.title").execute();
+    SvnVcs vcs = SvnVcs.getInstance(project);
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+
+    new CleanupWorker(vcs, immutableList(roots), message("action.Subversion.cleanup.project.title")).execute();
  }
 
   public void update(final AnActionEvent e) {

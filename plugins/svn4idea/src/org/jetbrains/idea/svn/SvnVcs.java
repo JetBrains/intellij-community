@@ -97,6 +97,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static java.util.Collections.emptyList;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
@@ -224,24 +225,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void cleanup17copies() {
     Runnable callCleanupWorker = () -> {
       if (myProject.isDisposed()) return;
-      new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
+      new CleanupWorker(this, emptyList()) {
         @Override
-        protected void chanceToFillRoots() {
-          final List<WCInfo> infos = getAllWcInfos();
-          final LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final List<VirtualFile> roots = new ArrayList<>(infos.size());
-          for (WCInfo info : infos) {
+        protected void fillRoots() {
+          for (WCInfo info : getAllWcInfos()) {
             if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-              final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+              VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(info.getRootInfo().getIoFile());
               if (file == null) {
                 LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
               }
               else {
-                roots.add(file);
+                myRoots.add(file);
               }
             }
           }
-          myRoots = roots.toArray(new VirtualFile[roots.size()]);
         }
       }.execute();
     };
