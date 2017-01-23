@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
  * Created by Kirill.Skrygan on 7/4/2016.
  */
 
-open class ConfigurableFactory() : Disposable {
+open class ConfigurableFactory : Disposable {
     companion object {
         fun getInstance(): ConfigurableFactory {
             return ServiceManager.getService(ConfigurableFactory::class.java)

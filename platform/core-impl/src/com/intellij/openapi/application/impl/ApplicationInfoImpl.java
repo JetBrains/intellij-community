@@ -62,7 +62,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
-  private Color myProgressBackgroundColor;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
@@ -145,7 +144,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_URL = "url";
   private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
-  private static final String ATTRIBUTE_PROGRESS_BACKGROUND_COLOR = "progressBackgroundColor";
   private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
@@ -361,10 +359,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   public Color getProgressColor() {
     return myProgressColor;
-  }
-
-  public Color getProgressBackgroundColor() {
-    return myProgressBackgroundColor;
   }
 
   public Color getCopyrightForeground() {
@@ -705,11 +699,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myProgressColor = parseColor(v);
       }
 
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_BACKGROUND_COLOR);
-      if (v != null) {
-        myProgressBackgroundColor = parseColor(v);
-      }
-
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
       if (v != null) {
         myProgressTailIconName = v;
@@ -928,7 +917,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myEvalLicenseUrl = url.trim();
       }
     }
- 
+
     Element licensingElement = getChild(parentNode, ELEMENT_LICENSING);
     if (licensingElement != null) {
       final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
