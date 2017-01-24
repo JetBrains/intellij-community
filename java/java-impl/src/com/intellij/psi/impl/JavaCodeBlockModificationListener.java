@@ -15,8 +15,11 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,7 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
   protected boolean isOutOfCodeBlock(@NotNull PsiElement element) {
     for (PsiElement e : SyntaxTraverser.psiApi().parents(element)) {
       if (e instanceof PsiModifiableCodeBlock) {
-        if (hasClassesInside(e)) break;
+        // trigger OOCBM for final variables initialized in constructors & class initializers
         if (!((PsiModifiableCodeBlock)e).shouldChangeModificationCount(element)) return false;
       }
       if (e instanceof PsiClass) break;
@@ -53,8 +56,20 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
   }
 
   @Override
-  protected boolean isOutOfCodeBlockInvalid(@NotNull PsiElement element) {
-    return hasClassesInside(element);
+  protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    PsiModificationTracker tracker = myPsiManager.getModificationTracker();
+    long cur = tracker.getOutOfCodeBlockModificationCount();
+    super.onTreeChanged(event);
+    if (cur == tracker.getOutOfCodeBlockModificationCount()) {
+      PsiEventType code = event.getCode();
+      if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
+        if (hasClassesInside(event.getOldChild()) ||
+            event.getOldChild() != event.getChild() && hasClassesInside(event.getChild())) {
+          onOutOfCodeBlockModification(event);
+          doIncOutOfCodeBlockCounter();
+        }
+      }
+    }
   }
 
   @Override
@@ -63,7 +78,8 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
   }
 
   private static boolean hasClassesInside(@Nullable PsiElement element) {
-    return !SyntaxTraverser.psiTraverser(element).filter(PsiClass.class).isEmpty();
+    return !SyntaxTraverser.psiTraverser(element).traverse()
+      .filter(Conditions.instanceOf(PsiClass.class, PsiLambdaExpression.class)).isEmpty();
   }
 
 }
