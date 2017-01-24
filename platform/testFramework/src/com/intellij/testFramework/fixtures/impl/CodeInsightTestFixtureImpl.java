@@ -201,9 +201,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+
     ProcessCanceledException exception = null;
     for (int i = 0; i < 1000; i++) {
+      int oldDelay = settings.AUTOREPARSE_DELAY;
       try {
+        settings.AUTOREPARSE_DELAY = 0;
         List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
@@ -212,6 +216,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         UIUtil.dispatchAllInvocationEvents();
         exception = e;
+      }
+      finally {
+        settings.AUTOREPARSE_DELAY = oldDelay;
       }
     }
     // unable to highlight after 100 retries
