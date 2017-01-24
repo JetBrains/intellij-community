@@ -112,13 +112,10 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     mySettingsPanel.repaint();
   }
 
-  private static int restorePanel(JPanel component, int i) {
-    int removed = 0;
+  private static void restorePanel(JPanel component, int i) {
     while (component.getComponentCount() > i) {
       component.remove(component.getComponentCount() - 1);
-      removed++;
     }
-    return removed;
   }
 
   @Override
@@ -194,7 +191,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   static void addField(String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
-    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.CENTER,
+    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
                                              GridBagConstraints.NONE, JBUI.insetsBottom(5), 4, 0));
     panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.CENTER,
                                             GridBagConstraints.HORIZONTAL, JBUI.insetsBottom(5), 0, 0));
