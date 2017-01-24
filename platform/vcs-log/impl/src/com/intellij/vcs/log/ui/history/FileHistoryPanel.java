@@ -168,14 +168,29 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @NotNull
   private List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
-    Set<FilePath> fileNames = myIndexDataGetter.getFileNames(myFilePath,
-                                                             myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot()));
+    Set<FilePath> fileNames = getFileNames(details);
     if (myFilePath.isDirectory()) {
       return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
     }
     else {
       return ContainerUtil.filter(details.getChanges(), change -> affectsFiles(change, fileNames));
     }
+  }
+
+  @NotNull
+  private Set<FilePath> getFileNames(@NotNull VcsFullCommitDetails details) {
+    int commitIndex = myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot());
+    VisiblePack pack = myGraphTable.getModel().getVisiblePack();
+    Set<FilePath> names;
+    if (pack instanceof FileHistoryVisiblePack) {
+      IndexDataGetter.FileNamesData namesData = ((FileHistoryVisiblePack)pack).getNamesData();
+      names = namesData.getAffectedPaths(commitIndex);
+    }
+    else {
+      names = myIndexDataGetter.getFileNames(myFilePath, commitIndex);
+    }
+    if (names.isEmpty()) return Collections.singleton(myFilePath);
+    return names;
   }
 
   private static boolean affectsFiles(@NotNull Change change, @NotNull Set<FilePath> files) {

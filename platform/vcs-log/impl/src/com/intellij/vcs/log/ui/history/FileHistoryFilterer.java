@@ -76,7 +76,8 @@ class FileHistoryFilterer extends VcsLogFilterer {
     // No worries! It's going to be fine later!
     IndexDataGetter.FileNamesData namesData = myIndexDataGetter.buildFileNamesData(myFilePath);
     if (!namesData.hasRenames()) {
-      return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, matchingCommits, canRequestMore);
+      VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
+      return new FileHistoryVisiblePack(dataPack, visibleGraph, canRequestMore, filters, namesData);
     }
 
     VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
@@ -84,13 +85,14 @@ class FileHistoryFilterer extends VcsLogFilterer {
       FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
       if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), getCurrentRow(dataPack, visibleGraph, namesData), myFilePath)) {
         // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-        return new VisiblePack(dataPack, createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits()),
-                               canRequestMore,
-                               filters);
+        return new FileHistoryVisiblePack(dataPack, createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits()),
+                                          canRequestMore,
+                                          filters,
+                                          namesData);
       }
     }
 
-    return new VisiblePack(dataPack, visibleGraph, canRequestMore, filters);
+    return new FileHistoryVisiblePack(dataPack, visibleGraph, canRequestMore, filters, namesData);
   }
 
   private int getCurrentRow(@NotNull DataPack pack,

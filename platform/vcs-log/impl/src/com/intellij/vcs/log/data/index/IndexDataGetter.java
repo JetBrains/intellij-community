@@ -171,5 +171,19 @@ public class IndexDataGetter {
         myCommitsToRenames.put(commit, ContainerUtil.set(new UnorderedPair<>(path, previousPath)));
       }
     }
+
+    @NotNull
+    public Set<FilePath> getAffectedPaths(int commit) {
+      Set<FilePath> paths = myCommitsToPaths.get(commit);
+      if (paths != null) return paths;
+
+      Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
+      Set<FilePath> result = ContainerUtil.newHashSet();
+      for (UnorderedPair<FilePath> rename : renames) {
+        result.add(rename.first);
+        result.add(rename.second);
+      }
+      return result;
+    }
   }
 }
