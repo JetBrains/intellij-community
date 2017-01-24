@@ -221,14 +221,7 @@ public class StackFrameItem extends XStackFrame {
   public void computeChildren(@NotNull XCompositeNode node) {
     if (myVariables != null) {
       XValueChildrenList children = new XValueChildrenList();
-      myVariables.forEach(v -> children.add(v.myName, new XValue() {
-        @Override
-        public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-          String type = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(v.myType);
-          Icon icon = v.myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
-          node.setPresentation(icon, type, v.myValue, false);
-        }
-      }));
+      myVariables.forEach(children::add);
       node.addChildren(children, true);
     }
     else {
@@ -236,19 +229,25 @@ public class StackFrameItem extends XStackFrame {
     }
   }
 
-  private static class VariableItem {
+  private static class VariableItem extends XNamedValue {
     enum VarType {PARAM, OBJECT}
 
-    private final String myName;
     private final String myType;
     private final String myValue;
     private final VarType myVarType;
 
     public VariableItem(String name, String type, String value, VarType varType) {
-      myName = name;
+      super(name);
       myType = type;
       myValue = value;
       myVarType = varType;
+    }
+
+    @Override
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      String type = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myType);
+      Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      node.setPresentation(icon, type, myValue, false);
     }
   }
 }
