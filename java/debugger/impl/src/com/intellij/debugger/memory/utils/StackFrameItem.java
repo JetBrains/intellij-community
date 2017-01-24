@@ -119,7 +119,11 @@ public class StackFrameItem extends XStackFrame {
   @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
     component.setIcon(myFirst ? AllIcons.Actions.Menu_cut : JBUI.scale(EmptyIcon.create(6)));
-    component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, myFilePath), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, className()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    String packageName = packageName();
+    if (!packageName.trim().isEmpty()) {
+      component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+    }
   }
 
   @Nullable
