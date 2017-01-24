@@ -39,10 +39,6 @@ public class SetPropertyAction extends BasicAction {
     return SvnBundle.message("action.name.set.property");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
-  }
-
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file == null || project == null || vcs == null) return false;
     final FileStatus status = FileStatusManager.getInstance(project).getStatus(file);

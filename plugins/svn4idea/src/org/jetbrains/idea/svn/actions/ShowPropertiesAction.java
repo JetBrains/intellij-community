@@ -36,6 +36,7 @@ public class ShowPropertiesAction extends BasicAction {
     return "Show Properties";
   }
 
+  @Override
   protected boolean needsAllFiles() {
     return false;
   }

@@ -54,6 +54,7 @@ public class MarkResolvedAction extends BasicAction {
     return SvnBundle.message("action.name.mark.resolved");
   }
 
+  @Override
   protected boolean needsAllFiles() {
     return false;
   }

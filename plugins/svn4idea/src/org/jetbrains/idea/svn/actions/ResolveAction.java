@@ -37,10 +37,6 @@ public class ResolveAction extends BasicAction {
     return SvnBundle.message("action.name.resolve.conflict");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
-  }
-
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) return true;
     final FileStatus fStatus = FileStatusManager.getInstance(project).getStatus(file);

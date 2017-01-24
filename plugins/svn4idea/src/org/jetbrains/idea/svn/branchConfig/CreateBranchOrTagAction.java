@@ -54,10 +54,6 @@ public class CreateBranchOrTagAction extends BasicAction {
     return SvnBundle.message("action.Subversion.Copy.text");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
-  }
-
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file == null) {
       return false;

@@ -34,10 +34,6 @@ public class LockAction extends BasicAction {
     return SvnBundle.message("action.Subversion.Lock.description");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
-  }
-
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file == null || file.isDirectory()) {
       return false;

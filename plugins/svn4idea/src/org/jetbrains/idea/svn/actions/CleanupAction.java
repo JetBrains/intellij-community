@@ -34,10 +34,6 @@ public class CleanupAction extends BasicAction {
     return SvnBundle.message("cleanup.action.name");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
-  }
-
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     return SvnStatusUtil.isUnderControl(project, file);
   }
