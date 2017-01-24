@@ -54,6 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -487,7 +488,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
        When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-    return !(SystemProperties.isTrueSmoothScrollingEnabled() && !IdeBackgroundUtil.isBackgroundImageSet(myEditor.getProject())) &&
+    boolean opaque = JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
+    return !(opaque && !IdeBackgroundUtil.isBackgroundImageSet(myEditor.getProject())) &&
            Registry.is("editor.transparent.scrollbar", false) &&
            EditorUtil.isRealFileEditor(myEditor);
   }

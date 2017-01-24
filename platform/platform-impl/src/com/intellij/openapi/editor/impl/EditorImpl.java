@@ -507,7 +507,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel = new JPanel();
 
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    if (SystemProperties.isTrueSmoothScrollingEnabled() && !IdeBackgroundUtil.isBackgroundImageSet(project)) {
+    boolean opaque = JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
+    if (opaque && !IdeBackgroundUtil.isBackgroundImageSet(project)) {
       //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
       myVerticalScrollBar.setOpaque(true);
       myScrollPane.getHorizontalScrollBar().setOpaque(true);
