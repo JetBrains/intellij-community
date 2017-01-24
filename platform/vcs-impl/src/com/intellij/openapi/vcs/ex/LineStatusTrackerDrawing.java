@@ -16,15 +16,12 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +51,6 @@ public class LineStatusTrackerDrawing {
                                    @NotNull Range range) {
       super(tracker, editor, range);
       myTracker = tracker;
-    }
-
-    @Override
-    protected boolean isShowInnerDifferences() {
-      return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
     }
 
     @NotNull
@@ -109,7 +101,7 @@ public class LineStatusTrackerDrawing {
     }
   }
 
-  private static class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
+  private static class ToggleByWordDiffAction extends LineStatusMarkerPopup.ToggleByWordDiffActionBase {
     @NotNull private final Range myRange;
     @NotNull private final Editor myEditor;
     @NotNull private final LineStatusTracker myTracker;
@@ -119,7 +111,6 @@ public class LineStatusTrackerDrawing {
                                   @NotNull Editor editor,
                                   @NotNull LineStatusTracker tracker,
                                   @Nullable Point mousePosition) {
-      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
       myRange = range;
       myEditor = editor;
       myTracker = tracker;
@@ -127,13 +118,7 @@ public class LineStatusTrackerDrawing {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
+    protected void reshowPopup() {
       new MyLineStatusMarkerPopup(myTracker, myEditor, myRange).showHintAt(myMousePosition);
     }
   }

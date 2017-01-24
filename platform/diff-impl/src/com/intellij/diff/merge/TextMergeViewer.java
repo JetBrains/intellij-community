@@ -1319,11 +1319,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final MyShowNextChangeMarkerAction localShowNextAction = new MyShowNextChangeMarkerAction(myRange);
         final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor);
         final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(myTracker, myRange);
+        final ToggleByWordDiffAction toggleWordDiff = new ToggleByWordDiffAction(myRange, mousePosition);
 
         group.add(localShowPrevAction);
         group.add(localShowNextAction);
         group.add(showDiff);
         group.add(copyRange);
+        group.add(toggleWordDiff);
 
         JComponent editorComponent = myEditor.getComponent();
         DiffUtil.registerAction(localShowPrevAction, editorComponent);
@@ -1410,6 +1412,21 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       protected Range getTargetRange(int line) {
         return myLineStatusTracker.getNextRange(line);
+      }
+    }
+
+    private class ToggleByWordDiffAction extends LineStatusMarkerPopup.ToggleByWordDiffActionBase {
+      @NotNull private final Range myRange;
+      @Nullable private final Point myMousePosition;
+
+      public ToggleByWordDiffAction(@NotNull Range range, @Nullable Point mousePosition) {
+        myRange = range;
+        myMousePosition = mousePosition;
+      }
+
+      @Override
+      protected void reshowPopup() {
+        new MyLineStatusMarkerPopup(myRange).showHintAt(myMousePosition);
       }
     }
   }

@@ -24,8 +24,11 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -36,7 +39,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
@@ -78,7 +83,7 @@ public abstract class LineStatusMarkerPopup {
   }
 
   protected boolean isShowInnerDifferences() {
-    return false;
+    return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
   }
 
 
@@ -299,5 +304,24 @@ public abstract class LineStatusMarkerPopup {
     public int getEditorTextOffset() {
       return 3; // myEditorComponent.getInsets().left
     }
+  }
+
+  public abstract static class ToggleByWordDiffActionBase extends ToggleAction implements DumbAware {
+    public ToggleByWordDiffActionBase() {
+      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
+      reshowPopup();
+    }
+
+    protected abstract void reshowPopup();
   }
 }
