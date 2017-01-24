@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author egor
@@ -58,22 +58,15 @@ public class ShowRelatedStackAction extends AnAction {
 
   @Nullable
   private static List<StackFrameItem> getRelatedStack(AnActionEvent e) {
-    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-
-    DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if (debugProcess == null) {
-      return null;
-    }
-
-    Map<ObjectReference, List<StackFrameItem>> data = debugProcess.getUserData(StackCapturingLineBreakpoint.CAPTURED_STACKS);
-    if (data == null) {
-      return null;
-    }
-
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
-      return data.get(values.get(0).getDescriptor().getValue());
+      Value value = values.get(0).getDescriptor().getValue();
+      if (value instanceof ObjectReference) {
+        DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+        return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)value, debuggerContext.getDebugProcess());
+      }
     }
+
     return null;
   }
 }
