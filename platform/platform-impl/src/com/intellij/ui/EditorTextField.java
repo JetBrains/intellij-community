@@ -331,7 +331,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       }
     }
 
-    if (duringRemoveNotify) {
+    final Application application = ApplicationManager.getApplication();
+    if (duringRemoveNotify && !application.isUnitTestMode()) {
       // releasing an editor implies removing it from a component hierarchy
       // invokeLater in required because releaseEditor() may be called from
       // removeNotify(), so we need to let swing complete its removeNotify() chain
@@ -346,7 +347,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     editor.getContentComponent().removeFocusListener(this);
 
-    final Application application = ApplicationManager.getApplication();
     final Runnable runnable = () -> {
       if (!editor.isDisposed()) {
         EditorFactory.getInstance().releaseEditor(editor);
