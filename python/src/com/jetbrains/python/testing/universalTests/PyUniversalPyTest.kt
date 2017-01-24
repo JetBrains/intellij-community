@@ -28,7 +28,9 @@ import com.jetbrains.python.testing.PythonTestConfigurationsModel
  */
 
 class PyUniversalPyTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(PyUniversalTestForm.create(configuration, PyUniversalPyTestConfiguration::keywords.name))
+  PyUniversalTestSettingsEditor(
+    PyUniversalTestForm.create(configuration, PyUniversalTestForm.CustomOption(
+      PyUniversalPyTestConfiguration::keywords.name, TestTargetType.PATH, TestTargetType.PYTHON)))
 
 class PyUniversalPyTestExecutionEnvironment(configuration: PyUniversalPyTestConfiguration, environment: ExecutionEnvironment) :
   PyUniversalTestExecutionEnvironment<PyUniversalPyTestConfiguration>(configuration, environment) {
