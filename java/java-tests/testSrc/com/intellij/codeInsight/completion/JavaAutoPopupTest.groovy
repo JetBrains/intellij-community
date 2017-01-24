@@ -1448,7 +1448,7 @@ class Foo {{
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
     LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
-    assert p.tailText == ' = 2 (foo)'
+    assert p.tailText == ' ( = 2) (foo)'
     assert p.typeText == 'int'
 
     type 'fo\n'

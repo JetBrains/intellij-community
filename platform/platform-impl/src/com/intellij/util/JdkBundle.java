@@ -63,10 +63,12 @@ public class JdkBundle {
     myBundled = bundled;
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
     return createBundle(jvm, boot, bundled, true);
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled, boolean matchArch) {
     String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
     return createBundle(jvm, homeSubPath, boot, bundled, matchArch);

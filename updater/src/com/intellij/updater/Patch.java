@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,10 +68,9 @@ public class Patch {
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    DiffCalculator.Result diff;
-    diff = DiffCalculator.calculate(digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui),
-                                    digestFiles(newerDir, spec.getIgnoredFiles(), false, ui),
-                                    spec.getCriticalFiles(), true);
+    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
+    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -249,7 +248,7 @@ public class Patch {
     boolean checkWarnings = true;
     while (checkWarnings) {
       //always collect files and folders to avoid cases such as IDEA-152249
-      files = Utils.collectRelativePaths(toDir, true);
+      files = Utils.collectRelativePaths(toDir);
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -392,7 +391,7 @@ public class Patch {
   public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize, UpdaterUI ui) throws IOException, OperationCancelledException {
     Map<String, Long> result = new LinkedHashMap<>();
     //always collect files and folders to avoid cases such as IDEA-152249
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, true);
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
     for (String each : paths) {
       if (ignoredFiles.contains(each)) continue;
       ui.setStatus(each);

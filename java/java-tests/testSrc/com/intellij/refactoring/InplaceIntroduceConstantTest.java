@@ -130,7 +130,7 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
-  public void testEnsureVisibility() throws Exception {
+  public void testEnsureVisibilityForAnno() throws Exception {
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = PsiModifier.PRIVATE;
     try {
       doTest(new Pass<AbstractInplaceIntroducer>() {

@@ -249,7 +249,7 @@ public class MinusculeMatcher implements Matcher {
         patternIndex += 2;
       }
     }
-    if (patternIndex < myMinNameLength) {
+    if (patternIndex < myMinNameLength * 2) {
       return null;
     }
 

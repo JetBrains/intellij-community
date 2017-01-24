@@ -1,5 +1,6 @@
 package com.intellij.configurationStore
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -43,6 +44,8 @@ class DoNotSaveDefaultsTest {
       true
     })
 
+    // <property name="file.gist.reindex.count" value="54" />
+    PropertiesComponent.getInstance().unsetValue("file.gist.reindex.count")
     try {
       System.setProperty("store.save.use.modificationCount", "false")
       app.doNotSave(false)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.xerces.impl;
+package com.intellij.ide.errorTreeView;
 
-import java.util.Map;
+import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dmitry Avdeev
+ * Implement this interface in your {@link ErrorTreeElement}'s inheritor to provide navigation from error messages to source code.
  */
-public class XercesAccessor {
-
-  public static Map<String, XMLEntityManager.Entity> getEntities(XMLEntityManager entityManager) {
-    return entityManager.getDeclaredEntities();
-  }
+public interface NavigatableErrorTreeElement {
+  @NotNull
+  Navigatable getNavigatable();
 }

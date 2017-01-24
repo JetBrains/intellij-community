@@ -264,10 +264,14 @@ public class PlatformTestUtil {
     assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert app.isDispatchThread();
 
+    Disposable tempDisposable = Disposer.newDisposable();
+
     final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
     final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    final Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
     ModalityState initialModality = ModalityState.current();
 
     alarm.addRequest(() -> {
@@ -277,28 +281,36 @@ public class PlatformTestUtil {
         alarm.addRequest(() -> alarmInvoked2.set(true), delay);
       });
     }, delay);
+    pooledAlarm.addRequest(() -> pooledRunnableInvoked.set(true), delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
     long start = System.currentTimeMillis();
     boolean sleptAlready = false;
-    while (!alarmInvoked2.get()) {
-      UIUtil.dispatchAllInvocationEvents();
-      //noinspection BusyWait
-      Thread.sleep(sleptAlready ? 10 : delay);
-      sleptAlready = true;
-      if (System.currentTimeMillis() - start > 100 * 1000) {
-        throw new AssertionError("Couldn't await alarm" +
-                                 "; alarm1 passed=" + alarmInvoked1.get() +
-                                 "; modality1=" + initialModality +
-                                 "; modality2=" + ModalityState.current() +
-                                 "; invokeLater passed=" + runnableInvoked.get() +
-                                 "; app.disposed=" + app.isDisposed() +
-                                 "; alarm.disposed=" + alarm.isDisposed() +
-                                 "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                 "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
-        );
+    try {
+      while (!alarmInvoked2.get()) {
+        UIUtil.dispatchAllInvocationEvents();
+        //noinspection BusyWait
+        Thread.sleep(sleptAlready ? 10 : delay);
+        sleptAlready = true;
+        if (System.currentTimeMillis() - start > 100 * 1000) {
+          throw new AssertionError("Couldn't await alarm" +
+                                   "; alarm passed=" + alarmInvoked1.get() +
+                                   "; modality1=" + initialModality +
+                                   "; modality2=" + ModalityState.current() +
+                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; invokeLater passed=" + runnableInvoked.get() +
+                                   "; pooled alarm passed=" + pooledRunnableInvoked.get() +
+                                   "; app.disposed=" + app.isDisposed() +
+                                   "; alarm.disposed=" + alarm.isDisposed() +
+                                   "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                   "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
+          );
+        }
       }
+    }
+    finally {
+      Disposer.dispose(tempDisposable);
     }
     UIUtil.dispatchAllInvocationEvents();
   }

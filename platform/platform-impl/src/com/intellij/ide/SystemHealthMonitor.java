@@ -98,7 +98,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           }
           else if (SystemInfo.isWindows || SystemInfo.isLinux) {
             JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
-            if (bundledJdk.getVersion() != null) {
+            if (bundledJdk != null && bundledJdk.getVersion() != null) {
               showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
             }
           }

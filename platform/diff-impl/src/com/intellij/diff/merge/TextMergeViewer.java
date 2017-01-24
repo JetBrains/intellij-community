@@ -37,7 +37,6 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1312,37 +1311,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @NotNull
       @Override
-      protected ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable) {
-        final DefaultActionGroup group = new DefaultActionGroup();
-
-        final MyShowPrevChangeMarkerAction localShowPrevAction = new MyShowPrevChangeMarkerAction(myRange);
-        final MyShowNextChangeMarkerAction localShowNextAction = new MyShowNextChangeMarkerAction(myRange);
-        final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor);
-        final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(myTracker, myRange);
-
-        group.add(localShowPrevAction);
-        group.add(localShowNextAction);
-        group.add(showDiff);
-        group.add(copyRange);
-
-        JComponent editorComponent = myEditor.getComponent();
-        DiffUtil.registerAction(localShowPrevAction, editorComponent);
-        DiffUtil.registerAction(localShowNextAction, editorComponent);
-        DiffUtil.registerAction(showDiff, editorComponent);
-        DiffUtil.registerAction(copyRange, editorComponent);
-
-        final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
-        Disposer.register(parentDisposable, new Disposable() {
-          @Override
-          public void dispose() {
-            actionList.remove(localShowPrevAction);
-            actionList.remove(localShowNextAction);
-            actionList.remove(showDiff);
-            actionList.remove(copyRange);
-          }
-        });
-
-        return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+      protected List<AnAction> createToolbarActions(@Nullable Point mousePosition) {
+        List<AnAction> actions = new ArrayList<>();
+        actions.add(new MyShowPrevChangeMarkerAction(myRange));
+        actions.add(new MyShowNextChangeMarkerAction(myRange));
+        actions.add(new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor));
+        actions.add(new CopyLineStatusRangeAction(myTracker, myRange));
+        actions.add(new ToggleByWordDiffAction(myRange, mousePosition));
+        return actions;
       }
     }
 
@@ -1410,6 +1386,21 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       protected Range getTargetRange(int line) {
         return myLineStatusTracker.getNextRange(line);
+      }
+    }
+
+    private class ToggleByWordDiffAction extends LineStatusMarkerPopup.ToggleByWordDiffActionBase {
+      @NotNull private final Range myRange;
+      @Nullable private final Point myMousePosition;
+
+      public ToggleByWordDiffAction(@NotNull Range range, @Nullable Point mousePosition) {
+        myRange = range;
+        myMousePosition = mousePosition;
+      }
+
+      @Override
+      protected void reshowPopup() {
+        new MyLineStatusMarkerPopup(myRange).showHintAt(myMousePosition);
       }
     }
   }

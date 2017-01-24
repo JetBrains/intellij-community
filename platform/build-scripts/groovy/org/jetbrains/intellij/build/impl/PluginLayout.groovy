@@ -55,6 +55,9 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
+  /**
+   * @return map from a JAR name to list of modules
+   */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
     def result = new MultiValuesMap<String, String>(true)
     for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
