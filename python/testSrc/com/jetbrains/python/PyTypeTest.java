@@ -65,9 +65,9 @@ public class PyTypeTest extends PyTestCase {
   public void testBinaryExprType() {
     doTest("int",
            "expr = 1 + 2");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '1' + '2'");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '%s' % ('a')");
     doTest("List[int]",
            "expr = [1] + [2]");
