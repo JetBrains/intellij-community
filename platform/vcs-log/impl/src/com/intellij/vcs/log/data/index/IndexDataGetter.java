@@ -16,11 +16,15 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,5 +72,104 @@ public class IndexDataGetter {
     }
 
     return Collections.emptySet();
+  }
+
+  @NotNull
+  public FileNamesData buildFileNamesData(@NotNull FilePath path) {
+    FileNamesData result = new FileNamesData();
+
+    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    if (myRoots.contains(root)) {
+      try {
+        myIndexStorage.paths.iterateCommits(Collections.singleton(path), (paths, commit) -> result.add(commit, paths));
+      }
+      catch (IOException | StorageException e) {
+        myFatalErrorsConsumer.consume(this, e);
+      }
+    }
+
+    return result;
+  }
+
+  public static class FileNamesData {
+    @NotNull private final TIntObjectHashMap<Set<FilePath>> myCommitsToPaths;
+    @NotNull private final TIntObjectHashMap<Set<UnorderedPair<FilePath>>> myCommitsToRenames;
+
+    public FileNamesData() {
+      myCommitsToPaths = new TIntObjectHashMap<>();
+      myCommitsToRenames = new TIntObjectHashMap<>();
+    }
+
+    public boolean hasRenames() {
+      return !myCommitsToRenames.isEmpty();
+    }
+
+    private void addPath(int commit, @NotNull FilePath path) {
+      Set<FilePath> paths = myCommitsToPaths.get(commit);
+      if (paths == null) {
+        paths = ContainerUtil.newHashSet();
+        myCommitsToPaths.put(commit, paths);
+      }
+      paths.add(path);
+    }
+
+    private void addRename(int commit, @NotNull Couple<FilePath> path) {
+      Set<UnorderedPair<FilePath>> paths = myCommitsToRenames.get(commit);
+      if (paths == null) {
+        paths = ContainerUtil.newHashSet();
+        myCommitsToRenames.put(commit, paths);
+      }
+      paths.add(new UnorderedPair<>(path.first, path.second));
+    }
+
+    public void add(int commit, @NotNull Couple<FilePath> paths) {
+      if (paths.second == null) {
+        addPath(commit, paths.first);
+      }
+      else {
+        addRename(commit, paths);
+      }
+    }
+
+    public boolean affects(int commit, @NotNull FilePath path) {
+      Set<FilePath> paths = myCommitsToPaths.get(commit);
+      if (paths != null && paths.contains(path)) return true;
+      return getRenamedPath(commit, path) != null;
+    }
+
+    @Nullable
+    public FilePath getRenamedPath(int commit, @Nullable FilePath newName) {
+      Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
+      if (renames == null) return null;
+
+      for (UnorderedPair<FilePath> rename : renames) {
+        if (rename.first.equals(newName)) return rename.second;
+        if (rename.second.equals(newName)) return rename.first;
+      }
+      return null;
+    }
+
+    @Nullable
+    public FilePath getPreviousPath(int commit, @Nullable FilePath path) {
+      Set<FilePath> paths = myCommitsToPaths.get(commit);
+      if (paths != null && paths.contains(path)) return path;
+      return getRenamedPath(commit, path);
+    }
+
+    public void remove(int commit) {
+      myCommitsToPaths.remove(commit);
+      myCommitsToRenames.remove(commit);
+    }
+
+    public void retain(int commit, @NotNull FilePath path, @NotNull FilePath previousPath) {
+      if (path.equals(previousPath)) {
+        myCommitsToPaths.put(commit, ContainerUtil.set(path));
+        myCommitsToRenames.remove(commit);
+      }
+      else {
+        myCommitsToPaths.remove(commit);
+        myCommitsToRenames.put(commit, ContainerUtil.set(new UnorderedPair<>(path, previousPath)));
+      }
+    }
   }
 }

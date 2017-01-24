@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntPredicate;
 
 public class ReachableNodes {
   @NotNull private final LiteLinearGraph myGraph;
@@ -72,6 +73,13 @@ public class ReachableNodes {
   }
 
   private void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull Consumer<Integer> consumer) {
+    walk(startNodes, goDown, node -> {
+      consumer.consume(node);
+      return true;
+    });
+  }
+
+  public void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull IntPredicate consumer) {
     synchronized (myTempFlags) {
 
       myTempFlags.setAll(false);
@@ -79,16 +87,16 @@ public class ReachableNodes {
         if (start < 0) continue;
         if (myTempFlags.get(start)) continue;
         myTempFlags.set(start, true);
-        consumer.consume(start);
+        if (!consumer.test(start)) return;
 
-        DfsUtil.walk(start, currentNode -> {
-          for (int downNode : myGraph.getNodes(currentNode, goDown ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
-            if (!myTempFlags.get(downNode)) {
-              myTempFlags.set(downNode, true);
-              consumer.consume(downNode);
-              return downNode;
+        DfsUtil.walk(start,  currentNode-> {
+            for (int downNode : myGraph.getNodes(currentNode, goDown ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
+              if (!myTempFlags.get(downNode)) {
+                myTempFlags.set(downNode, true);
+                if (!consumer.test(downNode)) return DfsUtil.NextNode.EXIT;
+                return downNode;
+              }
             }
-          }
 
           return DfsUtil.NextNode.NODE_NOT_FOUND;
         });

@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ObjIntConsumer;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
@@ -82,11 +83,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     myPathsIndexer.getPathsEnumerator().force();
   }
 
+  @NotNull
   public TIntHashSet getCommitsForPaths(@NotNull Collection<FilePath> paths) throws IOException, StorageException {
-    Set<Integer> allPathIds = ContainerUtil.newHashSet();
-    for (FilePath path : paths) {
-      allPathIds.add(myPathsIndexer.myPathsEnumerator.enumerate(path.getPath()));
-    }
+    Set<Integer> allPathIds = getPathIds(paths);
 
     TIntHashSet result = new TIntHashSet();
     Set<Integer> renames = allPathIds;
@@ -96,6 +95,15 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     }
 
     return result;
+  }
+
+  @NotNull
+  private Set<Integer> getPathIds(@NotNull Collection<FilePath> paths) throws IOException {
+    Set<Integer> allPathIds = ContainerUtil.newHashSet();
+    for (FilePath path : paths) {
+      allPathIds.add(myPathsIndexer.myPathsEnumerator.enumerate(path.getPath()));
+    }
+    return allPathIds;
   }
 
   @NotNull
@@ -136,6 +144,37 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
       result.add(VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(id)));
     }
     return result;
+  }
+
+  public void iterateCommits(@NotNull Collection<FilePath> paths, @NotNull ObjIntConsumer<Couple<FilePath>> consumer)
+    throws IOException, StorageException {
+
+    Set<Integer> startIds = getPathIds(paths);
+    Set<Integer> allIds = ContainerUtil.newHashSet(startIds);
+    Set<Integer> newIds = ContainerUtil.newHashSet();
+    while (!startIds.isEmpty()) {
+      for (int currentPathId : startIds) {
+        FilePath currentPath = VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(currentPathId));
+        iterateCommitIdsAndValues(currentPathId, (renamedPathId, commitId) -> {
+          FilePath renamedPath = null;
+          if (renamedPathId != null) {
+            if (!allIds.contains(renamedPathId)) {
+              newIds.add(renamedPathId);
+            }
+            try {
+              renamedPath = VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(renamedPathId));
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+          consumer.accept(Couple.of(currentPath, renamedPath), commitId);
+        });
+      }
+      startIds = ContainerUtil.newHashSet(newIds);
+      allIds.addAll(startIds);
+      newIds.clear();
+    }
   }
 
   @NotNull

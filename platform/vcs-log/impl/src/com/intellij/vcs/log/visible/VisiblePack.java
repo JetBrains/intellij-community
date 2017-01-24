@@ -38,10 +38,10 @@ public class VisiblePack implements VcsLogDataPack {
   private final boolean myCanRequestMore;
   @NotNull private final VcsLogFilterCollection myFilters;
 
-  VisiblePack(@NotNull DataPackBase dataPack,
-              @NotNull VisibleGraph<Integer> graph,
-              boolean canRequestMore,
-              @NotNull VcsLogFilterCollection filters) {
+  public VisiblePack(@NotNull DataPackBase dataPack,
+                     @NotNull VisibleGraph<Integer> graph,
+                     boolean canRequestMore,
+                     @NotNull VcsLogFilterCollection filters) {
     myDataPack = dataPack;
     myVisibleGraph = graph;
     myCanRequestMore = canRequestMore;

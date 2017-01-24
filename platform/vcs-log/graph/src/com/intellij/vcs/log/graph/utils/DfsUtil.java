@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class DfsUtil {
   public interface NextNode {
     int NODE_NOT_FOUND = -1;
+    int EXIT = -10;
 
     int fun(int currentNode);
   }
@@ -32,6 +33,7 @@ public class DfsUtil {
 
     while (!stack.empty()) {
       int nextNode = nextNodeFun.fun(stack.peek());
+      if (nextNode == NextNode.EXIT) return;
       if (nextNode != NextNode.NODE_NOT_FOUND) {
         stack.push(nextNode);
       }

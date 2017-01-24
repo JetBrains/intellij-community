@@ -15,20 +15,228 @@
  */
 package com.intellij.vcs.log.ui.history;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.CompressedRefs;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
+import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LiteLinearGraph;
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
+import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 
 class FileHistoryFilterer extends VcsLogFilterer {
   @NotNull private final FilePath myFilePath;
+  @NotNull private final IndexDataGetter myIndexDataGetter;
+  @NotNull private final VirtualFile myRoot;
 
   public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath) {
     super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
           logData.getIndex());
     myFilePath = filePath;
+    myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
+    myRoot = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(logData.getProject(), myFilePath));
   }
 
-  // this is empty now
-  // that's going to change soon
+  @NotNull
+  protected VisiblePack createVisiblePack(@NotNull DataPack dataPack,
+                                          @NotNull PermanentGraph.SortType sortType,
+                                          @NotNull VcsLogFilterCollection filters,
+                                          @Nullable Set<Integer> matchingHeads,
+                                          @Nullable Set<Integer> matchingCommits,
+                                          boolean canRequestMore) {
+    if (!myIndex.isIndexed(myRoot) || matchingCommits == null) {
+      return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, matchingCommits, canRequestMore);
+    }
+    // I realize, I'm calculating this data for the second time.
+    // No worries! It's going to be fine later!
+    IndexDataGetter.FileNamesData namesData = myIndexDataGetter.buildFileNamesData(myFilePath);
+    if (!namesData.hasRenames()) {
+      return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, matchingCommits, canRequestMore);
+    }
+
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
+    if (visibleGraph instanceof VisibleGraphImpl) {
+      FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
+      if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), getCurrentRow(dataPack, visibleGraph, namesData), myFilePath)) {
+        // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+        return new VisiblePack(dataPack, createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits()),
+                               canRequestMore,
+                               filters);
+      }
+    }
+
+    return new VisiblePack(dataPack, visibleGraph, canRequestMore, filters);
+  }
+
+  private int getCurrentRow(@NotNull DataPack pack,
+                            @NotNull VisibleGraph<Integer> visibleGraph,
+                            @NotNull IndexDataGetter.FileNamesData fileIndexData) {
+    PermanentGraph<Integer> permanentGraph = pack.getPermanentGraph();
+    if (permanentGraph instanceof PermanentGraphImpl) {
+      CompressedRefs refs = pack.getRefsModel().getAllRefsByRoot().get(myRoot);
+      Optional<VcsRef> headOptional = refs.streamBranches().filter(br -> br.getName().equals("HEAD")).findFirst();
+      if (headOptional.isPresent()) {
+        VcsRef head = headOptional.get();
+        assert head.getRoot().equals(myRoot);
+        return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, head.getCommitHash(), visibleGraph, fileIndexData);
+      }
+    }
+    return 0;
+  }
+
+  private int findAncestorRowAffectingFile(@NotNull PermanentGraphImpl<Integer> permanentGraph,
+                                           @NotNull Hash hash,
+                                           @NotNull VisibleGraph<Integer> visibleGraph,
+                                           @NotNull IndexDataGetter.FileNamesData fileNamesData) {
+    Ref<Integer> result = new Ref<>();
+
+    PermanentCommitsInfoImpl<Integer> commitsInfo = permanentGraph.getPermanentCommitsInfo();
+    ReachableNodes reachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.getLinearGraph()));
+    reachableNodes.walk(Collections.singleton(commitsInfo.getNodeId(myStorage.getCommitIndex(hash, myRoot))), true,
+                        currentNode -> {
+                          int id = commitsInfo.getCommitId(currentNode);
+                          if (fileNamesData.affects(id, myFilePath)) {
+                            result.set(currentNode);
+                            return false; // stop walk, we have found it
+                          }
+                          return true; // continue walk
+                        });
+
+    if (!result.isNull()) {
+      Integer rowIndex = visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()));
+      return ObjectUtils.assertNotNull(rowIndex);
+    }
+
+    return 0;
+  }
+
+  private static void walk(@NotNull LiteLinearGraph graph, int start, @NotNull NodeVisitor visitor) {
+    BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
+    BitSetFlags visitedInSameDirection = new BitSetFlags(graph.nodesCount(), false);
+
+    Stack<Pair<Integer, Boolean>> stack = new Stack<>();
+    stack.push(new Pair<>(start, true)); // commit + direction of travel
+
+    while (!stack.empty()) {
+      int currentNode = stack.peek().first;
+      boolean down = stack.peek().second;
+      if (!visited.get(currentNode)) {
+        visited.set(currentNode, true);
+        visitor.enterNode(currentNode);
+      }
+
+      boolean found = false;
+      for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
+        if (!visited.get(nextNode)) {
+          stack.push(new Pair<>(nextNode, down));
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        if (!visitedInSameDirection.get(currentNode)) {
+          visitedInSameDirection.set(currentNode, true);
+          visitor.exitNode(currentNode);
+        }
+        for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
+          if (!visited.get(nextNode)) {
+            stack.push(new Pair<>(nextNode, !down));
+            found = true;
+            break;
+          }
+        }
+      }
+
+      if (!found) {
+        stack.pop();
+      }
+    }
+  }
+
+  public interface NodeVisitor {
+    void enterNode(int node);
+
+    void exitNode(int node);
+  }
+
+  private static class FileHistoryRefiner implements NodeVisitor {
+    @NotNull private final VisibleGraph<Integer> myVisibleGraph;
+    @NotNull private final IndexDataGetter.FileNamesData myNamesData;
+    @NotNull private final Stack<FilePath> myPaths;
+    @NotNull private final Set<Integer> myMatchingCommits;
+
+    private boolean myWasChanged;
+
+    public FileHistoryRefiner(@NotNull VisibleGraph<Integer> visibleGraph,
+                              @NotNull IndexDataGetter.FileNamesData namesData) {
+      myVisibleGraph = visibleGraph;
+      myNamesData = namesData;
+
+      myPaths = new Stack<>();
+      myMatchingCommits = ContainerUtil.newHashSet();
+      myWasChanged = false;
+    }
+
+    public boolean refine(@NotNull LinearGraph graph, int row, @NotNull FilePath startPath) {
+      myPaths.push(startPath);
+      walk(LinearGraphUtils.asLiteLinearGraph(graph), row, this);
+      return myWasChanged;
+    }
+
+    @NotNull
+    public Set<Integer> getMatchingCommits() {
+      return myMatchingCommits;
+    }
+
+    @Override
+    public void enterNode(int node) {
+      FilePath currentPath = myPaths.peek();
+      Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
+
+      FilePath previousPath = myNamesData.getPreviousPath(commit, currentPath);
+      if (previousPath != null) {
+        myMatchingCommits.add(commit);
+        if (!currentPath.equals(previousPath)) myPaths.push(previousPath);
+        myNamesData.retain(commit, currentPath, previousPath);
+      }
+      else {
+        myNamesData.remove(commit);
+        myWasChanged = true;
+      }
+    }
+
+    @Override
+    public void exitNode(int node) {
+      Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
+      if (myMatchingCommits.contains(commit)) {
+        if (myNamesData.getRenamedPath(commit, myPaths.peek()) != null) myPaths.pop();
+      }
+    }
+  }
 }
