@@ -154,10 +154,6 @@ class FTManager {
     final FileTemplateBase template = getTemplates().get(qName);
     if (template instanceof CustomFileTemplate) {
       getTemplates().remove(qName);
-      File file = new File(getConfigRoot(false), qName);
-      if (file.exists()) {
-        file.delete();
-      }
       mySortedTemplates = null;
     }
     else if (template instanceof BundledFileTemplate){
