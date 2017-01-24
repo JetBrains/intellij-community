@@ -22,14 +22,19 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.xml.util.XmlStringUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VcsPushDialog extends DialogWrapper {
 
@@ -56,7 +62,6 @@ public class VcsPushDialog extends DialogWrapper {
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
-
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
@@ -174,18 +179,40 @@ public class VcsPushDialog extends DialogWrapper {
 
   @CalledInAwt
   private void push(boolean forcePush) {
-    CheckinPushHandler.HandlerResult result = myController.executeHandlers();
-    switch (result) {
-      case OK:
+    AtomicReference<CheckinPushHandler.HandlerResult> result = new AtomicReference<>();
+    new Task.Modal(myController.getProject(), "Checking Commits...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        result.set(myController.executeHandlers());
+      }
+
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
         myController.push(forcePush);
         close(OK_EXIT_CODE);
-        break;
-      case ABORT:
-        break;
-      case ABORT_AND_CLOSE:
-        doCancelAction();
-        break;
-    }
+      }
+
+      @Override
+      public void onCancel() {
+        super.onCancel();
+        if (result.get() == CheckinPushHandler.HandlerResult.ABORT_AND_CLOSE) {
+          doCancelAction();
+        }
+        // user pressed on cancel indicator window button,  then HandlerResult is not ABORT (usually OK or null);
+        else if (result.get() != CheckinPushHandler.HandlerResult.ABORT) {
+          if (Messages.showOkCancelDialog(myProject,
+                                          XmlStringUtil.wrapInHtml(
+                                            "Would you like to <u>C</u>ancel push completely or <u>S</u>kip pre-push checking and continue?"),
+                                          "Push",
+                                          "&Push Anyway",
+                                          "&Cancel",
+                                          UIUtil.getWarningIcon()) == Messages.OK) {
+            onSuccess();
+          }
+        }
+      }
+    }.queue();
   }
 
   public void updateOkActions() {

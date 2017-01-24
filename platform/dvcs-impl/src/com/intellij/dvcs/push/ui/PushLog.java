@@ -500,6 +500,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   public List<Change> getSelectedChanges() {
+  // todo fix me!
     return myChangesBrowser.getSelectedChanges();
   }
 
