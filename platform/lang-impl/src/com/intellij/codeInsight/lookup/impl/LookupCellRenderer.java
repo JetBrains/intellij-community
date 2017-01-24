@@ -266,7 +266,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
-      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+      int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
+      myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
       allowedWidth -= RealLookupElementPresentation.getStringWidth(trimmed, fontMetrics);
     }
   }
