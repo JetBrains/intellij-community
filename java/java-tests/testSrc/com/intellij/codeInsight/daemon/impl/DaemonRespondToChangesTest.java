@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2146,66 +2146,64 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() throws Exception {
-    runHeavyProcessing = false;
-    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int delay = settings.AUTOREPARSE_DELAY;
-    settings.AUTOREPARSE_DELAY = 0;
+    executeWithReparseDelay(() -> {
+      runHeavyProcessing = false;
+      try {
+        final Set<Editor> applied = Collections.synchronizedSet(new THashSet<>());
+        final Set<Editor> collected = Collections.synchronizedSet(new THashSet<>());
+        registerFakePass(applied, collected);
 
-    final Set<Editor> applied = Collections.synchronizedSet(new THashSet<>());
-    final Set<Editor> collected = Collections.synchronizedSet(new THashSet<>());
-    registerFakePass(applied, collected);
-
-    configureByText(PlainTextFileType.INSTANCE, "");
-    Editor editor = getEditor();
-    EditorTracker editorTracker = getProject().getComponent(EditorTracker.class);
-    editorTracker.setActiveEditors(Collections.singletonList(editor));
-    while (HeavyProcessLatch.INSTANCE.isRunning()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    type("xxx"); // restart daemon
-    assertTrue(editorTracker.getActiveEditors().contains(editor));
-    assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
-
-    try {
-      // wait for first pass to complete
-      long start = System.currentTimeMillis();
-      while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-        UIUtil.dispatchAllInvocationEvents();
-        if (System.currentTimeMillis() - start > 10000) {
-          fail("Too long waiting for daemon");
+        configureByText(PlainTextFileType.INSTANCE, "");
+        Editor editor = getEditor();
+        EditorTracker editorTracker = getProject().getComponent(EditorTracker.class);
+        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        while (HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
         }
-      }
+        type("xxx"); // restart daemon
+        assertTrue(editorTracker.getActiveEditors().contains(editor));
+        assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
 
-      runHeavyProcessing = true;
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
-        try {
-          while (runHeavyProcessing) {
+
+        // wait for first pass to complete
+        long start = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
+          UIUtil.dispatchAllInvocationEvents();
+          if (System.currentTimeMillis() - start > 10000) {
+            fail("Too long waiting for daemon");
           }
         }
-        finally {
-          token.finish();
+
+        runHeavyProcessing = true;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
+          try {
+            while (runHeavyProcessing) {
+            }
+          }
+          finally {
+            token.finish();
+          }
+        });
+        while (!HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
         }
-      });
-      while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-      applied.clear();
-      collected.clear();
+        applied.clear();
+        collected.clear();
 
-      type("xxx"); // try to restart daemon
+        type("xxx"); // try to restart daemon
 
-      start = System.currentTimeMillis();
-      while (System.currentTimeMillis() < start + 5000) {
-        assertEmpty(applied);  // it should not restart
-        assertEmpty(collected);
-        UIUtil.dispatchAllInvocationEvents();
+        start = System.currentTimeMillis();
+        while (System.currentTimeMillis() < start + 5000) {
+          assertEmpty(applied);  // it should not restart
+          assertEmpty(collected);
+          UIUtil.dispatchAllInvocationEvents();
+        }
       }
-    }
-    finally {
-      runHeavyProcessing = false;
-      settings.AUTOREPARSE_DELAY = delay;
-    }
+      finally {
+        runHeavyProcessing = false;
+      }
+    });
   }
 
   
@@ -2370,20 +2368,32 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
-    DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
-    mySettings.AUTOREPARSE_DELAY = 0;
-    for (int i=0; i<1000; i++) {
-      caretRight();
-      UIUtil.dispatchAllInvocationEvents();
-      caretLeft();
-      DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-      while(myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+    executeWithReparseDelay(() -> {
+      for (int i = 0; i < 1000; i++) {
+        caretRight();
         UIUtil.dispatchAllInvocationEvents();
+        caretLeft();
+        DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
+        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        long start = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
+          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
+        }
       }
-      long start = System.currentTimeMillis();
-      while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
-        UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
-      }
+    });
+  }
+
+  private static void executeWithReparseDelay(@NotNull Runnable task) {
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    int oldDelay = settings.AUTOREPARSE_DELAY;
+    settings.AUTOREPARSE_DELAY = 0;
+    try {
+      task.run();
+    }
+    finally {
+      settings.AUTOREPARSE_DELAY = oldDelay;
     }
   }
 
@@ -2420,9 +2430,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   
   public void testCodeFoldingPassRestartsOnRegionUnfolding() throws Exception {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int savedDelay = settings.AUTOREPARSE_DELAY;
-    settings.AUTOREPARSE_DELAY = 0;
-    try {
+    executeWithReparseDelay(() -> {
       configureByText(StdFileTypes.JAVA, "class Foo {\n" +
                                          "    void m() {\n" +
                                          "\n" +
@@ -2434,7 +2442,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
 
-      new WriteCommandAction<Void>(myProject){
+      new WriteCommandAction<Void>(myProject) {
         @Override
         protected void run(@NotNull Result<Void> result) throws Throwable {
           myEditor.getDocument().insertString(0, "/*");
@@ -2442,14 +2450,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }.execute();
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
-      
+
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");
-    }
-    finally {
-      settings.AUTOREPARSE_DELAY = savedDelay;
-    }
+    });
   }
 
   private void checkFoldingState(String expected) {
