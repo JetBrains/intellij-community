@@ -70,7 +70,7 @@ public class FormatProcessor {
     myWrapState = new WrapBlocksState(builder, blockIndentOptions);
     
     FormatTextRanges ranges = options.myAffectedRanges;
-    if (ranges != null && options.myReformatContext && Registry.is("smart.reformat.vcs.changes")) {
+    if (ranges != null && myReformatContext) {
       AdjustFormatRangesState adjustRangesState = new AdjustFormatRangesState(block, ranges);
       myStateProcessor = new StateProcessor(adjustRangesState);
       myStateProcessor.setNextState(myWrapState);
