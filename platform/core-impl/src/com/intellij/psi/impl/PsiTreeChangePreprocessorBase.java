@@ -45,14 +45,9 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     return true;
   }
 
-  protected boolean isOutOfCodeBlockInvalid(@NotNull PsiElement element) {
-    return false;
-  }
-
   private boolean outOfCodeBlock(@Nullable PsiElement element) {
-    if (element == null) return false;
+    if (element == null || !element.isValid()) return false;
     if (element instanceof PsiDirectory) return false; // handled by PsiModificationTrackerImpl#treeChanged()
-    if (!element.isValid()) return !(element instanceof PsiFileSystemItem) && isOutOfCodeBlockInvalid(element);
     if (element instanceof PsiFileSystemItem) return isOutOfCodeBlock((PsiFileSystemItem)element);
     return isOutOfCodeBlock(element);
   }
