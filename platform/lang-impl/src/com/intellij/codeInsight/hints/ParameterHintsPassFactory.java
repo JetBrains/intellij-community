@@ -144,6 +144,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
     @Override
     public void doApplyInformationToEditor() {
+      if (isDebug) {
+        System.out.println(System.nanoTime() + ": hints addition started");
+      }
+
       assert myDocument != null;
       boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
       ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
@@ -176,6 +180,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       }
       keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
+
+      if (isDebug) {
+        System.out.println(System.nanoTime() + ": hints applied to editor");
+      }
     }
 
     private boolean delayRemoval(Inlay inlay, TIntObjectHashMap<Caret> caretMap) {
