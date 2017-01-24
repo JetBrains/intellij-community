@@ -48,6 +48,10 @@ public class WizardContext extends UserDataHolderBase {
   private String myCompilerOutputDirectory;
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
+  /**
+   * Stores project type builder in case if replaced by TemplateModuleBuilder
+   */
+  private ProjectBuilder myOriginalBuilder;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
   private ModulesProvider myModulesProvider;
@@ -195,10 +199,16 @@ public class WizardContext extends UserDataHolderBase {
 
   public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
+    myOriginalBuilder = myProjectBuilder;
   }
 
-  public void setProjectTemplate(ProjectTemplate projectTemplate) {
-    setProjectBuilder(projectTemplate.createModuleBuilder());
+  public void setProjectTemplate(@Nullable ProjectTemplate projectTemplate) {
+    if (projectTemplate != null) {
+      myProjectBuilder = projectTemplate.createModuleBuilder();
+    }
+    else {
+      myProjectBuilder = myOriginalBuilder;
+    }
   }
 
   public String getPresentationName() {
