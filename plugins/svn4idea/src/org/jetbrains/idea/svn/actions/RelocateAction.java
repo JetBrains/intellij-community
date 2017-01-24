@@ -35,6 +35,8 @@ import java.io.File;
  * @author yole
  */
 public class RelocateAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return "Relocate working copy to a different URL";
   }

@@ -40,7 +40,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class BasicAction extends AnAction implements DumbAware {
 
@@ -56,7 +55,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     project.save();
 
     String actionName = getActionName();
-    LocalHistoryAction action = actionName != null ? LocalHistory.getInstance().startAction(actionName) : LocalHistoryAction.NULL;
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
     try {
@@ -81,7 +80,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
         }
       }, null);
 
-      helper.showErrors(exceptions, notNull(actionName, vcs.getName()));
+      helper.showErrors(exceptions, actionName);
     }
     finally {
       action.finish();
@@ -127,6 +126,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     }
   }
 
+  @NotNull
   protected abstract String getActionName();
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {

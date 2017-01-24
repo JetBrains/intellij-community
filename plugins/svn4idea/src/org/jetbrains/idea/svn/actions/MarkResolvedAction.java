@@ -48,6 +48,8 @@ import java.util.TreeSet;
 public class MarkResolvedAction extends BasicAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.MarkResolvedAction");
 
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.name.mark.resolved");
   }

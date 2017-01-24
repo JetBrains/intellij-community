@@ -41,6 +41,8 @@ public class RemoveFromIgnoreListAction extends BasicAction {
     myActionName = name;
   }
 
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.name.undo.ignore.files");
   }

@@ -31,6 +31,8 @@ import java.io.File;
 
 public class ShowPropertiesAction extends BasicAction {
 
+  @NotNull
+  @Override
   protected String getActionName() {
     return "Show Properties";
   }

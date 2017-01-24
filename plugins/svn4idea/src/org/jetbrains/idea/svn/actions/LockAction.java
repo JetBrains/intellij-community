@@ -30,6 +30,8 @@ import java.io.File;
 import static org.jetbrains.idea.svn.SvnStatusUtil.*;
 
 public class LockAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.Subversion.Lock.description");
   }

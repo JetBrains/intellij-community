@@ -49,6 +49,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 
 public class CreateBranchOrTagAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.Subversion.Copy.text");
   }

@@ -34,6 +34,8 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import java.io.File;
 
 public class SetPropertyAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.name.set.property");
   }

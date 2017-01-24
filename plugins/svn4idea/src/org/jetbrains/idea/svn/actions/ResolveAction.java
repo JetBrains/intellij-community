@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResolveAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.name.resolve.conflict");
   }

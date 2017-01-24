@@ -28,6 +28,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 import static java.util.Collections.singletonList;
 
 public class CleanupAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("cleanup.action.name");
   }

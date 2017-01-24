@@ -41,6 +41,8 @@ public class AddToIgnoreListAction extends BasicAction {
     myActionName = name;
   }
 
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.name.ignore.files");
   }

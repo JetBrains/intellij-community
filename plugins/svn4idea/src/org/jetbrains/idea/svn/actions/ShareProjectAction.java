@@ -46,6 +46,8 @@ import java.io.File;
 
 public class ShareProjectAction extends BasicAction {
 
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("share.directory.action");
   }

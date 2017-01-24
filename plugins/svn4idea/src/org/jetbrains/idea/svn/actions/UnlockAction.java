@@ -29,6 +29,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 import java.io.File;
 
 public class UnlockAction extends BasicAction {
+  @NotNull
+  @Override
   protected String getActionName() {
     return SvnBundle.message("action.Subversion.Unlock.description");
   }
