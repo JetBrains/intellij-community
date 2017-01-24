@@ -482,7 +482,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return fileSet;
   }
 
-  @TestOnly
+  // should not be used in production code
   @NotNull
   public DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
