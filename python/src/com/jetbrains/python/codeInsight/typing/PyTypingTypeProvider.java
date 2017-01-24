@@ -333,12 +333,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final List<PyGenericType> genericTypes = collectGenericTypes(cls, new Context(context));
-    final List<PyType> elementTypes = new ArrayList<>(genericTypes);
-    if (elementTypes.isEmpty()) {
+    final List<PyType> genericTypes = collectGenericTypes(cls, new Context(context));
+    if (genericTypes.isEmpty()) {
       return null;
     }
-    return new PyCollectionTypeImpl(cls, false, elementTypes);
+    return new PyCollectionTypeImpl(cls, false, genericTypes);
   }
 
   private static boolean isAny(@NotNull PyType type) {
@@ -346,7 +345,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static List<PyGenericType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
+  private static List<PyType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
     boolean isGeneric = false;
     for (PyClassLikeType ancestor : cls.getAncestorTypes(context.getTypeContext())) {
       if (ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName())) {
@@ -355,7 +354,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     if (isGeneric) {
-      final ArrayList<PyGenericType> results = new ArrayList<>();
+      final Set<PyGenericType> results = new LinkedHashSet<>();
       // XXX: Requires switching from stub to AST
       for (PyExpression expr : cls.getSuperClassExpressions()) {
         if (expr instanceof PySubscriptionExpression) {
@@ -370,7 +369,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
       }
-      return results;
+      return new ArrayList<>(results);
     }
     return Collections.emptyList();
   }
