@@ -243,13 +243,13 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
 
   }
 }
-//TODO: Support "pattern" field for unittest
 private class LegacyConfigurationManagerUnit(newConfig: PyUniversalUnitTestConfiguration) :
   LegacyConfigurationManager<PythonUnitTestRunConfiguration, PyUniversalUnitTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY, newConfig) {
   override fun copyFromLegacy() {
     super.copyFromLegacy()
     newConfig.additionalArguments = legacyConfig.params
+    newConfig.pattern = legacyConfig.pattern
   }
 }
 

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.testing.universalTests;
 
+import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -25,7 +26,6 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
@@ -72,7 +72,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   private final ButtonGroup myButtonGroup = new ButtonGroup();
   private AbstractPyCommonOptionsForm myOptionsForm;
 
-  private final Map<String, JBTextField> myCustomOptions = new LinkedHashMap<>(); // TDO: Linked -- order
+  private final Map<String, OptionHolder> myCustomOptions = new LinkedHashMap<>(); // TDO: Linked -- order
 
   @NotNull
   JPanel getPanel() {
@@ -89,14 +89,14 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   public void setPropertyValue(@NotNull
                                final String propertyName, @Nullable
                                final String propertyValue) {
-    myCustomOptions.get(propertyName).setText(propertyValue != null ? propertyValue : "");
+    myCustomOptions.get(propertyName).myOptionValue.setText(propertyValue != null ? propertyValue : "");
   }
 
   @Nullable
   @Override
   public String getPropertyValue(@NotNull
                                  final String propertyName) {
-    return myCustomOptions.get(propertyName).getText();
+    return myCustomOptions.get(propertyName).myOptionValue.getText();
   }
 
   private PyUniversalTestForm() {
@@ -110,7 +110,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
   public static PyUniversalTestForm create(@NotNull
                                            final PyUniversalTestConfiguration configuration,
                                            @NotNull
-                                           final String... customOptions) { // TODO: DOC
+                                           final CustomOption... customOptions) { // TODO: DOC
 
 
     final PyUniversalTestForm form = new PyUniversalTestForm();
@@ -135,25 +135,29 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
 
     form.myLabel.setText(configuration.getTestFrameworkName());
 
-    form.addCustomOptions(ArrayUtil.mergeArrays(customOptions, PyUniversalTestsKt.getAdditionalArgumentsPropertyName()));
+
+    form.addCustomOptions(
+      ObjectArrays.concat(customOptions, new CustomOption(PyUniversalTestsKt.getAdditionalArgumentsPropertyName(), TestTargetType.values()))
+    );
     configuration.copyTo(ReflectionUtilsKt.getProperties(form, null, true));
     return form;
   }
 
   private void addCustomOptions(@NotNull
-                                final String... optionNames) {
-    if (optionNames.length == 0) {
+                                final CustomOption... customOptions) {
+    if (customOptions.length == 0) {
       return;
     }
-    for (final String optionName : optionNames) {
+    final Map<String, JBTextField> optionValueFields = new HashMap<>();
+    for (final CustomOption option : customOptions) {
       final JBTextField textField = new JBTextField();
-      myCustomOptions.put(optionName, textField);
+      optionValueFields.put(option.myName, textField);
     }
-    myCustomOptionsPanel.setLayout(new GridLayoutManager(optionNames.length, 2));
+    myCustomOptionsPanel.setLayout(new GridLayoutManager(customOptions.length, 2));
 
-    for (int i = 0; i < optionNames.length; i++) {
-      final String optionName = optionNames[i];
-      final JBTextField textField = myCustomOptions.get(optionName);
+    for (int i = 0; i < customOptions.length; i++) {
+      final CustomOption option = customOptions[i];
+      final JBTextField textField = optionValueFields.get(option.myName);
 
       final GridConstraints labelConstraints = new GridConstraints();
       labelConstraints.setFill(GridConstraints.FILL_VERTICAL);
@@ -161,7 +165,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
       labelConstraints.setColumn(0);
       labelConstraints.setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_SHRINK);
 
-      final JLabel label = new JLabel(StringUtil.capitalize(CAPITAL_LETTER.matcher(optionName).replaceAll(" ")));
+      final JLabel label = new JLabel(StringUtil.capitalize(CAPITAL_LETTER.matcher(option.myName).replaceAll(" ")));
       label.setHorizontalAlignment(SwingConstants.LEFT);
       myCustomOptionsPanel.add(label, labelConstraints);
 
@@ -172,6 +176,8 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
       textConstraints.setColumn(1);
       textConstraints.setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW);
       myCustomOptionsPanel.add(textField, textConstraints);
+
+      myCustomOptions.put(option.myName, new OptionHolder(option, label, textField));
     }
   }
 
@@ -198,6 +204,10 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
     final TestTargetType targetType = getTargetType();
     myTargetText.setVisible(targetType != TestTargetType.CUSTOM);
     myTargetText.getButton().setVisible(targetType == TestTargetType.PATH);
+
+    for (final OptionHolder optionHolder : myCustomOptions.values()) {
+      optionHolder.setType(targetType);
+    }
   }
 
   @SuppressWarnings("WeakerAccess") // Accessor for property
@@ -218,5 +228,52 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
       }
     }
     configureElementsVisibility();
+  }
+
+  static final class CustomOption {
+    /**
+     * Option name
+     */
+    @NotNull
+    private final String myName;
+    /**
+     * Types to display this option for
+     */
+    private final EnumSet<TestTargetType> mySupportedTypes;
+
+    CustomOption(@NotNull
+                 final String name,
+                 @NotNull
+                 final TestTargetType... supportedTypes) {
+      myName = name;
+      mySupportedTypes = EnumSet.copyOf(Arrays.asList(supportedTypes));
+    }
+  }
+
+  private static final class OptionHolder {
+    @NotNull
+    private final CustomOption myOption;
+    @NotNull
+    private final JLabel myOptionLabel;
+    @NotNull
+    private final JTextField myOptionValue;
+
+    private OptionHolder(@NotNull
+                         final CustomOption option,
+                         @NotNull
+                         final JLabel optionLabel,
+                         @NotNull
+                         final JTextField optionValue) {
+      myOption = option;
+      myOptionLabel = optionLabel;
+      myOptionValue = optionValue;
+    }
+
+    private void setType(@NotNull
+                         final TestTargetType type) {
+      final boolean visible = myOption.mySupportedTypes.contains(type);
+      myOptionLabel.setVisible(visible);
+      myOptionValue.setVisible(visible);
+    }
   }
 }

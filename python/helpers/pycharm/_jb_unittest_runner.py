@@ -10,15 +10,15 @@ if __name__ == '__main__':
 
     args = ["python -m unittest"]
     if path:
+        discovery_args = ["discover", "-s"]
         # Unittest does not support script directly, but it can use "discover" to find all tests in some folder
         # filtering by script
-        additional_args.append("discover")
-        additional_args.append("-s")
         assert os.path.exists(path), "{0}: No such file or directory".format(path)
         if os.path.isfile(path):
-            additional_args += [os.path.dirname(path), "-p", os.path.basename(path)]
+            discovery_args += [os.path.dirname(path), "-p", os.path.basename(path)]
         else:
-            additional_args.append(path)
+            discovery_args.append(path)
+        additional_args = discovery_args + additional_args
     else:
         additional_args += targets
     args += additional_args

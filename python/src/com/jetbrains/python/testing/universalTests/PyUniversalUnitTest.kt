@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 
@@ -29,9 +30,11 @@ import com.jetbrains.python.testing.PythonTestConfigurationsModel
  * unittest
  */
 
-//TODO: Support pattern
 class PyUniversalUnitTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(PyUniversalTestForm.create(configuration))
+  PyUniversalTestSettingsEditor(
+    PyUniversalTestForm.create(configuration,
+                               PyUniversalTestForm.CustomOption(PyUniversalUnitTestConfiguration::pattern.name, TestTargetType.PATH)
+    ))
 
 class PyUniversalUnitTestExecutionEnvironment(configuration: PyUniversalUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyUniversalTestExecutionEnvironment<PyUniversalUnitTestConfiguration>(configuration, environment) {
@@ -41,12 +44,26 @@ class PyUniversalUnitTestExecutionEnvironment(configuration: PyUniversalUnitTest
 
 class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUnitTestFactory) :
   PyUniversalTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
+  @ConfigField
+  var pattern: String? = null
+
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
     PyUniversalUnitTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalUnitTestSettingsEditor(this)
 
+  override fun getCustomRawArgumentsString(): String {
+    // Pattern can only be used with folders ("all in folder" in legacy terms)
+    if ((!pattern.isNullOrEmpty()) && target.targetType != TestTargetType.CUSTOM) {
+      val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
+      return if (path.isDirectory) "-p $pattern" else ""
+    }
+    else {
+      return ""
+    }
+
+  }
 }
 
 object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {
