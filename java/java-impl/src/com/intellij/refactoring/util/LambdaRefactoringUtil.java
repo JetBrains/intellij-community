@@ -263,8 +263,7 @@ public class LambdaRefactoringUtil {
       PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
       if (reference.resolve() instanceof PsiClass &&
           reference.getQualifier() == null &&
-          (PsiTreeUtil.isAncestor(containingClass, qualifier, false) ||
-           PsiTreeUtil.isContextAncestor(containingClass, qualifier, false))) {
+          PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
         return true;
       }
     }
