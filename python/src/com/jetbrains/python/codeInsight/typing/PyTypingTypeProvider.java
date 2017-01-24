@@ -225,7 +225,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
       // We model generic classes as return types of their constructors here
-      if (PyUtil.isInit(function)) {
+      final boolean isInit = PyUtil.isInit(function);
+      if (isInit) {
         final PyClass cls = function.getContainingClass();
         if (cls != null) {
           final PyType genericType = getGenericType(cls, context);
@@ -237,7 +238,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression value = getReturnTypeAnnotation(function);
       if (value != null) {
         final PyType type = getType(value, new Context(context));
-        return type != null && type != PyNoneType.INSTANCE ? Ref.create(type) : null;
+        if (isInit && type instanceof PyNoneType) {
+          return null;
+        }
+        return type != null ? Ref.create(type) : null;
       }
     }
     return null;
