@@ -11,6 +11,6 @@ def test_numerics():
     float(False)
     complex(False)
     divmod(False, False)
-    divmod(<warning descr="Expected type 'int', got 'bytes' instead">b'foo'</warning>, <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>)
+    divmod(<warning descr="Expected type 'TypeVar('_N', int, float)', got 'bytes' instead">b'foo'</warning>, <warning descr="Expected type 'TypeVar('_N', int, float)', got 'str' instead">'bar'</warning>)
     pow(False, True)
-    round(False, <warning descr="Expected type 'Optional[Integral]', got 'str' instead">'foo'</warning>)
+    round(False, 'foo')
