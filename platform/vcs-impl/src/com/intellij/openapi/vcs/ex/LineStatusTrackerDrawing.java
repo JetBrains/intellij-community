@@ -15,20 +15,16 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LineStatusTrackerDrawing {
@@ -55,43 +51,15 @@ public class LineStatusTrackerDrawing {
 
     @NotNull
     @Override
-    protected ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable) {
-      final DefaultActionGroup group = new DefaultActionGroup();
-
-      final ShowPrevChangeMarkerAction localShowPrevAction = new ShowPrevChangeMarkerAction(myTracker.getPrevRange(myRange), myTracker, myEditor);
-      final ShowNextChangeMarkerAction localShowNextAction = new ShowNextChangeMarkerAction(myTracker.getNextRange(myRange), myTracker, myEditor);
-      final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(myTracker, myRange, myEditor);
-      final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor);
-      final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(myTracker, myRange);
-      final ToggleByWordDiffAction toggleWordDiff = new ToggleByWordDiffAction(myRange, myEditor, myTracker, mousePosition);
-
-      group.add(localShowPrevAction);
-      group.add(localShowNextAction);
-      group.add(rollback);
-      group.add(showDiff);
-      group.add(copyRange);
-      group.add(toggleWordDiff);
-
-      JComponent editorComponent = myEditor.getComponent();
-      DiffUtil.registerAction(localShowPrevAction, editorComponent);
-      DiffUtil.registerAction(localShowNextAction, editorComponent);
-      DiffUtil.registerAction(rollback, editorComponent);
-      DiffUtil.registerAction(showDiff, editorComponent);
-      DiffUtil.registerAction(copyRange, editorComponent);
-
-      final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          actionList.remove(localShowPrevAction);
-          actionList.remove(localShowNextAction);
-          actionList.remove(rollback);
-          actionList.remove(showDiff);
-          actionList.remove(copyRange);
-        }
-      });
-
-      return ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true);
+    protected List<AnAction> createToolbarActions(@Nullable Point mousePosition) {
+      List<AnAction> actions = new ArrayList<>();
+      actions.add(new ShowPrevChangeMarkerAction(myTracker.getPrevRange(myRange), myTracker, myEditor));
+      actions.add(new ShowNextChangeMarkerAction(myTracker.getNextRange(myRange), myTracker, myEditor));
+      actions.add(new RollbackLineStatusRangeAction(myTracker, myRange, myEditor));
+      actions.add(new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor));
+      actions.add(new CopyLineStatusRangeAction(myTracker, myRange));
+      actions.add(new ToggleByWordDiffAction(myRange, myEditor, myTracker, mousePosition));
+      return actions;
     }
 
     @NotNull

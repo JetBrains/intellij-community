@@ -26,9 +26,8 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -75,7 +74,7 @@ public abstract class LineStatusMarkerPopup {
   }
 
   @NotNull
-  protected abstract ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable);
+  protected abstract List<AnAction> createToolbarActions(@Nullable Point mousePosition);
 
   @NotNull
   protected FileType getFileType() {
@@ -231,6 +230,25 @@ public abstract class LineStatusMarkerPopup {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return "";
     return file.getName();
+  }
+
+  @NotNull
+  private ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable) {
+    List<AnAction> actions = createToolbarActions(mousePosition);
+
+    JComponent editorComponent = myEditor.getComponent();
+    for (AnAction action : actions) {
+      DiffUtil.registerAction(action, editorComponent);
+    }
+
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ActionUtil.getActions(editorComponent).removeAll(actions);
+      }
+    });
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), true);
   }
 
   private static class PopupPanel extends JPanel {
