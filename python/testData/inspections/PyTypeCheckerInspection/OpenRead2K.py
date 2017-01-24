@@ -6,8 +6,8 @@ def f(s):
 
 def g(s):
     """
-    :type s: unicode
+    :type s: int
     """
 
 f(open('foo').read()) # pass
-g(<warning descr="Expected type 'unicode', got 'str' instead">open('foo').read()</warning>)
+g(<warning descr="Expected type 'int', got 'str' instead">open('foo').read()</warning>)
