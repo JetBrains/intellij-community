@@ -54,16 +54,17 @@ public class CreateBranchOrTagAction extends BasicAction {
     return SvnBundle.message("action.Subversion.Copy.text");
   }
 
-  protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
     if (file == null) {
       return false;
     }
-    return SvnStatusUtil.isUnderControl(project, file);
+    return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
-    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(project, true, new File(file.getPath()));
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs.getProject(), true, new File(file.getPath()));
     if (dialog.showAndGet()) {
       final String dstURL = dialog.getToURL();
       final SVNRevision revision = dialog.getRevision();
@@ -83,8 +84,9 @@ public class CreateBranchOrTagAction extends BasicAction {
         throw new SvnBindException(e);
       }
 
-      if (!dirExists(activeVcs, parentUrl)) {
-        int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
+      if (!dirExists(vcs, parentUrl)) {
+        int rc =
+          Messages.showYesNoDialog(vcs.getProject(), "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
                                           "Branch or Tag", Messages.getQuestionIcon());
         if (rc == Messages.NO) {
           return;
@@ -102,10 +104,10 @@ public class CreateBranchOrTagAction extends BasicAction {
             }
 
             SvnTarget source = isSrcFile ? SvnTarget.fromFile(srcFile, revision) : SvnTarget.fromURL(srcUrl, revision);
-            long newRevision = activeVcs.getFactory(source).createCopyMoveClient()
+            long newRevision = vcs.getFactory(source).createCopyMoveClient()
               .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, false, comment, handler);
 
-            updateStatusBar(newRevision, project);
+            updateStatusBar(newRevision, vcs.getProject());
           }
           catch (Exception e) {
             exception.set(e);
@@ -113,13 +115,14 @@ public class CreateBranchOrTagAction extends BasicAction {
         }
       };
       ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
+        .runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, vcs.getProject());
       if (!exception.isNull()) {
         throw new VcsException(exception.get());
       }
 
       if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
-        SingleRootSwitcher switcher = new SingleRootSwitcher(project, VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl);
+        SingleRootSwitcher switcher =
+          new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl);
         AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
       }
       ;
@@ -167,8 +170,8 @@ public class CreateBranchOrTagAction extends BasicAction {
     return resultRef.get();
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
-    throws VcsException {
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] files, DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.Arrays;
@@ -71,13 +72,13 @@ public abstract class BasicAction extends AnAction implements DumbAware {
           VirtualFile badFile = null;
           try {
             if (isBatchAction()) {
-              batchExecute(project, vcs, files, dataContext, helper);
+              batchExecute(vcs, files, dataContext, helper);
             }
             else {
               for (int i = 0; files != null && i < files.length; i++) {
                 VirtualFile file = files[i];
                 badFile = file;
-                execute(project, vcs, file, dataContext, helper);
+                execute(vcs, file, dataContext, helper);
               }
             }
           }
@@ -137,7 +138,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
       VirtualFile file = files[i];
       boolean fileEnabled = false;
       try {
-        fileEnabled = isEnabled(project, vcs, file);
+        fileEnabled = isEnabled(vcs, file);
       }
       catch (Throwable t) {
         LOG.debug(t);
@@ -167,42 +168,40 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     return true;
   }
 
-  protected void execute(Project project,
-                       final SvnVcs activeVcs,
-                       final VirtualFile file,
-                       DataContext context,
-                       AbstractVcsHelper helper) throws VcsException {
+  protected void execute(@NotNull SvnVcs vcs,
+                         final VirtualFile file,
+                         DataContext context,
+                         AbstractVcsHelper helper) throws VcsException {
     if (file.isDirectory()) {
-      perform(project, activeVcs, file, context);
+      perform(vcs, file, context);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           file.refresh(false, true);
         }
       });
 
-      doVcsRefresh(project, file);
+      doVcsRefresh(vcs, file);
     }
     else {
-      perform(project, activeVcs, file, context);
+      perform(vcs, file, context);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           file.refresh(false, true);
         }
       });
-      doVcsRefresh(project, file);
+      doVcsRefresh(vcs, file);
     }
   }
 
-  protected void doVcsRefresh(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, final VirtualFile file) {
+    VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
   }
 
-  private void batchExecute(Project project,
-                            final SvnVcs activeVcs,
+  private void batchExecute(@NotNull SvnVcs vcs,
                             final VirtualFile[] file,
                             DataContext context,
                             AbstractVcsHelper helper) throws VcsException {
-    batchPerform(project, activeVcs, file, context);
+    batchPerform(vcs, file, context);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (int i = 0; file != null && i < file.length; i++) {
@@ -212,17 +211,17 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     });
 
     for (int i = 0; file != null && i < file.length; i++) {
-      doVcsRefresh(project, file[i]);
+      doVcsRefresh(vcs, file[i]);
     }
   }
 
   protected abstract String getActionName(AbstractVcs vcs);
 
-  protected abstract boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file);
+  protected abstract boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file);
 
-  protected abstract void perform(Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException;
+  protected abstract void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException;
 
-  protected abstract void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException;
+  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

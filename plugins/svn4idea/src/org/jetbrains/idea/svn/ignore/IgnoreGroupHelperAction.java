@@ -17,11 +17,11 @@ package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
@@ -67,7 +67,8 @@ public class IgnoreGroupHelperAction extends BasicAction {
     return false;
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, final VirtualFile file) {
     final boolean result = isEnabledImpl(vcs, file);
     if (result) {
       myListener.onFileEnabled(file);
@@ -83,14 +84,12 @@ public class IgnoreGroupHelperAction extends BasicAction {
     return myAllAreIgnored;
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
-      throws VcsException {
-
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, final DataContext context) throws VcsException {
   }
 
-  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
-      throws VcsException {
-
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, final VirtualFile[] file, final DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

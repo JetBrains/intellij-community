@@ -18,11 +18,11 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
@@ -57,25 +57,25 @@ public class AddToIgnoreListAction extends BasicAction {
   }
 
   @Override
-  protected void doVcsRefresh(Project project, VirtualFile file) {
-    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, VirtualFile file) {
+    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
     if (file != null && (file.getParent() != null)) {
       vcsDirtyScopeManager.fileDirty(file.getParent());
     }
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, final VirtualFile file) {
     return true;
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
-      throws VcsException {
-
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, final DataContext context) throws VcsException {
   }
 
-  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
-      throws VcsException {
-    SvnPropertyService.doAddToIgnoreProperty(activeVcs, myUseCommonExtension, file, myInfoGetter);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, final VirtualFile[] file, final DataContext context) throws VcsException {
+    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, file, myInfoGetter);
   }
 
   protected boolean isBatchAction() {

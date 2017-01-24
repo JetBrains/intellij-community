@@ -20,7 +20,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
@@ -59,34 +58,35 @@ public class MarkResolvedAction extends BasicAction {
     return false;
   }
 
-  protected boolean isEnabled(Project project, @NotNull SvnVcs vcs, VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) {
-      return SvnStatusUtil.isUnderControl(project, file);
+      return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
     }
-    final FileStatus fStatus = FileStatusManager.getInstance(project).getStatus(file);
+    final FileStatus fStatus = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
     return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus) ||
            FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(fStatus);
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
-    batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+    batchPerform(vcs, new VirtualFile[]{file}, context);
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
-    throws VcsException {
-    SvnVcs vcs = SvnVcs.getInstance(project);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] files, DataContext context) throws VcsException {
     ApplicationManager.getApplication().saveAll();
     Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {
-      Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"),
+      Messages.showInfoMessage(vcs.getProject(), SvnBundle.message("message.text.no.conflicts.found"),
                                SvnBundle.message("message.title.no.conflicts.found"));
       return;
     }
     String[] pathsArray = ArrayUtil.toStringArray(paths);
-    SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
-                                                     SvnBundle.message("dialog.title.mark.resolved"),
-                                                     SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
+    SelectFilesDialog dialog =
+      new SelectFilesDialog(vcs.getProject(), SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
+                            SvnBundle.message("dialog.title.mark.resolved"),
+                            SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
     );
     if (!dialog.showAndGet()) {
       return;
@@ -103,7 +103,7 @@ public class MarkResolvedAction extends BasicAction {
     }
     finally {
       for (VirtualFile file : files) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+        VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
         file.refresh(true, false);
         if (file.getParent() != null) {
           file.getParent().refresh(true, false);

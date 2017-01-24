@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RelocateDialog;
@@ -40,14 +40,16 @@ public class RelocateAction extends BasicAction {
     return "Relocate working copy to a different URL";
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
-    return SvnStatusUtil.isUnderControl(project, file);
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, final VirtualFile file) {
+    return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
-    Info info = activeVcs.getInfo(file);
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, DataContext context) throws VcsException {
+    Info info = vcs.getInfo(file);
     assert info != null;
-    RelocateDialog dlg = new RelocateDialog(project, info.getURL());
+    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getURL());
     if (!dlg.showAndGet()) {
       return;
     }
@@ -64,21 +66,22 @@ public class RelocateAction extends BasicAction {
         try {
           File path = new File(file.getPath());
 
-          activeVcs.getFactory(path).createRelocateClient().relocate(path, beforeURL, afterURL);
-          VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+          vcs.getFactory(path).createRelocateClient().relocate(path, beforeURL, afterURL);
+          VcsDirtyScopeManager.getInstance(vcs.getProject()).markEverythingDirty();
         }
         catch (final VcsException e) {
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
-              Messages.showErrorDialog(project, "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy");
+              Messages.showErrorDialog(vcs.getProject(), "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy");
             }
-          }, null, project);
+          }, null, vcs.getProject());
         }
       }
-    }, "Relocating Working Copy", false, project);
+    }, "Relocating Working Copy", false, vcs.getProject());
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException {
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

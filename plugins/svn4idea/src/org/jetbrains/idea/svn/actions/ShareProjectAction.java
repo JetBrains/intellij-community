@@ -80,7 +80,8 @@ public class ShareProjectAction extends BasicAction {
     presentation.setVisible(visible);
   }
 
-  protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
     return false;
   }
 
@@ -88,8 +89,9 @@ public class ShareProjectAction extends BasicAction {
     return performImpl(project, SvnVcs.getInstance(project), file);
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
-    performImpl(project, activeVcs, file);
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, DataContext context) throws VcsException {
+    performImpl(vcs.getProject(), vcs, file);
   }
 
   private static boolean performImpl(final Project project, final SvnVcs activeVcs, final VirtualFile file) throws VcsException {
@@ -234,8 +236,8 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected void doVcsRefresh(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, final VirtualFile file) {
+    VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file);
   }
 
   private static void addRecursively(@NotNull final SvnVcs activeVcs, @NotNull final ClientFactory factory, final VirtualFile file)
@@ -255,7 +257,8 @@ public class ShareProjectAction extends BasicAction {
     operation.execute(file);
   }
 
-  protected void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException {
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {
