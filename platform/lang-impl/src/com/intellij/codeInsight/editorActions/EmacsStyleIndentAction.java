@@ -55,7 +55,6 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
     @Override
     public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
       if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
         return;

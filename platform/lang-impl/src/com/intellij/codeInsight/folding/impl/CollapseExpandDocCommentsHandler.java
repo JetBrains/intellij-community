@@ -35,8 +35,6 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
 
   @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor);
     final FoldRegion[] allFoldRegions = editor.getFoldingModel().getAllFoldRegions();

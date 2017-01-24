@@ -61,7 +61,6 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       editor.getSelectionModel().selectLineAtCaret();
       if (!editor.getSelectionModel().hasSelection()) return null;
     }
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
     if (templates.isEmpty() && customTemplates.isEmpty()) {

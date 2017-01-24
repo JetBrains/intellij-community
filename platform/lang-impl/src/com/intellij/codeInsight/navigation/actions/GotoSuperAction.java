@@ -44,8 +44,6 @@ public class GotoSuperAction extends PresentableActionHandlerBasedAction impleme
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     int offset = editor.getCaretModel().getOffset();
     final Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
 

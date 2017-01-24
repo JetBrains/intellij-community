@@ -31,8 +31,6 @@ public class MethodDownHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     LookupManager.getInstance(project).hideActiveLookup();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     int caretOffset = editor.getCaretModel().getOffset();
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
     int[] offsets = MethodUpDownUtil.getNavigationOffsets(file, caretOffset);

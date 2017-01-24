@@ -97,8 +97,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     int startOffset = selectionModel.getSelectionStart();
     int endOffset = selectionModel.getSelectionEnd();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
 
