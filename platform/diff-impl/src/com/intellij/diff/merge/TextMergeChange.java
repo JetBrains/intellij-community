@@ -324,7 +324,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
-    if (myViewer.resolveConflictUsingInnerDifferences(this) == null) return null;
+    if (!myViewer.canResolveConflictedChange(this)) return null;
 
     return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
       myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {

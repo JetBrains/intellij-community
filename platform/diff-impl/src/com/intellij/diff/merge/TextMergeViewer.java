@@ -780,7 +780,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Nullable
-    public CharSequence resolveConflictUsingInnerDifferences(@NotNull TextMergeChange change) {
+    private CharSequence resolveConflictUsingInnerDifferences(@NotNull TextMergeChange change) {
       if (!change.isConflict()) return null;
       if (change.isResolved(Side.LEFT) || change.isResolved(Side.RIGHT)) return null;
 
@@ -809,6 +809,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       });
 
       return ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
+    }
+
+    public boolean canResolveConflictedChange(@NotNull TextMergeChange change) {
+      return resolveConflictUsingInnerDifferences(change) != null;
     }
 
     public void resolveConflictedChange(@NotNull TextMergeChange change) {
