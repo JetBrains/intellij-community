@@ -18,11 +18,14 @@ package com.intellij.psi.templateLanguages;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.tree.LanguagePerFileConfigurable;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.tree.PerFileConfigurableBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,23 +34,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurable<Language> {
+public class TemplateDataLanguageConfigurable extends PerFileConfigurableBase<Language> {
   public TemplateDataLanguageConfigurable(@NotNull Project project) {
-    super(project, Language.class, TemplateDataLanguageMappings.getInstance(project),
-          LangBundle.message("dialog.template.data.language.caption", ApplicationNamesInfo.getInstance().getFullProductName()),
-          LangBundle.message("template.data.language.configurable.tree.table.title"),
-          LangBundle.message("template.data.language.override.warning.text"),
-          LangBundle.message("template.data.language.override.warning.title"));
-  }
-
-  @Override
-  protected boolean handleDefaultValue(VirtualFile file, ColoredTableCellRenderer renderer) {
-    final Language language = TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
-    if (language != null) {
-      renderer.append(visualize(language), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-      return true;
-    }
-    return false;
+    super(project, TemplateDataLanguageMappings.getInstance(project));
   }
 
   @Override
@@ -64,9 +53,25 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   }
 
   @Override
-  protected String visualize(@NotNull final Language language) {
-    return language.getDisplayName();
+  protected <S> Object getParameter(@NotNull Key<S> key) {
+    if (key == DESCRIPTION) return LangBundle.message("dialog.template.data.language.caption", ApplicationNamesInfo.getInstance().getFullProductName());
+    if (key == MAPPING_TITLE) return LangBundle.message("template.data.language.configurable.tree.table.title");
+    if (key == OVERRIDE_QUESTION) return LangBundle.message("template.data.language.override.warning.text");
+    if (key == OVERRIDE_TITLE) return LangBundle.message("template.data.language.override.warning.title");
+    return null;
   }
 
+  @Override
+  protected void renderValue(@Nullable Object target, @NotNull Language language, @NotNull ColoredTextContainer renderer) {
+    renderer.append(language.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.setIcon(ObjectUtils.notNull(language.getAssociatedFileType(), FileTypes.UNKNOWN).getIcon());
+  }
 
+  @Override
+  protected void renderDefaultValue(Object target, @NotNull ColoredTextContainer renderer) {
+    Language language = TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName((VirtualFile)target);
+    if (language == null) return;
+    renderer.append(language.getDisplayName(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    renderer.setIcon(ObjectUtils.notNull(language.getAssociatedFileType(), FileTypes.UNKNOWN).getIcon());
+  }
 }
