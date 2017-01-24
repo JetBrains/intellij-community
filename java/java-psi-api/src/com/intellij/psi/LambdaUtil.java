@@ -171,7 +171,6 @@ public class LambdaUtil {
   public static MethodSignature getFunction(final PsiClass psiClass) {
     if (isPlainInterface(psiClass)) {
       return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MethodSignature>() {
-        @Nullable
         @Override
         public Result<MethodSignature> compute() {
           return Result.create(calcFunction(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -262,7 +261,7 @@ public class LambdaUtil {
     return methodSignature;
   }
 
-  @Nullable
+  @NotNull
   private static List<HierarchicalMethodSignature> hasSubsignature(List<HierarchicalMethodSignature> signatures) {
     for (HierarchicalMethodSignature signature : signatures) {
       boolean subsignature = true;
