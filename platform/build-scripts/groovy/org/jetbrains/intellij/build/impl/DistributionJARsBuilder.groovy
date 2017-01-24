@@ -303,6 +303,13 @@ class DistributionJARsBuilder {
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
+
+    moduleNames.each {
+      if (containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class")) {
+        buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$mainPluginModule' plugin, because they are included into a platform JAR. " +
+                                    "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
+      }
+    }
   }
 
   private boolean containsFileInOutput(String moduleName, String filePath) {
