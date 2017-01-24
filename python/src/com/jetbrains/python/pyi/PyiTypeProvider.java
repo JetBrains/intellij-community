@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author vlan
  */
@@ -121,7 +123,10 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         }
 
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
+        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
+        if (mapping == null) {
+          continue;
+        }
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
 
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
@@ -201,5 +206,17 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                  @NotNull PyFunction function,
+                                                                  @NotNull TypeEvalContext context) {
+    final Map<PyExpression, PyNamedParameter> map = PyCallExpressionHelper.mapArguments(callSite, function, context);
+    final PyCallExpression callExpr = as(callSite, PyCallExpression.class);
+    if (callExpr != null && callExpr.getArguments().length != map.size()) {
+      return null;
+    }
+    return map;
   }
 }
