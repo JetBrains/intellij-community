@@ -18,11 +18,9 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 public abstract class Transformation {
 
@@ -35,19 +33,5 @@ public abstract class Transformation {
     GrExpression expression = callExpression.getInvokedExpression();
     GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
     return invokedExpression.getQualifierExpression();
-  }
-
-  @NotNull
-  public static GrExpression parenthesize(@NotNull GrExpression expression, int parentPrecedence) {
-    if (ParenthesesUtils.getPrecedence(expression) >= parentPrecedence) {
-      return createParenthesizedExpr(expression);
-    }
-    return expression;
-  }
-
-  @NotNull
-  private static GrExpression createParenthesizedExpr(@NotNull GrExpression expression) {
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    return factory.createParenthesizedExpr(expression);
   }
 }

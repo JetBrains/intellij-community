@@ -98,8 +98,6 @@ class Operators {
     doTest "a.asBoolean(1)"
   }
 
-
-
   void testNegatedOption() {
     inspection.useDoubleNegation = false
     doTest "a.asBoolean()"
@@ -182,6 +180,7 @@ class Operators {
 
   void testSamePrioritiesExpression() {
     doTest "a.eq<caret>uals(b) == 1", "(a == b) == 1"
+    doTest "(a == b).eq<caret>uals(1)", "(a == b) == 1"
     doTest "1 == a.eq<caret>uals(b)", "1 == (a == b)"
     doTest "!a.eq<caret>uals(b) == 1", "(a != b) == 1"
     doTest "1 == !a.eq<caret>uals(b)", "1 == (a != b)"
@@ -189,6 +188,7 @@ class Operators {
     doTest "1 + a.p<caret>lus(b)", "1 + a + b"
     doTest "1 + a.m<caret>inus(b)", "1 + a - b"
     doTest "1 - a.m<caret>inus(b)", "1 - (a - b)"
+    doTest "a.m<caret>inus(1 - b)", "a - (1 - b)"
     doTest "1 - a.p<caret>lus(b)", "1 - (a + b)"
 
     doTest "a.m<caret>inus(b) - 1", "a - b - 1"
@@ -200,7 +200,7 @@ class Operators {
   void testComplex() {
     doTest "a.eq<caret>uals(b * c) == 1", "(a == b * c) == 1"
 
-    doTest "a.eq<caret>uals b * c", "a == b * c"
+    doTest "a.eq<caret>uals(b * c)", "a == b * c"
     doTest "(Boolean) a.eq<caret>uals(b)", "(Boolean) (a == b)"
   }
 

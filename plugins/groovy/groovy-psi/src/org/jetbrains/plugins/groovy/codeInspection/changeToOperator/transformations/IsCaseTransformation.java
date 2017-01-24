@@ -23,11 +23,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 public class IsCaseTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull ChangeToOperatorInspection.Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), ParenthesesUtils.RELATIONAL_PRECEDENCE);
+    GrExpression rhsParenthesized = addParenthesesIfNeeded(getRhs(methodCall), ParenthesesUtils.RELATIONAL_PRECEDENCE);
     replaceExpression(methodCall, format("%s in %s", rhsParenthesized.getText(), getLhs(methodCall).getText()));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
+package org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
-public class EqualsTransformation extends BinaryTransformation {
-  @Override
-  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = addParenthesesIfNeeded(getRhs(methodCall), ParenthesesUtils.EQUALITY_PRECEDENCE);
-    GrExpression replacedElement = methodCall;
-    String operator = "==";
-    if (isNegation(methodCall.getParent())) {
-      replacedElement = (GrExpression) methodCall.getParent();
-      operator = "!=";
-    }
+public class SimpleBinaryTransformation extends BinaryTransformation {
 
-    replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), operator, rhsParenthesized.getText()));
+  @NotNull
+  private final String myMethod;
+
+  public SimpleBinaryTransformation(@NotNull String method) {
+    myMethod = method;
+  }
+
+  @Override
+  public void apply(@NotNull GrBinaryExpression expression) {
+    GrExpression lhsParenthesized = addParenthesesIfNeeded(getLhs(expression), ParenthesesUtils.METHOD_CALL_PRECEDENCE);
+    replaceExpression(expression, format("%s.%s(%s)", lhsParenthesized.getText(), myMethod, getRhs(expression).getText()));
+  }
+
+  @NotNull
+  @Override
+  public String getMethod() {
+    return myMethod;
   }
 }

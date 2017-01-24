@@ -844,6 +844,10 @@
                      displayName="Change to operator"
                      groupName="Style" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToMethod"
+                     displayName="Change to method"
+                     groupName="Style" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToMethod.ChangeToMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"

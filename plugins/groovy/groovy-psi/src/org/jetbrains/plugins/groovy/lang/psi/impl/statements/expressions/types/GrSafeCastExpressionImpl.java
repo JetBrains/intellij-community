@@ -136,6 +136,12 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     return findNotNullChildByClass(GrExpression.class);
   }
 
+  @NotNull
+  @Override
+  public PsiElement getOperationToken() {
+    return findNotNullChildByType(GroovyTokenTypes.kAS);
+  }
+
   @Override
   public PsiReference getReference() {
     return this;
