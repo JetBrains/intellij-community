@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -963,7 +963,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       createVariable(context, inVar.getName());
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" + myDownstream.generate(myVariable, context);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstream.generate(myVariable, context);
     }
 
     private void createVariable(StreamToLoopReplacementContext context, String item) {
@@ -982,8 +982,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String acc) {
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" +
-             myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
     }
   }
 
