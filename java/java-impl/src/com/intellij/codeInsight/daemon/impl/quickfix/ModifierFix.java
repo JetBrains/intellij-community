@@ -197,6 +197,13 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       changeModifierList(modifierList);
+      if (myShouldHave && owner instanceof PsiMethod && PsiModifier.ABSTRACT.equals(myModifier)) {
+        final PsiMethod method = (PsiMethod)owner;
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          changeModifierList(aClass.getModifierList());
+        }
+      }
       UndoUtil.markPsiFileForUndo(containingFile);
     });
   }
