@@ -504,15 +504,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                                  !IdeBackgroundUtil.isBackgroundImageSet(project));
     myPanel = new JPanel();
 
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                                                    !IdeBackgroundUtil.isBackgroundImageSet(project));
-
+    if (SystemProperties.isTrueSmoothScrollingEnabled() && !IdeBackgroundUtil.isBackgroundImageSet(project)) {
+      //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
+      myVerticalScrollBar.setOpaque(true);
+      myScrollPane.getHorizontalScrollBar().setOpaque(true);
+    }
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
         JComponent component = getPermanentHeaderComponent();
