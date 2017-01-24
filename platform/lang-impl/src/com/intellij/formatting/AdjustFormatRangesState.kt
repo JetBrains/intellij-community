@@ -21,6 +21,7 @@ import com.intellij.psi.formatter.common.ExtraRangesProvider
 import com.intellij.util.containers.Stack
 
 class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTextRanges) : State() {
+  private val extendedRanges = formatRanges.extendedFormattingRanges
   private val totalNewRanges = mutableListOf<TextRange>()
   private val state = Stack(currentRoot)
 
@@ -39,17 +40,18 @@ class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTe
   }
 
   private fun processBlock(currentBlock: Block) {
-    if (formatRanges.isReadOnly(currentBlock.textRange)) {
-      extractRanges(currentBlock)
-    }
-    else {
-      extractRanges(currentBlock)
-      currentBlock.subBlocks
-          .filterNot { formatRanges.isReadOnly(it.textRange) }
+    if (!isInsideExtendedFormattingRanges(currentBlock)) return
+
+    currentBlock.subBlocks
           .reversed()
           .forEach { state.push(it) }
+
+    if (!formatRanges.isReadOnly(currentBlock.textRange)) {
+      extractRanges(currentBlock)
     }
   }
+
+  private fun isInsideExtendedFormattingRanges(currentBlock: Block) = extendedRanges.find { it.intersects(currentBlock.textRange) } != null
 
   private fun extractRanges(block: Block) {
     if (block is ExtraRangesProvider) {
