@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.NOPLogger;
+import org.apache.log4j.spi.NOPLoggerRepository;
 
 import java.io.*;
 import java.net.URI;
@@ -188,12 +190,12 @@ public class Runner {
 
   public static List<String> extractArguments(String[] args, String paramName) {
     List<String> result = new ArrayList<>();
+    String prefix = paramName + '=';
     for (String param : args) {
-      if (param.startsWith(paramName + "=")) {
-        param = param.substring((paramName + "=").length());
-        for (StringTokenizer tokenizer = new StringTokenizer(param, ";"); tokenizer.hasMoreTokens();) {
-          String each = tokenizer.nextToken();
-          result.add(each);
+      if (param.startsWith(prefix)) {
+        StringTokenizer tokenizer = new StringTokenizer(param.substring(prefix.length()), ";");
+        while (tokenizer.hasMoreTokens()) {
+          result.add(tokenizer.nextToken());
         }
       }
     }
@@ -237,7 +239,7 @@ public class Runner {
   private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
     UpdaterUI ui = new ConsoleUpdaterUI();
     try {
-      File tempPatchFile = Utils.createTempFile();
+      File tempPatchFile = Utils.getTempFile("patch");
       PatchFileCreator.create(spec, tempPatchFile, ui);
 
       logger().info("Packing JAR file: " + spec.getPatchFile() );
@@ -284,7 +286,7 @@ public class Runner {
   private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
     try {
       try {
-        File patchFile = Utils.createTempFile();
+        File patchFile = Utils.getTempFile("patch");
 
         logger().info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
@@ -340,6 +342,15 @@ public class Runner {
     catch (URISyntaxException e) {
       printStackTrace(e);
       throw new IOException(e.getMessage());
+    }
+  }
+
+  static void initTestLogger() {
+    if (logger == null) {
+      logger = new NOPLogger(new NOPLoggerRepository(), "root");
+    }
+    else if (!(logger instanceof NOPLogger)) {
+      throw new IllegalStateException("Non-test logger already defined");
     }
   }
 }

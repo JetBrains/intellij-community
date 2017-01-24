@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class UpdateAction extends BaseUpdateAction {
-  public UpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
-    super(patch, path, source, checksum, move);
-  }
-
   public UpdateAction(Patch patch, String path, long checksum) {
     this(patch, path, path, checksum, false);
+  }
+
+  public UpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
+    super(patch, path, source, checksum, move);
   }
 
   public UpdateAction(Patch patch, DataInputStream in) throws IOException {
@@ -35,50 +35,44 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    if (!myIsMove) {
-      patchOutput.putNextEntry(new ZipEntry(myPath));
-      if (Utils.isLink(newerFile)) {
-        writeLinkInfo(newerFile, patchOutput);
-      } else {
-        writeExecutableFlag(patchOutput, newerFile);
-        writeDiff(olderFile, newerFile, patchOutput);
-      }
+    if (!isMove()) {
+      patchOutput.putNextEntry(new ZipEntry(getPath()));
+
+      FileType type = getFileType(newerFile);
+      if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
+      writeFileType(patchOutput, type);
+      writeDiff(olderFile, newerFile, patchOutput);
+
       patchOutput.closeEntry();
     }
   }
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    File source = getSource(backupDir);
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
-    File updated;
-    if (!myIsMove) {
-      updated = Utils.createTempFile();
-      InputStream in = Utils.findEntryInputStream(patchFile, myPath);
-      int filePermissions = in.read();
-      if (filePermissions > 1 ) {
-        Utils.createLink(readLinkInfo(in, filePermissions), toFile);
-        in.close();
-        return;
-      } else {
-        OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
-        try {
-          InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized());
-          try {
-            applyDiff(in, oldFileIn, out);
-          }
-          finally {
-            oldFileIn.close();
-          }
+
+    File source = getSource(backupDir);
+    if (!isMove()) {
+      try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
+        if (in == null) {
+          throw new IOException("Invalid entry " + getPath());
         }
-        finally {
-          out.close();
+
+        FileType type = readFileType(in);
+        File tempFile = Utils.getTempFile(toFile.getName());
+        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
+             InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized())) {
+          applyDiff(in, oldFileIn, out);
         }
+
+        if (type == FileType.EXECUTABLE_FILE) {
+          Utils.setExecutable(tempFile);
+        }
+
+        source = tempFile;
       }
-      Utils.setExecutable(updated, filePermissions == 1);
-    } else {
-      updated = source;
     }
-    replaceUpdated(updated, toFile);
+
+    replaceUpdated(source, toFile);
   }
 }

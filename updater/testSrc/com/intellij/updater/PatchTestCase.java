@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,14 @@ package com.intellij.updater;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.function.Function;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 public abstract class PatchTestCase extends UpdaterTestCase {
   protected File myNewerDir;
   protected File myOlderDir;
@@ -28,16 +34,14 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myOlderDir = getDataDir();
+    myOlderDir = getTempFile("oldDir");
     myNewerDir = getTempFile("newDir");
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.copyDir(dataDir, myOlderDir);
+    FileUtil.copyDir(dataDir, myNewerDir);
 
     FileUtil.delete(new File(myNewerDir, "bin/idea.bat"));
     FileUtil.writeToFile(new File(myNewerDir, "Readme.txt"), "hello");
-    File newFile = new File(myNewerDir, "newDir/newFile.txt");
-    newFile.getParentFile().mkdirs();
-    newFile.createNewFile();
-    FileUtil.writeToFile(newFile, "hello");
+    FileUtil.writeToFile(new File(myNewerDir, "newDir/newFile.txt"), "hello");
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations_changed.jar"));
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
@@ -53,5 +57,33 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     FileUtil.delete(new File(myNewerDir, "lib/boot2.jar"));
     FileUtil.rename(new File(myNewerDir, "lib/boot2_changed_with_unchanged_content.jar"),
                     new File(myNewerDir, "lib/boot2.jar"));
+  }
+
+  protected Patch createPatch() throws IOException, OperationCancelledException {
+    PatchSpec spec = new PatchSpec()
+      .setOldFolder(myOlderDir.getAbsolutePath())
+      .setNewFolder(myNewerDir.getAbsolutePath());
+    return new Patch(spec, TEST_UI);
+  }
+
+  protected static List<PatchAction> sortActions(List<PatchAction> actions) {
+    return sort(actions, a -> a.getClass().getSimpleName().charAt(0), Comparator.comparing(PatchAction::getPath));
+  }
+
+  protected static List<ValidationResult> sortResults(List<ValidationResult> results) {
+    return sort(results, r -> r.action, Comparator.comparing(r -> r.path));
+  }
+
+  private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
+    // splits the list into groups
+    Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
+    // verifies the list is monotonic
+    List<T> joined = groups.stream().reduce(new ArrayList<>(list.size()), (acc, elements) -> { acc.addAll(elements); return acc; });
+    assertThat(list).isEqualTo(joined);
+    // sorts group elements and concatenates groups into a list
+    return groups.stream()
+      .map(elements -> elements.stream().sorted(sorter))
+      .flatMap(stream -> stream)
+      .collect(toList());
   }
 }
