@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Main {
   private static long countInRange(int... input) {
-      long count = 0;
+      long count = 0L;
       for (int x : input) {
           if (x > 0) {
               if (x < 10) {

@@ -35,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -297,6 +298,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private static void normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
       CodeStyleManager.getInstance(project).reformat(element);
     }
 

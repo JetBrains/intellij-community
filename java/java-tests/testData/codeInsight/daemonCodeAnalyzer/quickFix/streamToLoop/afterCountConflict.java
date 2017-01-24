@@ -7,7 +7,7 @@ public class Main {
   }
 
   public long test(List<Count> count) {
-      long result = 0;
+      long result = 0L;
       for (Count count1 : count) {
           result++;
       }

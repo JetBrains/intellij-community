@@ -5,7 +5,7 @@ import java.util.*;
 public class Main {
 
   private static long test(Map<String, List<String>> strings) {
-      long count = 0;
+      long count = 0L;
       for (Map.Entry<String, List<String>> e : strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               String sInner = e.getKey();

@@ -7,7 +7,7 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static long test(List<String> list) {
-      long count = 0;
+      long count = 0L;
       for (String l : list) {
           if (l != null) {
               (new Consumer<String>() {
