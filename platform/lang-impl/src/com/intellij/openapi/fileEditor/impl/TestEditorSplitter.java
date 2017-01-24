@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 
@@ -27,6 +28,10 @@ import java.util.HashMap;
  * Created by Kirill.Skrygan on 1/21/2016.
  */
 
+/**
+ * Test component that allows to test FileEditorManagerEvent and other events in the test environment
+ * Emulates changing selection from one tab to another, by throwing appropriate events to the listeners
+ */
 public class TestEditorSplitter {
   private final HashMap<String, TestTabWell> myTabWellsMap = new HashMap<String, TestTabWell>();
   private static final String Default = "Default";
@@ -43,6 +48,13 @@ public class TestEditorSplitter {
     getDefaultTabWell().openTab(virtualFile, fileEditor, provider);
   }
 
+  /**
+   * all these necessary parameters can be retrieved by TestEditorManagerImpl
+   * @param virtualFile virtual file that should be opened in the specific tab well
+   * @param fileEditor associated fileEditor
+   * @param specificTabWell id of a tab well where the specified file should be opened
+   */
+  @TestOnly
   public void openAndFocusTab(VirtualFile virtualFile, FileEditor fileEditor, String specificTabWell, FileEditorProvider provider) {
     TestTabWell result = myTabWellsMap.get(specificTabWell);
     if (result == null) {
