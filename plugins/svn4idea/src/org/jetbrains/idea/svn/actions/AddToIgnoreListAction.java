@@ -75,7 +75,7 @@ public class AddToIgnoreListAction extends BasicAction {
 
   protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
       throws VcsException {
-    SvnPropertyService.doAddToIgnoreProperty(activeVcs, project, myUseCommonExtension, file, myInfoGetter);
+    SvnPropertyService.doAddToIgnoreProperty(activeVcs, myUseCommonExtension, file, myInfoGetter);
   }
 
   protected boolean isBatchAction() {

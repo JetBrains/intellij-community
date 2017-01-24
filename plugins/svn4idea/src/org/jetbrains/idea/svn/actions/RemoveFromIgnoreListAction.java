@@ -74,7 +74,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
 
   protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
       throws VcsException {
-    SvnPropertyService.doRemoveFromIgnoreProperty(activeVcs, project, myUseCommonExtension, file, myInfoGetter);
+    SvnPropertyService.doRemoveFromIgnoreProperty(activeVcs, myUseCommonExtension, file, myInfoGetter);
   }
 
   protected boolean isBatchAction() {
