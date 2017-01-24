@@ -34,7 +34,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.xml.util.XmlStringUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -202,8 +201,7 @@ public class VcsPushDialog extends DialogWrapper {
         // user pressed on cancel indicator window button,  then HandlerResult is not ABORT (usually OK or null);
         else if (result.get() != CheckinPushHandler.HandlerResult.ABORT) {
           if (Messages.showOkCancelDialog(myProject,
-                                          XmlStringUtil.wrapInHtml(
-                                            "Would you like to <u>C</u>ancel push completely or <u>S</u>kip pre-push checking and continue?"),
+                                          "Would you like to cancel push completely or skip pre-push checking and continue?",
                                           "Push",
                                           "&Push Anyway",
                                           "&Cancel",
