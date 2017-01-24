@@ -482,7 +482,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testDecimalDividedByInt() {
-    doTest("Union[int, Decimal]",
+    doTest("Union[Decimal, int]",
            "class Decimal(object):\n" +
            "    def __div__(self, other):\n" +
            "        \"\"\"\n" +
