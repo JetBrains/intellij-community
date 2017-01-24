@@ -62,25 +62,18 @@ public class PyCallExpressionHelper {
       final PyReferenceExpression referenceExpr = (PyReferenceExpression)redefining_callee;
       if (referenceExpr != null) {
         final String refName = referenceExpr.getReferencedName();
-        if ((PyNames.CLASSMETHOD.equals(refName) || PyNames.STATICMETHOD.equals(refName))) {
-          PsiElement redefining_func = referenceExpr.getReference().resolve();
-          if (redefining_func != null) {
-            PsiElement true_func = PyBuiltinCache.getInstance(us).getByName(refName);
-            if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true, null);
-            if (true_func == redefining_func) {
-              // yes, really a case of "foo = classmethod(foo)"
-              PyArgumentList argumentList = redefiningCall.getArgumentList();
-              if (argumentList != null) { // really can't be any other way
-                PyExpression[] args = argumentList.getArguments();
-                if (args.length == 1) {
-                  PyExpression possible_original_ref = args[0];
-                  if (possible_original_ref instanceof PyReferenceExpression) {
-                    PsiElement original = ((PyReferenceExpression)possible_original_ref).getReference().resolve();
-                    if (original instanceof PyFunction) {
-                      // pinned down the original; replace our resolved callee with it and add flags.
-                      return Pair.create(refName, (PyFunction)original);
-                    }
-                  }
+        if ((PyNames.CLASSMETHOD.equals(refName) || PyNames.STATICMETHOD.equals(refName)) && PyBuiltinCache.isInBuiltins(referenceExpr)) {
+          // yes, really a case of "foo = classmethod(foo)"
+          PyArgumentList argumentList = redefiningCall.getArgumentList();
+          if (argumentList != null) { // really can't be any other way
+            PyExpression[] args = argumentList.getArguments();
+            if (args.length == 1) {
+              PyExpression possible_original_ref = args[0];
+              if (possible_original_ref instanceof PyReferenceExpression) {
+                PsiElement original = ((PyReferenceExpression)possible_original_ref).getReference().resolve();
+                if (original instanceof PyFunction) {
+                  // pinned down the original; replace our resolved callee with it and add flags.
+                  return Pair.create(refName, (PyFunction)original);
                 }
               }
             }
