@@ -153,6 +153,7 @@ public class BuildManager implements Disposable {
     s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
   private final File mySystemDirectory;
+  private final List<String> myFallbackJdkParams = new SmartList<>();
   private final ProjectManager myProjectManager;
 
   private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<TaskFuture, Project>());
@@ -246,6 +247,12 @@ public class BuildManager implements Disposable {
     }
     mySystemDirectory = system;
 
+    final String fallbackSdkHome = getFallbackSdkHome();
+    if (fallbackSdkHome != null) {
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + fallbackSdkHome);
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
+    }
+
     projectManager.addProjectManagerListener(new ProjectWatcher());
 
     final MessageBusConnection conn = application.getMessageBus().connect();
@@ -320,6 +327,22 @@ public class BuildManager implements Disposable {
 
     ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
     Disposer.register(this, () -> future.cancel(false));
+  }
+
+  @Nullable
+  private static String getFallbackSdkHome() {
+    final String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
+    if (home == null) {
+      return null;
+    }
+    File javaHome = new File(home);
+    if (!JavaSdk.checkForJdk(javaHome)) {
+      final File parent = javaHome.getParentFile();
+      if (parent != null && JavaSdk.checkForJdk(parent)) {
+        javaHome = parent;
+      }
+    }
+    return FileUtil.toSystemIndependentName(javaHome.getAbsolutePath());
   }
 
   private List<Project> getOpenProjects() {
@@ -1151,8 +1174,7 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath());
 
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
-    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
-    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
+    cmdLine.addParameters(myFallbackJdkParams);
 
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
