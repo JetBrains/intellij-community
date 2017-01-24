@@ -35,9 +35,4 @@ public interface TestFinder {
   Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 
   boolean isTest(@NotNull PsiElement element);
-
-  @Nullable
-  default PsiElement findSelectedElement(@NotNull final PsiElement element) {
-    return element;
-  }
 }
