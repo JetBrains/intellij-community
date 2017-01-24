@@ -56,11 +56,6 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
     return myExplicitProximity;
   }
 
-  @Override
-  public boolean isWorthShowingInAutoPopup() {
-    return getDelegate().isWorthShowingInAutoPopup();
-  }
-
   public static LookupElement withPriority(LookupElement element, double priority) {
     final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     return new PrioritizedLookupElement<>(element, priority, prioritized == null ? 0 : prioritized.getGrouping());
