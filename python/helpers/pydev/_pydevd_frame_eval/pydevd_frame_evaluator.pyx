@@ -8,8 +8,7 @@ from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 
-def get_breakpoints_for_file(filename):
-    main_debugger = get_global_debugger()
+def get_breakpoints_for_file(filename, main_debugger):
     breakpoints_for_file = main_debugger.breakpoints.get(filename)
     return breakpoints_for_file
 
@@ -39,7 +38,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(<object> frame)
 
             filepath = abs_path_real_path_and_base[1]
-            breakpoints = get_breakpoints_for_file(filepath)
+            main_debugger = get_global_debugger()
+            breakpoints = get_breakpoints_for_file(filepath, main_debugger)
             if breakpoints:
                 was_break = False
                 breakpoints_to_update = []
@@ -59,6 +59,13 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
                     update_globals_dict(<object> frame.f_globals)
                     for bp in breakpoints_to_update:
                         bp.code_objects.append(<object> frame.f_code)
+            else:
+                if main_debugger.has_plugin_line_breaks:
+                    can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, <object>frame)
+                    if can_not_skip:
+                        main_debugger.SetTrace(main_debugger.trace_dispatch)
+                        main_debugger.set_trace_for_frame_and_parents(<object>frame)
+
             additional_info.is_tracing = False
     return _PyEval_EvalFrameDefault(frame, exc)
 
