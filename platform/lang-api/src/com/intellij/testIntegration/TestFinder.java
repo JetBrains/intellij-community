@@ -32,7 +32,7 @@ public interface TestFinder {
   /**
    * Finds tests for given class.
    *
-   * @param element may by of any language but not related to a current test finder domain language
+   * @param element may by of any language but not specific to a current test finder domain language
    * @return founded tests for class
    */
   @NotNull
@@ -41,7 +41,7 @@ public interface TestFinder {
   /**
    * Finds classes for given test.
    *
-   * @param element may by of any language but not related to a current test finder domain language
+   * @param element may by of any language but not specific to a current test finder domain language
    * @return founded classes for test
    */
   @NotNull
