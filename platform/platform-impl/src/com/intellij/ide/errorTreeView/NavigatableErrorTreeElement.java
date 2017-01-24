@@ -18,6 +18,9 @@ package com.intellij.ide.errorTreeView;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implement this interface in your {@link ErrorTreeElement}'s inheritor to provide navigation from error messages to source code.
+ */
 public interface NavigatableErrorTreeElement {
   @NotNull
   Navigatable getNavigatable();
