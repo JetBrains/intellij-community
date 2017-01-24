@@ -20,8 +20,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.TYPE_TO_RANK;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getQualifiedName;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.*;
 
 public interface TypeConstants {
 
@@ -43,5 +42,10 @@ public interface TypeConstants {
       return TYPE_TO_RANK.get(((PsiPrimitiveType)type).getBoxedTypeName());
     }
     return 0;
+  }
+
+  @Nullable
+  static String getTypeFqn(int rank) {
+    return RANK_TO_TYPE.get(rank);
   }
 }

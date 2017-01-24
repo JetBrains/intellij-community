@@ -29,6 +29,7 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -178,6 +179,15 @@ public class TypesUtil implements TypeConstants {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, FLOAT_RANK);
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, DOUBLE_RANK);
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 10);
+  }
+
+  static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
+
+  static {
+    TYPE_TO_RANK.forEachEntry((fqn, rank) -> {
+      RANK_TO_TYPE.put(rank, fqn);
+      return true;
+    });
   }
 
   private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
