@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -226,10 +227,23 @@ public class PyImportOptimizer implements ImportOptimizer {
           myGroups.put(priority, imports);
         }
       }
+      prepareNewImports();
       markGroupStarts();
       addImports(myImportBlock.get(0));
 
       myFile.deleteChildRange(myImportBlock.get(0), myImportBlock.get(myImportBlock.size() - 1));
+    }
+
+    private void prepareNewImports() {
+      for (List<PyImportStatementBase> imports : myGroups.values()) {
+        for (int i = 0; i < imports.size(); i++) {
+          final PyImportStatementBase newImport = imports.get(i);
+          final CodeStyleManager styleManager = CodeStyleManager.getInstance(newImport.getProject());
+          // Some of imports were copied as is and they're still present in the original PSI file
+          final PyImportStatementBase formatted = (PyImportStatementBase)styleManager.reformat(newImport.copy());
+          imports.set(i, formatted);
+        }
+      }
     }
 
     private void markGroupStarts() {
