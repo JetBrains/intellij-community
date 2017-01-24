@@ -21,7 +21,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -30,23 +29,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class BasicAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.actions.BasicAction");
 
   public void actionPerformed(AnActionEvent event) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: actionPerformed(id='" + ActionManager.getInstance().getId(this) + "')");
-    }
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (LOG.isDebugEnabled() && files != null) {
-      LOG.debug("files='" + Arrays.asList(files) + "'");
-    }
     if (files == null || files.length == 0) return;
 
     final SvnVcs vcs = SvnVcs.getInstance(project);
@@ -101,7 +92,6 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    //LOG.debug("enter: update class:"+getClass().getName());
     super.update(e);
 
     Presentation presentation = e.getPresentation();
@@ -133,7 +123,6 @@ public abstract class BasicAction extends AnAction implements DumbAware {
       enabled = false;
     }
 
-    LOG.debug(getClass().getName() + (enabled ? " needsAllFiles" : " needsSingleFile"));
     for (int i = 0; i < files.length; i++) {
       VirtualFile file = files[i];
       boolean fileEnabled = false;
@@ -141,20 +130,15 @@ public abstract class BasicAction extends AnAction implements DumbAware {
         fileEnabled = isEnabled(vcs, file);
       }
       catch (Throwable t) {
-        LOG.debug(t);
-
       }
-      LOG.debug("file:" + file.getPath() + (fileEnabled ? " is enabled" : " is not enabled"));
       if (needsAllFiles()) {
         if (!fileEnabled) {
-          LOG.debug("now disabled");
           enabled = false;
           break;
         }
       }
       else {
         if (fileEnabled) {
-          LOG.debug("now enabled");
           enabled = true;
         }
       }
