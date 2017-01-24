@@ -94,40 +94,42 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   void compilerActivityStarted() {
+    final ExcludeEntryDescription[] excludeEntryDescriptions =
+      CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     synchronized (myLock) {
       myCompilationPhase = true;
-      Collections.addAll(myExcludedDescriptions, CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions());
+      Collections.addAll(myExcludedDescriptions, excludeEntryDescriptions);
       myExcludedFilesScope = null;
       myCompilationAffectedModules.clear();
     }
   }
 
   void upToDateChecked(boolean isUpToDate) {
+    final Module[] modules = ReadAction.compute(() -> {
+      final Project project = myService.getProject();
+      if (project.isDisposed()) {
+        return null;
+      }
+      return ModuleManager.getInstance(project).getModules();
+    });
+    if (modules == null) return;
     compilationFinished(() -> {
       if (!isUpToDate) {
-        final Module[] modules = ReadAction.compute(() -> {
-          final Project project = myService.getProject();
-          if (project.isDisposed()) {
-            return null;
-          }
-          return ModuleManager.getInstance(project).getModules();
-        });
-        if (modules == null) return;
         ContainerUtil.addAll(myVFSChangedModules, modules);
       }
     });
   }
 
   void compilerActivityFinished() {
+    final List<Module> compiledModules = ReadAction.compute(() -> {
+      final Project project = myService.getProject();
+      if (project.isDisposed()) {
+        return null;
+      }
+      final ModuleManager moduleManager = ModuleManager.getInstance(myService.getProject());
+      return myCompilationAffectedModules.stream().map(moduleManager::findModuleByName).collect(Collectors.toList());
+    });
     compilationFinished(() -> {
-      final List<Module> compiledModules = ReadAction.compute(() -> {
-        final Project project = myService.getProject();
-        if (project.isDisposed()) {
-          return null;
-        }
-        final ModuleManager moduleManager = ModuleManager.getInstance(myService.getProject());
-        return myCompilationAffectedModules.stream().map(moduleManager::findModuleByName).collect(Collectors.toList());
-      });
       if (compiledModules == null) return;
       myVFSChangedModules.removeAll(compiledModules);
     });
@@ -138,28 +140,28 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     synchronized (myLock) {
       myCompilationPhase = false;
       action.run();
-      myCompilationAffectedModules.clear();
       myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
       descriptions = myExcludedDescriptions.toArray(new ExcludeEntryDescription[myExcludedDescriptions.size()]);
       myExcludedDescriptions.clear();
     }
+    myCompilationAffectedModules.clear();
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
-
   }
 
   GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
-    synchronized (myLock) {
-      if (myCompilationPhase) {
-        return GlobalSearchScope.allScope(project);
-      }
-      return ReadAction.compute(() -> {
+    return ReadAction.compute(() -> {
+      synchronized (myLock) {
+        if (myCompilationPhase) {
+          return GlobalSearchScope.allScope(project);
+        }
         if (project.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getManager(project).getCachedValue(this, () ->
-          CachedValueProvider.Result.create(calculateDirtyScope(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
-      });
-    }
+          CachedValueProvider.Result
+            .create(calculateDirtyScope(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+      }
+    });
   }
 
   private GlobalSearchScope calculateDirtyScope() {
