@@ -8,7 +8,6 @@ import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel
 import com.intellij.ide.todo.configurable.TodoConfigurable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 
@@ -35,7 +34,7 @@ open class ConfigurableFactory : Disposable {
         return codeStyleConfigurableWrapper
     }
 
-    open fun getTodoConfigurable(project: Project): TodoConfigurable {
+    open fun getTodoConfigurable(): TodoConfigurable {
         return TodoConfigurable()
     }
 }
