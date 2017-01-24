@@ -998,15 +998,10 @@ public abstract class ChooseByNameBase {
     Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
-    if (commands == null) {
-      return; // Nothing changed
-    }
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
-    if (commands.isEmpty()) {
-      if (pos <= 0) {
-        pos = calcSelectedIndex(newElements, getTrimmedText());
-      }
+    if (commands == null || commands.isEmpty()) {
+      pos = calcSelectedIndex(newElements, getTrimmedText());
 
       ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.getSize() - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
