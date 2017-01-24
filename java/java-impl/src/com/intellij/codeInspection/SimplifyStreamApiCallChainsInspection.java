@@ -410,13 +410,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
                                                           "valueOf", PsiType.BOOLEAN)) {
       return true;
     }
-    if (arg instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
-      PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      PsiParameterList parameters = lambda.getParameterList();
-      return parameters.getParametersCount() == 1 && ExpressionUtils.isReferenceTo(body, parameters.getParameters()[0]);
-    }
-    return false;
+    return arg instanceof PsiLambdaExpression && LambdaUtil.isIdentityLambda((PsiLambdaExpression)arg);
   }
 
   @Nullable

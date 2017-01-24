@@ -183,12 +183,12 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
     }
     if (expression instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+      if (LambdaUtil.isIdentityLambda(lambda)) return true;
+      if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 1) return false;
       PsiParameter parameter = parameters[0];
-      if (ExpressionUtils.isReferenceTo(body, parameter)) return true;
-      if (!allowBoxUnbox) return false;
       PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiMethodCallExpression.class);
       if (call == null) return false;
       PsiReferenceExpression methodExpression = call.getMethodExpression();
