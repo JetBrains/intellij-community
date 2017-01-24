@@ -54,6 +54,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String GENERATOR = "typing.Generator";
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
+  public static final String NAMEDTUPLE = "typing.NamedTuple";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
