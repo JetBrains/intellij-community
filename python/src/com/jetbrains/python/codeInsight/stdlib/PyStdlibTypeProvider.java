@@ -84,8 +84,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
     if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&
-        "basestring".equals(((PyElement)referenceTarget).getName())) {
-      return builtinCache.getStringType(LanguageLevel.forElement(referenceTarget));
+        PyNames.BASESTRING.equals(((PyElement)referenceTarget).getName())) {
+      return builtinCache.getStrOrUnicodeType();
     }
     return null;
   }
