@@ -20,12 +20,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -127,12 +130,12 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(1, preparationResult.validationResults.size());
-    assertEquals(new ValidationResult(ValidationResult.Kind.ERROR,
-                                      "lib/annotations.jar",
-                                      ValidationResult.Action.UPDATE,
-                                      ValidationResult.ABSENT_MESSAGE,
-                                      ValidationResult.Option.NONE), preparationResult.validationResults.get(0));
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/annotations.jar",
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.ABSENT_MESSAGE,
+                           ValidationResult.Option.NONE));
   }
 
   @Test
@@ -145,7 +148,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.delete(new File(myOlderDir, "bin/idea.bat"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertTrue(preparationResult.validationResults.isEmpty());
+    assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
@@ -265,7 +268,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
                   new File(myOlderDir, "/lib/boot.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertTrue(preparationResult.validationResults.isEmpty());
+    assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
@@ -277,10 +280,12 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.copy(new File(myOlderDir, "/lib/bootstrap.jar"), new File(myOlderDir, "/lib/boot.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(1, preparationResult.validationResults.size());
-    assertEquals(
-      new ValidationResult(ValidationResult.Kind.ERROR, "lib/boot.jar", ValidationResult.Action.VALIDATE, ValidationResult.MODIFIED_MESSAGE,
-                           ValidationResult.Option.NONE), preparationResult.validationResults.get(0));
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/boot.jar",
+                           ValidationResult.Action.VALIDATE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.NONE));
   }
 
   @Test
@@ -290,7 +295,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myOlderDir, "new_file.txt"), "hello");
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertTrue(preparationResult.validationResults.isEmpty());
+    assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
@@ -305,9 +310,12 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(1, preparationResult.validationResults.size());
-    assertEquals(new ValidationResult(ValidationResult.Kind.CONFLICT, "new_file.txt", ValidationResult.Action.VALIDATE, "Unexpected file",
-                                      ValidationResult.Option.DELETE), preparationResult.validationResults.get(0));
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "new_file.txt",
+                           ValidationResult.Action.VALIDATE,
+                           "Unexpected file",
+                           ValidationResult.Option.DELETE));
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
@@ -321,7 +329,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myOlderDir, "lib/java_pid1234.hprof"), "bye!");
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(0, preparationResult.validationResults.size());
+    assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
@@ -337,22 +345,22 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     FileUtil.createDirectory(new File(myOlderDir, "newDir"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(3, preparationResult.validationResults.size());
-    assertEquals(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                      "unexpected_new_dir/unexpected.txt",
-                                      ValidationResult.Action.VALIDATE,
-                                      "Unexpected file",
-                                      ValidationResult.Option.DELETE), preparationResult.validationResults.get(0));
-    assertEquals(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                      "unexpected_new_dir/",
-                                      ValidationResult.Action.VALIDATE,
-                                      "Unexpected file",
-                                      ValidationResult.Option.DELETE), preparationResult.validationResults.get(1));
-    assertEquals(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                      "newDir/",
-                                      ValidationResult.Action.CREATE,
-                                      ValidationResult.ALREADY_EXISTS_MESSAGE,
-                                      ValidationResult.Option.REPLACE), preparationResult.validationResults.get(2));
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "unexpected_new_dir/unexpected.txt",
+                           ValidationResult.Action.VALIDATE,
+                           "Unexpected file",
+                           ValidationResult.Option.DELETE),
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "unexpected_new_dir/",
+                           ValidationResult.Action.VALIDATE,
+                           "Unexpected file",
+                           ValidationResult.Option.DELETE),
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "newDir/",
+                           ValidationResult.Action.CREATE,
+                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           ValidationResult.Option.REPLACE));
     FileUtil.delete(new File(myOlderDir, "newDir"));
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
@@ -403,7 +411,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     action = getAction(patch, "from/move.me/");
     assertTrue(action instanceof DeleteAction);
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertEquals(0, preparationResult.validationResults.size());
+    assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndRevertedCorrectly(patch, preparationResult);
   }
 
