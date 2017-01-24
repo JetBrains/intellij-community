@@ -551,6 +551,7 @@ public class PyTypeChecker {
         subClass == null ||
         subClass.isSubclass(superClass, context) ||
         PyABCUtil.isSubclass(subClass, superClass, context) ||
+        isStrUnicodeMatch(subClass, superClass) ||
         PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
@@ -558,6 +559,11 @@ public class PyTypeChecker {
       final String superName = superClass.getName();
       return superName != null && superName.equals(subClass.getName());
     }
+  }
+
+  private static boolean isStrUnicodeMatch(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+    // TODO: Check for subclasses as well
+    return PyNames.TYPE_STR.equals(subClass.getName()) && PyNames.TYPE_UNICODE.equals(superClass.getName());
   }
 
   @NotNull
