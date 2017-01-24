@@ -155,10 +155,13 @@ private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean
   }
 }
 
-class FailedTest(val module: String, val message: String, val id: String, val path: String) {
-  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File = image.presentablePath) :
-    this(module.name, message, image.id, file.absolutePath)
+class FailedTest(val module: String, val message: String, val id: String, val paths: List<String>) {
+  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
+    this(module.name, message, image.id, listOf(file.absolutePath))
+
+  internal constructor(module: JpsModule, message: String, image: ImagePaths) :
+    this(module.name, message, image.id, image.files.values.map { it.absolutePath }.toList())
 
   fun getTestName(): String = "'${module}' - $id - $message"
-  fun getException(): Throwable = Exception("${message} - ${path}")
+  fun getException(): Throwable = Exception("${message}\n\n${paths.joinToString("\n")}")
 }
