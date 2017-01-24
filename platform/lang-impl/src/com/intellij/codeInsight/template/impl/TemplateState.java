@@ -1086,7 +1086,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  boolean isDisposed() {
+  public boolean isDisposed() {
     return myDocument == null;
   }
 
