@@ -1,6 +1,8 @@
 package com.jetbrains.python.testing.universalTests
 
+import com.intellij.execution.RunConfigurationProducerService
 import com.intellij.execution.RunManager
+import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -18,10 +20,12 @@ import com.jetbrains.python.run.PythonConfigurationFactoryBase
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
 import com.jetbrains.python.testing.PythonTestConfigurationType
+import com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer
 import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration
 import com.jetbrains.python.testing.pytest.PyTestRunConfiguration
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration
 import org.jdom.Element
+import org.picocontainer.MutablePicoContainer
 
 /**
  * Module to support legacy configurations.
@@ -46,6 +50,38 @@ fun projectInitialized(project: Project) {
   RunManager.getInstance(project).allConfigurationsList.filterIsInstance(PyUniversalTestConfiguration::class.java).forEach {
     it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
   }
+
+  disableUnneededConfigurationProducer(project)
+}
+
+/**
+ * It is impossible to have 2 producers for one type (class cast exception may take place), so we need to disable either old or new one
+ */
+private fun disableUnneededConfigurationProducer(project: Project) {
+  val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+
+  @Suppress("UNCHECKED_CAST")
+  val newProducers = container.getComponentInstancesOfType(
+    PyUniversalTestsConfigurationProducer::class.java) as List<RunConfigurationProducer<*>>
+
+
+  @Suppress("UNCHECKED_CAST")
+  val legacyProducers = container.getComponentInstancesOfType(
+    PythonTestLegacyConfigurationProducer::class.java) as List<RunConfigurationProducer<*>>
+
+
+  val producersToRemove = if (isNewTestsModeEnabled()) {
+    legacyProducers
+  }
+  else {
+    newProducers
+  }
+
+  val configurationProducerService = RunConfigurationProducerService.getInstance(project)
+  // First, enable all
+  (legacyProducers + newProducers).forEach { configurationProducerService.removeIgnoredProducer(it.javaClass) }
+  // Then, disable one that need to be disabled
+  producersToRemove.forEach { configurationProducerService.addIgnoredProducer(it.javaClass) }
 }
 
 private fun getVirtualFileByPath(path: String): VirtualFile? {
@@ -243,6 +279,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
 
   }
 }
+
 private class LegacyConfigurationManagerUnit(newConfig: PyUniversalUnitTestConfiguration) :
   LegacyConfigurationManager<PythonUnitTestRunConfiguration, PyUniversalUnitTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY, newConfig) {

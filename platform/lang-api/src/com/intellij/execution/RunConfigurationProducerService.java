@@ -63,6 +63,10 @@ public class RunConfigurationProducerService implements PersistentStateComponent
     myState.ignoredProducers.add(ignoredProducer.getName());
   }
 
+  public void removeIgnoredProducer(@NotNull Class<? extends RunConfigurationProducer<?>> ignoredProducer) {
+    myState.ignoredProducers.remove(ignoredProducer.getName());
+  }
+
   public boolean isIgnored(RunConfigurationProducer<?> producer) {
     return myState.ignoredProducers.contains(producer.getClass().getName());
   }
