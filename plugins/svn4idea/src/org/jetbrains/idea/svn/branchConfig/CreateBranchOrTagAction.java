@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -50,12 +49,12 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 
 public class CreateBranchOrTagAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.Subversion.Copy.text");
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     if (file == null) {
       return false;
     }
@@ -63,7 +62,7 @@ public class CreateBranchOrTagAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs.getProject(), true, new File(file.getPath()));
     if (dialog.showAndGet()) {
       final String dstURL = dialog.getToURL();
@@ -171,7 +170,7 @@ public class CreateBranchOrTagAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] files, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

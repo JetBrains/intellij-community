@@ -33,24 +33,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResolveAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.name.resolve.conflict");
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     if (file.isDirectory()) return true;
     final FileStatus fStatus = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
     return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus);
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     batchPerform(vcs, new VirtualFile[]{file}, context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, final VirtualFile[] files, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull final VirtualFile[] files, @NotNull DataContext context) throws VcsException {
     boolean hasDirs = false;
     for(VirtualFile file: files) {
       if (file.isDirectory()) {

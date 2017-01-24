@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -47,11 +46,11 @@ import java.io.File;
 
 public class ShareProjectAction extends BasicAction {
 
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("share.directory.action");
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 
@@ -81,7 +80,7 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     return false;
   }
 
@@ -90,7 +89,7 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull final VirtualFile file, @NotNull DataContext context) throws VcsException {
     performImpl(vcs.getProject(), vcs, file);
   }
 
@@ -236,7 +235,7 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected void doVcsRefresh(@NotNull SvnVcs vcs, final VirtualFile file) {
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file);
   }
 
@@ -258,7 +257,7 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

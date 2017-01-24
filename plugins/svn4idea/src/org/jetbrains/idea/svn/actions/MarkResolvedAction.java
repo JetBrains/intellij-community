@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -49,7 +48,7 @@ import java.util.TreeSet;
 public class MarkResolvedAction extends BasicAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.MarkResolvedAction");
 
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.name.mark.resolved");
   }
 
@@ -59,7 +58,7 @@ public class MarkResolvedAction extends BasicAction {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
     }
@@ -69,12 +68,12 @@ public class MarkResolvedAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     batchPerform(vcs, new VirtualFile[]{file}, context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] files, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
     ApplicationManager.getApplication().saveAll();
     Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {

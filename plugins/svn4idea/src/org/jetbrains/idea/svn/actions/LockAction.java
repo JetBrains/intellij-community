@@ -18,7 +18,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +30,12 @@ import java.io.File;
 import static org.jetbrains.idea.svn.SvnStatusUtil.*;
 
 public class LockAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.Subversion.Lock.description");
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     if (file == null || file.isDirectory()) {
       return false;
     }
@@ -44,12 +43,12 @@ public class LockAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     batchPerform(vcs, new VirtualFile[]{file}, context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] files, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
     File[] ioFiles = new File[files.length];
     for (int i = 0; i < files.length; i++) {
       VirtualFile virtualFile = files[i];

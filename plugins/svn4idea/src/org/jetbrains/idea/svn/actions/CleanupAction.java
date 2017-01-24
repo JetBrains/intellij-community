@@ -18,8 +18,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,28 +28,28 @@ import org.jetbrains.idea.svn.SvnVcs;
 import static java.util.Collections.singletonList;
 
 public class CleanupAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("cleanup.action.name");
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
   }
 
   @Override
-  protected void execute(@NotNull SvnVcs vcs, final VirtualFile file, final DataContext context, final AbstractVcsHelper helper)
+  protected void execute(@NotNull SvnVcs vcs, @NotNull final VirtualFile file, @NotNull final DataContext context)
     throws VcsException {
     perform(vcs, file, context);
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     new CleanupWorker(vcs, singletonList(file)).execute();
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
     throw new VcsException(SvnBundle.message("exception.text.cleanupaction.batchperform.not.implemented"));
   }
 

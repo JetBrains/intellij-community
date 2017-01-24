@@ -18,7 +18,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -35,24 +34,24 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import java.io.File;
 
 public class SetPropertyAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.name.set.property");
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     if (file == null) return false;
     final FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
     return (! FileStatus.IGNORED.equals(status)) && (! FileStatus.UNKNOWN.equals(status));
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     batchPerform(vcs, new VirtualFile[]{file}, context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
     File[] ioFiles = new File[file.length];
     for (int i = 0; i < ioFiles.length; i++) {
       ioFiles[i] = new File(file[i].getPath());

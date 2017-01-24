@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,17 +35,17 @@ import java.io.File;
  * @author yole
  */
 public class RelocateAction extends BasicAction {
-  protected String getActionName(final AbstractVcs vcs) {
+  protected String getActionName() {
     return "Relocate working copy to a different URL";
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, final VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull final VirtualFile file) {
     return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull final VirtualFile file, @NotNull DataContext context) throws VcsException {
     Info info = vcs.getInfo(file);
     assert info != null;
     RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getURL());
@@ -81,7 +80,7 @@ public class RelocateAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile[] file, DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

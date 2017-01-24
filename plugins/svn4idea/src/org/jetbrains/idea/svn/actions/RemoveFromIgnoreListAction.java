@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,11 +41,11 @@ public class RemoveFromIgnoreListAction extends BasicAction {
     myActionName = name;
   }
 
-  protected String getActionName(final AbstractVcs vcs) {
+  protected String getActionName() {
     return SvnBundle.message("action.name.undo.ignore.files");
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(true);
     presentation.setEnabled(true);
@@ -56,12 +55,12 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, final VirtualFile file) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull final VirtualFile file) {
     return true;
   }
 
   @Override
-  protected void doVcsRefresh(@NotNull SvnVcs vcs, VirtualFile file) {
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
     if (file != null && (file.getParent() != null)) {
       vcsDirtyScopeManager.fileDirty(file.getParent());
@@ -69,11 +68,11 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, final VirtualFile file, final DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull final VirtualFile file, @NotNull final DataContext context) throws VcsException {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, final VirtualFile[] file, final DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull final VirtualFile[] file, @NotNull final DataContext context) throws VcsException {
     SvnPropertyService.doRemoveFromIgnoreProperty(vcs, myUseCommonExtension, file, myInfoGetter);
   }
 
