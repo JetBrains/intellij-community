@@ -59,7 +59,7 @@ public class GdkMethodHolder {
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
-      if (!m.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+      if (!m.hasModifierProperty(PsiModifier.PUBLIC) || !m.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m)) {
         continue;
       }
