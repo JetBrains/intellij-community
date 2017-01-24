@@ -16,8 +16,6 @@
 package com.intellij.testGuiFramework.fixtures.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.testGuiFramework.fixtures.FrameworksTreeFixture;
 import com.intellij.testGuiFramework.fixtures.SelectSdkDialogFixture;
@@ -38,7 +36,6 @@ import java.awt.*;
 import java.io.File;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.LONG_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemJdk;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
@@ -135,19 +132,19 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     });
   }
 
-  public NewProjectWizardFixture setupJdk() {
-    if (this.isJdkEmpty()) {
-      JButton newButton = GuiTestUtil.findButton(this,
-                                                 GuiTestUtil.adduction(ApplicationBundle.message("button.new")),
-                                                 robot());
-      robot().click(newButton);
-      File javaSdkPath = new File(getSystemJdk());
-      String sdkType = GuiTestUtil.adduction(ProjectBundle.message("sdk.java.name"));
-      GuiTestUtil.clickPopupMenuItem(sdkType, newButton, robot());
-      this.selectSdkPath(javaSdkPath, sdkType);
-    }
-    return this;
-  }
+  //public NewProjectWizardFixture setupJdk() {
+  //  if (this.isJdkEmpty()) {
+  //    JButton newButton = GuiTestUtil.findButton(this,
+  //                                               GuiTestUtil.adduction(ApplicationBundle.message("button.new")),
+  //                                               robot());
+  //    robot().click(newButton);
+  //    File javaSdkPath = new File(getSystemJdk());
+  //    String sdkType = GuiTestUtil.adduction(ProjectBundle.message("sdk.java.name"));
+  //    GuiTestUtil.clickPopupMenuItem(sdkType, newButton, robot());
+  //    this.selectSdkPath(javaSdkPath, sdkType);
+  //  }
+  //  return this;
+  //}
 
 
   @NotNull
