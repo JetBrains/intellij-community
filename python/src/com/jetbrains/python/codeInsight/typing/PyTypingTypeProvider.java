@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -236,7 +237,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression value = getReturnTypeAnnotation(function);
       if (value != null) {
         final PyType type = getType(value, new Context(context));
-        return type != null ? Ref.create(type) : null;
+        return type != null && type != PyNoneType.INSTANCE ? Ref.create(type) : null;
       }
     }
     return null;
@@ -354,22 +355,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     if (isGeneric) {
-      final Set<PyGenericType> results = new LinkedHashSet<>();
       // XXX: Requires switching from stub to AST
       for (PyExpression expr : cls.getSuperClassExpressions()) {
         if (expr instanceof PySubscriptionExpression) {
           final PyExpression indexExpr = ((PySubscriptionExpression)expr).getIndexExpression();
-          if (indexExpr != null) {
-            for (PsiElement resolved : tryResolving(indexExpr, context.getTypeContext())) {
-              final PyGenericType genericType = getGenericType(resolved, context);
-              if (genericType != null) {
-                results.add(genericType);
-              }
-            }
-          }
+          final PyTupleExpression tupleExpr = as(indexExpr, PyTupleExpression.class);
+          final List<PyExpression> generics = tupleExpr != null ?
+                                              Arrays.asList(tupleExpr.getElements()) : Collections.singletonList(indexExpr);
+          return StreamEx.of(generics)
+            .flatMap(e -> tryResolving(e, context.getTypeContext()).stream())
+            .map(e -> as(getGenericTypeFromTypeVar(e, context), PyType.class))
+            .nonNull()
+            .toList();
         }
       }
-      return new ArrayList<>(results);
     }
     return Collections.emptyList();
   }
@@ -412,7 +411,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (builtinCollection != null) {
         return builtinCollection;
       }
-      final PyType genericType = getGenericType(resolved, context);
+      final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
       if (genericType != null) {
         return genericType;
       }
@@ -551,7 +550,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyGenericType getGenericType(@NotNull PsiElement element, @NotNull Context context) {
+  private static PyGenericType getGenericTypeFromTypeVar(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyCallExpression) {
       final PyCallExpression assignedCall = (PyCallExpression)element;
       final PyExpression callee = assignedCall.getCallee();
