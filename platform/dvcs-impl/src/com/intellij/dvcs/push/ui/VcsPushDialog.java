@@ -21,6 +21,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -34,6 +35,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.xml.util.XmlStringUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -140,8 +142,10 @@ public class VcsPushDialog extends DialogWrapper {
     myForcePushAction.putValue(Action.NAME, "&Force Push");
     if (myController.isForcePushEnabled()) {
       myPushAction = new ComplexPushAction(myForcePushAction);
-    } else {
-      myPushAction = new OkAction() {};
+    }
+    else {
+      myPushAction = new OkAction() {
+      };
       myPushAction.putValue(Action.NAME, "&Push");
     }
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -179,6 +183,7 @@ public class VcsPushDialog extends DialogWrapper {
   @CalledInAwt
   private void push(boolean forcePush) {
     AtomicReference<CheckinPushHandler.HandlerResult> result = new AtomicReference<>();
+    FileDocumentManager.getInstance().saveAllDocuments();
     new Task.Modal(myController.getProject(), "Checking Commits...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -193,6 +198,13 @@ public class VcsPushDialog extends DialogWrapper {
       }
 
       @Override
+      public void onThrowable(@NotNull Throwable error) {
+        super.onThrowable(error);
+        suggestToPushAnyway(
+          XmlStringUtil.wrapInHtml("Pre-push checks failed: " + error.getMessage() + "<br/>Would you like to push anyway?"));
+      }
+
+      @Override
       public void onCancel() {
         super.onCancel();
         if (result.get() == CheckinPushHandler.HandlerResult.ABORT_AND_CLOSE) {
@@ -200,14 +212,13 @@ public class VcsPushDialog extends DialogWrapper {
         }
         // user pressed on cancel indicator window button,  then HandlerResult is not ABORT (usually OK or null);
         else if (result.get() != CheckinPushHandler.HandlerResult.ABORT) {
-          if (Messages.showOkCancelDialog(myProject,
-                                          "Would you like to cancel push completely or skip pre-push checking and continue?",
-                                          "Push",
-                                          "&Push Anyway",
-                                          "&Cancel",
-                                          UIUtil.getWarningIcon()) == Messages.OK) {
-            onSuccess();
-          }
+          suggestToPushAnyway("Would you like to cancel push completely or skip pre-push checking and continue?");
+        }
+      }
+
+      private void suggestToPushAnyway(@NotNull String message) {
+        if (Messages.showOkCancelDialog(myProject, message, "Push", "&Push Anyway", "&Cancel", UIUtil.getWarningIcon()) == Messages.OK) {
+          onSuccess();
         }
       }
     }.queue();
