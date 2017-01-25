@@ -421,7 +421,12 @@ class DistributionJARsBuilder {
       entry.value.each { pattern ->
         def fileSet = new FileSet()
         fileSet.setProject(buildContext.ant.antProject)
-        fileSet.setDir(new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false)))
+        def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false))
+        if (!moduleOutput.exists()) {
+          buildContext.messages.error("There are excludes defined for module '$module', but the module wasn't compiled; " +
+                                      "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
+        }
+        fileSet.setDir(moduleOutput)
         fileSet.createInclude().setName(pattern)
         if (fileSet.size() == 0) {
           buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
