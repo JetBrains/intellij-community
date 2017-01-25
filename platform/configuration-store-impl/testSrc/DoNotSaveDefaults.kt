@@ -45,7 +45,10 @@ class DoNotSaveDefaultsTest {
     })
 
     // <property name="file.gist.reindex.count" value="54" />
-    PropertiesComponent.getInstance().unsetValue("file.gist.reindex.count")
+    val propertyComponent = PropertiesComponent.getInstance()
+    propertyComponent.unsetValue("file.gist.reindex.count")
+    // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
+    propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     try {
       System.setProperty("store.save.use.modificationCount", "false")
       app.doNotSave(false)
