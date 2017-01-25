@@ -80,28 +80,19 @@ public class GraphicsUtil {
   }
 
   public static GraphicsConfig setupRoundedBorderAntialiasing(Graphics g) {
-    return new GraphicsConfig(g)
-      .setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      .setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      .setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+    return new GraphicsConfig(g).setupRoundedBorderAntialiasing();
   }
 
   public static GraphicsConfig setupAAPainting(Graphics g) {
-    return new GraphicsConfig(g)
-      .setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      .setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+    return new GraphicsConfig(g).setupAAPainting();
   }
 
   public static GraphicsConfig disableAAPainting(Graphics g) {
-    return new GraphicsConfig(g)
-      .setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
-      .setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+    return new GraphicsConfig(g).disableAAPainting();
   }
 
   public static GraphicsConfig paintWithAlpha(Graphics g, float alpha) {
-    assert 0.0f <= alpha && alpha <= 1.0f : "alpha should be in range 0.0f .. 1.0f";
-    return new GraphicsConfig(g)
-      .setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+    return new GraphicsConfig(g).paintWithAlpha(alpha);
   }
 
   /**
