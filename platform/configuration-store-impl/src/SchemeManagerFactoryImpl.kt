@@ -45,12 +45,13 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                        presentableName: String?,
                                                        roamingType: RoamingType,
                                                        isUseOldFileNameSanitize: Boolean,
-                                                       streamProvider: StreamProvider?): SchemeManager<T> {
+                                                       streamProvider: StreamProvider?,
+                                                       directoryPath: Path?): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
                                     streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider,
-                                    pathToFile(path),
+                                    directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,
                                     isUseOldFileNameSanitize,
