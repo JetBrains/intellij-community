@@ -74,7 +74,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected static final ThemeInfo AQUA = new ThemeInfo("Default", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
-  protected static final ThemeInfo INTELLIJ = new ThemeInfo("IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
+  protected static final ThemeInfo INTELLIJ = new ThemeInfo(
+    LafManagerImpl.useIntelliJInsteadOfAqua() ? "Default" : "IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
   protected static final ThemeInfo ALLOY = new ThemeInfo("Alloy. IDEA Theme", "Alloy", "com.incors.plaf.alloy.AlloyIdea");
   protected static final ThemeInfo GTK = new ThemeInfo("GTK+", "GTK", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 
