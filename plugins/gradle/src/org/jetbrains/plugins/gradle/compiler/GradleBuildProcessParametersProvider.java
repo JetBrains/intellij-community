@@ -17,9 +17,6 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.google.gson.Gson;
 import com.intellij.compiler.server.BuildProcessParametersProvider;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +26,7 @@ import groovy.lang.GroovyObject;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
@@ -56,12 +53,8 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   public List<String> getClassPath() {
     List<String> result = ContainerUtil.newArrayList();
     addGradleClassPath(result);
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    for (Module module : moduleManager.getModules()) {
-      if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-        addOtherClassPath(result);
-        break;
-      }
+    if (!GradleSettings.getInstance(myProject).getLinkedProjectsSettings().isEmpty()) {
+      addOtherClassPath(result);
     }
     return result;
   }

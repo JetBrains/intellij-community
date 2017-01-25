@@ -51,6 +51,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   private JCheckBox myReplaceAllCb;
 
   private JCheckBox myMoveToAnotherClassCb;
+  private String myVisibility;
 
   public InplaceIntroduceConstantPopup(Project project,
                                        Editor editor,
@@ -117,6 +118,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
 
+  @NotNull
   private String getSelectedVisibility() {
     if (myParentClass != null && myParentClass.isInterface()) {
       return PsiModifier.PUBLIC;
@@ -124,6 +126,12 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
     if (initialVisibility == null) {
       initialVisibility = PsiModifier.PUBLIC;
+    }
+    else {
+      String effectiveVisibility = IntroduceConstantDialog.getEffectiveVisibility(initialVisibility, myOccurrences, myParentClass);
+      if (effectiveVisibility != null) {
+        return effectiveVisibility;
+      }
     }
     return initialVisibility;
   }
@@ -141,10 +149,8 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
           myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-        final String visibility = getSelectedVisibility();
-        if (visibility != null) {
-          PsiUtil.setModifierProperty(field, visibility, true);
-        }
+        myVisibility = getSelectedVisibility();
+        PsiUtil.setModifierProperty(field, myVisibility, true);
         final PsiElement anchorElementIfAll = getAnchorElementIfAll();
         PsiElement finalAnchorElement;
         for (finalAnchorElement = anchorElementIfAll;
@@ -185,7 +191,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   @Override
   protected void saveSettings(@NotNull PsiVariable psiVariable) {
     super.saveSettings(psiVariable);
-    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getSelectedVisibility();
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = myVisibility;
   }
 
   @Override
@@ -241,7 +247,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 isReplaceAllOccurrences(), true,
                                                 true,
                                                 BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
-                                                getSelectedVisibility(), (PsiLocalVariable)getLocalVariable(),
+                                                myVisibility, (PsiLocalVariable)getLocalVariable(),
                                                 getType(),
                                                 true,
                                                 myParentClass, false, false);

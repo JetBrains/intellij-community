@@ -8,7 +8,7 @@ import static java.util.Arrays.asList;
 
 public class Main {
   private static long test(List<List<String>> nested) {
-      long count = 0;
+      long count = 0L;
       for (List<String> names : nested) {
           Set<String> uniqueValues = new HashSet<>();
           for (String name : names) {

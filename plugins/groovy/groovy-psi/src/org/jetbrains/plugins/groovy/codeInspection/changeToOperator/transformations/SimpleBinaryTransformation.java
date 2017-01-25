@@ -20,10 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 public class SimpleBinaryTransformation extends BinaryTransformation {
 
@@ -35,7 +35,10 @@ public class SimpleBinaryTransformation extends BinaryTransformation {
 
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), ParenthesesUtils.precedenceForBinaryOperator(myOperator));
-    replaceExpression(methodCall, format("%s %s %s", getLhs(methodCall).getText(), myOperator.toString(), rhsParenthesized.getText()));
+    GrExpression rhs = getRhs(methodCall);
+    if (isParenthesesRequiredBinaryOperation(getPrecedence(rhs), myOperator, true)) {
+      rhs = parenthesize(rhs);
+    }
+    replaceExpression(methodCall, format("%s %s %s", getLhs(methodCall).getText(), myOperator.toString(), rhs.getText()));
   }
 }

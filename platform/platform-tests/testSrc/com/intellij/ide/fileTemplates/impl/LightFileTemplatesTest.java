@@ -159,11 +159,13 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       manager.saveAllTemplates();
       assertTrue(file.exists());
 
+      /*
       FileTemplate template = manager.addTemplate("Foo", "java");
       // now remove it via "remove template" call
       manager.removeTemplate(template);
       manager.saveAllTemplates();
       assertFalse(file.exists());
+      */
 
       // check "setTemplates" call
       FileTemplateBase templateBase = (FileTemplateBase)manager.addTemplate("Foo", "java");

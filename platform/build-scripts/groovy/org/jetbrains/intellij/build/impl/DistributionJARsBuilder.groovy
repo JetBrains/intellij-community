@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.io.FileUtil
+import org.apache.tools.ant.types.FileSet
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
@@ -292,8 +293,27 @@ class DistributionJARsBuilder {
     def enabledModulesSet = buildContext.productProperties.productLayout.enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
+      checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values())
       buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars)
     }
+  }
+
+  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames) {
+    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml") }
+    if (modulesWithPluginXml.size() > 1) {
+      buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
+    }
+
+    moduleNames.each {
+      if (containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class")) {
+        buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$mainPluginModule' plugin, because they are included into a platform JAR. " +
+                                    "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
+      }
+    }
+  }
+
+  private boolean containsFileInOutput(String moduleName, String filePath) {
+    return new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false), filePath).exists()
   }
 
   private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars) {
@@ -301,6 +321,7 @@ class DistributionJARsBuilder {
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
     def buildContext = buildContext
+    checkModuleExcludes(layout.moduleExcludes)
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
         moduleJars.entrySet().each {
@@ -319,7 +340,7 @@ class DistributionJARsBuilder {
                 }
                 layout.moduleExcludes.get(moduleName)?.each {
                   //noinspection GrUnresolvedAccess
-                  ant.exclude(name: "$it/**")
+                  ant.exclude(name: it)
                 }
               }
             }
@@ -389,6 +410,26 @@ class DistributionJARsBuilder {
               ant.fileset(dir: path)
             }
           }
+        }
+      }
+    }
+  }
+
+  private void checkModuleExcludes(MultiValuesMap<String, String> moduleExcludes) {
+    moduleExcludes.entrySet().each { entry ->
+      String module = entry.key
+      entry.value.each { pattern ->
+        def fileSet = new FileSet()
+        fileSet.setProject(buildContext.ant.antProject)
+        def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false))
+        if (!moduleOutput.exists()) {
+          buildContext.messages.error("There are excludes defined for module '$module', but the module wasn't compiled; " +
+                                      "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
+        }
+        fileSet.setDir(moduleOutput)
+        fileSet.createInclude().setName(pattern)
+        if (fileSet.size() == 0) {
+          buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
         }
       }
     }

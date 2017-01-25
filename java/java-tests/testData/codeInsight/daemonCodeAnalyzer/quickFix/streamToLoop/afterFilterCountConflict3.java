@@ -7,7 +7,7 @@ public class Main {
     int x = 1;
     int y = 2;
     int i = 3;
-      long count = 0;
+      long count = 0L;
       for (int x1 : input) {
           if (x1 > 0) {
               if (x1 < 10) {

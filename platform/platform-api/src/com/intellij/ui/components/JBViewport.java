@@ -79,6 +79,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
+  private boolean myUpdateViewPosition; // avoid cyclic references
+  private double myViewX;
+  private double myViewY;
+
   public JBViewport() {
     addContainerListener(new ContainerListener() {
       @Override
@@ -107,7 +111,40 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       checkScrollingCapabilities();
     }
 
+    if (myUpdateViewPosition) return;
+    myViewX = p.x;
+    myViewY = p.y;
     super.setViewPosition(p);
+  }
+
+  /**
+   * Updates a view position directly without using a corresponding scroll bar.
+   *
+   * @param horizontal   {@code true} for horizontal scrolling, {@code false} for vertical scrolling
+   * @param preciseValue precise wheel rotation in pixels for the specified direction
+   */
+  void updateViewPosition(boolean horizontal, double preciseValue) {
+    int x = (int)myViewX;
+    int y = (int)myViewY;
+    if (horizontal) {
+      int old = x;
+      myViewX = Math.max(0, myViewX + preciseValue);
+      x = (int)myViewX;
+      if (x == old) return; // nothing changed
+    }
+    else {
+      int old = y;
+      myViewY = Math.max(0, myViewY + preciseValue);
+      y = (int)myViewY;
+      if (y == old) return; // nothing changed
+    }
+    try {
+      myUpdateViewPosition = true;
+      super.setViewPosition(new Point(x, y));
+    }
+    finally {
+      myUpdateViewPosition = false;
+    }
   }
 
   // A heuristic to detect whether this viewport belongs to the "Event Log" tool window (which we use for output)

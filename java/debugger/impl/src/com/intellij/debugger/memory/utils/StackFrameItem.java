@@ -20,8 +20,10 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -34,15 +36,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,7 @@ public class StackFrameItem extends XStackFrame {
   private final String myMethodName;
   private final int myLineNumber;
   private List<VariableItem> myVariables = null;
+  private boolean myFirst;
 
   private final NullableLazyValue<XSourcePosition> mySourcePosition;
 
@@ -116,8 +118,12 @@ public class StackFrameItem extends XStackFrame {
 
   @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
-    component.setIcon(JBUI.scale(EmptyIcon.create(6)));
-    component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, myFilePath), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    component.setIcon(myFirst ? AllIcons.Actions.Menu_cut : JBUI.scale(EmptyIcon.create(6)));
+    component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, className()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    String packageName = packageName();
+    if (!packageName.trim().isEmpty()) {
+      component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+    }
   }
 
   @Nullable
@@ -138,7 +144,8 @@ public class StackFrameItem extends XStackFrame {
                                                   boolean withVars)
     throws EvaluateException {
     if (threadReferenceProxy != null) {
-      return StreamEx.of(threadReferenceProxy.frames()).map(frame -> {
+      List<StackFrameItem> res = new ArrayList<>();
+      for (StackFrameProxyImpl frame : threadReferenceProxy.frames()) {
         try {
           Location loc = frame.location();
           StackFrameItem frameItem = new StackFrameItem(process.getProject(),
@@ -146,7 +153,18 @@ public class StackFrameItem extends XStackFrame {
                                                         loc.declaringType().name(),
                                                         loc.method().name(),
                                                         loc.lineNumber());
+          if (res.isEmpty()) {
+            frameItem.myFirst = true;
+          }
+          res.add(frameItem);
+
           if (withVars) {
+            List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, process);
+            if (!ContainerUtil.isEmpty(relatedStack)) {
+              res.addAll(relatedStack);
+              break;
+            }
+
             try {
               ObjectReference thisObject = frame.thisObject();
               if (thisObject != null) {
@@ -165,9 +183,6 @@ public class StackFrameItem extends XStackFrame {
                   if (v.getVariable().isArgument()) {
                     varType = VariableItem.VarType.PARAM;
                   }
-                  else if (value instanceof PrimitiveValue) {
-                    varType = VariableItem.VarType.PRIMITIVE;
-                  }
                   frameItem.addVariable(createVariable(value, v.name(), varType));
                 }
                 catch (EvaluateException e) {
@@ -179,13 +194,12 @@ public class StackFrameItem extends XStackFrame {
               LOG.debug(e);
             }
           }
-          return frameItem;
         }
         catch (EvaluateException e) {
           LOG.debug(e);
-          return null;
         }
-      }).nonNull().toList();
+      }
+      return res;
     }
     return Collections.emptyList();
   }
@@ -199,7 +213,6 @@ public class StackFrameItem extends XStackFrame {
     }
     else if (value != null) {
       valueText = value.toString();
-      type = value.type().name();
     }
     return new VariableItem(name, type, valueText, varType);
   }
@@ -208,25 +221,7 @@ public class StackFrameItem extends XStackFrame {
   public void computeChildren(@NotNull XCompositeNode node) {
     if (myVariables != null) {
       XValueChildrenList children = new XValueChildrenList();
-      myVariables.forEach(v -> children.add(v.myName, new XValue() {
-        @Override
-        public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-          String type = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(v.myType);
-          Icon icon;
-          switch (v.myVarType) {
-            case PARAM:
-              icon = PlatformIcons.PARAMETER_ICON;
-              break;
-            case PRIMITIVE:
-              icon = AllIcons.Debugger.Db_primitive;
-              type = null;
-              break;
-            default:
-              icon = AllIcons.Debugger.Value;
-          }
-          node.setPresentation(icon, type, v.myValue, false);
-        }
-      }));
+      myVariables.forEach(children::add);
       node.addChildren(children, true);
     }
     else {
@@ -234,19 +229,25 @@ public class StackFrameItem extends XStackFrame {
     }
   }
 
-  private static class VariableItem {
-    enum VarType {PARAM, PRIMITIVE, OBJECT}
+  private static class VariableItem extends XNamedValue {
+    enum VarType {PARAM, OBJECT}
 
-    private final String myName;
     private final String myType;
     private final String myValue;
     private final VarType myVarType;
 
     public VariableItem(String name, String type, String value, VarType varType) {
-      myName = name;
+      super(name);
       myType = type;
       myValue = value;
       myVarType = varType;
+    }
+
+    @Override
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      String type = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myType);
+      Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      node.setPresentation(icon, type, myValue, false);
     }
   }
 }

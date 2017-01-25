@@ -29,15 +29,16 @@ import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.repla
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.RELATIONAL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 class CompareToTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), RELATIONAL_PRECEDENCE);
+    GrExpression rhsParenthesized = addParenthesesIfNeeded(getRhs(methodCall), RELATIONAL_PRECEDENCE);
     GrExpression replacedElement = methodCall;
     IElementType changeToOperator = shouldChangeToOperator(methodCall, options);
     if (changeToOperator != mCOMPARE_TO) {
-        replacedElement = (GrExpression)methodCall.getParent();
+        replacedElement = (GrExpression) methodCall.getParent();
     }
 
     replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), changeToOperator, rhsParenthesized.getText()));

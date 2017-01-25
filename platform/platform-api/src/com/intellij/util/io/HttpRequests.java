@@ -33,6 +33,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +172,7 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
+    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = UntrustedCertificateStrategy.ASK_USER;
 
     private RequestBuilderImpl(@NotNull String url) {
       myUrl = url;
@@ -245,6 +247,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder tuner(@Nullable ConnectionTuner tuner) {
       myTuner = tuner;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
+      myUntrustedCertificateStrategy = strategy;
       return this;
     }
 
@@ -411,7 +419,8 @@ public final class HttpRequests {
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     try (RequestImpl request = new RequestImpl(builder)) {
-      return processor.process(request);
+      return CertificateManager.getInstance()
+        .runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
     }
   }
 

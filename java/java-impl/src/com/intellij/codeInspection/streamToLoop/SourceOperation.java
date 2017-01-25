@@ -53,7 +53,7 @@ abstract class SourceOperation extends Operation {
   abstract String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context);
 
   @Nullable
-  static SourceOperation createSource(PsiMethodCallExpression call) {
+  static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
     if(callType == null) return null;
@@ -99,6 +99,9 @@ abstract class SourceOperation extends Operation {
     if (name.equals("stream") && args.length == 1 &&
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
       return new ForEachSource(args[0]);
+    }
+    if (supportUnknownSources) {
+      return new StreamIteratorSource(call);
     }
     return null;
   }
@@ -224,7 +227,7 @@ abstract class SourceOperation extends Operation {
       }
       return context.getLoopLabel() +
              loop+"{\n" +
-             outVar.getDeclaration() + "=" + myFn.getText() + ";\n" + code +
+             outVar.getDeclaration(myFn.getText()) + code +
              "}\n";
     }
   }
@@ -297,6 +300,58 @@ abstract class SourceOperation extends Operation {
              "for(" + outVar.getDeclaration() + " = " + myOrigin.getText() + ";" +
              outVar + (myInclusive ? "<=" : "<") + bound + ";" +
              outVar + "++) {\n" +
+             code + "}\n";
+    }
+  }
+
+  private static class StreamIteratorSource extends SourceOperation {
+    private PsiMethodCallExpression myCall;
+
+    public StreamIteratorSource(PsiMethodCallExpression call) {
+      myCall = call;
+    }
+
+    @Override
+    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+      myCall = (PsiMethodCallExpression)replaceVarReference(myCall, oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myCall);
+    }
+
+    @Override
+    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+      String name = myCall.getMethodExpression().getReferenceName();
+      if (name != null) {
+        String unpluralized = StringUtil.unpluralize(name);
+        if (unpluralized != null && !unpluralized.equals(name)) {
+          outVar.addOtherNameCandidate(unpluralized);
+        }
+      }
+    }
+
+    static String getIteratorType(String type) {
+      switch(type) {
+        case "int":
+          return "java.util.PrimitiveIterator.OfInt";
+        case "long":
+          return "java.util.PrimitiveIterator.OfLong";
+        case "double":
+          return "java.util.PrimitiveIterator.OfDouble";
+        default:
+          return CommonClassNames.JAVA_UTIL_ITERATOR+"<"+type+">";
+      }
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String iterator = context.registerVarName(Arrays.asList("it", "iter", "iterator"));
+      String declaration = getIteratorType(outVar.getType()) + " " + iterator + "=" + myCall.getText() + ".iterator()";
+      String condition = iterator + ".hasNext()";
+      return "for(" + declaration + ";" + condition + ";) {\n" +
+             outVar.getDeclaration(iterator + ".next()") +
              code + "}\n";
     }
   }

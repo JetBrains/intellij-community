@@ -4,7 +4,7 @@ import java.util.stream.IntStream;
 
 public class Main {
   private static long check(int start, int stop, double v) {
-      long count = 0;
+      long count = 0L;
       for (int x = start; x < stop; x++) {
           double x1 = 1.0 / x;
           if (x1 < v) {

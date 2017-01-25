@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +62,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 /**
  * @author ven
  */
-public class TypesUtil {
+public class TypesUtil implements TypeConstants {
 
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<>();
@@ -165,18 +166,28 @@ public class TypesUtil {
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
-  private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
+  static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
 
   static {
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, 1);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, 2);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, 3);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, 4);
-    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, 5);
-    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, 6);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, 7);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, 8);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 9);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, BYTE_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_CHARACTER, CHARACTER_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, SHORT_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, INTEGER_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, LONG_RANK);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, BIG_INTEGER_RANK);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, BIG_DECIMAL_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, FLOAT_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, DOUBLE_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 10);
+  }
+
+  static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
+
+  static {
+    TYPE_TO_RANK.forEachEntry((fqn, rank) -> {
+      RANK_TO_TYPE.put(rank, fqn);
+      return true;
+    });
   }
 
   private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
@@ -277,6 +288,7 @@ public class TypesUtil {
                                                       @NotNull PsiElement context,
                                                       @NotNull ApplicableTo position) {
     if (!(context instanceof GroovyPsiElement)) return null;
+    if (targetType.equals(actualType)) return ConversionResult.OK;
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
       final ConversionResult result = converter.isConvertibleEx(targetType, actualType, (GroovyPsiElement)context, position);

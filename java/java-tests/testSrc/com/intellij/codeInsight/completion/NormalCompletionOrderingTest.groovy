@@ -557,7 +557,7 @@ interface TxANotAnno {}
   }
 
   void testPreferString() {
-    checkPreferredItems 0, 'String', 'System', 'Set'
+    checkPreferredItems 0, 'String', 'System', 'Short'
   }
 
   void testAnnotationEnum() {

@@ -6,7 +6,7 @@ public class Main {
   private static long countInRange(int... input) {
     int x = 1;
     int y = 2;
-      long count = 0;
+      long count = 0L;
       for (int i : input) {
           if (i > 0) {
               if (i < 10) {

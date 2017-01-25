@@ -122,8 +122,16 @@ public class RecentProjectPanel extends JPanel {
             if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
               removeRecentProjectAction.actionPerformed(null);
             } else if (selection != null) {
-              ((AnAction)selection).actionPerformed(
-                AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+              AnAction selectedAction = (AnAction) selection;
+              AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
+              selectedAction.actionPerformed(actionEvent);
+
+              // remove action from list if needed
+              if (selectedAction instanceof ReopenProjectAction) {
+                if (((ReopenProjectAction)selectedAction).isRemoved()) {
+                  ListUtil.removeSelectedItems(myList);
+                }
+              }
             }
           }
         }

@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static long test(List<String> strings) {
-      long count = 0;
+      long count = 0L;
       for (String s : strings) {
           if (!s.isEmpty()) {
               count++;

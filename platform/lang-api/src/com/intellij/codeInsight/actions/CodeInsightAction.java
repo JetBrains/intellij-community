@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +59,14 @@ public abstract class CodeInsightAction extends AnAction {
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
+    final CodeInsightActionHandler handler = getHandler();
+    PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
+    if (elementToMakeWritable != null && 
+        !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
+      return;
+    }
+
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      final CodeInsightActionHandler handler = getHandler();
       final Runnable action = () -> {
         if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
         handler.invoke(project, editor, psiFile);

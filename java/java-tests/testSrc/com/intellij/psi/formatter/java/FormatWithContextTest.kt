@@ -15,26 +15,16 @@
  */
 package com.intellij.psi.formatter.java
 
+import com.intellij.formatting.FormatterTestUtils
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 
 
 class FormatWithContextTest : AbstractJavaFormatterTest() {
 
   fun check(before: String, after: String) {
-    doTextTest(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, before, after)
+    doTextTest(FormatterTestUtils.Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, before, after)
   }
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("smart.reformat.vcs.changes").setValue(true)
-  }
-
-  override fun tearDown() {
-    Registry.get("smart.reformat.vcs.changes").setValue(false)
-    super.tearDown()
-  }
-
+  
   fun `test if block`() {
     myLineRange = TextRange(3, 3)
     check(

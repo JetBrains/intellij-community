@@ -54,6 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -343,13 +344,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @Override
   public void setErrorStripeVisible(boolean val) {
     if (val) {
-      myEditor.getVerticalScrollBar().setPersistentUI(new MyErrorPanel());
-      myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
+      disposeErrorPanel();
+      MyErrorPanel panel = new MyErrorPanel();
+      myEditor.getVerticalScrollBar().setPersistentUI(panel);
     }
     else {
       myEditor.getVerticalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
-      myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
     }
+    myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
   }
 
   @Nullable
@@ -411,17 +413,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void dispose() {
-
-    final MyErrorPanel panel = getErrorPanel();
-    if (panel != null) {
-      panel.uninstallListeners();
-    }
+    disposeErrorPanel();
 
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
     myErrorStripeRenderer = null;
     super.dispose();
+  }
+
+  private void disposeErrorPanel() {
+    final MyErrorPanel panel = getErrorPanel();
+
+    if (panel != null) {
+      panel.uninstallListeners();
+    }
   }
 
   // startOffset == -1 || endOffset == -1 means whole document
@@ -482,7 +488,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
        When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-    return !(SystemProperties.isTrueSmoothScrollingEnabled() && !IdeBackgroundUtil.isBackgroundImageSet(myEditor.getProject())) &&
+    boolean opaque = JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
+    return !(opaque && !IdeBackgroundUtil.isBackgroundImageSet(myEditor.getProject())) &&
            Registry.is("editor.transparent.scrollbar", false) &&
            EditorUtil.isRealFileEditor(myEditor);
   }
@@ -710,8 +717,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
-      final Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, (o1, o2) -> o1.yEnd - o2.yEnd);
-      final Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, (o1, o2) -> o1.yEnd - o2.yEnd);
+      final Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
+      final Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
       // sorted by layer
       final List<PositionedStripe> thinStripes = new ArrayList<>(); // layer desc
       final List<PositionedStripe> wideStripes = new ArrayList<>(); // layer desc
@@ -1181,9 +1188,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myStartVisualLine = fitLineToEditor(myVisualLine - myPreviewLines);
       myEndVisualLine = fitLineToEditor(myVisualLine + myPreviewLines);
       isDirty |= oldStartLine != myStartVisualLine || oldEndLine != myEndVisualLine;
-      for (RangeHighlighterEx rangeHighlighter : rangeHighlighters) {
-          myHighlighters.add(rangeHighlighter);
-      }
+      myHighlighters.addAll(rangeHighlighters);
       Collections.sort(myHighlighters, (ex1, ex2) -> {
         LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
         LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());

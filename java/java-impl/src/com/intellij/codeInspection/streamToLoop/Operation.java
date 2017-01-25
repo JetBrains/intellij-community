@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ abstract class Operation {
 
   @Nullable
   static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
-                                      @NotNull StreamVariable outVar, @NotNull PsiType inType) {
+                                      @NotNull StreamVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
@@ -83,7 +83,7 @@ abstract class Operation {
     }
     if ((name.equals("flatMap") || name.equals("flatMapToInt") || name.equals("flatMapToLong") || name.equals("flatMapToDouble")) &&
         args.length == 1) {
-      return FlatMapOperation.from(outVar, args[0], inType);
+      return FlatMapOperation.from(outVar, args[0], inType, supportUnknownSources);
     }
     if ((name.equals("map") ||
          name.equals("mapToInt") ||
@@ -162,7 +162,7 @@ abstract class Operation {
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return outVar.getDeclaration() + " = " + myFn.getText() + ";\n" + code;
+      return outVar.getDeclaration(myFn.getText()) + code;
     }
 
     @Override
@@ -177,7 +177,7 @@ abstract class Operation {
                 StreamVariable outVar,
                 String code,
                 StreamToLoopReplacementContext context) {
-      return outVar.getDeclaration() + " = " + inVar + ";\n" + code;
+      return outVar.getDeclaration(inVar.getName()) + code;
     }
 
     @Override
@@ -256,7 +256,7 @@ abstract class Operation {
     }
 
     @Nullable
-    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType) {
+    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType, boolean supportUnknownSources) {
       FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
       String varName = fn.tryLightTransform(inType);
@@ -280,7 +280,8 @@ abstract class Operation {
       }
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
-      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall);
+      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall,
+                                                                                                      supportUnknownSources);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
       return new FlatMapOperation(varName, fn, records, condition, inverted);
     }

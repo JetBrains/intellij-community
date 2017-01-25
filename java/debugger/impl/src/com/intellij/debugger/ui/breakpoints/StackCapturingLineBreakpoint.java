@@ -120,4 +120,30 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       new StackCapturingLineBreakpoint(debugProcess.getProject(), classFqn, methodName, methodSignature, paramNo);
     breakpoint.createRequest(debugProcess);
   }
+
+  @Nullable
+  public static List<StackFrameItem> getRelatedStack(@Nullable StackFrameProxyImpl frame, @Nullable DebugProcessImpl process) {
+    if (process != null && frame != null) {
+      Map<ObjectReference, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
+      if (data != null) {
+        try {
+          return data.get(frame.thisObject());
+        }
+        catch (EvaluateException ignore) {
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
+    if (process != null && key != null) {
+      Map<ObjectReference, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
+      if (data != null) {
+        return data.get(key);
+      }
+    }
+    return null;
+  }
 }

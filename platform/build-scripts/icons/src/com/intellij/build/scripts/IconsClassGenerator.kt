@@ -30,6 +30,9 @@ import java.util.*
 import java.util.function.Function
 
 class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
+  private var processedClasses = 0
+  private var processedIcons = 0
+
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
     val packageName: String
@@ -77,12 +80,19 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     val copyrightComment = getCopyrightComment(outFile)
     val text = generate(module, className, packageName, customLoad, copyrightComment)
     if (text != null) {
+      processedClasses++
+      
       if (!outFile.exists() || !sameLines(outFile.readText(), text)) {
         outFile.parentFile.mkdirs()
         outFile.writeText(text)
         println("Updated icons class: ${outFile.name}")
       }
     }
+  }
+
+  fun printStats() {
+    println("")
+    println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
 
   private fun findIconClass(dir: File): String? {
@@ -186,6 +196,8 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
           val deprecated = image.deprecated
 
           if (isIcon(file)) {
+            processedIcons++
+
             if (used || deprecated) {
               append(answer, "", level)
               append(answer, "@SuppressWarnings(\"unused\")", level)

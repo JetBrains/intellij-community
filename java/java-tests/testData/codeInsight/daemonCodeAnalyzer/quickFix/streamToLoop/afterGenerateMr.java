@@ -14,7 +14,7 @@ public class Main {
       long limit = 33;
       OUTER:
       while (true) {
-          Integer x = Main.getInt();
+          Integer x = getInt();
           for (int i = 0; i < x; i++) {
               if (limit-- == 0) break OUTER;
               stat.accept(i);

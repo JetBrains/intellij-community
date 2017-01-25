@@ -438,14 +438,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void tearDown() throws Exception {
     Project project = myProject;
 
+    runTearDownActions(project);
+  }
+
+  private void runTearDownActions(Project project) {
     new RunAll()
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication, false);
         }
       })
-      .append(() -> disposeProject())
-      .append(() -> checkForSettingsDamage())
+      .append(this::disposeProject)
+      .append(this::checkForSettingsDamage)
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -475,7 +479,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           myThreadTracker.checkLeak();
         }
       })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(LightPlatformTestCase::checkEditorsReleased)
       .append(() -> {
         myProjectManager = null;
         myProject = null;
@@ -871,7 +875,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
-  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

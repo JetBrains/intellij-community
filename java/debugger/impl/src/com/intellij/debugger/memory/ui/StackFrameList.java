@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
@@ -30,10 +31,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -65,11 +64,8 @@ class StackFrameList extends JBList<StackFrameItem> {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends StackFrameItem> list,
                                            StackFrameItem value, int index, boolean isSelected, boolean hasFocus) {
-        append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
-        String packageName = value.packageName();
-        if (packageName.trim().isEmpty() /*!StringUtils.isEmpty(packageName)*/) {
-          append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-        }
+        value.customizePresentation(this);
+        setIcon(null); // no icons in the list
       }
     });
   }

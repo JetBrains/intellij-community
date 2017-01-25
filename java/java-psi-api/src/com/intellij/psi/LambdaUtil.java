@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,6 @@ public class LambdaUtil {
   public static MethodSignature getFunction(final PsiClass psiClass) {
     if (isPlainInterface(psiClass)) {
       return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MethodSignature>() {
-        @Nullable
         @Override
         public Result<MethodSignature> compute() {
           return Result.create(calcFunction(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -262,7 +261,7 @@ public class LambdaUtil {
     return methodSignature;
   }
 
-  @Nullable
+  @NotNull
   private static List<HierarchicalMethodSignature> hasSubsignature(List<HierarchicalMethodSignature> signatures) {
     for (HierarchicalMethodSignature signature : signatures) {
       boolean subsignature = true;
@@ -929,6 +928,30 @@ public class LambdaUtil {
    */
   public static String createLambda(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
     return variable.getName() + " -> " + expression.getText();
+  }
+
+  /**
+   * Returns true if lambda has single parameter and its return value is the same as parameter.
+   *
+   * <p>
+   * The lambdas like this are considered identity lambda: {@code x -> x}, {@code x -> {return x;}}
+   * {@code (String x) -> (x)}, etc.</p>
+   *
+   * <p>
+   * This method does not check the lambda type, also it does not check whether auto-(un)boxing occurs,
+   * so a lambda like {@code ((Predicate<Boolean>)b -> b)} is also identity lambda even though it performs
+   * auto-unboxing.
+   * </p>
+   *
+   * @param lambda a lambda to check
+   * @return true if the supplied lambda is an identity lambda
+   */
+  public static boolean isIdentityLambda(PsiLambdaExpression lambda) {
+    PsiParameterList parameters = lambda.getParameterList();
+    if(parameters.getParametersCount() != 1) return false;
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(extractSingleExpressionFromBody(lambda.getBody()));
+    return expression instanceof PsiReferenceExpression &&
+           ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

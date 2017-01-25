@@ -144,6 +144,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
     @Override
     public void doApplyInformationToEditor() {
+      if (isDebug) {
+        System.out.println(System.nanoTime() + ": hints addition started");
+      }
+
       assert myDocument != null;
       boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
       ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
@@ -173,9 +177,16 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         int offset = e.getKey();
         String text = e.getValue();
         presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
+        if (isDebug) {
+          System.out.println(System.nanoTime() + ": hint added \"" + text + "\" " + offset);
+        }
       }
       keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
+
+      if (isDebug) {
+        System.out.println(System.nanoTime() + ": hints applied to editor");
+      }
     }
 
     private boolean delayRemoval(Inlay inlay, TIntObjectHashMap<Caret> caretMap) {

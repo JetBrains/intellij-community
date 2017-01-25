@@ -358,7 +358,10 @@ idea.fatal.error.notification=disabled
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
+    checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
+    checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
+    checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")

@@ -16,6 +16,7 @@
 package com.intellij.build.scripts
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -36,7 +37,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectBadIcons()
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.COMMUNITY)
     }
   }
 }
@@ -46,7 +47,7 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectIconsWithNonOptimumSize()
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
     }
   }
 }
@@ -57,7 +58,7 @@ class AllImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectBadIcons(true)
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.ALL, true)
     }
   }
 }
@@ -68,7 +69,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any>> {
-      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(false, true)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
     }
   }
 }
@@ -84,12 +85,15 @@ abstract class ImageResourcesTestBase {
     throw exception
   }
 
+  enum class TestRoot { COMMUNITY, ULTIMATE, ALL }
+
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun collectBadIcons(ignoreSkipTag: Boolean = false): List<Array<Any>> {
+    fun collectBadIcons(root: TestRoot,
+                        ignoreSkipTag: Boolean = false): List<Array<Any>> {
       val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
-      forEachModule {
+      forEachModule(root) {
         checker.check(it)
       }
       return createTestData(checker.failures)
@@ -97,9 +101,11 @@ abstract class ImageResourcesTestBase {
 
     @JvmStatic
     @JvmOverloads
-    fun collectIconsWithNonOptimumSize(iconsOnly: Boolean = true, ignoreSkipTag: Boolean = false): List<Array<Any>> {
+    fun collectIconsWithNonOptimumSize(root: TestRoot,
+                                       iconsOnly: Boolean = true,
+                                       ignoreSkipTag: Boolean = false): List<Array<Any>> {
       val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
-      forEachModule {
+      forEachModule(root) {
         checker.checkOptimumSizes(it)
       }
       return createTestData(checker.failures)
@@ -111,14 +117,31 @@ abstract class ImageResourcesTestBase {
         .map { arrayOf<Any>(it.getTestName(), it.getException()) }
     }
 
-    private fun forEachModule(action: (JpsModule) -> Unit) {
-      val home = PathManager.getHomePath()
+    private fun forEachModule(root: TestRoot, action: (JpsModule) -> Unit) {
+      val home = getHomePath(root)
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-      JpsProjectLoader.loadProject(model.project, pathVariables, home)
+      JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
 
-      model.project.modules.forEach(action)
+      model.project.modules
+        .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
+        .forEach(action)
+    }
+
+    private fun getHomePath(root: TestRoot): File {
+      val home = File(PathManager.getHomePath())
+
+      if (root == TestRoot.COMMUNITY) {
+        val community = File(home, "community")
+        if (community.exists()) return community
+      }
+      return home
+    }
+
+    private fun isCommunityModule(home: File, module: JpsModule): Boolean {
+      val community = File(home, "community")
+      return module.sourceRoots.all { FileUtil.isAncestor(community, it.file, false) }
     }
   }
 }
@@ -155,10 +178,13 @@ private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean
   }
 }
 
-class FailedTest(val module: String, val message: String, val id: String, val path: String) {
-  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File = image.presentablePath) :
-    this(module.name, message, image.id, file.absolutePath)
+class FailedTest(val module: String, val message: String, val id: String, val paths: List<String>) {
+  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
+    this(module.name, message, image.id, listOf(file.absolutePath))
+
+  internal constructor(module: JpsModule, message: String, image: ImagePaths) :
+    this(module.name, message, image.id, image.files.values.map { it.absolutePath }.toList())
 
   fun getTestName(): String = "'${module}' - $id - $message"
-  fun getException(): Throwable = Exception("${message} - ${path}")
+  fun getException(): Throwable = Exception("${message}\n\n${paths.joinToString("\n")}")
 }

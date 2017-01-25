@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 public class Main {
   private static long test(List<? extends String> list) {
-      long count = 0;
+      long count = 0L;
       for (Object o : Arrays.asList(0, null, "1", list)) {
           for (Object o1 : Arrays.asList(o)) {
               for (Object o2 : Arrays.asList(o1)) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
 import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
@@ -49,34 +50,27 @@ public class ChangeToOperatorInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-        visitMethodCall(applicationStatement);
-      }
+      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCall) {
+        final String methodName = getMethodName(methodCall);
+        if (methodName == null) return;
 
-      @Override
-      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-        visitMethodCall(methodCallExpression);
-      }
-
-      public void visitMethodCall(@NotNull GrMethodCall methodCall) {
-
-        Transformation transformation = getTransformation(methodCall);
+        Transformation transformation = TRANSFORMATIONS.get(methodName);
         if (transformation == null) return;
 
         if (transformation.couldApply(methodCall, getOptions())) {
-          registerError(methodCall);
+          registerError(
+            methodCall,
+            message("replace.with.operator.message", methodName),
+            new LocalQuickFix[]{getFix(transformation, methodName)},
+            GENERIC_ERROR_OR_WARNING
+          );
         }
       }
     };
   }
 
   @Nullable
-  @Override
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
-    if (!(location instanceof GrMethodCall)) return null;
-    final Transformation transformation = getTransformation((GrMethodCall)location);
-    final String methodName = getMethodName((GrMethodCall)location);
-    if (transformation == null) return null;
+  protected GroovyFix getFix(@NotNull Transformation transformation, @NotNull String methodName) {
     return new GroovyFix() {
       @Nls
       @NotNull
@@ -89,19 +83,15 @@ public class ChangeToOperatorInspection extends BaseInspection {
       protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
         PsiElement call = descriptor.getPsiElement();
         if (!(call instanceof GrMethodCall)) return;
-
-        GrExpression invokedExpression = ((GrMethodCall)call).getInvokedExpression();
+        GrMethodCall methodCall = (GrMethodCall) call;
+        GrExpression invokedExpression = methodCall.getInvokedExpression();
         if (!(invokedExpression instanceof GrReferenceExpression)) return;
 
-        transformation.apply((GrMethodCall)call, getOptions());
+        Options options = getOptions();
+        if(!transformation.couldApply(methodCall, options)) return;
+        transformation.apply(methodCall, options);
       }
     };
-  }
-
-  @Nullable
-  public Transformation getTransformation(@NotNull GrMethodCall methodCall) {
-    String methodName = getMethodName(methodCall);
-    return methodName == null ? null : TRANSFORMATIONS.get(methodName);
   }
 
   @Nullable

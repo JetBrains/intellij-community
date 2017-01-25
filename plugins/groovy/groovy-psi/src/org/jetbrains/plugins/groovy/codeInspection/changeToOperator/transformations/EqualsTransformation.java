@@ -24,11 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 public class EqualsTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), ParenthesesUtils.EQUALITY_PRECEDENCE);
+    GrExpression rhsParenthesized = addParenthesesIfNeeded(getRhs(methodCall), ParenthesesUtils.EQUALITY_PRECEDENCE);
     GrExpression replacedElement = methodCall;
     String operator = "==";
     if (isNegation(methodCall.getParent())) {

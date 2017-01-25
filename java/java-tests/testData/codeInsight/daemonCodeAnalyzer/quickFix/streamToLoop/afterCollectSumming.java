@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static Double test(List<String> strings) {
-      double sum = 0;
+      double sum = 0.0;
       for (String string : strings) {
           if (string != null) {
               sum += string.length();
