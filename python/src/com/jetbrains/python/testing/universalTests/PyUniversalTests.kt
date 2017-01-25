@@ -243,6 +243,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   override fun writeExternal(element: Element) {
     // Write legacy config to preserve it
     legacyConfigurationAdapter.writeExternal(element)
+    // Super is called after to overwrite legacy settings with new one
     super.writeExternal(element)
 
     val gson = Gson()

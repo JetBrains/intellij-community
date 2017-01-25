@@ -113,6 +113,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
   : JDOMExternalizable {
 
   private val configManager: LegacyConfigurationManager<*, *>
+  private val project = newConfig.project
 
   /**
    * Does configuration contain legacy information or was it created as new config?
@@ -120,7 +121,6 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
    */
   private var containsLegacyInformation: Boolean? = null
 
-  // TODO: DOC null to prevent useless save
   /**
    * True if configuration [containsLegacyInformation] and this information is already copied to new config, so it should not be
    * copied second time.
@@ -149,8 +149,10 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
 
   override fun readExternal(element: Element) {
     configManager.legacyConfig.readExternal(element)
-    containsLegacyInformation = configManager.loaded
-
+    containsLegacyInformation = configManager.isLoaded()
+    if (project.isInitialized) {
+      copyFromLegacyIfNeeded()
+    }
   }
 
   override fun writeExternal(element: Element) {
@@ -160,6 +162,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
   }
 
   fun copyFromLegacyIfNeeded() {
+    assert(project.isInitialized, {"Initialized project required"})
     if (containsLegacyInformation ?: return && !(legacyInformationCopiedToNew ?: false)) {
       configManager.copyFromLegacy()
       legacyInformationCopiedToNew = true
@@ -195,13 +198,12 @@ private abstract class LegacyConfigurationManager<
   /**
    * If one of these fields is not empty -- legacy configuration makes sence
    */
-  open protected val fieldsToCheckForEmptiness = listOf(legacyConfig.scriptName, legacyConfig.className, legacyConfig.methodName)
+  open protected fun getFieldsToCheckForEmptiness() = listOf(legacyConfig.scriptName, legacyConfig.className, legacyConfig.methodName)
 
   /**
    * @return true of legacy configuration loaded, false if configuration is pure new
    */
-  val loaded: Boolean
-    get() = fieldsToCheckForEmptiness.find { !it.isNullOrBlank() } != null
+  fun isLoaded() = getFieldsToCheckForEmptiness().find { !it.isNullOrBlank() } != null
 
   /**
    * Copies config from legacy to new configuration.
@@ -241,7 +243,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
    */
   private val KEYWORDS_SPLIT_PATTERN = java.util.regex.Pattern.compile("\\s+and\\s+", java.util.regex.Pattern.CASE_INSENSITIVE)
 
-  override val fieldsToCheckForEmptiness = super.fieldsToCheckForEmptiness + listOf(legacyConfig.keywords, legacyConfig.testToRun)
+  override fun getFieldsToCheckForEmptiness() = super.getFieldsToCheckForEmptiness() + listOf(legacyConfig.keywords, legacyConfig.testToRun)
 
   override fun copyFromLegacy() {
     // Do not call parent since target is always provided as testToRun here
@@ -264,7 +266,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
     val script = virtualFile.asPyFile(newConfig.project) ?: return
 
 
-    val keywordsList = oldKeywords.split(KEYWORDS_SPLIT_PATTERN)
+    val keywordsList = oldKeywords.split(KEYWORDS_SPLIT_PATTERN).filter(String::isNotEmpty)
     if (keywordsList.isEmpty() || keywordsList.size > 2 || keywordsList.find { it.contains(" ") } != null) {
       //Give up with interpreting
       newConfig.keywords = oldKeywords
