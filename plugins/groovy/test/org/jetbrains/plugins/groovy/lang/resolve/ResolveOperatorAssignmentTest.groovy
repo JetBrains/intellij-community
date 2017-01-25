@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
@@ -51,9 +52,30 @@ foo.pr<caret>op += new B()
     }
   }
 
-  void 'type reassigned'() {
+  void 'test resolve primitive getter & setter'() {
     fixture.with {
-      def file = configureByText '_.groovy', '''\
+      addClass '''\
+class Nothing {
+    private int value;
+    public void setValue(int value) { this.value = value; }
+    public int getValue() { return this.value; }
+}
+'''
+      def ref = configureByText('''\
+new Nothing().val<caret>ue += 42
+''') as GrReferenceExpression
+      def results = ref.multiResolve(false)
+      assert results.size() == 2
+      results.each {
+        assert it.validResult
+        assert it.element instanceof PsiMethod
+      }
+    }
+  }
+
+  void 'test type reassigned'() {
+    fixture.with {
+      def expression = configureByText('''\
 class ClassWithPlus {
   AnotherClass plus(a) {new AnotherClass()}
 }
@@ -61,8 +83,7 @@ class AnotherClass {}
 def c = new ClassWithPlus()
 c += 1
 <caret>c
-'''
-      def expression = file.children.last() as GrReferenceExpression
+''') as GrReferenceExpression
       assert expression.type.equalsToText("AnotherClass")
     }
   }
