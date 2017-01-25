@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @since 171.*
  * @author peter
  */
-public interface IntentionLike extends WriteActionAware {
+public interface FileModifier extends WriteActionAware {
 
   /**
    * Controls whether this intention/fix is going to modify the current file.
