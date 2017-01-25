@@ -912,8 +912,8 @@ java_library(
     name = "sqlite",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:sqlite-jdbc-3.6.20.1"],
-    runtime_deps = ["//tools/idea/lib:sqlite-jdbc-3.6.20.1"],
+    exports = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
+    runtime_deps = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
 )
 
 java_library(

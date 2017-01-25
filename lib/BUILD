@@ -573,8 +573,8 @@ java_import(
 )
 
 java_import(
-    name = "sqlite-jdbc-3.6.20.1",
-    jars = ["sqlite-jdbc-3.6.20.1.jar"],
+    name = "sqlite-jdbc-3.8.11.2",
+    jars = ["sqlite-jdbc-3.8.11.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
