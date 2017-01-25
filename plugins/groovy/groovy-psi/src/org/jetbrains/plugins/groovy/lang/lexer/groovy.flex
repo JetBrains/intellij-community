@@ -610,7 +610,7 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_DOLLAR_SLASH_REGEX> {
-  "/""$"                                  {  if (!gStringStack.isEmpty()) {
+  "/$"                                    {  if (!gStringStack.isEmpty()) {
                                                gStringStack.pop();
                                              }
                                              if (blockStack.isEmpty()){
@@ -620,15 +620,19 @@ mGSTRING_LITERAL = \"\"
                                              }
                                              return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END; }
 
+  "$$"                                    {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
+
+  "$"                                     {
+                                             yybegin(IN_DOLLAR_SLASH_REGEX_DOLLAR);
+                                             return GroovyTokenTypes.mDOLLAR;
+                                          }
+
   {mDOLLAR_SLASH_REGEX_CONTENT}? "$"
     /[^"{"[:letter:]"_"]                  {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
   "/"                                     {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
   {mDOLLAR_SLASH_REGEX_CONTENT}           {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
-
-  "$"                                     {  yybegin(IN_DOLLAR_SLASH_REGEX_DOLLAR);
-                                             return GroovyTokenTypes.mDOLLAR;}
 }
 
 <IN_DOLLAR_SLASH_REGEX_DOLLAR> {
