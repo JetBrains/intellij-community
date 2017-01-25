@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
@@ -1906,7 +1907,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     void ensureUpToDateAsync() {
-      if (myVfsEventsMerger.getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.get() == 0) {
+      if (myVfsEventsMerger.getApproximateChangesCount() >= 20 &&
+          myScheduledVfsEventsWorkers.get() == 0 &&
+          !PowerSaveMode.isEnabled()) {
         myScheduledVfsEventsWorkers.incrementAndGet();
         myVfsEventsExecutor.submit(this::processFilesInReadActionWithYieldingToWriteAction);
       }
