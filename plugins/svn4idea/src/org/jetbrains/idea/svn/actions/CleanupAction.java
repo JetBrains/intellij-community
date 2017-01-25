@@ -40,8 +40,7 @@ public class CleanupAction extends BasicAction {
   }
 
   @Override
-  protected void execute(@NotNull SvnVcs vcs, @NotNull final VirtualFile file, @NotNull final DataContext context)
-    throws VcsException {
+  protected void execute(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     perform(vcs, file, context);
   }
 
@@ -51,7 +50,7 @@ public class CleanupAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
     throw new VcsException(SvnBundle.message("exception.text.cleanupaction.batchperform.not.implemented"));
   }
 

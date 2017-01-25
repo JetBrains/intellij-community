@@ -26,7 +26,8 @@ import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.io.File;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
 
 public class UnlockAction extends BasicAction {
   @NotNull
@@ -37,25 +38,17 @@ public class UnlockAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    if (file == null || file.isDirectory()) {
-      return false;
-    }
-    return SvnStatusUtil.isExplicitlyLocked(vcs.getProject(), file);
+    return !file.isDirectory() && SvnStatusUtil.isExplicitlyLocked(vcs.getProject(), file);
   }
 
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
-    batchPerform(vcs, new VirtualFile[]{file}, context);
+    batchPerform(vcs, ar(file), context);
   }
 
   @Override
   protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
-    File[] ioFiles = new File[files.length];
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile virtualFile = files[i];
-      ioFiles[i] = new File(virtualFile.getPath());
-    }
-    SvnUtil.doUnlockFiles(vcs.getProject(), vcs, ioFiles);
+    SvnUtil.doUnlockFiles(vcs.getProject(), vcs, toIoFiles(files));
   }
 
   protected boolean isBatchAction() {

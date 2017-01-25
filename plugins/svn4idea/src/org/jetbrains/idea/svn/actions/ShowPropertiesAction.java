@@ -29,6 +29,9 @@ import org.jetbrains.idea.svn.dialogs.PropertiesComponent;
 
 import java.io.File;
 
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
+
 public class ShowPropertiesAction extends BasicAction {
 
   @NotNull
@@ -44,41 +47,31 @@ public class ShowPropertiesAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    if (file == null) return false;
-    final FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
-    return status != null && ! FileStatus.UNKNOWN.equals(status) && ! FileStatus.IGNORED.equals(status);
+    FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
+
+    return status != null && !FileStatus.UNKNOWN.equals(status) && !FileStatus.IGNORED.equals(status);
   }
 
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
-    batchPerform(vcs, new VirtualFile[]{file}, context);
+    batchPerform(vcs, ar(file), context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
-    final File[] ioFiles = new File[file.length];
-    for (int i = 0; i < ioFiles.length; i++) {
-      ioFiles[i] = new File(file[i].getPath());
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    File[] ioFiles = toIoFiles(files);
+    ToolWindow w = ToolWindowManager.getInstance(vcs.getProject()).getToolWindow(PropertiesComponent.ID);
+    PropertiesComponent component;
+    if (w == null) {
+      component = new PropertiesComponent();
+      w = ToolWindowManager.getInstance(vcs.getProject()).registerToolWindow(PropertiesComponent.ID, component, ToolWindowAnchor.BOTTOM);
     }
-    if (ioFiles.length > 0) {
-      ToolWindow w = ToolWindowManager.getInstance(vcs.getProject()).getToolWindow(PropertiesComponent.ID);
-      PropertiesComponent component = null;
-      if (w == null) {
-        component = new PropertiesComponent();
-        w = ToolWindowManager.getInstance(vcs.getProject()).registerToolWindow(PropertiesComponent.ID, component, ToolWindowAnchor.BOTTOM);
-      } else {
-        component = ((PropertiesComponent) w.getContentManager().getContents()[0].getComponent());
-      }
-      w.setTitle(ioFiles[0].getName());
-      w.show(null);
-      final PropertiesComponent comp = component;
-      w.activate(new Runnable() {
-        public void run() {
-          comp.setFile(vcs, ioFiles[0]);
-        }
-      });
+    else {
+      component = ((PropertiesComponent)w.getContentManager().getContents()[0].getComponent());
     }
-
+    w.setTitle(ioFiles[0].getName());
+    w.show(null);
+    w.activate(() -> component.setFile(vcs, ioFiles[0]));
   }
 
   protected boolean isBatchAction() {

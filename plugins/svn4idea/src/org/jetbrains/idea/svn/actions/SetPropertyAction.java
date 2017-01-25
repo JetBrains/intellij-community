@@ -33,6 +33,9 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
 
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
+
 public class SetPropertyAction extends BasicAction {
   @NotNull
   @Override
@@ -42,46 +45,41 @@ public class SetPropertyAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    if (file == null) return false;
-    final FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
-    return (! FileStatus.IGNORED.equals(status)) && (! FileStatus.UNKNOWN.equals(status));
+    FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
+
+    return !FileStatus.IGNORED.equals(status) && !FileStatus.UNKNOWN.equals(status);
   }
 
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
-    batchPerform(vcs, new VirtualFile[]{file}, context);
+    batchPerform(vcs, ar(file), context);
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] file, @NotNull DataContext context) throws VcsException {
-    File[] ioFiles = new File[file.length];
-    for (int i = 0; i < ioFiles.length; i++) {
-      ioFiles[i] = new File(file[i].getPath());
-    }
-
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    File[] ioFiles = toIoFiles(files);
     SetPropertyDialog dialog = new SetPropertyDialog(vcs.getProject(), ioFiles, null, true);
+
     if (dialog.showAndGet()) {
       String name = dialog.getPropertyName();
       String value = dialog.getPropertyValue();
       boolean recursive = dialog.isRecursive();
 
-      for (int i = 0; i < ioFiles.length; i++) {
-        File ioFile = ioFiles[i];
+      for (File ioFile : ioFiles) {
         PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
         // TODO: most likely SVNDepth.getInfinityOrEmptyDepth should be used instead of SVNDepth.fromRecursive - to have either "infinity"
         // TODO: or "empty" depth, and not "infinity" or "files" depth. But previous logic used SVNDepth.fromRecursive implicitly
         client.setProperty(ioFile, name, PropertyValue.create(value), Depth.allOrFiles(recursive), false);
       }
-      for (int i = 0; i < file.length; i++) {
-        if (recursive && file[i].isDirectory()) {
-          VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file[i], true);
+      for (VirtualFile file : files) {
+        if (recursive && file.isDirectory()) {
+          VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file, true);
         }
         else {
-          VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file[i]);
+          VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
         }
       }
-      ;
     }
   }
 

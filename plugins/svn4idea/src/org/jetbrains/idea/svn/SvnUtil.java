@@ -96,6 +96,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 
@@ -182,6 +183,11 @@ public class SvnUtil {
   public static String getExactLocation(final SvnVcs vcs, File path) {
     Info info = vcs.getInfo(path);
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
+  }
+
+  @NotNull
+  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+    return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
   public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
