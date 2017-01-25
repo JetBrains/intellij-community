@@ -154,37 +154,43 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
   }
 
   fun getSettings(place: String?): TextDiffSettings {
-    val placeSettings = myState.PLACES_MAP.getOrPut(place ?: DiffPlaces.DEFAULT, { PlaceSettings() })
+    val placeKey = place ?: DiffPlaces.DEFAULT
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
     return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
   }
 
+  private fun copyStateWithoutDefaults(): State {
+    val result = State()
+    result.SHARED_SETTINGS = myState.SHARED_SETTINGS
+
+    myState.PLACES_MAP.entries.forEach {
+      if (it.value != defaultPlaceSettings(it.key)) result.PLACES_MAP.put(it.key, it.value)
+    }
+    return result
+  }
+
+  private fun defaultPlaceSettings(place: String): PlaceSettings {
+    val settings = PlaceSettings();
+    if (place == DiffPlaces.CHANGES_VIEW) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    if (place == DiffPlaces.COMMIT_DIALOG) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    return settings
+  }
+
+
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = defaultPlaceSettings()
+    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
     internal var SHARED_SETTINGS = SharedSettings()
-
-    companion object {
-      private fun defaultPlaceSettings(): TreeMap<String, PlaceSettings> {
-        val map = TreeMap<String, PlaceSettings>()
-
-        val changes = PlaceSettings()
-        changes.EXPAND_BY_DEFAULT = false
-        val commit = PlaceSettings()
-        commit.EXPAND_BY_DEFAULT = false
-
-        map.put(DiffPlaces.DEFAULT, PlaceSettings())
-        map.put(DiffPlaces.CHANGES_VIEW, changes)
-        map.put(DiffPlaces.COMMIT_DIALOG, commit)
-
-        return map
-      }
-    }
   }
 
   private var myState: State = State()
 
   override fun getState(): State {
-    return myState
+    return copyStateWithoutDefaults()
   }
 
   override fun loadState(state: State) {

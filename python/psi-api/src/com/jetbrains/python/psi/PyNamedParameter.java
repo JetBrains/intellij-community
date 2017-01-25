@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a named parameter, as opposed to a tuple parameter.
@@ -39,10 +42,30 @@ public interface PyNamedParameter extends PyParameter, PsiNamedElement, PsiNameI
   boolean isKeywordOnly();
 
   /**
-   * @param includeDefaultValue if true, include the default value after an " = ".
-   * @return Canonical representation of parameter. Includes asterisks for *param and **param, and name.
+   * @param includeDefaultValue if true, include the default value after an "=".
+   * @return canonical representation of parameter.
+   * Includes asterisks for *param and **param, and name.
    */
   @NotNull
-  String getRepr(boolean includeDefaultValue);
+  default String getRepr(boolean includeDefaultValue) {
+    return getRepr(includeDefaultValue, null);
+  }
+
+  /**
+   * @param includeDefaultValue if true, include the default value after an "=".
+   * @param context             context to be used to resolve argument type
+   * @return canonical representation of parameter.
+   * Includes asterisks for *param and **param, and name.
+   * Also includes argument type if {@code context} is not null and resolved type is not unknown.
+   */
+  @NotNull
+  String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context);
+
+  /**
+   * @param context context to be used to resolve argument type
+   * @return argument type. Returns element type for *param and value type for **param.
+   */
+  @Nullable
+  PyType getArgumentType(@NotNull TypeEvalContext context);
 }
 
