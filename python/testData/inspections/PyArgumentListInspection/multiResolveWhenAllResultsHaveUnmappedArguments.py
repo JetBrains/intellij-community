@@ -15,4 +15,4 @@ def f():
     pass
 
 
-f().foo<warning descr="Unexpected argument(s)Possible callees:C1.foo(self, x)C2.foo(self, x, y)">(1, 2, 3)</warning>
+f().foo<warning descr="Unexpected argument(s)Possible callees:C1.foo(self: C1, x)C2.foo(self: C2, x, y)">(1, 2, 3)</warning>

@@ -136,8 +136,8 @@ public class PyArgumentListInspection extends PyInspection {
       }
     }
 
-    highlightUnexpectedArguments(node, holder, mappings);
-    highlightUnfilledParameters(node, holder, mappings);
+    highlightUnexpectedArguments(node, holder, mappings, context);
+    highlightUnfilledParameters(node, holder, mappings, context);
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
@@ -198,7 +198,8 @@ public class PyArgumentListInspection extends PyInspection {
 
   private static void highlightUnexpectedArguments(@NotNull PyArgumentList node,
                                                    @NotNull ProblemsHolder holder,
-                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings) {
+                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                   @NotNull TypeEvalContext context) {
     if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedArguments().isEmpty())) return;
 
     if (mappings.size() == 1) {
@@ -220,13 +221,14 @@ public class PyArgumentListInspection extends PyInspection {
     }
     else {
       // all mappings have unmapped arguments so we couldn't determine desired argument list and suggest appropriate quick fixes
-      holder.registerProblem(node, addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.unexpected.arg(s)"), mappings));
+      holder.registerProblem(node, addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.unexpected.arg(s)"), mappings, context));
     }
   }
 
   private static void highlightUnfilledParameters(@NotNull PyArgumentList node,
                                                   @NotNull ProblemsHolder holder,
-                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings) {
+                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                  @NotNull TypeEvalContext context) {
     if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedParameters().isEmpty())) return;
 
     Optional
@@ -244,7 +246,7 @@ public class PyArgumentListInspection extends PyInspection {
           }
           else {
             holder.registerProblem(psi,
-                                   addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.parameter(s).unfilled"), mappings));
+                                   addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.parameter(s).unfilled"), mappings, context));
           }
         }
       );
@@ -252,25 +254,27 @@ public class PyArgumentListInspection extends PyInspection {
 
   @NotNull
   private static String addPossibleCalleesRepresentationAndWrapInHtml(@NotNull String prefix,
-                                                                      @NotNull List<PyCallExpression.PyArgumentsMapping> mappings) {
-    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings);
+                                                                      @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                      @NotNull TypeEvalContext context) {
+    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context);
     return XmlStringUtil.wrapInHtml(prefix + "<br>" + PyBundle.message("INSP.possible.callees") + ":<br>" + possibleCalleesRepresentation);
   }
 
   @NotNull
-  private static String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings) {
+  private static String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                               @NotNull TypeEvalContext context) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
       .nonNull()
-      .map(markedCallee -> calculatePossibleCalleeRepresentation(markedCallee.getCallable()))
+      .map(markedCallee -> calculatePossibleCalleeRepresentation(markedCallee.getCallable(), context))
       .nonNull()
       .collect(Collectors.joining("<br>"));
   }
 
   @Nullable
-  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallable callable) {
-    final String callableNameAndParameters = callable.getName() + callable.getParameterList().getPresentableText(true);
+  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    final String callableNameAndParameters = callable.getName() + callable.getParameterList().getPresentableText(true, context);
 
     return Optional
       .ofNullable(PyUtil.as(callable, PyFunction.class))
