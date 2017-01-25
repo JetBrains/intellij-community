@@ -151,6 +151,12 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @NotNull
   private ThemeInfo getDefaultTheme() {
+    if (ApplicationManager.getApplication() != null) {
+      if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
+      if (UIUtil.isUnderDarcula()) return DARCULA;
+      if (UIUtil.isUnderGTKLookAndFeel()) return GTK;
+      return INTELLIJ;
+    }
     CloudConfigProvider provider = CloudConfigProvider.getProvider();
     if (provider != null) {
       String lafClassName = provider.getLafClassName();
@@ -192,6 +198,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private void applyLaf(ThemeInfo theme, Component component) {
     UIManager.LookAndFeelInfo info = new UIManager.LookAndFeelInfo(theme.name, theme.laf);
     try {
+      boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
       String className = info.getClassName();
       if (!myInitial) {
@@ -205,7 +212,13 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         SwingUtilities.updateComponentTreeUI(window);
       }
       if (ApplicationManager.getApplication() != null) {
-        LafManager.getInstance().setCurrentLookAndFeel(info);
+        LafManager lafManager = LafManager.getInstance();
+        lafManager.setCurrentLookAndFeel(info);
+        if (lafManager instanceof LafManagerImpl) {
+          ((LafManagerImpl)lafManager).updateWizardLAF(wasUnderDarcula);//Actually updateUI would be called inside EditorColorsManager
+        } else {
+          lafManager.updateUI();
+        }
       }
       if (myColumnMode) {
         myPreviewLabel.setIcon(theme.getIcon());

@@ -213,14 +213,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
-        if (WelcomeWizardUtil.getWizardLAF() != null) {
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          }
-          else if (needUninstall) {
-            DarculaInstaller.uninstall();
-          }
-        }
+        updateWizardLAF(needUninstall);
       }
     }
 
@@ -244,6 +237,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
         }
       });
+    }
+  }
+
+  public void updateWizardLAF(boolean wasUnderDarcula) {
+    if (WelcomeWizardUtil.getWizardLAF() != null) {
+      if (UIUtil.isUnderDarcula()) {
+        DarculaInstaller.install();
+      }
+      else if (wasUnderDarcula) {
+        DarculaInstaller.uninstall();
+      }
+      WelcomeWizardUtil.setWizardLAF(null);
     }
   }
 
