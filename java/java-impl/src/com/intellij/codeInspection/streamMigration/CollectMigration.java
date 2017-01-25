@@ -132,7 +132,8 @@ class CollectMigration extends BaseStreamApiMigration {
     if (tb.dependsOn(qualifierExpression)) return null;
 
     List<BiFunction<TerminalBlock, PsiMethodCallExpression, CollectTerminal>> extractors = Arrays
-      .asList(AddingTerminal::tryExtract, GroupingTerminal::tryExtract, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll);
+      .asList(AddingTerminal::tryExtract, GroupingTerminal::tryExtract, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll,
+              StringBuilderTerminal::tryExtract);
 
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
@@ -537,6 +538,79 @@ class CollectMigration extends BaseStreamApiMigration {
       if (variable == null || !isEmptyCollectionInitializer(variable.getInitializer())) return null;
       InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getMainLoop());
       return new ToMapTerminal(call, tb.getVariable(), variable, tb.getMainLoop(), status);
+    }
+  }
+
+  static class StringBuilderTerminal extends CollectTerminal {
+    final PsiVariable myElement;
+    final PsiMethodCallExpression myAddCall;
+
+    StringBuilderTerminal(PsiLocalVariable variable,
+                          PsiLoopStatement loop,
+                          InitializerUsageStatus status, PsiVariable element, PsiMethodCallExpression appendCall) {
+      super(variable, loop, status);
+      myElement = element;
+      myAddCall = appendCall;
+    }
+
+    @Override
+    String generateTerminal() {
+      return ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".joining())";
+    }
+
+    @Override
+    void cleanUp() {
+      PsiLocalVariable target = getTargetVariable();
+      target.getTypeElement()
+        .replace(JavaPsiFacade.getElementFactory(target.getProject()).createTypeElementFromText(CommonClassNames.JAVA_LANG_STRING, target));
+      Collection<PsiReference> usages = ReferencesSearch.search(target).findAll();
+      for (PsiReference usage : usages) {
+        PsiElement element = usage.getElement();
+        if (element.isValid() && element instanceof PsiExpression) {
+          PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)element);
+          if (call != null && "toString".equals(call.getMethodExpression().getReferenceName())) {
+            call.replace(element);
+          }
+        }
+      }
+    }
+
+    static StringBuilderTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
+      if (tb.getCountExpression() != null) return null;
+      if (!isCallOf(call, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append")) return null;
+      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression == null) return null;
+      PsiLocalVariable targetBuilder = extractQualifierVariable(tb, call);
+      if (targetBuilder == null) return null;
+      PsiNewExpression initializer =
+        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(targetBuilder.getInitializer()), PsiNewExpression.class);
+      if (initializer == null) return null;
+      PsiExpressionList args = initializer.getArgumentList();
+      if (args == null || args.getExpressions().length != 0) return null;
+      PsiJavaCodeReferenceElement classRef = initializer.getClassReference();
+      if (classRef == null || (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(classRef.getQualifiedName()) &&
+                               !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(classRef.getQualifiedName()))) {
+        return null;
+      }
+      if (!ReferencesSearch.search(targetBuilder).forEach(ref -> {
+        PsiElement element = ref.getElement();
+        if (PsiTreeUtil.isAncestor(targetBuilder, element, false) || PsiTreeUtil.isAncestor(tb.getMainLoop(), element, false)) {
+          return true;
+        }
+        if (element instanceof PsiExpression) {
+          PsiMethodCallExpression usage = ExpressionUtils.getCallForQualifier((PsiExpression)element);
+          if (usage != null) {
+            PsiExpression[] usageArgs = usage.getArgumentList().getExpressions();
+            String name = usage.getMethodExpression().getReferenceName();
+            if (usageArgs.length == 0 && ("toString".equals(name) || "length".equals(name))) return true;
+          }
+        }
+        return false;
+      })) {
+        return null;
+      }
+      InitializerUsageStatus status = getInitializerUsageStatus(targetBuilder, tb.getMainLoop());
+      return new StringBuilderTerminal(targetBuilder, tb.getMainLoop(), status, tb.getVariable(), call);
     }
   }
 
