@@ -943,6 +943,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @TestOnly
   public void cleanupForNextTest() {
     myTransactionMap = SmartFMap.emptyMap();
+    IndexConfiguration state = getState();
+    for (ID<?, ?> indexId : state.getIndexIDs()) {
+      final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
+      assert index != null;
+      final MemoryIndexStorage memStorage = (MemoryIndexStorage)index.getStorage();
+      index.getWriteLock().lock();
+      try {
+        memStorage.clearCaches();
+      }
+      finally {
+        index.getWriteLock().unlock();
+      }
+    }
   }
 
   @TestOnly

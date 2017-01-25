@@ -27,6 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -243,7 +244,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @Override
   public void clearCaches() {
-
+    l.lock();
+    try {
+      for(Map.Entry<Key, ChangeTrackingValueContainer<Value>> entry:myCache.entrySet()) {
+        entry.getValue().dropMergedData();
+      }
+    } finally {
+      l.unlock();
+    }
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
