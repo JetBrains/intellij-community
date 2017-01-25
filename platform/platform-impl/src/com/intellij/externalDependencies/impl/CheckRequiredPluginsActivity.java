@@ -86,7 +86,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
       }
       String maxVersion = dependency.getMaxVersion();
       if (maxVersion != null && VersionComparatorUtil.compare(plugin.getVersion(), maxVersion) > 0) {
-        errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + minVersion + "' or lower, but '" + plugin.getVersion() + "' is installed.");
+        errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + maxVersion + "' or lower, but '" + plugin.getVersion() + "' is installed.");
       }
     }
 
