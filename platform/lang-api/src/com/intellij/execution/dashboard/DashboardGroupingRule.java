@@ -28,12 +28,12 @@ import java.util.List;
  *
  * @author konstantin.aleev
  */
-public interface GroupingRule extends TreeAction {
+public interface DashboardGroupingRule extends TreeAction {
   /**
    * @return A list of groups which should be shown in the tree even if they do not contain any nodes.
    */
   @NotNull
-  default List<Group> getPermanentGroups() {
+  default List<DashboardGroup> getPermanentGroups() {
     return Collections.emptyList();
   }
 
@@ -42,5 +42,5 @@ public interface GroupingRule extends TreeAction {
    * @return A group which node belongs to or null if node could not be grouped by this rule.
    */
   @Nullable
-  Group getGroup(AbstractTreeNode<?> node);
+  DashboardGroup getGroup(AbstractTreeNode<?> node);
 }

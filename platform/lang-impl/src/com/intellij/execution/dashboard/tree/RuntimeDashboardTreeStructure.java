@@ -16,8 +16,8 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.Group;
-import com.intellij.execution.dashboard.GroupingRule;
+import com.intellij.execution.dashboard.DashboardGroup;
+import com.intellij.execution.dashboard.DashboardGroupingRule;
 import com.intellij.execution.dashboard.RuntimeDashboardContributor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -35,10 +35,10 @@ import java.util.stream.Collectors;
  */
 public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
-  private final List<Grouper> myGroupers;
+  private final List<DashboardGrouper> myGroupers;
   private final RunConfigurationsTreeRootNode myRootElement;
 
-  public RuntimeDashboardTreeStructure(@NotNull Project project, @NotNull List<Grouper> groupers) {
+  public RuntimeDashboardTreeStructure(@NotNull Project project, @NotNull List<DashboardGrouper> groupers) {
     super(project);
     myProject = project;
     myGroupers = groupers;
@@ -75,7 +75,7 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       return group(myProject,
                    this,
-                   myGroupers.stream().filter(Grouper::isEnabled).map(Grouper::getRule).collect(Collectors.toList()),
+                   myGroupers.stream().filter(DashboardGrouper::isEnabled).map(DashboardGrouper::getRule).collect(Collectors.toList()),
                    RunManager.getInstance(myProject).getAllSettings().stream()
                      .filter(runConfiguration -> RuntimeDashboardContributor.isShowInDashboard(runConfiguration.getType()))
                      .map(runConfiguration -> new RunConfigurationNode(myProject, runConfiguration))
@@ -88,13 +88,13 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
   }
 
   private static Collection<? extends AbstractTreeNode> group(final Project project, final AbstractTreeNode parent,
-                                                              List<GroupingRule> rules, List<AbstractTreeNode> nodes) {
+                                                              List<DashboardGroupingRule> rules, List<AbstractTreeNode> nodes) {
     if (rules.isEmpty()) {
       return nodes;
     }
-    final List<GroupingRule> remaining = new ArrayList<>(rules);
-    GroupingRule rule = remaining.remove(0);
-    Map<Group, List<AbstractTreeNode>> groups = nodes.stream().collect(
+    final List<DashboardGroupingRule> remaining = new ArrayList<>(rules);
+    DashboardGroupingRule rule = remaining.remove(0);
+    Map<DashboardGroup, List<AbstractTreeNode>> groups = nodes.stream().collect(
       HashMap::new,
       (map, node) -> map.computeIfAbsent(rule.getGroup(node), key -> new ArrayList<>()).add(node),
       (firstMap, secondMap) -> firstMap.forEach((key, value) -> value.addAll(secondMap.get(key)))

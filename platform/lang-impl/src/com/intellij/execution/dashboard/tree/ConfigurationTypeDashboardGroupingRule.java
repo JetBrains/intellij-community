@@ -17,8 +17,9 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.Group;
-import com.intellij.execution.dashboard.GroupingRule;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.dashboard.DashboardGroup;
+import com.intellij.execution.dashboard.DashboardGroupingRule;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author konstantin.aleev
  */
-public class FolderGroupingRule implements GroupingRule {
-  @NonNls private static final String NAME = "FolderGroupingRule";
+public class ConfigurationTypeDashboardGroupingRule implements DashboardGroupingRule {
+  @NonNls private static final String NAME = "ConfigurationTypeDashboardGroupingRule";
 
   @Override
   @NotNull
@@ -43,22 +44,21 @@ public class FolderGroupingRule implements GroupingRule {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
-                                      ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
-                                      AllIcons.Actions.GroupByPackage);
+    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.type.action.name"),
+                                      ExecutionBundle.message("runtime.dashboard.group.by.type.action.name"),
+                                      AllIcons.Actions.GroupByFile);
   }
 
   @Nullable
   @Override
-  public Group getGroup(AbstractTreeNode<?> node) {
+  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
       RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
-      String folderName = configurationSettings.getFolderName();
-      if (folderName != null) {
-        return new GroupImpl<>(folderName, folderName, AllIcons.Nodes.Folder);
+      ConfigurationType type = configurationSettings.getType();
+      if (type != null) {
+        return new DashboardGroupImpl<>(type, type.getDisplayName(), type.getIcon());
       }
     }
     return null;
   }
-
 }

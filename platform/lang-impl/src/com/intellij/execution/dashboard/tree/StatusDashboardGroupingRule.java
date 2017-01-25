@@ -16,8 +16,8 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.Group;
-import com.intellij.execution.dashboard.GroupingRule;
+import com.intellij.execution.dashboard.DashboardGroup;
+import com.intellij.execution.dashboard.DashboardGroupingRule;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 /**
  * @author konstantin.aleev
  */
-public class StatusGroupingRule implements GroupingRule {
-  @NonNls private static final String NAME = "StatusGroupingRule";
+public class StatusDashboardGroupingRule implements DashboardGroupingRule {
+  @NonNls private static final String NAME = "StatusDashboardGroupingRule";
 
   @Override
   @NotNull
@@ -54,13 +54,13 @@ public class StatusGroupingRule implements GroupingRule {
 
   @NotNull
   @Override
-  public List<Group> getPermanentGroups() {
+  public List<DashboardGroup> getPermanentGroups() {
     return Arrays.stream(Status.values()).map(Status::getGroup).collect(Collectors.toList());
   }
 
   @Nullable
   @Override
-  public Group getGroup(AbstractTreeNode<?> node) {
+  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
       if (((DashboardRunConfigurationNode)node).isTerminated()) {
         return Status.STOPPED.getGroup();
@@ -83,8 +83,8 @@ public class StatusGroupingRule implements GroupingRule {
       myIcon = icon;
     }
 
-    public Group getGroup() {
-      return new GroupImpl<>(this, myLabel, myIcon);
+    public DashboardGroup getGroup() {
+      return new DashboardGroupImpl<>(this, myLabel, myIcon);
     }
   }
 }

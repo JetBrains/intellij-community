@@ -15,44 +15,30 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.Group;
-
-import javax.swing.*;
+import com.intellij.execution.dashboard.DashboardGroupingRule;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-public class GroupImpl<T> implements Group {
-  private final T myValue;
-  private final String myName;
-  private final Icon myIcon;
+public class DashboardGrouper {
+  @NotNull private final DashboardGroupingRule myRule;
+  private boolean myEnabled = true;
 
-  public GroupImpl(T value, String name, Icon icon) {
-    myValue = value;
-    myName = name;
-    myIcon = icon;
+  public DashboardGrouper(@NotNull DashboardGroupingRule rule) {
+    myRule = rule;
   }
 
-  @Override
-  public String getName() {
-    return myName;
+  @NotNull
+  public DashboardGroupingRule getRule() {
+    return myRule;
   }
 
-  @Override
-  public Icon getIcon() {
-    return myIcon;
+  public boolean isEnabled() {
+    return myEnabled;
   }
 
-  @Override
-  public int hashCode() {
-    return myValue.hashCode();
-  }
-
-  @Override
-  public final boolean equals(Object obj) {
-    if (obj instanceof GroupImpl) {
-      return myValue.equals(((GroupImpl)obj).myValue);
-    }
-    return false;
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 }

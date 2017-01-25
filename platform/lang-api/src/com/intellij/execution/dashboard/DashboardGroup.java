@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public interface Group {
+public interface DashboardGroup {
   String getName();
 
   Icon getIcon();

@@ -15,10 +15,10 @@
  */
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.dashboard.tree.ConfigurationTypeGroupingRule;
-import com.intellij.execution.dashboard.tree.FolderGroupingRule;
-import com.intellij.execution.dashboard.tree.Grouper;
-import com.intellij.execution.dashboard.tree.StatusGroupingRule;
+import com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
+import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
+import com.intellij.execution.dashboard.tree.DashboardGrouper;
+import com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -59,7 +59,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
   @NonNls private static final String ENABLED_ATTR = "enabled";
 
   @NotNull private final ContentManager myContentManager;
-  private List<Grouper> myGroupers = new ArrayList<>();
+  private List<DashboardGrouper> myGroupers = new ArrayList<>();
 
   public RuntimeDashboardManagerImpl(@NotNull final Project project) {
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -71,9 +71,9 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
                                                                  project, true);
     toolWindow.setIcon(getToolWindowIcon());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myGroupers.add(new Grouper(new ConfigurationTypeGroupingRule()));
-      myGroupers.add(new Grouper(new StatusGroupingRule()));
-      myGroupers.add(new Grouper(new FolderGroupingRule()));
+      myGroupers.add(new DashboardGrouper(new ConfigurationTypeDashboardGroupingRule()));
+      myGroupers.add(new DashboardGrouper(new StatusDashboardGroupingRule()));
+      myGroupers.add(new DashboardGrouper(new FolderDashboardGroupingRule()));
 
       RuntimeDashboardContent dashboardContent = new RuntimeDashboardContent(project, myContentManager, myGroupers);
       Content content = contentFactory.createContent(dashboardContent, null, false);
@@ -113,7 +113,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
     return element;
   }
 
-  private static Element writeGrouperState(Grouper grouper) {
+  private static Element writeGrouperState(DashboardGrouper grouper) {
     Element element = new Element(GROUPER_TAG);
     element.setAttribute(NAME_ATTR, grouper.getRule().getName());
     element.setAttribute(ENABLED_ATTR, Boolean.toString(grouper.isEnabled()));
@@ -131,7 +131,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
 
   private void readGrouperState(Element grouperElement) {
     String id = grouperElement.getAttributeValue(NAME_ATTR);
-    for (Grouper grouper : myGroupers) {
+    for (DashboardGrouper grouper : myGroupers) {
       if (grouper.getRule().getName().equals(id)) {
         grouper.setEnabled(Boolean.valueOf(grouperElement.getAttributeValue(ENABLED_ATTR, "true")));
         return;
