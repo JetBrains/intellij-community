@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
-import static com.intellij.psi.formatter.java.FormatterTestUtils.Action.REFORMAT_WITH_CONTEXT;
+import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CONTEXT;
 
 /**
  * Is intended to hold specific java formatting tests for alignment settings (

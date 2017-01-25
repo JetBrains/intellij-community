@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java
 
+import com.intellij.formatting.FormatterTestUtils
 import com.intellij.openapi.util.TextRange
 
 

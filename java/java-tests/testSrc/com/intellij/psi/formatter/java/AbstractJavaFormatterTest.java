@@ -32,7 +32,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.formatter.java.FormatterTestUtils.Action;
+import com.intellij.formatting.FormatterTestUtils.Action;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -44,8 +44,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.psi.formatter.java.FormatterTestUtils.ACTIONS;
-import static com.intellij.psi.formatter.java.FormatterTestUtils.Action.*;
+import static com.intellij.formatting.FormatterTestUtils.ACTIONS;
+import static com.intellij.formatting.FormatterTestUtils.Action.*;
 
 /**
  * Base class for java formatter tests that holds utility methods.

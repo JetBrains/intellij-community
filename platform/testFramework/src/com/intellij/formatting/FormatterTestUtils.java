@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter.java;
+package com.intellij.formatting;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -62,16 +62,16 @@ public class FormatterTestUtils {
     }
   }
   
-  public static void doTest(@NotNull Project project,
-                            @NotNull String ext, 
-                            @NotNull String before, 
-                            @NotNull String after,
-                            @NotNull Action action) {
+  public static void testFormatting(@NotNull Project project,
+                                    @NotNull String ext,
+                                    @NotNull String before,
+                                    @NotNull String after,
+                                    @NotNull Action action) {
     String fileName = "FTU." + ext;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
 
     FormatData data = extractFormatData(before);
-    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, data.text);
+    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, data.text, System.currentTimeMillis(), true);
 
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = manager.getDocument(file);
