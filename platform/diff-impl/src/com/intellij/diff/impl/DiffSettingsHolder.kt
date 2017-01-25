@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.Key
-import com.intellij.util.containers.HashMap
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import java.util.*
 
@@ -40,14 +39,14 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     }
   }
 
-  internal class SharedSettings {
+  internal data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true
-  }
+  )
 
-  internal class PlaceSettings {
-    var DIFF_TOOLS_ORDER: List<String> = ArrayList()
+  internal data class PlaceSettings(
+    var DIFF_TOOLS_ORDER: List<String> = ArrayList(),
     var SYNC_BINARY_EDITOR_SETTINGS: Boolean = true
-  }
+  )
 
   class DiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
                                           val PLACE_SETTINGS: PlaceSettings) {
@@ -80,21 +79,35 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
   fun getSettings(place: String?): DiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
-    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { PlaceSettings() })
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
     return DiffSettings(myState.SHARED_SETTINGS, placeSettings)
+  }
+
+  private fun copyStateWithoutDefaults(): State {
+    val result = State()
+    result.SHARED_SETTINGS = myState.SHARED_SETTINGS
+
+    myState.PLACES_MAP.entries.forEach {
+      if (it.value != defaultPlaceSettings(it.key)) result.PLACES_MAP.put(it.key, it.value)
+    }
+    return result
+  }
+
+  private fun defaultPlaceSettings(place: String): PlaceSettings {
+    return PlaceSettings()
   }
 
 
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: MutableMap<String, PlaceSettings> = HashMap()
+    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
     internal var SHARED_SETTINGS = SharedSettings()
   }
 
-  private var myState : State = State()
+  private var myState: State = State()
 
   override fun getState(): State {
-    return myState
+    return copyStateWithoutDefaults()
   }
 
   override fun loadState(state: State) {
