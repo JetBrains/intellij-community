@@ -298,7 +298,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "public class MyTest {\n" +
       "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
       "}");
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithModifiableVisibilityLevel() {
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 
@@ -333,6 +333,16 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
 
       @Override
       public void setSelected(boolean selected) {}
+
+      @Override
+      public String getTitle() {
+        return getDisplayName();
+      }
+
+      @Override
+      public String getId() {
+        return getDisplayName();
+      }
     }, getTestRootDisposable());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();

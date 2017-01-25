@@ -340,7 +340,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
     final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
-    final File moduleFile = new File(FileUtil.toSystemDependentName(baseDir.getPath()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    String path = baseDir.getPath();
+    return createModuleAt(moduleName, project, moduleType, path);
+  }
+
+  protected static Module createModuleAt(String moduleName, Project project, ModuleType moduleType, String path) {
+    File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
@@ -433,14 +438,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void tearDown() throws Exception {
     Project project = myProject;
 
+    runTearDownActions(project);
+  }
+
+  private void runTearDownActions(Project project) {
     new RunAll()
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication, false);
         }
       })
-      .append(() -> disposeProject())
-      .append(() -> checkForSettingsDamage())
+      .append(this::disposeProject)
+      .append(this::checkForSettingsDamage)
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -470,7 +479,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           myThreadTracker.checkLeak();
         }
       })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(LightPlatformTestCase::checkEditorsReleased)
       .append(() -> {
         myProjectManager = null;
         myProject = null;
@@ -866,7 +875,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
-  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
@@ -39,18 +40,15 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
   private boolean myIsDisposed = false;
   private boolean myLoaded = false;
   private final OrderRootsCache myOrderRootsCache;
@@ -92,11 +90,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
         entries = new ArrayList<>(myModelCreations.entrySet());
       }
       for (final Map.Entry<RootModelImpl, Throwable> entry : entries) {
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("Created at:");
-        entry.getValue().printStackTrace(System.err);
+        LOG.warn("\n" +
+                 "***********************************************************************************************\n" +
+                 "***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***\n" +
+                 "***********************************************************************************************\n" +
+                 "Created at:", entry.getValue());
         entry.getKey().dispose();
       }
     }
@@ -174,10 +172,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
 
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
 
     if (changed) {
-      myModificationCount++;
+      stateChanged();
     }
   }
 
@@ -186,13 +184,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     rootModel.dispose();
 
     try {
-      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).myModificationCount++;
+      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).stateChanged();
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
-
 
   @Override
   @NotNull
@@ -333,6 +330,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   public ModuleRootManagerState getState() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("getState, module " + myModule.getName());
+    }
     return new ModuleRootManagerState(myRootModel);
   }
 
@@ -362,6 +362,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  void stateChanged() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("ModelRootManager state changed");
+    }
+    myModificationCount++;
   }
 
   public static class ModuleRootManagerState implements JDOMExternalizable {

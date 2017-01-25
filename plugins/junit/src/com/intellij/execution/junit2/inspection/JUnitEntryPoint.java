@@ -21,8 +21,9 @@
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.visibility.EntryPointWithModifiableVisibilityLevel;
+import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -36,7 +37,7 @@ import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitEntryPoint extends EntryPointWithModifiableVisibilityLevel {
+public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @NotNull
@@ -96,7 +97,17 @@ public class JUnitEntryPoint extends EntryPointWithModifiableVisibilityLevel {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
 
-    return super.getMinVisibilityLevel(member);
+    return -1;
+  }
+
+  @Override
+  public String getTitle() {
+    return "Suggest package-private visibility level for junit 5 tests";
+  }
+
+  @Override
+  public String getId() {
+    return "junit";
   }
 
   public boolean isSelected() {

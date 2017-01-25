@@ -32,13 +32,14 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.table.CommitSelectionListener;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

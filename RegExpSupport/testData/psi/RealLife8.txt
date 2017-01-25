@@ -8,7 +8,7 @@ REGEXP_FILE
       RegExpCharImpl: <d>
         PsiElement(CHARACTER)('d')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpClosureImpl: <[+-]?>
         RegExpClassImpl: <[+-]>
           PsiElement(CLASS_BEGIN)('[')

@@ -13,6 +13,8 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>collection.stream().collect(Collectors.toCollection(CollectionType::new))</code> &rarr; <code>new CollectionType&lt;&gt;(collection)</code></li>
   <li><code>collection.stream().toArray()</code> &rarr; <code>collection.toArray()</code></li>
   <li><code>Arrays.asList().stream()</code> &rarr; <code>Arrays.stream()</code> or <code>Stream.of()</code></li>
+  <li><code>IntStream.range(0, array.length).mapToObj(idx -> array[idx])</code> &rarr; <code>Arrays.stream(array)</code></li>
+  <li><code>IntStream.range(0, list.size()).mapToObj(idx -> list.get(idx))</code> &rarr; <code>list.stream()</code></li>
   <li><code>Collections.singleton().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.singletonList().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.emptyList().stream()</code> &rarr; <code>Stream.empty()</code></li>
@@ -34,6 +36,9 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>stream.noneMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
   <li><code>stream.allMatch(x -> !(...))</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.allMatch(x -> !(...))</code> &rarr; <code>stream.anyMatch()</code></li>
+  <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> -> <code>stream.anyMatch()</code></li>
+  <li><code>stream.map().allMatch(Boolean::booleanValue)</code> -> <code>stream.allMatch()</code></li>
+  <li><code>stream.map().noneMatch(Boolean::booleanValue)</code> -> <code>stream.noneMatch()</code></li>
 </ul>
 <p>
   Note that the replacements semantic may have minor difference in some cases.

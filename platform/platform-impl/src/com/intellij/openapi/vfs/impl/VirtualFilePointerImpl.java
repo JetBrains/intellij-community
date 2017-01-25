@@ -45,7 +45,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @NotNull
   public String getFileName() {
     if (!checkDisposed()) return "";
-    Pair<VirtualFile, String> result = myNode.update();
+    Pair<VirtualFile, String> result = update();
     VirtualFile file = result.first;
     if (file != null) {
       return file.getName();
@@ -55,10 +55,21 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
     return index >= 0 ? url.substring(index + 1) : url;
   }
 
+  @NotNull
+  private Pair<VirtualFile, String> update() {
+    while (true) {
+      Pair<VirtualFile, String> result = myNode.update();
+      if (result != null) {
+        return result;
+      }
+      // otherwise the node is becoming invalid, retry
+    }
+  }
+
   @Override
   public VirtualFile getFile() {
     if (!checkDisposed()) return null;
-    Pair<VirtualFile, String> result = myNode.update();
+    Pair<VirtualFile, String> result = update();
     return result.first;
   }
 
@@ -66,13 +77,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @NotNull
   public String getUrl() {
     if (isDisposed()) return "";
-    Pair<VirtualFile, String> update = myNode.update();
+    Pair<VirtualFile, String> update = update();
     return update.second;
-  }
-
-  @NotNull
-  private String getUrlNoUpdate() {
-    return isDisposed() ? "" : myNode.myFileAndUrl.second;
   }
 
   @Override
@@ -94,13 +100,13 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   @Override
   public boolean isValid() {
-    Pair<VirtualFile, String> result = isDisposed() ? null : myNode.update();
+    Pair<VirtualFile, String> result = isDisposed() ? null : update();
     return result != null && result.first != null;
   }
 
   @Override
   public String toString() {
-    return getUrlNoUpdate();
+    return isDisposed() ? "" : myNode.myFileAndUrl.second;
   }
 
   public void dispose() {

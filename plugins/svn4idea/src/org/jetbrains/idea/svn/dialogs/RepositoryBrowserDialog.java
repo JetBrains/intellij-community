@@ -652,7 +652,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
                                                      "'. Are you sure?", SvnBundle.message(myDialogTitleKey), Messages.getWarningIcon());
-            if (Messages.OK == result) return;
+            if (Messages.OK != result) return;
           }
         }
         String message = dialog.getCommitMessage();

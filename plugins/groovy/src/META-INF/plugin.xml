@@ -206,6 +206,7 @@
 
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrPrimitiveCastConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrGenericTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrClassConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNullVoidConverter"/>
@@ -333,7 +334,7 @@
     <lang.inspectionSuppressor language="Groovy"
                                implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionSuppressor"/>
 
-    <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
+    <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorSettingsPage"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
     <renamePsiElementProcessor id="groovyFieldRenameProcessor"
@@ -487,7 +488,7 @@
                               implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyMethodArgumentReferenceContributor"/>
 
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher"
-             id="groovyWithWeigher" order="after prefix"/>
+             id="groovyWithWeigher" order="after prefix, after stats"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher"
              id="groovyKindWeigher" order="after groovyWithWeigher, before explicitProximity"/>
 
@@ -844,6 +845,10 @@
                      displayName="Change to operator"
                      groupName="Style" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToMethod"
+                     displayName="Change to method"
+                     groupName="Style" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToMethod.ChangeToMethodInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"

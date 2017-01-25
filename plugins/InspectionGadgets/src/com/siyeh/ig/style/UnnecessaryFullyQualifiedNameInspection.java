@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
       shortenedElements.add(reference);
     }
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !"module-info.java".equals(file.getName());
   }
 
   @Override

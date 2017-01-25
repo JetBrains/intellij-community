@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,5 +94,29 @@ public interface RegExpLanguageHost {
   @Nullable
   default Number getQuantifierValue(@NotNull RegExpNumber number) {
     return Double.parseDouble(number.getText());
+  }
+
+  default Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
+    return Lookbehind.FULL; // to not break existing implementations, although rarely actually supported.
+  }
+
+  enum Lookbehind {
+    /** Lookbehind not supported. */
+    NOT_SUPPORTED,
+
+    /**
+     * Alternation inside lookbehind (a|b|c) branches must have same length,
+     * finite repetition with identical min, max values (a{3} or a{3,3}) allowed.
+     */
+    FIXED_LENGTH_ALTERNATION,
+
+    /** Alternation (a|bc|def) branches inside look behind may have different length */
+    VARIABLE_LENGTH_ALTERNATION,
+
+    /** Finite repetition inside lookbehind with different minimum, maximum values allowed */
+    FINITE_REPETITION,
+
+    /** Full regex syntax inside lookbehind ,i.e. star (*) and plus (*) repetition and backreferences, allowed. */
+    FULL
   }
 }

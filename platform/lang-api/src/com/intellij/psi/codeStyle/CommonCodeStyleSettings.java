@@ -344,11 +344,6 @@ public class CommonCodeStyleSettings {
    */
   public boolean USE_FLYING_GEESE_BRACES = false;
 
-  /**
-   * Defines number of white spaces between curly braces in case of {@link #USE_FLYING_GEESE_BRACES 'flying geese'} style usage.
-   */
-  public int FLYING_GEESE_BRACES_GAP = 1;
-
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
 
   /**
@@ -929,7 +924,6 @@ public class CommonCodeStyleSettings {
 
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
-    private boolean myInaccurate;
     private boolean myOverrideLanguageOptions;
 
     @Override

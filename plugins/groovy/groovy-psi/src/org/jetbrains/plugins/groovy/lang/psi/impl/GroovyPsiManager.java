@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -76,26 +75,13 @@ public class GroovyPsiManager {
     myCompileStatic.clear();
   }
 
-  public static boolean isInheritorCached(@Nullable PsiClass aClass, @NotNull String baseClassName) {
-    if (aClass == null) return false;
-
-    return InheritanceUtil.isInheritorOrSelf(aClass, getInstance(aClass.getProject()).findClassWithCache(baseClassName, aClass.getResolveScope()), true);
-  }
-
-  public static boolean isInheritorCached(@Nullable PsiType type, @NotNull String baseClassName) {
-    if (type instanceof PsiClassType) {
-      return isInheritorCached(((PsiClassType)type).resolve(), baseClassName);
-    }
-    return false;
-  }
-
   public static GroovyPsiManager getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
   public PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     if (ourPopularClasses.contains(fqName)) {
-      PsiClass result = findClassWithCache(fqName, resolveScope);
+      PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
       if (result != null) {
         return JavaPsiFacade.getElementFactory(myProject).createType(result);
       }
@@ -133,6 +119,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
+  @Deprecated
   public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
   }

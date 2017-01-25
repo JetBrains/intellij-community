@@ -164,7 +164,7 @@ public class UsageViewImpl implements UsageView {
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
 
-  UsageViewImpl(@NotNull final Project project,
+  public UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
                 @NotNull UsageTarget[] targets,
                 Factory<UsageSearcher> usageSearcherFactory) {
@@ -660,6 +660,10 @@ public class UsageViewImpl implements UsageView {
     return actionToolbar.getComponent();
   }
 
+  protected boolean isPreviewUsageActionEnabled() {
+    return true;
+  }
+
   @NotNull
   private JComponent createFiltersToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
@@ -670,7 +674,9 @@ public class UsageViewImpl implements UsageView {
     }
 
     addFilteringActions(group);
-    group.add(new PreviewUsageAction(this));
+    if (isPreviewUsageActionEnabled()) {
+      group.add(new PreviewUsageAction(this));
+    }
 
     group.add(new SortMembersAlphabeticallyAction(this));
     return toUsageViewToolbar(group);
@@ -699,7 +705,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   @NotNull
-  private AnAction[] createActions() {
+  protected AnAction[] createActions() {
     final TreeExpander treeExpander = new TreeExpander() {
       @Override
       public void expandAll() {
@@ -910,6 +916,12 @@ public class UsageViewImpl implements UsageView {
     TreeUtil.expand(myTree, 2);
   }
 
+  public void expandRoot() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    fireEvents();
+    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
+  }
+
   @NotNull
   DefaultMutableTreeNode getModelRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
@@ -977,10 +989,10 @@ public class UsageViewImpl implements UsageView {
     doReRun();
   }
 
-  private void doReRun() {
-    close();
+  protected void doReRun() {
+    myChangesDetected = false;
     com.intellij.usages.UsageViewManager.getInstance(getProject()).
-      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, true, myPresentation, null);
+      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
   }
 
   private void reset() {
@@ -990,6 +1002,7 @@ public class UsageViewImpl implements UsageView {
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(() -> {
         if (isDisposed) return;
+        fireEvents();
         TreeUtil.expand(myTree, 2);
       });
     }
@@ -1316,7 +1329,7 @@ public class UsageViewImpl implements UsageView {
     return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
   }
 
-  private boolean allTargetsAreValid() {
+  protected boolean allTargetsAreValid() {
     for (UsageTarget target : myTargets) {
       if (!target.isValid()) {
         return false;

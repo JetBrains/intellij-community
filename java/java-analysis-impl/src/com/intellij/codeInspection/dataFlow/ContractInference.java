@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,24 +65,41 @@ public class ContractInference {
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
-    List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
-      for (int i = 0; i < contract.arguments.length; i++) {
-        if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
-          return false;
-        }
-      }
-
-      if ((contract.returnValue == NOT_NULL_VALUE || contract.returnValue == NULL_VALUE) &&
-          NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false)) {
-        return false;
-      }
-      return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
-    });
+    List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, returnType, contract));
     if (compatible.size() > MAX_CONTRACT_COUNT) {
       LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(method) + ", shrinking the list");
       return compatible.subList(0, MAX_CONTRACT_COUNT);
     }
     return compatible;
+  }
+
+  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, PsiType returnType, MethodContract contract) {
+    if (hasContradictoryExplicitParameterNullity(method, contract)) return false;
+    if (isReturnNullitySpecifiedExplicitly(method, contract)) return false;
+    if (isContradictingExplicitNullableReturn(method, contract)) return false;
+    return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
+  }
+
+  private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, MethodContract contract) {
+    for (int i = 0; i < contract.arguments.length; i++) {
+      if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, MethodContract contract) {
+    return contract.returnValue == NOT_NULL_VALUE &&
+           Arrays.stream(contract.arguments).allMatch(c -> c == ANY_VALUE) &&
+           NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false);
+  }
+
+  private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, MethodContract contract) {
+    if (contract.returnValue != NOT_NULL_VALUE && contract.returnValue != NULL_VALUE) {
+      return false; // spare expensive nullity check
+    }
+    return NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false);
   }
 
   @NotNull

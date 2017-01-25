@@ -472,7 +472,7 @@ class Test {
 import java.util.*;
 
 /**
- * {@link Ma<caret>}
+ * {@link ArraLi<caret>}
  */
 class Test {
 }
@@ -484,7 +484,7 @@ class Test {
 import java.util.*;
 
 /**
- * {@link Map}
+ * {@link ArrayList}
  */
 class Test {
 }

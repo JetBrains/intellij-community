@@ -16,24 +16,30 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.*;
+import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.execution.dashboard.tree.RuntimeDashboardTreeStructure;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +50,18 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author konstantin.aleev
  */
-class RuntimeDashboardContent extends JPanel implements Disposable {
+public class RuntimeDashboardContent extends JPanel implements TreeContent, Disposable {
+  public static final DataKey<RuntimeDashboardContent> KEY = DataKey.create("runtimeDashboardContent");
+  @NonNls private static final String PLACE_TOOLBAR = "RuntimeDashboardContent#Toolbar";
+  @NonNls private static final String RUNTIME_DASHBOARD_TOOLBAR = "RuntimeDashboardToolbar";
+  @NonNls private static final String RUNTIME_DASHBOARD_POPUP = "RuntimeDashboardPopup";
+
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
 
@@ -62,15 +74,17 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
   private AbstractTreeBuilder myBuilder;
   private AbstractTreeNode<?> myLastSelection;
   private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
+  private List<DashboardGrouper> myGroupers;
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
 
   @NotNull private final Project myProject;
 
-  public RuntimeDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager) {
+  public RuntimeDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
+    myGroupers = groupers;
 
     myTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(myTreeModel);
@@ -80,7 +94,7 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    //TODO [konstantin.aleev] Create toolbar.
+    add(createToolbar(), BorderLayout.WEST);
 
     Splitter splitter = new OnePixelSplitter(false, 0.3f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -146,7 +160,10 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
       }
     });
 
-    //TODO [konstantin.aleev] setup popup actions.
+    DefaultActionGroup popupActionGroup = new DefaultActionGroup();
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_TOOLBAR));
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_POPUP));
+    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
   }
@@ -198,7 +215,7 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
   }
 
   private void setupBuilder() {
-    RuntimeDashboardTreeStructure structure = new RuntimeDashboardTreeStructure(myProject);
+    RuntimeDashboardTreeStructure structure = new RuntimeDashboardTreeStructure(myProject, myGroupers);
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -231,7 +248,10 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
       }
 
       @Override
-      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+      public void processTerminated(@NotNull String executorId,
+                                    @NotNull ExecutionEnvironment env,
+                                    @NotNull ProcessHandler handler,
+                                    int exitCode) {
         updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
@@ -243,11 +263,99 @@ class RuntimeDashboardContent extends JPanel implements Disposable {
     }
   }
 
+  private JComponent createToolbar() {
+    JPanel toolBarPanel = new JPanel(new GridLayout());
+    DefaultActionGroup leftGroup = new DefaultActionGroup();
+    leftGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_TOOLBAR));
+    // TODO [konstantin.aleev] provide context help ID
+    //leftGroup.add(new Separator());
+    //leftGroup.add(new ContextHelpAction(HELP_ID));
+
+    ActionToolbar leftActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, leftGroup, false);
+    toolBarPanel.add(leftActionToolBar.getComponent());
+
+    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (KEY.getName().equals(dataId)) {
+          return RuntimeDashboardContent.this;
+        }
+        return null;
+      }
+    });
+    leftActionToolBar.setTargetComponent(myTree);
+
+    DefaultActionGroup rightGroup = new DefaultActionGroup();
+
+    TreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
+    rightGroup.add(expandAllAction);
+
+    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
+    rightGroup.add(collapseAllAction);
+
+    rightGroup.add(new Separator());
+    myGroupers.forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
+
+    ActionToolbar rightActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, rightGroup, false);
+    toolBarPanel.add(rightActionToolBar.getComponent());
+    rightActionToolBar.setTargetComponent(myTree);
+    return toolBarPanel;
+  }
+
   @Override
   public void dispose() {
   }
 
   public void updateTree() {
-    ApplicationManager.getApplication().invokeLater(myBuilder::queueUpdate, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate().doWhenDone(() -> {
+      // Remove nodes not presented in the tree from collapsed node values set.
+      // Children retrieving is quick since grouping and run configuration nodes are already constructed.
+      Set<Object> nodes = new HashSet<>();
+      myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
+        @Override
+        public boolean visit(@NotNull AbstractTreeNode node) {
+          nodes.add(node.getValue());
+          return false;
+        }
+      });
+      myCollapsedTreeNodeValues.retainAll(nodes);
+    }), myProject.getDisposed());
+  }
+
+  @Override
+  @NotNull
+  public AbstractTreeBuilder getBuilder() {
+    return myBuilder;
+  }
+
+  private class GroupAction extends ToggleAction implements DumbAware {
+    private DashboardGrouper myGrouper;
+
+    public GroupAction(DashboardGrouper grouper) {
+      super();
+      myGrouper = grouper;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      Presentation presentation = e.getPresentation();
+      ActionPresentation actionPresentation = myGrouper.getRule().getPresentation();
+      presentation.setText(actionPresentation.getText());
+      presentation.setDescription(actionPresentation.getDescription());
+      presentation.setIcon(actionPresentation.getIcon());
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myGrouper.isEnabled();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myGrouper.setEnabled(state);
+      updateTree();
+    }
   }
 }

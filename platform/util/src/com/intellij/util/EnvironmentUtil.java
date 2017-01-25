@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -210,14 +211,20 @@ public class EnvironmentUtil {
       return parseEnv(lines, lineSeparator);
     }
 
+    @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
       String shell = getShell();
-
       if (shell == null || !new File(shell).canExecute()) {
         throw new Exception("shell:" + shell);
       }
-
-      return new ArrayList<String>(Arrays.asList(shell, "-l", "-i"));
+      List<String> commands = ContainerUtil.newArrayList(shell);
+      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
+        // Act as a login shell
+        // tsch does allow to use -l with any other options
+        commands.add("-l");
+      }
+      commands.add("-i"); // enable interactive shell
+      return commands;
     }
 
     @Nullable

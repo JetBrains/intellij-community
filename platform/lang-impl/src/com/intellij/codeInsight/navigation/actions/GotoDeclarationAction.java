@@ -87,7 +87,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {

@@ -31,7 +31,7 @@ REGEXP_FILE
                     RegExpCharImpl: <9>
                       PsiElement(CHARACTER)('9')
                   RegExpCharImpl: < >
-                    PsiElement(CHARACTER)(' ')
+                    PsiElement(CTRL_CHARACTER)(' ')
                   RegExpCharRangeImpl: <a-z>
                     RegExpCharImpl: <a>
                       PsiElement(CHARACTER)('a')

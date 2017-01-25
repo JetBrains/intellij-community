@@ -13,7 +13,6 @@ public class Main {
     String foo = "xyz";
 
     /*check*/
-
       boolean b = selector.andThen(Collections.singleton(/* "xyz" here */ "xyz")::contains).apply(/* foo here */ foo);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ abstract class SourceOperation extends Operation {
   abstract String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context);
 
   @Nullable
-  static SourceOperation createSource(PsiMethodCallExpression call) {
+  static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
     if(callType == null) return null;
@@ -100,19 +100,24 @@ abstract class SourceOperation extends Operation {
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
       return new ForEachSource(args[0]);
     }
+    if (supportUnknownSources) {
+      return new StreamIteratorSource(call);
+    }
     return null;
   }
 
   static class ForEachSource extends SourceOperation {
-    private PsiExpression myQualifier;
+    private @Nullable PsiExpression myQualifier;
 
-    ForEachSource(PsiExpression qualifier) {
+    ForEachSource(@Nullable PsiExpression qualifier) {
       myQualifier = qualifier;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      if(myQualifier != null) {
+        myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      }
     }
 
     @Override
@@ -135,8 +140,9 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + (myQualifier == null ? "this" : myQualifier.getText()) + ") {" + code + "}\n";
+      PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
+        .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+      return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameter.getText() + ") {" + code + "}\n";
     }
   }
 
@@ -160,17 +166,21 @@ abstract class SourceOperation extends Operation {
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String type = outVar.getType();
-      String collection;
+      String iterationParameter;
       PsiExpressionList argList = myCall.getArgumentList();
       if (TypeConversionUtil.isPrimitive(type)) {
-        collection = StreamEx.of(argList.getChildren()).remove(child -> child.textMatches("(") || child.textMatches(")"))
-          .map(PsiElement::getText).joining("", "new " + type + "[] {", "}");
+        // Not using argList.getExpressions() here as we want to preserve comments and formatting between the expressions
+        PsiElement[] children = argList.getChildren();
+        // first and last children are (parentheses), we need to remove them
+        iterationParameter = StreamEx.of(children, 1, children.length - 1)
+          .map(PsiElement::getText)
+          .joining("", "new " + type + "[] {", "}");
       }
       else {
-        collection = "java.util.Arrays.<" + type + ">asList" + argList.getText();
+        iterationParameter = "java.util.Arrays.<" + type + ">asList" + argList.getText();
       }
       return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + collection + ") {" + code + "}\n";
+             "for(" + outVar.getDeclaration() + ": " + iterationParameter + ") {" + code + "}\n";
     }
   }
 
@@ -217,7 +227,7 @@ abstract class SourceOperation extends Operation {
       }
       return context.getLoopLabel() +
              loop+"{\n" +
-             outVar.getDeclaration() + "=" + myFn.getText() + ";\n" + code +
+             outVar.getDeclaration(myFn.getText()) + code +
              "}\n";
     }
   }
@@ -290,6 +300,58 @@ abstract class SourceOperation extends Operation {
              "for(" + outVar.getDeclaration() + " = " + myOrigin.getText() + ";" +
              outVar + (myInclusive ? "<=" : "<") + bound + ";" +
              outVar + "++) {\n" +
+             code + "}\n";
+    }
+  }
+
+  private static class StreamIteratorSource extends SourceOperation {
+    private PsiMethodCallExpression myCall;
+
+    public StreamIteratorSource(PsiMethodCallExpression call) {
+      myCall = call;
+    }
+
+    @Override
+    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+      myCall = (PsiMethodCallExpression)replaceVarReference(myCall, oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myCall);
+    }
+
+    @Override
+    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+      String name = myCall.getMethodExpression().getReferenceName();
+      if (name != null) {
+        String unpluralized = StringUtil.unpluralize(name);
+        if (unpluralized != null && !unpluralized.equals(name)) {
+          outVar.addOtherNameCandidate(unpluralized);
+        }
+      }
+    }
+
+    static String getIteratorType(String type) {
+      switch(type) {
+        case "int":
+          return "java.util.PrimitiveIterator.OfInt";
+        case "long":
+          return "java.util.PrimitiveIterator.OfLong";
+        case "double":
+          return "java.util.PrimitiveIterator.OfDouble";
+        default:
+          return CommonClassNames.JAVA_UTIL_ITERATOR+"<"+type+">";
+      }
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String iterator = context.registerVarName(Arrays.asList("it", "iter", "iterator"));
+      String declaration = getIteratorType(outVar.getType()) + " " + iterator + "=" + myCall.getText() + ".iterator()";
+      String condition = iterator + ".hasNext()";
+      return "for(" + declaration + ";" + condition + ";) {\n" +
+             outVar.getDeclaration(iterator + ".next()") +
              code + "}\n";
     }
   }

@@ -20,10 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.EmptyInputKeyIterator;
-import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -127,14 +124,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                             @NotNull DataExternalizer<T> externalizer,
                             int version) throws IOException {
       super(new MyIndexExtension(indexer, externalizer, version),
-            new MapIndexStorage<Integer, T>(getStorageFile(myName, myLogId),
-                                            EnumeratorIntegerDescriptor.INSTANCE,
-                                            externalizer, 5000, false) {
-              @Override
-              protected void checkCanceled() {
-                ProgressManager.checkCanceled();
-              }
-            }, new EmptyForwardIndex<>());
+            new MyMapIndexStorage<>(myName, myLogId, externalizer), new EmptyForwardIndex<>());
     }
 
     @Override
@@ -145,6 +135,18 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     @Override
     public void requestRebuild(@NotNull Exception ex) {
       myFatalErrorHandler.consume(this, ex);
+    }
+  }
+
+  private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
+    public MyMapIndexStorage(@NotNull String name, @NotNull String logId, @NotNull DataExternalizer<T> externalizer)
+      throws IOException {
+      super(VcsLogFullDetailsIndex.getStorageFile(name, logId), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+    }
+
+    @Override
+    protected void checkCanceled() {
+      ProgressManager.checkCanceled();
     }
   }
 
@@ -194,8 +196,8 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   private static class EmptyForwardIndex<T> implements ForwardIndex<Integer, T> {
     @NotNull
     @Override
-    public InputKeyIterator<Integer, T> getInputKeys(int inputId) {
-      return EmptyInputKeyIterator.getInstance();
+    public InputDataDiffBuilder<Integer, T> getDiffBuilder(int inputId) {
+      return new EmptyInputDataDiffBuilder<>(inputId);
     }
 
     @Override

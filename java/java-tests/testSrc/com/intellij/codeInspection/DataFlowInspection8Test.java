@@ -102,4 +102,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testCapturedWildcardNotNull() { doTest(); }
+  public void testVarargNotNull() { doTestWithCustomAnnotations(); }
+
 }

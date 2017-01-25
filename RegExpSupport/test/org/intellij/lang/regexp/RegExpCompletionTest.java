@@ -87,7 +87,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     @Override
     protected String getBasePath() {
       String homePath = PathManager.getHomePath();
-      File candidate = new File(homePath, "community/RegExpSupport");
+      File candidate = new File(homePath, "community/RegExpSupport/testData/completion");
       if (candidate.isDirectory()) {
         return "/community/RegExpSupport/testData/completion";
       }

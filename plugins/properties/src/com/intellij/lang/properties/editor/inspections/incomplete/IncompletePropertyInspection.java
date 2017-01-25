@@ -113,6 +113,11 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ResourceBundleEditorProblemDescriptor descriptor) {
       final PsiElement element = myElementPointer.getElement();
       if (element == null) {

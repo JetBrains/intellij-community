@@ -391,7 +391,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
 
         @Override
-        public void coloredTextAvailable(@NonNls String text, Key attributes) {
+        public void coloredTextAvailable(@NotNull @NonNls String text, @NotNull Key attributes) {
           super.coloredTextAvailable(text, attributes);
           if (text.toLowerCase().contains("active kernels")) {
             serverStarted[0] = true;

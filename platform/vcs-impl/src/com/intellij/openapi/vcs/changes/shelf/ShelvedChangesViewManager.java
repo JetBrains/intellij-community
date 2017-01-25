@@ -205,6 +205,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
+        myTree.updateUI();
         JPanel rootPanel = createRootPanel();
         myContent = new MyShelfContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);

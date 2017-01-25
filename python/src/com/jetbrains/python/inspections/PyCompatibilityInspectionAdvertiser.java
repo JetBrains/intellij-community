@@ -234,13 +234,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
     final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper tool = profile.getInspectionTool(getCompatibilityInspectionShortName(), project);
     if (tool != null) {
-      // Partially copied from JSLinterInspection 
-      final InspectionProfileImpl inspectionProfileImpl = as(profile, InspectionProfileImpl.class);
-      if (inspectionProfileImpl != null) {
-        final ScopeToolState state = inspectionProfileImpl.getToolDefaultState(tool.getShortName(), project);
-        state.setEnabled(true);
-      }
-      profile.modifyProfile(model -> model.enableTool(tool.getShortName(), null, project));
+      profile.modifyProfile(model -> model.enableTool(tool.getShortName(), project));
       EditInspectionToolsSettingsAction.editToolSettings(project, profile, getCompatibilityInspectionShortName());
     }
   }

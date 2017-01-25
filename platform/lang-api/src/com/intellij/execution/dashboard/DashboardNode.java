@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,5 +25,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface DashboardNode {
   @Nullable
-  Content getContent();
+  default RunContentDescriptor getDescriptor() {
+    return null;
+  }
+
+  @Nullable
+  default Content getContent() {
+    RunContentDescriptor descriptor = getDescriptor();
+    return descriptor == null ? null : descriptor.getAttachedContent();
+  }
+
+  Project getProject();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 Bas Leijdekkers
+ * Copyright 2005-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -613,6 +612,7 @@ public class ExpressionUtils {
     return JavaTokenType.MINUS.equals(tokenType);
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
     final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
@@ -620,6 +620,7 @@ public class ExpressionUtils {
     return target instanceof PsiVariable ? (PsiVariable)target : null;
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -663,10 +664,10 @@ public class ExpressionUtils {
    */
   @Nullable
   public static PsiExpression getValueComparedWithNull(@NotNull PsiBinaryExpression binOp) {
-    if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
-       !binOp.getOperationTokenType().equals(JavaTokenType.NE)) return null;
-    PsiExpression left = binOp.getLOperand();
-    PsiExpression right = binOp.getROperand();
+    final IElementType tokenType = binOp.getOperationTokenType();
+    if(!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) return null;
+    final PsiExpression left = binOp.getLOperand();
+    final PsiExpression right = binOp.getROperand();
     if(isNullLiteral(right)) return left;
     if(isNullLiteral(left)) return right;
     return null;
@@ -884,5 +885,39 @@ public class ExpressionUtils {
     final PsiType type = qualifier.getType();
     if (type == null || type.getArrayDimensions() <= 0) return null;
     return qualifier;
+  }
+
+  /**
+   * Returns a qualifier for reference or creates a corresponding {@link PsiThisExpression} statement if
+   * a qualifier is null
+   *
+   * @param ref a reference expression to get a qualifier from
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   */
+  @NotNull
+  public static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) return qualifier;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+    if (member != null) {
+      PsiClass memberClass = member.getContainingClass();
+      if (memberClass != null) {
+        PsiClass containingClass = ClassUtils.getContainingClass(ref);
+        if (containingClass == null) {
+          containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
+        }
+        if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+          containingClass = ClassUtils.getContainingClass(containingClass);
+          while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+            containingClass = ClassUtils.getContainingClass(containingClass);
+          }
+          if (containingClass != null) {
+            return factory.createExpressionFromText(containingClass.getQualifiedName() + "." + PsiKeyword.THIS, ref);
+          }
+        }
+      }
+    }
+    return factory.createExpressionFromText(PsiKeyword.THIS, ref);
   }
 }

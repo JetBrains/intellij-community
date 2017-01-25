@@ -27,6 +27,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -526,6 +527,23 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
     myIgnoreElements.add(refEntity);
+  }
+
+  @Override
+  public void ignoreElement(@NotNull RefEntity refEntity) {
+    if (refEntity instanceof RefElement) {
+      final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
+      if (descriptors != null) {
+        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
+        List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
+        for (CommonProblemDescriptor descriptor : descriptors) {
+          if (descriptor instanceof ProblemDescriptor && ReadAction.compute(() -> ((ProblemDescriptor)descriptor).getPsiElement()) == psiElement) continue;
+          foreignDescriptors.add(descriptor);
+        }
+        if (foreignDescriptors.size() == descriptors.length) return;
+      }
+    }
+    super.ignoreElement(refEntity);
   }
 
   @Override

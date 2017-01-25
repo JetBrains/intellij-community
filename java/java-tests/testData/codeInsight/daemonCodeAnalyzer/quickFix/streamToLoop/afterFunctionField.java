@@ -7,7 +7,7 @@ public class Main {
   static Predicate<String> nonEmpty = s -> s != null && !s.isEmpty();
 
   private static long test(List<String> strings) {
-      long count = 0;
+      long count = 0L;
       for (String string : strings) {
           if (nonEmpty.test(string)) {
               count++;

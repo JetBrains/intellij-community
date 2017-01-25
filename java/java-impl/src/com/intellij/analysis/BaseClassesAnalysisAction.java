@@ -36,7 +36,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
     super(title, analysisNoon);
   }
 
-  protected abstract void analyzeClasses(final Project project, final AnalysisScope scope, ProgressIndicator indicator);
+  protected abstract void analyzeClasses(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull ProgressIndicator indicator);
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
@@ -79,7 +79,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
     });
   }
 
-  private void doAnalyze(final Project project, final AnalysisScope scope) {
+  private void doAnalyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
       @Override
       @Nullable
@@ -94,7 +94,7 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
     });
   }
 
-  private void compileAndAnalyze(final Project project, final AnalysisScope scope) {
+  private void compileAndAnalyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     if (project.isDisposed()) {
       return;
     }

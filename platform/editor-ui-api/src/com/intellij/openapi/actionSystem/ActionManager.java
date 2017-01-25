@@ -153,6 +153,7 @@ public abstract class ActionManager implements NamedComponent {
    */
   public abstract JComponent createButtonToolbar(final String actionPlace, @NotNull ActionGroup messageActionGroup);
 
+  @Nullable
   public abstract AnAction getActionOrStub(@NonNls String id);
 
   public abstract void addTimerListener(int delay, TimerListener listener);

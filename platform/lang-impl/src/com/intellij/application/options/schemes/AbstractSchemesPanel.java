@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +31,9 @@ import java.util.Collection;
 public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
   private SchemesCombo<T> mySchemesCombo;
-  private DefaultSchemeActions<T> myActions;
+  private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
+  private JLabel myInfoLabel;
 
   public AbstractSchemesPanel() {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -44,11 +46,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     controlsPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
-    mySchemesCombo = new SchemesCombo<>(myActions);
-    controlsPanel.add(mySchemesCombo.getComboBox());
+    mySchemesCombo = new SchemesCombo<>(this);
+    controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
     controlsPanel.add(myToolbar);
-    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComboBox().getPreferredSize().height));
+    myInfoLabel = new JLabel();
+    controlsPanel.add(myInfoLabel);
+    controlsPanel.add(Box.createHorizontalGlue());
+    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
     add(Box.createVerticalGlue());
     add(Box.createRigidArea(new Dimension(0, 10)));
@@ -58,7 +63,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     toolbarActionGroup.add(new TopActionGroup());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarActionGroup, true);
-    return toolbar.getComponent();
+    JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
+    return toolbarComponent;
   }
 
 
@@ -85,7 +92,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     return myToolbar;
   }
 
-  protected abstract DefaultSchemeActions<T> createSchemeActions();
+  protected abstract AbstractSchemeActions<T> createSchemeActions();
   
   public T getSelectedScheme() {
     return mySchemesCombo.getSelectedScheme();
@@ -102,4 +109,28 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   public void disposeUIResources() {
     removeAll();
   }
+  
+  public void startEdit() {
+    mySchemesCombo.startEdit();
+  }
+  
+  public void cancelEdit() {
+    mySchemesCombo.cancelEdit();
+  }
+
+  public void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+    myInfoLabel.setText(message);
+    myInfoLabel.setForeground(messageType.getTitleForeground());
+  }
+
+  public void clearInfo() {
+    myInfoLabel.setText(null);
+  }
+
+  public AbstractSchemeActions<T> getActions() {
+    return myActions;
+  }
+
+  @NotNull
+  public abstract SchemesModel<T> getModel();
 }

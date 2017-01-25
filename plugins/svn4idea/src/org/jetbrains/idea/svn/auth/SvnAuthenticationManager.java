@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SystemProperties;
@@ -58,6 +57,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 /**
  * @author alex
@@ -1072,13 +1073,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       };
 
       if (myInteraction.promptInAwt()) {
-        new AbstractCalledLater(myProject, getCurrent()) {
-          @Override
-          public void run() {
-            saveOnce[0] = Boolean.TRUE.equals(prompt.get());
-            ApplicationManager.getApplication().executeOnPooledThread(actualSave);
-          }
-        }.callMe();
+        runOrInvokeLaterAboveProgress(() -> {
+          saveOnce[0] = Boolean.TRUE.equals(prompt.get());
+          ApplicationManager.getApplication().executeOnPooledThread(actualSave);
+        }, getCurrent(), myProject);
       } else {
         saveOnce[0] = Boolean.TRUE.equals(prompt.get());
         actualSave.run();

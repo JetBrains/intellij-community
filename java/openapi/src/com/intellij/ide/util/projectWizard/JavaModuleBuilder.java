@@ -85,7 +85,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
-    return sdkType instanceof JavaSdkType;
+    return sdkType instanceof JavaSdkType && !((JavaSdkType)sdkType).isDependent();
   }
 
   @Nullable

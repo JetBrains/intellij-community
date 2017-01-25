@@ -76,7 +76,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
+        if (project == myProject) {
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
+        }
       }
     });
   }

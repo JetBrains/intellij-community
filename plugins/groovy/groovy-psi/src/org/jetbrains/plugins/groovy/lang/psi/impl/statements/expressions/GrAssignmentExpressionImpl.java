@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressio
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -61,7 +62,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   @NotNull
   public GrExpression getLValue() {
-    return findExpressionChild(this);
+    return Objects.requireNonNull(findExpressionChild(this));
   }
 
   @Override
@@ -151,7 +152,18 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Nullable
   @Override
   public PsiType getLeftType() {
-    return getLValue().getType();
+    final GrExpression lValue = getLValue();
+    if (lValue instanceof GrIndexProperty) {
+      // now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
+      // by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
+      return ((GrIndexProperty)lValue).getGetterType();
+    }
+    else if (lValue instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)lValue).getRValueType();
+    }
+    else {
+      return lValue.getType();
+    }
   }
 
   @Nullable
@@ -161,31 +173,27 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     return rValue == null ? null : rValue.getType();
   }
 
-  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl> RESOLVER = new ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
-      final IElementType opType = assignmentExpression.getOperationTokenType();
-      if (opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
-
-      final GrExpression lValue = assignmentExpression.getLValue();
-      final PsiType lType;
-      if (lValue instanceof GrIndexProperty) {
-          /*
-          now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
-          by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
-           */
-        lType = ((GrIndexProperty)lValue).getGetterType();
-      }
-      else {
-        lType = lValue.getType();
-      }
-      if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-      PsiType rType = assignmentExpression.getRightType();
-
-      final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
-      return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, lValue, new PsiType[]{rType});
+  @Nullable
+  @Override
+  public PsiType getType() {
+    if (TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(getOperationTokenType())) {
+      return super.getType();
     }
+    else {
+      return getRightType();
+    }
+  }
+
+  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpression> RESOLVER = (assignmentExpression, incompleteCode) -> {
+    final IElementType opType = assignmentExpression.getOperationTokenType();
+    if (opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
+
+    PsiType lType = assignmentExpression.getLeftType();
+    if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+    PsiType rType = assignmentExpression.getRightType();
+
+    final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
+    return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, assignmentExpression, new PsiType[]{rType});
   };
 }

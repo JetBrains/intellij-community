@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,36 @@ import com.intellij.codeInspection.bulkOperation.BulkMethodInfo;
 import com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider;
 import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
 
 public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTestCase {
+
+  private static final BulkMethodInfoProvider TEST_PROVIDER = new BulkMethodInfoProvider() {
+    @NotNull
+    @Override
+    public Stream<BulkMethodInfo> consumers() {
+      return Stream.of(new BulkMethodInfo("testpackage.TestClass", "test", "test"));
+    }
+  };
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    Extensions.getArea(null).getExtensionPoint(BulkMethodInfoProvider.KEY.getName())
-      .registerExtension(new BulkMethodInfoProvider() {
-        @NotNull
-        @Override
-        public Stream<BulkMethodInfo> consumers() {
-          return Stream.of(new BulkMethodInfo("testpackage.TestClass", "test", "test"));
-        }
-      });
     UseBulkOperationInspection inspection = new UseBulkOperationInspection();
     inspection.USE_ARRAYS_AS_LIST = true;
     return new LocalInspectionTool[]{
       inspection
     };
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), BulkMethodInfoProvider.KEY, TEST_PROVIDER, getTestRootDisposable());
   }
 
   public void test() throws Exception { doAllTests(); }

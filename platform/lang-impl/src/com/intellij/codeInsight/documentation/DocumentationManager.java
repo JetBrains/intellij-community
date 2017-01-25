@@ -189,7 +189,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
-          if (action instanceof ScrollingUtil.ListScrollAction) return;
+          if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;

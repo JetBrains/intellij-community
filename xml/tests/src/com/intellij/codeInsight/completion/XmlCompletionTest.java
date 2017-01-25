@@ -345,7 +345,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeSingleQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -357,7 +357,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeNoneQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;

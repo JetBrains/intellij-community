@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1312,6 +1312,84 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  public void testAnyIsNone() {
+    doTest("None",
+           "def test_1(c):\n" +
+           "  if c is None:\n" +
+           "    expr = c\n");
+  }
+
+  public void testElseAfterIsNotNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
+  public void testElseAfterIsNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
+  public void testElseAfterAnyIsNone() {
+    doTest("Any",
+           "def test_1(c):\n" +
+           "  if c is None:\n" +
+           "    print(c)\n" +
+           "  else:\n" +
+           "    expr = c\n");
+  }
+
+  // PY-21897
+  public void testElseAfterIfReferenceStatement() {
+    doTest("Any",
+           "def test(a):\n" +
+           "  if a:\n" +
+           "    print(a)\n" +
+           "  else:\n" +
+           "    expr = a\n");
+  }
+
   public void testHeterogeneousListLiteral() {
     doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
 
@@ -1528,6 +1606,19 @@ public class PyTypeTest extends PyTestCase {
   public void testSumResult() {
     doTest("int",
            "expr = sum([1, 2, 3])");
+  }
+
+  // PY-21994
+  public void testOptionalAfterIfNot() {
+    doTest("List[int]",
+           "def bug(foo):\n" +
+           "    \"\"\"\n" +
+           "    Args:\n" +
+           "        foo (list[int]|None): an optional list of ints \n" +
+           "    \"\"\"\n" +
+           "    if not foo:\n" +
+           "        return None\n" +
+           "    expr = foo");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

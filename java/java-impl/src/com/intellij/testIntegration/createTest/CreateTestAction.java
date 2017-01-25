@@ -16,6 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -94,7 +95,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         psiClass instanceof PsiAnonymousClass) {
       return false;
     }
-    return true;
+    
+    return TestFrameworks.detectFramework(psiClass) == null;
   }
 
   @Override

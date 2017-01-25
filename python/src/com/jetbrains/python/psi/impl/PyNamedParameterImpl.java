@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -35,6 +36,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -166,13 +168,25 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @NotNull
-  public String getRepr(boolean includeDefaultValue) {
-    StringBuilder sb = new StringBuilder();
+  @Override
+  public String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    final StringBuilder sb = new StringBuilder();
+
     if (isPositionalContainer()) sb.append("*");
     else if (isKeywordContainer()) sb.append("**");
+
     sb.append(getName());
+
+    if (context != null) {
+      final PyType argumentType = getArgumentType(context);
+      if (argumentType != null) {
+        sb.append(": ");
+        sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+      }
+    }
+
     final PyExpression defaultValue = getDefaultValue();
-    if (includeDefaultValue && defaultValue != null) {
+    if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue)) {
       String representation = PyUtil.getReadableRepr(defaultValue, true);
       if (defaultValue instanceof PyStringLiteralExpression) {
         final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
@@ -182,7 +196,34 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       }
       sb.append("=").append(representation);
     }
+
     return sb.toString();
+  }
+
+  private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue, @Nullable PyExpression defaultValue) {
+    if (!includeDefaultValue || defaultValue == null) return false;
+
+    // In case of `None` default value, it will be listed in the type as `Optional[...]` or `Union[..., None, ...]`
+    return !PyNames.NONE.equals(defaultValue.getText());
+  }
+
+  @Override
+  @Nullable
+  public PyType getArgumentType(@NotNull TypeEvalContext context) {
+    final PyType parameterType = context.getType(this);
+
+    if (parameterType instanceof PyCollectionType) {
+      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
+
+      if (isPositionalContainer()) {
+        return paramCollectionType.getIteratedItemType();
+      }
+      else if (isKeywordContainer()) {
+        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
+      }
+    }
+
+    return parameterType;
   }
 
   @Override

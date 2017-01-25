@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,7 @@ public class AllIcons {
     public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); // 11x11
     public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png"); // 16x16
     public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); // 16x16
+    public static final Icon SynchronizeFS = IconLoader.getIcon("/actions/synchronizeFS.png"); // 16x16
     public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.png"); // 16x16
     public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); // 16x16
     public static final Icon ToggleSoftWrap = IconLoader.getIcon("/actions/toggleSoftWrap.png"); // 16x16
@@ -373,6 +374,7 @@ public class AllIcons {
     public static final Icon JavaOutsideSource = IconLoader.getIcon("/fileTypes/javaOutsideSource.png"); // 16x16
     public static final Icon JavaScript = IconLoader.getIcon("/fileTypes/javaScript.png"); // 16x16
     public static final Icon Json = IconLoader.getIcon("/fileTypes/json.png"); // 16x16
+    public static final Icon JsonSchema = IconLoader.getIcon("/fileTypes/jsonSchema.png"); // 16x16
     public static final Icon Jsp = IconLoader.getIcon("/fileTypes/jsp.png"); // 16x16
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.png"); // 16x16
     public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.png"); // 16x16
@@ -387,13 +389,13 @@ public class AllIcons {
     public static final Icon XsdFile = IconLoader.getIcon("/fileTypes/xsdFile.png"); // 16x16
 
   }
-  public static final Icon Frame_background = IconLoader.getIcon("/frame_background.png"); // 256x256
   
   public static class General {
     public static final Icon Add = IconLoader.getIcon("/general/add.png"); // 16x16
     public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.png"); // 16x16
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.png"); // 16x16
     public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.png"); // 7x6
+    public static final Icon ArrowDown_white = IconLoader.getIcon("/general/arrowDown_white.png"); // 7x6
     public static final Icon AutohideOff = IconLoader.getIcon("/general/autohideOff.png"); // 14x14
     public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/autohideOffInactive.png"); // 14x14
     public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/autohideOffPressed.png"); // 22x20
@@ -522,6 +524,7 @@ public class AllIcons {
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
+    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/general/siblingInheritedMethod.png"); // 12x12
     public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
     public static final Icon SplitCenterH = IconLoader.getIcon("/general/splitCenterH.png"); // 7x7
     public static final Icon SplitCenterV = IconLoader.getIcon("/general/splitCenterV.png"); // 6x7
@@ -989,6 +992,7 @@ public class AllIcons {
   public static class ObjectBrowser {
     public static final Icon AbbreviatePackageNames = IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"); // 16x16
     public static final Icon CompactEmptyPackages = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png"); // 16x16
+    public static final Icon FlattenModules = IconLoader.getIcon("/objectBrowser/flattenModules.png"); // 16x16
     public static final Icon FlattenPackages = IconLoader.getIcon("/objectBrowser/flattenPackages.png"); // 16x16
     public static final Icon ShowEditorHighlighting = IconLoader.getIcon("/objectBrowser/showEditorHighlighting.png"); // 16x16
     public static final Icon ShowLibraryContents = IconLoader.getIcon("/objectBrowser/showLibraryContents.png"); // 16x16
@@ -1296,6 +1300,7 @@ public class AllIcons {
     public static final Icon CloseHover = IconLoader.getIcon("/windows/closeHover.png"); // 16x16
     public static final Icon CloseInactive = IconLoader.getIcon("/windows/closeInactive.png"); // 16x16
     public static final Icon HelpButton = IconLoader.getIcon("/windows/helpButton.png"); // 16x16
+    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
     public static final Icon MaximizeInactive = IconLoader.getIcon("/windows/maximizeInactive.png"); // 16x16
     public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
     public static final Icon MinimizeInactive = IconLoader.getIcon("/windows/minimizeInactive.png"); // 16x16

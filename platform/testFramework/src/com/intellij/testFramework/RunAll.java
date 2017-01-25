@@ -33,17 +33,17 @@ public class RunAll implements Runnable {
   private final List<ThrowableRunnable<?>> myActions;
 
   @SafeVarargs
-  public RunAll(ThrowableRunnable<Throwable>... actions) {
+  public RunAll(@NotNull ThrowableRunnable<Throwable>... actions) {
     this(ContainerUtil.newArrayList(actions));
   }
 
-  private RunAll(List<ThrowableRunnable<?>> actions) {
+  private RunAll(@NotNull List<ThrowableRunnable<?>> actions) {
     myActions = actions;
   }
 
   @SafeVarargs
   @Contract(pure=true)
-  public final RunAll append(ThrowableRunnable<Throwable>... actions) {
+  public final RunAll append(@NotNull ThrowableRunnable<Throwable>... actions) {
     return new RunAll(ContainerUtil.concat(myActions, ContainerUtil.newArrayList(actions)));
   }
 

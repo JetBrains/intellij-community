@@ -794,14 +794,27 @@ public final class TreeUtil {
     expand(tree, new TreePath(tree.getModel().getRoot()), levels);
   }
 
-  private static void expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {
-    if (levels == 0) return;
+  /**
+   * Expands n levels of the tree counting from the root and return true if there is no nodes to expand
+   * @param tree to expand nodes of
+   * @param levels depths of the expantion
+   */
+  public static boolean expandWithResult(@NotNull JTree tree, int levels) {
+    return expand(tree, new TreePath(tree.getModel().getRoot()), levels);
+  }
+
+  private static boolean expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {
+    if (levels == 0) return false;
     tree.expandPath(path);
     TreeNode node = (TreeNode)path.getLastPathComponent();
     Enumeration children = node.children();
+
+    boolean isReady = true;
     while (children.hasMoreElements()) {
-      expand(tree, path.pathByAddingChild(children.nextElement()) , levels - 1);
+      if (!expand(tree, path.pathByAddingChild(children.nextElement()) , levels - 1))
+        isReady = false;
     }
+    return isReady;
   }
 
   @NotNull

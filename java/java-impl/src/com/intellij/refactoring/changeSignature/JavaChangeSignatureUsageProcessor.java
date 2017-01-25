@@ -764,7 +764,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
       if (newName != null && !newName.equals(method.getName())) {
         final PsiIdentifier nameId = method.getNameIdentifier();
-        assert nameId != null;
+        assert nameId != null : method;
         nameId.replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createIdentifier(newName));
       }
     }

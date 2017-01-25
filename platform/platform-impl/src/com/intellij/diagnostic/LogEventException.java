@@ -16,13 +16,15 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.psi.impl.DebugUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class LogEventException extends RuntimeException {
+public class LogEventException extends RuntimeException implements ExceptionWithAttachments {
   private final IdeaLoggingEvent myLogMessage;
 
   public LogEventException(String userMessage, final String details, final Attachment... attachments) {
@@ -36,5 +38,15 @@ public class LogEventException extends RuntimeException {
 
   public IdeaLoggingEvent getLogMessage() {
     return myLogMessage;
+  }
+
+  @NotNull
+  @Override
+  public Attachment[] getAttachments() {
+    Object data = myLogMessage.getData();
+    if (data instanceof LogMessageEx) {
+      return ((LogMessageEx)data).getAllAttachments().toArray(Attachment.EMPTY_ARRAY);
+    }
+    return Attachment.EMPTY_ARRAY;
   }
 }

@@ -75,8 +75,7 @@ public class DataFlowRunner {
   private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
-      final PsiElement parent = container.getParent();
-      final PsiCodeBlock block = DfaPsiUtil.getTopmostBlockInSameClass(parent);
+      PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
         final RunnerResult result = analyzeMethod(block, visitor);
         if (result == RunnerResult.OK) {

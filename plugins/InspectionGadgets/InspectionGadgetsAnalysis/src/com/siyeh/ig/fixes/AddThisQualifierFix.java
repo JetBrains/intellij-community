@@ -17,16 +17,13 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,37 +41,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
     if (expression.getQualifierExpression() != null) {
       return;
     }
-    final PsiElement target = expression.resolve();
-    if (!(target instanceof PsiMember)) {
-      return;
-    }
-    final PsiMember member = (PsiMember)target;
-    final PsiClass memberClass = member.getContainingClass();
-    if (memberClass == null) {
-      return;
-    }
-    PsiClass containingClass = ClassUtils.getContainingClass(expression);
-    @NonNls final String newExpression;
-    if (InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-      newExpression = "this." + expression.getText();
-    }
-    else {
-      containingClass = ClassUtils.getContainingClass(containingClass);
-      if (containingClass == null) {
-        return;
-      }
-      while (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-        containingClass = ClassUtils.getContainingClass(containingClass);
-        if (containingClass == null) {
-          return;
-        }
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (qualifiedName == null) {
-        return;
-      }
-      newExpression = qualifiedName + ".this." + expression.getText();
-    }
+    final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
+    @NonNls final String newExpression = thisQualifier.getText() + "." + expression.getText();
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
   }
 }

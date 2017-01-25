@@ -537,19 +537,17 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
     List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
-    if (list != null) {
-      for (Element additionalIndentElement : list) {
-        String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
-        if (!StringUtil.isEmpty(fileTypeId)) {
-          FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-          if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
-            target = new TempFileType(fileTypeId);
-          }
-
-          IndentOptions options = getDefaultIndentOptions(target);
-          options.readExternal(additionalIndentElement);
-          registerAdditionalIndentOptions(target, options);
+    for (Element additionalIndentElement : list) {
+      String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+      if (!StringUtil.isEmpty(fileTypeId)) {
+        FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+        if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+          target = new TempFileType(fileTypeId);
         }
+
+        IndentOptions options = getDefaultIndentOptions(target);
+        options.readExternal(additionalIndentElement);
+        registerAdditionalIndentOptions(target, options);
       }
     }
 
@@ -578,7 +576,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     if (!myAdditionalIndentOptions.isEmpty()) {
       FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-      Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
+      Arrays.sort(fileTypes, Comparator.comparing(FileType::getDefaultExtension));
       for (FileType fileType : fileTypes) {
         Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
         myAdditionalIndentOptions.get(fileType).serialize(additionalIndentOptions, getDefaultIndentOptions(fileType));
@@ -768,14 +766,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).CONTINUATION_INDENT_SIZE;
   }
 
-  public int getLabelIndentSize(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_SIZE;
-  }
-
-  public boolean getLabelIndentAbsolute(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_ABSOLUTE;
-  }
-
   public int getTabSize(FileType fileType) {
     return getIndentOptions(fileType).TAB_SIZE;
   }
@@ -894,13 +884,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (!exist) {
       myAdditionalIndentOptions.put(fileType, options);
     }
-  }
-
-  public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    if (!myLoadedAdditionalIndentOptions) {
-      loadAdditionalIndentOptions();
-    }
-    return myAdditionalIndentOptions.get(fileType);
   }
 
   private void loadAdditionalIndentOptions() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,6 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.SPREAD_ARGUMENT) return new GrSpreadArgumentImpl(node);
     if (elem == GroovyElementTypes.ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
 
-    if (elem == GroovyElementTypes.BALANCED_BRACKETS) return new GroovyASTPsiElementImpl(node);
     if (elem == GroovyTokenTypes.mREGEX_LITERAL || elem == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) return new GroovyASTPsiElementImpl(node);
 
     return new ASTWrapperPsiElement(node);

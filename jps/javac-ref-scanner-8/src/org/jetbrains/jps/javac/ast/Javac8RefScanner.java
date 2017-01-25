@@ -4,6 +4,7 @@ import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MemberReferenceTree;
 import com.sun.source.tree.Tree;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
@@ -18,7 +19,10 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     final TypeMirror type = refCollector.getType(node);
     final Element element = refCollector.getTypeUtility().asElement(type);
     if (element != null) {
-      refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(refCollector.asJavacRef(element)));
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
+      if (ref != null) {
+        refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(ref));
+      }
     }
     return super.visitLambdaExpression(node, refCollector);
   }
@@ -27,11 +31,17 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
   public Tree visitMemberReference(MemberReferenceTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null) {
-      refCollector.sinkReference(refCollector.asJavacRef(element));
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
+      if (ref != null) {
+        refCollector.sinkReference(ref);
+      }
     }
     final TypeMirror type = refCollector.getType(node);
     if (type != null) {
-      refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(refCollector.asJavacRef(refCollector.getTypeUtility().asElement(type))));
+      final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(refCollector.getTypeUtility().asElement(type));
+      if (ref != null) {
+        refCollector.sinkDeclaration(new JavacDef.JavacFunExprDef(ref));
+      }
     }
     return super.visitMemberReference(node, refCollector);
   }

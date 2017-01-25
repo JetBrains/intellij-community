@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,7 @@ abstract class FunctionHelper {
     PsiType returnType = interfaceMethod.getReturnType();
     if (returnType == null) return null;
     returnType = ((PsiClassType)type).resolveGenerics().getSubstitutor().substitute(returnType);
+    type = fixType(type, expression.getProject());
     if (expression instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
       PsiParameterList list = lambda.getParameterList();
@@ -178,6 +179,29 @@ abstract class FunctionHelper {
       }
     }
     return new ComplexExpressionFunctionHelper(returnType, type, interfaceMethod.getName(), expression);
+  }
+
+  private static PsiType fixType(PsiType type, Project project) {
+    if(type instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)type;
+      PsiClass aClass = classType.resolve();
+      if (aClass != null && classType.getParameterCount() != 0) {
+        PsiType[] parameters = classType.getParameters();
+        Arrays.asList(parameters).replaceAll(t -> fixType(t, project));
+        return JavaPsiFacade.getElementFactory(project).createType(aClass, parameters);
+      }
+    }
+    else if(type instanceof PsiArrayType) {
+      PsiType componentType = ((PsiArrayType)type).getComponentType();
+      PsiType fixedType = fixType(componentType, project);
+      if(fixedType != componentType) {
+        return fixedType.createArrayType();
+      }
+    }
+    else if(type instanceof PsiCapturedWildcardType) {
+      return ((PsiCapturedWildcardType)type).getUpperBound();
+    }
+    return type;
   }
 
   @Nullable

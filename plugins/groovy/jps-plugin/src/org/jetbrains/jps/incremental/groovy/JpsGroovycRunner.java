@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -388,8 +389,11 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     // IMPORTANT! must be the first in classpath
     cp.addAll(GroovyBuilder.getGroovyRtRoots());
 
-    for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
-      cp.add(FileUtil.toCanonicalPath(file.getPath()));
+    if (SystemProperties.getBooleanProperty("groovyc.include.jdk.into.compilation.classpath", false)) {
+      addFilePaths(cp, ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false));
+    } else {
+      addFilePaths(cp, ProjectPaths.getRuntimeBootClasspath(chunk));
+      addFilePaths(cp, ProjectPaths.getCompilationModulePath(chunk, false));
     }
 
     for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
@@ -397,6 +401,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     }
 
     return cp;
+  }
+
+  private static void addFilePaths(Set<String> cp, Collection<File> files) {
+    for (File file : files) {
+      cp.add(FileUtil.toCanonicalPath(file.getPath()));
+    }
   }
 
   private Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<T, String> finalOutputs) throws IOException {

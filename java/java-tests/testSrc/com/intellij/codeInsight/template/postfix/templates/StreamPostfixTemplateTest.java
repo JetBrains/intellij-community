@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -57,7 +58,7 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testDoNotExpandOnJavaLess8() {
-    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6, getTestRootDisposable());
     doTest();
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
+ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.testFramework.PlatformTestCase;
@@ -146,4 +146,30 @@ public class AlarmTest extends PlatformTestCase {
     assertEquals("12", sb.toString());
   }
 
+  public void testWaitForAllExecutedMustWaitUntilExecutionFinish() throws Exception {
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
+    StringBuffer sb = new StringBuffer();
+
+    alarm.addRequest(() -> {
+      TimeoutUtil.sleep(1000);
+      sb.append("1");
+    }, 1);
+    alarm.addRequest(() -> {
+      TimeoutUtil.sleep(1000);
+      sb.append("2");
+    }, 5);
+
+    assertEquals("", sb.toString());
+    try {
+      // started to execute but not finished yet
+      alarm.waitForAllExecuted(100, TimeUnit.MILLISECONDS);
+      fail();
+    }
+    catch (TimeoutException ignored) {
+    }
+
+    alarm.waitForAllExecuted(3000, TimeUnit.MILLISECONDS);
+
+    assertEquals(2, sb.length());
+  }
 }

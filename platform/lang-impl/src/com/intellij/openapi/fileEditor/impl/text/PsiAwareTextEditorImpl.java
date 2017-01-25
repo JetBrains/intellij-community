@@ -58,7 +58,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       if (foldingState != null) {
         foldingState.setToEditor(getEditor());
       }
-      if (psiFile != null) {
+      if (psiFile != null && psiFile.isValid()) {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
       EditorNotifications.getInstance(myProject).updateNotifications(myFile);

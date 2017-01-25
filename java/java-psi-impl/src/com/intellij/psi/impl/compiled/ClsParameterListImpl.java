@@ -38,7 +38,7 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
   }
 
   @Override
-  public int getParameterIndex(PsiParameter parameter) {
+  public int getParameterIndex(@NotNull PsiParameter parameter) {
     assert parameter.getParent() == this;
     return PsiImplUtil.getParameterIndex(parameter, this);
   }

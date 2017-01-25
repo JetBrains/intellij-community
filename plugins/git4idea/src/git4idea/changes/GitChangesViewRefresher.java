@@ -15,7 +15,6 @@
  */
 package git4idea.changes;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
 import git4idea.repo.GitRepository;
@@ -32,7 +31,7 @@ public class GitChangesViewRefresher implements ChangesViewRefresher {
 
   @Override
   public void refresh(@NotNull Project project) {
-    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (GitRepository repository : repositoryManager.getRepositories()) {
       repository.getUntrackedFilesHolder().invalidate();
     }

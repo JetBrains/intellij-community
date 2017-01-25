@@ -25,10 +25,12 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.util.PropertyOwner;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,29 +41,16 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
   @NotNull
   @Override
   public List<JavaLambdaTreeElement> provideNodes(@NotNull TreeElement node) {
-    if (node instanceof PsiMethodTreeElement ||
-        node instanceof PsiFieldTreeElement ||
-        node instanceof ClassInitializerTreeElement ||
-        node instanceof JavaLambdaTreeElement) {
-      final PsiElement el = ((PsiTreeElementBase)node).getElement();
-      if (el != null) {
-        final List<JavaLambdaTreeElement> result = new ArrayList<>();
-        el.accept(new JavaRecursiveElementVisitor() {
-          @Override
-          public void visitLambdaExpression(PsiLambdaExpression expression) {
-            super.visitLambdaExpression(expression);
-            result.add(new JavaLambdaTreeElement(expression));
-          }
-
-          @Override
-          public void visitClass(PsiClass aClass) {
-            //stop at class level
-          }
-        });
-        return result;
-      }
+    if (!(node instanceof PsiTreeElementBase)) {
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
+    PsiElement element = ((PsiTreeElementBase)node).getElement();
+    return SyntaxTraverser.psiTraverser(element)
+      .expand(o -> o == element || !(o instanceof PsiMember || o instanceof PsiLambdaExpression))
+      .filter(PsiLambdaExpression.class)
+      .filter(o -> o != element)
+      .map(o -> new JavaLambdaTreeElement(o))
+      .toList();
   }
 
   @NotNull

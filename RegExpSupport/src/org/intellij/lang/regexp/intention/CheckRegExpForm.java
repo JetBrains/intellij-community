@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -47,10 +48,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.regexp.RegExpFileType;
-import org.intellij.lang.regexp.RegExpMatchResult;
-import org.intellij.lang.regexp.RegExpMatcherProvider;
-import org.intellij.lang.regexp.RegExpModifierProvider;
+import org.intellij.lang.regexp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -84,8 +82,16 @@ public class CheckRegExpForm {
     myProject = myRegexpFile.getProject();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
 
-    final RegExpFileType tmpFileType = new RegExpFileType(myRegexpFile.getLanguage()); // for correct syntax highlighting
-    myRegExp = new EditorTextField(document, myProject, tmpFileType);
+    final Language language = myRegexpFile.getLanguage();
+    final LanguageFileType fileType;
+    if (language instanceof RegExpLanguage) {
+      fileType = RegExpLanguage.INSTANCE.getAssociatedFileType();
+    }
+    else {
+      // for correct syntax highlighting
+      fileType = new RegExpFileType(language);
+    }
+    myRegExp = new EditorTextField(document, myProject, fileType);
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bulkOperation;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
@@ -26,10 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -37,41 +33,35 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * @author Tagir Valeev
  */
 public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool {
-  private List<BulkMethodInfo> myInfos = StreamEx.of(BulkMethodInfoProvider.KEY.getExtensions())
-    .flatMap(BulkMethodInfoProvider::consumers).toList();
+  private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Use Arrays.asList() to adapt arrays", this, "USE_ARRAYS_AS_LIST");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.replace.with.bulk.wrap.arrays"), this,
+                                          "USE_ARRAYS_AS_LIST");
   }
 
   @Nullable
-  private BulkMethodInfo findInfo(PsiReferenceExpression ref) {
-    return StreamEx.of(myInfos).findFirst(info -> info.isMyMethod(ref)).orElse(null);
-  }
-
-  private static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
-    PsiExpression qualifier = ref.getQualifierExpression();
-    if (qualifier != null) return qualifier;
-    return JavaPsiFacade.getElementFactory(ref.getProject()).createExpressionFromText("this", ref);
+  private static BulkMethodInfo findInfo(PsiReferenceExpression ref) {
+    return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensions())
+      .flatMap(BulkMethodInfoProvider::consumers).findFirst(info -> info.isMyMethod(ref)).orElse(null);
   }
 
   @Nullable
   private static PsiExpression findIterable(PsiMethodCallExpression expression) {
-    PsiElement parent = expression.getParent();
     PsiExpression[] args = expression.getArgumentList().getExpressions();
     if (args.length != 1) return null;
     PsiExpression arg = args[0];
+    PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression) {
       return findIterableForLambda((PsiLambdaExpression)parent, arg);
     }
@@ -147,54 +137,13 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
 
   @Nullable
   private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
-    PsiExpression indexExpression = null;
-    PsiExpression iterable = null;
-    // Check that getElementExpression is either list.get(idx) or arr[idx] extracting idx and list/arr
-    if (getElementExpression instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)getElementExpression;
-      indexExpression = arrayAccess.getIndexExpression();
-      iterable = arrayAccess.getArrayExpression();
-    }
-    else if (getElementExpression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)getElementExpression;
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length != 1 || !MethodCallUtils.isCallToMethod(call, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT)) {
-        return null;
-      }
-      indexExpression = args[0];
-      iterable = getQualifierOrThis(call.getMethodExpression());
-    }
-    if (iterable == null) return null;
-
-    // Check that loop initialization is like `int idx = 0` and loop update is like `idx++`
-    PsiStatement initialization = loop.getInitialization();
-    if (!(initialization instanceof PsiDeclarationStatement)) return null;
-    PsiElement[] declaredElements = ((PsiDeclarationStatement)initialization).getDeclaredElements();
-    if (declaredElements.length != 1 || !(declaredElements[0] instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable indexVariable = (PsiLocalVariable)declaredElements[0];
-    if (!ExpressionUtils.isReferenceTo(indexExpression, indexVariable) ||
-        !ExpressionUtils.isZero(indexVariable.getInitializer()) ||
-        !VariableAccessUtils.variableIsIncremented(indexVariable, loop.getUpdate())) {
-      return null;
-    }
-
-    // Check that loop condition is like `idx < arr.length` or `idx < list.size()`
-    PsiExpression condition = loop.getCondition();
-    if (!(condition instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-    if (!binOp.getOperationTokenType().equals(JavaTokenType.LT)) return null;
-    if (!ExpressionUtils.isReferenceTo(binOp.getLOperand(), indexVariable)) return null;
-    PsiExpression bound = binOp.getROperand();
-    if (bound instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression boundCall = (PsiMethodCallExpression)bound;
-      if (!MethodCallUtils.isCallToMethod(boundCall, CommonClassNames.JAVA_UTIL_LIST, PsiType.INT, "size")) return null;
-      PsiExpression sizeQualifier = getQualifierOrThis(boundCall.getMethodExpression());
-      if (PsiEquivalenceUtil.areElementsEquivalent(sizeQualifier, iterable)) return sizeQualifier;
-    } else {
-      PsiExpression arrayExpression = ExpressionUtils.getArrayFromLengthExpression(bound);
-      if (arrayExpression != null && PsiEquivalenceUtil.areElementsEquivalent(arrayExpression, iterable)) return arrayExpression;
-    }
-    return null;
+    CountingLoop countingLoop = CountingLoop.from(loop);
+    if (countingLoop == null || countingLoop.isIncluding() || !ExpressionUtils.isZero(countingLoop.getInitializer())) return null;
+    IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
+    if (container == null) return null;
+    PsiExpression index = container.extractIndexFromGetExpression(getElementExpression);
+    if (!ExpressionUtils.isReferenceTo(index, countingLoop.getCounter())) return null;
+    return container.getQualifier();
   }
 
   @Nullable
@@ -208,27 +157,22 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
     if (!(parent instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression parentCall = (PsiMethodCallExpression)parent;
     PsiExpression parentQualifier = PsiUtil.skipParenthesizedExprDown(parentCall.getMethodExpression().getQualifierExpression());
-    if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_LANG_ITERABLE, null,
-                                       "forEach", new PsiType[]{null})) {
-      return getQualifierOrThis(parentCall.getMethodExpression());
+    if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_LANG_ITERABLE, null, "forEach", new PsiType[]{null})) {
+      return ExpressionUtils.getQualifierOrThis(parentCall.getMethodExpression());
     }
-    if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, null,
-                                       Pattern.compile("forEach(Ordered)?"), new PsiType[]{null}) &&
+    if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, FOR_EACH_METHOD, new PsiType[]{null}) &&
         parentQualifier instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression grandParentCall = (PsiMethodCallExpression)parentQualifier;
-      if (MethodCallUtils.isCallToMethod(grandParentCall, CommonClassNames.JAVA_UTIL_COLLECTION, null,
-                                         "stream", PsiType.EMPTY_ARRAY)) {
-        return getQualifierOrThis(grandParentCall.getMethodExpression());
+      if (MethodCallUtils.isCallToMethod(grandParentCall, CommonClassNames.JAVA_UTIL_COLLECTION, null, "stream", PsiType.EMPTY_ARRAY)) {
+        return ExpressionUtils.getQualifierOrThis(grandParentCall.getMethodExpression());
       }
       PsiExpression[] grandParentArgs = grandParentCall.getArgumentList().getExpressions();
-      if (MethodCallUtils.isCallToStaticMethod(grandParentCall, CommonClassNames.JAVA_UTIL_ARRAYS, "stream", 1)) {
-        if (grandParentArgs.length == 1) {
-          return grandParentArgs[0];
+      if (grandParentArgs.length == 1) {
+        PsiExpression maybeArray = grandParentArgs[0];
+        if (MethodCallUtils.isCallToStaticMethod(grandParentCall, CommonClassNames.JAVA_UTIL_ARRAYS, "stream", 1)) {
+          return maybeArray;
         }
-      }
-      if (MethodCallUtils.isCallToStaticMethod(grandParentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of", 1)) {
-        if (grandParentArgs.length == 1) {
-          PsiExpression maybeArray = grandParentArgs[0];
+        if (MethodCallUtils.isCallToStaticMethod(grandParentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of", 1)) {
           PsiType type = maybeArray.getType();
           if (type instanceof PsiArrayType) {
             return maybeArray;
@@ -246,10 +190,12 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
-        PsiExpression iterable = findIterable(call);
-        if (iterable == null) return;
         BulkMethodInfo info = findInfo(call.getMethodExpression());
-        if (info != null) register(iterable, info, call.getMethodExpression());
+        if (info == null) return;
+        PsiExpression iterable = findIterable(call);
+        if (iterable != null) {
+          register(iterable, info, call.getMethodExpression());
+        }
       }
 
       @Override
@@ -258,13 +204,15 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
         BulkMethodInfo info = findInfo(methodReference);
         if (info == null) return;
         PsiExpression iterable = findIterableForFunction(methodReference);
-        if (iterable != null) register(iterable, info, methodReference);
+        if (iterable != null) {
+          register(iterable, info, methodReference);
+        }
       }
 
       private void register(@NotNull PsiExpression iterable,
                             @NotNull BulkMethodInfo info,
                             @NotNull PsiReferenceExpression methodExpression) {
-        PsiExpression qualifier = getQualifierOrThis(methodExpression);
+        PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
         if (qualifier instanceof PsiThisExpression) {
           PsiMethod method = PsiTreeUtil.getParentOfType(iterable, PsiMethod.class);
           // Likely we are inside of the bulk method implementation
@@ -314,8 +262,7 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiReferenceExpression)) return;
-      PsiExpression qualifier = getQualifierOrThis((PsiReferenceExpression)element);
-      if (qualifier == null) return;
+      PsiExpression qualifier = ExpressionUtils.getQualifierOrThis((PsiReferenceExpression)element);
       PsiExpression iterable;
       if (element instanceof PsiMethodReferenceExpression) {
         iterable = findIterableForFunction((PsiFunctionalExpression)element);

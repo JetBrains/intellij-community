@@ -49,7 +49,6 @@ public class ScopeToolState {
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
   private ConfigPanelState myAdditionalConfigPanelState;
-  private InspectionToolWrapper myTool;
 
   public ScopeToolState(@NotNull NamedScope scope,
                         @NotNull InspectionToolWrapper toolWrapper,

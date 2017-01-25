@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
-    if (isUnderIf(node)) {
+    if (isUnderIf(node) && !isRevertedIfReferenceStatement(node, myPositive)) {
       pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
@@ -198,7 +198,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
     final PsiElement parent = node.getParent();
     return parent instanceof PyIfPart ||
-           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition();
+           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition() ||
+           parent instanceof PyPrefixExpression &&
+           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
+           parent.getParent() instanceof PyIfPart;
+  }
+
+  private static boolean isRevertedIfReferenceStatement(@NotNull PyReferenceExpression node, boolean positive) {
+    return !positive && node.getParent() instanceof PyIfPart;
   }
 
   static class Assertion {

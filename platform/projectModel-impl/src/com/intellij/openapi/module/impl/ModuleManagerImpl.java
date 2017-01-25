@@ -18,6 +18,8 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
@@ -100,17 +101,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        fireModulesAdded();
+        if (project == myProject) {
+          fireModulesAdded();
 
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectOpened();
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectOpened();
+          }
         }
       }
 
       @Override
       public void projectClosed(Project project) {
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectClosed();
+        if (project == myProject) {
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectClosed();
+          }
         }
       }
     });
@@ -312,6 +317,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     service.shutdown();
 
     progressIndicator.checkCanceled();
+
+    Application app = ApplicationManager.getApplication();
+    if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
+      Map<String, Module> track = new THashMap<>();
+      for (Module module : moduleModel.getModules()) {
+        for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
+          Module oldModule = track.put(url, module);
+          if (oldModule != null) {
+            //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
+            //VirtualFilePointer pointer = track1.get(url);
+            LOG.error("duplicated content url: " + url);
+          }
+        }
+      }
+    }
 
     onModuleLoadErrors(moduleModel, errors);
 
@@ -722,7 +742,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
       String resolvedPath = resolveShortWindowsName(filePath);
-      VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolvedPath);
+      Ref<VirtualFile> ref = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(() -> ref.set(StandardFileSystems.local().refreshAndFindFileByPath(resolvedPath)));
+      VirtualFile moduleFile = ref.get();
       if (moduleFile == null || !moduleFile.exists()) {
         throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", resolvedPath));
       }
@@ -786,8 +808,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     public void commit() {
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[0];
-      ModifiableModelCommitter.multiCommit(rootModels, this);
+      ModifiableModelCommitter.multiCommit(Collections.emptyList(), this);
     }
 
     private void commitWithRunnable(Runnable runnable) {
@@ -949,6 +970,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public String[] getModuleGroupPath(@NotNull Module module) {
     return myModuleModel.getModuleGroupPath(module);
+  }
+
+  @Override
+  public boolean hasModuleGroups() {
+    return myModuleModel.hasModuleGroups();
   }
 
   public void setModuleGroupPath(Module module, String[] groupPath) {

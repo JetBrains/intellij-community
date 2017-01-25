@@ -182,7 +182,16 @@ public class JBScrollPane extends SmoothScrollPane {
                 JScrollPane pane = (JScrollPane)source;
                 if (pane.isWheelScrollingEnabled()) {
                   JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
-                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                  if (bar != null && bar.isVisible()) {
+                    boolean isUnitScroll = MouseWheelEvent.WHEEL_UNIT_SCROLL == event.getScrollType();
+                    JViewport viewport = pane.getViewport();
+                    if (isUnitScroll && viewport instanceof JBViewport && isPreciseRotationSupported()) {
+                      ((JBViewport)viewport).updateViewPosition(event.isShiftDown(), 10 * event.getPreciseWheelRotation());
+                    }
+                    else {
+                      oldListener.mouseWheelMoved(event);
+                    }
+                  }
                 }
               }
             }
@@ -735,7 +744,7 @@ public class JBScrollPane extends SmoothScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && isPreciseRotationSupported()) {
+    if (ignore && (isPreciseRotationSupported() || isTrueSmoothScrollingEnabled())) {
       double rotation = event.getPreciseWheelRotation();
       double delta = MouseWheelEventEx.getScrollingDelta(event);
       ignore = (rotation == 0.0D || !Double.isFinite(rotation)) && (delta == 0.0D || !Double.isFinite(delta));
@@ -743,8 +752,18 @@ public class JBScrollPane extends SmoothScrollPane {
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
 
-  private static boolean isPreciseRotationSupported() {
-    return isTrueSmoothScrollingEnabled();
+  /**
+   * Indicates whether the smooth scrolling is supported by any means.
+   *
+   * @deprecated will be removed after fixing a blit-scrolling
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static boolean isPreciseRotationSupported() {
+    return SystemInfo.isJetbrainsJvm &&
+           SystemInfo.isMac &&
+           Registry.is("ide.scroll.precise") &&
+           !isTrueSmoothScrollingEnabled(); // do not use both implementations
   }
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling

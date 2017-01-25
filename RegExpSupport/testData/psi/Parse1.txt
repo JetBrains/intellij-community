@@ -8,11 +8,11 @@ REGEXP_FILE
       RegExpCharImpl: <3>
         PsiElement(CHARACTER)('3')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
     PsiElement(UNION)('|')
     RegExpBranchImpl: < 456>
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpCharImpl: <4>
         PsiElement(CHARACTER)('4')
       RegExpCharImpl: <5>

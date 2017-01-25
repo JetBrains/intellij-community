@@ -293,6 +293,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testLambdaImplementsBothInterfaces() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
 

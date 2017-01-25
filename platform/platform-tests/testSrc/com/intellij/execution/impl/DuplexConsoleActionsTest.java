@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
@@ -127,7 +128,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
       }
     };
     console.getComponent();
-    ProcessHandler processHandler = new ConsoleViewImplTest.MyProcessHandler();
+    ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
     console.attachToProcess(processHandler);
     return console;

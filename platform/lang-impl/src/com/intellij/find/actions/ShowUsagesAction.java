@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -1150,7 +1151,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     public MyTable() {
       ScrollingUtil.installActions(this);
-      HintUpdateSupply.installSimpleHintUpdateSupply(this);
+      HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
     @Override
@@ -1165,6 +1166,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         if (selected.length == 1) {
           return getPsiElementForHint(getValueAt(selected[0], 0));
         }
+      }
+      else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+        return PopupUtil.getPopupContainerFor(this);
       }
       return null;
     }
@@ -1243,7 +1247,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       Usage usage = node.getUsage();
       if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      return group + usage.getPresentation().getPlainText();
+      String groupText = group == null ? "" : group.getGroup().getText(null);
+      return groupText + usage.getPresentation().getPlainText();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -687,6 +687,8 @@ class Test {
    return field;
  }""" == myFixture.editor.selectionModel.selectedText
 
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
+    assert ' {\n   return field;\n }' == myFixture.editor.selectionModel.selectedText
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }

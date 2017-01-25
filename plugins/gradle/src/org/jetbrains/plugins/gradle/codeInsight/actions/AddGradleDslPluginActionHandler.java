@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -60,6 +61,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
 
     final JBList list = new JBList(myPlugins);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

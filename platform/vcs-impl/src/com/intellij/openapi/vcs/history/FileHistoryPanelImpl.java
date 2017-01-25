@@ -65,6 +65,7 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -778,6 +779,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         setForeground(table.getForeground());
       }
       if (value != null) append(value.toString());
+      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
     }
   }
 
@@ -852,6 +854,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
           if (value instanceof String) {
             String message = (String)value;
             myIssueLinkRenderer.appendTextWithLinks(message);
+            SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
           }
         }
       };
@@ -957,8 +960,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   abstract static class VcsColumnInfo<T extends Comparable<T>> extends DualViewColumnInfo<VcsFileRevision, String>
     implements Comparator<VcsFileRevision> {
+    @NotNull private final ColoredTableCellRenderer myRenderer;
+
     public VcsColumnInfo(String name) {
       super(name);
+
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setOpaque(selected);
+          append(value.toString());
+          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
+        }
+      };
     }
 
     protected abstract T getDataOf(VcsFileRevision o);
@@ -982,6 +995,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     public boolean shouldBeShownIsTheTable() {
       return true;
+    }
+
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+      return myRenderer;
     }
   }
 

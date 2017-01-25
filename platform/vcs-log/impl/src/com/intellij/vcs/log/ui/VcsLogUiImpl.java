@@ -17,15 +17,21 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 import com.intellij.vcs.log.impl.VcsLogImpl;
+import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcs.log.visible.VisiblePackChangeListener;
+import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +49,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLog myLog;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final VcsLogFilterer myFilterer;
+  @NotNull private final VisiblePackRefresher myRefresher;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
   @NotNull private final VisiblePackChangeListener myVisiblePackChangeListener;
@@ -55,13 +61,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                       @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
-                      @NotNull VcsLogFilterer filterer) {
+                      @NotNull VisiblePackRefresher refresher) {
     myProject = project;
     myColorManager = manager;
     myUiProperties = uiProperties;
     Disposer.register(logData, this);
 
-    myFilterer = filterer;
+    myRefresher = refresher;
     myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
@@ -75,7 +81,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
         setVisiblePack(visiblePack);
       }
     });
-    myFilterer.addVisiblePackChangeListener(myVisiblePackChangeListener);
+    myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
@@ -231,12 +237,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
-    myFilterer.onFiltersChange(filters);
+    myRefresher.onFiltersChange(filters);
   }
 
   @NotNull
-  public VcsLogFilterer getFilterer() {
-    return myFilterer;
+  public VisiblePackRefresher getRefresher() {
+    return myRefresher;
   }
 
   @NotNull
@@ -306,7 +312,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesListener);
-    myFilterer.removeVisiblePackChangeListener(myVisiblePackChangeListener);
+    myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
   }
@@ -328,7 +334,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     @Override
     public void onBekChanged() {
-      myFilterer.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
+      myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
     }
 
     @Override

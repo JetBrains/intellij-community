@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -73,7 +74,7 @@ abstract class TerminalOperation extends Operation {
       return null;
     }
     if(name.equals("count") && args.length == 0) {
-      return new TemplateBasedOperation("count", "long", "0", "{acc}++;");
+      return TemplateBasedOperation.counting();
     }
     if(name.equals("sum") && args.length == 0) {
       return TemplateBasedOperation.summing(resultType);
@@ -204,7 +205,7 @@ abstract class TerminalOperation extends Operation {
         return null;
       case "counting":
         if (collectorArgs.length != 0) return null;
-        return new TemplateBasedOperation("count", "long", "0", "{acc}++;");
+        return TemplateBasedOperation.counting();
       case "summingInt":
       case "summingLong":
       case "summingDouble": {
@@ -568,6 +569,10 @@ abstract class TerminalOperation extends Operation {
     String getSupplier();
     String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
+    default String getMerger(StreamVariable inVar, String map, String key) {
+      return null;
+    }
+
     default PsiType correctReturnType(PsiType type) {return type;}
   }
 
@@ -650,7 +655,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     CollectorOperation asCollector() {
-      return myFinisherTemplate.equals("{acc}") && !TypeConversionUtil.isPrimitive(myAccType) ? this : null;
+      return myFinisherTemplate.equals("{acc}") ? this : null;
     }
 
     @Override
@@ -663,15 +668,30 @@ abstract class TerminalOperation extends Operation {
       return myUpdateTemplate.replace("{acc}", acc).replace("{item}", inVar.getName());
     }
 
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      String boxedType = PsiTypesUtil.boxIfPossible(myAccType);
+      if (boxedType.equals(myAccType)) return null;
+      String val = myUpdateTemplate.equals("{acc}++;") ? "1L" : "(" + myAccType + ")" + inVar;
+      String merger = boxedType + "::sum";
+      return map + ".merge(" + key + "," + val + "," + merger + ");\n";
+    }
+
     @NotNull
     static TemplateBasedOperation summing(PsiType type) {
-      return new TemplateBasedOperation("sum", type.getCanonicalText(), "0", "{acc}+={item};");
+      String defValue = type.equals(PsiType.DOUBLE) ? "0.0" : type.equals(PsiType.LONG) ? "0L" : "0";
+      return new TemplateBasedOperation("sum", type.getCanonicalText(), defValue, "{acc}+={item};");
     }
 
     @NotNull
     static TemplateBasedOperation summarizing(@NotNull PsiType resultType) {
       return new TemplateBasedOperation("stat", resultType.getCanonicalText(), "new " + resultType.getCanonicalText() + "()",
                                         "{acc}.accept({item});");
+    }
+
+    @NotNull
+    static TemplateBasedOperation counting() {
+      return new TemplateBasedOperation("count", "long", "0L", "{acc}++;");
     }
   }
 
@@ -873,7 +893,10 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String map) {
-      String acc = map+".computeIfAbsent("+myKeyExtractor.getText()+","+myKeyVar+"->"+myCollector.getSupplier()+")";
+      String key = myKeyExtractor.getText();
+      String merger = myCollector.getMerger(inVar, map, key);
+      if (merger != null) return merger;
+      String acc = map + ".computeIfAbsent(" + key + "," + myKeyVar + "->" + myCollector.getSupplier() + ")";
       return myCollector.getAccumulatorUpdater(inVar, acc);
     }
   }
@@ -911,7 +934,10 @@ abstract class TerminalOperation extends Operation {
       myCollector.transform(context, inVar.getName());
       context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
       context.addBeforeStep(map + ".put(true, " + myCollector.getSupplier() + ");");
-      return myCollector.getAccumulatorUpdater(inVar, map + ".get(" + myPredicate.getText() + ")");
+      String key = myPredicate.getText();
+      String merger = myCollector.getMerger(inVar, map, key);
+      if (merger != null) return merger;
+      return myCollector.getAccumulatorUpdater(inVar, map + ".get(" + key + ")");
     }
   }
 
@@ -963,7 +989,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       createVariable(context, inVar.getName());
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" + myDownstream.generate(myVariable, context);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstream.generate(myVariable, context);
     }
 
     private void createVariable(StreamToLoopReplacementContext context, String item) {
@@ -982,8 +1008,13 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String acc) {
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" +
-             myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
+    }
+
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      String merger = myDownstreamCollector.getMerger(myVariable, map, key);
+      return merger == null ? null : myVariable.getDeclaration(myMapper.getText()) + merger;
     }
   }
 
@@ -1008,6 +1039,11 @@ abstract class TerminalOperation extends Operation {
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String acc) {
       return myDownstreamCollector.getAccumulatorUpdater(new StreamVariable(myMapper.getResultType(), myMapper.getText()), acc);
+    }
+
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      return myDownstreamCollector.getMerger(new StreamVariable(myMapper.getResultType(), myMapper.getText()), map, key);
     }
   }
 

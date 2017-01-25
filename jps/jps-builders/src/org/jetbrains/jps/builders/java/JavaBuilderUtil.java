@@ -127,7 +127,7 @@ public class JavaBuilderUtil {
     SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
     FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
     SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, filter);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
   }
 
   /**
@@ -142,21 +142,31 @@ public class JavaBuilderUtil {
                                        ModuleChunk chunk,
                                        Collection<File> filesToCompile,
                                        Collection<File> successfullyCompiled) throws IOException {
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, null);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, CompilationRound.NEXT, null);
+  }
+
+  public static void markDirtyDependenciesForInitialRound(CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dfh, ModuleChunk chunk) throws IOException {
+    if (hasRemovedPaths(chunk, dfh)) {
+      final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
+      final Set<File> empty = Collections.emptySet();
+      updateMappings(context, delta, dfh, chunk, empty, empty, CompilationRound.CURRENT, null);
+    }
   }
 
   /**
-   * @param filesToCompile       files compiled in this round
+   * @param filesToCompile   files compiled in this round
+   * @param markDirtyRound   compilation round at which dirty files should be visible to builders
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
   private static boolean updateMappings(CompileContext context,
-                                       final Mappings delta,
-                                       DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                       ModuleChunk chunk,
-                                       Collection<File> filesToCompile,
-                                       Collection<File> successfullyCompiled,
-                                       @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
+                                        final Mappings delta,
+                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                        ModuleChunk chunk,
+                                        Collection<File> filesToCompile,
+                                        Collection<File> successfullyCompiled,
+                                        final CompilationRound markDirtyRound,
+                                        @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
       boolean performIntegrate = true;
       boolean additionalPassRequired = false;
@@ -232,7 +242,7 @@ public class JavaBuilderUtil {
               }
 
               for (File file : newlyAffectedFiles) {
-                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
+                FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
               }
               additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
@@ -255,7 +265,7 @@ public class JavaBuilderUtil {
             }
 
             FileFilter toBeMarkedFilter = skipMarkingDirtyFilter == null ? null : new NegationFileFilter(skipMarkingDirtyFilter);
-            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk, toBeMarkedFilter);
+            FSOperations.markDirtyRecursively(context, markDirtyRound, chunk, toBeMarkedFilter);
           }
         }
         else {
@@ -382,6 +392,17 @@ public class JavaBuilderUtil {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }
     return removed;
+  }
+
+  private static boolean hasRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
+    if (dirtyFilesHolder.hasRemovedFiles()) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (!dirtyFilesHolder.getRemovedFiles(target).isEmpty()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static void cleanupChunkResources(CompileContext context) {

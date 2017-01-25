@@ -76,7 +76,6 @@
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
 
-    <fileBasedIndex implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaFileIndex"/>
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor"/>
     <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor"/>

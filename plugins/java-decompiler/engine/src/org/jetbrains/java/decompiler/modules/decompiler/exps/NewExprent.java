@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
@@ -181,7 +184,23 @@ public class NewExprent extends Exprent {
             typename = typename.substring(typename.lastIndexOf('.') + 1);
           }
         }
-        buf.append(typename);
+
+        GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
+        if (descriptor != null) {
+          if (descriptor.superinterfaces.isEmpty()) {
+            buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
+          }
+          else {
+            if (descriptor.superinterfaces.size() > 1 && !lambda) {
+              DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
+                                                         IFernflowerLogger.Severity.WARN);
+            }
+            buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
+          }
+        }
+        else {
+          buf.append(typename);
+        }
       }
 
       buf.append('(');
@@ -191,8 +210,8 @@ public class NewExprent extends Exprent {
 
         ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invSuper.getClassname());
 
-        List<VarVersionPair> sigFields = null;
-        if (newNode != null) { // own class
+        List<VarVersionPair> sigFields = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
+        if (sigFields == null && newNode != null) { // own class
           if (newNode.getWrapper() != null) {
             sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, invSuper.getStringDescriptor()).signatureFields;
           }
@@ -205,27 +224,17 @@ public class NewExprent extends Exprent {
           }
         }
 
+        List<Exprent> lstParameters = constructor.getLstParameters();
+
+        int start = enumConst ? 2 : 0;
         boolean firstParam = true;
-        int start = 0, end = invSuper.getLstParameters().size();
-        if (enumConst) {
-          start += 2;
-          end -= 1;
-        }
-        for (int i = start; i < end; i++) {
+        for (int i = start; i < lstParameters.size(); i++) {
           if (sigFields == null || sigFields.get(i) == null) {
             if (!firstParam) {
               buf.append(", ");
             }
 
-            Exprent param = invSuper.getLstParameters().get(i);
-            if (param.type == Exprent.EXPRENT_VAR) {
-              int varIndex = ((VarExprent)param).getIndex();
-              if (varIndex > 0 && varIndex <= constructor.getLstParameters().size()) {
-                param = constructor.getLstParameters().get(varIndex - 1);
-              }
-            }
-
-            ExprProcessor.getCastedExprent(param, invSuper.getDescriptor().params[i], buf, indent, true, tracer);
+            ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buf, indent, true, tracer);
 
             firstParam = false;
           }

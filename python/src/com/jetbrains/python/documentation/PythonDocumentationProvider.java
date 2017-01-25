@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -32,10 +31,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -151,7 +148,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     cat.addItem(escaper.apply(paramStr));
     if (!PyNames.INIT.equals(name)) {
       cat.addItem(escaper.apply("\nInferred type: "));
-      getTypeDescription(fun, cat);
+      describeTypeWithLinks(fun, cat);
       cat.addItem(BR);
     }
     return cat;
@@ -171,48 +168,67 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       if (originalElement instanceof PyTypedElement) {
-        result.append("\n").append(describeType((PyTypedElement)originalElement));
+        final String typeName = getTypeName(((PyTypedElement)originalElement));
+        result
+          .append("\n")
+          .append(String.format("Inferred type: %s", typeName));
       }
       return result.toString();
     }
     return null;
   }
 
-  private static String describeType(@NotNull PyTypedElement element) {
+  @NotNull
+  private static String getTypeName(@NotNull PyTypedElement element) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    return String.format("Inferred type: %s", getTypeName(context.getType(element), context));
+    return getTypeName(context.getType(element), context);
   }
 
-  private static void getTypeDescription(@NotNull PyFunction fun, @NotNull ChainIterable<String> body) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getProject(), fun.getContainingFile());
-    final PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
-    builder.build(context.getType(fun), true).toBodyWithLinks(body, fun);
-  }
-
+  /**
+   * @param type    type which name will be calculated
+   * @param context type evaluation context
+   * @return string representation of the type
+   */
+  @NotNull
   public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    final PyTypeModelBuilder.TypeModel typeModel = buildTypeModel(type, context);
-    return typeModel.asString();
+    return buildTypeModel(type, context).asString();
   }
 
-  private static PyTypeModelBuilder.TypeModel buildTypeModel(PyType type, TypeEvalContext context) {
-    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
-    return builder.build(type, true);
+  private static void describeTypeWithLinks(@NotNull PyTypedElement element, @NotNull ChainIterable<String> body) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
+    describeTypeWithLinks(context.getType(element), context, element, body);
   }
 
-  public static void describeExpressionTypeWithLinks(@NotNull ChainIterable<String> body,
-                                                     @NotNull PyReferenceExpression expression,
-                                                     @NotNull TypeEvalContext context) {
-    final PyType type = context.getType(expression);
-    describeTypeWithLinks(body, expression, type, context);
-  }
-
-  public static void describeTypeWithLinks(@NotNull ChainIterable<String> body,
+  /**
+   * @param type    type which description will be calculated.
+   *                Description is the same as {@link PythonDocumentationProvider#getTypeDescription(PyType, TypeEvalContext)} gives but
+   *                types are converted to links.
+   * @param context type evaluation context
+   * @param anchor  anchor element
+   * @param body    body to be used to append description
+   */
+  public static void describeTypeWithLinks(@Nullable PyType type,
+                                           @NotNull TypeEvalContext context,
                                            @NotNull PsiElement anchor,
-                                           PyType type, TypeEvalContext context) {
-    final PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
-    builder.build(type, true).toBodyWithLinks(body, anchor);
+                                           @NotNull ChainIterable<String> body) {
+    buildTypeModel(type, context).toBodyWithLinks(body, anchor);
   }
 
+  /**
+   * @param type    type which description will be calculated
+   * @param context type evaluation context
+   * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
+   * <code>Any</code> is excluded from <code>Union[Any, ...]</code>-like types.
+   */
+  @NotNull
+  public static String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return buildTypeModel(type, context).asDescription();
+  }
+
+  @NotNull
+  private static PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return new PyTypeModelBuilder(context).build(type, true);
+  }
 
   @NotNull
   static ChainIterable<String> describeDecorators(@NotNull PyDecoratable what,

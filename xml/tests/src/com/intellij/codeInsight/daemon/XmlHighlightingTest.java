@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1624,12 +1624,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       BASE_PATH +testName +"-inc.xml",
       BASE_PATH +testName +"TestSchema.xsd"
     );
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("oxf:/apps/somefile.xml"));
 
-    doDoTest(true, false, true);
+    ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
+    try {
+      ApplicationManager.getApplication().runWriteAction(() -> externalResourceManager.addIgnoredResource("oxf:/apps/somefile.xml"));
 
-    VirtualFile[] includedFiles = FileIncludeManager.getManager(getProject()).getIncludedFiles(getFile().getVirtualFile(), true);
-    assertEquals(1, includedFiles.length);
+      doDoTest(true, false, true);
+
+      VirtualFile[] includedFiles = FileIncludeManager.getManager(getProject()).getIncludedFiles(getFile().getVirtualFile(), true);
+      assertEquals(1, includedFiles.length);
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(() -> externalResourceManager.removeIgnoredResource("oxf:/apps/somefile.xml"));
+    }
   }
 
   public void testComplexRedefine() throws Exception {
@@ -2094,6 +2101,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testBillionLaughsValidation() throws Exception {
     configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
     doDoTest(true, false);
+  }
+
+  public void testTheSameElement() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "TheSameElement/IntellijPersonData.xml"),
+        getVirtualFile(BASE_PATH + "TheSameElement/IntellijCalTech.xsd"),
+        getVirtualFile(BASE_PATH + "TheSameElement/IntelliJMeldeamt.xsd")
+      },
+      true,
+      false
+    );
   }
 
   @Override

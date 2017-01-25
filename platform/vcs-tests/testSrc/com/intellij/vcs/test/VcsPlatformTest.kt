@@ -63,11 +63,16 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      runInEdtAndWait { super@VcsPlatformTest.tearDown() }
+      clearFields(this)
     }
     finally {
-      if (myAssertionsInTestDetected) {
-        TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
+      try {
+        runInEdtAndWait { super@VcsPlatformTest.tearDown() }
+      }
+      finally {
+        if (myAssertionsInTestDetected) {
+          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
+        }
       }
     }
   }

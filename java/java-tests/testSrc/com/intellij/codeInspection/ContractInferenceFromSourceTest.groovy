@@ -532,11 +532,11 @@ class Foo {{
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
 class Foo {{
   new Object() {
-    Object foo() { return null;}
-    Object bar() { return foo();}
+    Object foo(boolean b) { return b ? null : this;}
+    Object bar(boolean b) { return foo(b);}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
+    assert ContractInference.inferContracts(method).collect { it as String } == ['true -> null', 'false -> !null']
   }
 
   void "test anonymous class methods potentially used from outside"() {
@@ -561,6 +561,20 @@ class Foo {{
   }
 """)
     assert c == ['!null, _ -> false', 'null, _ -> true']
+  }
+
+  void "test no universal contradictory contracts for nullable method delegating to notNull"() {
+    def c = inferContracts("""
+  @org.jetbrains.annotations.Nullable 
+  Object delegating() {
+    return smth();
+  }
+  @org.jetbrains.annotations.NotNull 
+  Object smth() {
+    return this;
+  }
+""")
+    assert c == []
   }
 
   private String inferContract(String method) {

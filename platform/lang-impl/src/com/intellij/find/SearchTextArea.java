@@ -58,6 +58,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static javax.swing.ScrollPaneConstants.*;
+
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
   private final JTextArea myTextArea;
   private final boolean mySearchMode;
@@ -88,9 +90,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       }
     });
     myTextArea.setOpaque(false);
-    myScrollPane = new JBScrollPane(myTextArea,
-                                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+    myScrollPane = new JBScrollPane(myTextArea, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED) {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -187,6 +187,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         myIconsPanel.add(myNewLineButton);
       }
       myIconsPanel.setBorder(myHelper.getIconsPanelBorder(rows));
+      myScrollPane.setHorizontalScrollBarPolicy(multiline ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
+      myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
       myScrollPane.revalidate();
       doLayout();
     }

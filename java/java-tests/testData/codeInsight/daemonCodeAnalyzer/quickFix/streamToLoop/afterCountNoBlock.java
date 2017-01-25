@@ -5,7 +5,7 @@ import java.util.List;
 public class Main {
   public long test(List<String> list) {
     if(!list.isEmpty()) {
-        long count = 0;
+        long count = 0L;
         for (String s : list) {
             count++;
         }

@@ -60,7 +60,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,6 +85,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -104,12 +104,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NotNull private final PsiDocumentManager myPsiDocumentManager;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
-  private final Runnable myUpdateRunnable = createUpdateRunnable();
-
+  private final UpdateRunnable myUpdateRunnable;
   // use scheduler instead of Alarm because the latter requires ModalityState.current() which is obtainable from EDT only which requires too many invokeLaters
   private final ScheduledExecutorService myAlarm = EdtExecutorService.getScheduledExecutorInstance();
   @NotNull
-  private volatile ScheduledFuture<?> myUpdateRunnableFuture = myAlarm.schedule(EmptyRunnable.getInstance(), 0, TimeUnit.NANOSECONDS);
+  private volatile Future<?> myUpdateRunnableFuture = CompletableFuture.completedFuture(null);
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<>();
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<>();
@@ -150,9 +149,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myInitialized = true;
     myDisposed = false;
     myFileStatusMap.markAllFilesDirty("DCAI init");
+    myUpdateRunnable = new UpdateRunnable(myProject);
     Disposer.register(this, () -> {
       assert myInitialized : "Disposing not initialized component";
       assert !myDisposed : "Double dispose";
+      myUpdateRunnable.clearFieldsOnDispose();
 
       stopProcess(false, "Dispose");
 
@@ -163,7 +164,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public synchronized void dispose() {
-    myUpdateProgress = null; // leak of highlight session via user data
+    myUpdateProgress = new DaemonProgressIndicator(); // leak of highlight session via user data
     myUpdateRunnableFuture.cancel(true);
   }
 
@@ -181,15 +182,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     final FileEditorManager manager = FileEditorManager.getInstance(project);
-    List<HighlightInfo> result = new ArrayList<>();
-    for (FileEditor fileEditor : manager.getEditors(vFile)) {
-      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos == null) continue;
-      for (HighlightInfo info : infos) {
-          result.add(info);
-      }
-    }
-    return result;
+    return Arrays.stream(manager.getEditors(vFile))
+      .map(fileEditor -> fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS))
+      .filter(Objects::nonNull)
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
   }
 
   @Override
@@ -325,7 +322,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
-    DaemonProgressIndicator.setDebug(!ApplicationInfoImpl.isInPerformanceTest());
+    DaemonProgressIndicator.setDebug(!ApplicationInfoImpl.isInStressTest());
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
@@ -628,6 +625,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     boolean canceled = cancelUpdateProgress(toRestartAlarm, reason);
     // optimisation: this check is to avoid too many re-schedules in case of thousands of events spikes
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
+
     if (restart && myUpdateRunnableFuture.isDone()) {
       myUpdateRunnableFuture.cancel(false);
       myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
@@ -638,11 +636,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   // return true if the progress really was canceled
   private synchronized boolean cancelUpdateProgress(boolean toRestartAlarm, @NonNls String reason) {
-    boolean wasCanceled = myUpdateProgress.isCanceled();
+    DaemonProgressIndicator updateProgress = myUpdateProgress;
+    if (myDisposed) return false;
+    boolean wasCanceled = updateProgress.isCanceled();
     myPassExecutorService.cancelAll(false);
     if (!wasCanceled) {
-      PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, toRestartAlarm);
-      myUpdateProgress.cancel();
+      PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
+      updateProgress.cancel();
       return true;
     }
     return false;
@@ -852,37 +852,41 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   };
 
-  @NotNull
-  private Runnable createUpdateRunnable() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+  // made this class static and fields cleareable to avoid leaks when this object stuck in invokeLater queue
+  private static class UpdateRunnable implements Runnable {
+    private Project myProject;
+    private UpdateRunnable(@NotNull Project project) {
+      myProject = project;
+    }
 
-        if (myDisposed || !myProject.isInitialized() || PowerSaveMode.isEnabled()) {
-          return;
-        }
-        // wait for heavy processing to stop, re-schedule daemon but not too soon
-        if (HeavyProcessLatch.INSTANCE.isRunning()) {
-          HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
-              myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), TimeUnit.MILLISECONDS));
-          return;
-        }
-        Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-
-        if (activeEditor == null) {
-          AutoPopupController.runTransactionWithEverythingCommitted(myProject, submitPassesRunnable);
-        }
-        else {
-          ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed", submitPassesRunnable);
-        }
+    @Override
+    public void run() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      Project project = myProject;
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+      if (project == null || !project.isInitialized() || project.isDisposed() || PowerSaveMode.isEnabled() || daemonCodeAnalyzer.myDisposed) {
+        return;
       }
 
-      @Override
-      public String toString() {
-        return "Daemon update runnable";
+      // wait for heavy processing to stop, re-schedule daemon but not too soon
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
+          daemonCodeAnalyzer.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
+        return;
       }
-    };
+      Editor activeEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+
+      if (activeEditor == null) {
+        AutoPopupController.runTransactionWithEverythingCommitted(project, daemonCodeAnalyzer.submitPassesRunnable);
+      }
+      else {
+        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).cancelAndRunWhenAllCommitted("start daemon when all committed", daemonCodeAnalyzer.submitPassesRunnable);
+      }
+    }
+
+    private void clearFieldsOnDispose() {
+      myProject = null;
+    }
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -351,6 +351,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testregex$dollarSlashy8() throws Throwable { doTest() }
 
   void testregex$dollarSlashy9() throws Throwable { doTest() }
+
+  void testregex$dollarSlashy10() { doTest() }
 
   void testregex$dollarSlashyCode() throws Throwable { doTest() }
 

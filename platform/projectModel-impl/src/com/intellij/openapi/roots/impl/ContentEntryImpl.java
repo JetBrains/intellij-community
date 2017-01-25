@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -81,14 +80,14 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   private void initSourceFolders(@NotNull Element e) throws InvalidDataException {
-    for (Object child : e.getChildren(SourceFolderImpl.ELEMENT_NAME)) {
-      addSourceFolder(new SourceFolderImpl((Element)child, this));
+    for (Element child : e.getChildren(SourceFolderImpl.ELEMENT_NAME)) {
+      addSourceFolder(new SourceFolderImpl(child, this));
     }
   }
 
   private void initExcludeFolders(@NotNull Element e) throws InvalidDataException {
-    for (Object child : e.getChildren(ExcludeFolderImpl.ELEMENT_NAME)) {
-      ExcludeFolderImpl excludeFolder = new ExcludeFolderImpl((Element)child, this);
+    for (Element child : e.getChildren(ExcludeFolderImpl.ELEMENT_NAME)) {
+      ExcludeFolderImpl excludeFolder = new ExcludeFolderImpl(child, this);
       addExcludeFolder(excludeFolder);
     }
   }
@@ -234,7 +233,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   private SourceFolder addSourceFolder(@NotNull SourceFolderImpl f) {
     mySourceFolders.add(f);
-    Disposer.register(this, f); //rewire source folder dispose parent from rootmodel to this content root
+    Disposer.register(this, f); //rewire source folder dispose parent from root model to this content root
     return f;
   }
 

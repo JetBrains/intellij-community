@@ -33,7 +33,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -72,22 +71,22 @@ public class JavaCompletionSorting {
       sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
 
-    List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
-    afterPrefix.add(new PreferByKindWeigher(type, position, expectedTypes));
+    List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
+    afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
     if (!smart) {
-      ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
+      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
       if (!afterNew) {
-        afterPrefix.add(new PreferExpected(false, expectedTypes, position));
+        afterStats.add(new PreferExpected(false, expectedTypes, position));
       }
     }
-    ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
-    afterPrefix.add(new PreferSimilarlyEnding(expectedTypes));
+    ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
+    afterStats.add(new PreferSimilarlyEnding(expectedTypes));
     if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
-      afterPrefix.add(new PreferNonGeneric());
+      afterStats.add(new PreferNonGeneric());
     }
-    Collections.addAll(afterPrefix, new PreferAccessible(position), new PreferSimple());
+    Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
 
-    sorter = sorter.weighAfter("prefix", afterPrefix.toArray(new LookupElementWeigher[afterPrefix.size()]));
+    sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[afterStats.size()]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
     return result.withRelevanceSorter(sorter);
   }
@@ -287,7 +286,7 @@ public class JavaCompletionSorting {
       });
       myParameters = parameters;
 
-      final Pair<PsiClass,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
+      final Pair<PsiTypeParameterListOwner,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
       myTypeParameter = pair == null ? null : pair.first.getTypeParameters()[pair.second.intValue()];
       myLocation = new CompletionLocation(myParameters);
     }

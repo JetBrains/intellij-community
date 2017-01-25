@@ -25,13 +25,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -46,18 +42,15 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
 
   private final FileBasedIndex myIndex;
-  private final ProjectRootManagerEx myRootManager;
-  private final FileTypeManager myFileTypeManager;
+  private FileBasedIndexScanRunnableCollector myCollector;
 
   public FileBasedIndexProjectHandler(FileBasedIndex index,
                                       Project project,
-                                      ProjectRootManagerComponent rootManager,
-                                      FileTypeManager ftManager,
+                                      FileBasedIndexScanRunnableCollector collector,
                                       ProjectManager projectManager) {
     super(project);
     myIndex = index;
-    myRootManager = rootManager;
-    myFileTypeManager = ftManager;
+    myCollector = collector;
 
     if (ApplicationManager.getApplication().isInternal()) {
       project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -100,11 +93,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Override
   public boolean isInSet(@NotNull final VirtualFile file) {
-    final ProjectFileIndex index = myRootManager.getFileIndex();
-    if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      return !myFileTypeManager.isFileIgnored(file);
-    }
-    return false;
+    return myCollector.shouldCollect(file);
   }
 
   @Override

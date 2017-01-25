@@ -334,7 +334,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     }
 
     @Override
-    public void coloredTextAvailable(String text, Key attributes) {
+    public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
       super.notifyTextAvailable(text, attributes);
     }
   }

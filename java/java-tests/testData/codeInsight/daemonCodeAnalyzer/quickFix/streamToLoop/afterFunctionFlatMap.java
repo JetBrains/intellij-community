@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 public class Main {
   private static long test(List<Predicate<String>> predicates, List<String> strings) {
-      long count = 0;
+      long count = 0L;
       for (Predicate<String> pred : predicates) {
           if (pred != null) {
               for (String string : strings) {

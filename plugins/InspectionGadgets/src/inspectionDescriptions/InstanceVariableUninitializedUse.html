@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports reads of instance variables which are not yet initialized.
+Reports instance variables which are read prior to initialization.
+Equality checks with <b>null</b> are ignored by this inspection.
 <p>
 Note: This inspection uses a very conservative dataflow algorithm, and may report instance variables
 as uninitialized incorrectly. Variables reported as initialized will always be initialized.

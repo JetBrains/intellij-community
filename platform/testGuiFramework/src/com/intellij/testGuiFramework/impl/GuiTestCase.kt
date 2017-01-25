@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.fixtures.*
@@ -23,7 +24,9 @@ import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardF
 import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
+import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.LocationUnavailableException
@@ -46,7 +49,6 @@ open class GuiTestCase : GuiTestBase() {
     init {
       GeneralSettings.getInstance().isShowTipsOnStartup = false
       GuiTestUtil.setUpDefaultProjectCreationLocationPath()
-      GuiTestUtil.setUpSdks()
       val ideSettings = HttpConfigurable.getInstance()
       ideSettings.USE_HTTP_PROXY = false
       ideSettings.PROXY_HOST = ""
@@ -131,7 +133,7 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find RadioButton component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String): JTextComponentFixture = if (target() is Container) textfield(
+  fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?): JTextComponentFixture = if (target() is Container) textfield(
     target() as Container, textLabel)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JTextComponent (JTextField) component by label \"${textLabel}\" with ${target().toString()} as a Container")
@@ -146,11 +148,15 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find Popup component with ${target().toString()} as a Container")
 
+  fun <S, C : Component> ComponentFixture<S, C>.linkLabel(itemName: String) = if (target() is Container) linkLabel(
+          target() as Container, itemName)
+  else throw UnsupportedOperationException(
+          "Sorry, unable to find LinkLabel component with ${target().toString()} as a Container")
+
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
-
 
   fun ideFrame() = findIdeFrame()!!
   fun welcomeFrame() = findWelcomeFrame()
@@ -185,7 +191,7 @@ open class GuiTestCase : GuiTestBase() {
 
   private fun button(container: Container, name: String): JButtonFixture {
     val jButton = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JButton>(JButton::class.java) {
-      override fun isMatching(jButton: JButton): Boolean = (jButton.text == name)
+      override fun isMatching(jButton: JButton): Boolean = (jButton.isShowing && jButton.text == name)
     })
 
     return JButtonFixture(myRobot, jButton)
@@ -194,7 +200,7 @@ open class GuiTestCase : GuiTestBase() {
   private fun combobox(container: Container, labelText: String): JComboBoxFixture {
     //wait until label has appeared
     GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.text == labelText)
+      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.isShowing && jLabel.text == labelText)
     })
 
     return GuiTestUtil.findComboBox(myRobot, container, labelText)
@@ -203,7 +209,7 @@ open class GuiTestCase : GuiTestBase() {
   private fun checkbox(container: Container, labelText: String): CheckBoxFixture {
     //wait until label has appeared
     GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JCheckBox>(JCheckBox::class.java) {
-      override fun isMatching(checkBox: JCheckBox): Boolean = (checkBox.text == labelText)
+      override fun isMatching(checkBox: JCheckBox): Boolean = (checkBox.isShowing && checkBox.text == labelText)
     })
 
     return CheckBoxFixture.findByText(labelText, container, myRobot, false)
@@ -215,11 +221,27 @@ open class GuiTestCase : GuiTestBase() {
 
   private fun radioButton(container: Container, labelText: String) = GuiTestUtil.findRadioButton(myRobot, container, labelText)
 
-  private fun textfield(container: Container, labelText: String): JTextComponentFixture {
-    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.text == labelText)
+  private fun textfield(container: Container, labelText: String?): JTextComponentFixture {
+    //if 'textfield()' goes without label
+    if (labelText == null) {
+      val jTextField = myRobot.finder().find(ComponentMatcher { component -> component!!.isShowing && component is JTextField }) as JTextField
+      return JTextComponentFixture(myRobot, jTextField)
+    }
+
+    val jLabel = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
+      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.isShowing && jLabel.text == labelText)
     })
-    return JTextComponentFixture(myRobot, myRobot.finder().findByLabel(labelText, JTextComponent::class.java))
+    if (jLabel.labelFor != null && jLabel.labelFor is TextFieldWithBrowseButton)
+      return JTextComponentFixture(myRobot, (jLabel.labelFor as TextFieldWithBrowseButton).textField)
+    else
+      return JTextComponentFixture(myRobot, myRobot.finder().findByLabel(labelText, JTextComponent::class.java))
+  }
+
+  private fun linkLabel(container: Container, labelText: String): ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>> {
+    val myLinkLabel = waitUntilFound(myRobot, container, object: GenericTypeMatcher<LinkLabel<*>>(LinkLabel::class.java) {
+      override fun isMatching(someLinkLabel: LinkLabel<*>) = (someLinkLabel.isShowing && (someLinkLabel.text == labelText))
+    })
+    return ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>>(ComponentFixture::class.java, myRobot, myLinkLabel)
   }
 
   private fun popupClick(container: Container, itemName: String) {
@@ -251,5 +273,7 @@ open class GuiTestCase : GuiTestBase() {
     } else
     return JTreeFixture(myRobot, myTree)
   }
+
+  //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
 }

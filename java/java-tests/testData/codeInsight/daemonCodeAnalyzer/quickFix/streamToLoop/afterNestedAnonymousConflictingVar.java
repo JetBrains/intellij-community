@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 public class Main {
 
   private static long test(Map<String, List<String>> strings) {
-      long sum = 0;
+      long sum = 0L;
       for (Map.Entry<String, List<String>> e : strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               long count = e.getValue().stream().filter(new Predicate<String>() {

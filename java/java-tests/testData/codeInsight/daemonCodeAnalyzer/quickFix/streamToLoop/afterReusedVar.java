@@ -6,7 +6,7 @@ import java.util.function.LongSupplier;
 public class Main {
   private static void test(List<String> list) {
       // and filter!
-      long count1 = 0;
+      long count1 = 0L;
       for (String s : list) {
           if (!s/* comment */.isEmpty()) {
               count1++;

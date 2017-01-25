@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -126,6 +123,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
       editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(offset);
       scrollingModel.scrollToCaret(scrollType);
+      FoldRegion regionAtOffset = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (regionAtOffset != null) editor.getFoldingModel().runBatchFoldingOperation(() -> regionAtOffset.setExpanded(true));
     }
 
     scrollingModel.runActionOnScrollingFinished(

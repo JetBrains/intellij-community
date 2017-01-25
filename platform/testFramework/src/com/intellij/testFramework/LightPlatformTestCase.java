@@ -260,12 +260,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourSourceRoot;
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
       initApplication();
-      ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+      ApplicationInfoImpl.setInStressTest(isStressTest());
 
       ourApplication.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
@@ -368,7 +369,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     new RunAll(
       () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
-      () -> checkForSettingsDamage(),
+      this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication, true),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
@@ -381,7 +382,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
       append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
-      append(() -> checkJavaSwingTimersAreDisposed()).
+      append(LightPlatformTestCase::checkJavaSwingTimersAreDisposed).
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.getInstance(project).hideActiveLookup()).
       append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
@@ -628,9 +629,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     if (!ourProject.isDisposed()) {
+      assertEquals(ourProject, ourModule.getProject());
+
       @SuppressWarnings("ConstantConditions")
       File ioFile = new File(ourProject.getProjectFilePath());
-      Disposer.dispose(ourProject);
       if (ioFile.exists()) {
         File dir = ioFile.getParentFile();
         if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
@@ -642,7 +644,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
+    assertTrue(ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject));
+    assertTrue(ourProject.isDisposed());
 
     // project may be disposed but empty folder may still be there
     if (ourPathToKeep != null) {

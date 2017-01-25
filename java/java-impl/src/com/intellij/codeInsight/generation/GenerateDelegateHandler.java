@@ -60,7 +60,6 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final PsiElementClassMember target = chooseTarget(file, editor, project);
     if (target == null) return;

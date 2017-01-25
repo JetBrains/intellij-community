@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -487,18 +487,18 @@ public class PyTypeChecker {
         if (keywordParameter == null) keywordParameter = parameter;
         keywordTypes.add(actualArgType);
       }
-      else if (!match(getExpectedArgumentType(parameter, context), actualArgType, context, substitutions)) {
+      else if (!match(parameter.getArgumentType(context), actualArgType, context, substitutions)) {
         return null;
       }
     }
 
     if (positionalParameter != null &&
-        !match(getExpectedArgumentType(positionalParameter, context), PyUnionType.union(positionalTypes), context, substitutions)) {
+        !match(positionalParameter.getArgumentType(context), PyUnionType.union(positionalTypes), context, substitutions)) {
       return null;
     }
 
     if (keywordParameter != null &&
-        !match(getExpectedArgumentType(keywordParameter, context), PyUnionType.union(keywordTypes), context, substitutions)) {
+        !match(keywordParameter.getArgumentType(context), PyUnionType.union(keywordTypes), context, substitutions)) {
       return null;
     }
 
@@ -755,24 +755,6 @@ public class PyTypeChecker {
     else {
       return null;
     }
-  }
-
-  @Nullable
-  public static PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final PyType parameterType = context.getType(parameter);
-
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
-
-      if (parameter.isPositionalContainer()) {
-        return paramCollectionType.getIteratedItemType();
-      }
-      else if (parameter.isKeywordContainer()) {
-        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
-      }
-    }
-
-    return parameterType;
   }
 
   public static class AnalyzeCallResults {

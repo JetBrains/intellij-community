@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -723,7 +724,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     final long stamp = document.getModificationStamp();
-    ApplicationManager.getApplication().invokeLater(() -> {
+    DumbService.getInstance(file.getProject()).smartInvokeLater(() -> {
       if (project.isDisposed() || document.getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
       final UndoManager undoManager = UndoManager.getInstance(project);
@@ -823,5 +824,17 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       });
 
     return hasErrorsExceptUnresolvedImports;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+    return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+    return new InsertMethodCallFix(call, method);
   }
 }

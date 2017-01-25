@@ -81,6 +81,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     addContent((UsageViewImpl)usageView, presentation);
     showToolWindow(true);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!((UsageViewImpl)usageView).isDisposed()) {
+        ((UsageViewImpl)usageView).expandRoot();
+      }
+    });
     return usageView;
   }
 
@@ -149,7 +154,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull
   SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
-    UsageTarget target = searchFor[0];
+    UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];
       ((TypeSafeDataProvider)target).calcData(UsageView.USAGE_SCOPE, new DataSink() {
@@ -197,7 +202,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
+  protected static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(() -> {
       for (Usage foundUsage : foundUsages) {
         usageView.appendUsage(foundUsage);

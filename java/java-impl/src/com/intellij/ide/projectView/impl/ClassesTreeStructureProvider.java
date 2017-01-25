@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,11 +102,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   private boolean fileInRoots(VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
-  }
-
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 
   @Override

@@ -157,8 +157,8 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     final EmptyIcon icon = (EmptyIcon)o;
 
-    if (scaleVal(height, Scale.EFFECTIVE) != icon.scaleVal(height, Scale.EFFECTIVE)) return false;
-    if (scaleVal(width, Scale.EFFECTIVE) != icon.scaleVal(width, Scale.EFFECTIVE)) return false;
+    if (scaleVal(height, Scale.EFFECTIVE) != icon.scaleVal(icon.height, Scale.EFFECTIVE)) return false;
+    if (scaleVal(width, Scale.EFFECTIVE) != icon.scaleVal(icon.width, Scale.EFFECTIVE)) return false;
 
     return true;
   }

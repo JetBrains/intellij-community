@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Point2D;
 import java.text.Bidi;
 
 /**
@@ -71,7 +71,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   
   private int myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
-  private int myAscent; // guarded by myLock
+  private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
   private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
@@ -136,13 +136,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   @Override
   public void hierarchyChanged(HierarchyEvent e) {
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
-      checkFontRenderContext();
+      checkFontRenderContext(null);
     }
   }
 
   @Override
   public void visibleAreaChanged(VisibleAreaEvent e) {
-    checkFontRenderContext();
+    checkFontRenderContext(null);
   }
   public int yToVisualLine(int y) {
     return myMapper.yToVisualLine(y);
@@ -209,7 +209,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
   
   @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull Point p) {
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -217,7 +217,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @NotNull
-  public Point visualPositionToXY(@NotNull VisualPosition pos) {
+  public Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -225,7 +225,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @NotNull
-  public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+  public Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -262,6 +262,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   public void paint(Graphics2D g) {
     assertIsDispatchThread();
     myEditor.getSoftWrapModel().prepareToMapping();
+    checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
   }
 
@@ -337,7 +338,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       default:
         myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     }
-    setFontRenderContext();
+    setFontRenderContext(null);
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -442,7 +443,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   public int getDescent() {
     synchronized (myLock) {
-      return myLineHeight - myAscent;
+      return myDescent;
     }
   }
 
@@ -463,7 +464,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   public int getAscent() {
     synchronized (myLock) {
       initMetricsIfNeeded();
-      return myAscent;
+      return myLineHeight - myDescent;
     }
   }
 
@@ -497,10 +498,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
     myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
 
-    int ascent = FontLayoutService.getInstance().getAscent(fm);
-    myAscent = (int)Math.ceil(ascent * verticalScalingFactor);
-    myTopOverhang = ascent - myAscent;
-    myBottomOverhang = fontMetricsHeight - ascent - myLineHeight + myAscent;
+    int descent = FontLayoutService.getInstance().getDescent(fm);
+    myDescent = (int)Math.floor(descent * verticalScalingFactor);
+    myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
+    myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
@@ -516,14 +517,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  private void setFontRenderContext() {
-    JComponent component = myEditor.getContentComponent();
-    myFontRenderContext = FontInfo.getFontRenderContext(component);
+  private void setFontRenderContext(FontRenderContext context) {
+    myFontRenderContext = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
   }
 
-  private void checkFontRenderContext() {
+  private void checkFontRenderContext(FontRenderContext context) {
     FontRenderContext oldContext = myFontRenderContext;
-    setFontRenderContext();
+    setFontRenderContext(context);
     if (!myFontRenderContext.equals(oldContext)) {
       myTextLayoutCache.resetToDocumentSize(false);
     }
@@ -577,7 +577,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
              ", prefix attributes: " + prefixAttributes +
              ", space width: " + myPlainSpaceWidth +
              ", line height: " + myLineHeight +
-             ", ascent: " + myAscent +
+             ", descent: " + myDescent +
              ", char height: " + myCharHeight +
              ", max char width: " + myMaxCharWidth +
              ", tab size: " + myTabSize +

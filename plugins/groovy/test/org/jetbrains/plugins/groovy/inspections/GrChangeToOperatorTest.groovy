@@ -78,12 +78,15 @@ class Operators {
     doTest "a.previous()", "--a"
   }
 
-  void testNegatableUnaryExpression() {
+  void testAsBoolean() {
     doTest "a.asBoolean()", "!!a"
     doTest "!a.asBoolean()", "!a"
-    doTest "if (a.asBoo<caret>lean());", "if (a);"
-    doTest "if (!a.asBo<caret>olean());", "if (!a);"
-    doTest "if ('a'.intern().as<caret>Boolean());", "if ('a'.intern());"
+    doTest "if (a.as<caret>Boolean());", "if (a);"
+    doTest "while (a.as<caret>Boolean()) {}", "while (a) {}"
+    doTest "a.as<caret>Boolean() ? 1 : 0", "a ? 1 : 0"
+    doTest "a ? a.as<caret>Boolean() : 0", "a ? !!a : 0"
+    doTest "if (!a.asB<caret>oolean());", "if (!a);"
+    doTest "if ('a'.intern().asBool<caret>ean());", "if ('a'.intern());"
   }
 
   void 'test unary expression with wrong number arguments'() {
@@ -102,6 +105,7 @@ class Operators {
     doTest "if (a.as<caret>Boolean());", "if (a);"
     doTest "if (!a.asB<caret>oolean());", "if (!a);"
     doTest "if ('a'.intern().asBool<caret>ean());", "if ('a'.intern());"
+    doTest "a ? a.as<caret>Boolean() : 0"
   }
 
   void testSimpleBinaryExpression() {
@@ -159,11 +163,11 @@ class Operators {
     [
       "(a.toString() as Operators).minus(b.hashCode())": "(a.toString() as Operators) - b.hashCode()",
       "b.isCase(a)"                                    : "a in b",
-      "if ([1, 2, 3].is<caret>Case(2-1));"             : "if ((2 - 1) in [1, 2, 3]);",
+      "if ([1, 2, 3].is<caret>Case(2-1));"             : "if (2 - 1 in [1, 2, 3]);",
       'def x = "1".p<caret>lus(1)'                     : 'def x = "1" + 1',
       '("1" + 1).plus(1)'                              : '("1" + 1) + 1',
       '!a.toString().asBoolean()'                      : '!a.toString()',
-      "a.xor((a.b + 1) == b) == a"                     : "(a ^ ((a.b + 1) == b)) == a",
+      "a.xor((a.b + 1) * b) == a"                     : "(a ^ (a.b + 1) * b) == a",
     ].each {
       doTest it.key, it.value
     }
@@ -176,6 +180,7 @@ class Operators {
 
   void testSamePrioritiesExpression() {
     doTest "a.eq<caret>uals(b) == 1", "(a == b) == 1"
+    doTest "(a == b).eq<caret>uals(1)", "(a == b) == 1"
     doTest "1 == a.eq<caret>uals(b)", "1 == (a == b)"
     doTest "!a.eq<caret>uals(b) == 1", "(a != b) == 1"
     doTest "1 == !a.eq<caret>uals(b)", "1 == (a != b)"
@@ -183,12 +188,25 @@ class Operators {
     doTest "1 + a.p<caret>lus(b)", "1 + a + b"
     doTest "1 + a.m<caret>inus(b)", "1 + a - b"
     doTest "1 - a.m<caret>inus(b)", "1 - (a - b)"
+    doTest "a.m<caret>inus(1 - b)", "a - (1 - b)"
     doTest "1 - a.p<caret>lus(b)", "1 - (a + b)"
 
     doTest "a.m<caret>inus(b) - 1", "a - b - 1"
     doTest "a.p<caret>lus(b) - 1", "a + b - 1"
     doTest "a.m<caret>inus(b) + 1", "a - b + 1"
     doTest "a.p<caret>lus(b) + 1", "a + b + 1"
+  }
+
+  void testComplex() {
+    doTest "a.eq<caret>uals(b * c) == 1", "(a == b * c) == 1"
+
+    doTest "a.eq<caret>uals(b * c)", "a == b * c"
+    doTest "(Boolean) a.eq<caret>uals(b)", "(Boolean) (a == b)"
+  }
+
+  void testGetAtPutAt() {
+    doTest "(List) a.g<caret>etAt(b)", "(List) a[b]"
+    doTest "(List) a.g<caret>etAt(b + 1)", "(List) a[b + 1]"
   }
 
   void testComplexNegatableBinaryExpression() {
@@ -198,12 +216,14 @@ class Operators {
   void testCompareTo() {
     doTest "a.compareTo(b)", "a <=> b"
     doTest "a.compareTo(b) < 0", "a < b"
+
     doTest "a.compareTo(b) <= 0", "a <= b"
     doTest "a.compareTo(b) == 0", "a == b"
     doTest "a.compareTo(b) != 0", "a != b"
     doTest "a.compareTo(b) >= 0", "a >= b"
     doTest "a.compareTo(b) > 0", "a > b"
     doTest "if ((2-1).compa<caret>reTo(3) > 0);", /if ((2 - 1) > 3);/
+    doTest "! (a.compar<caret>eTo(b) < 0)", "!(a < b)"
   }
 
   void testCompareToOption() {
@@ -215,7 +235,7 @@ class Operators {
   void testGetAndPut() {
     doTest "a.getAt(b)", "a[b]"
     doTest "a.putAt(b, 'c')", "a[b] = 'c'"
-    doTest "a.putAt(b, 'c'*2)", "a[b] = ('c' * 2)"
+    doTest "a.putAt(b, 'c'*2)", "a[b] = 'c' * 2"
     doTest "a.getAt(a, b)"
     doTest "a.putAt(b)"
     doTest "a.putAt(b, b, b)"

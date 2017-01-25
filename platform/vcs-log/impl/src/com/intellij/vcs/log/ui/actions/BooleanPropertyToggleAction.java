@@ -18,7 +18,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

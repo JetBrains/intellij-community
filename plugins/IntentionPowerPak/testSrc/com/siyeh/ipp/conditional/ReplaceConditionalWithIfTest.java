@@ -31,6 +31,7 @@ public class ReplaceConditionalWithIfTest extends IPPTestCase {
     public void testArrayInitializer() { doTest(); }
     public void testInsideExprLambda() { doTest(); }
     public void testInsideExprLambdaWithParams() { doTest(); }
+    public void testCastNeeded() { doTest(); }
 
     @Override
     protected String getIntentionName() {

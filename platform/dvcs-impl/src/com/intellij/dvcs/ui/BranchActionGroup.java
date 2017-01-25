@@ -16,9 +16,45 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.EmptyIcon;
 
-public abstract class BranchActionGroup extends ActionGroup {
+import static icons.DvcsImplIcons.*;
+
+public abstract class BranchActionGroup extends ActionGroup implements DumbAware {
+
+  private boolean myIsFavorite;
+  private final LayeredIcon myIcon;
+  private final LayeredIcon myHoveredIcon;
+
   public BranchActionGroup() {
     super("", true);
+    myIcon = new LayeredIcon(Favorite, EmptyIcon.ICON_16);
+    myHoveredIcon = new LayeredIcon(FavoriteOnHover, NotFavoriteOnHover);
+    getTemplatePresentation().setIcon(myIcon);
+    getTemplatePresentation().setHoveredIcon(myHoveredIcon);
+    updateIcons();
+  }
+
+  private void updateIcons() {
+    myIcon.setLayerEnabled(0, myIsFavorite);
+    myHoveredIcon.setLayerEnabled(0, myIsFavorite);
+
+    myIcon.setLayerEnabled(1, !myIsFavorite);
+    myHoveredIcon.setLayerEnabled(1, !myIsFavorite);
+  }
+
+  public boolean isFavorite() {
+    return myIsFavorite;
+  }
+
+  public void setFavorite(boolean favorite) {
+    myIsFavorite = favorite;
+    updateIcons();
+  }
+
+  public void toggle() {
+    setFavorite(!myIsFavorite);
   }
 }

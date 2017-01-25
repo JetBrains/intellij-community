@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -716,15 +716,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    VirtualFile file = position.getFile().getVirtualFile();
-    if (file == null) {
-      file = position.getFile().getOriginalFile().getVirtualFile();
+  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+    if (position != null) {
+      VirtualFile file = position.getFile().getVirtualFile();
+      if (file == null) {
+        file = position.getFile().getOriginalFile().getVirtualFile();
+      }
+      if (file != null) {
+        return new JavaXSourcePosition(position, file);
+      }
     }
-    if (file == null) {
-      return null;
-    }
-    return new JavaXSourcePosition(position, file);
+    return null;
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {

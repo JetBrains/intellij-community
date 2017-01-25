@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.intellij.lang.regexp;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 
+import java.io.File;
 import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.*;
@@ -26,6 +27,20 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
  * @author Bas Leijdekkers
  */
 public class RegExpLexerTest extends LexerTestCase {
+
+  public void testAtomicGroup() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("(?>atom)", "ATOMIC_GROUP ('(?>')\n" +
+                       "CHARACTER ('a')\n" +
+                       "CHARACTER ('t')\n" +
+                       "CHARACTER ('o')\n" +
+                       "CHARACTER ('m')\n" +
+                       "GROUP_END (')')", lexer);
+    doTest("(?:no)", "NON_CAPT_GROUP ('(?:')\n" +
+                     "CHARACTER ('n')\n" +
+                     "CHARACTER ('o')\n" +
+                     "GROUP_END (')')", lexer);
+  }
 
   public void testAmpersand() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
@@ -39,8 +54,7 @@ public class RegExpLexerTest extends LexerTestCase {
   public void testQE() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("\\Q\r\n\\E", "QUOTE_BEGIN ('\\Q')\n" +
-                         "CHARACTER ('\n" +
-                         "')\n" +
+                         "CHARACTER ('\n')\n" +
                          "CHARACTER ('\\n')\n" +
                          "QUOTE_END ('\\E')", lexer);
   }
@@ -343,6 +357,68 @@ public class RegExpLexerTest extends LexerTestCase {
     doTest("[]]", "CLASS_BEGIN ('[')\n" +
                   "CHARACTER (']')\n" +
                   "CLASS_END (']')", lexer);
+    doTest("[\\]]", "CLASS_BEGIN ('[')\n" +
+                    "REDUNDANT_ESCAPE ('\\]')\n" +
+                    "CLASS_END (']')", lexer);
+    doTest("[[]]]", "CLASS_BEGIN ('[')\n" +
+                    "CLASS_BEGIN ('[')\n" +
+                    "CHARACTER (']')\n" +
+                    "CLASS_END (']')\n" +
+                    "CLASS_END (']')", lexer);
+    doTest("[ \\]]", "CLASS_BEGIN ('[')\n" +
+                     "CTRL_CHARACTER (' ')\n" +
+                     "ESC_CHARACTER ('\\]')\n" +
+                     "CLASS_END (']')", lexer);
+    doTest("[\\Q\\E]]", "CLASS_BEGIN ('[')\n" +
+                        "QUOTE_BEGIN ('\\Q')\n" +
+                        "QUOTE_END ('\\E')\n" +
+                        "CHARACTER (']')\n" +
+                        "CLASS_END (']')", lexer);
+    doTest("[\\Q+\\E]]", "CLASS_BEGIN ('[')\n" +
+                         "QUOTE_BEGIN ('\\Q')\n" +
+                         "CHARACTER ('+')\n" +
+                         "QUOTE_END ('\\E')\n" +
+                         "CLASS_END (']')\n" +
+                         "CHARACTER (']')", lexer);
+    doTest("[^\\Q\\E]]", "CLASS_BEGIN ('[')\n" +
+                         "CARET ('^')\n" +
+                         "QUOTE_BEGIN ('\\Q')\n" +
+                         "QUOTE_END ('\\E')\n" +
+                         "CHARACTER (']')\n" +
+                         "CLASS_END (']')", lexer);
+    doTest("[^\\Q+\\E]]", "CLASS_BEGIN ('[')\n" +
+                          "CARET ('^')\n" +
+                          "QUOTE_BEGIN ('\\Q')\n" +
+                          "CHARACTER ('+')\n" +
+                          "QUOTE_END ('\\E')\n" +
+                          "CLASS_END (']')\n" +
+                          "CHARACTER (']')", lexer);
+    final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(COMMENT_MODE));
+    doTest("[ \t\n]]", "CLASS_BEGIN ('[')\n" +
+                       "WHITE_SPACE (' ')\n" +
+                       "WHITE_SPACE ('\t')\n" +
+                       "WHITE_SPACE ('\\n')\n" +
+                       "CHARACTER (']')\n" +
+                       "CLASS_END (']')", lexer2);
+    doTest("[\\ ]", "CLASS_BEGIN ('[')\n" +
+                    "ESC_CTRL_CHARACTER ('\\ ')\n" +
+                    "CLASS_END (']')", lexer2);
+    final RegExpLexer lexer3 = new RegExpLexer(EnumSet.of(ALLOW_EMPTY_CHARACTER_CLASS));
+    doTest("[]]", "CLASS_BEGIN ('[')\n" +
+                  "CLASS_END (']')\n" +
+                  "CHARACTER (']')", lexer3);
+    doTest("[[]]]", "CLASS_BEGIN ('[')\n" +
+                    "CHARACTER ('[')\n" +
+                    "CLASS_END (']')\n" +
+                    "CHARACTER (']')\n" +
+                    "CHARACTER (']')", lexer3);
+    doTest("[\\]]", "CLASS_BEGIN ('[')\n" +
+                    "ESC_CHARACTER ('\\]')\n" +
+                    "CLASS_END (']')", lexer3);
+    doTest("[ \\]]", "CLASS_BEGIN ('[')\n" +
+                     "CTRL_CHARACTER (' ')\n" +
+                     "ESC_CHARACTER ('\\]')\n" +
+                     "CLASS_END (']')", lexer3);
   }
 
   public void testBoundaries() {
@@ -381,7 +457,7 @@ public class RegExpLexerTest extends LexerTestCase {
                                         "CHARACTER ('<')\n" +
                                         "CHARACTER ('a')\n" +
                                         "CHARACTER ('>')\n" +
-                                        "CHARACTER (' ')\n" +
+                                        "CTRL_CHARACTER (' ')\n" +
                                         "CHARACTER ('(')\n" +
                                         "CHARACTER ('?')\n" +
                                         "CHARACTER ('<')\n" +
@@ -475,6 +551,32 @@ public class RegExpLexerTest extends LexerTestCase {
                       "CLASS_END (']')", lexer);
   }
 
+  public void testControlCharacters() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\n\\b\\t\\r\\f[\\n\\b\\t\\r\\f]", "ESC_CTRL_CHARACTER ('\\n')\n" +
+                                               "BOUNDARY ('\\b')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\t')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\r')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\f')\n" +
+                                               "CLASS_BEGIN ('[')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\n')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\b')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\t')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\r')\n" +
+                                               "ESC_CTRL_CHARACTER ('\\f')\n" +
+                                               "CLASS_END (']')", lexer);
+    doTest("\n\t\r\f[\n\t\r\f]", "CTRL_CHARACTER ('\\n')\n" +
+                                 "CTRL_CHARACTER ('\t')\n" +
+                                 "CTRL_CHARACTER ('\n')\n" +
+                                 "CTRL_CHARACTER ('\f')\n" +
+                                 "CLASS_BEGIN ('[')\n" +
+                                 "CTRL_CHARACTER ('\\n')\n" +
+                                 "CTRL_CHARACTER ('\t')\n" +
+                                 "CTRL_CHARACTER ('\n')\n" +
+                                 "CTRL_CHARACTER ('\f')\n" +
+                                 "CLASS_END (']')", lexer);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;
@@ -482,6 +584,9 @@ public class RegExpLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return "community/RegExpSupport/testData/lexer";
+    if (new File(getHomePath(), "community/RegExpSupport").isDirectory()) {
+      return "/community/RegExpSupport/testData/lexer";
+    }
+    return "/RegExpSupport/testData/lexer";
   }
 }

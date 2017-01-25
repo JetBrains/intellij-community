@@ -176,7 +176,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   public PsiElement getDeclaration() {
     if (myPsiClass == null) return null;
     if (myStatic) return JavaFxPsiUtil.findStaticPropertySetter(myName, myPsiClass);
-    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
+    return JavaFxPsiUtil.getWritableProperties(myPsiClass).get(myName);
   }
 
   @Override

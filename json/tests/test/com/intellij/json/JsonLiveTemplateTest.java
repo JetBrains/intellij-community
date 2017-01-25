@@ -63,8 +63,16 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     assertFalse(isApplicableContextUnderCaret("{fo<caret>o: \"bar\"}"));
   }
 
+  public void testNotExpandableInsidePropertyKeyWithWhitespace() {
+    assertFalse(isApplicableContextUnderCaret("{fo<caret>o : \"bar\"}"));
+  }
+
   public void testExpandableAtTopLevel() {
     assertTrue(isApplicableContextUnderCaret("fo<caret>o"));
+  }
+
+  public void testExpandableInObjectLiteral() {
+    assertTrue(isApplicableContextUnderCaret("{fo<caret>o}"));
   }
 
   public void testCustomTemplateExpansion() {

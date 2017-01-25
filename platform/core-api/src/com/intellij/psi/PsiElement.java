@@ -402,10 +402,10 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Checks if this PSI element is valid. Valid elements and their hierarchy members
    * can be accessed for reading and writing. Valid elements can still correspond to
    * underlying documents whose text is different, when those documents have been changed
-   * and not yet committed ({@link com.intellij.psi.PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
+   * and not yet committed ({@link PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
    * (In this case an attempt to change PSI will result in an exception).
    *
-   * Any access to invalid elements results in {@link com.intellij.psi.PsiInvalidElementAccessException}.
+   * Any access to invalid elements results in {@link PsiInvalidElementAccessException}.
    *
    * Once invalid, elements can't become valid again.
    *
@@ -452,12 +452,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * multiple possible targets, {@link PsiPolyVariantReference} should be used instead
    * of returning multiple references.
    * <p/>
-   * Actually, it's preferable to call {@link com.intellij.psi.PsiReferenceService#getReferences} instead
-   * as it allows adding references by plugins when the element implements {@link com.intellij.psi.ContributedReferenceHost}.
+   * Actually, it's preferable to call {@link PsiReferenceService#getReferences} instead
+   * as it allows adding references by plugins when the element implements {@link ContributedReferenceHost}.
    *
    * @return the array of references, or an empty array if the element has no associated
    *         references.
-   * @see com.intellij.psi.PsiReferenceService#getReferences
+   * @see PsiReferenceService#getReferences
    * @see com.intellij.psi.search.searches.ReferencesSearch
    */
   @NotNull
@@ -469,7 +469,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param key the key for accessing the user data object.
    * @return the user data object, or null if no such object is found in the current element.
-   * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
+   * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
   @Contract(pure=true)
@@ -481,7 +481,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param key   the key for accessing the user data object.
    * @param value the user data object to attach.
-   * @see #getCopyableUserData(com.intellij.openapi.util.Key)
+   * @see #getCopyableUserData(Key)
    */
   <T> void putCopyableUserData(Key<T> key, @Nullable T value);
 

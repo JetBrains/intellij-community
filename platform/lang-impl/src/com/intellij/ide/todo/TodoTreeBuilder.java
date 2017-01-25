@@ -437,9 +437,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
-  public TodoItemNode getFirstPointerForElement(Object element) {
+  public TodoItemNode getFirstPointerForElement(@Nullable Object element) {
     if (element instanceof TodoItemNode) {
       return (TodoItemNode)element;
+    }
+    else if (element == null) {
+      return null;
     }
     else {
       Object[] children = getTreeStructure().getChildElements(element);

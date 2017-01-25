@@ -28,17 +28,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,26 +62,20 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
       myCommandsHistoryLimitField = new JTextField(3);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
-      myCbOverrideConsoleCycleBufferSize.addChangeListener(new ChangeListener(){
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
-        }
-      });
+      myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected()));
       myConsoleCycleBufferSizeField = new JTextField(3);
 
       JPanel northPanel = new JPanel(new GridBagLayout());
       GridBag gridBag = new GridBag();
       gridBag.anchor(GridBagConstraints.WEST).setDefaultAnchor(GridBagConstraints.WEST);
-      northPanel
-        .add(myCbUseSoftWrapsAtConsole,
-             gridBag.nextLine().next());
+      northPanel.add(myCbUseSoftWrapsAtConsole, gridBag.nextLine().next());
       northPanel.add(Box.createHorizontalGlue(), gridBag.next().coverLine());
       northPanel.add(new JLabel(ApplicationBundle.message("editbox.console.history.limit")), gridBag.nextLine().next());
       northPanel.add(myCommandsHistoryLimitField, gridBag.next());
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
+        northPanel.add(new JLabel(" KB"), gridBag.next());
       }
       if (!editFoldingsOnly()) {
         JPanel wrapper = new JPanel(new BorderLayout());
@@ -114,8 +107,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    boolean isModified = !Arrays.asList(myNegativePanel.getListItems()).equals(mySettings.getNegativePatterns());
-    isModified |= !Arrays.asList(myPositivePanel.getListItems()).equals(mySettings.getPositivePatterns());
+    boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getNegativePatterns()));
+    isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getPositivePatterns()));
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT);
     if (ConsoleBuffer.useCycleBuffer()) {
@@ -211,9 +204,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final String myQuery;
 
-    public MyAddDeleteListPanel(String title, String query) {
+    MyAddDeleteListPanel(String title, String query) {
       super(title, new ArrayList<>());
       myQuery = query;
+      new ListSpeedSearch(myList);
     }
 
     @Override
@@ -248,9 +242,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     void resetFrom(List<String> patterns) {
       myListModel.clear();
-      for (String pattern : patterns) {
-        myListModel.addElement(pattern);
-      }
+      patterns.stream().sorted(String.CASE_INSENSITIVE_ORDER).forEach(myListModel::addElement);
     }
 
     void applyTo(List<String> patterns) {
@@ -262,11 +254,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     public void addRule(String rule) {
       addElement(rule);
-    }
-
-    @Override
-    public void setBounds(int x, int y, int width, int height) {
-      super.setBounds(x, y, width, height);
     }
 
     @Override

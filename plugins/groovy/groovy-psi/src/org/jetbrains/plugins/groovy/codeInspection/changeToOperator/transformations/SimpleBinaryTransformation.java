@@ -17,24 +17,28 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+
+import static java.lang.String.format;
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 public class SimpleBinaryTransformation extends BinaryTransformation {
 
-  private final String myOperator;
+  private final IElementType myOperator;
 
   public SimpleBinaryTransformation(@NotNull IElementType operatorType) {
-    this(operatorType.toString());
+    myOperator = operatorType;
   }
 
-  public SimpleBinaryTransformation(@NotNull String operator) {
-    myOperator = operator;
-  }
-
-  @NotNull
   @Override
-  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
-    return myOperator;
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    if (isParenthesesRequiredBinaryOperation(getPrecedence(rhs), myOperator, true)) {
+      rhs = parenthesize(rhs);
+    }
+    replaceExpression(methodCall, format("%s %s %s", getLhs(methodCall).getText(), myOperator.toString(), rhs.getText()));
   }
 }

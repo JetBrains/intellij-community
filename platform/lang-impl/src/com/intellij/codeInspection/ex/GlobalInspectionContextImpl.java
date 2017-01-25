@@ -919,14 +919,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
               ApplicationManager.getApplication().runReadAction(runnable);
 
-              final List<ProblemDescriptor> localDescriptors = new ArrayList<>();
+              final Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
               for (LocalInspectionToolWrapper tool : lTools) {
                 InspectionToolPresentation toolPresentation = getPresentation(tool);
                 for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
                   if (descriptor instanceof ProblemDescriptor) {
-                    if (localDescriptors.contains(descriptor)) continue;
-                    int idx = Collections.binarySearch(localDescriptors, descriptor, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-                    localDescriptors.add(Math.abs(idx + 1), (ProblemDescriptor)descriptor);
+                    localDescriptors.add((ProblemDescriptor)descriptor);
                   }
                 }
               }
@@ -967,9 +965,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }, ModalityState.defaultModalityState());
       return;
     }
+    
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
       CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null);
+      if (postRunnable != null) {
+        postRunnable.run();
+      }
     };
     TransactionGuard.submitTransaction(getProject(), runnable);
   }

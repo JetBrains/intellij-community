@@ -58,13 +58,22 @@
 
     <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
 
+    <group id="CC.AddSubtaskGroup">
+      <action class="com.jetbrains.edu.coursecreator.actions.CCNewSubtaskAction" id="CC.NewStep"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="AnswerPlaceholderGroup" anchor="after"/>
+    </group>
+
     <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
-      <action id="CC.SwitchSubtask" class="com.jetbrains.edu.coursecreator.actions.CCSwitchSubtask" />
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
+      <separator/>
+      <action id="CC.SwitchSubtask" class="com.jetbrains.edu.coursecreator.actions.CCSwitchSubtask" />
+      <reference id="CC.NewStep"/>
+      <separator/>
       <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive"/>
       <action id="PushTask" class="com.jetbrains.edu.coursecreator.actions.CCPushTask"/>
       <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson"/>
@@ -98,11 +107,6 @@
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
     <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.CCGetCourseFromStepic"/>
-    <group id="CC.AddSubtaskGroup">
-      <action class="com.jetbrains.edu.coursecreator.actions.CCNewSubtaskAction" id="CC.NewStep"/>
-      <separator/>
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="AnswerPlaceholderGroup" anchor="after"/>
-    </group>
   </actions>
 
 

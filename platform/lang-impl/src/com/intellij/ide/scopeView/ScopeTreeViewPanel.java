@@ -70,6 +70,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -107,7 +108,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final IdeView myIdeView = new MyIdeView();
   private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
-  private final DnDAwareTree myTree = new JBTreeWithHintProvider(){
+  private final DnDAwareTree myTree = new DnDAwareTree() {
     @Override
     public boolean isFileColorsEnabled() {
       return ProjectViewTree.isFileColorsEnabledFor(this);
@@ -257,6 +258,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private void initTree() {
+    HintUpdateSupply.installDataContextHintUpdateSupply(myTree);
     myTree.setCellRenderer(new MyTreeCellRenderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);

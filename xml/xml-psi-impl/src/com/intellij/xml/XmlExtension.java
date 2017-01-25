@@ -164,10 +164,6 @@ public abstract class XmlExtension {
     return false;
   }
 
-  public boolean needWhitespaceBeforeAttribute() {
-    return true;
-  }
-
   public boolean useXmlTagInsertHandler() {
     return true;
   }

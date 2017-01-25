@@ -357,7 +357,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private void assertConsistency(boolean ignoreCase, @NotNull Object details) {
-    if (!CHECK || ApplicationInfoImpl.isInPerformanceTest()) return;
+    if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     for (int i = 1; i < childrenIds.length; i++) {
       int id = childrenIds[i];

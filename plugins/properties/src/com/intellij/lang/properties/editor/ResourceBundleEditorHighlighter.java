@@ -24,12 +24,13 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.ide.util.treeView.TreeVisitor;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.inspections.*;
+import com.intellij.lang.properties.editor.inspections.InspectedPropertyProblems;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +40,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -93,21 +95,21 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       final List<PropertiesFile> files = myEditor.getResourceBundle().getPropertiesFiles();
       final Project project = myEditor.getResourceBundle().getProject();
 
-      final TreeVisitor<TreeElementWrapper> nodeVisitor =
-        new TreeVisitor<TreeElementWrapper>() {
-          @Override
-          public boolean visit(@NotNull TreeElementWrapper wrapper) {
-            final TreeElement treeElement = wrapper.getValue();
-            if (!(treeElement instanceof ResourceBundlePropertyStructureViewElement)) return false;
-            ResourceBundlePropertyStructureViewElement node = (ResourceBundlePropertyStructureViewElement) treeElement;
-            final String key = node.getProperty().getKey();
-            LOG.assertTrue(key != null);
-            SortedSet<HighlightInfoType> highlightTypes = new TreeSet<>(Comparator.comparing(t -> t.getSeverity(null)));
-            List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
-              new SmartList<>();
-            final IProperty[] properties =
-              files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
-            if (properties.length == 0) return false;
+      final StructureViewModel model = myEditor.getStructureViewComponent().getTreeModel();
+      final Queue<TreeElement> queue = new Queue<>(1);
+      queue.addLast(model.getRoot());
+      while (!queue.isEmpty()) {
+        final TreeElement treeElement = queue.pullFirst();
+        if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+          ResourceBundlePropertyStructureViewElement node = (ResourceBundlePropertyStructureViewElement)treeElement;
+          final String key = node.getProperty().getKey();
+          LOG.assertTrue(key != null);
+          SortedSet<HighlightInfoType> highlightTypes = new TreeSet<>(Comparator.comparing(t -> t.getSeverity(null)));
+          List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
+            new SmartList<>();
+          final IProperty[] properties =
+            files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
+          if (properties.length != 0) {
             for (InspectionVisitorWrapper v : visitors) {
               final ResourceBundleEditorProblemDescriptor[] problemDescriptors = v.getProblemVisitor().apply(properties);
               if (!ArrayUtil.isEmpty(problemDescriptors)) {
@@ -122,12 +124,16 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                 }
               }
             }
-            node.setInspectedPropertyProblems(allDescriptors.isEmpty() ? null : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes));
-            return false;
+            node.setInspectedPropertyProblems(allDescriptors.isEmpty()
+                                              ? null
+                                              : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[allDescriptors.size()]),
+                                                                              highlightTypes));
           }
-        };
-      myEditor.getStructureViewComponent().getTreeBuilder().accept(TreeElementWrapper.class,
-                                                                   nodeVisitor);
+        }
+        for (TreeElement element : treeElement.getChildren()) {
+          queue.addLast(element);
+        }
+      }
     }
 
     @Override

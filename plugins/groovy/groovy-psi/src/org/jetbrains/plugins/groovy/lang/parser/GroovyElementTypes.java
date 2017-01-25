@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,9 +217,9 @@ public interface GroovyElementTypes {
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
   GroovyElementType RANGE_EXPRESSION = new GroovyElementType("Range expression");
-  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("Composite shift sign <<");
-  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType("Composite shift sign >>");
-  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType("Composite shift sign >>>");
+  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("<<");
+  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType(">>");
+  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType(">>>");
   GroovyElementType MORE_OR_EQUALS_SIGN = new GroovyElementType(">=");
   GroovyElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
   GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");
@@ -421,8 +421,6 @@ public interface GroovyElementTypes {
 
   //modifiers
   GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");
-
-  GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
 
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node

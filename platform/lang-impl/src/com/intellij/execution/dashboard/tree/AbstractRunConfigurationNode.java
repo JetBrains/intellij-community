@@ -15,15 +15,14 @@
  */
 package com.intellij.execution.dashboard.tree;
 
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.DashboardNode;
+import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RuntimeDashboardContributor;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.RowIcon;
-import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-abstract class AbstractRunConfigurationNode<T> extends AbstractTreeNode<T> implements DashboardNode {
+abstract class AbstractRunConfigurationNode<T> extends AbstractTreeNode<T> implements DashboardRunConfigurationNode {
   @NotNull private final RunnerAndConfigurationSettings myConfigurationSettings;
 
   protected AbstractRunConfigurationNode(Project project, T value, @NotNull RunnerAndConfigurationSettings configurationSettings) {
@@ -43,7 +42,7 @@ abstract class AbstractRunConfigurationNode<T> extends AbstractTreeNode<T> imple
   @Override
   protected void update(PresentationData presentation) {
     presentation.setPresentableText(myConfigurationSettings.getName());
-    Icon icon = myConfigurationSettings.getConfiguration().getIcon();
+    Icon icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(myConfigurationSettings);
     Icon decorator = getIconDecorator();
     if (decorator != null) {
       icon = new RowIcon(icon, decorator);
@@ -56,14 +55,11 @@ abstract class AbstractRunConfigurationNode<T> extends AbstractTreeNode<T> imple
   }
 
   @Override
-  @Nullable
-  public Content getContent() {
-    return getDescriptor() == null ? null : getDescriptor().getAttachedContent();
+  @NotNull
+  public RunnerAndConfigurationSettings getConfigurationSettings() {
+    return myConfigurationSettings;
   }
 
   @Nullable
   protected abstract Icon getIconDecorator();
-
-  @Nullable
-  protected abstract RunContentDescriptor getDescriptor();
 }

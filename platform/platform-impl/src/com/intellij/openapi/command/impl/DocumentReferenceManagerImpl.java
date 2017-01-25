@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
+public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponentAdapter {
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
   private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<>();
@@ -47,12 +47,6 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<>();
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return getClass().getSimpleName();
-  }
 
   @Override
   public void initComponent() {
@@ -103,10 +97,6 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       }
     }
     return files;
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @NotNull

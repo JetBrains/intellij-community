@@ -21,17 +21,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Irina.Chernushina on 3/28/2016.
@@ -49,14 +48,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     skeleton(new Callback() {
       @Override
       public void doCheck() {
-        assertStringItems("\"one\"", "\"two\"");
-
-        LookupImpl lookup = getActiveLookup();
-        if (lookup != null) lookup.hide();
-        JsonSchemaService.Impl.get(getProject()).reset();
-        doHighlighting();
-        complete();
-        assertStringItems("\"one\"", "\"two\"");
+        checkCompletion("\"one\"", "\"two\"");
       }
 
       @Override
@@ -79,6 +71,17 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         addSchema(inherited);
       }
     });
+  }
+
+  private void checkCompletion(String... strings) {
+    assertStringItems(strings);
+
+    LookupImpl lookup = getActiveLookup();
+    if (lookup != null) lookup.hide();
+    JsonSchemaService.Impl.get(getProject()).reset();
+    doHighlighting();
+    complete();
+    assertStringItems(strings);
   }
 
   public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
@@ -290,7 +293,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
         addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/refToDefinitionInFileSchema.json", false, Collections.emptyList()));
-        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
       }
 
       @Override
@@ -311,17 +314,193 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @NotNull
-  private static String getModuleDir(@NotNull final Project project) {
-    String moduleDir = null;
-    VirtualFile[] children = project.getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        break;
+  public void testFindRefToOtherFile() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/refToOtherFileSchema.json", false, Collections.emptyList()));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
       }
-    }
-    Assert.assertNotNull(moduleDir);
-    return moduleDir;
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/refToOtherFileSchema.json", "/definitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("definitionsSchema.json", resolve.getContainingFile().getName());
+      }
+    });
+  }
+
+  public void testNavigateToPropertyDefinitionInPackageJsonSchema() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("package.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/packageJsonSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/package.json", "/packageJsonSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        final String text = myFile.getText();
+        final int indexOf = text.indexOf("dependencies");
+        assertTrue(indexOf > 0);
+        final PsiReference referenceAt = myFile.findReferenceAt(indexOf);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("packageJsonSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"dependencies\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNavigateToPropertyDefinitionNestedDefinitions() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNestedDefinitionsNavigation.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/nestedDefinitionsSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/testNestedDefinitionsNavigation.json", "/nestedDefinitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("nestedDefinitionsSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"definitions\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNavigateToAllOfOneOfDefinitions() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNestedAllOfOneOfDefinitionsSchema.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/nestedAllOfOneOfDefinitionsSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/testNestedAllOfOneOfDefinitionsSchema.json", "/nestedAllOfOneOfDefinitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("nestedAllOfOneOfDefinitionsSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"begriff\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceNavigation() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNavigation.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testNavigation.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("baseSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"findMe\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceCompletion() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testCompletion.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testCompletion.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        checkCompletion("1","2");
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceHighlighting() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testHighlighting.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testHighlighting.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        doDoTest(true, false);
+      }
+    });
   }
 }

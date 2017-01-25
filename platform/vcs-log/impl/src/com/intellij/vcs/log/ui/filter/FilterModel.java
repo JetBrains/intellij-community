@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -17,8 +17,9 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
+import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.DefaultSchemeActions;
+import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
   }
 
   @Override
-  protected DefaultSchemeActions<EditorColorsScheme> createSchemeActions() {
+  protected AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
     return
       new ColorSchemeActions(this) {
 
@@ -92,19 +93,20 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
           }
         }
 
-        @Nullable
         @Override
-        protected EditorColorsScheme getCurrentScheme() {
-          EditorColorsScheme selectedScheme = getSelectedScheme();
-          return selectedScheme != null ? myOptions.getScheme(selectedScheme.getName()) : null;
-        }
-
-        @Override
-        public SchemeLevel getSchemeLevel(@NotNull EditorColorsScheme scheme) {
-          return SchemeLevel.IDE_Only;
+        protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+          if (myOptions.saveSchemeAs(scheme, newName)) {
+            myOptions.removeScheme(scheme.getName());
+            myOptions.selectScheme(newName);
+          }
         }
       };
   }
 
+  @NotNull
+  @Override
+  public SchemesModel<EditorColorsScheme> getModel() {
+    return myOptions;
+  }
   
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -361,7 +362,11 @@ public class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public static abstract class ListScrollAction extends SpeedSearchAwareAction {
+  public interface ScrollingAction extends DumbAware {
+
+  }
+
+  public static abstract class ListScrollAction extends MyScrollingAction {
     protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
       super(component);
       registerCustomShortcutSet(shortcutSet, component);
@@ -538,8 +543,8 @@ public class ScrollingUtil {
     int size = table.getModel().getRowCount();
     int increment = visible - 1;
     int index = Math.min(selectionModel.getMinSelectionIndex() + increment, size - 1);
-    int fisrtVisibleRow = getLeadingRow(table, table.getVisibleRect());
-    int top = fisrtVisibleRow + increment;
+    int firstVisibleRow = getLeadingRow(table, table.getVisibleRect());
+    int top = firstVisibleRow + increment;
     int bottom = top + visible - 1;
     if (bottom >= size) {
       bottom = size - 1;
@@ -554,10 +559,10 @@ public class ScrollingUtil {
     installActions(table, UISettings.getInstance().CYCLE_SCROLLING);
   }
 
-  public abstract static class SpeedSearchAwareAction extends DumbAwareAction {
+  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction {
     private final JComponent myComponent;
 
-    public SpeedSearchAwareAction(JComponent component) {
+    MyScrollingAction(JComponent component) {
       myComponent = component;
     }
 
@@ -578,42 +583,42 @@ public class ScrollingUtil {
 
     maybeInstallDefaultShortcuts(table);
 
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         movePageUp(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
       public void actionPerformed(AnActionEvent e) {
         movePageDown(table);
       }

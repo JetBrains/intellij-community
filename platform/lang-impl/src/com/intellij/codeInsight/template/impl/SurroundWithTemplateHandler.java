@@ -61,15 +61,12 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       editor.getSelectionModel().selectLineAtCaret();
       if (!editor.getSelectionModel().hasSelection()) return null;
     }
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return null;
     }
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return null;
 
     Set<Character> usedMnemonicsSet = new HashSet<>();
     DefaultActionGroup group = new DefaultActionGroup();
@@ -82,10 +79,5 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
     }
     return group;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

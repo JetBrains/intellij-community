@@ -154,22 +154,27 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testRefreshAndFindFile() throws Exception {
-    File dir = createTempDirectory();
+    doTestRefreshAndFindFile(createTempDirectory());
+  }
 
-    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
-    assertNotNull(vFile);
-    vFile.getChildren();
+  public static void doTestRefreshAndFindFile(@NotNull File tempDir) throws IOException {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile tempVDir = lfs.refreshAndFindFileByPath(tempDir.getPath());
+    assertNotNull(tempVDir);
 
-    for (int i = 0; i < 100; i++) {
-      File subdir = new File(dir, "a" + i);
-      assertTrue(subdir.mkdir());
-    }
+    File file1 = new File(tempDir, "some/nested/dir/hello.txt");
+    FileUtil.writeToFile(file1, "hello");
+    assertNotNull(lfs.refreshAndFindFileByPath(file1.getPath()));
 
-    File subdir = new File(dir, "aaa");
-    assertTrue(subdir.mkdir());
+    File file2 = new File(tempDir, "another/nested/dir/hello.txt");
+    FileUtil.writeToFile(file2, "hello again");
+    assertNotNull(lfs.refreshAndFindFileByPath(file2.getPath()));
 
-    VirtualFile file = myFS.refreshAndFindFileByPath(subdir.getPath());
-    assertNotNull(file);
+    tempVDir.getChildren();
+    tempVDir.refresh(false, true);
+    File file3 = new File(tempDir, "one/more/nested/dir/hello.txt");
+    FileUtil.writeToFile(file3, "hello again");
+    assertNotNull(lfs.refreshAndFindFileByPath(file3.getPath()));
   }
 
   public void testCopyFile() throws Exception {

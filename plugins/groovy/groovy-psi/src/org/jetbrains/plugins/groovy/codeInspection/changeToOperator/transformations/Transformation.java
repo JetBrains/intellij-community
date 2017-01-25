@@ -17,31 +17,21 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.ReplacementData;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 public abstract class Transformation {
 
-  @Nullable
-  public ReplacementData transform(GrMethodCallExpression callExpression, OptionsData optionsData) {
-    GrExpression element = getExpandedElement(callExpression);
-    MethodCallData methodInfo = MethodCallData.create(element);
-    if (methodInfo == null) return null;
+  public abstract boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options);
 
-    String replacement = getReplacement(methodInfo, optionsData);
-    if (replacement == null) return null;
-
-    return new ReplacementData(replacement, this::getExpandedElement);
-  }
-
-  @NotNull
-  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
-    return callExpression;
-  }
+  public abstract void apply(@NotNull GrMethodCall methodCall, @NotNull Options options);
 
   @Nullable
-  public abstract String getReplacement(MethodCallData methodInfo, OptionsData optionsData);
+  public static GrExpression getBase(@NotNull GrMethodCall callExpression) {
+    GrExpression expression = callExpression.getInvokedExpression();
+    GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
+    return invokedExpression.getQualifierExpression();
+  }
 }

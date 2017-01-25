@@ -4,17 +4,17 @@ REGEXP_FILE
       RegExpCharImpl: <i>
         PsiElement(CHARACTER)('i')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
       RegExpCharImpl: <m>
         PsiElement(CHARACTER)('m')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpCharImpl: <g>
         PsiElement(CHARACTER)('g')
       RegExpCharImpl: <r>
@@ -26,7 +26,7 @@ REGEXP_FILE
       RegExpCharImpl: <n>
         PsiElement(CHARACTER)('n')
       RegExpCharImpl: < >
-        PsiElement(CHARACTER)(' ')
+        PsiElement(CTRL_CHARACTER)(' ')
       RegExpGroupImpl: <(giant|man|martian)>
         PsiElement(GROUP_BEGIN)('(')
         RegExpPatternImpl: <giant|man|martian>

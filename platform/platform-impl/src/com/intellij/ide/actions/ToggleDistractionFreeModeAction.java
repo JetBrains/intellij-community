@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -43,9 +44,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    RegistryValue value = Registry.get(key);
-    boolean selected = value.asBoolean();
-    e.getPresentation().setText((selected ? "Exit" : "Enter") + " Distraction Free Mode");
+    //noinspection ConditionalExpressionWithIdenticalBranches
+    String text = Registry.is(key) ? ActionsBundle.message("action.ToggleDistractionFreeMode.exit")
+                                   : ActionsBundle.message("action.ToggleDistractionFreeMode.enter");
+    e.getPresentation().setText(text);
   }
 
   @Override

@@ -44,10 +44,11 @@ class PanelContentUI implements ContentUI {
     manager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(final ContentManagerEvent event) {
-        if (ContentManagerEvent.ContentOperation.add != event.getOperation()) {
-          return;
+        if (ContentManagerEvent.ContentOperation.add == event.getOperation()) {
+          showContent(event.getContent());
+        } else if (ContentManagerEvent.ContentOperation.remove == event.getOperation()) {
+          hideContent();
         }
-        showContent(event.getContent());
       }
     });
   }
@@ -61,6 +62,12 @@ class PanelContentUI implements ContentUI {
       myPanel.revalidate();
       myPanel.repaint();
     }
+  }
+
+  private void hideContent() {
+    myPanel.removeAll();
+    myPanel.revalidate();
+    myPanel.repaint();
   }
 
   @Override
