@@ -32,7 +32,6 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -64,8 +63,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  */
 public class TypesUtil implements TypeConstants {
 
-  @NonNls
-  public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<>();
   public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
     PsiType.CHAR,
@@ -198,18 +195,6 @@ public class TypesUtil implements TypeConstants {
     PsiType.FLOAT,
     PsiType.DOUBLE
   );
-
-  static {
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_CHARACTER, PsiType.CHAR);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_SHORT, PsiType.SHORT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_INTEGER, PsiType.INT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_LONG, PsiType.LONG);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_VOID, PsiType.VOID);
-  }
 
   /**
    * @deprecated see {@link #canAssign}
@@ -433,15 +418,11 @@ public class TypesUtil implements TypeConstants {
     return TypeConversionUtil.erasure(unboxPrimitiveTypeWrapper(result));
   }
 
+  @Contract("null -> null")
+  @Nullable
   public static PsiType unboxPrimitiveTypeWrapper(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        PsiType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
-        if (unboxed != null) type = unboxed;
-      }
-    }
-    return type;
+    PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+    return unboxed == null ? type : unboxed;
   }
 
   public static PsiType boxPrimitiveType(@Nullable PsiType result,
