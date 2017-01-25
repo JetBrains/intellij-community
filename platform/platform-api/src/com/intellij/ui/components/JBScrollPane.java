@@ -760,7 +760,10 @@ public class JBScrollPane extends SmoothScrollPane {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isPreciseRotationSupported() {
-    return Registry.is("ide.scroll.precise");
+    return SystemInfo.isJetbrainsJvm &&
+           SystemInfo.isMac &&
+           Registry.is("ide.scroll.precise") &&
+           !isTrueSmoothScrollingEnabled(); // do not use both implementations
   }
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
