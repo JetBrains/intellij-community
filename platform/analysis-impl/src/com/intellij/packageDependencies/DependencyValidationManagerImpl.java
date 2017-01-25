@@ -220,11 +220,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     });
     super.setScopes(scopes);
     myUnnamedScopes.clear();
-    final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
     final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
-    for (Object unnamedScope : unnamedScopes) {
+    for (Element unnamedScope : element.getChildren(UNNAMED_SCOPE)) {
       try {
-        final String packageSet = ((Element)unnamedScope).getAttributeValue(VALUE);
+        final String packageSet = unnamedScope.getAttributeValue(VALUE);
         myUnnamedScopes.put(packageSet, packageSetFactory.compile(packageSet));
       }
       catch (ParsingException ignored) {
@@ -235,7 +234,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     readRules(element);
   }
 
-  private void readRules(Element element) {
+  private void readRules(@NotNull Element element) {
     removeAllRules();
 
     for (Element rule1 : element.getChildren(DENY_RULE_KEY)) {
@@ -305,7 +304,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Nullable
-  private DependencyRule readRule(Element ruleElement) {
+  private DependencyRule readRule(@NotNull Element ruleElement) {
     String fromScope = ruleElement.getAttributeValue(FROM_SCOPE_KEY);
     String toScope = ruleElement.getAttributeValue(TO_SCOPE_KEY);
     String denyRule = ruleElement.getAttributeValue(IS_DENY_KEY);
