@@ -20,8 +20,11 @@ import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
+import org.junit.platform.engine.support.descriptor.FileSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -30,6 +33,7 @@ import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -39,6 +43,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
+  private static final String NO_LOCATION_HINT = "";
+  private static final String NO_LOCATION_HINT_VALUE = "";
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
@@ -110,16 +116,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
     else if (!myRoots.contains(testIdentifier)){
       myFinishCount = 0;
-      myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + "\']");
+      myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + "]");
     }
-  }
-
-  private static String idAndName(TestIdentifier testIdentifier) {
-    return idAndName(testIdentifier, testIdentifier.getDisplayName());
-  }
-
-  private static String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + escapeName(testIdentifier.getUniqueId()) + "\' name=\'" + escapeName(displayName);
   }
 
   @Override
@@ -161,7 +159,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
       if (messageName != null) {
         if (status == TestExecutionResult.Status.FAILED) {
-          myPrintStream.println("\n##teamcity[testStarted name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + getLocationHint(testIdentifier) + "\']");
+          myPrintStream.println("\n##teamcity[testStarted name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\' " + getLocationHint(testIdentifier) + "]");
           testFailure(JUnit4TestListener.CLASS_CONFIGURATION, JUnit4TestListener.CLASS_CONFIGURATION, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
         }
@@ -176,7 +174,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           myFinishCount = 0;
         }
       }
-      myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
     }
   }
 
@@ -185,11 +183,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private void testStarted(TestIdentifier testIdentifier) {
-    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "\']");
+    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + " " + getLocationHint(testIdentifier) + "]");
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
+    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + Long.toString(duration) + "\'" : "") + "]");
   }
 
   private void testFailure(TestIdentifier testIdentifier,
@@ -277,7 +275,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                                  HashSet<TestIdentifier> visited) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
-      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + getLocationHint(root) + "\']");
+      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
       for (TestIdentifier childIdentifier : testPlan.getChildren(root)) {
         if (visited.add(childIdentifier)) {
           sendTreeUnderRoot(testPlan, childIdentifier, visited);
@@ -286,19 +284,70 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           System.err.println("Identifier \'" + childIdentifier.getUniqueId() + "\' is reused");
         }
       }
-      myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "\']");
+      myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
     }
     else if (root.isTest()) {
-      myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + getLocationHint(root) + "\']");
+      myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + " " + getLocationHint(root) + "]");
     }
   }
 
-  private static String getLocationHint(TestIdentifier root) {
-    final String className = getClassName(root);
-    final String methodName = getMethodName(root);
-    return "\' locationHint=\'java:" + (root.isTest() ? "test" : "suite") + "://" + escapeName(className + (methodName != null ? "." + methodName : ""));
+  private static String idAndName(TestIdentifier testIdentifier) {
+    return idAndName(testIdentifier, testIdentifier.getDisplayName());
   }
 
+  private static String idAndName(TestIdentifier testIdentifier, String displayName) {
+    return " id=\'" + escapeName(testIdentifier.getUniqueId()) + "\' name=\'" + escapeName(displayName) + "\'";
+  }
+
+  static String getLocationHint(TestIdentifier root) {
+    return root.getSource()
+      .map(testSource -> getLocationHintValue(testSource, root.isTest()))
+      .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
+      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'")
+      .orElse(NO_LOCATION_HINT);
+  }
+
+  static String getLocationHintValue(TestSource testSource, boolean isTest) {
+
+    if (testSource instanceof CompositeTestSource) {
+      CompositeTestSource compositeTestSource = ((CompositeTestSource)testSource);
+      for (TestSource sourceFromComposite : compositeTestSource.getSources()) {
+        String locationHintValue = getLocationHintValue(sourceFromComposite, isTest);
+        if (!NO_LOCATION_HINT_VALUE.equals(locationHintValue)) {
+          return locationHintValue;
+        }
+      }
+      return NO_LOCATION_HINT_VALUE;
+    }
+
+    if (testSource instanceof FileSource) {
+      FileSource fileSource = (FileSource)testSource;
+      File file = fileSource.getFile();
+      String line = fileSource.getPosition()
+        .map(position -> ":" + position.getLine())
+        .orElse("");
+      return "file://" + file.getAbsolutePath() + line;
+    }
+
+    if (testSource instanceof MethodSource) {
+      MethodSource methodSource = (MethodSource)testSource;
+      return javaLocation(methodSource.getClassName(), methodSource.getMethodName(), isTest);
+    }
+
+    if (testSource instanceof ClassSource) {
+      String className = ((ClassSource)testSource).getClassName();
+      return javaLocation(className, null, isTest);
+    }
+
+    return NO_LOCATION_HINT_VALUE;
+  }
+
+  private static String javaLocation(String className, String maybeMethodName, boolean isTest) {
+    String type = isTest ? "test" : "suite";
+    String methodName = maybeMethodName == null ? "" : "." + maybeMethodName;
+    String location = escapeName(className + methodName);
+    return "java:" + type + "://" + location;
+  }
 
   private static String escapeName(String str) {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
