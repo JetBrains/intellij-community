@@ -71,7 +71,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   
   private int myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
-  private int myAscent; // guarded by myLock
+  private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
   private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
@@ -443,7 +443,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   public int getDescent() {
     synchronized (myLock) {
-      return myLineHeight - myAscent;
+      return myDescent;
     }
   }
 
@@ -464,7 +464,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   public int getAscent() {
     synchronized (myLock) {
       initMetricsIfNeeded();
-      return myAscent;
+      return myLineHeight - myDescent;
     }
   }
 
@@ -498,10 +498,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
     myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
 
-    int ascent = FontLayoutService.getInstance().getAscent(fm);
-    myAscent = (int)Math.ceil(ascent * verticalScalingFactor);
-    myTopOverhang = ascent - myAscent;
-    myBottomOverhang = fontMetricsHeight - ascent - myLineHeight + myAscent;
+    int descent = FontLayoutService.getInstance().getDescent(fm);
+    myDescent = (int)Math.floor(descent * verticalScalingFactor);
+    myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
+    myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
@@ -577,7 +577,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
              ", prefix attributes: " + prefixAttributes +
              ", space width: " + myPlainSpaceWidth +
              ", line height: " + myLineHeight +
-             ", ascent: " + myAscent +
+             ", descent: " + myDescent +
              ", char height: " + myCharHeight +
              ", max char width: " + myMaxCharWidth +
              ", tab size: " + myTabSize +
