@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "DependencyValidationManager",
@@ -173,13 +176,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     appendUnnamedScope(rule.getFromScope());
     appendUnnamedScope(rule.getToScope());
     myRules.add(rule);
-  }
-
-  @Override
-  public void reloadRules() {
-    final Element element = new Element("rules_2_reload");
-    writeRules(element);
-    readRules(element);
   }
 
   private void appendUnnamedScope(final NamedScope fromScope) {
@@ -344,13 +340,19 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   private void reloadScopes() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (getProject().isDisposed()) return;
+      if (getProject().isDisposed()) {
+        return;
+      }
+
       List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<>();
       addScopesToList(scopeList, this);
       addScopesToList(scopeList, myNamedScopeManager);
       myScopePairs.clear();
       myScopePairs.addAll(scopeList);
-      reloadRules();
+
+      Element element = new Element("rules_2_reload");
+      writeRules(element);
+      readRules(element);
     });
   }
 
