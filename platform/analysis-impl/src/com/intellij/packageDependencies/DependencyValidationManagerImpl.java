@@ -54,7 +54,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   };
 
-  private final List<DependencyRule> myRules = new ArrayList<>();
+  private static class State {
+    private final List<DependencyRule> rules = new ArrayList<>();
+    private final Map<String, PackageSet> unnamedScopes = new THashMap<>();
+  }
+
+  private volatile State myState = new State();
   private final NamedScopeManager myNamedScopeManager;
 
   private boolean mySkipImportStatements;
@@ -66,8 +71,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String IS_DENY_KEY = "is_deny";
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
-
-  private final Map<String, PackageSet> myUnnamedScopes = new THashMap<>();
 
   public DependencyValidationManagerImpl(final Project project, NamedScopeManager namedScopeManager) {
     super(project);
@@ -107,13 +110,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public boolean hasRules() {
-    return !myRules.isEmpty();
+    return !myState.rules.isEmpty();
   }
 
   @Override
   @Nullable
   public DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to) {
-    for (DependencyRule dependencyRule : myRules) {
+    for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isForbiddenToUse(from, to)) return dependencyRule;
     }
 
@@ -124,7 +127,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NotNull
   public DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<>();
-    for (DependencyRule dependencyRule : myRules) {
+    for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isForbiddenToUse(from, to)) {
         result.add(dependencyRule);
       }
@@ -136,7 +139,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public DependencyRule[] getApplicableRules(@NotNull PsiFile file) {
     ArrayList<DependencyRule> result = new ArrayList<>();
-    for (DependencyRule dependencyRule : myRules) {
+    for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isApplicable(file)) {
         result.add(dependencyRule);
       }
@@ -157,32 +160,37 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NotNull
   @Override
   public Map<String, PackageSet> getUnnamedScopes() {
-    return myUnnamedScopes;
+    return myState.unnamedScopes;
   }
 
   @NotNull
   @Override
   public DependencyRule[] getAllRules() {
-    return myRules.toArray(new DependencyRule[myRules.size()]);
+    List<DependencyRule> rules = myState.rules;
+    return rules.toArray(new DependencyRule[rules.size()]);
   }
 
   @Override
   public void removeAllRules() {
-    myRules.clear();
+    myState.rules.clear();
+  }
+
+  private void addRule(@NotNull DependencyRule rule, @NotNull State state) {
+    appendUnnamedScope(rule.getFromScope(), state);
+    appendUnnamedScope(rule.getToScope(), state);
+    state.rules.add(rule);
   }
 
   @Override
   public void addRule(@NotNull DependencyRule rule) {
-    appendUnnamedScope(rule.getFromScope());
-    appendUnnamedScope(rule.getToScope());
-    myRules.add(rule);
+    addRule(rule, myState);
   }
 
-  private void appendUnnamedScope(final NamedScope fromScope) {
+  private void appendUnnamedScope(@NotNull NamedScope fromScope, @NotNull State state) {
     if (getScope(fromScope.getName()) == null) {
       final PackageSet packageSet = fromScope.getValue();
-      if (packageSet != null && !myUnnamedScopes.containsKey(packageSet.getText())) {
-        myUnnamedScopes.put(packageSet.getText(), packageSet);
+      if (packageSet != null && !state.unnamedScopes.containsKey(packageSet.getText())) {
+        state.unnamedScopes.put(packageSet.getText(), packageSet);
       }
     }
   }
@@ -206,6 +214,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
 
     super.loadState(element);
+
     final NamedScope[] scopes = getEditableScopes();
     Arrays.sort(scopes, (s1, s2) -> {
       final String name1 = s1.getName();
@@ -219,28 +228,28 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       return i1 > i2 ? 1 : -1;
     });
     super.setScopes(scopes);
-    myUnnamedScopes.clear();
+
+    State state = new State();
     final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
     for (Element unnamedScope : element.getChildren(UNNAMED_SCOPE)) {
       try {
         final String packageSet = unnamedScope.getAttributeValue(VALUE);
-        myUnnamedScopes.put(packageSet, packageSetFactory.compile(packageSet));
+        state.unnamedScopes.put(packageSet, packageSetFactory.compile(packageSet));
       }
       catch (ParsingException ignored) {
         //skip pattern
       }
     }
 
-    readRules(element);
+    readRules(element, state);
+    myState = state;
   }
 
-  private void readRules(@NotNull Element element) {
-    removeAllRules();
-
+  private void readRules(@NotNull Element element, State state) {
     for (Element rule1 : element.getChildren(DENY_RULE_KEY)) {
       DependencyRule rule = readRule(rule1);
       if (rule != null) {
-        addRule(rule);
+        addRule(rule, state);
       }
     }
   }
@@ -253,20 +262,21 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       element.addContent(new Element("option").setAttribute("name", "SKIP_IMPORT_STATEMENTS").setAttribute("value", Boolean.toString(mySkipImportStatements)));
     }
 
-    if (!myUnnamedScopes.isEmpty()) {
-      String[] unnamedScopes = myUnnamedScopes.keySet().toArray(new String[myUnnamedScopes.size()]);
+    State state = myState;
+    if (!state.unnamedScopes.isEmpty()) {
+      String[] unnamedScopes = state.unnamedScopes.keySet().toArray(new String[state.unnamedScopes.size()]);
       Arrays.sort(unnamedScopes);
       for (String unnamedScope : unnamedScopes) {
         element.addContent(new Element(UNNAMED_SCOPE).setAttribute(VALUE, unnamedScope));
       }
     }
 
-    writeRules(element);
+    writeRules(element, state);
     return element;
   }
 
-  private void writeRules(Element element) {
-    for (DependencyRule rule : myRules) {
+  private static void writeRules(@NotNull Element element, @NotNull State state) {
+    for (DependencyRule rule : state.rules) {
       Element ruleElement = writeRule(rule);
       if (ruleElement != null) {
         element.addContent(ruleElement);
@@ -276,10 +286,14 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   @Nullable
-  public NamedScope getScope(@Nullable final String name) {
+  public NamedScope getScope(@Nullable String name) {
+    return getScope(name, myState);
+  }
+
+  private NamedScope getScope(@Nullable String name, @NotNull State state) {
     final NamedScope scope = super.getScope(name);
     if (scope == null) {
-      final PackageSet packageSet = myUnnamedScopes.get(name);
+      final PackageSet packageSet = state.unnamedScopes.get(name);
       if (packageSet != null) {
         return new NamedScope.UnnamedScope(packageSet);
       }
@@ -350,8 +364,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       myScopePairs.addAll(scopeList);
 
       Element element = new Element("rules_2_reload");
-      writeRules(element);
-      readRules(element);
+      writeRules(element, myState);
+      State state = new State();
+      readRules(element, state);
+      myState = state;
     });
   }
 
