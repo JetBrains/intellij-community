@@ -218,7 +218,7 @@ public class EnvironmentUtil {
         throw new Exception("shell:" + shell);
       }
       List<String> commands = ContainerUtil.newArrayList(shell);
-      if (!shell.endsWith("/tcsh")) {
+      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
         // Act as a login shell
         // tsch does allow to use -l with any other options
         commands.add("-l");
