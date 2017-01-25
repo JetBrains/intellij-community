@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,6 +126,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       assertEquals(1, editors.length);
       assertTrue(editors[0] instanceof TextEditor);
       Editor editor = ((TextEditor)editors[0]).getEditor();
+      EditorTestUtil.waitForLoading(editor);
       final FoldingModel foldingModel = editor.getFoldingModel();
       assertEquals(2, foldingModel.getAllFoldRegions().length);
       foldingModel.runBatchFoldingOperation(() -> {
@@ -143,6 +145,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       assertEquals(1, editors.length);
       assertTrue(editors[0] instanceof TextEditor);
       editor = ((TextEditor)editors[0]).getEditor();
+      EditorTestUtil.waitForLoading(editor);
       assertEquals(textLength, editor.getCaretModel().getOffset());
       assertEquals(textLength - 1, editor.getSelectionModel().getSelectionStart());
       assertEquals(textLength, editor.getSelectionModel().getSelectionEnd());
