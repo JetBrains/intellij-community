@@ -392,7 +392,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     if (SystemProperties.getBooleanProperty("groovyc.include.jdk.into.compilation.classpath", false)) {
       addFilePaths(cp, ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false));
     } else {
-      addFilePaths(cp, ProjectPaths.getPlatformCompilationClasspath(chunk, false, false));
+      addFilePaths(cp, ProjectPaths.getRuntimeBootClasspath(chunk));
       addFilePaths(cp, ProjectPaths.getCompilationModulePath(chunk, false));
     }
 

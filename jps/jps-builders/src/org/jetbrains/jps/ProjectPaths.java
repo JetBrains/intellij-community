@@ -48,12 +48,12 @@ public class ProjectPaths {
 
   @NotNull
   public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getPlatformCompilationClasspath(chunk, excludeMainModuleOutput, true);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_PLUS_JDK, true);
   }
 
   @NotNull
-  public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput, boolean exportedOnly) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, exportedOnly);
+  public static Collection<File> getRuntimeBootClasspath(@NotNull ModuleChunk chunk) {
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), false, ClasspathPart.BEFORE_JDK, false);
   }
 
   @NotNull
@@ -78,7 +78,7 @@ public class ProjectPaths {
       if (exportedOnly) {
         enumerator = enumerator.exportedOnly();
       }
-      if (classpathPart == ClasspathPart.BEFORE_JDK) {
+      if (classpathPart == ClasspathPart.BEFORE_JDK || classpathPart == ClasspathPart.BEFORE_PLUS_JDK) {
         enumerator = enumerator.satisfying(new BeforeJavaSdkItemFilter(module));
       }
       else if (classpathPart == ClasspathPart.AFTER_JDK) {
@@ -91,7 +91,7 @@ public class ProjectPaths {
       files.addAll(rootsEnumerator.getRoots());
     }
 
-    if (classpathPart == ClasspathPart.BEFORE_JDK) {
+    if (classpathPart == ClasspathPart.BEFORE_PLUS_JDK) {
       for (JpsModule module : chunk.getModules()) {
         JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
         if (sdk != null) {
@@ -188,7 +188,7 @@ public class ProjectPaths {
     return StringUtil.isEmpty(sourceDirName)? outputDir : new File(outputDir, sourceDirName);
   }
 
-  private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
+  private enum ClasspathPart {WHOLE, BEFORE_JDK, BEFORE_PLUS_JDK, AFTER_JDK}
 
   private static class BeforeJavaSdkItemFilter implements Condition<JpsDependencyElement> {
     private JpsModule myModule;
