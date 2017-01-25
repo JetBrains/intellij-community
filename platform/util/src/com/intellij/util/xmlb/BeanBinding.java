@@ -383,7 +383,17 @@ class BeanBinding extends Binding {
       part = methodName.substring(3, methodName.length());
       isSetter = true;
     }
-    return part.isEmpty() ? null : Pair.create(Introspector.decapitalize(part), isSetter);
+
+    if (part.isEmpty()) {
+      return null;
+    }
+
+    int suffixIndex = part.indexOf('$');
+    if (suffixIndex > 0) {
+      // see XmlSerializerTest.internalVar
+      part = part.substring(0, suffixIndex);
+    }
+    return Pair.create(Introspector.decapitalize(part), isSetter);
   }
 
   public String toString() {
