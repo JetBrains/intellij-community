@@ -8,7 +8,7 @@ public class Test {
     System.out.println("hello");
     for(String s : li<caret>st) {
       if(!s.isEmpty()) {
-        sb.append(s);
+        sb.append(s.trim());
       }
     }
     return sb.length() == 0 ? null : sb.toString();

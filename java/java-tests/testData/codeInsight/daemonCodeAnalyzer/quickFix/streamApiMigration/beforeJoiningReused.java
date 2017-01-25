@@ -3,12 +3,12 @@
 import java.util.List;
 
 public class Test {
-  static String test(List<String> list) {
+  static String test(List<Integer> list) {
     StringBuffer sb = new StringBuffer();
     if(!list.isEmpty()) {
-      for (String s : li<caret>st) {
-        if (!s.isEmpty()) {
-          sb.append(s);
+      for (Integer i : li<caret>st) {
+        if (i != 0) {
+          sb.append(i);
         }
       }
     }

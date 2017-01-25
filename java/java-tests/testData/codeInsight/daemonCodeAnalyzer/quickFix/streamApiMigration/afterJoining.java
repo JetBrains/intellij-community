@@ -7,7 +7,7 @@ public class Test {
   static String test(List<String> list) {
     String sb;
     System.out.println("hello");
-      sb = list.stream().filter(s -> !s.isEmpty()).collect(Collectors.joining());
+      sb = list.stream().filter(s -> !s.isEmpty()).map(String::trim).collect(Collectors.joining());
     return sb.length() == 0 ? null : sb;
   }
 }

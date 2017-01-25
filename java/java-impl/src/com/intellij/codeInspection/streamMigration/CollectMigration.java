@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,10 +28,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -288,7 +284,7 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiType addedType = getAddedElementType(myAddCall);
       PsiExpression mapping = getMapping();
       if (addedType == null) addedType = mapping.getType();
-      return new MapOp(mapping, myElement, addedType).createReplacement();
+      return StreamApiUtil.generateMapOperation(myElement, addedType, mapping);
     }
 
     public String generateCollector() {
@@ -543,14 +539,25 @@ class CollectMigration extends BaseStreamApiMigration {
 
   static class StringBuilderTerminal extends CollectTerminal {
     final PsiVariable myElement;
-    final PsiMethodCallExpression myAddCall;
+    final PsiMethodCallExpression myAppendCall;
 
     StringBuilderTerminal(PsiLocalVariable variable,
                           PsiLoopStatement loop,
                           InitializerUsageStatus status, PsiVariable element, PsiMethodCallExpression appendCall) {
       super(variable, loop, status);
       myElement = element;
-      myAddCall = appendCall;
+      myAppendCall = appendCall;
+    }
+
+    @Override
+    public String generateIntermediate() {
+      PsiExpression mapping = myAppendCall.getArgumentList().getExpressions()[0];
+      PsiType type = mapping.getType();
+      if (!InheritanceUtil.isInheritor(type, "java.lang.CharSequence")) {
+        mapping = JavaPsiFacade.getElementFactory(mapping.getProject())
+          .createExpressionFromText(CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + mapping.getText() + ")", mapping);
+      }
+      return StreamApiUtil.generateMapOperation(myElement, null, mapping);
     }
 
     @Override
@@ -584,6 +591,8 @@ class CollectMigration extends BaseStreamApiMigration {
     static StringBuilderTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
       if (tb.getCountExpression() != null) return null;
       if (!isCallOf(call, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append")) return null;
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length != 1) return null;
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       if (qualifierExpression == null) return null;
       PsiLocalVariable targetBuilder = extractQualifierVariable(tb, call);
@@ -591,8 +600,7 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiNewExpression initializer =
         ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(targetBuilder.getInitializer()), PsiNewExpression.class);
       if (initializer == null) return null;
-      PsiExpressionList args = initializer.getArgumentList();
-      if (args == null || args.getExpressions().length != 0) return null;
+      if (initializer.getArgumentList() == null || initializer.getArgumentList().getExpressions().length != 0) return null;
       PsiJavaCodeReferenceElement classRef = initializer.getClassReference();
       if (classRef == null || (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(classRef.getQualifiedName()) &&
                                !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(classRef.getQualifiedName()))) {
