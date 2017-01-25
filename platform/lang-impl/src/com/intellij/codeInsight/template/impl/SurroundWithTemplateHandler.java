@@ -68,8 +68,6 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       return null;
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return null;
-
     Set<Character> usedMnemonicsSet = new HashSet<>();
     DefaultActionGroup group = new DefaultActionGroup();
 
@@ -81,10 +79,5 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
     }
     return group;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

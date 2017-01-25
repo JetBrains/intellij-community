@@ -36,41 +36,32 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) return;
+    PsiMethod method = canInsertSuper(editor, file);
+    LOG.assertTrue(method != null);
+    PsiMethod template = (PsiMethod)method.copy();
 
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      PsiMethod method = canInsertSuper(editor, file);
-      LOG.assertTrue(method != null);
-      PsiMethod template = (PsiMethod)method.copy();
-
-      OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
-      PsiCodeBlock templateBody = template.getBody();
-      LOG.assertTrue(templateBody != null, template);
-      PsiStatement superCall = templateBody.getStatements()[0];
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-      LOG.assertTrue(codeBlock != null);
-      PsiElement toGo;
-      if (codeBlock.getLBrace() == null) {
-        toGo = codeBlock.addBefore(superCall, null);
+    OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
+    PsiCodeBlock templateBody = template.getBody();
+    LOG.assertTrue(templateBody != null, template);
+    PsiStatement superCall = templateBody.getStatements()[0];
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+    LOG.assertTrue(codeBlock != null);
+    PsiElement toGo;
+    if (codeBlock.getLBrace() == null) {
+      toGo = codeBlock.addBefore(superCall, null);
+    }
+    else {
+      if (element.getParent() == codeBlock) {
+        toGo = codeBlock.addBefore(superCall, element);
       }
       else {
-        if (element.getParent() == codeBlock) {
-          toGo = codeBlock.addBefore(superCall, element);
-        }
-        else {
-          toGo = codeBlock.addAfter(superCall, codeBlock.getLBrace());
-        }
+        toGo = codeBlock.addAfter(superCall, codeBlock.getLBrace());
       }
-      toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
-      editor.getCaretModel().moveToOffset(toGo.getTextOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    });
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    }
+    toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
+    editor.getCaretModel().moveToOffset(toGo.getTextOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static PsiMethod canInsertSuper(Editor editor, PsiFile file) {

@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandler {
   private final boolean myExpand;
@@ -49,8 +50,9 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
     editor.getFoldingModel().runBatchFoldingOperation(processor);
   }
 
+  @Nullable
   @Override
-  public boolean startInWriteAction() {
-    return true;
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return null;
   }
 }

@@ -71,6 +71,12 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     return true;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return null;
+  }
+
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     if (file instanceof PsiCompiledElement) {

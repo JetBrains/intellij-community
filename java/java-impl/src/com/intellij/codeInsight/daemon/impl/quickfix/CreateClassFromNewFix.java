@@ -134,7 +134,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
         runnable.run();
       }
       else {
-        AsyncEditorLoader.performWhenLoaded(editor, () -> TransactionGuard.getInstance().submitTransactionLater(project, runnable));
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
     }
     else {

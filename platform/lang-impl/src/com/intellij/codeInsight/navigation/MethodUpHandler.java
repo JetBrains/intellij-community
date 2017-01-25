@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodUpHandler implements CodeInsightActionHandler {
   @Override
@@ -48,6 +50,12 @@ public class MethodUpHandler implements CodeInsightActionHandler {
         }
       }
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return null;
   }
 
   @Override

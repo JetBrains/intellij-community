@@ -35,12 +35,6 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
-      return;
-    }
-
     Document document = editor.getDocument();
     int startOffset;
     int endOffset;
@@ -87,10 +81,5 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
     } else {
       codeStyleManager.adjustLineIndent(file, new TextRange(DocumentUtil.getLineStartOffset(startOffset, document), endOffset));
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }
