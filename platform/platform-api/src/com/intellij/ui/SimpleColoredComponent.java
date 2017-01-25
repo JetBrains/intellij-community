@@ -953,7 +953,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   public static int getTextBaseLine(@NotNull FontMetrics metrics, final int height) {
-    return (height - metrics.getHeight()) / 2 + metrics.getAscent();
+    return (height - metrics.getHeight()) / 2 + metrics.getAscent() + metrics.getLeading(); // adding leading to ascent, just like in editor
   }
 
   private static void checkCanPaint(Graphics g) {
