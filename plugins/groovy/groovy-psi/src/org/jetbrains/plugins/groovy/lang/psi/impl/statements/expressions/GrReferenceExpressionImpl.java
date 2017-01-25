@@ -368,7 +368,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private static PsiType calculate(@NotNull GrReferenceExpressionImpl refExpr, boolean forceRValue) {
+  private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr, boolean forceRValue) {
     final GroovyResolveResult[] results = refExpr.multiResolve(false, forceRValue);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
@@ -455,15 +455,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   @Override
-  public PsiType getType(boolean forceRValue) {
-    if (forceRValue) {
-      return calculate(this, true);
-    }
-    else {
-      return TypeInferenceHelper.getCurrentContext().getExpressionType(
-        this, e -> calculate(e, false)
-      );
-    }
+  public PsiType getType() {
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, e -> calculateType(e, false));
+  }
+
+  @Nullable
+  @Override
+  public PsiType getRValueType() {
+    return calculateType(this, true);
   }
 
   @Override

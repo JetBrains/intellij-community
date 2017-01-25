@@ -52,9 +52,5 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiMember member);
 
   @Nullable
-  @Override
-  default PsiType getType() { return getType(false); }
-
-  @Nullable
-  PsiType getType(boolean forceRValue);
+  PsiType getRValueType();
 }

@@ -189,7 +189,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
         lType = ((GrIndexProperty)lValue).getGetterType();
       }
       else if (lValue instanceof GrReferenceExpression) {
-        lType = ((GrReferenceExpression)lValue).getType(true);
+        lType = ((GrReferenceExpression)lValue).getRValueType();
       }
       else {
         lType = lValue.getType();
