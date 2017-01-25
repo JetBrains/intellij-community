@@ -20,6 +20,7 @@ package com.jetbrains.python.testing.universalTests
 import com.google.gson.Gson
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
@@ -325,6 +326,11 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
     return true
   }
 
+  override fun getConfigurationSettingsList(runManager: RunManager): List<RunnerAndConfigurationSettings> {
+    // Some configurations have same type but produces different class (doctest, for example)
+    // to prevent ClassCastException we only allow our configurations
+    return super.getConfigurationSettingsList(runManager).filter { it.configuration is PyUniversalTestConfiguration }
+  }
 
   /**
    * Find concrete element to be used as test target.
