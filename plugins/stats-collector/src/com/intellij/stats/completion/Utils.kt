@@ -8,13 +8,7 @@ import java.nio.file.Files
 
 abstract class UrlProvider {
     abstract val statsServerPostUrl: String
-    
     abstract val experimentDataUrl: String
-    
-    companion object {
-        fun getInstance(): UrlProvider = ServiceManager.getService(UrlProvider::class.java)
-    }
-
 }
 
 abstract class FilePathProvider {
@@ -22,11 +16,6 @@ abstract class FilePathProvider {
     abstract fun getDataFiles(): List<File>
     abstract fun getStatsDataDirectory(): File
     abstract fun cleanupOldFiles()
-    
-    companion object {
-        fun getInstance(): FilePathProvider = ServiceManager.getService(FilePathProvider::class.java)
-    }
-
 }
 
 class InternalUrlProvider: UrlProvider() {
@@ -42,9 +31,10 @@ class InternalUrlProvider: UrlProvider() {
 }
 
 
-class PluginDirectoryFilePathProvider() : UniqueFilesProvider("chunk", { getPluginDir() })
+class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", { getPluginDir() })
 
-open class UniqueFilesProvider(private val baseName: String, private val rootDirectoryComputer: () -> File) : FilePathProvider() {
+open class UniqueFilesProvider(private val baseName: String, 
+                               private val rootDirectoryComputer: () -> File) : FilePathProvider() {
     
     constructor(baseName: String, rootDir: File) : this(baseName, { rootDir })
 
