@@ -561,8 +561,14 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     void cleanUp() {
       PsiLocalVariable target = getTargetVariable();
-      target.getTypeElement()
-        .replace(JavaPsiFacade.getElementFactory(target.getProject()).createTypeElementFromText(CommonClassNames.JAVA_LANG_STRING, target));
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
+      target.getTypeElement().replace(factory.createTypeElementFromText(CommonClassNames.JAVA_LANG_STRING, target));
+      if (getStatus() == InitializerUsageStatus.AT_WANTED_PLACE) {
+        PsiExpression initializer = target.getInitializer();
+        if (initializer != null) {
+          initializer.replace(factory.createExpressionFromText("\"\"", target));
+        }
+      }
       Collection<PsiReference> usages = ReferencesSearch.search(target).findAll();
       for (PsiReference usage : usages) {
         PsiElement element = usage.getElement();
