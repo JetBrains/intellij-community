@@ -19,16 +19,20 @@ package com.intellij.openapi.ui;
 import java.awt.*;
 import java.util.Map;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class GraphicsConfig {
-
   private final Graphics2D myG;
   private final Map myHints;
   private final Composite myComposite;
+  private final Stroke myStroke;
 
   public GraphicsConfig(Graphics g) {
     myG = (Graphics2D)g;
     myHints = (Map)myG.getRenderingHints().clone();
     myComposite = myG.getComposite();
+    myStroke = myG.getStroke();
   }
 
   public GraphicsConfig setAntialiasing(boolean on) {
@@ -41,12 +45,28 @@ public class GraphicsConfig {
     return this;
   }
 
+  public GraphicsConfig setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
+    myG.setRenderingHint(hintKey, hintValue);
+    return this;
+  }
+
   public Graphics2D getG() {
     return myG;
+  }
+
+  public GraphicsConfig setComposite(Composite composite) {
+    myG.setComposite(composite);
+    return this;
+  }
+
+  public GraphicsConfig setStroke(Stroke stroke) {
+    myG.setStroke(stroke);
+    return this;
   }
 
   public void restore() {
     myG.setRenderingHints(myHints);
     myG.setComposite(myComposite);
+    myG.setStroke(myStroke);
   }
 }
