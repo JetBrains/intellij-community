@@ -149,7 +149,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
 
   override fun readExternal(element: Element) {
     configManager.legacyConfig.readExternal(element)
-    containsLegacyInformation = (configManager.legacyConfig.getTestType() != null)
+    containsLegacyInformation = configManager.loaded
 
   }
 
@@ -193,6 +193,17 @@ private abstract class LegacyConfigurationManager<
   }
 
   /**
+   * If one of these fields is not empty -- legacy configuration makes sence
+   */
+  open protected val fieldsToCheckForEmptiness = listOf(legacyConfig.scriptName, legacyConfig.className, legacyConfig.methodName)
+
+  /**
+   * @return true of legacy configuration loaded, false if configuration is pure new
+   */
+  val loaded: Boolean
+    get() = fieldsToCheckForEmptiness.find { !it.isNullOrBlank() } != null
+
+  /**
    * Copies config from legacy to new configuration.
    * Used by all runners but py.test which has very different settings
    */
@@ -229,6 +240,8 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
    * "function_foo", "MyClass" or "MyClass and my_method" could be used here.
    */
   private val KEYWORDS_SPLIT_PATTERN = java.util.regex.Pattern.compile("\\s+and\\s+", java.util.regex.Pattern.CASE_INSENSITIVE)
+
+  override val fieldsToCheckForEmptiness = super.fieldsToCheckForEmptiness + listOf(legacyConfig.keywords, legacyConfig.testToRun)
 
   override fun copyFromLegacy() {
     // Do not call parent since target is always provided as testToRun here
