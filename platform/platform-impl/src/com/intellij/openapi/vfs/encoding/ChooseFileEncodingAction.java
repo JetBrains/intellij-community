@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -44,7 +45,7 @@ import java.util.List;
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
 
-  public ChooseFileEncodingAction(VirtualFile virtualFile) {
+  public ChooseFileEncodingAction(@Nullable VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
   }
 
@@ -52,45 +53,18 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   public abstract void update(final AnActionEvent e);
 
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
-                                  @Nullable VirtualFile virtualFile,
+                                  @Nullable final VirtualFile virtualFile,
                                   @NotNull List<Charset> charsets,
                                   @NotNull final Function<Charset, String> charsetFilter) {
-    for (final Charset slave : charsets) {
-      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave) {
-        {
-          String description = charsetFilter.fun(slave);
-          if (description == null) {
-            getTemplatePresentation().setIcon(AllIcons.General.Warning);
-          }
-          else {
-            getTemplatePresentation().setDescription(description);
-          }
-        }
-
+    for (final Charset charset : charsets) {
+      String description = charsetFilter.fun(charset);
+      AnAction action = new DumbAwareAction(charset.displayName(), description, description == null ? AllIcons.General.Warning : null) {
         @Override
-        public void update(@NotNull AnActionEvent e) {
-        }
-
-        @Override
-        protected void chosen(final VirtualFile file, @NotNull final Charset charset) {
-          ChooseFileEncodingAction.this.chosen(file, charset);
+        public void actionPerformed(AnActionEvent e) {
+          ChooseFileEncodingAction.this.chosen(virtualFile, charset);
         }
       };
       group.add(action);
-    }
-  }
-
-  private class ClearThisFileEncodingAction extends AnAction {
-    private final VirtualFile myFile;
-
-    private ClearThisFileEncodingAction(@Nullable VirtualFile file, @NotNull String clearItemText) {
-      super(clearItemText, "Clear " + (file == null ? "default" : "file '"+file.getName()+"'") + " encoding.", null);
-      myFile = file;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      chosen(myFile, NO_ENCODING);
     }
   }
 
@@ -113,9 +87,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
   @NotNull
-  protected DefaultActionGroup createCharsetsActionGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
-                                                      Charset alreadySelected,
-                                                      @NotNull Function<Charset, String> charsetFilter) {
+  protected DefaultActionGroup createCharsetsActionGroup(@Nullable String clearItemText,
+                                                         @Nullable Charset alreadySelected,
+                                                         @NotNull Function<Charset, String> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
@@ -124,7 +98,13 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     favorites.remove(alreadySelected);
 
     if (clearItemText != null) {
-      group.add(new ClearThisFileEncodingAction(myVirtualFile, clearItemText));
+      String description = "Clear " + (myVirtualFile == null ? "default" : "file '" + myVirtualFile.getName() + "'") + " encoding.";
+      group.add(new DumbAwareAction(clearItemText, description, null) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          chosen(myVirtualFile, NO_ENCODING);
+        }
+      });
     }
     if (favorites.isEmpty() && clearItemText == null) {
       fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
