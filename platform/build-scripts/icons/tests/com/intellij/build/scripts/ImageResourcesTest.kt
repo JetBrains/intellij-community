@@ -36,7 +36,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any>> {
+    fun data(): Collection<Array<Any?>> {
       return ImageResourcesTestBase.collectBadIcons(TestRoot.COMMUNITY)
     }
   }
@@ -46,7 +46,7 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any>> {
+    fun data(): Collection<Array<Any?>> {
       return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
     }
   }
@@ -57,7 +57,7 @@ class AllImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any>> {
+    fun data(): Collection<Array<Any?>> {
       return ImageResourcesTestBase.collectBadIcons(TestRoot.ALL, true)
     }
   }
@@ -68,7 +68,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any>> {
+    fun data(): Collection<Array<Any?>> {
       return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
     }
   }
@@ -77,12 +77,12 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
 
 @RunWith(Parameterized::class)
 abstract class ImageResourcesTestBase {
-  @Parameter(value = 0) lateinit var testName: String
-  @Parameter(value = 1) lateinit var exception: Throwable
+  @JvmField @Parameter(value = 0) var testName: String? = null
+  @JvmField @Parameter(value = 1) var exception: Throwable? = null
 
   @Test
   fun test() {
-    throw exception
+    if (exception != null) throw exception!!
   }
 
   enum class TestRoot { COMMUNITY, ULTIMATE, ALL }
@@ -91,42 +91,45 @@ abstract class ImageResourcesTestBase {
     @JvmStatic
     @JvmOverloads
     fun collectBadIcons(root: TestRoot,
-                        ignoreSkipTag: Boolean = false): List<Array<Any>> {
+                        ignoreSkipTag: Boolean = false): List<Array<Any?>> {
+      val modules = collectModules(root)
       val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
-      forEachModule(root) {
+      modules.forEach {
         checker.check(it)
       }
-      return createTestData(checker.failures)
+      return createTestData(modules, checker.failures)
     }
 
     @JvmStatic
     @JvmOverloads
     fun collectIconsWithNonOptimumSize(root: TestRoot,
                                        iconsOnly: Boolean = true,
-                                       ignoreSkipTag: Boolean = false): List<Array<Any>> {
+                                       ignoreSkipTag: Boolean = false): List<Array<Any?>> {
+      val modules = collectModules(root)
       val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
-      forEachModule(root) {
+      modules.forEach {
         checker.checkOptimumSizes(it)
       }
-      return createTestData(checker.failures)
+      return createTestData(modules, checker.failures)
     }
 
-    private fun createTestData(failures: Collection<FailedTest>): List<Array<Any>> {
-      return failures
+    private fun createTestData(modules: List<JpsModule>, failures: Collection<FailedTest>): List<Array<Any?>> {
+      val success = listOf(arrayOf<Any?>("success: processed ${modules.size} modules", null))
+      val failedTests = failures
         .sortedWith(compareBy<FailedTest> { it.module }.thenBy { it.id }.thenBy { it.message })
-        .map { arrayOf<Any>(it.getTestName(), it.getException()) }
+        .map { arrayOf<Any?>(it.getTestName(), it.getException()) }
+      return success + failedTests
     }
 
-    private fun forEachModule(root: TestRoot, action: (JpsModule) -> Unit) {
+    private fun collectModules(root: TestRoot): List<JpsModule> {
       val home = getHomePath(root)
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
       JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
 
-      model.project.modules
+      return model.project.modules
         .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
-        .forEach(action)
     }
 
     private fun getHomePath(root: TestRoot): File {
