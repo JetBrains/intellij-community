@@ -323,6 +323,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     }), myProject.getDisposed());
   }
 
+  @Override
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;

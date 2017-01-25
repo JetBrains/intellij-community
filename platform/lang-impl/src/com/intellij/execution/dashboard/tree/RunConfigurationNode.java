@@ -86,11 +86,6 @@ class RunConfigurationNode extends AbstractRunConfigurationNode<RunnerAndConfigu
 
   @Override
   public boolean isTerminated() {
-    for (RunDescriptorNode node : myChildren) {
-      if (!node.isTerminated()) {
-        return false;
-      }
-    }
-    return true;
+    return myChildren.stream().allMatch(RunDescriptorNode::isTerminated);
   }
 }

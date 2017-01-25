@@ -17,6 +17,7 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -31,5 +32,10 @@ public abstract class RuntimeDashboardTreeAction<T extends DashboardNode> extend
   @Override
   protected final RuntimeDashboardContent getTreeContent(AnActionEvent e) {
     return e.getData(RuntimeDashboardContent.KEY);
+  }
+
+  @Override
+  protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
+    return false;
   }
 }

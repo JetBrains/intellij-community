@@ -1023,6 +1023,7 @@
       <action id="RuntimeDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"/>
       <action id="RuntimeDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"/>
       <action id="RuntimeDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
+      <separator/>
       <action id="RuntimeDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"/>
       <action id="RuntimeDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"/>
       <action id="RuntimeDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"/>
