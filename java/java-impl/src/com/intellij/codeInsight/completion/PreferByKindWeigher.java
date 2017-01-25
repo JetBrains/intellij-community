@@ -144,6 +144,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     suitableClass,
     nonInitialized,
     classNameOrGlobalStatic,
+    unlikelyClass,
     improbableKeyword,
   }
 
@@ -175,6 +176,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
         return MyResult.collectionFactory;
       }
+    }
+    if (object instanceof PsiClass &&
+        CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)object).getQualifiedName()) &&
+        JavaSmartCompletionContributor.AFTER_NEW.accepts(myPosition)) {
+      return MyResult.unlikelyClass;
     }
     Boolean expectedTypeMember = item.getUserData(MembersGetter.EXPECTED_TYPE_MEMBER);
     if (expectedTypeMember != null) {
