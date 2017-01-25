@@ -177,6 +177,9 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         int offset = e.getKey();
         String text = e.getValue();
         presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
+        if (isDebug) {
+          System.out.println(System.nanoTime() + ": hint added \"" + text + "\" " + offset);
+        }
       }
       keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
