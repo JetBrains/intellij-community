@@ -31,6 +31,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner {
@@ -40,6 +41,9 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
   @NotNull
   @Override
   public List<JavaLambdaTreeElement> provideNodes(@NotNull TreeElement node) {
+    if (!(node instanceof PsiTreeElementBase)) {
+      return Collections.emptyList();
+    }
     PsiElement element = ((PsiTreeElementBase)node).getElement();
     return SyntaxTraverser.psiTraverser(element)
       .expand(o -> o == element || !(o instanceof PsiMember || o instanceof PsiLambdaExpression))
