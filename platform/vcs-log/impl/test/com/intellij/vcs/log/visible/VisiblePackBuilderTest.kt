@@ -188,7 +188,7 @@ class VisiblePackBuilderTest {
   }
 
   fun userFilter(user: VcsUser?): VcsLogUserFilter? {
-    return if (user != null) VcsLogUserFilterImpl(listOf(user.name), emptyMap(), emptySet()) else null
+    return if (user != null) VcsLogUserFilterImpl(listOf(user.name), emptyMap(), setOf(user)) else null
   }
 
   fun graph(f: GraphBuilder.() -> Unit): Graph {
