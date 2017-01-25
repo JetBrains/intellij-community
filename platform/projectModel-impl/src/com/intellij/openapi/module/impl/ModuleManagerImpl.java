@@ -18,6 +18,8 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -315,6 +317,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     service.shutdown();
 
     progressIndicator.checkCanceled();
+
+    Application app = ApplicationManager.getApplication();
+    if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
+      Map<String, Module> track = new THashMap<>();
+      for (Module module : moduleModel.getModules()) {
+        for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
+          Module oldModule = track.put(url, module);
+          if (oldModule != null) {
+            //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
+            //VirtualFilePointer pointer = track1.get(url);
+            LOG.error("duplicated content url: " + url);
+          }
+        }
+      }
+    }
 
     onModuleLoadErrors(moduleModel, errors);
 
