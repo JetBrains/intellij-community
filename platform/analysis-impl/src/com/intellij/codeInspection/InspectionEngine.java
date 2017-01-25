@@ -121,15 +121,19 @@ public class InspectionEngine {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
 
-    TextRange range = file.getTextRange();
-    List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, range, range, Conditions.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
-
-    List<PsiElement> elements = ContainerUtil.concat(
-      (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
+    List<PsiElement> elements = getElementsToInspect(file);
 
     return inspectElements(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator, elements,
                            calcElementDialectIds(elements));
+  }
+
+  @NotNull
+  public static List<PsiElement> getElementsToInspect(@NotNull PsiFile file) {
+    final TextRange range = file.getTextRange();
+    final List<Divider.DividedElements> allDivided = new ArrayList<>();
+    Divider.divideInsideAndOutsideAllRoots(file, range, range, Conditions.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
+
+    return ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
   }
 
   // returns map tool.shortName -> list of descriptors found

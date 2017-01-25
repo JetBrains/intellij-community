@@ -33,12 +33,12 @@ public abstract class VirtualFileContentsChangedAdapter extends VirtualFileAdapt
 
   @Override
   public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
+    onBeforeFileChange(event.getFile());
   }
 
   @Override
   public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-    onFileChange(event.getFile());
+    onBeforeFileChange(event.getFile());
   }
 
   @Override
@@ -52,4 +52,15 @@ public abstract class VirtualFileContentsChangedAdapter extends VirtualFileAdapt
   }
 
   protected abstract void onFileChange(@NotNull final VirtualFile file);
+  protected abstract void onBeforeFileChange(@NotNull final VirtualFile file);
+
+  @Override
+  public void fileDeleted(@NotNull VirtualFileEvent event) {
+    onFileChange(event.getFile());
+  }
+
+  @Override
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+    onBeforeFileChange(event.getFile());
+  }
 }
