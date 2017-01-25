@@ -618,6 +618,15 @@ class CollectMigration extends BaseStreamApiMigration {
             String name = usage.getMethodExpression().getReferenceName();
             if (usageArgs.length == 0 && ("toString".equals(name) || "length".equals(name))) return true;
           }
+          PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+          if (parent instanceof PsiPolyadicExpression &&
+              ((PsiPolyadicExpression)parent).getOperationTokenType().equals(JavaTokenType.PLUS)) {
+            return true;
+          }
+          if (parent instanceof PsiAssignmentExpression &&
+            ((PsiAssignmentExpression)parent).getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
+            return true;
+          }
         }
         return false;
       })) {
