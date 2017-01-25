@@ -28,6 +28,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -102,6 +103,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
             listener.projectClosed(project);
           }
           ZipHandler.clearFileAccessorCache();
+          LaterInvocator.purgeExpiredItems();
         }
 
         @Override
