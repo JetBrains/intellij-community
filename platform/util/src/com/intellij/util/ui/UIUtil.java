@@ -1712,13 +1712,15 @@ public class UIUtil {
   public static void drawSearchMatch(Graphics2D g, int startX, int endX, int height, Color c1, Color c2) {
     final boolean drawRound = endX - startX > 4;
 
-    final Composite oldComposite = g.getComposite();
+    GraphicsConfig config = new GraphicsConfig(g);
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
 
     if (isJDKManagedHiDPIScreen()) {
+      GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
       g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
-      g.setComposite(oldComposite);
+      c.restore();
+      config.restore();
       return;
     }
 
@@ -1736,7 +1738,7 @@ public class UIUtil {
       g.drawLine(startX, height - 3, endX - 1, height - 3);
     }
 
-    g.setComposite(oldComposite);
+    config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
