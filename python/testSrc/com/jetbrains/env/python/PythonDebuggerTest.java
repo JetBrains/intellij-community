@@ -1132,6 +1132,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
+  @Test
+  public void testAddBreakWhileRunning() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        toggleBreakpoint(getScriptName(), 5);
+        resume();
+        waitForPause();
+        eval("d").hasValue("4");
+        resume();
+      }
+    });
+  }
+
 
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
