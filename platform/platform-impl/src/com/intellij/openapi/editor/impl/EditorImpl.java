@@ -905,7 +905,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // To have both the hardware acceleration and the background image we need to completely redesign JViewport machinery to support
       // independent layers, which is (probably) possible, but it's a rather cumbersome task.
       // Smooth scrolling still works event without the blit-acceleration, but with suboptimal performance and CPU usage.
-      if (IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
+      if (SystemProperties.isTrueSmoothScrollingEnabled() && IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
         JComponent component = new JComponent() {}; // transparent
         component.setPreferredSize(new Dimension(1, 1));
         layeredPane.add(component, JLayeredPane.POPUP_LAYER);
