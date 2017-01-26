@@ -49,6 +49,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.GCUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -210,10 +211,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return; // Check for leaked projects ~ every 20 tests
     }
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    for (int i = 0; i < 3 && getLeakedProjects().count() >= MAX_LEAKY_PROJECTS; i++) {
+      GCUtil.tryGcSoftlyReachableObjects();
+    }
 
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
-      List<Project> copy = getLeakedProjects().collect(Collectors.toList());
+      List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
       myProjects.clear();
       throw new TooManyProjectLeakedException(copy);
     }
