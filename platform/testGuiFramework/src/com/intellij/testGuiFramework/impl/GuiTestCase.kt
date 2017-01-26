@@ -53,7 +53,6 @@ open class GuiTestCase : GuiTestBase() {
       ideSettings.USE_HTTP_PROXY = false
       ideSettings.PROXY_HOST = ""
       ideSettings.PROXY_PORT = 80
-      if (IS_UNDER_TEAMCITY) GitSettings.setup()
     }
 
     companion object {
@@ -81,7 +80,6 @@ open class GuiTestCase : GuiTestBase() {
 
   @Throws(InvocationTargetException::class, InterruptedException::class)
   override fun tearDown() {
-    GitSettings.restore()
     super.tearDown()
   }
 

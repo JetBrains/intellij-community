@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.impl
+package com.intellij.testGuiFramework
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -54,19 +54,22 @@ object GitSettings{
   }
 
   private fun cacheGitGlobalUserName() { gitGlobalUserNameCached = executeGitCommand("config user.name") }
-  private fun cacheGitGlobalUserEmail() { gitGlobalUserEmailCached = executeGitCommand("config user.email")}
+  private fun cacheGitGlobalUserEmail() { gitGlobalUserEmailCached = executeGitCommand("config user.email")
+  }
 
   private fun setGitGlobalUserName(userName: String) { executeGitCommand("config --global user.name \"$userName\"") }
   private fun setGitGlobalUserEmail(userEmail: String) { executeGitCommand("config --global user.email $userEmail") }
 
   private fun setPathToGit() { GitVcsApplicationSettings.getInstance().setPathToGit(ExecutableHelper.findGitExecutable()) }
 
+  private fun getPathToGit() = GitVcsApplicationSettings.getInstance().pathToGit
+
   private fun executeGitCommand(commandLine: String) = executeGitCommand(commandLine.splitSpaceIgnoreQuotes())
 
   private fun executeGitCommand(params: List<String>): String? {
     val myCommandLine = GeneralCommandLine()
-    val appSettings = GitVcsApplicationSettings.getInstance()
-    myCommandLine.exePath = appSettings.pathToGit
+
+    myCommandLine.exePath = getPathToGit()
     myCommandLine.addParameters(params)
     val clientProcess = myCommandLine.createProcess()
 
