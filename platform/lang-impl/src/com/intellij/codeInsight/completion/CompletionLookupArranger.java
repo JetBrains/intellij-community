@@ -96,6 +96,10 @@ public class CompletionLookupArranger extends LookupArranger {
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
     }
+    for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
+      inputBySorter.put(sorter, sortByPresentation(inputBySorter.get(sorter)));
+    }
+
     return inputBySorter;
   }
 
@@ -161,7 +165,7 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier()));
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new EmptyClassifier()));
     }
     ProcessingContext context = createContext(true);
     classifier.addElement(element, context);
@@ -584,10 +588,10 @@ public class CompletionLookupArranger extends LookupArranger {
     }
   }
 
-  private class AlphaClassifier extends Classifier<LookupElement> {
+  private static class EmptyClassifier extends Classifier<LookupElement> {
 
-    private AlphaClassifier() {
-      super(null, "alpha");
+    private EmptyClassifier() {
+      super(null, "empty");
     }
 
     @NotNull
@@ -599,7 +603,7 @@ public class CompletionLookupArranger extends LookupArranger {
     @NotNull
     @Override
     public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
-      return sortByPresentation(source);
+      return source;
     }
 
   }
