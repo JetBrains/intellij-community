@@ -160,16 +160,30 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
         if (!presentationManager.isParameterHint(inlay)) continue;
         int offset = inlay.getOffset();
+        
         String newText = myAnnotations.remove(offset);
-        if (delayRemoval(inlay, caretMap)) continue;
         String oldText = presentationManager.getHintText(inlay);
+        
+        if (isDebug) {
+          System.out.println("Hint at: " + offset + " Old text: " + oldText + " New text: " + newText);
+        }
+        
+        if (delayRemoval(inlay, caretMap)) continue;
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
             presentationManager.deleteHint(myEditor, inlay);
+        
+            if (isDebug) {
+              System.out.println("Hint deleted " + offset);
+            }
           }
           else {
             presentationManager.replaceHint(myEditor, inlay, newText);
+            
+            if (isDebug) {
+              System.out.println("Hint replaced " + offset + " with new text: " + newText);
+            }
           }
         }
       }
