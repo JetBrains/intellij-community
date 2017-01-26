@@ -113,6 +113,7 @@ object PyTypeShed {
   val directoryPath: String?
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
+                         "${PathManager.getConfigPath()}/../typeshed",
                          PythonHelpersLocator.getHelperPath("typeshed"))
       return paths.asSequence()
           .filter { File(it).exists() }
