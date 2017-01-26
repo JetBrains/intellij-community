@@ -31,7 +31,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
     set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
-    InternalSendCurrExceptionTraceProceeded
+    InternalSendCurrExceptionTraceProceeded, InternalSetTracingThread
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -253,6 +253,9 @@ class PyDB:
         self.is_filter_libraries = pydevd_utils.is_filter_libraries()
         self.show_return_values = False
         self.remove_return_values_flag = False
+
+        # this dict is used for frame evaluation, it holds thread_id -> set of frames
+        self.disable_tracing_after_exit_frames = {}
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -811,8 +814,9 @@ class PyDB:
 
         if self.frame_eval_func is not None and info.pydev_state == STATE_RUN:
             if info.pydev_step_cmd == -1:
-                # disable old tracing function without stepping commands
-                self.SetTrace(None)
+                if not self.disable_tracing_after_exit_frames.get(get_thread_id(thread), None):
+                    # disable old tracing function without stepping commands
+                    self.SetTrace(None)
             else:
                 if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
                     self.set_trace_for_frame_and_parents(frame)
