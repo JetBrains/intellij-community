@@ -71,6 +71,11 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
       return
     }
 
-    (storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE) as FileBasedStorage).setFile(file, null)
+    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
+      (this as FileBasedStorage).setFile(file, null)
+      // ModifiableModuleModel#newModule should always create a new module from scratch
+      // https://youtrack.jetbrains.com/issue/IDEA-147530
+      resolveVirtualFileOnlyOnWrite = true
+    })
   }
 }
