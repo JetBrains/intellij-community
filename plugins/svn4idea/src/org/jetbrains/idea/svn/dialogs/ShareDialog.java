@@ -162,6 +162,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return wrapper;
   }
 
+  @NotNull
   public ShareTarget getShareTarget() {
     if (myExisting.isSelected()) {
       return ShareTarget.useSelected;

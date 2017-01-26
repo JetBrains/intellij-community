@@ -594,9 +594,9 @@ public class SvnUtil {
     return info == null ? null : info.getURL();
   }
 
-  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
+  public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
-    final Ref<Boolean> result = new Ref<>(true);
+    Ref<Boolean> result = new Ref<>(true);
     DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
 
       @Override
