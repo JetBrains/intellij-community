@@ -133,7 +133,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void somethingChanged() {
     if (myModel != null) {
-      myModel.fireCurrentSettingsChanged();
+      myModel.fireBeforeCurrentSettingsChanged();
     }
   }
 
@@ -212,6 +212,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
         try {
           apply(mySettings);
+          if (myModel != null) {
+            myModel.fireAfterCurrentSettingsChanged();
+          }
         }
         catch (ConfigurationException ignore) {
         }

@@ -95,10 +95,15 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       }
 
       @Override
-      public void currentSettingsChanged() {
+      public void beforeCurrentSettingsChanged() {
         if (!myIsDisposed) {
           ensureCurrentPanel().onSomethingChanged();
         }
+      }
+
+      @Override
+      public void afterCurrentSettingsChanged() {
+         mySchemesPanel.updateOnCurrentSettingsChange();
       }
 
       @Override

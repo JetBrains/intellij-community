@@ -107,6 +107,7 @@ public class NewColorAndFontPanel extends JPanel {
     optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void settingsChanged() {
+        mySchemesPanel.updateOnCurrentSettingsChange();
         optionsPanel.applyChangesToScheme();
         previewPanel.updateView();
       }

@@ -32,4 +32,6 @@ public interface SchemesModel<T extends Scheme> {
   boolean canRenameScheme(@NotNull T scheme);
   
   boolean nameExists(@NotNull String name);
+
+  boolean differsFromDefault(@NotNull T scheme);
 }

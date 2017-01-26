@@ -179,8 +179,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     return false;
   }
 
-  public void fireCurrentSettingsChanged() {
-    myDispatcher.getMulticaster().currentSettingsChanged();
+  public void fireBeforeCurrentSettingsChanged() {
+    myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
   public void fireSchemeChanged(CodeStyleScheme scheme) {
@@ -189,6 +189,10 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public void fireSchemeListChanged() {
     myDispatcher.getMulticaster().schemeListChanged();
+  }
+  
+  public void fireAfterCurrentSettingsChanged() {
+    myDispatcher.getMulticaster().afterCurrentSettingsChanged();
   }
 
   public CodeStyleScheme getSelectedGlobalScheme() {
@@ -238,7 +242,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   @Override
   public boolean canResetScheme(@NotNull CodeStyleScheme scheme) {
-    return true;
+    return scheme.isDefault();
   }
 
   @Override
@@ -259,6 +263,13 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   @Override
   public boolean nameExists(@NotNull String name) {
     return findSchemeByName(name) != null;
+  }
+
+  @Override
+  public boolean differsFromDefault(@NotNull CodeStyleScheme scheme) {
+    CodeStyleSettings defaults = CodeStyleSettings.getDefaults();
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    return !defaults.equals(clonedSettings);
   }
 
   public List<CodeStyleScheme> getAllSortedSchemes() {

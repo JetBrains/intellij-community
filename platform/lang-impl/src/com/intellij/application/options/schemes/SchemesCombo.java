@@ -45,6 +45,7 @@ public class SchemesCombo<T extends Scheme> {
   private AbstractSchemesPanel<T> mySchemesPanel;
   private final CardLayout myLayout;
   private final JTextField myNameEditorField;
+  private final MyComboBoxModel myComboBoxModel;
   
   private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
   private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
@@ -53,6 +54,7 @@ public class SchemesCombo<T extends Scheme> {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
     myRootPanel = new JPanel(myLayout);
+    myComboBoxModel = new MyComboBoxModel();
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
@@ -75,6 +77,10 @@ public class SchemesCombo<T extends Scheme> {
       }
     }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
     return nameEditorField;
+  }
+  
+  public void updateSelected() {
+    myComboBox.repaint();
   }
 
   private void stopEdit() {
@@ -105,21 +111,12 @@ public class SchemesCombo<T extends Scheme> {
   }
 
   private void createCombo() {
-    myComboBox = new ComboBox<>();
+    myComboBox = new ComboBox<>(myComboBoxModel);
     myComboBox.setRenderer(new MyListCellRenderer());
     myComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
-      }
-    });
-    myComboBox.setModel(new DefaultComboBoxModel<MySchemeListItem<T>>() {
-      @Override
-      public void setSelectedItem(Object anObject) {
-        if (anObject instanceof MySchemeListItem && ((MySchemeListItem)anObject).isSeparator()) {
-          return;
-        }
-        super.setSelectedItem(anObject);
       }
     });
   }
@@ -134,19 +131,24 @@ public class SchemesCombo<T extends Scheme> {
   }
 
   private SimpleTextAttributes getSchemeAttributes(@NotNull MySchemeListItem<T> item) {
+    SchemesModel<T> model = mySchemesPanel.getModel();
     T scheme = item.getScheme();
-    return scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme)
+    SimpleTextAttributes baseAttributes = scheme !=null && model.canDeleteScheme(scheme)
            ? SimpleTextAttributes.REGULAR_ATTRIBUTES
            : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+    if (scheme != null && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
+      return baseAttributes.derive(-1, JBColor.BLUE, null, null);
+    }
+    return baseAttributes;
   }
 
   public void resetSchemes(@NotNull Collection<T> schemes) {
-    myComboBox.removeAllItems();
+    myComboBoxModel.removeAllElements();
     SchemesModel<T> model = mySchemesPanel.getModel();
     if (model.supportsProjectSchemes()) {
-      myComboBox.addItem(new MySeparatorItem(PROJECT_LEVEL));
+      myComboBoxModel.addElement(new MySeparatorItem(PROJECT_LEVEL));
       addItems(schemes, scheme -> model.isProjectScheme(scheme));
-      myComboBox.addItem(new MySeparatorItem(IDE_LEVEL));
+      myComboBoxModel.addElement(new MySeparatorItem(IDE_LEVEL));
       addItems(schemes, scheme -> !model.isProjectScheme(scheme));
     }
     else {
@@ -157,7 +159,7 @@ public class SchemesCombo<T extends Scheme> {
   private void addItems(@NotNull Collection<T> schemes, Function<T,Boolean> filter) {
     for (T scheme : schemes) {
       if (filter.apply(scheme)) {
-        myComboBox.addItem(new MySchemeListItem<>(scheme));
+        myComboBoxModel.addElement(new MySchemeListItem<>(scheme));
       }
     }
   }
@@ -296,5 +298,16 @@ public class SchemesCombo<T extends Scheme> {
       return NAME_ALREADY_EXISTS_MESSAGE;
     }
     return null;
+  }
+  
+  private class MyComboBoxModel extends DefaultComboBoxModel<MySchemeListItem<T>> {
+
+    @Override
+    public void setSelectedItem(Object anObject) {
+      if (anObject instanceof MySchemeListItem && ((MySchemeListItem)anObject).isSeparator()) {
+        return;
+      }
+      super.setSelectedItem(anObject);
+    }
   }
 }

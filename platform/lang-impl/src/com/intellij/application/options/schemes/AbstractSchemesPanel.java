@@ -133,4 +133,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
 
   @NotNull
   public abstract SchemesModel<T> getModel();
+
+  public void updateOnCurrentSettingsChange() {
+    mySchemesCombo.updateSelected();
+  }
 }

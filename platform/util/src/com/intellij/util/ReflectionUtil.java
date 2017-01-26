@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
@@ -498,6 +499,26 @@ public class ReflectionUtil {
       }
     }
     return valuesChanged;
+  }
+
+  public static boolean comparePublicNonFinalFields(@NotNull Object first,
+                                                    @NotNull Object second) {
+    Set<Field> firstFields = ContainerUtil.newHashSet(first.getClass().getFields());
+    for (Field field : second.getClass().getFields()) {
+      if (firstFields.contains(field)) {
+        if (isPublic(field) && !isFinal(field)) {
+          try {
+            if (!Comparing.equal(field.get(first), field.get(second))) {
+              return false;
+            }
+          }
+          catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+    return true;
   }
 
   public static void copyFieldValue(@NotNull Object from, @NotNull Object to, @NotNull Field field)

@@ -889,9 +889,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return root;
   }
 
-  public boolean isEqualToBundled(AbstractColorsScheme bundledScheme) {
+  public boolean equals(Object other) {
+    if (!(other instanceof AbstractColorsScheme)) return false;
+    AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
+    
     // parent is used only for default schemes (e.g. Darcula — bundled in all ide (opposite to IDE-specific, like Cobalt))
-    if (myParentScheme != bundledScheme.myParentScheme && myParentScheme != bundledScheme) {
+    if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
     }
 
@@ -903,23 +906,39 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
           propertyName.equals(META_INFO_ORIGINAL)
         ) {
         continue;
-      }
+      }                                                                                                               
 
-      if (!Comparing.equal(myMetaInfo.getProperty(propertyName), bundledScheme.myMetaInfo.getProperty(propertyName))) {
+      if (!Comparing.equal(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
         return false;
       }
     }
 
-    return getLineSpacing() == bundledScheme.getLineSpacing() &&
-           getConsoleLineSpacing() == bundledScheme.getConsoleLineSpacing() &&
-           getQuickDocFontSize() == bundledScheme.getQuickDocFontSize() &&
-           myFontPreferences.getRealFontFamilies().equals(bundledScheme.myFontPreferences.getRealFontFamilies()) &&
-           myFontPreferences.useLigatures() == bundledScheme.myFontPreferences.useLigatures() &&
-           myConsoleFontPreferences.useLigatures() == bundledScheme.myConsoleFontPreferences.useLigatures() &&
-           myConsoleFontPreferences.getRealFontFamilies().equals(bundledScheme.myConsoleFontPreferences.getRealFontFamilies()) &&
-           myColorsMap.equals(bundledScheme.myColorsMap) &&
-           myAttributesMap.equals(bundledScheme.myAttributesMap) &&
-           myFontPreferences.equals(bundledScheme.myFontPreferences) &&
-           myConsoleFontPreferences.equals(bundledScheme.myConsoleFontPreferences);
+    return getLineSpacing() == otherScheme.getLineSpacing() &&
+           getConsoleLineSpacing() == otherScheme.getConsoleLineSpacing() &&
+           myFontPreferences.equals(otherScheme.getFontPreferences()) &&
+           myConsoleFontPreferences.equals(otherScheme.getConsoleFontPreferences()) &&
+           attributesEqual(otherScheme) &&
+           colorsEqual(otherScheme) &&
+           myFontPreferences.equals(otherScheme.myFontPreferences);
+  }
+
+  protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
+    return myAttributesMap.equals(otherScheme.myAttributesMap);
+  }
+
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
+    return myColorsMap.equals(otherScheme.myColorsMap);
+  }
+
+  @Nullable
+  private static EditorColorsScheme getBaseDefaultScheme(@NotNull EditorColorsScheme scheme) {
+    if (!(scheme instanceof AbstractColorsScheme)) {
+      return null;
+    }
+    if (scheme instanceof DefaultColorsScheme) {
+      return scheme;
+    }
+    EditorColorsScheme parent = ((AbstractColorsScheme)scheme).myParentScheme;
+    return parent != null ? getBaseDefaultScheme(parent) : null;
   }
 }

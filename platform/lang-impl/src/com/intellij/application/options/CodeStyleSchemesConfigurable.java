@@ -231,8 +231,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         }
 
         @Override
-        public void currentSettingsChanged() {
+        public void beforeCurrentSettingsChanged() {
+        }
 
+        @Override
+        public void afterCurrentSettingsChanged() {
         }
 
         @Override

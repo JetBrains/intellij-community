@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -190,6 +191,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public boolean nameExists(@NotNull String name) {
     return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
+  }
+
+  @Override
+  public boolean differsFromDefault(@NotNull EditorColorsScheme scheme) {
+    if (scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      String displayName = SchemeManager.getDisplayName(scheme);
+      EditorColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getScheme(displayName);
+      if (defaultScheme == null) {
+        defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
+      }
+      if (defaultScheme != null) {
+        return !scheme.equals(defaultScheme);
+      }
+    }
+    return false;
   }
 
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {

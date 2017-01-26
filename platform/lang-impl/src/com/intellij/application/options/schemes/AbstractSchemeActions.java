@@ -107,7 +107,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
-      p.setEnabled(scheme != null && mySchemesPanel.getModel().canResetScheme(scheme));
+      if(scheme != null && mySchemesPanel.getModel().canResetScheme(scheme)) {
+        p.setVisible(true);
+        p.setEnabled(mySchemesPanel.getModel().differsFromDefault(scheme));
+      }
+      else {
+        p.setEnabledAndVisible(false);
+      }
     }
   }
   
