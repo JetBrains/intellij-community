@@ -67,7 +67,7 @@ public class MarkResolvedAction extends BasicAction {
     FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
 
     return file.isDirectory()
-           ? SvnStatusUtil.isUnderControl(vcs.getProject(), file)
+           ? SvnStatusUtil.isUnderControl(vcs, file)
            : FileStatus.MERGED_WITH_CONFLICTS.equals(status) ||
              FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status) ||
              FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status);

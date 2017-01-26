@@ -38,10 +38,7 @@ public class LockAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return !file.isDirectory() &&
-           isUnderControl(vcs.getProject(), file) &&
-           !isAdded(vcs.getProject(), file) &&
-           !isExplicitlyLocked(vcs.getProject(), file);
+    return !file.isDirectory() && isUnderControl(vcs, file) && !isAdded(vcs, file) && !isExplicitlyLocked(vcs, file);
   }
 
   @Override

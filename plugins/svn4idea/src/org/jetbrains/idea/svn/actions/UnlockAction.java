@@ -38,7 +38,7 @@ public class UnlockAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return !file.isDirectory() && SvnStatusUtil.isExplicitlyLocked(vcs.getProject(), file);
+    return !file.isDirectory() && SvnStatusUtil.isExplicitlyLocked(vcs, file);
   }
 
   @Override

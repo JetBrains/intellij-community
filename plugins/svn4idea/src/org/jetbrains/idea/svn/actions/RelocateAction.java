@@ -42,7 +42,7 @@ public class RelocateAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return SvnStatusUtil.isUnderControl(vcs.getProject(), file);
+    return SvnStatusUtil.isUnderControl(vcs, file);
   }
 
   @Override

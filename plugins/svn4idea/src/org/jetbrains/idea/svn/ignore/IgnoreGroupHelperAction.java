@@ -34,7 +34,7 @@ public class IgnoreGroupHelperAction {
   private boolean myAllAreIgnored;
   private FileIterationListener myListener;
 
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myAllAreIgnored = true;
     myAllCanBeIgnored = true;
 
@@ -53,24 +53,20 @@ public class IgnoreGroupHelperAction {
            Stream.of(files).allMatch(file -> isEnabled(vcs, file));
   }
 
-  public void setFileIterationListener(final FileIterationListener listener) {
+  public void setFileIterationListener(FileIterationListener listener) {
     myListener = listener;
   }
 
-  private boolean isEnabledImpl(final SvnVcs vcs, final VirtualFile file) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(vcs.getProject());
-
-    if (SvnStatusUtil.isIgnoredInAnySense(clManager, file)) {
+  private boolean isEnabledImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    if (SvnStatusUtil.isIgnoredInAnySense(vcs.getProject(), file)) {
       myAllCanBeIgnored = false;
-      return myAllAreIgnored | myAllCanBeIgnored;
-    } else if (clManager.isUnversioned(file)) {
-      // check parent
-      final VirtualFile parent = file.getParent();
-      if (parent != null) {
-        if ((! SvnStatusUtil.isIgnoredInAnySense(clManager, parent)) && (! clManager.isUnversioned(parent))) {
-          myAllAreIgnored = false;
-          return myAllAreIgnored | myAllCanBeIgnored;
-        }
+      return myAllAreIgnored;
+    }
+    else if (ChangeListManager.getInstance(vcs.getProject()).isUnversioned(file)) {
+      VirtualFile parent = file.getParent();
+      if (parent != null && SvnStatusUtil.isUnderControl(vcs, parent)) {
+        myAllAreIgnored = false;
+        return myAllCanBeIgnored;
       }
     }
     myAllCanBeIgnored = false;
@@ -78,8 +74,8 @@ public class IgnoreGroupHelperAction {
     return false;
   }
 
-  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull final VirtualFile file) {
-    final boolean result = isEnabledImpl(vcs, file);
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    boolean result = isEnabledImpl(vcs, file);
     if (result) {
       myListener.onFileEnabled(file);
     }

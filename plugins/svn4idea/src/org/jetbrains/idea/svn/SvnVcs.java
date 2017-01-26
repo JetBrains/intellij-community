@@ -586,13 +586,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean fileIsUnderVcs(FilePath path) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-    final VirtualFile file = path.getVirtualFile();
-    if (file == null) {
-      return false;
-    }
-    return !SvnStatusUtil.isIgnoredInAnySense(clManager, file) && !clManager.isUnversioned(file);
+  public boolean fileIsUnderVcs(@NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+    return file != null && SvnStatusUtil.isUnderControl(this, file);
   }
 
   @Nullable
