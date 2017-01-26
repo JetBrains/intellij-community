@@ -36,7 +36,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
@@ -47,10 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -67,6 +67,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static final Key<List<StackCapturingLineBreakpoint>> CAPTURE_BREAKPOINTS = Key.create("CAPTURE_BREAKPOINTS");
   public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
+  private static final int MAX_STACK_LENGTH = 500;
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
@@ -123,7 +124,14 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           }
           Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myCapturePoint.myParamNo, null);
           if (key instanceof ObjectReference) {
-            stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread(), suspendContext, true));
+            List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext.getThread(), suspendContext, true);
+            if (frames.size() > MAX_STACK_LENGTH) {
+              ArrayList<StackFrameItem> truncated = new ArrayList<>(MAX_STACK_LENGTH + 1);
+              truncated.addAll(frames.subList(0, MAX_STACK_LENGTH));
+              truncated.add(TOO_MANY_FRAMES);
+              frames = truncated;
+            }
+            stacks.put((ObjectReference)key, frames);
           }
         }
       }
@@ -132,6 +140,19 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
     return false;
   }
+
+  private static StackFrameItem TOO_MANY_FRAMES = new StackFrameItem(null, null, "", "", -1) {
+    @Nullable
+    @Override
+    public XSourcePosition getSourcePosition() {
+      return null;
+    }
+
+    @Override
+    public void customizePresentation(@NotNull ColoredTextContainer component) {
+      component.append("Too many frames, the rest is truncated...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+    }
+  };
 
   @Override
   public StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {

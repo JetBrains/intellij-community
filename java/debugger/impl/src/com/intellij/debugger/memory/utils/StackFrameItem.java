@@ -153,6 +153,7 @@ public class StackFrameItem extends XStackFrame {
     myVariables.add(var);
   }
 
+  @NotNull
   public static List<StackFrameItem> createFrames(@Nullable ThreadReferenceProxyImpl threadReferenceProxy,
                                                   @NotNull SuspendContextImpl suspendContext,
                                                   boolean withVars)
