@@ -29,5 +29,4 @@ public class VcsLogActionPlaces {
   public static final String VCS_LOG_TEXT_FILTER_SETTINGS_ACTION = "Vcs.Log.QuickTextFilterSettings";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
   public static final String VCS_LOG_SHOW_DETAILS_ACTION = "Vcs.Log.ShowDetailsAction";
-  public static final String VCS_SHOW_HISTORY_ACTION = "Vcs.Show.History";
 }

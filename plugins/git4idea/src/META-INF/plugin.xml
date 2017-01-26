@@ -38,8 +38,6 @@
     </action>
 
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
-    <action class="git4idea.actions.GitShowHistoryAction" id="Git.New.Show.History"
-            text="Show History" description="Show History"/>
 
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
@@ -51,7 +49,7 @@
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
-      <reference id="Git.New.Show.History"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Vcs.Show.Graph.History"/>
       <separator/>
