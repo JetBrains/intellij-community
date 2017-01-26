@@ -17,6 +17,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.exists
 import java.nio.file.Paths
 
@@ -63,5 +64,13 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
     if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
       storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, Paths.get(path))
     }
+  }
+
+  override fun setPath(path: String, file: VirtualFile?) {
+    if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
+      return
+    }
+
+    (storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE) as FileBasedStorage).setFile(file, null)
   }
 }
