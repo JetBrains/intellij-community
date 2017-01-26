@@ -282,25 +282,27 @@ class Operators {
   final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'
 
   private void doTest(String before, String after = null) {
-    fixture.with {
-      configureByText '_.groovy', "$DECLARATIONS$before"
-      moveCaret()
-      def intentions = filterAvailableIntentions('Replace ')
-      if (after) {
-        assert intentions: before
-        launchAction intentions.first()
-        checkResult "$DECLARATIONS$after"
-      }
-      else {
-        assert !intentions
+    Closeable closeCaret =  {fixture.editor.caretModel.moveToOffset(0)}
+
+    closeCaret.withCloseable {
+      fixture.with {
+        configureByText '_.groovy', "$DECLARATIONS$before"
+        moveCaret()
+        def intentions = filterAvailableIntentions('Replace ')
+        if (after) {
+          assert intentions: before
+          launchAction intentions.first()
+          checkResult "$DECLARATIONS$after"
+        }
+        else {
+          assert !intentions
+        }
       }
     }
   }
 
   private void moveCaret() {
-    def statement =
-
-   (fixture.file as GroovyFile).statements.last()
+    def statement = (fixture.file as GroovyFile).statements.last()
     GrMethodCall call = null
 
     if (statement instanceof GrMethodCall) {
