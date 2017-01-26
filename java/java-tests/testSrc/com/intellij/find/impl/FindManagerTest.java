@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.find;
+package com.intellij.find.impl;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.find.impl.FindInProjectUtil;
-import com.intellij.find.impl.FindResultImpl;
+import com.intellij.find.*;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;

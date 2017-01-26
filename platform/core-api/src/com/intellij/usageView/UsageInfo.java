@@ -256,9 +256,9 @@ public class UsageInfo {
       shift0 = ((VirtualFileWindow)containingFile0).getDocumentWindow().injectedToHost(0);
       containingFile0 = ((VirtualFileWindow)containingFile0).getDelegate();
     }
-    Segment range0 = mySmartPointer.getPsiRange();
-    if (range0 == null) return null;
-    return Pair.create(containingFile0, range0.getStartOffset() + shift0);
+    Segment range = myPsiFileRange == null ? mySmartPointer.getPsiRange() : myPsiFileRange.getPsiRange();
+    if (range == null) return null;
+    return Pair.create(containingFile0, range.getStartOffset() + shift0);
   }
 
   public int compareToByStartOffset(@NotNull UsageInfo info) {
