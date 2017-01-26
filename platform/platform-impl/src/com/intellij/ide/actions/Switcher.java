@@ -118,7 +118,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override
-      public boolean dispatch(AWTEvent event) {
+      public boolean dispatch(@NotNull AWTEvent event) {
         ToolWindow tw;
         if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;

@@ -152,7 +152,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
     }
 
     @Override
-    public boolean dispatch(AWTEvent event) {
+    public boolean dispatch(@NotNull AWTEvent event) {
       if (event instanceof KeyEvent) {
         final KeyEvent keyEvent = (KeyEvent)event;
         final int keyCode = keyEvent.getKeyCode();

@@ -292,7 +292,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   @Override
-  public boolean dispatch(AWTEvent e) {
+  public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
       MouseEvent mouseEvent = (MouseEvent)e;
       Component component = findActualComponent(mouseEvent);
