@@ -19,34 +19,28 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> returnSelfNames = new HashSet<>();
+  private static final Set<String> returnSelfNames =
+    ContainerUtil.set("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse");
 
-  static {
-    returnSelfNames.add("append");
-    returnSelfNames.add("appendCodePoint");
-    returnSelfNames.add("delete");
-    returnSelfNames.add("deleteCharAt");
-    returnSelfNames.add("insert");
-    returnSelfNames.add("replace");
-    returnSelfNames.add("reverse");
-  }
-
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -149,7 +143,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     private static boolean stringBuilderContentsAreUpdated(
       PsiVariable variable, PsiElement context) {
       final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && !isDefaultConstructorCall(initializer)) {
+      if (initializer != null && !ConstructionUtils.isEmptyStringBuilderInitializer(initializer)) {
         return true;
       }
       return isStringBuilderUpdated(variable, context);
@@ -157,38 +151,6 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     private static boolean stringBuilderContentsAreQueried(PsiVariable variable, PsiElement context) {
       return isStringBuilderQueried(variable, context);
-    }
-
-    private static boolean isDefaultConstructorCall(PsiExpression initializer) {
-      if (!(initializer instanceof PsiNewExpression)) {
-        return false;
-      }
-      final PsiNewExpression newExpression = (PsiNewExpression)initializer;
-      final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-      if (classReference == null) {
-        return false;
-      }
-      final PsiElement target = classReference.resolve();
-      if (!(target instanceof PsiClass)) {
-        return false;
-      }
-      final PsiClass aClass = (PsiClass)target;
-      final String qualifiedName = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
-          !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(qualifiedName)) {
-        return false;
-      }
-      final PsiExpressionList argumentList = newExpression.getArgumentList();
-      if (argumentList == null) {
-        return false;
-      }
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
-        return true;
-      }
-      final PsiExpression argument = arguments[0];
-      final PsiType argumentType = argument.getType();
-      return PsiType.INT.equals(argumentType);
     }
   }
 
@@ -200,18 +162,8 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> updateNames = new HashSet<>();
-
-    static {
-      updateNames.add("append");
-      updateNames.add("appendCodePoint");
-      updateNames.add("delete");
-      updateNames.add("delete");
-      updateNames.add("deleteCharAt");
-      updateNames.add("insert");
-      updateNames.add("replace");
-      updateNames.add("setCharAt");
-    }
+    private static final Set<String> updateNames =
+      ContainerUtil.set("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength");
 
     private final PsiVariable variable;
     private boolean updated;
@@ -226,27 +178,21 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      if (updated) {
-        return;
-      }
+      if (updated) return;
       super.visitMethodCallExpression(expression);
       checkReferenceExpression(expression.getMethodExpression());
     }
 
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-      if (updated) {
-        return;
-      }
+      if (updated) return;
       super.visitMethodReferenceExpression(expression);
       checkReferenceExpression(expression);
     }
 
     private void checkReferenceExpression(PsiReferenceExpression methodExpression) {
       final String name = methodExpression.getReferenceName();
-      if (!updateNames.contains(name)) {
-        return;
-      }
+      if (!updateNames.contains(name)) return;
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (hasReferenceToVariable(variable, qualifierExpression)) {
         updated = true;
@@ -262,25 +208,9 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> queryNames = new HashSet<>();
-
-    static {
-      queryNames.add("toString");
-      queryNames.add("indexOf");
-      queryNames.add("lastIndexOf");
-      queryNames.add("capacity");
-      queryNames.add("charAt");
-      queryNames.add("codePointAt");
-      queryNames.add("codePointBefore");
-      queryNames.add("codePointCount");
-      queryNames.add("equals");
-      queryNames.add("getChars");
-      queryNames.add("hashCode");
-      queryNames.add("length");
-      queryNames.add("offsetByCodePoints");
-      queryNames.add("subSequence");
-      queryNames.add("substring");
-    }
+    private static final Set<String> queryNames = ContainerUtil
+      .set("toString", "indexOf", "lastIndexOf", "capacity", "charAt", "codePointAt", "codePointBefore", "codePointCount", "equals",
+           "getChars", "hashCode", "length", "offsetByCodePoints", "subSequence", "substring");
 
     private final PsiVariable variable;
     private boolean queried;
@@ -295,17 +225,13 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
-      if (queried) {
-        return;
-      }
+      if (queried) return;
       super.visitElement(element);
     }
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      if (queried) {
-        return;
-      }
+      if (queried) return;
       super.visitReferenceExpression(expression);
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       if (!(parent instanceof PsiPolyadicExpression)) {
@@ -329,9 +255,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      if (queried) {
-        return;
-      }
+      if (queried) return;
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
@@ -386,10 +310,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   private static boolean hasReferenceToVariable(PsiVariable variable, PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-      final PsiElement target = referenceExpression.resolve();
-      if (variable.equals(target)) {
-        return true;
-      }
+      return referenceExpression.isReferenceTo(variable);
     }
     else if (element instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)element;
