@@ -78,7 +78,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setOpaque(false);
     description.setBackground(UIUtil.getLabelBackground());
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    final String toolDescription = toolWrapper.loadDescription();
+    final String toolDescription = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(toolWrapper.loadDescription());
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
