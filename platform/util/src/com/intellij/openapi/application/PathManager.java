@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.ElementTraversal;
 
 import java.io.*;
 import java.net.URL;
@@ -473,7 +474,8 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      SecurityManager.class         // xercesImpl
+      SecurityManager.class,        // xercesImpl
+      ElementTraversal.class        // xml-apis (required by Xerces)
     };
 
     final Set<String> classPath = new HashSet<String>();
