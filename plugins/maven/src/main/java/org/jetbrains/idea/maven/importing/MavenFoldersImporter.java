@@ -217,9 +217,7 @@ public class MavenFoldersImporter {
     }
 
     if (myImportingSettings.isExcludeTargetFolder()) {
-      if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
         myModel.addExcludedFolder(targetDir.getPath());
-      }
     }
   }
 
