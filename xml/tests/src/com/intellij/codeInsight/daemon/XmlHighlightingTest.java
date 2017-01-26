@@ -2106,7 +2106,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testTheSameElement() throws Exception {
     doTest(
       new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "TheSameElement/IntellijPersonData.xml"),
+        getVirtualFile(BASE_PATH + "TheSameElement/IntelliJPersonData.xml"),
         getVirtualFile(BASE_PATH + "TheSameElement/IntellijCalTech.xsd"),
         getVirtualFile(BASE_PATH + "TheSameElement/IntelliJMeldeamt.xsd")
       },
