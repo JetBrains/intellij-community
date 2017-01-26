@@ -165,7 +165,9 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   private GlobalSearchScope calculateDirtyScope() {
-    GlobalSearchScope dirtyModuleScope = GlobalSearchScope.union(getAllDirtyModules()
+    final Set<Module> dirtyModules = getAllDirtyModules();
+    if (dirtyModules.isEmpty()) return myExcludedFilesScope;
+    GlobalSearchScope dirtyModuleScope = GlobalSearchScope.union(dirtyModules
                                                                    .stream()
                                                                    .map(Module::getModuleWithDependentsScope)
                                                                    .toArray(GlobalSearchScope[]::new));
