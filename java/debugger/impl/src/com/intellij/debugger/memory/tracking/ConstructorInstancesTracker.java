@@ -243,8 +243,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           if (myReference.equals(thisRef.referenceType()) && data != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
-            final List<StackFrameItem> frame =
-              StackFrameItem.createFrames(suspendContext.getThread(), suspendContext.getDebugProcess(), false);
+            final List<StackFrameItem> frame = StackFrameItem.createFrames(suspendContext.getThread(), suspendContext, false);
             data.getTrackedStacks().addStack(thisRef, frame);
           }
         }

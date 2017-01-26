@@ -17,21 +17,24 @@ package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCompiledFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -41,6 +44,8 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -51,6 +56,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class StackFrameItem extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(StackFrameItem.class);
@@ -61,7 +67,7 @@ public class StackFrameItem extends XStackFrame {
   private final String myFilePath;
   private final String myMethodName;
   private final int myLineNumber;
-  private List<VariableItem> myVariables = null;
+  private List<XNamedValue> myVariables = null;
   private boolean myFirst;
 
   private final NullableLazyValue<XSourcePosition> mySourcePosition;
@@ -83,7 +89,15 @@ public class StackFrameItem extends XStackFrame {
       if (psiClass == null) {
         return null;
       }
-      SourcePosition position = SourcePosition.createFromLine(psiClass.getContainingFile(), myLineNumber - 1);
+      PsiElement element = psiClass.getNavigationElement();
+      // see IDEA-137167, prefer not compiled elements
+      if (element instanceof PsiCompiledElement) {
+        PsiElement fileElement = psiClass.getContainingFile().getNavigationElement();
+        if (!(fileElement instanceof PsiCompiledElement)) {
+          element = fileElement;
+        }
+      }
+      SourcePosition position = SourcePosition.createFromLine(element.getContainingFile(), myLineNumber - 1);
       PsiFile psiFile = psiClass.getContainingFile().getOriginalFile();
       if (psiFile instanceof PsiCompiledFile) {
         position = new PositionManagerImpl.ClsSourcePosition(position, myLineNumber - 1);
@@ -132,7 +146,7 @@ public class StackFrameItem extends XStackFrame {
     return mySourcePosition.getValue();
   }
 
-  void addVariable(VariableItem var) {
+  void addVariable(XNamedValue var) {
     if (myVariables == null) {
       myVariables = new ArrayList<>();
     }
@@ -140,7 +154,7 @@ public class StackFrameItem extends XStackFrame {
   }
 
   public static List<StackFrameItem> createFrames(@Nullable ThreadReferenceProxyImpl threadReferenceProxy,
-                                                  DebugProcessImpl process,
+                                                  @NotNull SuspendContextImpl suspendContext,
                                                   boolean withVars)
     throws EvaluateException {
     if (threadReferenceProxy != null) {
@@ -148,8 +162,9 @@ public class StackFrameItem extends XStackFrame {
       for (StackFrameProxyImpl frame : threadReferenceProxy.frames()) {
         try {
           Location loc = frame.location();
-          StackFrameItem frameItem = new StackFrameItem(process.getProject(),
-                                                        process.getSearchScope(),
+          DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+          StackFrameItem frameItem = new StackFrameItem(debugProcess.getProject(),
+                                                        debugProcess.getSearchScope(),
                                                         loc.declaringType().name(),
                                                         loc.method().name(),
                                                         loc.lineNumber());
@@ -159,7 +174,7 @@ public class StackFrameItem extends XStackFrame {
           res.add(frameItem);
 
           if (withVars) {
-            List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, process);
+            List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
             if (!ContainerUtil.isEmpty(relatedStack)) {
               res.addAll(relatedStack);
               break;
@@ -191,7 +206,22 @@ public class StackFrameItem extends XStackFrame {
               });
             }
             catch (EvaluateException e) {
-              LOG.debug(e);
+              if (e.getCause() instanceof AbsentInformationException) {
+                frameItem.addVariable(JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
+                                                                       XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+                // trying to collect values from variable slots
+                try {
+                  for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(frame, debugProcess).entrySet()) {
+                    frameItem.addVariable(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
+                  }
+                }
+                catch (Exception ex) {
+                  LOG.info(ex);
+                }
+              }
+              else {
+                LOG.debug(e);
+              }
             }
           }
         }

@@ -360,6 +360,10 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
+  public static XNamedValue createMessageNode(String text, Icon icon) {
+    return new DummyMessageValueNode(text, icon);
+  }
+
   static class DummyMessageValueNode extends XNamedValue {
     private final String myMessage;
     private final Icon myIcon;
