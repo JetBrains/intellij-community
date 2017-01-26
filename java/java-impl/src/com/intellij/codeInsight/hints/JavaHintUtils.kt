@@ -91,7 +91,13 @@ object JavaInlayHintsProvider {
   private fun createUnclearInlays(args: List<CallArgumentInfo>): List<InlayInfo> {
     return args
       .filter { isUnclearExpression(it.argument) }
-      .mapNotNull { createInlayInfo(it.argument, it.parameter) }
+      .mapNotNull { 
+        val inlayInfo = createInlayInfo(it.argument, it.parameter)
+        if (ParameterHintsPassFactory.isDebug()) {
+          println("Hint for ${it.argument} : ${inlayInfo?.text}")  
+        }
+        inlayInfo
+      }
   }
 
   private fun getVarArgInlay(info: CallInfo): InlayInfo? {

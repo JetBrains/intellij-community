@@ -58,7 +58,6 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     isDebug = value;  
   }
   
-  @TestOnly
   public static boolean isDebug() {
     return isDebug;
   }
