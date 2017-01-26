@@ -18,9 +18,9 @@ package com.intellij.diff.tools.util.base
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import java.util.*
@@ -31,15 +31,8 @@ import java.util.*
 )
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
-    @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
-
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
     @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", "Disable")
-
-    @JvmStatic
-    fun getInstance(): TextDiffSettingsHolder {
-      return ServiceManager.getService(TextDiffSettingsHolder::class.java)
-    }
   }
 
   data class SharedSettings(
@@ -70,8 +63,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var EXPAND_BY_DEFAULT: Boolean = true
   )
 
-  class TextDiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
-                                              val PLACE_SETTINGS: PlaceSettings) {
+  class TextDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
+                                              private val PLACE_SETTINGS: PlaceSettings) {
     constructor() : this(SharedSettings(), PlaceSettings())
 
     // Presentation settings
@@ -141,15 +134,10 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     //
 
     companion object {
-      @JvmStatic
-      fun getSettings(): TextDiffSettings {
-        return getSettings(null)
-      }
+      @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
 
-      @JvmStatic
-      fun getSettings(place: String?): TextDiffSettings {
-        return getInstance().getSettings(place)
-      }
+      @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
+      @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
     }
   }
 
