@@ -209,12 +209,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   @NotNull
   private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
-    return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return virtualFile.getPresentableUrl();
-      }
-    }) + "'";
+    return "'" + ApplicationManager.getApplication().runReadAction((Computable<String>)virtualFile::getPresentableUrl) + "'";
   }
 
   @NotNull
@@ -246,12 +241,7 @@ class SearchForUsagesRunnable implements Runnable {
   private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return ((PsiElementUsageTarget)target).getElement();
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)((PsiElementUsageTarget)target)::getElement);
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {

@@ -607,6 +607,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
+
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
@@ -615,20 +616,18 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return;
-      }
-    }
+    if (dispatchByCustomDispatchers(e)) return;
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;
       }
     }
+
     if (e instanceof ComponentEvent && myWindowManager != null) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
+
     if (e instanceof KeyEvent) {
       if (mySuspendMode || !myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         defaultDispatchEvent(e);
@@ -654,6 +653,15 @@ public class IdeEventQueue extends EventQueue {
     else {
       defaultDispatchEvent(e);
     }
+  }
+
+  private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
+    for (EventDispatcher eachDispatcher : myDispatchers) {
+      if (eachDispatcher.dispatch(e)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
@@ -1182,6 +1190,7 @@ public class IdeEventQueue extends EventQueue {
   /**
    * An absolutely guru API, please avoid using it at all cost.
    */
+  @FunctionalInterface
   public interface PostEventHook extends EventListener {
     /**
      * @return true if event is handled by the listener and should't be added to event queue at all

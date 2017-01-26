@@ -78,6 +78,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.File;
@@ -245,12 +246,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static Project createProject(File projectFile, String creationPlace) {
+  public static Project createProject(File projectFile, @NotNull String creationPlace) {
     return createProject(projectFile.getPath(), creationPlace);
   }
 
   @NotNull
-  public static Project createProject(@NotNull String path, String creationPlace) {
+  public static Project createProject(@NotNull String path, @NotNull String creationPlace) {
     String fileName = PathUtilRt.getFileName(path);
 
     try {
@@ -291,6 +292,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
+  @TestOnly
   public static String getCreationPlace(@NotNull Project project) {
     String place = project.getUserData(CREATION_PLACE);
     Object base;
