@@ -100,11 +100,6 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
     public void actionPerformed(AnActionEvent e) {
       myBuilder.rename();
     }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(myBuilder.canRename());
-    }
   }
 
   private class DeleteAction extends AnAction implements DumbAware {
