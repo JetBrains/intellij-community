@@ -2115,6 +2115,20 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testTheSameTypeName() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "TheSameTypeName/test2.xml"),
+        getVirtualFile(BASE_PATH + "TheSameTypeName/test-common-xsd1.xsd"),
+        getVirtualFile(BASE_PATH + "TheSameTypeName/test-common-xsd2.xsd"),
+        getVirtualFile(BASE_PATH + "TheSameTypeName/test-xsd1.xsd"),
+        getVirtualFile(BASE_PATH + "TheSameTypeName/test-xsd2.xsd"),
+      },
+      true,
+      false
+    );
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

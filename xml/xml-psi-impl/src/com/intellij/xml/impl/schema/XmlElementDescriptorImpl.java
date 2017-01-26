@@ -557,8 +557,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
       return typeDescriptor.canContainTag("a", namespace, context) ||
              typeDescriptor.getNsDescriptor().hasSubstitutions() ||
-             XmlUtil.nsFromTemplateFramework(namespace)
-        ;
+             XmlUtil.nsFromTemplateFramework(namespace);
     }
     return false;
   }
