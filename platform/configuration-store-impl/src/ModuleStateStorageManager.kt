@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
@@ -39,7 +40,7 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
         val module = componentManager as ModuleEx
         val oldName = module.name
         module.rename(getModuleNameByFilePath(newPath), false)
-        ModuleManagerImpl.getInstanceImpl(module.project).fireModuleRenamedByVfsEvent(module, oldName)
+        (ModuleManager.getInstance(module.project) as? ModuleManagerImpl)?.fireModuleRenamedByVfsEvent(module, oldName)
       }
     }
   }

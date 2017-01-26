@@ -586,7 +586,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
   @NotNull
-  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
+  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) throws IOException;
 
   static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -690,7 +690,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (module == null) {
         module = myManager.createModule(filePath);
         final ModuleEx newModule = module;
-        initModule(module, filePath, () -> {
+        initModule(module, filePath, null, () -> {
           newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
           if (options != null) {
             for (Map.Entry<String, String> option : options.entrySet()) {
@@ -753,14 +753,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
       return () -> ReadAction.compute(() -> {
         if (myManager.myProject.isDisposed()) return null;
-        ModuleEx result = myManager.createAndLoadModule(path);
-        initModule(result, path, null);
+        ModuleEx result = myManager.createAndLoadModule(path, moduleFile);
+        initModule(result, path, moduleFile, null);
         return result;
       });
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
-      module.init(path, beforeComponentCreation);
+    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
+      module.init(path, file, beforeComponentCreation);
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }
