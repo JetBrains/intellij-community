@@ -18,9 +18,8 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
-import com.intellij.openapi.module.ModuleGrouper;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -49,7 +48,6 @@ import java.util.*;
  * @author dsl
  */
 public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DirectoryChooserModuleTreeView");
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();
     final Object o2 = node2.getUserObject();
@@ -75,7 +73,6 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<>();
   private final DefaultMutableTreeNode myRootNode;
   private final ProjectFileIndex myFileIndex;
-  private final Project myProject;
   private final ModuleGrouper myModuleGrouper;
 
   public DirectoryChooserModuleTreeView(@NotNull Project project) {
@@ -83,8 +80,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myProject = project;
-    myModuleGrouper = ModuleGrouper.instanceFor(myProject);
+    myModuleGrouper = ModuleGrouper.instanceFor(project);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
@@ -222,7 +218,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(@NotNull JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final Object value = ((DefaultMutableTreeNode)nodeValue).getUserObject();
       if (value instanceof DirectoryChooser.ItemWrapper) {
         DirectoryChooser.ItemWrapper wrapper = (DirectoryChooser.ItemWrapper)value;
