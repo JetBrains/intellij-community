@@ -23,10 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ConstructionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -123,6 +120,9 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
         return false;
       }
       if (!TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
+        return false;
+      }
+      if (!(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()) instanceof PsiNewExpression)) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssigned(variable, context)) {
@@ -267,8 +267,21 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
         return;
       }
       if (hasReferenceToVariable(variable, qualifierExpression)) {
+        PsiIfStatement ifStatement =
+          PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class, true, PsiStatement.class, PsiLambdaExpression.class);
+        if (ifStatement != null && !SideEffectChecker.mayHaveSideEffects(ifStatement, this::isSideEffectFreeBuilderMethodCall)) return;
         queried = true;
       }
+    }
+
+    /**
+     * @param call call to check
+     * @return true if method call has no side effect except possible modification of the current StringBuilder
+     */
+    private boolean isSideEffectFreeBuilderMethodCall(PsiMethodCallExpression call) {
+      PsiReferenceExpression methodExpression = call.getMethodExpression();
+      return !"getChars".equals(methodExpression.getReferenceName()) &&
+             ExpressionUtils.isReferenceTo(methodExpression.getQualifierExpression(), variable);
     }
   }
 
