@@ -76,7 +76,7 @@ def _pydev_stop_at_break():
     if t.additional_info.is_tracing:
         return
 
-    if t.additional_info.pydev_step_cmd == -1:
+    if t.additional_info.pydev_step_cmd == -1 and sys.gettrace() is None:
         # do not handle breakpoints while stepping, because they're handled by old tracing function
         t.additional_info.is_tracing = True
         debugger = get_global_debugger()
