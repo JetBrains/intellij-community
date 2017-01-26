@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static javax.swing.SwingUtilities.isEventDispatchThread;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -135,8 +137,98 @@ public class InvokerTest {
     });
   }
 
+  @Test
+  public void testThreadChangingOnEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testThreadChangingOnBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundPool(parent));
+  }
+
+  @Test
+  public void testThreadChangingOnBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundThread(parent));
+  }
+
+  private static void testThreadChanging(Disposable parent, Invoker invoker) {
+    testThreadChanging(parent, invoker, invoker, true);
+  }
+
+  @Test
+  public void testThreadChangingOnEDTfromEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.EDT(parent), new Invoker.EDT(parent), true);
+  }
+
+  @Test
+  public void testThreadChangingOnEDTfromBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.EDT(parent), new Invoker.BackgroundPool(parent), false);
+  }
+
+  @Test
+  public void testThreadChangingOnEDTfromBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.EDT(parent), new Invoker.BackgroundThread(parent), false);
+  }
+
+  @Test
+  public void testThreadChangingOnBgPoolFromEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundPool(parent), new Invoker.EDT(parent), false);
+  }
+
+  @Test
+  public void testThreadChangingOnBgPoolFromBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundPool(parent), new Invoker.BackgroundPool(parent), true);
+  }
+
+  @Test
+  public void testThreadChangingOnBgPoolFromBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundPool(parent), new Invoker.BackgroundThread(parent), true);
+  }
+
+  @Test
+  public void testThreadChangingOnBgThreadFromEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundThread(parent), new Invoker.EDT(parent), false);
+  }
+
+  @Test
+  public void testThreadChangingOnBgThreadFromBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundThread(parent), new Invoker.BackgroundPool(parent), null);
+  }
+
+  @Test
+  public void testThreadChangingOnBgThreadFromBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testThreadChanging(parent, new Invoker.BackgroundThread(parent), new Invoker.BackgroundThread(parent), null);
+  }
+
+  private static void testThreadChanging(Disposable parent, Invoker foreground, Invoker background, Boolean equal) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(parent, foreground, latch, error
+      -> new Command.Processor(foreground, background).process(Thread::currentThread, thread
+      -> countDown(latch, 0, error, "unexpected thread", ()
+      -> isExpected(thread, equal))));
+  }
+
+  private static boolean isExpected(Thread thread, Boolean equal) {
+    if (equal != null) return equal.equals(thread == Thread.currentThread());
+    return true; // debug only: thread may be reused
+  }
+
 
   private static void test(Disposable parent, Invoker invoker, CountDownLatch latch, Consumer<AtomicReference<String>> consumer) {
+    Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && isEventDispatchThread());
     AtomicReference<String> error = new AtomicReference<>();
     invoker.invokeLater(() -> consumer.accept(error));
     String message;
