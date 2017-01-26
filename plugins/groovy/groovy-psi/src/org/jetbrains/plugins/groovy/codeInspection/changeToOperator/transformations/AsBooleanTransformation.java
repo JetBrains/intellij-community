@@ -18,14 +18,21 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 
 import static java.util.Objects.requireNonNull;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLNOT;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.PREFIX_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+
 /**
  * e.g.
  * !a.asBoolean()    → !a
@@ -36,6 +43,7 @@ class AsBooleanTransformation extends Transformation {
   public static final String NEGATION = mLNOT.toString();
   public static final String DOUBLE_NEGATION = NEGATION + NEGATION;
 
+  @Nullable
   protected String getPrefix(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     if (isImplicitlyBoolean(methodCall)) {
       return "";
@@ -54,8 +62,14 @@ class AsBooleanTransformation extends Transformation {
   }
 
   @Override
-  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     return getBase(methodCall) != null && methodCall.getExpressionArguments().length == 0 && getPrefix(methodCall, options) != null;
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    String prefix = getPrefix(methodCall, options);
+    return DOUBLE_NEGATION.equals(prefix) && checkPrecedence(PREFIX_PRECEDENCE, methodCall);
   }
 
   private static boolean isImplicitlyBoolean(GrMethodCall methodCall) {

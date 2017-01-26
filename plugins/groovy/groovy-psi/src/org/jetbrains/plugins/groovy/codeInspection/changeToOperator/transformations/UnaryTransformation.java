@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 import static java.util.Objects.requireNonNull;
 
@@ -38,7 +39,12 @@ public class UnaryTransformation extends Transformation {
   }
 
   @Override
-  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     return getBase(methodCall)!= null && methodCall.getExpressionArguments().length == 0;
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return ParenthesesUtils.checkPrecedence(ParenthesesUtils.PREFIX_PRECEDENCE, methodCall);
   }
 }

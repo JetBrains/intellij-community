@@ -81,6 +81,7 @@ class Operators {
   void testAsBoolean() {
     doTest "a.asBoolean()", "!!a"
     doTest "!a.asBoolean()", "!a"
+    doTest "a.as<caret>Boolean().toString()", "(!!a).toString()"
     doTest "if (a.as<caret>Boolean());", "if (a);"
     doTest "while (a.as<caret>Boolean()) {}", "while (a) {}"
     doTest "a.as<caret>Boolean() ? 1 : 0", "a ? 1 : 0"
@@ -164,10 +165,12 @@ class Operators {
       "(a.toString() as Operators).minus(b.hashCode())": "(a.toString() as Operators) - b.hashCode()",
       "b.isCase(a)"                                    : "a in b",
       "if ([1, 2, 3].is<caret>Case(2-1));"             : "if (2 - 1 in [1, 2, 3]);",
+      "![1, 2, 3].is<caret>Case(2-1)"                  : "!(2 - 1 in [1, 2, 3])",
       'def x = "1".p<caret>lus(1)'                     : 'def x = "1" + 1',
       '("1" + 1).plus(1)'                              : '("1" + 1) + 1',
       '!a.toString().asBoolean()'                      : '!a.toString()',
-      "a.xor((a.b + 1) * b) == a"                     : "(a ^ (a.b + 1) * b) == a",
+      "a.xo<caret>r((a.b + 1) * b) == a"               : "(a ^ (a.b + 1) * b) == a",
+      "a.as<caret>Type(String).bytes"                  : "(a as String).bytes",
     ].each {
       doTest it.key, it.value
     }
@@ -224,6 +227,7 @@ class Operators {
     doTest "a.compareTo(b) > 0", "a > b"
     doTest "if ((2-1).compa<caret>reTo(3) > 0);", /if ((2 - 1) > 3);/
     doTest "! (a.compar<caret>eTo(b) < 0)", "!(a < b)"
+    doTest "(2 - 1).compa<caret>reTo(2 | 1) > 0", "(2 - 1) > (2 | 1)"
   }
 
   void testCompareToOption() {
@@ -234,11 +238,45 @@ class Operators {
 
   void testGetAndPut() {
     doTest "a.getAt(b)", "a[b]"
+    doTest "a.g<caret>etAt(b).toString()", "a[b].toString()"
     doTest "a.putAt(b, 'c')", "a[b] = 'c'"
     doTest "a.putAt(b, 'c'*2)", "a[b] = 'c' * 2"
     doTest "a.getAt(a, b)"
     doTest "a.putAt(b)"
     doTest "a.putAt(b, b, b)"
+  }
+
+  void testWithoutAdditionalParenthesesOption() {
+    inspection.withoutAdditionalParentheses = true
+    doTest "a.eq<caret>uals(b) == 1"
+    doTest "1 == !a.eq<caret>uals(b)"
+    doTest "a.eq<caret>uals(b) && c", "a == b && c"
+
+    doTest "1 - a.m<caret>inus(b)"
+    doTest "a.m<caret>inus(1 - b)"
+    doTest "1 - a.p<caret>lus(b)"
+    doTest '("1" + 1).plus(1)', '("1" + 1) + 1'
+
+    doTest "a.asType(String)", "a as String"
+    doTest "!a.asType(String)"
+    doTest "a.as<caret>Type(String).toString()"
+
+    doTest "a.g<caret>etAt(b).field", "a[b].field"
+    doTest "a.p<caret>utAt(b, 1).field"
+
+    doTest "a.ne<caret>xt().bytes"
+    doTest "a.ne<caret>xt() + 1", "++a + 1"
+
+    doTest "[1, 2, 3].is<caret>Case(2-1)", "2 - 1 in [1, 2, 3]"
+    doTest "![1, 2, 3].is<caret>Case(2-1)"
+
+    doTest "! (a.compar<caret>eTo(b) < 0)", "!(a < b)"
+    doTest "if ((2 - 1).compa<caret>reTo(2-1) > 0);", "if ((2 - 1) > 2 - 1);"
+    doTest "(2 - 1).compa<caret>reTo(2) - 1"
+    doTest "(2 - 1).compa<caret>reTo(2 | 1)"
+
+    doTest "a.as<caret>Boolean() != b.asBoolean()", "!!a != b.asBoolean()"
+    doTest "a.asBoolean().toString()"
   }
 
   final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'
@@ -249,7 +287,7 @@ class Operators {
       moveCaret()
       def intentions = filterAvailableIntentions('Replace ')
       if (after) {
-        assert intentions
+        assert intentions: before
         launchAction intentions.first()
         checkResult "$DECLARATIONS$after"
       }
@@ -260,7 +298,9 @@ class Operators {
   }
 
   private void moveCaret() {
-    def statement = (fixture.file as GroovyFile).statements.last()
+    def statement =
+
+   (fixture.file as GroovyFile).statements.last()
     GrMethodCall call = null
 
     if (statement instanceof GrMethodCall) {
@@ -279,7 +319,7 @@ class Operators {
       }
     }
 
-    if (call) {
+    if (call && fixture.editor.caretModel.logicalPosition.column == 0) {
       def invoked = call.invokedExpression as GrReferenceExpression
       fixture.editor.caretModel.moveToOffset(invoked.referenceNameElement.textRange.startOffset)
     }

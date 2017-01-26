@@ -15,11 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
 import java.util.HashMap;
@@ -29,7 +31,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.ASSOCIATIVE_BINA
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.PARENTHESIZED_BINARY_OP_SET;
 
 /**
- * Precedence documentation - http://groovy-lang.org/operators.html
+ * Precedence documentation - http://groovy-lang.org/operators.html#_operator_precedence
  */
 public class ParenthesesUtils {
 
@@ -128,6 +130,8 @@ public class ParenthesesUtils {
     return BINARY_PRECEDENCES.get(sign);
   }
 
+
+
   public static int getPrecedence(GrExpression expr) {
     if (expr instanceof GrUnaryExpression) return ((GrUnaryExpression)expr).isPostfix() ? POSTFIX_PRECEDENCE : PREFIX_PRECEDENCE;
     if (expr instanceof GrTypeCastExpression) return TYPE_CAST_PRECEDENCE;
@@ -149,47 +153,6 @@ public class ParenthesesUtils {
     return  0;
   }
 
-  public static boolean isParenthesesRequired(int precedence, int parentPrecedence) {
-    return precedence > parentPrecedence;
-  }
-
-  public static boolean isParenthesesRequiredBinaryOperation(int precedence, @NotNull IElementType parentToken, boolean isRhs) {
-    int parentPrecedence = precedenceForBinaryOperator(parentToken);
-    if (precedence > parentPrecedence) return true;
-    if (precedence == parentPrecedence && parentPrecedence != 0) {
-      if (!ASSOCIATIVE_BINARY_OP_SET.contains(parentToken) && isRhs ||
-          PARENTHESIZED_BINARY_OP_SET.contains(parentToken)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @NotNull
-  public static GrExpression addParenthesesIfNeeded(@NotNull GrExpression expression, int parentPrecedence) {
-    if (isParenthesesRequired(getPrecedence(expression), parentPrecedence)) {
-      return parenthesize(expression);
-    }
-    return expression;
-  }
-
-  /**
-   * @return parenthesized expression if required, same expression else.
-   */
-  @NotNull
-  public static GrExpression addParenthesesIfNeeded(@NotNull GrExpression newExpr, @NotNull GrExpression oldExpr, GrExpression oldParent) {
-    boolean parenthesize;
-    int precedence = getPrecedence(newExpr);
-    if (oldParent instanceof GrBinaryExpression) {
-      GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
-      GrExpression rightOperand = binaryExpression.getRightOperand();
-      parenthesize = isParenthesesRequiredBinaryOperation(precedence, binaryExpression.getOperationTokenType(), oldExpr.equals(rightOperand));
-    } else {
-      parenthesize = isParenthesesRequired(precedence, getPrecedence(oldParent));
-    }
-    return parenthesize ? parenthesize(newExpr) : newExpr;
-  }
-
   @NotNull
   public static GrExpression parenthesize(@NotNull GrExpression expression) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
@@ -208,5 +171,45 @@ public class ParenthesesUtils {
       }
     }
     return currentExpression;
+  }
+
+  public static boolean checkPrecedenceForBinaryOps(int precedence, @NotNull IElementType parentToken, boolean isRhs) {
+    int parentPrecedence = precedenceForBinaryOperator(parentToken);
+    if (precedence > parentPrecedence) return true;
+    if (precedence == parentPrecedence && parentPrecedence != 0) {
+      if (!ASSOCIATIVE_BINARY_OP_SET.contains(parentToken) && isRhs ||
+          PARENTHESIZED_BINARY_OP_SET.contains(parentToken)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean checkPrecedenceForNonBinaryOps(@NotNull GrExpression newExpr, int parentPrecedence) {
+    return checkPrecedenceForNonBinaryOps(getPrecedence(newExpr), parentPrecedence);
+  }
+
+  public static boolean checkPrecedenceForNonBinaryOps(int precedence, int parentPrecedence) {
+    return precedence > parentPrecedence;
+  }
+
+  public static boolean checkPrecedence(int precedence, @NotNull GrExpression oldExpr) {
+    PsiElement parent = oldExpr.getParent();
+    if (parent instanceof GrArgumentList) {
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof GrExpression)) return false;
+    GrExpression oldParent = (GrExpression) parent;
+    if (oldParent instanceof GrBinaryExpression) {
+      GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
+      GrExpression rightOperand = binaryExpression.getRightOperand();
+      return checkPrecedenceForBinaryOps(precedence, binaryExpression.getOperationTokenType(), oldExpr.equals(rightOperand));
+    } else {
+      return checkPrecedenceForNonBinaryOps(precedence, getPrecedence(oldParent));
+    }
+  }
+
+  public static boolean checkPrecedence(@NotNull GrExpression newExpr, @NotNull GrExpression oldExpr) {
+    return checkPrecedence(getPrecedence(newExpr), oldExpr);
   }
 }

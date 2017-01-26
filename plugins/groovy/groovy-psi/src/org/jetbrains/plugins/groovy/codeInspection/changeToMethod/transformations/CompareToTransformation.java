@@ -23,22 +23,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMPARE_TO;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 class CompareToTransformation extends BinaryTransformation {
 
   @NotNull
-  private IElementType myElementType;
+  private final IElementType myElementType;
 
   public CompareToTransformation(@NotNull IElementType elementType) {
-
     myElementType = elementType;
   }
 
   @Override
   public void apply(@NotNull GrBinaryExpression expression) {
-    GrExpression lhsParenthesized = addParenthesesIfNeeded(getLhs(expression), METHOD_CALL_PRECEDENCE);
+    GrExpression lhsParenthesized = addParenthesesIfNeeded(getLhs(expression));
     String compare = "";
     if (myElementType != mCOMPARE_TO) {
         compare = format(" %s 0", myElementType.toString());

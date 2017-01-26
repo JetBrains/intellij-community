@@ -41,7 +41,7 @@ abstract class BinaryTransformation extends Transformation {
   }
 
   @Override
-  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     GrExpression[] arguments = methodCall.getExpressionArguments();
     return getBase(methodCall) != null && arguments.length == 1;
   }

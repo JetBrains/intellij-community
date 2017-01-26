@@ -24,7 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 public abstract class Transformation {
 
-  public abstract boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options);
+  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return couldApplyInternal(methodCall, options) && (!options.withoutAdditionalParentheses() || !needParentheses(methodCall, options));
+  }
+
+  protected abstract boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
+  protected abstract boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options);
 
   public abstract void apply(@NotNull GrMethodCall methodCall, @NotNull Options options);
 

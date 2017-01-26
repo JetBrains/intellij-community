@@ -44,6 +44,7 @@ import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.trans
 public class ChangeToOperatorInspection extends BaseInspection {
   public boolean useDoubleNegation = true;
   public boolean shouldChangeCompareToEqualityToEquals = true;
+  public boolean withoutAdditionalParentheses = false;
 
   @NotNull
   @Override
@@ -114,20 +115,23 @@ public class ChangeToOperatorInspection extends BaseInspection {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(message("replace.with.operator.double.negation.option"), "useDoubleNegation");
     optionsPanel.addCheckbox(message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
+    optionsPanel.addCheckbox(message("replace.with.operator.parentheses"), "withoutAdditionalParentheses");
     return optionsPanel;
   }
 
   private Options getOptions() {
-    return new Options(useDoubleNegation, shouldChangeCompareToEqualityToEquals);
+    return new Options(useDoubleNegation, shouldChangeCompareToEqualityToEquals, withoutAdditionalParentheses);
   }
 
   public static final class Options {
     private final boolean useDoubleNegation;
     private final boolean shouldChangeCompareToEqualityToEquals;
+    private final boolean withoutAdditionalParentheses;
 
-    public Options(boolean useDoubleNegation, boolean shouldChangeCompareToEqualityToEquals) {
+    public Options(boolean useDoubleNegation, boolean shouldChangeCompareToEqualityToEquals, boolean withoutAdditionalParentheses) {
       this.useDoubleNegation = useDoubleNegation;
       this.shouldChangeCompareToEqualityToEquals = shouldChangeCompareToEqualityToEquals;
+      this.withoutAdditionalParentheses = withoutAdditionalParentheses;
     }
 
     public boolean useDoubleNegation() {
@@ -136,6 +140,10 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
     public boolean shouldChangeCompareToEqualityToEquals() {
       return shouldChangeCompareToEqualityToEquals;
+    }
+
+    public boolean withoutAdditionalParentheses() {
+      return withoutAdditionalParentheses;
     }
   }
 }

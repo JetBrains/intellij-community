@@ -25,7 +25,7 @@ import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
-public class SimpleBinaryTransformation extends BinaryTransformation {
+public final class SimpleBinaryTransformation extends BinaryTransformation {
 
   private final IElementType myOperator;
 
@@ -36,9 +36,15 @@ public class SimpleBinaryTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     GrExpression rhs = getRhs(methodCall);
-    if (isParenthesesRequiredBinaryOperation(getPrecedence(rhs), myOperator, true)) {
-      rhs = parenthesize(rhs);
-    }
+
+    rhs = checkPrecedenceForBinaryOps(getPrecedence(rhs), myOperator, true) ? parenthesize(rhs) : rhs;
     replaceExpression(methodCall, format("%s %s %s", getLhs(methodCall).getText(), myOperator.toString(), rhs.getText()));
+  }
+
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall,
+                                    @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    int rhsPrecedence = getPrecedence(rhs);
+    return checkPrecedenceForBinaryOps(rhsPrecedence, myOperator, true) || checkPrecedence(precedenceForBinaryOperator(myOperator), methodCall);
   }
 }

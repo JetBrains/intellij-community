@@ -19,6 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForNonBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
+
 public abstract class Transformation<T extends GrExpression> {
 
   public boolean couldApplyRow(@NotNull GrExpression expression) {
@@ -39,4 +43,9 @@ public abstract class Transformation<T extends GrExpression> {
   protected abstract void apply(@NotNull T expression);
 
   public abstract String getMethod();
+
+  @NotNull
+  GrExpression addParenthesesIfNeeded(@NotNull GrExpression expression) {
+    return checkPrecedenceForNonBinaryOps(expression, METHOD_CALL_PRECEDENCE) ? parenthesize(expression) : expression;
+  }
 }

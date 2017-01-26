@@ -25,8 +25,6 @@ import java.util.Objects;
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 public class AsTypeTransformation extends Transformation<GrSafeCastExpression> {
   @Nullable
@@ -42,7 +40,7 @@ public class AsTypeTransformation extends Transformation<GrSafeCastExpression> {
 
   @Override
   protected void apply(@NotNull GrSafeCastExpression expression) {
-    GrExpression lhsParenthesized = addParenthesesIfNeeded(expression.getOperand(), METHOD_CALL_PRECEDENCE);
+    GrExpression lhsParenthesized = addParenthesesIfNeeded(expression.getOperand());
     GrTypeElement typeElement = Objects.requireNonNull(expression.getCastTypeElement());
     replaceExpression(expression, format("%s.asType(%s)", lhsParenthesized.getText(), typeElement.getText()));
   }

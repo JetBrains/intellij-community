@@ -23,8 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.addParenthesesIfNeeded;
 
 
 public class UnaryTransformation extends Transformation<GrUnaryExpression> {
@@ -38,7 +36,7 @@ public class UnaryTransformation extends Transformation<GrUnaryExpression> {
 
   @Override
   public void apply(@NotNull GrUnaryExpression expression) {
-    GrExpression operand = addParenthesesIfNeeded(requireNonNull(getOperand(expression)), METHOD_CALL_PRECEDENCE);
+    GrExpression operand = addParenthesesIfNeeded(requireNonNull(getOperand(expression)));
     GrInspectionUtil.replaceExpression(expression, format("%s.%s()", operand.getText(), myMethod));
   }
 
