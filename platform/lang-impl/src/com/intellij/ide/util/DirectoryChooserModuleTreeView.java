@@ -191,13 +191,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   }
 
   private void insertNode(final DefaultMutableTreeNode nodeToInsert, DefaultMutableTreeNode parentNode) {
-    final int index = TreeUtil.indexedBinarySearch(parentNode, nodeToInsert, NODE_COMPARATOR);
-    if (index >= 0) {
-      LOG.error("Node " + nodeToInsert + " is already added to " + parentNode);
-      return;
-    }
-    final int insertionPoint = -(index+1);
-    ((DefaultTreeModel)myTree.getModel()).insertNodeInto(nodeToInsert, parentNode, insertionPoint);
+    TreeUtil.insertNode(nodeToInsert, parentNode, (DefaultTreeModel)myTree.getModel(), NODE_COMPARATOR);
   }
 
   @Override

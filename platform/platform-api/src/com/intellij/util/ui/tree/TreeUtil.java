@@ -989,6 +989,22 @@ public final class TreeUtil {
     }
   }
 
+  public static void insertNode(@NotNull MutableTreeNode child, @NotNull MutableTreeNode parent, @Nullable DefaultTreeModel model,
+                                @NotNull Comparator<? extends TreeNode> comparator) {
+    int index = indexedBinarySearch(parent, child, comparator);
+    if (index >= 0) {
+      LOG.error("Node " + child + " is already added to " + parent);
+      return;
+    }
+    int insertionPoint = -(index + 1);
+    if (model != null) {
+      model.insertNodeInto(child, parent, insertionPoint);
+    }
+    else {
+      parent.insert(child, insertionPoint);
+    }
+  }
+
   public static int indexedBinarySearch(@NotNull TreeNode parent, @NotNull TreeNode key, Comparator comparator) {
     int low = 0;
     int high = parent.getChildCount() - 1;
