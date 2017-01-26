@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +24,21 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 class JointCompilationClassLoader extends UrlClassLoader {
+  private static final boolean ourExplicitlyAvoidLoadingJava = SystemProperties.getBooleanProperty("groovy.classloader.skip.java.package", true);
   @NotNull private final Builder myBuilder;
   @NotNull private ClassPath myClassPath;
-  
+
   public JointCompilationClassLoader(@NotNull Builder builder) {
     super(builder);
     myBuilder = builder;
     myClassPath = super.getClassPath();
+  }
+
+  @Override
+  protected Class findClass(String name) throws ClassNotFoundException {
+    if (ourExplicitlyAvoidLoadingJava && name.startsWith("java.")) return null;
+
+    return super.findClass(name);
   }
 
   @Override

@@ -52,11 +52,6 @@ public class ProjectPaths {
   }
 
   @NotNull
-  public static Collection<File> getRuntimeBootClasspath(@NotNull ModuleChunk chunk) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), false, ClasspathPart.BEFORE_JDK, false);
-  }
-
-  @NotNull
   public static Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
