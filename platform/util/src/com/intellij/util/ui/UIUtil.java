@@ -2265,6 +2265,22 @@ public class UIUtil {
     return getParentOfType(cls, c);
   }
 
+  //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
+  @Nullable
+  public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
+    Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
+    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+      JRootPane rootPane = (JRootPane)component.getParent();
+      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
+      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      if (component == null) {
+        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
+        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+      }
+    }
+    return component;
+  }
+
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
     return getCssFontDeclaration(font, null, null, null);
