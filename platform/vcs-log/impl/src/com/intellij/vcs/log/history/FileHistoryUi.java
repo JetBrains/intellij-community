@@ -33,10 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
@@ -70,6 +67,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
+  @Nullable private final Hash myRevision;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
@@ -79,12 +77,15 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
-                       @NotNull FilePath path) {
+                       @NotNull FilePath path,
+                       @Nullable Hash revision) {
     super(logData, project, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
-    myFilterUi = new FileHistoryFilterUi(path, uiProperties);
+    myRevision = revision;
+    CommitId commitId = revision == null ? null : new CommitId(revision, ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, path)));
+    myFilterUi = new FileHistoryFilterUi(path, commitId, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
@@ -232,6 +233,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull
   public FilePath getPath() {
     return myPath;
+  }
+
+  @Nullable
+  public Hash getRevision() {
+    return myRevision;
   }
 
   @NotNull
