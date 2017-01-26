@@ -157,7 +157,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
             new ClassPreparedListener(className, debugSession) {
               @Override
               public void onClassPrepared(@NotNull ReferenceType referenceType) {
-                trackClass(referenceType, type, activated);
+                trackClass(referenceType, type, myIsTrackersActivated.get());
               }
             };
           }
