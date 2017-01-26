@@ -853,6 +853,11 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           module("adt-ui")
           module("adt-ui-model")
         }
+        jar("android-profilers.jar") {
+          module("perfd-host")
+          module("profilers")
+          module("profilers-ui")
+        }
 
         fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
         fileset(dir: "${androidHome}/android/lib") {
@@ -921,21 +926,32 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           jar("android-gradle-jps.jar") { module("android-gradle-jps") }
         }
         dir("device-art-resources") {
-          fileset(dir: "$androidHome/android/device-art-resources")
+          fileset(dir: "$androidHome/android/device-art-resources") {
+            exclude(name: "BUILD")
+          }
         }
 
         dir("jps") {
           jar("android-jps-plugin.jar") { module("android-jps-plugin") }
         }
         dir("templates") {
-          fileset(dir: "$androidToolsBaseHome/templates")
+          fileset(dir: "$androidToolsBaseHome/templates") {
+            exclude(name: "BUILD")
+          }
         }
 
         dir("layoutlib") {
           fileset(dir: "${home}/../../prebuilts/studio/layoutlib") {
+            exclude(name: "BUILD")
             exclude(name: "PREBUILT")
             exclude(name: "**/layoutlib.jar")
           }
+        }
+      }
+      dir("resources") {
+        fileset(file: "${home}/../../out/studio/transform/libs/profilers-transform.jar")
+        dir("perfd") {
+          fileset(dir: "${home}/../../out/studio/native/out/release")
         }
       }
     }
