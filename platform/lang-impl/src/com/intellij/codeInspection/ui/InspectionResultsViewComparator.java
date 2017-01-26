@@ -44,18 +44,15 @@ import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
 
-public class InspectionResultsViewComparator implements Comparator {
+public class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 
-  public boolean areEqual(Object o1, Object o2) {
+  public boolean areEqual(InspectionTreeNode o1, InspectionTreeNode o2) {
     return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
   }
 
   @Override
-  public int compare(Object o1, Object o2) {
-    InspectionTreeNode node1 = (InspectionTreeNode)o1;
-    InspectionTreeNode node2 = (InspectionTreeNode)o2;
-
+  public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
       final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
       final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;

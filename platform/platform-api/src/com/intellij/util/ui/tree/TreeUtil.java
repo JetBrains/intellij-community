@@ -989,8 +989,8 @@ public final class TreeUtil {
     }
   }
 
-  public static void insertNode(@NotNull MutableTreeNode child, @NotNull MutableTreeNode parent, @Nullable DefaultTreeModel model,
-                                @NotNull Comparator<? extends TreeNode> comparator) {
+  public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
+                                                            @NotNull Comparator<? super T> comparator) {
     int index = indexedBinarySearch(parent, child, comparator);
     if (index >= 0) {
       LOG.error("Node " + child + " is already added to " + parent);
@@ -1005,13 +1005,14 @@ public final class TreeUtil {
     }
   }
 
-  public static int indexedBinarySearch(@NotNull TreeNode parent, @NotNull TreeNode key, Comparator comparator) {
+  public static <T extends TreeNode> int indexedBinarySearch(@NotNull T parent, @NotNull T key, @NotNull Comparator<? super T> comparator) {
     int low = 0;
     int high = parent.getChildCount() - 1;
 
     while (low <= high) {
       int mid = (low + high) / 2;
-      TreeNode treeNode = parent.getChildAt(mid);
+      //noinspection unchecked
+      T treeNode = (T)parent.getChildAt(mid);
       int cmp = comparator.compare(treeNode, key);
       if (cmp < 0) {
         low = mid + 1;
@@ -1028,6 +1029,6 @@ public final class TreeUtil {
 
   @NotNull
   public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
-    return (path1, path2) -> tree.getRowForPath(path1) - tree.getRowForPath(path2);
+    return Comparator.comparingInt(tree::getRowForPath);
   }
 }
