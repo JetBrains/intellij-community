@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,4 +34,13 @@ public class CapturePoint {
 
   @Attribute("param-idx")
   public int myParamNo = 0;
+
+  @Attribute("insert-class-name")
+  public String myInsertClassName;
+
+  @Attribute("insert-method-name")
+  public String myInsertMethodName;
+
+  @Attribute("insert-key-expression")
+  public String myInsertKeyExpression;
 }

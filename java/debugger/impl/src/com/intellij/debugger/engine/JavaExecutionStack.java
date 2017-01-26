@@ -27,6 +27,7 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -202,7 +203,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         // replace the rest with the related stack (if available)
-        if (frame instanceof JavaStackFrame) {
+        if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame) {
           List<? extends XStackFrame> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, myDebugProcess);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             myContainer.addStackFrames(relatedStack, true);

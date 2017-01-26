@@ -356,7 +356,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (Registry.is("debugger.capture.points")) {
       for (CapturePoint point : DebuggerSettings.getInstance().getCapturePoints()) {
         if (point.myEnabled) {
-          StackCapturingLineBreakpoint.track(this, point.myClassName, point.myMethodName, null, point.myParamNo);
+          StackCapturingLineBreakpoint.track(this, point);
         }
       }
     }

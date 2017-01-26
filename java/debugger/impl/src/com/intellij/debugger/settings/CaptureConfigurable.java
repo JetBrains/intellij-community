@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,11 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int CLASS_COLUMN = 1;
     public static final int METHOD_COLUMN = 2;
     public static final int PARAM_COLUMN = 3;
+    public static final int INSERT_CLASS_COLUMN = 4;
+    public static final int INSERT_METHOD_COLUMN = 5;
+    public static final int INSERT_KEY_EXPR = 6;
 
-    String[] columnNames = new String[]{"", "Class name", "Method name", "Param index"};
+    String[] columnNames = new String[]{"", "Class name", "Method name", "Param index", "Insert class name", "Insert method name", "Insert key expression"};
     List<CapturePoint> capturePoints = DebuggerSettings.getInstance().getCapturePoints();
 
     public String getColumnName(int column) {
@@ -109,6 +112,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
           return point.myMethodName;
         case PARAM_COLUMN:
           return point.myParamNo;
+        case INSERT_CLASS_COLUMN:
+          return point.myInsertClassName;
+        case INSERT_METHOD_COLUMN:
+          return point.myInsertMethodName;
+        case INSERT_KEY_EXPR:
+          return point.myInsertKeyExpression;
       }
       return null;
     }
@@ -131,6 +140,15 @@ public class CaptureConfigurable implements SearchableConfigurable {
           break;
         case PARAM_COLUMN:
           point.myParamNo = (int)value;
+          break;
+        case INSERT_CLASS_COLUMN:
+          point.myInsertClassName = (String)value;
+          break;
+        case INSERT_METHOD_COLUMN:
+          point.myInsertMethodName = (String)value;
+          break;
+        case INSERT_KEY_EXPR:
+          point.myInsertKeyExpression = (String)value;
           break;
       }
       fireTableCellUpdated(row, col);

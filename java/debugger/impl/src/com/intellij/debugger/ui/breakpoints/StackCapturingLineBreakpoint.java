@@ -21,11 +21,14 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -39,31 +42,29 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author egor
  */
 public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
+  private final CapturePoint myCapturePoint;
   private final String mySignature;
-  private final int myParamNo;
 
+  public static final Key<List<StackCapturingLineBreakpoint>> CAPTURE_BREAKPOINTS = Key.create("CAPTURE_BREAKPOINTS");
   public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
-  public StackCapturingLineBreakpoint(Project project,
-                                      String className,
-                                      String methodName,
-                                      String methodSignature,
-                                      int paramNo) {
+  public StackCapturingLineBreakpoint(Project project, CapturePoint capturePoint) {
     super(project, null);
-    mySignature = methodSignature;
-    myParamNo = paramNo;
+    myCapturePoint = capturePoint;
+    mySignature = null;
     myProperties.EMULATED = true;
     myProperties.WATCH_EXIT = false;
-    myProperties.myClassPattern = className;
-    myProperties.myMethodName = methodName;
+    myProperties.myClassPattern = myCapturePoint.myClassName;
+    myProperties.myMethodName = myCapturePoint.myMethodName;
   }
 
   @NotNull
@@ -95,7 +96,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             };
             process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
           }
-          Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myParamNo, null);
+          Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myCapturePoint.myParamNo, null);
           if (key instanceof ObjectReference) {
             stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread(), process, true));
           }
@@ -115,22 +116,50 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       .limit(1);
   }
 
-  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName, @Nullable String methodSignature, int paramNo) {
-    StackCapturingLineBreakpoint breakpoint =
-      new StackCapturingLineBreakpoint(debugProcess.getProject(), classFqn, methodName, methodSignature, paramNo);
+  public static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
+    StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess.getProject(), capturePoint);
     breakpoint.createRequest(debugProcess);
+    List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
+    if (bpts == null) {
+      bpts = new CopyOnWriteArrayList<>();
+      debugProcess.putUserData(CAPTURE_BREAKPOINTS, bpts);
+    }
+    bpts.add(breakpoint);
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@Nullable StackFrameProxyImpl frame, @Nullable DebugProcessImpl process) {
-    if (process != null && frame != null) {
-      Map<ObjectReference, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
-      if (data != null) {
-        try {
-          return data.get(frame.thisObject());
+  public static List<StackFrameItem> getRelatedStack(@Nullable StackFrameProxyImpl frame, @Nullable DebugProcessImpl debugProcess) {
+    if (debugProcess != null && frame != null) {
+      Map<ObjectReference, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
+      if (ContainerUtil.isEmpty(capturedStacks)) {
+        return null;
+      }
+      List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
+      if (ContainerUtil.isEmpty(captureBreakpoints)) {
+        return null;
+      }
+      try {
+        Location location = frame.location();
+        String className = location.declaringType().name();
+        String methodName = location.method().name();
+        List<Value> argumentValues = null;
+
+        for (StackCapturingLineBreakpoint b : captureBreakpoints) {
+          if (StringUtil.equals(b.myCapturePoint.myInsertClassName, className) &&
+              StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
+            if (argumentValues == null) {
+              argumentValues = frame.getArgumentValues();
+            }
+
+            Value key = ContainerUtil.getOrElse(argumentValues, Integer.parseInt(b.myCapturePoint.myInsertKeyExpression), null);
+            if (key instanceof ObjectReference) {
+              return capturedStacks.get(key);
+            }
+          }
         }
-        catch (EvaluateException ignore) {
-        }
+
+      }
+      catch (EvaluateException ignore) {
       }
     }
     return null;
