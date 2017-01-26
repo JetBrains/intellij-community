@@ -15,6 +15,7 @@ import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -39,18 +41,28 @@ import java.util.stream.Collectors;
 public class IpnbConnection {
   private static final Logger LOG = Logger.getInstance(IpnbConnection.class);
   protected static final String API_URL = "/api";
+  private final static String DEFAULT_LOGIN_PATH = "/login";
+  private static final String KERNEL_SPECS_PATH = "/kernelspecs";
+  private static final String SESSIONS_PATH = "/sessions";
+  private static final String USER_PATH = "/user";
+  private static final String HUB_PREFIX = "/hub";
+  private static final String SPAWN_URL = HUB_PREFIX + "/spawn";
   protected static final String KERNELS_URL = API_URL + "/kernels";
+  
+  private static final int myAttemptToConnectNumber = 10;
+
   // TODO: Serialize cookies for the authentication message
   protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
                                               "\"channel\":\"shell\" }";
   public static final String AUTHENTICATION_NEEDED = "Authentication needed";
-  private static final String LOGIN_URL = "/login";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
   @NotNull protected final String mySessionId;
   @NotNull protected final IpnbConnectionListener myListener;
   @Nullable private final String myToken;
+  private final boolean myIsHubServer;
+  private final Project myProject;
   private WebSocketClient myShellClient;
   private WebSocketClient myIOPubClient;
   private Thread myShellThread;
@@ -72,6 +84,72 @@ public class IpnbConnection {
     myListener = listener;
     myToken = token;
     mySessionId = UUID.randomUUID().toString();
+    myProject = project;
+
+    String loginUrl = getLoginUrl();
+    myIsHubServer = isHubServer(loginUrl);
+    myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
+
+    initializeClients();
+  }
+
+  private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
+    if (isLoginNeeded(loginUrl)) {
+      IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
+      String cookies = login(ipnbSettings.getUsername(), ipnbSettings.getPassword(), loginUrl);
+      myHeaders.put("Cookie", cookies);
+      if (myIsHubServer) {
+        final Boolean started = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> startIpnbServer(), "Starting a Server");
+        if (!started) {
+          throw new IOException("Cannot start Jupyter Notebook");
+        }
+      }
+      return getExistingKernelForSession(pathToFile);
+    }
+    else {
+      initXSRF();
+      if (myToken != null) {
+        myHeaders.put("Authorization", "token " + myToken);
+      }
+      return startKernel();
+    }
+  }
+
+  private boolean startIpnbServer() throws IOException, InterruptedException {
+    String serverStartUrl = getLocation(myURI + SPAWN_URL);
+
+    if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
+      if (!serverStartUrl.isEmpty()) {
+        for (int i = 0; i < myAttemptToConnectNumber; i++) {
+          final String username = IpnbSettings.getInstance(myProject).getUsername();
+          final String locationPrefix = USER_PATH + "/" + username + "/tree";
+          final String location = getLocation(myURI + serverStartUrl);
+          if (location != null && location.startsWith(locationPrefix)) {
+            return true;
+          }
+          TimeUnit.MILLISECONDS.sleep(500);
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  @Nullable
+  private String getLocation(@NotNull String url) throws IOException {
+    URLConnection urlConnection = new URL(url).openConnection();
+    if (urlConnection instanceof HttpURLConnection) {
+      final HttpURLConnection connection = configureConnection((HttpURLConnection)urlConnection, HTTPMethod.GET.name());
+      return connection.getHeaderField("Location");
+    }
+    return "";
+  }
+
+  private static boolean isHubServer(@NotNull String redirectUrl) {
+    return redirectUrl.startsWith(HUB_PREFIX);
+  }
+
+  private void configureHttpsConnection() {
     HttpsURLConnection.setDefaultSSLSocketFactory(CertificateManager.getInstance().getSslContext().getSocketFactory());
     HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
       @Override
@@ -79,32 +157,14 @@ public class IpnbConnection {
         return myURI.getHost().equals(s);
       }
     });
-    final boolean needed = isLoginNeeded();
-    if (needed) {
-      final IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
-      final List<HttpCookie> cookies = login(ipnbSettings.getUsername(), ipnbSettings.getPassword());
-      final String cookieString =
-        cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
-      myHeaders.put("Cookie", cookieString);
-      myKernelId = getExistingKernelForSession(pathToFile);
-    }
-    else {
-      initXSRF();
-      if (myToken != null) {
-        myHeaders.put("Authorization", "token " + myToken);
-      }
-      myKernelId = startKernel();
-    }
-
-    initializeClients();
   }
 
-  private List<HttpCookie> login(@NotNull String username, @NotNull String password) throws IOException {
+  private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
     CookieManager cookieManager = new CookieManager();
     CookieHandler.setDefault(cookieManager);
     String urlParameters = "username=" + username + "&" + "password=" + password;
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
-    final HttpsURLConnection connection = (HttpsURLConnection)new URL(myURI + LOGIN_URL).openConnection();
+    final HttpsURLConnection connection = (HttpsURLConnection)new URL(myURI + loginUrl).openConnection();
     connection.setUseCaches(false);
     connection.setRequestMethod(HTTPMethod.POST.name());
     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
@@ -120,7 +180,8 @@ public class IpnbConnection {
 
     final int code = connection.getResponseCode();
     if (code == HttpURLConnection.HTTP_OK) {
-      return cookieManager.getCookieStore().getCookies();
+      final List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
+      return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
     }
     else {
       throw new IOException("Unable to login: " + code + " " + connection.getResponseMessage());
@@ -129,7 +190,7 @@ public class IpnbConnection {
 
   private String getDefaultKernelName() {
     try {
-      final String response = httpRequest(myURI + "/api/kernelspecs", HTTPMethod.GET.name());
+      final String response = httpRequest(createApiUrl(KERNEL_SPECS_PATH), HTTPMethod.GET.name());
       final JsonObject kernelSpecs = PyUtil.as(new JsonParser().parse(response), JsonObject.class);
       if (kernelSpecs != null && kernelSpecs.has("default")) {
         return kernelSpecs.get("default").getAsString();
@@ -145,15 +206,19 @@ public class IpnbConnection {
     return "";
   }
 
+  @NotNull
+  private String createApiUrl(@NotNull String path) {
+    final String apiPrefix = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() : "";
+    return myURI + apiPrefix + API_URL + path;
+  }
+
   private String getExistingKernelForSession(@NotNull String pathToFile) {
     try {
-      final URLConnection connection = new URL(myURI + "/api/sessions").openConnection();
+      final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
       if (connection instanceof HttpsURLConnection) {
         final String kernelName = getDefaultKernelName();
         if (kernelName.isEmpty()) return "";
-        final SessionWrapper sessionWrapper = new SessionWrapper(kernelName, pathToFile);
-        final Gson gsonBuilder = new GsonBuilder().serializeNulls().create();
-        final byte[] postData = gsonBuilder.toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);
+        final byte[] postData = createKernelPostParameters(pathToFile, kernelName);
         final HttpsURLConnection httpsConnection = (HttpsURLConnection)configureConnection((HttpURLConnection)connection, 
                                                                                            HTTPMethod.POST.name());
         httpsConnection.setRequestProperty("Content-Type", "application/json");
@@ -169,7 +234,7 @@ public class IpnbConnection {
         }
         connection.connect();
         final String response = getResponse(httpsConnection);
-        final SessionWrapper wrapper = gsonBuilder.fromJson(response, SessionWrapper.class);
+        final SessionWrapper wrapper = new GsonBuilder().create().fromJson(response, SessionWrapper.class);
 
         return wrapper.kernel.id;
       }
@@ -183,18 +248,37 @@ public class IpnbConnection {
     return "";
   }
 
-  private boolean isLoginNeeded() throws IOException {
-    final HttpsURLConnection connection = PyUtil.as(new URL(myURI.toString() + "/tree").openConnection(), HttpsURLConnection.class);
+  private byte[] createKernelPostParameters(@NotNull String pathToFile, String kernelName) {
+    final Gson gsonBuilder = new GsonBuilder().create();
+    if (myIsHubServer) {
+      final HubSessionWrapper hubSessionWrapper = new HubSessionWrapper(kernelName, pathToFile, "notebook");
+      return gsonBuilder.toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8);
+    }
+    else {
+      final SessionWrapper sessionWrapper = new SessionWrapper(kernelName, pathToFile);
+      return gsonBuilder.toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);      
+    }
+  }
+
+  private static boolean isLoginNeeded(@NotNull String redirectUrl) throws IOException {
+    return redirectUrl.startsWith(DEFAULT_LOGIN_PATH) || redirectUrl.startsWith(HUB_PREFIX);
+  }
+
+  @NotNull
+  private String getLoginUrl() throws IOException {
+    configureHttpsConnection();
+    String location = "";
+    final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
+    final HttpsURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
     if (connection != null) {
       connection.setInstanceFollowRedirects(false);
       connection.connect();
       if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        final String location = connection.getHeaderField("Location");
+        location = connection.getHeaderField("Location");
         connection.disconnect();
-        if (location != null && location.startsWith("/login")) return true;
       }
     }
-    return false;
+    return location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
   }
 
   private void initXSRF() {
@@ -313,7 +397,8 @@ public class IpnbConnection {
   protected String getWebSocketURIBase() {
     final String scheme = myURI.getScheme();
     String prefix = scheme.equals("http") ? "ws://" : "wss://";
-    return prefix + myURI.getAuthority() + KERNELS_URL + "/" + myKernelId;
+    String hubPath = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() : "";
+    return prefix + myURI.getAuthority() + hubPath + "/" + KERNELS_URL + "/" + myKernelId;
   }
 
   @NotNull
@@ -353,6 +438,7 @@ public class IpnbConnection {
   private HttpURLConnection configureConnection(HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
     urlConnection.setRequestMethod(method);
     urlConnection.setReadTimeout(60000);
+    urlConnection.setInstanceFollowRedirects(false);
     if (!StringUtil.isEmptyOrSpaces(myToken)) {
       urlConnection.setRequestProperty("Authorization", "token " + myToken);
     }
@@ -707,6 +793,20 @@ public class IpnbConnection {
 
   public int getExecCount() {
     return myExecCount;
+  }
+  
+  private static class HubSessionWrapper {
+    KernelWrapper kernel;
+    String name;
+    String path;
+    String type = "notebook";
+
+    public HubSessionWrapper(String kernelName, String path, String type) {
+      this.kernel = new KernelWrapper(kernelName);
+      this.name = "";
+      this.path = path;
+      this.type = type;
+    }
   }
 
   private static class SessionWrapper {
