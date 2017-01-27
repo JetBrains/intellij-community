@@ -392,7 +392,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
       for (HighlightInfo info : infos) {
         final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),//todo here
+        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
                                                                    myRestrictRange.getStartOffset(),
                                                                    myRestrictRange.getEndOffset(),
                                                                    info, colorsScheme, getId(),
