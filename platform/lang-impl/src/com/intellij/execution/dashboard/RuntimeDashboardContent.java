@@ -295,7 +295,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     rightGroup.add(collapseAllAction);
 
     rightGroup.add(new Separator());
-    myGroupers.forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
+    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnable()).forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
 
     ActionToolbar rightActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, rightGroup, false);
     toolBarPanel.add(rightActionToolBar.getComponent());

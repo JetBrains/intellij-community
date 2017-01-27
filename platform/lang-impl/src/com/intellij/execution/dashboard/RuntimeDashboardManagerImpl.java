@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
-import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
-import com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -41,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,9 +63,10 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
                                                                  project, true);
     toolWindow.setIcon(getToolWindowIcon());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myGroupers.add(new DashboardGrouper(new ConfigurationTypeDashboardGroupingRule()));
-      myGroupers.add(new DashboardGrouper(new StatusDashboardGroupingRule()));
-      myGroupers.add(new DashboardGrouper(new FolderDashboardGroupingRule()));
+      myGroupers = Arrays.stream(DashboardGroupingRule.EP_NAME.getExtensions())
+        .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
+        .map(DashboardGrouper::new)
+        .collect(Collectors.toList());
 
       RuntimeDashboardContent dashboardContent = new RuntimeDashboardContent(project, myContentManager, myGroupers);
       Content content = contentFactory.createContent(dashboardContent, null, false);
@@ -101,7 +100,9 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
   @Override
   public State getState() {
     State state = new State();
-    state.ruleStates = myGroupers.stream().map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
+    state.ruleStates = myGroupers.stream()
+      .filter(grouper -> !grouper.getRule().isAlwaysEnable())
+      .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
       .collect(Collectors.toList());
     return state;
   }
@@ -110,7 +111,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
   public void loadState(State state) {
     state.ruleStates.forEach(ruleState -> {
       for (DashboardGrouper grouper : myGroupers) {
-        if (grouper.getRule().getName().equals(ruleState.name)) {
+        if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnable()) {
           grouper.setEnabled(ruleState.enabled);
           return;
         }
