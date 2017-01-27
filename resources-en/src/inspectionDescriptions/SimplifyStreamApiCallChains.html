@@ -7,38 +7,23 @@ It allows to avoid creating redundant temporary objects when traversing a collec
 </p>
 <ul>
   <li><code>collection.stream().forEach()</code> &rarr; <code>collection.forEach()</code></li>
-  <li><code>collection.stream().forEachOrdered()</code> &rarr; <code>collection.forEach()</code></li>
-  <li><code>collection.stream().collect(Collectors.toList())</code> &rarr; <code>new ArrayList&lt;&gt;(collection)</code></li>
-  <li><code>collection.stream().collect(Collectors.toSet())</code> &rarr; <code>new HashSet&lt;&gt;(collection)</code></li>
-  <li><code>collection.stream().collect(Collectors.toCollection(CollectionType::new))</code> &rarr; <code>new CollectionType&lt;&gt;(collection)</code></li>
+  <li><code>collection.stream().collect(toList/toSet/toCollection())</code> &rarr; <code>new CollectionType&lt;&gt;(collection)</code></li>
   <li><code>collection.stream().toArray()</code> &rarr; <code>collection.toArray()</code></li>
   <li><code>Arrays.asList().stream()</code> &rarr; <code>Arrays.stream()</code> or <code>Stream.of()</code></li>
   <li><code>IntStream.range(0, array.length).mapToObj(idx -> array[idx])</code> &rarr; <code>Arrays.stream(array)</code></li>
   <li><code>IntStream.range(0, list.size()).mapToObj(idx -> list.get(idx))</code> &rarr; <code>list.stream()</code></li>
   <li><code>Collections.singleton().stream()</code> &rarr; <code>Stream.of()</code></li>
-  <li><code>Collections.singletonList().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.emptyList().stream()</code> &rarr; <code>Stream.empty()</code></li>
-  <li><code>Collections.emptySet().stream()</code> &rarr; <code>Stream.empty()</code></li>
   <li><code>stream.filter().findFirst().isPresent()</code> &rarr; <code>stream.anyMatch()</code></li>
-  <li><code>stream.filter().findAny().isPresent()</code> &rarr; <code>stream.anyMatch()</code></li>
   <li><code>stream.collect(Collectors.counting())</code> &rarr; <code>stream.count()</code></li>
   <li><code>stream.collect(Collectors.maxBy())</code> &rarr; <code>stream.max()</code></li>
-  <li><code>stream.collect(Collectors.minBy())</code> &rarr; <code>stream.min()</code></li>
   <li><code>stream.collect(Collectors.mapping())</code> &rarr; <code>stream.map().collect()</code></li>
-  <li><code>stream.collect(Collectors.reducing())</code> &rarr; <code>stream.reduce()</code> or <code>Stream.map().reduce()</code></li>
+  <li><code>stream.collect(Collectors.reducing())</code> &rarr; <code>stream.reduce()</code></li>
   <li><code>stream.collect(Collectors.summingInt())</code> &rarr; <code>stream.mapToInt().sum()</code></li>
-  <li><code>stream.collect(Collectors.summingLong())</code> &rarr; <code>stream.mapToLong().sum()</code></li>
-  <li><code>stream.collect(Collectors.summingDouble())</code> &rarr; <code>stream.mapToDouble().sum()</code></li>
   <li><code>stream.mapToObj(x -> x)</code> &rarr; <code>stream.boxed()</code></li>
   <li><code>!stream.anyMatch()</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.anyMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
-  <li><code>!stream.noneMatch()</code> &rarr; <code>stream.anyMatch()</code></li>
-  <li><code>stream.noneMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
-  <li><code>stream.allMatch(x -> !(...))</code> &rarr; <code>stream.noneMatch()</code></li>
-  <li><code>!stream.allMatch(x -> !(...))</code> &rarr; <code>stream.anyMatch()</code></li>
   <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> -> <code>stream.anyMatch()</code></li>
-  <li><code>stream.map().allMatch(Boolean::booleanValue)</code> -> <code>stream.allMatch()</code></li>
-  <li><code>stream.map().noneMatch(Boolean::booleanValue)</code> -> <code>stream.noneMatch()</code></li>
 </ul>
 <p>
   Note that the replacements semantic may have minor difference in some cases.
