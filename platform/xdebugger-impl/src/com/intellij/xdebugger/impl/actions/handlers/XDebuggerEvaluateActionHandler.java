@@ -76,15 +76,13 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     EvaluationMode finalMode = mode;
     XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
     expressionTextPromise.done(expressionText -> {
-      if (expressionText == null) {
-        if (value != null) {
+      if (expressionText == null && value != null) {
           value.calculateEvaluationExpression()
               .done(expression -> {
                 if (expression != null) {
                   AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression));
                 }
               });
-        }
       }
       else {
         XExpression expression = XExpressionImpl.fromText(StringUtil.notNullize(expressionText), finalMode);
