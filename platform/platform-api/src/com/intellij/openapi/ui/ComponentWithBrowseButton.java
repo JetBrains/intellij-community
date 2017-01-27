@@ -26,6 +26,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,6 +112,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   public void setButtonIcon(Icon icon) {
     myBrowseButton.setIcon(icon);
+    myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
   }
 
   /**
