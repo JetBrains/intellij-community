@@ -88,7 +88,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       }
       else {
         XExpression expression = XExpressionImpl.fromText(StringUtil.notNullize(expressionText), finalMode);
-        showDialog(session, file, editorsProvider, stackFrame, evaluator, expression);
+        AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression));
       }
     });
   }
