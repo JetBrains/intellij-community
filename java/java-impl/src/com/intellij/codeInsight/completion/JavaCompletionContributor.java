@@ -773,6 +773,9 @@ public class JavaCompletionContributor extends CompletionContributor {
         return true;
       }
     }
+    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(file.findElementAt(startOffset))) {
+      return true;
+    }
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
     if (iterator.atEnd()) return false;
