@@ -43,17 +43,11 @@ public class VcsEventWatcher extends AbstractProjectComponent {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() ->
+            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
-    final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener,myProject);
+    WolfTheProblemSolver.getInstance(myProject).addProblemListener(new MyProblemListener(), myProject);
   }
 
   @Override
