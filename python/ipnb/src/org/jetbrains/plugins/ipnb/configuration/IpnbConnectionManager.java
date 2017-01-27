@@ -283,9 +283,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
       String pathToFile = getRelativePathToFile(file);
       if (pathToFile != null) {
         if (!IpnbParser.isIpythonNewFormat(file)) {
-          return IpnbUtils.runCancellableProcessUnderProgress(myProject, 
-                                                       () -> new IpnbConnection(urlString, listener, myToken, myProject, pathToFile),
-                                                       "Connecting to Jupyter Notebook");
+          return IpnbUtils.runCancellableProcessUnderProgress(myProject,
+                                                              () -> new IpnbConnection(urlString, listener, myToken, myProject, pathToFile),
+                                                              "Connecting to Jupyter Notebook");
         }
         return IpnbUtils.runCancellableProcessUnderProgress(myProject,
                                                             () -> new IpnbConnectionV3(urlString, listener, myToken, myProject, pathToFile),

@@ -8,7 +8,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.TimeoutUtil;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
@@ -69,7 +68,6 @@ public class IpnbUtils {
   }
 
   @SuppressWarnings("Duplicates")
-  @Nullable
   public static <T> T execCancelable(@NotNull final Callable<T> callable) {
     final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
 
