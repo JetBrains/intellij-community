@@ -318,6 +318,13 @@ class CollectionsUser {
     map.merge("key", "value", (i,j)->j);
     map.forEach((k,v) -> System.out.println(k + " : " + v));
   }
+
+  int ignoredClasses() {
+    BaseConstList<String> <warning descr="Contents of collection 'l1' are queried, but never updated">l1</warning> = new BaseConstList<String>(10, "foo");
+    ConstList<String> l2 = new ConstList<String>(10, "foo");
+    ChildConstList<String> l3 = new ChildConstList<String>(10, "foo");
+    return l1.size()+l2.size()+l3.size();
+  }
 }
 
 class SimpleAdd {
@@ -355,3 +362,30 @@ class ToArray {{
   list.add("A thing");
   list.toArray(new Object[1]);
 }}
+
+class BaseConstList<T> extends AbstractList<T> {
+  private int size;
+  private T value;
+
+  BaseConstList(int size, T value) {
+    this.size = size;
+    this.value = value;
+  }
+
+  @Override
+  public T get(int index) {
+    return value;
+  }
+
+  @Override
+  public int size() {
+    return size;
+  }
+}
+
+class ConstList<T> extends BaseConstList<T> {
+  ConstList(int size, T value) {super(size, value);}
+}
+class ChildConstList<T> extends ConstList<T> {
+  ChildConstList(int size, T value) {super(size, value);}
+}

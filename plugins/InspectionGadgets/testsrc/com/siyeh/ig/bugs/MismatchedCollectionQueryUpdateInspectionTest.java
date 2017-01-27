@@ -86,6 +86,8 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MismatchedCollectionQueryUpdateInspection();
+    MismatchedCollectionQueryUpdateInspection inspection = new MismatchedCollectionQueryUpdateInspection();
+    inspection.ignoredClasses.add("com.siyeh.igtest.bugs.mismatched_collection_query_update.ConstList");
+    return inspection;
   }
 }

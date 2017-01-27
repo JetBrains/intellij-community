@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -53,9 +54,12 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     new ExternalizableStringSet("add", "clear", "compute", "drainTo", "insert", "load", "merge", "offer", "poll", "push", "put", "remove",
                                 "replace", "retain", "set", "take");
 
+  @SuppressWarnings("PublicField")
+  public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet();
+
   private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {
-      return false;
+      return ConstructionUtils.isEmptyCollectionInitializer(initializer);
     }
     final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -236,7 +240,10 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       if (VariableAccessUtils.variableIsReturned(variable, context)) {
         return false;
       }
-      return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
+      if (VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context)) {
+        return false;
+      }
+      return ignoredClasses.stream().noneMatch(className -> InheritanceUtil.isInheritor(type, className));
     }
 
     private boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
