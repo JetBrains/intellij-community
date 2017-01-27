@@ -22,11 +22,10 @@ class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
 
   override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(
     object : RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*") {
-      override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo? {
-        super.createOpenFileHyperlink(fileName, line, column)?.let {
-          return it
-        }
-        return LazyFileHyperlinkInfo(project, fileName, line, column)
+
+      override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo {
+        return super.createOpenFileHyperlink(fileName, line, column)
+               ?: LazyFileHyperlinkInfo(project, fileName, line, column)
       }
     }
   )
