@@ -283,6 +283,14 @@ public class MethodCallUtils {
     assert copyArgumentList != null;
     final PsiExpression[] arguments = copyArgumentList.getExpressions();
     arguments[index].replace(replacement);
+    if (call instanceof PsiEnumConstant) {
+      final PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
+      assert containingClass != null;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(call.getProject());
+      final PsiClassType type = facade.getElementFactory().createType(containingClass);
+      final JavaResolveResult resolveResult = facade.getResolveHelper().resolveConstructor(type, copy.getArgumentList(), call);
+      return (PsiMethod)resolveResult.getElement();
+    }
     return copy.resolveMethod();
   }
 
