@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         try {
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
-            psiContext.getContainingFile(),
+            findPhysicalContext(psiContext),
             fragmentFactory.apply(psiContext),
             getGeneratedClassName());
           if (data != null) {
@@ -175,5 +175,17 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       });
     }
     return null;
+  }
+
+  @NotNull
+  private static PsiElement findPhysicalContext(@NotNull PsiElement element) {
+    while (!element.isPhysical()) {
+      PsiElement context = element.getContext();
+      if (context == null) {
+        break;
+      }
+      element = context;
+    }
+    return element;
   }
 }
