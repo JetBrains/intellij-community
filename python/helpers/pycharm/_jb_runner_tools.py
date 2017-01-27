@@ -54,7 +54,7 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         for i in range(0, len(parts)):
             m = parts[i]
             try:
-                (fil, path, desc) = imp.find_module(m, path)
+                (fil, path, desc) = imp.find_module(m, [path] if path else None)
             except ImportError:
                 fs_part = fs_glue.join(parts[:i])
                 python_path = python_glue.join(parts[i:])
