@@ -39,11 +39,11 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     }
   }
 
-  internal data class SharedSettings(
+  data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true
   )
 
-  internal data class PlaceSettings(
+  data class PlaceSettings(
     var DIFF_TOOLS_ORDER: List<String> = ArrayList(),
     var SYNC_BINARY_EDITOR_SETTINGS: Boolean = true
   )
@@ -100,8 +100,8 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    internal var SHARED_SETTINGS = SharedSettings()
+    var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
+    var SHARED_SETTINGS = SharedSettings()
   }
 
   private var myState: State = State()

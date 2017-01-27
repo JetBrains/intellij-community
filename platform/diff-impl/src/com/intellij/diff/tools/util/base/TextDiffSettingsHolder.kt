@@ -42,7 +42,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     }
   }
 
-  internal data class SharedSettings(
+  data class SharedSettings(
     // Fragments settings
     var CONTEXT_RANGE: Int = 4,
 
@@ -50,7 +50,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var MERGE_LST_GUTTER_MARKERS: Boolean = true
   )
 
-  internal data class PlaceSettings(
+  data class PlaceSettings(
     // Diff settings
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
@@ -183,8 +183,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    internal var SHARED_SETTINGS = SharedSettings()
+    var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
+    var SHARED_SETTINGS = SharedSettings()
   }
 
   private var myState: State = State()
