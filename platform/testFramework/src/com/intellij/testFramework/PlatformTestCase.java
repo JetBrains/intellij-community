@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,25 +325,29 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
+  @NotNull
   protected Module createMainModule() throws IOException {
     return createModule(myProject.getName());
   }
 
+  @NotNull
   protected Module createModule(@NonNls final String moduleName) {
     return doCreateRealModule(moduleName);
   }
 
+  @NotNull
   protected Module doCreateRealModule(final String moduleName) {
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
+  @NotNull
   protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
     final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
-    String path = baseDir.getPath();
-    return createModuleAt(moduleName, project, moduleType, path);
+    return createModuleAt(moduleName, project, moduleType, baseDir.getPath());
   }
 
+  @NotNull
   protected static Module createModuleAt(String moduleName, Project project, ModuleType moduleType, String path) {
     File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
