@@ -207,7 +207,14 @@ abstract class PyUniversalTestConfiguration(project: Project,
     return result + generateRawArguments()
   }
 
-  fun getTestSpec() = listOf(target.targetType.optionName, target.target) + generateRawArguments()
+  fun getTestSpec(): List<String> {
+    // For custom we only need to provide additional (raw) args
+    // Provide target otherwise
+    if (target.targetType == TestTargetType.CUSTOM) {
+      return generateRawArguments()
+    }
+    return listOf(target.targetType.optionName, target.target) + generateRawArguments()
+  }
 
   /**
    * raw arguments to be added after "--" and passed to runner directly
