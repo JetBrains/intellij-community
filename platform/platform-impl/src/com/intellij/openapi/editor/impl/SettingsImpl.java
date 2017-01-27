@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -38,11 +39,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsImpl implements EditorSettings {
+  private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
+
   @Nullable private final EditorEx myEditor;
   @Nullable private final Language myLanguage;
   private Boolean myIsCamelWords;
@@ -360,17 +364,23 @@ public class SettingsImpl implements EditorSettings {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
     int tabSize;
-    if (project == null || project.isDisposed()) {
-      tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
-    }
-    else  {
-      PsiFile file = getPsiFile(project);
-      if (myEditor != null && myEditor.isViewer()) {
-        FileType fileType = file != null ? file.getFileType() : null;
-        tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptions(fileType).TAB_SIZE; 
-      } else {
-        tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).TAB_SIZE;
+    try {
+      if (project == null || project.isDisposed()) {
+        tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
       }
+      else  {
+        PsiFile file = getPsiFile(project);
+        if (myEditor != null && myEditor.isViewer()) {
+          FileType fileType = file != null ? file.getFileType() : null;
+          tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+        } else {
+          tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).TAB_SIZE;
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error("Error determining tab size", e);
+      tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
     }
     myCachedTabSize = Integer.valueOf(tabSize);
     return tabSize;
