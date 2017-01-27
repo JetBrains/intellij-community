@@ -15,6 +15,7 @@ import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
@@ -75,6 +76,7 @@ public class IpnbConnection {
   private int myExecCount;
   private String myXsrf;
   private HashMap<String, String> myHeaders = new HashMap<>();
+  private final CookieManager myCookieManager;
 
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
@@ -84,6 +86,8 @@ public class IpnbConnection {
     myToken = token;
     mySessionId = UUID.randomUUID().toString();
     myProject = project;
+    myCookieManager = new CookieManager();
+    CookieHandler.setDefault(myCookieManager);
 
     String loginUrl = getLoginUrl();
     myIsHubServer = isHubServer(loginUrl);
@@ -93,12 +97,17 @@ public class IpnbConnection {
   }
 
   private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
+    initXSRF(myURI.toString());
     if (isLoginNeeded(loginUrl)) {
       IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
-      String cookies = login(ipnbSettings.getUsername(), ipnbSettings.getPassword(), loginUrl);
+      final String username = ipnbSettings.getUsername();
+      String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
       myHeaders.put("Cookie", cookies);
       if (myIsHubServer) {
-        final Boolean started = startIpnbServer();
+        if (myXsrf == null) {
+          initXSRF(myURI.toString() + "/user/" + username + "/tree?");
+        }
+        final Boolean started = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> startIpnbServer(), "Starting a Server");
         if (!started) {
           throw new IOException("Cannot start Jupyter Notebook");
         }
@@ -106,7 +115,6 @@ public class IpnbConnection {
       return getExistingKernelForSession(pathToFile);
     }
     else {
-      initXSRF();
       if (myToken != null) {
         myHeaders.put("Authorization", "token " + myToken);
       }
@@ -114,7 +122,7 @@ public class IpnbConnection {
     }
   }
 
-  private boolean startIpnbServer() throws IOException {
+  private boolean startIpnbServer() throws IOException, InterruptedException {
     String serverStartUrl = getLocation(myURI + SPAWN_URL);
 
     if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
@@ -126,12 +134,7 @@ public class IpnbConnection {
           if (location != null && location.startsWith(locationPrefix)) {
             return true;
           }
-          try {
-            TimeUnit.MILLISECONDS.sleep(500);
-          }
-          catch (InterruptedException e) {
-            LOG.warn(e.getMessage());
-          }
+          TimeUnit.MILLISECONDS.sleep(500);
         }
       }
     }
@@ -164,32 +167,31 @@ public class IpnbConnection {
   }
 
   private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
-    CookieManager cookieManager = new CookieManager();
-    CookieHandler.setDefault(cookieManager);
-    String urlParameters = "username=" + username + "&" + "password=" + password;
+    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password;
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
-    final HttpsURLConnection connection = (HttpsURLConnection)new URL(myURI + loginUrl).openConnection();
-    connection.setUseCaches(false);
-    connection.setRequestMethod(HTTPMethod.POST.name());
-    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-    connection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-    connection.setDoOutput(true);
+    final HttpsURLConnection connection = PyUtil.as(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(), 
+                                                              HTTPMethod.POST.name()), HttpsURLConnection.class);
+    if (connection != null) {
+      connection.setUseCaches(false);
+      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+      connection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+      connection.setDoOutput(true);
 
-    final OutputStream outputStream = connection.getOutputStream();
-    try (DataOutputStream wr = new DataOutputStream(outputStream)) {
-      wr.write(postData);
-      wr.flush();
-    }
-    connection.connect();
+      final OutputStream outputStream = connection.getOutputStream();
+      try (DataOutputStream wr = new DataOutputStream(outputStream)) {
+        wr.write(postData);
+        wr.flush();
+      }
+      connection.connect();
 
-    final int code = connection.getResponseCode();
-    if (code == HttpURLConnection.HTTP_OK) {
-      final List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
-      return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
+      final int code = connection.getResponseCode();
+      if (code != HttpURLConnection.HTTP_FORBIDDEN && code != HttpsURLConnection.HTTP_UNAUTHORIZED) {
+        final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
+        return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
+      }
     }
-    else {
-      throw new IOException("Unable to login: " + code + " " + connection.getResponseMessage());
-    }
+    String message = connection == null ? "" : connection.getResponseCode() + " " + connection.getResponseMessage();
+    throw new IOException("Unable to login: " + message);
   }
 
   private String getDefaultKernelName() {
@@ -223,24 +225,27 @@ public class IpnbConnection {
         final String kernelName = getDefaultKernelName();
         if (kernelName.isEmpty()) return "";
         final byte[] postData = createKernelPostParameters(pathToFile, kernelName);
-        final HttpsURLConnection httpsConnection = (HttpsURLConnection)configureConnection((HttpURLConnection)connection, 
-                                                                                           HTTPMethod.POST.name());
-        httpsConnection.setRequestProperty("Content-Type", "application/json");
-        httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-        httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
-        httpsConnection.setUseCaches(false);
-        httpsConnection.setDoOutput(true);
+        final HttpsURLConnection httpsConnection = PyUtil.as(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
+                                                             HttpsURLConnection.class);
+        if (httpsConnection != null) {
+          httpsConnection.setRequestProperty("Content-Type", "application/json");
+          httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+          httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
+          httpsConnection.setRequestProperty("_xsrf", myXsrf);
+          httpsConnection.setUseCaches(false);
+          httpsConnection.setDoOutput(true);
 
-        final OutputStream outputStream = connection.getOutputStream();
-        try (DataOutputStream wr = new DataOutputStream(outputStream)) {
-          wr.write(postData);
-          wr.flush();
+          final OutputStream outputStream = connection.getOutputStream();
+          try (DataOutputStream wr = new DataOutputStream(outputStream)) {
+            wr.write(postData);
+            wr.flush();
+          }
+          connection.connect();
+          final String response = getResponse(httpsConnection);
+          final SessionWrapper wrapper = new GsonBuilder().create().fromJson(response, SessionWrapper.class);
+
+          return wrapper.kernel.id;
         }
-        connection.connect();
-        final String response = getResponse(httpsConnection);
-        final SessionWrapper wrapper = new GsonBuilder().create().fromJson(response, SessionWrapper.class);
-
-        return wrapper.kernel.id;
       }
       else {
         throw new UnsupportedOperationException("Only HTTP URLs are supported");
@@ -273,24 +278,23 @@ public class IpnbConnection {
     configureHttpsConnection();
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
-    final HttpURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpURLConnection.class);
+    final HttpsURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
     if (connection != null) {
-      final HttpURLConnection httpsURLConnection = configureConnection(connection, HTTPMethod.GET.name());
-      httpsURLConnection.connect();
-      if (httpsURLConnection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        location = httpsURLConnection.getHeaderField("Location");
+      connection.setInstanceFollowRedirects(false);
+      connection.connect();
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+        location = connection.getHeaderField("Location");
+        connection.disconnect();
       }
     }
-    return location == null || location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
+    return location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
   }
 
-  private void initXSRF() {
+  private void initXSRF(String url) {
     try {
-      CookieManager cookieManager = new CookieManager();
-      CookieHandler.setDefault(cookieManager);
-      final URLConnection connection = new URL(myURI.toString()).openConnection();
+      final URLConnection connection = new URL(url).openConnection();
       connection.getHeaderFields();
-      final List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
+      final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
       for (HttpCookie cookie : cookies) {
         if ("_xsrf".equals(cookie.getName())) {
           myXsrf = cookie.getValue();
@@ -400,8 +404,8 @@ public class IpnbConnection {
   protected String getWebSocketURIBase() {
     final String scheme = myURI.getScheme();
     String prefix = scheme.equals("http") ? "ws://" : "wss://";
-    String hubPath = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() : "";
-    return prefix + myURI.getAuthority() + hubPath + "/" + KERNELS_URL + "/" + myKernelId;
+    String hubPath = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() + "/" : "";
+    return prefix + myURI.getAuthority() + hubPath + KERNELS_URL + "/" + myKernelId;
   }
 
   @NotNull
@@ -438,7 +442,7 @@ public class IpnbConnection {
   }
 
   @NotNull
-  private HttpURLConnection configureConnection(@NotNull HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
+  private HttpURLConnection configureConnection(HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
     urlConnection.setRequestMethod(method);
     urlConnection.setReadTimeout(60000);
     urlConnection.setInstanceFollowRedirects(false);
@@ -448,7 +452,7 @@ public class IpnbConnection {
     else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
       urlConnection.setRequestProperty("X-XSRFToken", myXsrf);
     }
-    else if (!myHeaders.isEmpty()) {
+    if (!myHeaders.isEmpty()) {
       for (Map.Entry<String, String> entry : myHeaders.entrySet()) {
         urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
       }
