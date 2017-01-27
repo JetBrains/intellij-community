@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -61,8 +62,9 @@ public abstract class CodeInsightAction extends AnAction {
     if (psiFile == null) return;
     final CodeInsightActionHandler handler = getHandler();
     PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
-    if (elementToMakeWritable != null && 
-        !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
+    if (elementToMakeWritable != null &&
+        !(EditorModificationUtil.showReadOnlyViewWarning(editor) &&
+          FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable))) {
       return;
     }
 
