@@ -22,12 +22,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
@@ -37,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -108,14 +105,8 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       return (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection};
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      Set<VcsKey> abstractVcs = ContainerUtil.newHashSet(ContainerUtil.mapNotNull(myViewer.getSelectedChanges(), change -> {
-        ContentRevision revision = change.getAfterRevision();
-        if (revision == null) revision = change.getBeforeRevision();
-        FilePath affectedFile = ObjectUtils.assertNotNull(revision).getFile();
-        AbstractVcs vcs = VcsUtil.getVcsFor(myProject, affectedFile);
-        return vcs == null ? null : vcs.getKeyInstanceMethod();
-      }));
-      if (abstractVcs.size() == 1) return ContainerUtil.getFirstItem(abstractVcs);
+      Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(myViewer.getSelectedChanges(), myProject);
+      if (abstractVcs.size() == 1) return ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
       return null;
     }
     else {
