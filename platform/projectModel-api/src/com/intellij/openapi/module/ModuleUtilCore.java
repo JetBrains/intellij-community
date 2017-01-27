@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +54,7 @@ public class ModuleUtilCore {
 
   @NotNull
   public static String getModuleNameInReadAction(@NotNull final Module module) {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)module::getName);
+    return ReadAction.compute(module::getName);
   }
 
   public static boolean isModuleDisposed(@NotNull PsiElement element) {

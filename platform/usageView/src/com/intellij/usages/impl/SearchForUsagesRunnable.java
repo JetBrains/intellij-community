@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Segment;
@@ -209,7 +209,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   @NotNull
   private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
-    return "'" + ApplicationManager.getApplication().runReadAction((Computable<String>)virtualFile::getPresentableUrl) + "'";
+    return "'" + ReadAction.compute(virtualFile::getPresentableUrl) + "'";
   }
 
   @NotNull
@@ -241,7 +241,7 @@ class SearchForUsagesRunnable implements Runnable {
   private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
-    return ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)((PsiElementUsageTarget)target)::getElement);
+    return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {

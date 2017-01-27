@@ -43,6 +43,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -470,8 +471,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
-      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
+    CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 

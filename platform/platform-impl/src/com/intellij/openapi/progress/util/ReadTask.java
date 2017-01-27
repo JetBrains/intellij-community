@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,7 @@ public abstract class ReadTask {
    * @param indicator the progress indicator of the background thread
    */
   public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
-    return ApplicationManager.getApplication().runReadAction((Computable<Continuation>)() -> performInReadAction(indicator));
+    return ReadAction.compute(() -> performInReadAction(indicator));
   }
 
   /**

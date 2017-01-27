@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -65,7 +64,7 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
   }
 
   public static Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
-    if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> !canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization
+    if (ReadAction.compute(() -> !canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
   }
 
@@ -82,7 +81,7 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
 
   @NotNull
   public static Query<PsiMethod> search(@NotNull PsiMethod method, final boolean checkDeep) {
-    return search(method, ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)method::getUseScope), checkDeep);
+    return search(method, ReadAction.compute(method::getUseScope), checkDeep);
   }
 
   @NotNull
