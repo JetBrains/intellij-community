@@ -16,10 +16,33 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 
 class BlackListMethodIntentionTest : LightCodeInsightFixtureTestCase() {
+
+  private var isParamHintsEnabledBefore = false
+  private lateinit var stateBefore: Element
+  
+  override fun setUp() {
+    super.setUp()
+
+    val settings = EditorSettingsExternalizable.getInstance()
+    isParamHintsEnabledBefore = settings.isShowParameterNameHints
+    settings.isShowParameterNameHints = true
+
+    stateBefore = ParameterNameHintsSettings.getInstance().state
+  }
+
+  override fun tearDown() {
+    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
+    ParameterNameHintsSettings.getInstance().loadState(stateBefore)
+
+    super.tearDown()
+  }
   
   fun `test add to blacklist by alt enter`() {
     myFixture.configureByText("a.java", """
