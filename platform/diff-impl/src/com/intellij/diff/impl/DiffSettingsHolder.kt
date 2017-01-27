@@ -72,10 +72,7 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
   private fun copyStateWithoutDefaults(): State {
     val result = State()
     result.SHARED_SETTINGS = myState.SHARED_SETTINGS
-
-    myState.PLACES_MAP.entries.forEach {
-      if (it.value != defaultPlaceSettings(it.key)) result.PLACES_MAP.put(it.key, it.value)
-    }
+    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP, { defaultPlaceSettings(it) })
     return result
   }
 
