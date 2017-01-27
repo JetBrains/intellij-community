@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.filters
 
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,8 +23,6 @@ class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: In
   : FileHyperlinkInfoBase(project, documentLine, documentColumn) {
 
   override val virtualFile: VirtualFile? by lazy {
-    runWriteAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    }
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
   }
 }
