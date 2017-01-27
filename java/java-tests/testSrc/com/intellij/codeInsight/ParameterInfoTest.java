@@ -19,8 +19,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
 import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -29,6 +33,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -82,10 +87,18 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals(2, itemsToShow.length);
     assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
+    MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
+    assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
+  }
+
+  @NotNull
+  private MockUpdateParameterInfoContext updateParameterInfo(MethodParameterInfoHandler handler,
+                                                             PsiExpressionList list,
+                                                             Object[] itemsToShow) {
     MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(getEditor(), getFile(), itemsToShow);
     updateParameterInfoContext.setParameterOwner(list);
     handler.updateParameterInfo(list, updateParameterInfoContext);
-    assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
+    return updateParameterInfoContext;
   }
 
   public void testStopAtAccessibleStaticCorrectCandidate() {
@@ -132,18 +145,32 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   }
 
   private String parameterPresentation(int parameterIndex) {
+    return parameterPresentation(0, parameterIndex);
+  }
+
+  private String parameterPresentation(int lineIndex, int parameterIndex) {
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    CreateParameterInfoContext context = createContext();
     PsiExpressionList list = handler.findElementForParameterInfo(context);
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
-    assertEquals(1, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
-    PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
+    assertTrue(itemsToShow[lineIndex] instanceof MethodCandidateInfo);
+    PsiMethod method = ((MethodCandidateInfo)itemsToShow[lineIndex]).getElement();
     ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, parameterIndex);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor();
+    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[lineIndex]).getSubstitutor();
     return MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
+  }
+
+  private CreateParameterInfoContext createContext() {
+    int caretOffset = getEditor().getCaretModel().getOffset();
+    PsiExpressionList argList = PsiTreeUtil.findElementOfClassAtOffset(getFile(), caretOffset, PsiExpressionList.class, false);
+    return new MockCreateParameterInfoContext(getEditor(), getFile()) {
+      @Override
+      public int getParameterListStart() {
+        return argList == null ? caretOffset : argList.getTextRange().getStartOffset();
+      }
+    };
   }
 
   public void testAnnotationWithGenerics() {
@@ -189,4 +216,57 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
     assertEquals("<html>@TA String s</html>", parameterPresentation(-1));
   }
+
+  public void testHighlightMethodJustChosenInCompletion() {
+    myFixture.configureByText("a.java", "class Foo {" +
+                                        "{ bar<caret> }" +
+                                        "void bar(boolean a);" +
+                                        "void bar(String a);" +
+                                        "void bar(int a);" +
+                                        "void bar2(int a);" +
+                                        "}");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals("(int a)", LookupElementPresentation.renderElement(elements[1]).getTailText());
+    myFixture.getLookup().setCurrentItem(elements[1]);
+    myFixture.type('\n');
+
+    assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
+    assertEquals("<html>String a</html>", parameterPresentation(1, -1));
+    assertEquals("<html>int a</html>", parameterPresentation(2, -1));
+
+    checkHighlighted(2);
+  }
+
+  public void testHighlightConstructorJustChosenInCompletion() {
+    Registry.get("java.completion.show.constructors").setValue(true);
+    Disposer.register(getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
+
+    myFixture.addClass("class Bar {" +
+                       "Bar(boolean a);" +
+                       "Bar(String a);" +
+                       "Bar(int a);" +
+                       "}; " +
+                       "class Bar2 {}");
+    myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals("(String a) (default package)", LookupElementPresentation.renderElement(elements[2]).getTailText());
+    myFixture.getLookup().setCurrentItem(elements[2]);
+    myFixture.type('\n');
+    myFixture.checkResult("class Foo {{ new Bar(<caret>) }}");
+
+    assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
+    assertEquals("<html>String a</html>", parameterPresentation(1, -1));
+    assertEquals("<html>int a</html>", parameterPresentation(2, -1));
+
+    checkHighlighted(1);
+  }
+
+  private void checkHighlighted(int lineIndex) {
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    CreateParameterInfoContext context = createContext();
+    PsiExpressionList list = handler.findElementForParameterInfo(context);
+    Object[] itemsToShow = context.getItemsToShow();
+    assertEquals(itemsToShow[lineIndex], updateParameterInfo(handler, list, itemsToShow).getHighlightedParameter());
+  }
+
 }
