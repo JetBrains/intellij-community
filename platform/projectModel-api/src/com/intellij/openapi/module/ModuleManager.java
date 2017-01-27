@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
   @NotNull
-  public abstract Module loadModule(@NotNull String filePath)
-    throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.
