@@ -15,7 +15,6 @@ import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
@@ -107,7 +106,7 @@ public class IpnbConnection {
         if (myXsrf == null) {
           initXSRF(myURI.toString() + "/user/" + username + "/tree?");
         }
-        final Boolean started = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> startIpnbServer(), "Starting a Server");
+        final Boolean started = startIpnbServer();
         if (!started) {
           throw new IOException("Cannot start Jupyter Notebook");
         }
@@ -122,7 +121,7 @@ public class IpnbConnection {
     }
   }
 
-  private boolean startIpnbServer() throws IOException, InterruptedException {
+  private boolean startIpnbServer() throws IOException {
     String serverStartUrl = getLocation(myURI + SPAWN_URL);
 
     if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
@@ -134,7 +133,12 @@ public class IpnbConnection {
           if (location != null && location.startsWith(locationPrefix)) {
             return true;
           }
-          TimeUnit.MILLISECONDS.sleep(500);
+          try {
+            TimeUnit.MILLISECONDS.sleep(500);
+          }
+          catch (InterruptedException e) {
+            LOG.warn(e.getMessage());
+          }
         }
       }
     }
@@ -167,7 +171,7 @@ public class IpnbConnection {
   }
 
   private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
-    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password;
+    String urlParameters = URLEncoder.encode("_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password, "UTF-8");
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
     final HttpsURLConnection connection = PyUtil.as(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(), 
                                                               HTTPMethod.POST.name()), HttpsURLConnection.class);
@@ -185,7 +189,7 @@ public class IpnbConnection {
       connection.connect();
 
       final int code = connection.getResponseCode();
-      if (code != HttpURLConnection.HTTP_FORBIDDEN && code != HttpsURLConnection.HTTP_UNAUTHORIZED) {
+      if (code != HttpURLConnection.HTTP_FORBIDDEN && code != HttpURLConnection.HTTP_UNAUTHORIZED) {
         final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
         return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
       }

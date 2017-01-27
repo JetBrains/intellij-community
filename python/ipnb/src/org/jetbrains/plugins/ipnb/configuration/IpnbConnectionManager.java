@@ -41,7 +41,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -283,13 +282,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
       String pathToFile = getRelativePathToFile(file);
       if (pathToFile != null) {
         if (!IpnbParser.isIpythonNewFormat(file)) {
-          return IpnbUtils.runCancellableProcessUnderProgress(myProject,
-                                                              () -> new IpnbConnection(urlString, listener, myToken, myProject, pathToFile),
-                                                              "Connecting to Jupyter Notebook");
+          return new IpnbConnection(urlString, listener, myToken, myProject, pathToFile);
         }
-        return IpnbUtils.runCancellableProcessUnderProgress(myProject,
-                                                            () -> new IpnbConnectionV3(urlString, listener, myToken, myProject, pathToFile),
-                                                            "Connecting to Jupyter Notebook");
+        return  new IpnbConnectionV3(urlString, listener, myToken, myProject, pathToFile);
       }
     }
     
