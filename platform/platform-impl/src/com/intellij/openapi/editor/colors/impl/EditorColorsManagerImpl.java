@@ -128,7 +128,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
           return false;
         }
 
-        return scheme.equals(bundledScheme);
+        return scheme.settingsEqual(bundledScheme);
       }
 
       @Override

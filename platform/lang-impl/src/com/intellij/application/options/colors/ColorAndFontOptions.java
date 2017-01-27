@@ -201,8 +201,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       if (defaultScheme == null) {
         defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
       }
-      if (defaultScheme != null) {
-        return !scheme.equals(defaultScheme);
+      if (defaultScheme != null && scheme instanceof AbstractColorsScheme) {
+        return !((AbstractColorsScheme)scheme).settingsEqual(defaultScheme);
       }
     }
     return false;

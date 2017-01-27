@@ -889,7 +889,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return root;
   }
 
-  public boolean equals(Object other) {
+  public boolean settingsEqual(Object other) {
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
     
