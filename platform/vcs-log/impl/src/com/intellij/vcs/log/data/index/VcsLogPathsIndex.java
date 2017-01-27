@@ -120,7 +120,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     outer:
     while (!startIds.isEmpty()) {
       for (int currentPathId : startIds) {
-        if (!iterateCommitIdsAndValues(currentPathId, (renamedPathId, commitId) -> {
+        boolean foundCommit = !iterateCommitIdsAndValues(currentPathId, (renamedPathId, commitId) -> {
           if (commitId == commit) {
             resultIds.add(currentPathId);
             if (renamedPathId != null) resultIds.add(renamedPathId);
@@ -130,9 +130,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
             newIds.add(renamedPathId);
           }
           return true;
-        })) {
-          break outer;
-        }
+        });
+        if (foundCommit) break outer;
       }
       startIds = ContainerUtil.newHashSet(newIds);
       allIds.addAll(startIds);
