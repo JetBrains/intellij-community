@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +46,9 @@ public class LogEventException extends RuntimeException implements ExceptionWith
   public Attachment[] getAttachments() {
     Object data = myLogMessage.getData();
     if (data instanceof LogMessageEx) {
-      return ((LogMessageEx)data).getAllAttachments().toArray(Attachment.EMPTY_ARRAY);
+      Attachment[] attachments = ((LogMessageEx)data).getAllAttachments().toArray(Attachment.EMPTY_ARRAY);
+      Throwable throwable = myLogMessage.getThrowable();
+      return throwable == null ? attachments : ArrayUtil.prepend(new Attachment("details.trace", throwable), attachments);
     }
     return Attachment.EMPTY_ARRAY;
   }
