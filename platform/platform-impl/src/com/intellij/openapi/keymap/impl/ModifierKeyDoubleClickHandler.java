@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * SearchEverywhere behaviour remains intact.
  */
 public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationComponentAdapter {
+  private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
   private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
@@ -156,7 +158,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
       if (event instanceof KeyEvent) {
         final KeyEvent keyEvent = (KeyEvent)event;
         final int keyCode = keyEvent.getKeyCode();
-
+        LOG.debug("", this, event);
         if (keyCode == myModifierKeyCode) {
           if (hasOtherModifiers(keyEvent)) {
             resetState();
@@ -275,6 +277,12 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
 
     @Override
     public void dispose() {
+    }
+
+    @Override
+    public String toString() {
+      return "modifier double-click dispatcher [modifierKeyCode=" + myModifierKeyCode +
+             ",actionKeyCode=" + myActionKeyCode + ",actionId=" + myActionId + "]";
     }
   }
 }
