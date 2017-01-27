@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author vlan
@@ -192,11 +191,6 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   // PY-8325
   public void testTooFewMappingKeys() {
     doTest();
-  }
-  
-  // PY-20599
-  public void testPy3kAsciiFormatSpecifier() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   //PY-21166

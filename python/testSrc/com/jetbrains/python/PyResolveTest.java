@@ -681,7 +681,7 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PyNumericLiteralExpression);
     assertNotNull(((PyNumericLiteralExpression)target).getLongValue());
-    assertTrue(4181 == ((PyNumericLiteralExpression)target).getLongValue());
+    assertTrue(((PyNumericLiteralExpression)target).getLongValue() == 4181);
   }
 
   public void testPercentStringKeyWordArgWithParentheses() {

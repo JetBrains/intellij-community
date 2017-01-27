@@ -71,7 +71,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     final TextRange textRange = chunk.getTextRange();
     if (chunk.getMappingKey() != null) {
       final int start = textRange.getStartOffset() + chunk.getTextRange().substring(element.getText()).indexOf(chunk.getMappingKey());
-      return new TextRange(start, start + chunk.getMappingKey().length());
+      return TextRange.from(start, chunk.getMappingKey().length());
     }
     return textRange;
   }
@@ -292,7 +292,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       if (returnValueExpr instanceof PyDictLiteralExpression) {
         Ref<PyExpression> resolvedRef;
         try {
-          final Integer index = Integer.getInteger(key);
+          final Integer index = Integer.parseInt(key);
           resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)returnValueExpr, index, resolveContext);
         }
         catch (NumberFormatException e) {
