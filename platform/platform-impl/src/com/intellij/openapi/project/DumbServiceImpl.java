@@ -264,8 +264,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () ->
-          WriteAction.run(
-            () -> updateFinished())));
+          WriteAction.run(this::updateFinished)));
     }
   }
 
@@ -403,7 +402,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     finally {
       if (myState.get() != State.SMART) {
         if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
-        WriteAction.run(() -> updateFinished());
+        WriteAction.run(this::updateFinished);
       }
     }
   }

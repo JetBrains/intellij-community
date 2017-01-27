@@ -237,8 +237,8 @@ class SmartPointerTracker {
     private int index = -2;
 
     PointerReference(@NotNull SmartPsiElementPointerImpl<?> pointer,
-                             @NotNull VirtualFile containingFile,
-                             @NotNull Key<SmartPointerTracker> key) {
+                     @NotNull VirtualFile containingFile,
+                     @NotNull Key<SmartPointerTracker> key) {
       super(pointer, ourQueue);
       file = containingFile;
       this.key = key;

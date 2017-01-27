@@ -53,7 +53,7 @@ public class RunAll implements Runnable {
   }
 
   @NotNull
-  public List<Throwable> collectExceptions() {
+  private List<Throwable> collectExceptions() {
     List<Throwable> errors = new SmartList<>();
     for (ThrowableRunnable<?> action : myActions) {
       try {
