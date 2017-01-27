@@ -521,7 +521,7 @@ public final class TreeUtil {
     };
 
 
-    if (!okToScroll) {
+    if (!okToScroll || !scroll) {
       selectRunnable.run();
       return ActionCallback.DONE;
     }
@@ -546,7 +546,8 @@ public final class TreeUtil {
 
     final Rectangle visible = tree.getVisibleRect();
     if (visible.contains(bounds)) {
-      bounds = null;
+      selectRunnable.run();
+      return ActionCallback.DONE;
     } else {
       final Component comp =
         tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
@@ -563,7 +564,6 @@ public final class TreeUtil {
 
     selectRunnable.run();
 
-    if (bounds != null) {
       final Range<Integer> range = getExpandControlRange(tree, path);
       if (range != null) {
         int delta = bounds.x - range.getFrom().intValue();
@@ -579,48 +579,42 @@ public final class TreeUtil {
         bounds.x = 0;
       }
 
-      final Rectangle b1 = bounds;
-      final Runnable runnable = () -> {
-        if (scroll) {
-          AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-          if (builder != null) {
-            builder.getReady(TreeUtil.class).doWhenDone(() -> tree.scrollRectToVisible(b1));
-            callback.setDone();
-          } else {
-            tree.scrollRectToVisible(b1);
+    LOG.debug("tree scroll: ", path);
+    tree.scrollRectToVisible(bounds);
+    // try to scroll later when the tree is ready
+    Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+    long stamp = property instanceof Long ? (Long)property + 1L : Long.MIN_VALUE;
+    tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    // store relative offset because the row can be moved during the tree updating
+    int offset = rowBounds.y - bounds.y;
 
-            Long ts = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
-            if (ts == null) {
-              ts = 0L;
-            }
-            ts = ts.longValue() + 1;
-            tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, ts);
-
-            final long targetValue = ts.longValue();
-
-            SwingUtilities.invokeLater(() -> {
-              Long actual = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
-              if (actual == null || targetValue < actual.longValue()) return;
-
-              if (!tree.getVisibleRect().contains(b1)) {
-                tree.scrollRectToVisible(b1);
-              }
-              callback.setDone();
-            });
-          }
-        }
-        callback.setDone();
-      };
-
-      runnable.run();
-
-    } else {
-      callback.setDone();
+    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+    if (builder != null) {
+      builder.getReady(TreeUtil.class).doWhenDone(scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone));
+    }
+    else {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone));
     }
 
     return callback;
   }
 
+  private static Runnable scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done) {
+    return () -> {
+      Rectangle pathBounds = tree.getPathBounds(path);
+      if (pathBounds != null) {
+        Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+        long stamp = property instanceof Long ? (Long)property : Long.MAX_VALUE;
+        LOG.debug("tree scroll: ", stamp == expected ? "try again: " : "ignore: ", path);
+        if (stamp == expected) {
+          bounds.y = pathBounds.y - offset; // restore bounds according to the current row
+          if (!tree.getVisibleRect().contains(bounds)) tree.scrollRectToVisible(bounds);
+        }
+      }
+      done.run();
+    };
+  }
 
   // this method returns FIRST selected row but not LEAD
   private static int getSelectedRow(@NotNull final JTree tree) {
