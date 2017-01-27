@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -28,6 +29,7 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +84,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     return visitor.mayBeQueried();
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -199,7 +202,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       }
       final boolean written = collectionContentsAreUpdated(field, containingClass);
       final boolean read = collectionContentsAreQueried(field, containingClass);
-      if (read == written) {
+      if (read == written || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));

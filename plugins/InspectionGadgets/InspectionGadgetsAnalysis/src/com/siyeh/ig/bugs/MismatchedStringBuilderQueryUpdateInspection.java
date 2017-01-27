@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -94,7 +95,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       }
       final boolean queried = stringBuilderContentsAreQueried(field, containingClass);
       final boolean updated = stringBuilderContentsAreUpdated(field, containingClass);
-      if (queried == updated) {
+      if (queried == updated || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(updated), field.getType());
