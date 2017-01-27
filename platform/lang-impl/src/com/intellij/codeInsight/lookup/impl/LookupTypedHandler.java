@@ -144,7 +144,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
         }
 
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-        lookup.finishLookup(charTyped);
+        lookup.finishLookupInWritableFile(charTyped, item);
         return true;
       }
     }

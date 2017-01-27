@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -77,12 +76,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     final LookupImpl lookup = getLookup();
     lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
-          lookup.finishLookup(completionChar);
-        }
-      }.execute().throwException();
+      lookup.finishLookup(completionChar);
     } else {
       type(completionChar);
     }

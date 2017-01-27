@@ -461,6 +461,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "finishLookup should be called without a write action");
+    final PsiFile file = getPsiFile();
+    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+      return;
+    }
+
+    if (!writableOk) {
+      doHide(false, true);
+      fireItemSelected(null, completionChar);
+      return;
+    }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
+  }
+
+  void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     //noinspection deprecation,unchecked
     if (item == null ||
         !item.isValid() ||
@@ -474,18 +490,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     if (myDisposed) { // DeferredUserLookupValue could close us in any way
-      return;
-    }
-
-    final PsiFile file = getPsiFile();
-    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
-      return;
-    }
-
-    if (!writableOk) {
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
       return;
     }
 
