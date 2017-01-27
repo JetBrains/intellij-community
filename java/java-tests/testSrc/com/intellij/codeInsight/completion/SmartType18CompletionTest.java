@@ -104,6 +104,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
     myFixture.addClass("package foo; public class ImplFoo<T> implements intf.Intf<T> {}");
     myFixture.addClass("package foo; public class ImplIncompatible implements intf.Intf<Integer> {}");
+    myFixture.addClass("package foo; public abstract class ImplAbstract implements intf.Intf<String> { public ImplAbstract() {} }");
     myFixture.addClass("package foo; class ImplInaccessible implements intf.Intf<String> {}");
 
     configureByTestName();
