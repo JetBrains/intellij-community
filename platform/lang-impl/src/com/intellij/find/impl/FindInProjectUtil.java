@@ -400,33 +400,30 @@ public class FindInProjectUtil {
         result.add(grandGrandChild);
       }
     }
-    return result != null ? result : Collections.<PsiElement>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   @NotNull
-  public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+  static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
-        if (topLevelRegExpChars.size() != 1) return "";
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+      if (topLevelRegExpChars.size() != 1) return "";
 
-        // leave only top level regExpChars
-        return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
-          final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      // leave only top level regExpChars
+      return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
+        final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
 
-          @Override
-          public String fun(PsiElement element) {
-            if (regExpCharPsiClass.isInstance(element)) {
-              String text = element.getText();
-              if (!text.startsWith("\\")) return text;
-            }
-            return " ";
+        @Override
+        public String fun(PsiElement element) {
+          if (regExpCharPsiClass.isInstance(element)) {
+            String text = element.getText();
+            if (!text.startsWith("\\")) return text;
           }
-        }, "");
-      }
+          return " ";
+        }
+      }, "");
     });
   }
 

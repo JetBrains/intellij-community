@@ -49,6 +49,16 @@ public class ConfigurationTypeDashboardGroupingRule implements DashboardGrouping
                                       AllIcons.Actions.GroupByFile);
   }
 
+  @Override
+  public int getPriority() {
+    return Priorities.BY_TYPE;
+  }
+
+  @Override
+  public boolean isAlwaysEnable() {
+    return false;
+  }
+
   @Nullable
   @Override
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {

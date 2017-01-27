@@ -16,9 +16,7 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.DashboardGroup;
-import com.intellij.execution.dashboard.DashboardGroupingRule;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -50,6 +48,16 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
     return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.status.action.name"),
                                       ExecutionBundle.message("runtime.dashboard.group.by.status.action.name"),
                                       AllIcons.Actions.GroupByPrefix); // TODO [konstantin.aleev] provide new icon
+  }
+
+  @Override
+  public int getPriority() {
+    return Priorities.BY_STATUS;
+  }
+
+  @Override
+  public boolean isAlwaysEnable() {
+    return false;
   }
 
   @NotNull

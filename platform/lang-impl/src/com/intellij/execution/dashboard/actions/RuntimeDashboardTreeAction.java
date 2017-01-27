@@ -36,6 +36,6 @@ public abstract class RuntimeDashboardTreeAction<T extends DashboardNode> extend
 
   @Override
   protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
-    return false;
+    return true;
   }
 }

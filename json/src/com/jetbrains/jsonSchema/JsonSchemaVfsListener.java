@@ -27,7 +27,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -52,40 +54,15 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   }
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
-    super(new VirtualFileAdapter() {
+    super(new VirtualFileContentsChangedAdapter() {
       private final MyUpdater myUpdater = updater;
 
-      @Override
-      public void contentsChanged(@NotNull VirtualFileEvent event) {
-        onFileChange(event.getFile());
+      protected void onFileChange(@NotNull final VirtualFile schemaFile) {
+        myUpdater.onFileChange(schemaFile);
       }
 
       @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        onFileChange(event.getFile());
-      }
-
-      @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        onFileChange(event.getFile());
-      }
-
-      @Override
-      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-        onFileChange(event.getFile());
-      }
-
-      @Override
-      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        onFileChange(event.getFile());
-      }
-
-      @Override
-      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-        onFileChange(event.getFile());
-      }
-
-      private void onFileChange(@NotNull final VirtualFile schemaFile) {
+      protected void onBeforeFileChange(@NotNull VirtualFile schemaFile) {
         myUpdater.onFileChange(schemaFile);
       }
     });

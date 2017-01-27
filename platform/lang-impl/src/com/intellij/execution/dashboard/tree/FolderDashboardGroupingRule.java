@@ -48,6 +48,16 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
                                       AllIcons.Actions.GroupByPackage);
   }
 
+  @Override
+  public int getPriority() {
+    return Priorities.BY_FOLDER;
+  }
+
+  @Override
+  public boolean isAlwaysEnable() {
+    return true;
+  }
+
   @Nullable
   @Override
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {

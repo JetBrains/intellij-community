@@ -30,15 +30,40 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class FindResultUsageInfo extends UsageInfo {
+class FindResultUsageInfo extends UsageInfo {
   private final FindManager myFindManager;
   private final FindModel myFindModel;
-  private SmartPsiFileRange myAnchor;
+  private final SmartPsiFileRange myAnchor;
 
   private Boolean myCachedResult;
-  private long myTimestamp = 0;
+  private long myTimestamp;
 
-  private static final Key<Long> ourDocumentTimestampKey = Key.create("com.intellij.find.impl.FindResultUsageInfo.documentTimestamp");
+  private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
+
+  FindResultUsageInfo(@NotNull FindManager finder,
+                      @NotNull PsiFile file,
+                      int offset,
+                      @NotNull FindModel findModel,
+                      @NotNull FindResult result) {
+    super(file, result.getStartOffset(), result.getEndOffset());
+
+    myFindManager = finder;
+    myFindModel = findModel;
+
+    assert result.isStringFound();
+
+    if (myFindModel.isRegularExpressions() ||
+        myFindModel.isInCommentsOnly() ||
+        myFindModel.isInStringLiteralsOnly() ||
+        myFindModel.isExceptStringLiterals() ||
+        myFindModel.isExceptCommentsAndStringLiterals() ||
+        myFindModel.isExceptComments()) {
+      myAnchor = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
+    }
+    else {
+      myAnchor = null;
+    }
+  }
 
   @Override
   public boolean isValid() {
@@ -77,12 +102,12 @@ public class FindResultUsageInfo extends UsageInfo {
     }
 
     int offset = searchOffset.getStartOffset();
-    Long data = myFindModel.getUserData(ourDocumentTimestampKey);
+    Long data = myFindModel.getUserData(DOCUMENT_TIMESTAMP_KEY);
     if (data == null || data != myTimestamp) {
       data = myTimestamp;
       FindManagerImpl.clearPreviousFindData(myFindModel);
     }
-    myFindModel.putUserData(ourDocumentTimestampKey, data);
+    myFindModel.putUserData(DOCUMENT_TIMESTAMP_KEY, data);
     FindResult result;
     do {
       result = myFindManager.findString(document.getCharsSequence(), offset, myFindModel, file);
@@ -100,25 +125,5 @@ public class FindResultUsageInfo extends UsageInfo {
 
   private PsiFile getPsiFile() {
     return (PsiFile)getElement();
-  }
-
-  public FindResultUsageInfo(@NotNull FindManager finder, @NotNull PsiFile file, int offset, @NotNull FindModel findModel, @NotNull FindResult result) {
-    super(file, result.getStartOffset(), result.getEndOffset());
-
-    myFindManager = finder;
-    myFindModel = findModel;
-
-    assert result.isStringFound();
-
-    if (myFindModel.isRegularExpressions() ||
-        myFindModel.isInCommentsOnly() ||
-        myFindModel.isInStringLiteralsOnly() ||
-        myFindModel.isExceptStringLiterals() ||
-        myFindModel.isExceptCommentsAndStringLiterals() ||
-        myFindModel.isExceptComments()
-      ) {
-      myAnchor = SmartPointerManager.getInstance(getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
-    }
-
   }
 }

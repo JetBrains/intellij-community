@@ -17,10 +17,12 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,6 +31,24 @@ import java.util.List;
  * @author konstantin.aleev
  */
 public interface DashboardGroupingRule extends TreeAction {
+  ExtensionPointName<DashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runtimeDashboardGroupingRule");
+
+  Comparator<DashboardGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
+    final int res = o2.getPriority() - o1.getPriority();
+    return res != 0 ? res : (o1.getName().compareTo(o2.getName()));
+  };
+
+  /**
+   * Grouping rules are ordered and applied to dashboard nodes according to their priority.
+   * @return Rule's priority.
+   */
+  int getPriority();
+
+  /**
+   * @return {@code true} if grouping rule should always be applied to dashboard nodes.
+   */
+  boolean isAlwaysEnable();
+
   /**
    * @return A list of groups which should be shown in the tree even if they do not contain any nodes.
    */
@@ -43,4 +63,10 @@ public interface DashboardGroupingRule extends TreeAction {
    */
   @Nullable
   DashboardGroup getGroup(AbstractTreeNode<?> node);
+
+  interface Priorities {
+    int BY_FOLDER = 200;
+    int BY_STATUS = 800;
+    int BY_TYPE = 1000;
+  }
 }
