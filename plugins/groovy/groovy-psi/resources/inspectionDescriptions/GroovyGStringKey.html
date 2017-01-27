@@ -8,7 +8,7 @@ Also, GString entry could not be accessed with java.lang.String object with same
 <pre>
     def map = [:]
     <b><font color="#000080">def</font></b> key = 'foo'
-    map << ["${key}": 'bar']
+    map &lt&lt ["${key}": 'bar']
     <b><font color="#000080">assert </font></b> map[key] == <b><font color="#000080">null</font></b>
 
 </pre>

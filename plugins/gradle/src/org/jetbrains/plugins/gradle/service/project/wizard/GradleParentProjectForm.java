@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -50,7 +51,7 @@ import java.util.Collection;
 
 import static org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleWizardStep.isGradleModuleExist;
 
-public class GradleParentProjectForm {
+public class GradleParentProjectForm implements Disposable {
 
   private static final String EMPTY_PARENT = "<none>";
 
@@ -110,8 +111,15 @@ public class GradleParentProjectForm {
   }
 
   public void updateComponents() {
-    myParentPathField.setText(myParent == null ? EMPTY_PARENT : myParent.getLinkedExternalProjectPath());
-    collapseIfPossible(myParentPathField, GradleConstants.SYSTEM_ID, getProject());
+    if (myIsVisible) {
+      myParentPathField.setText(myParent == null ? EMPTY_PARENT : myParent.getLinkedExternalProjectPath());
+      collapseIfPossible(myParentPathField, GradleConstants.SYSTEM_ID, getProject());
+    }
+  }
+
+  @Override
+  public void dispose() {
+    myParentPathField.removeNotify();
   }
 
   private ProjectData doSelectProject(ProjectData current) {
@@ -210,6 +218,16 @@ public class GradleParentProjectForm {
     @Override
     protected void setViewerEnabled(boolean enabled) {
       // do not reset com.intellij.ui.EditorTextField.myIsViewer field
+    }
+
+    @Override
+    public void removeNotify() {
+      // The editor needs to be removed manually because it normally is removed by invokeLater, which may happen to late
+      Editor editor = getEditor();
+      if (editor != null && !editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+      super.removeNotify();
     }
   }
 }
