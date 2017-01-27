@@ -421,16 +421,18 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     alarm.addRequest(() -> {
       final Set<VirtualFile> files = new HashSet<>();
       DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        if (myTodoTreeBuilder.isDisposed()) return;
         myTodoTreeBuilder.collectFiles(virtualFile -> {
           files.add(virtualFile);
           return true;
         });
+        final Runnable runnable = () -> {
+          if (myTodoTreeBuilder.isDisposed()) return;
+          myTodoTreeBuilder.rebuildCache(files);
+          updateTree();
+        };
+        ApplicationManager.getApplication().invokeLater(runnable);
       });
-      final Runnable runnable = () -> {
-        myTodoTreeBuilder.rebuildCache(files);
-        updateTree();
-      };
-      ApplicationManager.getApplication().invokeLater(runnable);
     }, 300);
   }
 
