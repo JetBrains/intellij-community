@@ -59,6 +59,10 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     myHighlightedParameter = parameter;
   }
 
+  public Object getHighlightedParameter() {
+    return myHighlightedParameter;
+  }
+
   public void setCurrentParameter(int index) {
     myCurrentParameter = index;
   }

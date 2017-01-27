@@ -201,17 +201,20 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   void testFqnStats() {
     myFixture.addClass("public interface Baaaaaaar {}")
+    myFixture.addClass("package boo; public interface Baaaaaaar {}")
     myFixture.addClass("package zoo; public interface Baaaaaaar {}")
 
     configureSecondCompletion()
 
     final LookupImpl lookup = getLookup()
-    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName())
-    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(1)).getQualifiedName())
-    incUseCount(lookup, 1)
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName)
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[2]).qualifiedName)
+    incUseCount(lookup, 2)
 
-    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName())
-    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName())
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName) // same package
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[2]).qualifiedName)
   }
 
   void testSkipLifted() {
@@ -736,6 +739,23 @@ class ContainerUtil extends ContainerUtilRt {
     myFixture.type('this.')
     myFixture.completeBasic()
     assertPreferredItems 0, 'someMethod'
+  }
+
+  void testPreferImportedClassesAmongstSameNamed() {
+    myFixture.addClass('package foo; public class String {}')
+
+    // use foo.String
+    myFixture.configureByText 'a.java', 'class Foo { Stri<caret> }'
+    myFixture.completeBasic()
+    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == 'String' && LookupElementPresentation.renderElement(it).tailText.contains('foo') }
+    myFixture.type('\n')
+    myFixture.checkResult 'import foo.String;\n\nclass Foo { String<caret>\n}'
+
+    // assert non-imported String is not preselected when completing in another file
+    myFixture.configureByText 'b.java', 'class Bar { Stri<caret> }'
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'String', 'String'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,12 +98,15 @@ public class PyStatementEffectInspection extends PyInspection {
         }
       }
       else if (expression instanceof PyBinaryExpression) {
-        PyBinaryExpression binary = (PyBinaryExpression)expression;
+        final PyBinaryExpression binary = (PyBinaryExpression)expression;
+
+        final PyElementType operator = binary.getOperator();
+        if (PyTokenTypes.COMPARISON_OPERATIONS.contains(operator)) return false;
+
         final PyExpression leftExpression = binary.getLeftExpression();
         final PyExpression rightExpression = binary.getRightExpression();
         if (hasEffect(leftExpression) || hasEffect(rightExpression)) return true;
 
-        final PyElementType operator = binary.getOperator();
         String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"

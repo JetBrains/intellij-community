@@ -114,10 +114,6 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           GradleProp gradleProp = new GradleProp();
           gradleProp.name = property.getName();
           gradleProp.typeFqn = property.getTypeFqn();
-          Serializable value = property.getValue();
-          if (value != null) {
-            gradleProp.value = value.toString();
-          }
           extensionsData.properties.add(gradleProp);
         }
         for (ExternalTask task : gradleExtensions.getTasks()) {

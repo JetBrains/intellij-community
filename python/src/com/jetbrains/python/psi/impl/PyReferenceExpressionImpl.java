@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,10 +289,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       Property property = pyClass.findProperty(name, true, context);
       if (property != null) {
         if (classType.isDefinition()) {
-          return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
+          return Ref.create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
         }
         if (AccessDirection.of(this) == AccessDirection.READ) {
-          final PyType type = property.getType(context);
+          final PyType type = property.getType(getQualifier(), context);
           if (type != null) {
             return Ref.create(type);
           }

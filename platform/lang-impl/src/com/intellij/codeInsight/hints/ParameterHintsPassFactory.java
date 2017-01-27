@@ -105,12 +105,15 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
       if (isDebug) {
         System.out.println(System.nanoTime() + ": [HintsPass] Traversing started");
+        System.out.println(System.nanoTime() + ": [HintsPass] Matchers:");
+        blackList.forEach(blackListItem -> System.out.println("    " + blackListItem));
       }
       
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
       
       if (isDebug) {
-        System.out.println(System.nanoTime() + ": [HintsPass] Traversing ended");
+        System.out.println(System.nanoTime() + ": [HintsPass] Traversing ended, hints to apply:");
+        myAnnotations.forEach((i, s) -> System.out.println("    " + i + " " + s));
       }
     }
 
@@ -139,12 +142,15 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
         hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
       }
+      else if (isDebug) {
+        System.out.println("Method Info : " + info + " is matched by something");
+      }
     }
 
     @Override
     public void doApplyInformationToEditor() {
       if (isDebug) {
-        System.out.println(System.nanoTime() + ": hints addition started");
+        System.out.println(System.nanoTime() + ": hints addition started, total hints: " + myAnnotations.size());
       }
 
       assert myDocument != null;

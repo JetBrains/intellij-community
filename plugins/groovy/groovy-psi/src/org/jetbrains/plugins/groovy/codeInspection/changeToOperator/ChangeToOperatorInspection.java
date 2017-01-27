@@ -58,9 +58,11 @@ public class ChangeToOperatorInspection extends BaseInspection {
         Transformation transformation = TRANSFORMATIONS.get(methodName);
         if (transformation == null) return;
 
+        PsiElement highlightElement = getHighlightElement(methodCall);
+        if (highlightElement == null) return;
         if (transformation.couldApply(methodCall, getOptions())) {
           registerError(
-            methodCall,
+            highlightElement,
             message("replace.with.operator.message", methodName),
             new LocalQuickFix[]{getFix(transformation, methodName)},
             GENERIC_ERROR_OR_WARNING
@@ -82,7 +84,9 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
       @Override
       protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement call = descriptor.getPsiElement();
+        PsiElement call = descriptor.getPsiElement().getParent();
+        if (call == null) return;
+        call = call.getParent();
         if (!(call instanceof GrMethodCall)) return;
         GrMethodCall methodCall = (GrMethodCall) call;
         GrExpression invokedExpression = methodCall.getInvokedExpression();
@@ -93,6 +97,14 @@ public class ChangeToOperatorInspection extends BaseInspection {
         transformation.apply(methodCall, options);
       }
     };
+  }
+
+  @Nullable
+  public PsiElement getHighlightElement(@NotNull GrMethodCall methodCall) {
+    GrExpression invokedExpression = methodCall.getInvokedExpression();
+    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
+
+    return  ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
   }
 
   @Nullable

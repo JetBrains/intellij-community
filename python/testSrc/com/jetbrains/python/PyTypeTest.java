@@ -1621,6 +1621,19 @@ public class PyTypeTest extends PyTestCase {
            "    expr = foo");
   }
 
+  // PY-22037
+  public void testAncestorPropertyReturnsSelf() {
+    doTest("Child",
+           "class Master(object):\n" +
+           "    @property\n" +
+           "    def me(self):\n" +
+           "        return self\n" +
+           "class Child(Master):\n" +
+           "    pass\n" +
+           "child = Child()\n" +
+           "expr = child.me");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

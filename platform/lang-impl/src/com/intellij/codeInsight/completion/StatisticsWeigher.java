@@ -19,7 +19,7 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -27,9 +27,8 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FlatteningIterator;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,25 +80,16 @@ public class StatisticsWeigher extends CompletionWeigher {
     public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull final ProcessingContext context) {
       checkPrefixChanged(context);
 
-      final Collection<List<LookupElement>> byWeight = buildMapByWeight(source).descendingMap().values();
-
       List<LookupElement> initialList = getInitialNoStatElements(source, context);
+      Iterable<LookupElement> rest = withoutInitial(source, initialList);
+      Collection<List<LookupElement>> byWeight = buildMapByWeight(rest).descendingMap().values();
 
-      //noinspection unchecked
-      final THashSet<LookupElement> initialSet = new THashSet<>(initialList, TObjectHashingStrategy.IDENTITY);
-      final Condition<LookupElement> notInInitialList = element -> !initialSet.contains(element);
+      return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
+    }
 
-      return ContainerUtil.concat(initialList, new Iterable<LookupElement>() {
-        @Override
-        public Iterator<LookupElement> iterator() {
-          return new FlatteningIterator<List<LookupElement>, LookupElement>(byWeight.iterator()) {
-            @Override
-            protected Iterator<LookupElement> createValueIterator(List<LookupElement> group) {
-              return myNext.classify(ContainerUtil.findAll(group, notInInitialList), context).iterator();
-            }
-          };
-        }
-      });
+    private static Iterable<LookupElement> withoutInitial(Iterable<LookupElement> allItems, List<LookupElement> initial) {
+      Set<LookupElement> initialSet = ContainerUtil.newIdentityTroveSet(initial);
+      return JBIterable.from(allItems).filter(element -> !initialSet.contains(element));
     }
 
     private List<LookupElement> getInitialNoStatElements(Iterable<LookupElement> source, ProcessingContext context) {
@@ -116,16 +106,40 @@ public class StatisticsWeigher extends CompletionWeigher {
     }
 
     private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source) {
+      MultiMap<String, LookupElement> byName = buildMapByLookupString(source);
+
+      Set<List<LookupElement>> toSort = ContainerUtil.newIdentityTroveSet();
       TreeMap<Integer, List<LookupElement>> map = new TreeMap<>();
       for (LookupElement element : source) {
-        final int weight = getWeight(element).getScalar();
-        List<LookupElement> list = map.get(weight);
-        if (list == null) {
-          map.put(weight, list = new SmartList<>());
-        }
+        Collection<LookupElement> sameNamedGroup = byName.get(element.getLookupString());
+        int weight = getMaxWeight(sameNamedGroup);
+        List<LookupElement> list = ContainerUtil.getOrCreate(map, weight, (Factory<List<LookupElement>>)() -> new SmartList<>());
         list.add(element);
+        if (sameNamedGroup.size() > 1 && weight != getScalarWeight(element)) {
+          toSort.add(list);
+        }
+      }
+      for (List<LookupElement> group : toSort) {
+        Collections.sort(group, Comparator.comparing(this::getScalarWeight).reversed());
       }
       return map;
+    }
+
+    @NotNull
+    private static MultiMap<String, LookupElement> buildMapByLookupString(Iterable<LookupElement> elements) {
+      MultiMap<String, LookupElement> byName = new MultiMap<>();
+      for (LookupElement element : elements) {
+        byName.putValue(element.getLookupString(), element);
+      }
+      return byName;
+    }
+
+    private int getMaxWeight(Collection<LookupElement> group) {
+      return group.stream().mapToInt(this::getScalarWeight).max().orElse(0);
+    }
+
+    private int getScalarWeight(LookupElement e) {
+      return getWeight(e).getScalar();
     }
 
     private StatisticsComparable getWeight(LookupElement t) {
