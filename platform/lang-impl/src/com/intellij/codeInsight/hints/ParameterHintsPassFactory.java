@@ -105,6 +105,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
       if (isDebug) {
         System.out.println(System.nanoTime() + ": [HintsPass] Traversing started");
+        System.out.println(System.nanoTime() + ": [HintsPass] Matchers:");
+        blackList.forEach(blackListItem -> System.out.println("    " + blackListItem));
       }
       
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
@@ -139,6 +141,9 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       MethodInfo info = provider.getMethodInfo(element);
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
         hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
+      }
+      else if (isDebug) {
+        System.out.println("Method Info : " + info + " is matched by something");
       }
     }
 
