@@ -41,11 +41,13 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -284,26 +286,23 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<>();
-          processLocalCalls(func, call -> {
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final PyArgumentList argumentList = call.getArgumentList();
-            if (argumentList != null) {
-              final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
-              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-                if (entry.getValue() == this) {
-                  final PyExpression argument = entry.getKey();
-                  if (argument != null) {
-                    final PyType type = context.getType(argument);
-                    if (type != null) {
-                      types.add(type);
-                      return true;
-                    }
-                  }
-                }
-              }
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+          processLocalCalls(
+            func, call -> {
+              StreamEx
+                .of(call.multiMapArguments(resolveContext))
+                .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())
+                .filter(entry -> entry.getValue() == this)
+                .map(Map.Entry::getKey)
+                .nonNull()
+                .map(context::getType)
+                .nonNull()
+                .forEach(types::add);
+              return true;
             }
-            return true;
-          });
+          );
+
           if (!types.isEmpty()) {
             return PyUnionType.createWeakType(PyUnionType.union(types));
           }
@@ -355,13 +354,11 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             else {
               final PsiReference ref = expr.getReference();
               if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
-                final PyNamedParameter parameter = getParameterByCallArgument(expr, context);
-                if (parameter != null) {
-                  final PyType type = context.getType(parameter);
-                  if (type instanceof PyStructuralType) {
-                    result.addAll(((PyStructuralType)type).getAttributeNames());
-                  }
-                }
+                StreamEx.of(getParametersByCallArgument(expr, context))
+                  .nonNull()
+                  .map(context::getType)
+                  .select(PyStructuralType.class)
+                  .forEach(type -> result.addAll(type.getAttributeNames()));
               }
             }
           }
@@ -418,8 +415,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return result;
   }
 
-  @Nullable
-  private PyNamedParameter getParameterByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  @NotNull
+  private List<PyNamedParameter> getParametersByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final PyArgumentList argumentList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
     if (argumentList != null) {
       boolean elementIsArgument = false;
@@ -438,20 +435,20 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           if (firstQualifier != null) {
             final PsiReference ref = firstQualifier.getReference();
             if (ref != null && ref.isReferenceTo(this)) {
-              return null;
+              return Collections.emptyList();
             }
           }
         }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-          if (entry.getKey() == element) {
-            return entry.getValue();
-          }
-        }
+        return callExpression.multiMapArguments(resolveContext)
+          .stream()
+          .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())
+          .filter(entry -> entry.getKey() == element)
+          .map(Map.Entry::getValue)
+          .collect(Collectors.toList());
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
