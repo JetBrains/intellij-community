@@ -1017,7 +1017,7 @@ class Foo {
       assertTopLevelFoldRegionsState "[FoldRegion +(7:50), placeholder='...']"
 
       myFixture.type("Class t = TreeMap.class;")
-      myFixture.doHighlighting()
+      myFixture.doHighlighting() // let auto-import complete
       myFixture.checkResult"""\
 import java.util.ArrayList;
 import java.util.List;
@@ -1031,6 +1031,7 @@ class Foo {
     }
 }
 """
+      myFixture.doHighlighting() // update folding for the new text
       assertTopLevelFoldRegionsState "[FoldRegion +(7:76), placeholder='...']"
     }
     finally {
