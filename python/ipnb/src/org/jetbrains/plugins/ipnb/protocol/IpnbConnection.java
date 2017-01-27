@@ -15,7 +15,6 @@ import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
@@ -99,7 +98,7 @@ public class IpnbConnection {
       String cookies = login(ipnbSettings.getUsername(), ipnbSettings.getPassword(), loginUrl);
       myHeaders.put("Cookie", cookies);
       if (myIsHubServer) {
-        final Boolean started = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> startIpnbServer(), "Starting a Server");
+        final Boolean started = startIpnbServer();
         if (!started) {
           throw new IOException("Cannot start Jupyter Notebook");
         }
@@ -115,7 +114,7 @@ public class IpnbConnection {
     }
   }
 
-  private boolean startIpnbServer() throws IOException, InterruptedException {
+  private boolean startIpnbServer() throws IOException {
     String serverStartUrl = getLocation(myURI + SPAWN_URL);
 
     if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
@@ -127,7 +126,12 @@ public class IpnbConnection {
           if (location != null && location.startsWith(locationPrefix)) {
             return true;
           }
-          TimeUnit.MILLISECONDS.sleep(500);
+          try {
+            TimeUnit.MILLISECONDS.sleep(500);
+          }
+          catch (InterruptedException e) {
+            LOG.warn(e.getMessage());
+          }
         }
       }
     }
@@ -269,16 +273,15 @@ public class IpnbConnection {
     configureHttpsConnection();
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
-    final HttpsURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
+    final HttpURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpURLConnection.class);
     if (connection != null) {
-      connection.setInstanceFollowRedirects(false);
-      connection.connect();
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        location = connection.getHeaderField("Location");
-        connection.disconnect();
+      final HttpURLConnection httpsURLConnection = configureConnection(connection, HTTPMethod.GET.name());
+      httpsURLConnection.connect();
+      if (httpsURLConnection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+        location = httpsURLConnection.getHeaderField("Location");
       }
     }
-    return location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
+    return location == null || location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
   }
 
   private void initXSRF() {
@@ -435,7 +438,7 @@ public class IpnbConnection {
   }
 
   @NotNull
-  private HttpURLConnection configureConnection(HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
+  private HttpURLConnection configureConnection(@NotNull HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
     urlConnection.setRequestMethod(method);
     urlConnection.setReadTimeout(60000);
     urlConnection.setInstanceFollowRedirects(false);
