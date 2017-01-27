@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.execution.filters
+package com.intellij.execution.filters
 
-import com.intellij.execution.filters.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 
-class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
+class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: Int, documentColumn: Int)
+  : FileHyperlinkInfoBase(project, documentLine, documentColumn) {
 
-  override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(
-    object : RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*") {
-
-      override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo {
-        return super.createOpenFileHyperlink(fileName, line, column)
-               ?: LazyFileHyperlinkInfo(project, fileName, line, column)
-      }
-    }
-  )
+  override val virtualFile: VirtualFile? by lazy {
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+  }
 }
