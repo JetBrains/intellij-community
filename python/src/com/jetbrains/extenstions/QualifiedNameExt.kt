@@ -27,7 +27,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  */
 fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElement? {
   val facade = PyPsiFacadeImpl.getInstance(module.project)
-  var currentName = this
+  var currentName = QualifiedName.fromComponents(this.components)
 
 
   var element: PsiElement? = null
@@ -40,8 +40,8 @@ fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElemen
     if (element != null) {
       break
     }
-    lastElement = this.lastComponent!!
-    currentName = this.removeLastComponent()
+    lastElement = currentName.lastComponent!!
+    currentName = currentName.removeLastComponent()
   }
 
   if (lastElement != null && element is PyClass) {
