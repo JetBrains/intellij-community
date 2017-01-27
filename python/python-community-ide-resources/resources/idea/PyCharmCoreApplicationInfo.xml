@@ -17,8 +17,9 @@
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/python/"/>
 
-  <help file="pycharmhelp.jar" root="pycharm"/>
+  <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>
+
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
