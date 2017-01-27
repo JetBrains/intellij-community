@@ -45,7 +45,7 @@ class MarkerCache {
       o2 = info2.getPsiEndOffset();
       if (o1 != o2) return o1 > o2 ? 1 : -1;
 
-      return (info1.isForInjected() ? 1 : 0) - (info2.isForInjected() ? 1 : 0);
+      return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
     }
   };
   private final SmartPointerTracker myPointers;
@@ -83,13 +83,13 @@ class MarkerCache {
     int i = 0;
     while (i < markers.length) {
       SelfElementInfo info = infos.get(i);
-      boolean forInjected = info.isForInjected();
+      boolean greedy = info.isGreedy();
       int start = info.getPsiStartOffset();
       int end = info.getPsiEndOffset();
-      markers[i] = new ManualRangeMarker(start, end, forInjected, forInjected, !forInjected, null);
+      markers[i] = new ManualRangeMarker(start, end, greedy, greedy, !greedy, null);
 
       i++;
-      while (i < markers.length && rangeEquals(infos.get(i), start, end, forInjected)) {
+      while (i < markers.length && rangeEquals(infos.get(i), start, end, greedy)) {
         markers[i] = markers[i - 1];
         i++;
       }
@@ -97,8 +97,8 @@ class MarkerCache {
     return markers;
   }
 
-  private static boolean rangeEquals(SelfElementInfo info, int start, int end, boolean injected) {
-    return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && injected == info.isForInjected();
+  private static boolean rangeEquals(SelfElementInfo info, int start, int end, boolean greedy) {
+    return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && greedy == info.isGreedy();
   }
 
   private static UpdatedRanges applyEvents(@NotNull List<DocumentEvent> events, final UpdatedRanges struct) {

@@ -996,7 +996,7 @@ class Foo {
     assertTopLevelFoldRegionsState "[FoldRegion +(49:92), placeholder='otherMethod() → { ', FoldRegion +(113:123), placeholder=' }']"
   }
 
-  public void "disabled - test imports remain collapsed when new item is added at the end"() {
+  public void "test imports remain collapsed when new item is added at the end"() {
     boolean oldValue = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // tests disable this by default
