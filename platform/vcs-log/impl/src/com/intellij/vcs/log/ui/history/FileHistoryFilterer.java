@@ -72,23 +72,22 @@ class FileHistoryFilterer extends VcsLogFilterer {
     if (!myIndex.isIndexed(myRoot) || matchingCommits == null) {
       return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, matchingCommits, canRequestMore);
     }
+
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
+
     // I realize, I'm calculating this data for the second time.
     // No worries! It's going to be fine later!
     IndexDataGetter.FileNamesData namesData = myIndexDataGetter.buildFileNamesData(myFilePath);
-    if (!namesData.hasRenames()) {
-      VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
-      return new FileHistoryVisiblePack(dataPack, visibleGraph, canRequestMore, filters, namesData);
-    }
+    if (namesData.hasRenames() && visibleGraph.getVisibleCommitCount() > 0) {
+      if (visibleGraph instanceof VisibleGraphImpl) {
 
-    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
-    if (visibleGraph instanceof VisibleGraphImpl) {
-      FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
-      if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), getCurrentRow(dataPack, visibleGraph, namesData), myFilePath)) {
-        // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-        return new FileHistoryVisiblePack(dataPack, createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits()),
-                                          canRequestMore,
-                                          filters,
-                                          namesData);
+        int row = getCurrentRow(dataPack, visibleGraph, namesData);
+
+        FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
+        if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), row, myFilePath)) {
+          // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+          visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits());
+        }
       }
     }
 
