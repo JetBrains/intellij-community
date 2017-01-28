@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -39,16 +40,16 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.*;
 
 /**
  * @author yole
@@ -385,7 +386,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
     if (!inherited) {
-      return PyUtil.as(myClass.getMetaClassType(context), PyClassLikeType.class);
+      return as(myClass.getMetaClassType(context), PyClassLikeType.class);
     }
     final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
     final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
@@ -599,10 +600,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (!myClass.isNewStyleClass(typeEvalContext)) {
-      final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
-      final PyClassType classobjType = cache.getOldstyleClassobjType();
-      if (classobjType != null) {
-        ret.addAll(Arrays.asList(classobjType.getCompletionVariants(prefix, location, context)));
+      final PyClass instanceClass = as(resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE),
+                                                             fromFoothold(myClass)), PyClass.class);
+      if (instanceClass != null) {
+        final PyClassTypeImpl instanceType = new PyClassTypeImpl(instanceClass, false);
+        ret.addAll(Arrays.asList(instanceType.getCompletionVariants(prefix, location, context)));
+
       }
     }
 

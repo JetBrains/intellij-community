@@ -107,7 +107,6 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
-        // and we probably don't want to confuse user with PyNames.FAKE_OLD_BASE anyway
         if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
           candidates.add(PyBuiltinCache.getInstance(anchor).getClass(PyNames.OBJECT));
         }

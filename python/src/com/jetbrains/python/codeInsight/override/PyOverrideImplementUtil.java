@@ -237,7 +237,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || raisesNotImplementedError(baseFunction) || implement) {
+    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || raisesNotImplementedError(baseFunction) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {

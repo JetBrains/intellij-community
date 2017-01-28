@@ -41,10 +41,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -60,6 +57,9 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.resolveTopLevelMember;
 
 /**
  * @author yole
@@ -999,7 +999,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses(context)) {
-        if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+        if (skipClassObj && PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
           continue;
         }
         if (!ancestor.visitMethods(processor, false, null)) {
@@ -1313,7 +1313,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getSuperClassTypes(@NotNull final TypeEvalContext context) {
-    if (PyNames.FAKE_OLD_BASE.equals(getName())) {
+    if (PyNames.TYPES_INSTANCE_TYPE.equals(getQualifiedName())) {
       return Collections.emptyList();
     }
     final PyClassStub stub = getStub();
@@ -1330,8 +1330,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
     PyPsiUtils.assertValid(this);
     if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
-      final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
-      final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
+      final PyClass implicitSuper;
+      if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30)) {
+        implicitSuper = as(resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE),
+                                                 fromFoothold(this)), PyClass.class);
+      }
+      else {
+        implicitSuper = builtinCache.getClass(PyNames.OBJECT);
+      }
       if (implicitSuper != null) {
         final PyType type = context.getType(implicitSuper);
         if (type instanceof PyClassLikeType) {
@@ -1659,7 +1665,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   @Override
   public PyClassLikeType getType(@NotNull TypeEvalContext context) {
-    return PyUtil.as(context.getType(this), PyClassLikeType.class);
+    return as(context.getType(this), PyClassLikeType.class);
   }
 
   private static final class MyAttributesCollector implements Processor<PyTargetExpression> {

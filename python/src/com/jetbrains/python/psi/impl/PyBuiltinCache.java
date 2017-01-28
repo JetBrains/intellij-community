@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
@@ -393,11 +392,6 @@ public class PyBuiltinCache {
   @Nullable
   public PyClassType getBoolType() {
     return getObjectType("bool");
-  }
-
-  @Nullable
-  public PyClassType getOldstyleClassobjType() {
-    return getObjectType(PyNames.FAKE_OLD_BASE);
   }
 
   @Nullable
