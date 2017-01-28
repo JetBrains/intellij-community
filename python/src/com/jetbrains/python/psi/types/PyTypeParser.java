@@ -479,7 +479,7 @@ public class PyTypeParser {
       else if (PyNames.NONE.equals(name)) {
         return new ParseResult(PyNoneType.INSTANCE, range);
       }
-      else if ("integer".equals(name) || ("long".equals(name) && LanguageLevel.forElement(myAnchor).isPy3K())) {
+      else if ("integer".equals(name) || "long".equals(name)) {
         final PyClassType type = builtinCache.getIntType();
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
