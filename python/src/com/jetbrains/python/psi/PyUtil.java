@@ -299,7 +299,7 @@ public class PyUtil {
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<>();
     for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
-      if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+      if (!PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
         superClasses.add(ancestor);
       }
     }
@@ -1722,17 +1722,9 @@ public class PyUtil {
     return expectedName.equals(symbolName);
   }
 
-  /**
-   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
-   * special {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
-   *
-   * @param cls    Python class to check
-   * @see PyBuiltinCache
-   * @see PyNames#FAKE_OLD_BASE
-   */
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-    return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
+    final String name = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(name) || PyNames.TYPES_INSTANCE_TYPE.equals(name);
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {

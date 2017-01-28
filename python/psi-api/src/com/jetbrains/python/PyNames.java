@@ -90,10 +90,9 @@ public class PyNames {
   public static final String TRUE = "True";
   public static final String FALSE = "False";
 
-  public static final String FAKE_OLD_BASE = "___Classobj";
-
   public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
   public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";
+  public static final String TYPES_INSTANCE_TYPE = "types.InstanceType";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
