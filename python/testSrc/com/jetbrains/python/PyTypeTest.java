@@ -461,7 +461,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyOfUnionType() {
-    doTest("int", "def f():\n" +
+    doTest("Optional[int]", "def f():\n" +
                   "    '''\n" +
                   "    :rtype: int or slice\n" +
                   "    '''\n" +
