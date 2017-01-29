@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -73,9 +74,9 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
     final List<String> handledLibraryTables = new SmartList<>();
     getRootModel().orderEntries().forEachLibrary(library -> {
       LibraryTable table = library.getTable();
-      if (table instanceof PersistentStateComponentWithModificationTracker && !handledLibraryTables.contains(table.getTableLevel())) {
+      if (table instanceof LibraryTableBase && !handledLibraryTables.contains(table.getTableLevel())) {
         handledLibraryTables.add(table.getTableLevel());
-        long count = ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
+        long count = ((LibraryTableBase)table).getStateModificationCount();
         if (count > 0) {
           if (Registry.is("store.track.module.root.manager.changes", false)) {
             LOG.error("modification count changed due to library  " + library.getName() + " change (" + count + "), module " + getModule().getName());

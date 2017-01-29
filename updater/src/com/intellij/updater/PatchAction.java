@@ -166,18 +166,18 @@ public abstract class PatchAction {
         ValidationResult.Option[] options;
         if (myPatch.isStrict()) {
           if (isCritical()) {
-            options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE };
+            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
           }
           else {
-            options = new ValidationResult.Option[]{ ValidationResult.Option.NONE };
+            options = new ValidationResult.Option[]{ValidationResult.Option.NONE};
           }
         }
         else {
           if (isCritical()) {
-            options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE };
+            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE};
           }
           else {
-            options = new ValidationResult.Option[]{ ValidationResult.Option.IGNORE };
+            options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
           }
         }
         return new ValidationResult(kind, myPath, action, ValidationResult.MODIFIED_MESSAGE, options);

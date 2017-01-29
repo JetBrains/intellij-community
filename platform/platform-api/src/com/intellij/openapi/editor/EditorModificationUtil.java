@@ -17,6 +17,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -26,6 +28,7 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -410,5 +413,16 @@ public class EditorModificationUtil {
       return false;
     }
     return true;
+  }
+
+  /**
+   * @return true when not viewer
+   */
+  public static boolean showReadOnlyViewWarning(Editor editor) {
+    if (!editor.isViewer()) return true;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
+
+    HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.viewer.hint"));
+    return false;
   }
 }

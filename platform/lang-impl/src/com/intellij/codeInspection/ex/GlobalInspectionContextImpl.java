@@ -547,7 +547,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             indicator.checkCanceled();
             if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
 
-            PsiFile psiFile = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)() -> {
+            PsiFile psiFile = ReadAction.compute(() -> {
               if (getProject().isDisposed()) throw new ProcessCanceledException();
               PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
               Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
@@ -879,7 +879,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final TextRange range;
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-      range = elements.length == 1 ? ApplicationManager.getApplication().runReadAction((Computable<TextRange>)elements[0]::getTextRange) : null;
+      range = elements.length == 1 ? ReadAction.compute(elements[0]::getTextRange) : null;
     }
     else {
       range = null;

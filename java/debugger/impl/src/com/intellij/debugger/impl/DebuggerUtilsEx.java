@@ -43,12 +43,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -470,8 +473,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
-      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
+    CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 
@@ -995,5 +997,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return -1;
+  }
+
+  public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      if (file == null) {
+        return true;
+      }
+      else {
+        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
+      }
+    });
   }
 }

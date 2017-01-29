@@ -17,7 +17,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor) {
     Module[] modules =
-      ApplicationManager.getApplication().runReadAction((Computable<Module[]>)() -> ModuleManager.getInstance(myProject).getModules());
+      ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModules());
     for (final Module module : modules) {
       for (VirtualFile contentRoot : getRootsToIterate(module)) {
         if (!iterateContentUnderDirectory(contentRoot, processor)) {
@@ -63,7 +62,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   private Set<VirtualFile> getRootsToIterate(final Module module) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)() -> {
+    return ReadAction.compute(() -> {
       if (module.isDisposed()) return Collections.emptySet();
 
       Set<VirtualFile> result = new LinkedHashSet<>();

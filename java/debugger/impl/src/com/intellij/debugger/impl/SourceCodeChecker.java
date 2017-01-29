@@ -29,14 +29,13 @@ import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +109,7 @@ public class SourceCodeChecker {
       return ThreeState.UNSURE;
     }
     if (position != null) {
-      return ApplicationManager.getApplication().runReadAction((Computable<ThreeState>)() -> {
+      return ReadAction.compute(() -> {
         PsiFile psiFile = position.getFile();
         if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
           return ThreeState.UNSURE;
@@ -184,7 +183,7 @@ public class SourceCodeChecker {
       try {
         for (Location loc : type.allLineLocations()) {
           SourcePosition position =
-            ApplicationManager.getApplication().runReadAction((Computable<SourcePosition>)() -> {
+            ReadAction.compute(() -> {
               try {
                 return positionManager.getSourcePosition(loc);
               }

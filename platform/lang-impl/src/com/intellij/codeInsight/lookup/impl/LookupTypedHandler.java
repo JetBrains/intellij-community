@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -67,7 +66,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor)) {
+    if (!EditorModificationUtil.showReadOnlyViewWarning(originalEditor)) {
       return;
     }
 
@@ -145,7 +144,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
         }
 
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-        lookup.finishLookup(charTyped);
+        lookup.finishLookupInWritableFile(charTyped, item);
         return true;
       }
     }

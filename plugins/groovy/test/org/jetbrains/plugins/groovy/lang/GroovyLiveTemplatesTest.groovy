@@ -22,7 +22,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -68,13 +67,8 @@ void usage(int num, boolean someBoolean, List<String> args){
   }
 
   static void expandTemplate(final Editor editor) {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      void run() {
-        new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor)
-        ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR)
-      }
-    })
+    new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor)
+    ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR)
   }
 
   void testGroovyStatementContext() throws Exception {

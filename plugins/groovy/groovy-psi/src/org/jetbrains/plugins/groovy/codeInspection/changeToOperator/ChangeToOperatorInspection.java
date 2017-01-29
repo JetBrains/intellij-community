@@ -103,21 +103,13 @@ public class ChangeToOperatorInspection extends BaseInspection {
   public PsiElement getHighlightElement(@NotNull GrMethodCall methodCall) {
     GrExpression invokedExpression = methodCall.getInvokedExpression();
     if (!(invokedExpression instanceof GrReferenceExpression)) return null;
-
     return  ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
   }
 
   @Nullable
   public String getMethodName(@NotNull GrMethodCall methodCall) {
-    GrExpression invokedExpression = methodCall.getInvokedExpression();
-    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
-
-    PsiElement element = ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
-    if (element == null) return null;
-
     PsiMethod method = methodCall.resolveMethod();
     if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) return null;
-
     return method.getName();
   }
 

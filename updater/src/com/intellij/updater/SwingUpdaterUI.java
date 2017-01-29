@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,9 +218,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (validationResults.isEmpty()) return Collections.emptyMap();
-
-    final Map<String, ValidationResult.Option> result = new HashMap<>();
+    Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
         boolean proceed = true;
@@ -259,7 +257,8 @@ public class SwingUpdaterUI implements UpdaterUI {
           });
           buttonsPanel.add(proceedButton);
           dialog.getRootPane().setDefaultButton(proceedButton);
-        } else {
+        }
+        else {
           dialog.getRootPane().setDefaultButton(cancelButton);
         }
 
@@ -277,12 +276,12 @@ public class SwingUpdaterUI implements UpdaterUI {
         }
 
         String message = "<html>Some conflicts were found in the installation area.<br><br>";
-
         if (proceed) {
           message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
                      " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
                      "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-        } else {
+        }
+        else {
           message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
                      "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
         }

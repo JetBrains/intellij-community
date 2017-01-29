@@ -157,15 +157,10 @@ public class CodeInsightTestUtil {
   public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
                                         @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
-        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
-        assert lookup != null;
-        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute();
+    new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
+    assert lookup != null;
+    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     fixture.checkResultByFile(after, false);
   }
 

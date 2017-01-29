@@ -18,9 +18,9 @@ package com.intellij.diff.impl
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import java.util.*
@@ -30,26 +30,17 @@ import java.util.*
   storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
 )
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
-  companion object {
-    @JvmField val KEY: Key<DiffSettings> = Key.create("DiffSettings")
-
-    @JvmStatic
-    fun getInstance(): DiffSettingsHolder {
-      return ServiceManager.getService(DiffSettingsHolder::class.java)
-    }
-  }
-
-  internal data class SharedSettings(
+  data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true
   )
 
-  internal data class PlaceSettings(
+  data class PlaceSettings(
     var DIFF_TOOLS_ORDER: List<String> = ArrayList(),
     var SYNC_BINARY_EDITOR_SETTINGS: Boolean = true
   )
 
-  class DiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
-                                          val PLACE_SETTINGS: PlaceSettings) {
+  class DiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
+                                          private val PLACE_SETTINGS: PlaceSettings) {
     constructor() : this(SharedSettings(), PlaceSettings())
 
     var diffToolsOrder: List<String>
@@ -65,15 +56,10 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
       set(value) { PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS = value }
 
     companion object {
-      @JvmStatic
-      fun getSettings(): DiffSettings {
-        return getSettings(null)
-      }
+      @JvmField val KEY: Key<DiffSettings> = Key.create("DiffSettings")
 
-      @JvmStatic
-      fun getSettings(place: String?): DiffSettings {
-        return getInstance().getSettings(place)
-      }
+      @JvmStatic fun getSettings(): DiffSettings = getSettings(null)
+      @JvmStatic fun getSettings(place: String?): DiffSettings = service<DiffSettingsHolder>().getSettings(place)
     }
   }
 
@@ -100,8 +86,8 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    internal var SHARED_SETTINGS = SharedSettings()
+    var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
+    var SHARED_SETTINGS = SharedSettings()
   }
 
   private var myState: State = State()

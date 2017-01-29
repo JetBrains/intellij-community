@@ -150,7 +150,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
-      if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
+      if (psiClass == null || psiClass instanceof PsiTypeParameter || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
 
       if (eachReturnType.getArrayDimensions() == 0) {
         PsiMethod[] constructors = psiClass.getConstructors();

@@ -17,11 +17,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -30,12 +28,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.LightweightHint;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -101,20 +97,15 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     return !status.hasReadonlyFiles();
   }
-
+  
   // returns true on success
+  @Deprecated
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
-    if (!editor.isViewer()) return true;
-    showReadOnlyViewWarning(editor);
-    return false;
+    return EditorModificationUtil.showReadOnlyViewWarning(editor);
   }
 
+  @Deprecated
   public static void showReadOnlyViewWarning(Editor editor) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return;
-    
-    JComponent component = HintUtil.createInformationLabel("This view is read-only");
-    final LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
+    EditorModificationUtil.showReadOnlyViewWarning(editor);
   }
 }

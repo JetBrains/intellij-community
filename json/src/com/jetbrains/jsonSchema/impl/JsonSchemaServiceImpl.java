@@ -10,13 +10,12 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -156,7 +155,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private JsonSchemaObject readObject(@NotNull JsonSchemaFileProvider provider) {
     final VirtualFile file = provider.getSchemaFile();
     if (file == null) return null;
-    return ApplicationManager.getApplication().runReadAction((Computable<JsonSchemaObject>)() -> {
+    return ReadAction.compute(() -> {
       try {
         final JsonSchemaReader reader = JsonSchemaReader.create(myProject, file);
         if (reader == null) return null;

@@ -47,7 +47,9 @@ public class Runner {
 
   public static void main(String[] args) throws Exception {
     String jarFile = getArgument(args, "jar");
-    jarFile = jarFile == null ? resolveJarFile() : jarFile;
+    if (jarFile == null) {
+      jarFile = resolveJarFile();
+    }
 
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
@@ -65,7 +67,12 @@ public class Runner {
       boolean normalized = Arrays.asList(args).contains("--normalized");
 
       String root = getArgument(args, "root");
-      root = root == null ? "" : (root.endsWith("/") ? root : root + "/");
+      if (root == null) {
+        root = "";
+      }
+      else if (!root.endsWith("/")) {
+        root += "/";
+      }
 
       List<String> ignoredFiles = extractArguments(args, "ignored");
       List<String> criticalFiles = extractArguments(args, "critical");
@@ -103,7 +110,7 @@ public class Runner {
         install(jarFile, destFolder);
       }
       else {
-        apply(jarFile, destFolder);
+        apply(jarFile, destFolder, Arrays.asList(args).contains("--toolbox-ui"));
       }
     }
     else {
@@ -275,9 +282,10 @@ public class Runner {
     });
   }
 
-  private static void apply(String jarFile, String destFolder) throws Exception {
-     logger().info("Applying patch to the " + destFolder);
-    final boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
+    logger().info("Applying patch to the " + destFolder);
+    UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
+    boolean success = doInstall(jarFile, ui, destFolder);
     if (!success) {
       System.exit(1);
     }
@@ -301,8 +309,9 @@ public class Runner {
 
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
-        Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
-        return PatchFileCreator.apply(result, options, ui);
+        List<ValidationResult> problems = result.validationResults;
+        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+        return PatchFileCreator.apply(result, resolutions, ui);
       }
       catch (Throwable e) {
         printStackTrace(e);

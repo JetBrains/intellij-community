@@ -1743,4 +1743,6 @@ class Bar {
     assert myFixture.lookupElements[0].object == uClass
   }
 
+  void testSuggestClassNamesForLambdaParameterTypes() { doTest('\n') }
+
 }

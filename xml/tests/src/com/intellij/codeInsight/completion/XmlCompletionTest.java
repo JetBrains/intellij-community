@@ -26,15 +26,12 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -79,16 +76,6 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     }
 
     ExternalResourceManagerExImpl.addTestResource(url, location, getTestRootDisposable());
-  }
-
-  @Override
-  protected void runTest() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        XmlCompletionTest.super.runTest();
-      }
-    }.execute();
   }
 
   public void testCompleteWithAnyInSchema() throws Exception {

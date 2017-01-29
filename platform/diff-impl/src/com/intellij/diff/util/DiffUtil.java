@@ -31,7 +31,6 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -1320,10 +1319,10 @@ public class DiffUtil {
 
   @NotNull
   public static DiffSettings getDiffSettings(@NotNull DiffContext context) {
-    DiffSettings settings = context.getUserData(DiffSettingsHolder.KEY);
+    DiffSettings settings = context.getUserData(DiffSettings.KEY);
     if (settings == null) {
       settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
-      context.putUserData(DiffSettingsHolder.KEY, settings);
+      context.putUserData(DiffSettings.KEY, settings);
     }
     return settings;
   }

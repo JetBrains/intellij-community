@@ -28,11 +28,10 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +79,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myEvaluator = NullableLazyValue.createValue(() -> ApplicationManager.getApplication().runReadAction((Computable<ExpressionEvaluator>)() -> {
+    myEvaluator = NullableLazyValue.createValue(() -> ReadAction.compute(() -> {
         try {
           return EvaluatorBuilderImpl.build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCapturePoint.myInsertKeyExpression),
                                             null, null, project);
@@ -89,8 +88,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           LOG.warn(e);
         }
         return null;
-      }
-    ));
+      }));
   }
 
   @NotNull

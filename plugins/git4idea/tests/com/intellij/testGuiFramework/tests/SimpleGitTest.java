@@ -23,6 +23,7 @@ import com.intellij.testGuiFramework.fixtures.*;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
 import org.fest.swing.timing.Pause;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
@@ -34,6 +35,7 @@ import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatche
 /**
  * @author Sergey Karashevich
  */
+@Ignore
 public class SimpleGitTest extends GitGuiTestCase {
 
   @Test

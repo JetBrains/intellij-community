@@ -504,13 +504,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
+    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
+    myVerticalScrollBar.setOpaque(shouldScrollBarBeOpaque(project));
     myPanel = new JPanel();
 
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    boolean opaque = JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
-    if (opaque && !IdeBackgroundUtil.isBackgroundImageSet(project)) {
+    if (myVerticalScrollBar.isOpaque()) {
       //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
-      myVerticalScrollBar.setOpaque(true);
       myScrollPane.getHorizontalScrollBar().setOpaque(true);
     }
     UIUtil.putClientProperty(
@@ -552,6 +552,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       new MacGestureSupportForEditor(getComponent());
     }
 
+  }
+
+  static boolean shouldScrollBarBeOpaque(Project project) {
+    if (IdeBackgroundUtil.isBackgroundImageSet(project)) return false;
+    return JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -2777,8 +2782,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
         When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                !IdeBackgroundUtil.isBackgroundImageSet(myProject));
+      setOpaque(shouldScrollBarBeOpaque(myProject));
     }
 
     /**

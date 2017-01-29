@@ -89,8 +89,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myEndOffset;
   }
 
-  boolean isForInjected() {
-    return myForInjected;
+  boolean isGreedy() {
+    return myForInjected || myIdentikit.isForPsiFile();
   }
 
   @Override

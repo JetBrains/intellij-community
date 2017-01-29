@@ -18,7 +18,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
@@ -158,7 +157,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor)) return;
+    if (!EditorModificationUtil.showReadOnlyViewWarning(originalEditor)) return;
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
