@@ -47,7 +47,9 @@ public class Runner {
 
   public static void main(String[] args) throws Exception {
     String jarFile = getArgument(args, "jar");
-    jarFile = jarFile == null ? resolveJarFile() : jarFile;
+    if (jarFile == null) {
+      jarFile = resolveJarFile();
+    }
 
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
@@ -65,7 +67,12 @@ public class Runner {
       boolean normalized = Arrays.asList(args).contains("--normalized");
 
       String root = getArgument(args, "root");
-      root = root == null ? "" : (root.endsWith("/") ? root : root + "/");
+      if (root == null) {
+        root = "";
+      }
+      else if (!root.endsWith("/")) {
+        root += "/";
+      }
 
       List<String> ignoredFiles = extractArguments(args, "ignored");
       List<String> criticalFiles = extractArguments(args, "critical");
@@ -276,8 +283,8 @@ public class Runner {
   }
 
   private static void apply(String jarFile, String destFolder) throws Exception {
-     logger().info("Applying patch to the " + destFolder);
-    final boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+    logger().info("Applying patch to the " + destFolder);
+    boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
     if (!success) {
       System.exit(1);
     }
