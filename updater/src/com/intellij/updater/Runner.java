@@ -110,7 +110,7 @@ public class Runner {
         install(jarFile, destFolder);
       }
       else {
-        apply(jarFile, destFolder);
+        apply(jarFile, destFolder, Arrays.asList(args).contains("--toolbox-ui"));
       }
     }
     else {
@@ -282,9 +282,10 @@ public class Runner {
     });
   }
 
-  private static void apply(String jarFile, String destFolder) throws Exception {
+  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
     logger().info("Applying patch to the " + destFolder);
-    boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+    UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
+    boolean success = doInstall(jarFile, ui, destFolder);
     if (!success) {
       System.exit(1);
     }

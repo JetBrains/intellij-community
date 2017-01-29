@@ -83,7 +83,7 @@ public class Bootstrap {
 
     final Class<?> runner = Bootstrap.class.getClassLoader().loadClass("com.intellij.updater.Runner");
     final Method main = runner.getMethod("main", String[].class);
-    main.invoke(null, (Object)new String[]{"apply", args[0]});
+    main.invoke(null, (Object)new String[]{"apply", args[0], "--toolbox-ui"});
   }
 
   private static void cleanUp() {
