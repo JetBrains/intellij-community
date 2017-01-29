@@ -48,6 +48,8 @@ import java.util.*;
 
 /**
  * Implements reference expression PSI.
+ *
+ * @author yole
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
@@ -416,9 +418,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile)target);
-    }
-    if (target instanceof PyImportedModule) {
-      return new PyImportedModuleType((PyImportedModule)target);
     }
     if ((target instanceof PyTargetExpression || target instanceof PyNamedParameter) && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);

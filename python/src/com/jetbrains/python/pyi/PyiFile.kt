@@ -18,7 +18,9 @@ package com.jetbrains.python.pyi
 import com.intellij.psi.FileViewProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.impl.PyFileImpl
+import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -32,20 +34,23 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun getLanguageLevel() = LanguageLevel.PYTHON36
 
-  override fun multiResolveName(name: String): List<RatedResolveResult> {
-    val exportedResults = super.multiResolveName(name)
-        // XXX: This filter rules out names that are needed in PyClassImpl.getElementQNamed()
-//        .filter {
-//          val importedResult = it as? ImportedResolveResult
-//          val importElement = importedResult?.definer as? PyImportElement
-//          if (importElement != null) importElement.asName != null else true
-//        }
-    val firstOverload = exportedResults.firstOrNull {
+  override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
+    val baseResults = super.multiResolveName(name, exported)
+    val results = if (exported)
+      baseResults
+        .filter {
+          val importedResult = it as? ImportedResolveResult
+          val importElement = importedResult?.definer as? PyImportElement
+          if (importElement != null) importElement.asName != null else true
+        }
+    else
+      baseResults
+    val firstOverload = results.firstOrNull {
       val element = it.element
       element is PyCallable &&
-          element.containingFile is PyiFile &&
-          PyiTypeProvider.isOverload(element, TypeEvalContext.deepCodeInsight(project))
+      element.containingFile is PyiFile &&
+      PyiTypeProvider.isOverload(element, TypeEvalContext.deepCodeInsight(project))
     }
-    return if (firstOverload != null) listOf(firstOverload) else exportedResults
+    return if (firstOverload != null) listOf(firstOverload) else results
   }
 }
