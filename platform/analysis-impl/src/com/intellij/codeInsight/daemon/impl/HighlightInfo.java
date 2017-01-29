@@ -326,7 +326,7 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
-  boolean equalsByActualOffset(@NotNull HighlightInfo info) {
+  protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getSeverity() == getSeverity() &&
