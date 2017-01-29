@@ -21,13 +21,13 @@ def process_args():
     force_cython = False
     for i, arg in enumerate(sys.argv[:]):
         if arg.startswith('--target-pyd-name='):
-            del sys.argv[i]
+            sys.argv.remove(arg)
             target_pydevd_name = arg[len('--target-pyd-name='):]
         if arg.startswith('--target-pyd-frame-eval='):
-            del sys.argv[i]
+            sys.argv.remove(arg)
             target_frame_eval = arg[len('--target-pyd-frame-eval='):]
         if arg == '--force-cython':
-            del sys.argv[i]
+            sys.argv.remove(arg)
             force_cython = True
 
     return target_pydevd_name, target_frame_eval, force_cython

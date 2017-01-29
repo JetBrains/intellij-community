@@ -5,6 +5,7 @@ plugins {
 }
 
 envs {
+  project.buildDir = new File(System.getenv().getOrDefault("PYCHARM_BUILD_DIR", buildDir))
   bootstrapDirectory = new File(buildDir, '.miniconda')
   envsDirectory = new File(buildDir, 'MinicondaEnvs')
   minicondaVersion = 'latest'
