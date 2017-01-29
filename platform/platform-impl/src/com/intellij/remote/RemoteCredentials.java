@@ -37,6 +37,8 @@ public interface RemoteCredentials {
 
   boolean isUseKeyPair();
 
+  boolean isUsePassword();
+
   String getPrivateKeyFile();
 
   boolean isStorePassword();

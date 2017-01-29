@@ -32,6 +32,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String USERNAME = "USERNAME";
   public static final String PASSWORD = "PASSWORD";
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
+  public static final String USE_PASSWORD = "USE_PASSWORD";
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
@@ -49,6 +50,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myPassphrase;
   private boolean myStorePassword;
   private boolean myStorePassphrase;
+  private boolean myUsePassword;
 
   public static String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
@@ -166,6 +168,16 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myUseKeyPair = useKeyPair;
   }
 
+  @Override
+  public boolean isUsePassword() {
+    return myUsePassword;
+  }
+
+  @Override
+  public void setUsePassword(boolean usePassword) {
+    myUsePassword = usePassword;
+  }
+
   @NotNull
   public String getSerializedUserName() {
     if (myUserName == null) return "";
@@ -236,6 +248,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setUserName(from.getUserName());
     to.setPassword(from.getPassword());
     to.setUseKeyPair(from.isUseKeyPair());
+    to.setUsePassword(from.isUsePassword());
     to.setPrivateKeyFile(from.getPrivateKeyFile());
     to.setKnownHostsFile(from.getKnownHostsFile());
     to.setStorePassword(from.isStorePassword());
@@ -256,6 +269,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
+    setUsePassword(StringUtil.parseBoolean(element.getAttributeValue(USE_PASSWORD), !isUseKeyPair()));
   }
 
   public void save(Element rootElement) {
@@ -267,6 +281,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
     rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
+    rootElement.setAttribute(USE_PASSWORD, Boolean.toString(isUsePassword()));
   }
 
   @Override
@@ -278,6 +293,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
     if (myLiteralPort != null ? !myLiteralPort.equals(holder.myLiteralPort) : holder.myLiteralPort != null) return false;
     if (myUseKeyPair != holder.myUseKeyPair) return false;
+    if (myUsePassword != holder.myUsePassword) return false;
     if (myStorePassword != holder.myStorePassword) return false;
     if (myStorePassphrase != holder.myStorePassphrase) return false;
     if (myHost != null ? !myHost.equals(holder.myHost) : holder.myHost != null) return false;
@@ -297,6 +313,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
     result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
     result = 31 * result + (myUseKeyPair ? 1 : 0);
+    result = 31 * result + (myUsePassword ? 1 : 0);
     result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
     result = 31 * result + (myKnownHostsFile != null ? myKnownHostsFile.hashCode() : 0);
     result = 31 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
