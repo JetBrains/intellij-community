@@ -699,7 +699,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
-    RangeHighlighterEx highlighter = info.highlighter;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter == null || !highlighter.isValid()) return false;
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
