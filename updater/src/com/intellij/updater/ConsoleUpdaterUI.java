@@ -16,6 +16,7 @@
 package com.intellij.updater;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,25 +59,35 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (!validationResults.isEmpty()) {
-      System.out.println("Validation info:");
+    if (validationResults.isEmpty()) return Collections.emptyMap();
 
-      for (ValidationResult item : validationResults) {
-        System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+    System.out.println("Validation info:");
+    for (ValidationResult item : validationResults) {
+      System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+    }
+
+    final Map<String, ValidationResult.Option> result = new HashMap<>();
+
+    for (ValidationResult item : validationResults) {
+
+      if (item.options.contains(ValidationResult.Option.REPLACE)) {
+        result.put(item.path, ValidationResult.Option.REPLACE);
+        System.out.println("Selected REPLACE for " + item.path);
+        continue;
       }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.ERROR)) {
+      if (item.kind == ValidationResult.Kind.ERROR) {
         System.out.println("Invalid files were detected. Failing.");
         throw new OperationCancelledException();
       }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.CONFLICT)) {
+      if (item.kind == ValidationResult.Kind.CONFLICT) {
         System.out.println("Conflicting files were detected. Failing.");
         throw new OperationCancelledException();
       }
     }
 
-    return Collections.emptyMap();
+    return result;
   }
 
   @Override
