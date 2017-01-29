@@ -17,6 +17,8 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -48,7 +50,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
-    g.setColor(getBackgroundColor());
+    g.setColor(Registry.is("ide.new.editor.tabs.selection") ? new JBColor(Gray._255, Gray._60) : getBackgroundColor());
     g.fill(clip);
   }
 
@@ -60,7 +62,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return UIUtil.CONTRAST_BORDER_COLOR;
+    return Registry.is("ide.new.editor.tabs.selection") ? new JBColor(Gray._255, Gray._60) : UIUtil.CONTRAST_BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {
