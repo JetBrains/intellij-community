@@ -96,7 +96,7 @@ public abstract class JBEditorTabsPainter {
 
     if (Registry.is("ide.new.editor.tabs.selection")) {
       //todo[kb] move to editor scheme
-      g2d.setColor(new Color(0x439EB8));
+      g2d.setColor(Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0));
       int thickness = 3;
       if (position == JBTabsPosition.bottom) {
         g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
