@@ -28,6 +28,12 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             break
 
     if not skip_file:
+        try:
+            threading.currentThread()
+        except:
+            skip_file = True
+
+    if not skip_file:
         t = threading.currentThread()
         try:
             additional_info = t.additional_info
