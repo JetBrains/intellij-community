@@ -714,7 +714,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private boolean isBuiltInConstant() {
     // TODO: generalize
     String name = myElement.getReferencedName();
-    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
+    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name) || PyNames.DEBUG.equals(name);
   }
 
   @Override
