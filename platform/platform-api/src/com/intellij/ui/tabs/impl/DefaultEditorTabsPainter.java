@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -40,6 +41,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     ;
     g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g2d.fillRect(x, y, w, h);
+    if (Registry.is("ide.new.editor.tabs.selection")) return;
     g2d.setColor(getInactiveMaskColor());
     g2d.fillRect(x, y, w, h);
   }

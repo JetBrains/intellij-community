@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -85,10 +86,18 @@ public abstract class JBEditorTabsPainter {
                                 selectedShape.labelPath.deltaY(4)));
     }
 
-    g2d.setColor(Gray._0.withAlpha(15));
-    g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
-                                                   selectedShape.path.getMaxX(),
-                                                   selectedShape.labelPath.getMaxY()));
+    if (!Registry.is("ide.new.editor.tabs.selection")) {
+      g2d.setColor(Gray._0.withAlpha(15));
+      g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
+                                                     selectedShape.path.getMaxX(),
+                                                     selectedShape.labelPath.getMaxY()));
+    }
+
+    if (horizontalTabs && Registry.is("ide.new.editor.tabs.selection")) {
+      //todo[kb] move to editor scheme
+      g2d.setColor(new Color(0x439EB8));
+      g2d.fillRect(rect.x, rect.y + rect.height - 2, rect.width, 3);
+    }
   }
 
   public abstract Color getBackgroundColor();
