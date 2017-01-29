@@ -11,22 +11,26 @@ the .pyx file by running "python build_tools/build.py"
 
 import os
 from setuptools import setup
+import sys
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-def process_args(extension_name):
-    import sys
-    target_pydevd_name = extension_name
+def process_args():
+    target_pydevd_name = None
+    target_frame_eval = None
     force_cython = False
     for i, arg in enumerate(sys.argv[:]):
         if arg.startswith('--target-pyd-name='):
             del sys.argv[i]
             target_pydevd_name = arg[len('--target-pyd-name='):]
+        if arg.startswith('--target-pyd-frame-eval='):
+            del sys.argv[i]
+            target_frame_eval = arg[len('--target-pyd-frame-eval='):]
         if arg == '--force-cython':
             del sys.argv[i]
             force_cython = True
 
-    return target_pydevd_name, force_cython
+    return target_pydevd_name, target_frame_eval, force_cython
 
 
 def build_extension(dir_name, extension_name, target_pydevd_name, force_cython):
@@ -78,6 +82,15 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython):
                 traceback.print_exc()
 
 
+target_pydevd_name, target_frame_eval, force_cython = process_args()
+
 extension_name = "pydevd_cython"
-target_pydevd_name, force_cython = process_args(extension_name)
+if target_pydevd_name is None:
+    target_pydevd_name = extension_name
 build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython)
+
+if sys.version_info >= (3, 6):
+    extension_name = "pydevd_frame_evaluator"
+    if target_frame_eval is None:
+        target_frame_eval = extension_name
+    build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython)
