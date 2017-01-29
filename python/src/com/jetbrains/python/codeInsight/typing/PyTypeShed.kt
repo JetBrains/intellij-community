@@ -40,7 +40,7 @@ object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  private val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types")
+  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types")
   private val BLACK_LIST = setOf<String>()
 
   /**
