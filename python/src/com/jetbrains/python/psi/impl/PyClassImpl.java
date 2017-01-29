@@ -1593,44 +1593,49 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable
   private static PsiElement getElementQNamed(@NotNull PyFile file, @NotNull QualifiedName qualifiedName, @NotNull TypeEvalContext context) {
-    final int componentCount = qualifiedName.getComponentCount();
-    final String fullName = qualifiedName.toString();
-    final PyType type = new PyModuleType(file);
-    if (componentCount == 0) {
+    if (qualifiedName.getComponentCount() == 0) {
       return null;
     }
-    else if (componentCount == 1) {
-      PsiElement element = resolveTypeMember(type, fullName, context);
-      if (element == null) {
-        element = PyBuiltinCache.getInstance(file).getByName(fullName);
-      }
-      return element;
-    }
-    else {
-      final String name = qualifiedName.getLastComponent();
-      final QualifiedName containingQName = qualifiedName.removeLastComponent();
-      PyType currentType = type;
-      for (String component : containingQName.getComponents()) {
-        currentType = getMemberType(currentType, component, context);
-        if (currentType == null) {
-          return null;
-        }
-      }
-      if (name != null) {
-        return resolveTypeMember(currentType, name, context);
-      }
+    final String first = qualifiedName.getFirstComponent();
+    if (first == null) {
       return null;
     }
+    final QualifiedName rest = qualifiedName.removeHead(1);
+    final PsiElement firstElement = file.multiResolveName(first, false)
+      .stream()
+      .map(RatedResolveResult::getElement)
+      .findFirst()
+      .orElse(PyBuiltinCache.getInstance(file).getByName(first));
+    if (rest.getComponentCount() == 0) {
+      return firstElement;
+    }
+    final PyTypedElement typedElement = as(firstElement, PyTypedElement.class);
+    if (typedElement == null) {
+      return null;
+    }
+    final String name = rest.getLastComponent();
+    final QualifiedName containingQName = rest.removeLastComponent();
+    PyType currentType = context.getType(typedElement);
+    if (currentType == null) {
+      return null;
+    }
+    for (String component : containingQName.getComponents()) {
+      currentType = getMemberType(currentType, component, context);
+      if (currentType == null) {
+        return null;
+      }
+    }
+    if (name != null) {
+      return resolveTypeMember(currentType, name, context);
+    }
+    return null;
   }
 
   @Nullable
   private static PyType getMemberType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyType result;
     PsiElement element = resolveTypeMember(type, name, context);
-    if (element instanceof PyImportedModule) {
-      result = new PyImportedModuleType((PyImportedModule)element);
-    }
-    else if (element instanceof PyTypedElement) {
+    if (element instanceof PyTypedElement) {
       result = context.getType((PyTypedElement)element);
     }
     else {
