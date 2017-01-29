@@ -2304,13 +2304,7 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    //final GraphicsConfig config = new GraphicsConfig(g);
-    //try {
-    //  config.setAntialiasing(true);
-      paintSelectionAndBorder((Graphics2D)g);
-    //} finally {
-    //  config.restore();
-    //}
+    paintSelectionAndBorder((Graphics2D)g);
 
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {
