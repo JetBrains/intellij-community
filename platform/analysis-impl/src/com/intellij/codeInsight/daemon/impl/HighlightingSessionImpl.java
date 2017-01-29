@@ -138,12 +138,12 @@ public class HighlightingSessionImpl implements HighlightingSession {
   }
 
   void queueDisposeHighlighterFor(@NotNull HighlightInfo info) {
-    RangeHighlighterEx highlighter = info.highlighter;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter == null) return;
     // that highlighter may have been reused for another info
     myEDTQueue.offer(() -> {
       Object actualInfo = highlighter.getErrorStripeTooltip();
-      if (actualInfo == info && info.highlighter == highlighter) highlighter.dispose();
+      if (actualInfo == info && info.getHighlighter() == highlighter) highlighter.dispose();
     });
   }
 

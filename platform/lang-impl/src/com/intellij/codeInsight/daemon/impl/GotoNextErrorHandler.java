@@ -93,7 +93,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   private boolean isBetterThan(HighlightInfo oldInfo, int caretOffset, int newOffset) {
     if (oldInfo == null) return true;
-    int oldOffset = getNavigationPositionFor(oldInfo, oldInfo.highlighter.getDocument());
+    int oldOffset = getNavigationPositionFor(oldInfo, oldInfo.getHighlighter().getDocument());
     if (myGoForward) {
       return caretOffset < oldOffset != caretOffset < newOffset ? caretOffset < newOffset : newOffset < oldOffset;
     }
