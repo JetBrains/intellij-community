@@ -308,8 +308,9 @@ public class Runner {
 
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
-        Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
-        return PatchFileCreator.apply(result, options, ui);
+        List<ValidationResult> problems = result.validationResults;
+        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+        return PatchFileCreator.apply(result, resolutions, ui);
       }
       catch (Throwable e) {
         printStackTrace(e);

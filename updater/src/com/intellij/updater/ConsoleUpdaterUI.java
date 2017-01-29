@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,22 +58,23 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (!validationResults.isEmpty()) {
-      System.out.println("Validation info:");
+    boolean hasErrors = false, hasConflicts = false;
 
-      for (ValidationResult item : validationResults) {
-        System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
-      }
+    System.out.println("Validation info:");
+    for (ValidationResult item : validationResults) {
+      System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+      if (item.kind == ValidationResult.Kind.ERROR) hasErrors = true;
+      if (item.kind == ValidationResult.Kind.CONFLICT) hasConflicts = true;
+    }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.ERROR)) {
-        System.out.println("Invalid files were detected. Failing.");
-        throw new OperationCancelledException();
-      }
+    if (hasErrors) {
+      System.out.println("Invalid files were detected. Failing.");
+      throw new OperationCancelledException();
+    }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.CONFLICT)) {
-        System.out.println("Conflicting files were detected. Failing.");
-        throw new OperationCancelledException();
-      }
+    if (hasConflicts) {
+      System.out.println("Conflicting files were detected. Failing.");
+      throw new OperationCancelledException();
     }
 
     return Collections.emptyMap();
