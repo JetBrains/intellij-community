@@ -294,7 +294,7 @@ public class SchemesCombo<T extends Scheme> {
     if (name.isEmpty()) {
       return EMPTY_NAME_MESSAGE;
     }
-    else if (mySchemesPanel.getModel().nameExists(name)) {
+    else if (mySchemesPanel.getModel().containsScheme(name)) {
       return NAME_ALREADY_EXISTS_MESSAGE;
     }
     return null;

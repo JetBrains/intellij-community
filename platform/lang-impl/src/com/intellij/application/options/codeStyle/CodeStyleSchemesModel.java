@@ -174,6 +174,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     mySettingsToClone.clear();
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
     return false;
@@ -213,7 +214,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
-    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> nameExists(name)),
+    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> containsScheme(name)),
                                    false,
                                    parentScheme);
   }
@@ -261,7 +262,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   @Override
-  public boolean nameExists(@NotNull String name) {
+  public boolean containsScheme(@NotNull String name) {
     return findSchemeByName(name) != null;
   }
 

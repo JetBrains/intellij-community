@@ -189,7 +189,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public boolean nameExists(@NotNull String name) {
+  public boolean containsScheme(@NotNull String name) {
     return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
   }
 
