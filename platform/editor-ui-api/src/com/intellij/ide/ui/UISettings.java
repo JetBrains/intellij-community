@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
@@ -85,8 +86,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int EDITOR_TAB_LIMIT = 10;
   public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
-  @Deprecated //todo remove in IDEA 16
-  public int ANIMATION_SPEED = 4000; // Pixels per second
   public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
@@ -113,7 +112,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public AntialiasingType IDE_AA_TYPE = AntialiasingType.SUBPIXEL;
   public AntialiasingType EDITOR_AA_TYPE = AntialiasingType.SUBPIXEL;
   public ColorBlindness COLOR_BLINDNESS; 
-  public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -124,12 +122,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
   public boolean DISABLE_MNEMONICS_IN_CONTROLS = false;
   public boolean USE_SMALL_LABELS_ON_TABS = SystemInfo.isMac;
-  public boolean SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
   public int MAX_LOOKUP_WIDTH2 = 500;
   public int MAX_LOOKUP_LIST_HEIGHT = 11;
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
   public boolean DND_WITH_PRESSED_ALT_ONLY = false;
-  public boolean FILE_COLORS_IN_PROJECT_VIEW = false;
   public boolean DEFAULT_AUTOSCROLL_TO_SOURCE = false;
   @Transient
   public boolean PRESENTATION_MODE = false;
@@ -139,9 +135,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
   public boolean NAVIGATE_TO_PREVIEW = false;
   public boolean SORT_BOOKMARKS = false;
-  public boolean MERGE_EQUAL_STACKTRACES = true;
 
   private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
+
+  private final UISettingsState myState = new UISettingsState();
 
   public UISettings() {
     tweakPlatformDefaults();
@@ -150,6 +147,29 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     if (scrollToSource != null) {
       DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
     }
+  }
+
+  @OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
+  public boolean isSortLookupElementsLexicographically() {
+    return myState.getSortLookupElementsLexicographically();
+  }
+
+  public void setSortLookupElementsLexicographically(boolean value) {
+    myState.setSortLookupElementsLexicographically(value);
+  }
+
+  @OptionTag("MERGE_EQUAL_STACKTRACES")
+  public boolean isMergeEqualStackTraces() {
+    return myState.getMergeEqualStackTraces();
+  }
+
+  public void setMergeEqualStackTraces(boolean value) {
+    myState.setMergeEqualStackTraces(value);
+  }
+
+  @Override
+  public long getModificationCount() {
+    return super.getModificationCount() + myState.getModificationCount();
   }
 
   private UISettings withDefFont() {
@@ -229,6 +249,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   @Override
   public void loadState(UISettings object) {
     XmlSerializerUtil.copyBean(object, this);
+    myState.resetModificationCount();
 
     // Check tab placement in editor
     if (EDITOR_TAB_PLACEMENT != TABS_NONE &&

@@ -42,7 +42,19 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return false
   }
 
-  fun <T : Any> storedProperty(defaultValue: T? = null): ReadWriteProperty<BaseState, T?> {
+  fun <T> storedProperty(defaultValue: T? = null): ReadWriteProperty<BaseState, T?> {
+    val result = StoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
+  fun storedProperty(defaultValue: Int = 0): ReadWriteProperty<BaseState, Int> {
+    val result = StoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
+  fun storedProperty(defaultValue: Boolean = false): ReadWriteProperty<BaseState, Boolean> {
     val result = StoredProperty(defaultValue)
     properties.add(result)
     return result
@@ -77,14 +89,14 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 }
 
-internal class StoredProperty<T>(internal val defaultValue: T?) : ReadWriteProperty<BaseState, T?> {
+internal class StoredProperty<T>(internal val defaultValue: T) : ReadWriteProperty<BaseState, T> {
   internal var value = defaultValue
   internal var name: String? = null
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
   @Suppress("UNCHECKED_CAST")
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
     if (value != newValue) {
       thisRef.modificationCount++
 

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots
+package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
 
-class LanguageLevelState : BaseState() {
-  @get:Attribute("LANGUAGE_LEVEL")
-  var languageLevel by storedProperty<LanguageLevel?>()
+class UISettingsState : BaseState() {
+  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
+  var sortLookupElementsLexicographically by storedProperty(false)
+
+  @get:OptionTag("MERGE_EQUAL_STACKTRACES")
+  var mergeEqualStackTraces by storedProperty(true)
 }
