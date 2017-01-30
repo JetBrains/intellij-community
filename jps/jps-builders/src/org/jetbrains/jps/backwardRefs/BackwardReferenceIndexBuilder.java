@@ -24,7 +24,6 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -56,7 +55,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-    if (JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+    if (BackwardReferenceIndexWriter.getInstance() != null) {
       final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
       for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
         boolean allAreDummyOrCompiled = true;
@@ -85,17 +84,15 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    if (dirtyFilesHolder.hasRemovedFiles()) {
-      final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
-      if (writer != null) {
-        for (ModuleBuildTarget target : chunk.getTargets()) {
-          final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
-          writer.processDeletedFiles(files);
-        }
+    final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
+    if (writer != null && dirtyFilesHolder.hasRemovedFiles()) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
+        writer.processDeletedFiles(files);
       }
     }
 
-    if (JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+    if (writer != null) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         if (context.getScope().isWholeTargetAffected(target)) {
           myCompiledTargets.add(target);
