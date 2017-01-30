@@ -108,7 +108,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testJComponentInstanceMembers() throws Throwable {
-    checkPreferredItems(0, "getAccessibleContext", "getUI")
+    checkPreferredItems(0, "getAccessibleContext", "getUIClassID", "getUI")
   }
 
   void testClassStaticMembersInBooleanContext() throws Throwable {
