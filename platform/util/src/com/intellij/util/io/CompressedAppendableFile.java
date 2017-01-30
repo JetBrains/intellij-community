@@ -400,11 +400,13 @@ public class CompressedAppendableFile {
   private void saveIncompleteChunk() {
     if (myNextChunkBuffer != null && myBufferPosition != 0 && myDirty) {
 
+      File incompleteChunkFile = getIncompleteChunkFile();
+
       try {
         saveNextChunkIfNeeded();
         if (myBufferPosition != 0) {
           BufferedOutputStream stream =
-            new BufferedOutputStream(new FileOutputStream(getIncompleteChunkFile()));
+            new BufferedOutputStream(new FileOutputStream(incompleteChunkFile));
           try {
             stream.write(myNextChunkBuffer, 0, myBufferPosition);
           }
@@ -416,6 +418,17 @@ public class CompressedAppendableFile {
             }
           }
         }
+      } catch (FileNotFoundException ex) {
+        File parentFile = incompleteChunkFile.getParentFile();
+        if (!parentFile.exists()) {
+          if(parentFile.mkdirs()) {
+            saveIncompleteChunk();
+            return;
+          } else {
+            throw new RuntimeException("Failed to write:"+incompleteChunkFile, ex);
+          }
+        }
+        throw new RuntimeException(ex);
       }
       catch (IOException ex) {
         throw new RuntimeException(ex);
