@@ -87,10 +87,6 @@ abstract class InlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
     myFixture.doHighlighting()
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-
-    if (ParameterHintsPassFactory.isDebug()) {
-      println("${System.nanoTime()}: [HintTests] inlays extracted")
-    }
     
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays

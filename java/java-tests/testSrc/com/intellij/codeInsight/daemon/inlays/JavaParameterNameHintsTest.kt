@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
 
@@ -572,8 +571,6 @@ class Key {
   }
 
   fun `test poly and binary expressions`() {
-    try {
-      ParameterHintsPassFactory.setDebug(true)
       check("""
 class Test {
   void test() {
@@ -587,10 +584,6 @@ class Test {
   void yyy(int followTheSum) {}
 }
 """)
-    }
-    finally {
-      ParameterHintsPassFactory.setDebug(false)
-    }
   }
 
   fun `test incorrect pattern`() {
