@@ -173,7 +173,9 @@ public class IpnbConnection {
   }
 
   private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
-    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password;
+    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + URLEncoder.encode(username, "UTF-8") + "&" + "password=" + 
+                           URLEncoder.encode(password, "UTF-8");
+    
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
     final HttpsURLConnection connection = PyUtil.as(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(), 
                                                               HTTPMethod.POST.name()), HttpsURLConnection.class);
