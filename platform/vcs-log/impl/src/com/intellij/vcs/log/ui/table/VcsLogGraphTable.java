@@ -103,8 +103,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
-    super(new GraphTableModel(initialDataPack, logData, ui));
+  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
+                          @NotNull VcsLogData logData,
+                          @NotNull VisiblePack initialDataPack,
+                          boolean showHash) {
+    super(new GraphTableModel(initialDataPack, logData, ui, showHash));
     getEmptyText().setText("Changes Log");
 
     myUi = ui;
@@ -213,6 +216,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
         int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+                  myStringCellRenderer.getHorizontalTextPadding();
+        column.setPreferredWidth(min);
+      }
+      else if (i == GraphTableModel.HASH_COLUMN) {
+        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("aaaaaaaa") +
                   myStringCellRenderer.getHorizontalTextPadding();
         column.setPreferredWidth(min);
       }
@@ -330,9 +338,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
-      sb.append(getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN).toString());
-      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.AUTHOR_COLUMN).toString());
-      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.DATE_COLUMN).toString());
+      for (int j = GraphTableModel.ROOT_COLUMN + 1; j < getModel().getRowCount(); j++) {
+        sb.append(getModel().getValueAt(row, j).toString());
+        if (j < getModel().getRowCount() - 1) sb.append(" ");
+      }
       if (i != selectedRows.length - 1) sb.append("\n");
     }
 

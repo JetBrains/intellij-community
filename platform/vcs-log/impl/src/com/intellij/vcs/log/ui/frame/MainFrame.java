@@ -80,7 +80,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
+    myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack, false);
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
