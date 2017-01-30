@@ -77,6 +77,7 @@ public class IpnbConnection {
   private HashMap<String, String> myHeaders = new HashMap<>();
   private final CookieManager myCookieManager;
 
+  public final static String UNABLE_LOGIN = "Unable to login: ";
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
                         @Nullable final String token, @NotNull Project project, @NotNull String pathToFile) throws IOException, URISyntaxException {
@@ -171,7 +172,7 @@ public class IpnbConnection {
   }
 
   private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
-    String urlParameters = URLEncoder.encode("_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password, "UTF-8");
+    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + username + "&" + "password=" + password;
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
     final HttpsURLConnection connection = PyUtil.as(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(), 
                                                               HTTPMethod.POST.name()), HttpsURLConnection.class);
@@ -195,7 +196,7 @@ public class IpnbConnection {
       }
     }
     String message = connection == null ? "" : connection.getResponseCode() + " " + connection.getResponseMessage();
-    throw new IOException("Unable to login: " + message);
+    throw new IOException(UNABLE_LOGIN + message);
   }
 
   private String getDefaultKernelName() {
@@ -261,16 +262,10 @@ public class IpnbConnection {
     return "";
   }
 
-  private byte[] createKernelPostParameters(@NotNull String pathToFile, String kernelName) {
+  private static byte[] createKernelPostParameters(@NotNull String pathToFile, String kernelName) {
     final Gson gsonBuilder = new GsonBuilder().create();
-    if (myIsHubServer) {
-      final HubSessionWrapper hubSessionWrapper = new HubSessionWrapper(kernelName, pathToFile, "notebook");
-      return gsonBuilder.toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8);
-    }
-    else {
-      final SessionWrapper sessionWrapper = new SessionWrapper(kernelName, pathToFile);
-      return gsonBuilder.toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);      
-    }
+    final HubSessionWrapper hubSessionWrapper = new HubSessionWrapper(kernelName, pathToFile, "notebook");
+    return gsonBuilder.toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8); 
   }
 
   private static boolean isLoginNeeded(@NotNull String redirectUrl) throws IOException {

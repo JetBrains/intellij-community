@@ -41,6 +41,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -63,8 +64,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private final Map<String, IpnbConnection> myKernels = new HashMap<>();
   private final Map<String, IpnbCodePanel> myUpdateMap = new HashMap<>();
-  private static final int MAX_ATTEMPTS = 10;
   @Nullable private String myToken;
+  
+  private static final String CONNECTION_REFUSED = "Connection refused";
+  private static final int MAX_ATTEMPTS = 10;
 
   public IpnbConnectionManager(final Project project) {
     myProject = project;
@@ -102,14 +105,16 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                @NotNull final String path) {
     final String url = getURL();
     if (connectToIpythonServer(codePanel, fileEditor, path, url)) return;
-
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    final String username = IpnbSettings.getInstance(myProject).getUsername();
+    final String password = IpnbSettings.getInstance(myProject).getPassword();
+    final boolean isRemote = !username.isEmpty() && !password.isEmpty();
+    if (!isRemote) {
       final boolean serverStarted = startIpythonServer(url, fileEditor);
       if (!serverStarted) {
         return;
       }
-      GuiUtils.invokeLaterIfNeeded(() -> startConnection(codePanel, path, url, true), ModalityState.defaultModalityState());
-    });
+      startConnection(codePanel, path, url, true);
+    }
   }
 
   private boolean connectToIpythonServer(@NotNull final IpnbCodePanel codePanel,
@@ -119,7 +124,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     final boolean isRemote = !ipnbSettings.getUsername().isEmpty() && !ipnbSettings.getPassword().isEmpty();
     if (!isRemote) {
-      if (myToken != null) return startConnection(codePanel, path, url, false);
+      if (myToken != null) return startConnection(codePanel, path, url, true);
       final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
       if (module != null) {
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -135,7 +140,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       }
     }
-    return startConnection(codePanel, path, url, false);
+    return startConnection(codePanel, path, url, true);
   }
 
   private static String askForToken(@NotNull final String url) {
@@ -199,96 +204,122 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  public boolean startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
-                                 final boolean showNotification) {
+  public boolean startConnection(@Nullable IpnbCodePanel codePanel,
+                                 @NotNull String path,
+                                 @NotNull String urlString,
+                                 boolean showNotification) {
+    final boolean[] connectionOpened = {false};
+    final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened);
+
+    if (codePanel == null) return false;
+    final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
+    String pathToFile = getRelativePathToFile(file);
+    if (pathToFile == null) return false;
+    final boolean format = IpnbParser.isIpythonNewFormat(file);
+    Boolean isConnected = IpnbUtils.runCancellableProcessUnderProgress(myProject,
+                                                                       () -> setupConnection(codePanel, path, urlString,
+                                                                                             showNotification,
+                                                                                             connectionOpened, listener, pathToFile,
+                                                                                             format),
+                                                                       "Connection to Jupyter Notebook Server");
+    return isConnected != null ? isConnected : false;
+  }
+
+  @NotNull
+  private IpnbConnectionListenerBase createConnectionListener(@Nullable IpnbCodePanel codePanel, boolean[] connectionOpened) {
+    return new IpnbConnectionListenerBase() {
+      @Override
+      public void onOpen(@NotNull IpnbConnection connection) {
+        connectionOpened[0] = true;
+        if (codePanel == null) return;
+        final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
+        myUpdateMap.put(messageId, codePanel);
+      }
+
+      @Override
+      public void onOutput(@NotNull IpnbConnection connection,
+                           @NotNull String parentMessageId) {
+        if (!myUpdateMap.containsKey(parentMessageId)) return;
+        final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
+        cell.getCell().setPromptNumber(connection.getExecCount());
+        cell.updatePanel(null, connection.getOutput());
+      }
+
+      @Override
+      public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
+        if (!myUpdateMap.containsKey(parentMessageId)) return;
+        final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+        if (payload != null) {
+          cell.updatePanel(payload, null);
+        }
+      }
+
+      @Override
+      public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
+        if (!myUpdateMap.containsKey(parentMessageId)) return;
+        final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+        cell.getCell().setPromptNumber(connection.getExecCount());
+        cell.finishExecution();
+      }
+    };
+  }
+
+  @Nullable
+  private Boolean setupConnection(@NotNull IpnbCodePanel codePanel,
+                                  @NotNull String path,
+                                  @NotNull String urlString,
+                                  boolean showNotification,
+                                  boolean[] connectionOpened,
+                                  IpnbConnectionListenerBase listener, String pathToFile, boolean isNewFormat) {
     try {
-      final boolean[] connectionOpened = {false};
-      final IpnbConnectionListenerBase listener = new IpnbConnectionListenerBase() {
-        @Override
-        public void onOpen(@NotNull IpnbConnection connection) {
-          connectionOpened[0] = true;
-          if (codePanel == null) return;
-          final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
-          myUpdateMap.put(messageId, codePanel);
-        }
-
-        @Override
-        public void onOutput(@NotNull IpnbConnection connection,
-                             @NotNull String parentMessageId) {
-          if (!myUpdateMap.containsKey(parentMessageId)) return;
-          final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
-          cell.getCell().setPromptNumber(connection.getExecCount());
-          cell.updatePanel(null, connection.getOutput());
-        }
-
-        @Override
-        public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
-          if (!myUpdateMap.containsKey(parentMessageId)) return;
-          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-          if (payload != null) {
-            cell.updatePanel(payload, null);
-          }
-        }
-
-        @Override
-        public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
-          if (!myUpdateMap.containsKey(parentMessageId)) return;
-          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-          cell.getCell().setPromptNumber(connection.getExecCount());
-          cell.finishExecution();
-        }
-      };
-
-      try {
-        final IpnbConnection connection = getConnection(codePanel, urlString, listener);
-        int countAttempt = 0;
-        while (!connectionOpened[0] && countAttempt < MAX_ATTEMPTS) {
-          countAttempt += 1;
-          TimeoutUtil.sleep(1000);
-        }
-        myKernels.put(path, connection);
+      final IpnbConnection connection = getConnection(urlString, listener, pathToFile, isNewFormat);
+      int countAttempt = 0;
+      while (!connectionOpened[0] && countAttempt < MAX_ATTEMPTS) {
+        countAttempt += 1;
+        TimeoutUtil.sleep(1000);
       }
-      catch (URISyntaxException e) {
-        if (showNotification && codePanel != null) {
-          showWarning(codePanel.getFileEditor(),
-                      "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                      new IpnbSettingsAdapter());
-          LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
-        }
-        return false;
+      myKernels.put(path, connection);
+    }
+    catch (URISyntaxException e) {
+      if (showNotification) {
+        showWarning(codePanel.getFileEditor(),
+                    "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                    new IpnbSettingsAdapter());
+        LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
       }
+      return false;
     }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
         myToken = askForToken(urlString);
         if (myToken != null) {
-          return startConnection(codePanel, path, urlString, showNotification);
+          return setupConnection(codePanel, path, urlString, showNotification, connectionOpened, listener, pathToFile, isNewFormat);
         }
       }
       if (showNotification) {
-        LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
+        final String message = e.getMessage();
+        if (message.startsWith(IpnbConnection.UNABLE_LOGIN)) {
+          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter());
+        }
+        else if(message.startsWith(CONNECTION_REFUSED)) {
+          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: connection refused", new IpnbSettingsAdapter());
+        }
+        LOG.warn("Jupyter Notebook connection refused: " + message);
       }
       return false;
     }
-    return true;
+    return null;
   }
 
   @NotNull
-  private IpnbConnection getConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String urlString,
-                                       @NotNull final IpnbConnectionListenerBase listener)
-    throws IOException, URISyntaxException {
-    if (codePanel != null) {
-      final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
-      String pathToFile = getRelativePathToFile(file);
-      if (pathToFile != null) {
-        if (!IpnbParser.isIpythonNewFormat(file)) {
-          return new IpnbConnection(urlString, listener, myToken, myProject, pathToFile);
-        }
-        return  new IpnbConnectionV3(urlString, listener, myToken, myProject, pathToFile);
-      }
+  private IpnbConnection getConnection(@NotNull String urlString,
+                                       @NotNull IpnbConnectionListenerBase listener,
+                                       @NotNull String pathToFile,
+                                       boolean isNewFormat) throws IOException, URISyntaxException {
+    if (!isNewFormat) {
+      return new IpnbConnection(urlString, listener, myToken, myProject, pathToFile);
     }
-    
-    throw new IOException("Code panel is null");
+    return new IpnbConnectionV3(urlString, listener, myToken, myProject, pathToFile);
   }
 
   @Nullable
@@ -303,7 +334,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return null;
   }
 
-  public void interruptKernel(@NotNull final String filePath) {
+  public void interruptKernel(@NotNull String filePath) {
     if (!hasConnection(filePath)) return;
     final IpnbConnection connection = myKernels.get(filePath);
     try {
@@ -315,7 +346,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  public void reloadKernel(@NotNull final String filePath) {
+  public void reloadKernel(@NotNull String filePath) {
     if (!hasConnection(filePath)) return;
     final IpnbConnection connection = myKernels.get(filePath);
     try {
@@ -327,140 +358,139 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message,
-                                  @Nullable final HyperlinkAdapter listener) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-      message, null, MessageType.WARNING.getPopupBackground(), listener);
-    final Balloon balloon = balloonBuilder.createBalloon();
-    ApplicationManager.getApplication().invokeLater(() -> balloon.showInCenterOf(fileEditor.getRunCellButton()));
+  private static void showWarning(@NotNull IpnbFileEditor fileEditor,
+                                  @NotNull String message,
+                                  @Nullable HyperlinkAdapter listener) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+        message, null, MessageType.WARNING.getPopupBackground(), listener);
+      final Balloon balloon = balloonBuilder.createBalloon();
+      ApplicationManager.getApplication().invokeLater(() -> balloon.showInCenterOf(fileEditor.getRunCellButton()));
+    });
   }
 
-  public boolean startIpythonServer(@NotNull final String initUrl, @NotNull final IpnbFileEditor fileEditor) {
-    final String username = IpnbSettings.getInstance(myProject).getUsername();
-    final String password = IpnbSettings.getInstance(myProject).getPassword();
-    final boolean isRemote = !username.isEmpty() && !password.isEmpty();
-    if (!isRemote) {
-      final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
-      if (module == null) return false;
-      final Sdk sdk = PythonSdkType.findPythonSdk(module);
-      if (sdk == null) {
-        showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter", null);
-        return false;
-      }
-      final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
-      final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
-      final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
-      if (ipythonPackage == null && jupyterPackage == null) {
-        showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
-        return false;
-      }
-
-      String url = showDialogUrl(initUrl);
-      if (url == null) return false;
-      final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
-      ipnbSettings.setURL(url);
-
-      final Pair<String, String> hostPort = getHostPortFromUrl(url);
-      if (hostPort == null) {
-        showWarning(fileEditor, "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                    new IpnbSettingsAdapter());
-        return false;
-      }
-      final String homePath = sdk.getHomePath();
-      if (homePath == null) {
-        showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
-        return false;
-      }
-      Map<String, String> env = null;
-      final ArrayList<String> parameters = Lists.newArrayList(homePath);
-      String ipython = findJupyterRunner(homePath);
-      if (ipython == null) {
-        ipython = findIPythonRunner(homePath);
-        if (ipython == null) {
-          ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
-          env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
-        }
-        parameters.add(ipython);
-        parameters.add("notebook");
-      }
-      else {
-        parameters.add(ipython);
-      }
-      parameters.add("--no-browser");
-
-      if (hostPort.getFirst() != null) {
-        parameters.add("--ip");
-        parameters.add(hostPort.getFirst());
-      }
-      if (hostPort.getSecond() != null) {
-        parameters.add("--port");
-        parameters.add(hostPort.getSecond());
-      }
-      final String arguments = ipnbSettings.getArguments();
-      if (!StringUtil.isEmptyOrSpaces(arguments)) {
-        parameters.addAll(StringUtil.split(arguments, " "));
-      }
-
-      final String directory = ipnbSettings.getWorkingDirectory();
-      final String baseDir = !StringUtil.isEmptyOrSpaces(directory) ? directory :
-                             ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
-      final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
-      if (env != null) {
-        commandLine.withEnvironment(env);
-      }
-
-      try {
-        final boolean[] serverStarted = {false};
-        final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
-          @Override
-          protected void doDestroyProcess() {
-            super.doDestroyProcess();
-            myKernels.clear();
-            myToken = null;
-            UnixProcessManager.sendSigIntToProcessTree(getProcess());
-          }
-
-          @Override
-          public void coloredTextAvailable(@NotNull @NonNls String text, @NotNull Key attributes) {
-            super.coloredTextAvailable(text, attributes);
-            if (text.toLowerCase().contains("active kernels")) {
-              serverStarted[0] = true;
-            }
-            final String token = "?token=";
-            if (text.toLowerCase().contains(token)) {
-              myToken = text.substring(text.indexOf(token) + token.length()).trim();
-            }
-          }
-
-          @Override
-          public boolean isSilentlyDestroyOnClose() {
-            return true;
-          }
-        };
-        processHandler.setShouldDestroyProcessRecursively(true);
-        GuiUtils.invokeLaterIfNeeded(() -> new RunContentExecutor(myProject, processHandler)
-          .withTitle("Jupyter Notebook")
-          .withStop(() -> {
-            myKernels.clear();
-            processHandler.destroyProcess();
-            UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
-          }, () -> !processHandler.isProcessTerminated())
-          .withRerun(() -> startIpythonServer(url, fileEditor))
-          .withHelpId("reference.manage.py")
-          .withFilter(new UrlFilter())
-          .run(), ModalityState.defaultModalityState());
-        int countAttempt = 0;
-        while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
-          countAttempt += 1;
-          TimeoutUtil.sleep(1000);
-        }
-        return true;
-      }
-      catch (ExecutionException e) {
-        return false;
-      }
+  public boolean startIpythonServer(@NotNull
+                                    final String initUrl, @NotNull
+                                    final IpnbFileEditor fileEditor) {
+    final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
+    if (module == null) return false;
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    if (sdk == null) {
+      showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter", null);
+      return false;
     }
-    return true;
+    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
+    final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
+    if (ipythonPackage == null && jupyterPackage == null) {
+      showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
+      return false;
+    }
+
+    String url = showDialogUrl(initUrl);
+    if (url == null) return false;
+    final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
+    ipnbSettings.setURL(url);
+
+    final Pair<String, String> hostPort = getHostPortFromUrl(url);
+    if (hostPort == null) {
+      showWarning(fileEditor, "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                  new IpnbSettingsAdapter());
+      return false;
+    }
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) {
+      showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
+      return false;
+    }
+    Map<String, String> env = null;
+    final ArrayList<String> parameters = Lists.newArrayList(homePath);
+    String ipython = findJupyterRunner(homePath);
+    if (ipython == null) {
+      ipython = findIPythonRunner(homePath);
+      if (ipython == null) {
+        ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
+        env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+      }
+      parameters.add(ipython);
+      parameters.add("notebook");
+    }
+    else {
+      parameters.add(ipython);
+    }
+    parameters.add("--no-browser");
+
+    if (hostPort.getFirst() != null) {
+      parameters.add("--ip");
+      parameters.add(hostPort.getFirst());
+    }
+    if (hostPort.getSecond() != null) {
+      parameters.add("--port");
+      parameters.add(hostPort.getSecond());
+    }
+    final String arguments = ipnbSettings.getArguments();
+    if (!StringUtil.isEmptyOrSpaces(arguments)) {
+      parameters.addAll(StringUtil.split(arguments, " "));
+    }
+
+    final String directory = ipnbSettings.getWorkingDirectory();
+    final String baseDir = !StringUtil.isEmptyOrSpaces(directory) ? directory :
+                           ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
+    if (env != null) {
+      commandLine.withEnvironment(env);
+    }
+
+    try {
+      final boolean[] serverStarted = {false};
+      final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
+        @Override
+        protected void doDestroyProcess() {
+          super.doDestroyProcess();
+          myKernels.clear();
+          myToken = null;
+          UnixProcessManager.sendSigIntToProcessTree(getProcess());
+        }
+
+        @Override
+        public void coloredTextAvailable(@NotNull @NonNls String text, @NotNull Key attributes) {
+          super.coloredTextAvailable(text, attributes);
+          if (text.toLowerCase().contains("active kernels")) {
+            serverStarted[0] = true;
+          }
+          final String token = "?token=";
+          if (text.toLowerCase().contains(token)) {
+            myToken = text.substring(text.indexOf(token) + token.length()).trim();
+          }
+        }
+
+        @Override
+        public boolean isSilentlyDestroyOnClose() {
+          return true;
+        }
+      };
+      processHandler.setShouldDestroyProcessRecursively(true);
+      GuiUtils.invokeLaterIfNeeded(() -> new RunContentExecutor(myProject, processHandler)
+        .withTitle("Jupyter Notebook")
+        .withStop(() -> {
+          myKernels.clear();
+          processHandler.destroyProcess();
+          UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
+        }, () -> !processHandler.isProcessTerminated())
+        .withRerun(() -> startIpythonServer(url, fileEditor))
+        .withHelpId("reference.manage.py")
+        .withFilter(new UrlFilter())
+        .run(), ModalityState.defaultModalityState());
+      int countAttempt = 0;
+      while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
+        countAttempt += 1;
+        TimeoutUtil.sleep(1000);
+      }
+      return true;
+    }
+    catch (ExecutionException e) {
+      return false;
+    }
   }
 
   @Nullable
