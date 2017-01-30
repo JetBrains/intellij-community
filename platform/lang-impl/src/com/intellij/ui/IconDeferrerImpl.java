@@ -44,6 +44,8 @@ public class IconDeferrerImpl extends IconDeferrer {
   @SuppressWarnings("UnusedDeclaration")
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(this::clear);
 
+  protected IconDeferrerImpl() {}
+
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
@@ -60,7 +62,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     });
   }
 
-  private void clear() {
+  protected final void clear() {
     synchronized (LOCK) {
       myIconsCache.clear();
       myLastClearTimestamp++;
@@ -101,6 +103,12 @@ public class IconDeferrerImpl extends IconDeferrer {
       }
 
       return result;
+    }
+  }
+
+  protected void cacheIcon(Object key,Icon value) {
+    synchronized (LOCK) {
+      myIconsCache.put(key, value);
     }
   }
 
