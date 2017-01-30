@@ -75,8 +75,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("WIDESCREEN_SUPPORT") var wideScreenSupport by storedProperty(false)
   @get:OptionTag("LEFT_HORIZONTAL_SPLIT") var leftGorizontalSplit by storedProperty(false)
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightGorizontalSplit by storedProperty(false)
+  @get:OptionTag("SHOW_EDITOR_TOOLTIP") var showEditorToolTip by storedProperty(true)
 
-  @JvmField var SHOW_EDITOR_TOOLTIP = true
   @JvmField var SHOW_MEMORY_INDICATOR = false
   @JvmField var ALLOW_MERGE_BUTTONS = true
   @JvmField var SHOW_MAIN_TOOLBAR = false

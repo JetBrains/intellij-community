@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int visualY = myEditor.getLineHeight() * visualLine;
     boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
 
-    if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().SHOW_EDITOR_TOOLTIP) {
+    if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
       final Set<RangeHighlighter> highlighters = new THashSet<>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
@@ -553,7 +553,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void uiSettingsChanged(UISettings uiSettings) {
-      if (!uiSettings.SHOW_EDITOR_TOOLTIP) {
+      if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }
       setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
