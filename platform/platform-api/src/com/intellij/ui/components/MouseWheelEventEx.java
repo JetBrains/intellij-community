@@ -15,8 +15,6 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.openapi.util.SystemInfo;
-
 import java.awt.event.MouseWheelEvent;
 
 /**
@@ -37,7 +35,8 @@ class MouseWheelEventEx {
    * <p>
    * That approach is suboptimal, because it:
    * 1) produces different dynamics of relative deltas (in Mac OS there's no reliable linear mapping between those values),
-   * 2) makes handling of true relative deltas impossible (as there's no way to distinguish them from the encoded absolute ones).
+   * 2) makes handling of true relative deltas impossible, as there's no way to distinguish them from the encoded absolute ones
+   * (if we choose to decode the absolute deltas).
    * <p>
    * Ideally, we need to implement a method of distinguishing between the two kinds of scrolling deltas.
    *
@@ -46,6 +45,7 @@ class MouseWheelEventEx {
    * 0.0 when absolute deltas are not supported or not available
    */
   static double getScrollingDelta(MouseWheelEvent e) {
-    return SystemInfo.isJetbrainsJvm && SystemInfo.isMac ? 10.0D * e.getPreciseWheelRotation() : 0.0D;
+    // This API is temporary disabled as there's no way to detect relative deltas.
+    return 0.0D;//SystemInfo.isJetbrainsJvm && SystemInfo.isMac ? 10.0D * e.getPreciseWheelRotation() : 0.0D;
   }
 }
