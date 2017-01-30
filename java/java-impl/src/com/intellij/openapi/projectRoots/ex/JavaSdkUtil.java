@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.projectRoots.ex;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,12 +28,15 @@ import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION;
 
 public class JavaSdkUtil {
   @NonNls public static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
@@ -82,5 +86,18 @@ public class JavaSdkUtil {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
     return moduleJdk == null ? projectJdk : moduleJdk;
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isAtLeast(@Nullable Sdk jdk, @NotNull JavaSdkVersion version) {
+    if (jdk == null) return false;
+
+    String sdkVersionString = JdkUtil.getJdkMainAttribute(jdk, IMPLEMENTATION_VERSION);
+    if (sdkVersionString == null) return false;
+
+    JavaSdkVersion sdkVersion = JdkVersionUtil.getVersion(sdkVersionString);
+    if (sdkVersion == null) return false;
+
+    return sdkVersion.isAtLeast(version);
   }
 }
