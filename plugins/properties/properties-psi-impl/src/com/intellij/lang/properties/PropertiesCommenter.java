@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class PropertiesCommenter implements Commenter, SelfManagingCommenter<CommenterDataHolder> {
-  private static final String HASH_COMMENT_PREFIX = "#";
-  private static final String EXCLAMATION_COMMENT_PREFIX = "!";
+  public static final String HASH_COMMENT_PREFIX = "#";
+  public static final String EXCLAMATION_COMMENT_PREFIX = "!";
 
   public String getLineCommentPrefix() {
     return HASH_COMMENT_PREFIX;
