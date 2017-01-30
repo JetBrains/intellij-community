@@ -16,24 +16,24 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -41,11 +41,6 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   private Path myTestData;
   private Path myTempPath;
   private VirtualFile myRoot;
-
-  @BeforeClass
-  public static void setUpClass() {
-    assumeTrue("skipped: java=" + SystemInfo.JAVA_VERSION, JrtFileSystem.isSupported());
-  }
 
   @Before
   public void setUp() throws IOException {

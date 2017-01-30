@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl.jrt;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,23 +115,5 @@ class JrtHandler extends ArchiveHandler {
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
     return Files.readAllBytes(path);
-  }
-}
-
-class JrtHandlerStub extends ArchiveHandler {
-  public JrtHandlerStub(@NotNull String path) {
-    super(path);
-  }
-
-  @NotNull
-  @Override
-  protected Map<String, EntryInfo> createEntriesMap() {
-    return Collections.emptyMap();
-  }
-
-  @NotNull
-  @Override
-  public byte[] contentsToByteArray(@NotNull String relativePath) {
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 }
