@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,6 +39,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   private Path myTestData;
+  private Path myTempPath;
   private VirtualFile myRoot;
 
   @BeforeClass
@@ -52,9 +50,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
-    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
-    Files.copy(myTestData.resolve("jrt-fs.jar"), myTempDir.getRoot().toPath().resolve("jrt-fs.jar"));
-    Path lib = Files.createDirectory(myTempDir.getRoot().toPath().resolve("lib"));
+    myTempPath = myTempDir.getRoot().toPath();
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Files.copy(myTestData.resolve("jrt-fs.jar"), myTempPath.resolve("jrt-fs.jar"));
+    Path lib = Files.createDirectory(myTempPath.resolve("lib"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
@@ -92,10 +91,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   public void refresh() throws IOException {
     assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
 
-    Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
-    Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
-    Files.copy(myTestData.resolve("image2"), modules, StandardCopyOption.REPLACE_EXISTING);
-    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Path modules = myTempPath.resolve("lib/modules");
+    Files.move(modules, myTempPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
+    Files.copy(myTestData.resolve("image2"), modules);
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
 
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();
