@@ -43,10 +43,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
@@ -207,8 +204,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doAddAction(@NotNull AnActionButton button) {
+    int row = myTable.getSelectedRow();
+    Pair<Object, T> selectedRow = myModel.data.get(myTable.convertRowIndexToModel(row));
+    VirtualFile toSelect = myFileToSelect != null ? myFileToSelect :
+                           row >= 0 ? ObjectUtils.tryCast(selectedRow.first, VirtualFile.class) : null;
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, true);
-    Set<VirtualFile> chosen = ContainerUtil.newHashSet(FileChooser.chooseFiles(descriptor, myProject, myFileToSelect));
+    Set<VirtualFile> chosen = ContainerUtil.newHashSet(FileChooser.chooseFiles(descriptor, myProject, toSelect));
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
     for (VirtualFile file : chosen) {
       if (!set.add(file)) continue;
@@ -369,10 +370,15 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     myTable.getTableHeader().setReorderingAllowed(false);
     TableRowSorter<MyModel<T>> sorter = new TableRowSorter<>(myModel);
     sorter.setStringConverter(new TableStringConverter() {
+      final SimpleColoredText text = new SimpleColoredText();
       @Override
       public String toString(TableModel model, int row, int column) {
-        return StringUtil.toLowerCase(myTable.getCellRenderer(row, column).getTableCellRendererComponent(
-          myTable, model.getValueAt(row, column), false, false, row, column).toString());
+        text.clear();
+        Pair<Object, T> pair = myModel.data.get(row);
+        if (column == 0) renderTarget(pair.first, text);
+        else if (pair.second != null) renderValue(pair.first, pair.second, text);
+        else renderDefaultValue(pair.first, text);
+        return StringUtil.toLowerCase(text.toString());
       }
     });
     sorter.setSortable(0, true);
