@@ -76,8 +76,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("LEFT_HORIZONTAL_SPLIT") var leftGorizontalSplit by storedProperty(false)
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightGorizontalSplit by storedProperty(false)
   @get:OptionTag("SHOW_EDITOR_TOOLTIP") var showEditorToolTip by storedProperty(true)
+  @get:OptionTag("SHOW_MEMORY_INDICATOR") var showMemoryIndicator by storedProperty(false)
 
-  @JvmField var SHOW_MEMORY_INDICATOR = false
   @JvmField var ALLOW_MERGE_BUTTONS = true
   @JvmField var SHOW_MAIN_TOOLBAR = false
   @JvmField var SHOW_STATUS_BAR = true

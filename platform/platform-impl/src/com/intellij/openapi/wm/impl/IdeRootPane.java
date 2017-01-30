@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
    * Invoked when enclosed frame is being shown.
    */
+  @Override
   public final void addNotify(){
     super.addNotify();
   }
@@ -160,6 +161,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
    * Invoked when enclosed frame is being disposed.
    */
+  @Override
   public final void removeNotify(){
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (!myStatusBarDisposed) {
@@ -191,6 +193,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     contentPane.revalidate();
   }
 
+  @Override
   protected JLayeredPane createLayeredPane() {
     JLayeredPane p = new JBLayeredPane();
     p.setName(this.getName()+".layeredPane");
@@ -204,6 +207,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     super.setLayout(mgr);
   }
 
+  @Override
   protected final Container createContentPane(){
     return myContentPane = new IdePanePanel(new BorderLayout());
   }
@@ -262,22 +266,27 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       for (final StatusBarCustomComponentFactory<JComponent> componentFactory : myStatusBarCustomComponentFactories) {
         final JComponent c = componentFactory.createComponent(myStatusBar);
         myStatusBar.addWidget(new CustomStatusBarWidget() {
+          @Override
           public JComponent getComponent() {
             return c;
           }
 
+          @Override
           @NotNull
           public String ID() {
             return c.getClass().getSimpleName();
           }
 
+          @Override
           public WidgetPresentation getPresentation(@NotNull PlatformType type) {
             return null;
           }
 
+          @Override
           public void install(@NotNull StatusBar statusBar) {
           }
 
+          @Override
           public void dispose() {
             componentFactory.disposeComponent(myStatusBar, c);
           }
@@ -288,7 +297,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBar.addWidget(myMemoryWidget);
     myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
 
-    setMemoryIndicatorVisible(UISettings.getInstance().SHOW_MEMORY_INDICATOR);
+    setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
   }
 
   void setMemoryIndicatorVisible(final boolean visible) {
@@ -342,8 +351,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return null;
   }
 
+  @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    setMemoryIndicatorVisible(uiSettings.SHOW_MEMORY_INDICATOR);
+    setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
@@ -359,6 +369,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private class MyRootLayout extends RootLayout {
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension rd, mbd;
       Insets i = getInsets();
@@ -379,6 +390,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
                            rd.height + mbd.height + i.top + i.bottom);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
       Dimension rd, mbd;
       Insets i = getInsets();
@@ -398,6 +410,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
                            rd.height + mbd.height + i.top + i.bottom);
     }
 
+    @Override
     public Dimension maximumLayoutSize(Container target) {
       Dimension rd, mbd;
       Insets i = getInsets();
@@ -418,6 +431,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
                            rd.height + mbd.height + i.top + i.bottom);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
       Rectangle b = parent.getBounds();
       Insets i = getInsets();

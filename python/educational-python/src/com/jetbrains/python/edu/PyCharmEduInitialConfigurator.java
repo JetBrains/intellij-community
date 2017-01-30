@@ -164,7 +164,7 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
       uiSettings.setHideToolStripes(false);
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
+      uiSettings.setShowMemoryIndicator(false);
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
 
@@ -178,7 +178,7 @@ public class PyCharmEduInitialConfigurator {
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
+      uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;

@@ -192,8 +192,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setHideToolStripes(!myComponent.myShowToolStripesCheckBox.isSelected());
     update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
     settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
-    update |= settings.SHOW_MEMORY_INDICATOR != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
-    settings.SHOW_MEMORY_INDICATOR = myComponent.myShowMemoryIndicatorCheckBox.isSelected();
+    update |= settings.getShowMemoryIndicator() != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
+    settings.setShowMemoryIndicator(myComponent.myShowMemoryIndicatorCheckBox.isSelected());
     update |= settings.ALLOW_MERGE_BUTTONS != myComponent.myAllowMergeButtons.isSelected();
     settings.ALLOW_MERGE_BUTTONS = myComponent.myAllowMergeButtons.isSelected();
     update |= settings.CYCLE_SCROLLING != myComponent.myCycleScrollingCheckBox.isSelected();
@@ -339,7 +339,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
-    myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
+    myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.getShowMemoryIndicator());
     myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
 
@@ -406,7 +406,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
-    isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
+    isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.getShowMemoryIndicator();
     isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.ALLOW_MERGE_BUTTONS;
     isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
 
