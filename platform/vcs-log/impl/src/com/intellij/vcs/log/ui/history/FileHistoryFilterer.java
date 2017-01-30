@@ -171,7 +171,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
       FilePath previousPath = myNamesData.getPreviousPath(commit, currentPath);
       if (previousPath != null) {
         myMatchingCommits.add(commit);
-        if (!currentPath.equals(previousPath)) myPaths.push(previousPath);
+        myPaths.push(previousPath);
         myNamesData.retain(commit, currentPath, previousPath);
       }
       else {
@@ -184,7 +184,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     public void exitNode(int node) {
       Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
       if (myMatchingCommits.contains(commit)) {
-        if (myNamesData.getRenamedPath(commit, myPaths.peek()) != null) myPaths.pop();
+        myPaths.pop();
       }
     }
   }
