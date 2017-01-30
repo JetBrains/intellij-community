@@ -27,6 +27,7 @@ import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -79,16 +80,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py");
+    unittests("tests_pydevd_python/test_debugger.py", null);
   }
 
   @Test
   @Staging
   public void testPydevMonkey() {
-    unittests("tests_pydevd_python/test_pydev_monkey.py");
+    unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
 
-  private void unittests(final String script) {
+  @Test
+  @Staging
+  public void testBytecodeModification() {
+    unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
+  }
+
+  private void unittests(final String script, @Nullable Set<String> tags) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
 
       @NotNull
@@ -109,6 +116,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         runner.assertAllTestsPassed();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        if (tags == null) {
+          return super.getTags();
+        }
+        return tags;
       }
     });
   }
