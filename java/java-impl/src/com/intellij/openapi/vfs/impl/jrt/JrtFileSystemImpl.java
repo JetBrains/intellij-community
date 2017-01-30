@@ -110,7 +110,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
             VirtualFile file = event.getFile();
             if (file != null && "release".equals(file.getName())) {
               String homePath = file.getParent().getPath();
-              if (myHandlers.remove(homePath) != null) {
+              ArchiveHandler handler = myHandlers.remove(homePath);
+              if (handler != null) {
+                handler.dispose();
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();

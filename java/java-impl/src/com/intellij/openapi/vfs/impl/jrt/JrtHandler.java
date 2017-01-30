@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
@@ -32,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Map;
 
+@SuppressWarnings("SynchronizeOnThis")
 class JrtHandler extends ArchiveHandler {
   private static final URI ROOT_URI = URI.create("jrt:/");
 
@@ -39,6 +41,27 @@ class JrtHandler extends ArchiveHandler {
 
   public JrtHandler(@NotNull String path) {
     super(path);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+
+    synchronized (this) {
+      FileSystem fs = SoftReference.dereference(myFileSystem);
+      if (fs != null) {
+        try {
+          fs.close();
+          ClassLoader loader = fs.getClass().getClassLoader();
+          if (loader instanceof URLClassLoader && ((URLClassLoader)loader).getURLs().length == 1) {
+            ((URLClassLoader)loader).close();
+          }
+        }
+        catch (IOException e) {
+          Logger.getInstance(JrtHandler.class).info(e);
+        }
+      }
+    }
   }
 
   private synchronized FileSystem getFileSystem() throws IOException {
