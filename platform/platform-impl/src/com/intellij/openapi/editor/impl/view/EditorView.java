@@ -526,6 +526,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     setFontRenderContext(context);
     if (!myFontRenderContext.equals(oldContext)) {
       myTextLayoutCache.resetToDocumentSize(false);
+      invalidateFoldRegionLayouts();
     }
   }
 
