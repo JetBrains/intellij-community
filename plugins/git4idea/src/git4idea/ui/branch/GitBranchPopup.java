@@ -50,6 +50,7 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  */
 class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
+  private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
@@ -86,7 +87,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                          @NotNull GitVcsSettings vcsSettings,
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
-          preselectActionCondition);
+          preselectActionCondition, DIMENSION_SERVICE_KEY);
   }
 
   @Override

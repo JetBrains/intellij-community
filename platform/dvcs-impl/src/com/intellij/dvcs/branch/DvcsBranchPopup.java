@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,14 +46,14 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull protected final DvcsMultiRootBranchConfig<Repo> myMultiRootBranchConfig;
 
   @NotNull protected final Repo myCurrentRepository;
-  @NotNull protected final ListPopupImpl myPopup;
+  @NotNull protected final BranchActionGroupPopup myPopup;
   @NotNull protected final String myRepoTitleInfo;
 
   protected DvcsBranchPopup(@NotNull Repo currentRepository,
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
                             @NotNull DvcsMultiRootBranchConfig<Repo> multiRootBranchConfig,
                             @NotNull DvcsSyncSettings vcsSettings,
-                            @NotNull Condition<AnAction> preselectActionCondition) {
+                            @NotNull Condition<AnAction> preselectActionCondition, @Nullable String dimensionKey) {
     myProject = currentRepository.getProject();
     myCurrentRepository = currentRepository;
     myRepositoryManager = repositoryManager;
@@ -64,8 +63,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     String title = myVcs.getDisplayName() + " Branches";
     myRepoTitleInfo = (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)
                  ? " in " + DvcsUtil.getShortRepositoryName(currentRepository) : "";
-    myPopup = new BranchActionGroupPopup(title + myRepoTitleInfo, myProject, preselectActionCondition, createActions());
-
+    myPopup = new BranchActionGroupPopup(title + myRepoTitleInfo, myProject, preselectActionCondition, createActions(), dimensionKey);
     initBranchSyncPolicyIfNotInitialized();
     setCurrentBranchInfo();
     warnThatBranchesDivergedIfNeeded();

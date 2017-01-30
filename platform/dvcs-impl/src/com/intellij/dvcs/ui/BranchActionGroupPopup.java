@@ -20,9 +20,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
@@ -44,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -54,13 +59,29 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
   private MyPopupListElementRenderer myListElementRenderer;
+  private boolean myShown;
+  @NotNull private Dimension myPrevSize = JBUI.emptySize();
+  private boolean myUserSizeChanged;
+  private Project myProject;
 
-  public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
-                                @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
+  public BranchActionGroupPopup(@NotNull String title,
+                                @NotNull Project project,
+                                @NotNull Condition<AnAction> preselectActionCondition,
+                                @NotNull ActionGroup actions,
+                                @Nullable String dimensionKey) {
     super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
+    myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
+    if (dimensionKey != null) {
+      Dimension storedSize = WindowStateService.getInstance(myProject).getSize(dimensionKey);
+      if (storedSize != null) {
+        //set forced size before component is shown
+        setSize(storedSize);
+      }
+    }
+    trackDimensions(dimensionKey);
   }
 
   //for child popups only
@@ -68,6 +89,56 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
+    // don't store children popup userSize;
+    trackDimensions(null);
+  }
+
+  private void trackDimensions(@Nullable String dimensionKey) {
+    getComponent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if (myShown) {
+          expandOnSizeChanged();
+          updateCachedUIValues();
+        }
+      }
+    });
+    if (dimensionKey != null) {
+      addPopupListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          if (myUserSizeChanged) {
+            WindowStateService.getInstance(myProject).putSize(dimensionKey, myPrevSize);
+          }
+        }
+      });
+    }
+  }
+
+  private void updateCachedUIValues() {
+    myPrevSize = getSize();
+    myUserSizeChanged = true;
+  }
+
+  private void expandOnSizeChanged() {
+    Dimension newSize = ObjectUtils.assertNotNull(getSize());
+    if (myPrevSize.height < newSize.height) {
+      while (getList().getScrollableTracksViewportHeight()) {
+        MoreAction moreAction = getFirstNotExpandedMore();
+        if (moreAction == null) return;
+        moreAction.myIsExpanded = true;
+        getListModel().refilter();
+      }
+    }
+  }
+
+  private MoreAction getFirstNotExpandedMore() {
+    ListPopupModel model = getListModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      MoreAction moreAction = getSpecificAction(model.getElementAt(i), MoreAction.class);
+      if (moreAction != null && !moreAction.myIsExpanded) return moreAction;
+    }
+    return null;
   }
 
   @NotNull
@@ -80,6 +151,16 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   @Override
   protected boolean isResizable() {
     return true;
+  }
+
+  @Override
+  protected void afterShow() {
+    super.afterShow();
+    myShown = true;
+    Dimension size = getSize();
+    if (size != null) {
+      myPrevSize = size;
+    }
   }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,

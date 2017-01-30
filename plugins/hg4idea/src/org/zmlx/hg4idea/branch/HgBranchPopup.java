@@ -43,6 +43,7 @@ import java.util.List;
  * </p>
  */
 public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
+  private static final String DIMENSION_SERVICE_KEY = "Hg.Branch.Popup";
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
@@ -67,7 +68,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
                         @NotNull HgRepositoryManager repositoryManager,
                         @NotNull HgMultiRootBranchConfig hgMultiRootBranchConfig, @NotNull HgProjectSettings vcsSettings,
                         @NotNull Condition<AnAction> preselectActionCondition) {
-    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition);
+    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY);
   }
 
   protected void setCurrentBranchInfo() {
