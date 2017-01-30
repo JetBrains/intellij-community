@@ -60,7 +60,7 @@ public class IpnbConnection {
   @NotNull protected final String mySessionId;
   @NotNull protected final IpnbConnectionListener myListener;
   @Nullable private final String myToken;
-  private final boolean myIsHubServer;
+  private boolean myIsHubServer = false;
   private final Project myProject;
   private WebSocketClient myShellClient;
   private WebSocketClient myIOPubClient;
@@ -88,39 +88,39 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-
-    String loginUrl = getLoginUrl();
-    myIsHubServer = isHubServer(loginUrl);
-    myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
-
-    initializeClients();
-  }
-
-  private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
-    initXSRF(myURI.toString());
-    if (isLoginNeeded(loginUrl)) {
-      IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
-      final String username = ipnbSettings.getUsername();
-      String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
-      myHeaders.put("Cookie", cookies);
-      if (myIsHubServer) {
-        if (myXsrf == null) {
-          initXSRF(myURI.toString() + "/user/" + username + "/tree?");
-        }
-        final Boolean started = startJupyterNotebookServer();
-        if (!started) {
-          throw new IOException("Cannot start Jupyter Notebook");
-        }
-      }
-      final String kernelName = getDefaultKernelName();
-      return getExistingKernelForSession(pathToFile, kernelName);
+    
+    if (isRemote(myProject)) {
+      String loginUrl = getLoginUrl();
+      myIsHubServer = isHubServer(loginUrl);
+      myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
     }
     else {
       if (myToken != null) {
         myHeaders.put("Authorization", "token " + myToken);
       }
-      return startKernel();
+      myKernelId = startKernel();
     }
+    
+    initializeClients();
+  }
+
+  private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
+    initXSRF(myURI.toString());
+    IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
+    final String username = ipnbSettings.getUsername();
+    String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
+    myHeaders.put("Cookie", cookies);
+    if (myIsHubServer) {
+      if (myXsrf == null) {
+        initXSRF(myURI.toString() + "/user/" + username + "/tree?");
+      }
+      final Boolean started = startJupyterNotebookServer();
+      if (!started) {
+        throw new IOException("Cannot start Jupyter Notebook");
+      }
+    }
+    final String kernelName = getDefaultKernelName();
+    return getExistingKernelForSession(pathToFile, kernelName);
   }
 
   private boolean startJupyterNotebookServer() throws IOException {
@@ -498,6 +498,10 @@ public class IpnbConnection {
     final JsonObject metadata = new JsonObject();
 
     return Message.create(header, parentHeader, metadata, content);
+  }
+
+  public static boolean isRemote(Project project) {
+    return !IpnbSettings.getInstance(project).getUsername().isEmpty() && !IpnbSettings.getInstance(project).getPassword().isEmpty();
   }
 
   @SuppressWarnings("UnusedDeclaration")
