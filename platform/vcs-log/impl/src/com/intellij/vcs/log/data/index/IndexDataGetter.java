@@ -175,15 +175,19 @@ public class IndexDataGetter {
 
     @NotNull
     public Set<FilePath> getAffectedPaths(int commit) {
+      Set<FilePath> result = new SmartHashSet<>();
+
       Set<FilePath> paths = myCommitsToPaths.get(commit);
-      if (paths != null) return paths;
+      if (paths != null) result.addAll(paths);
 
       Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
-      Set<FilePath> result = new SmartHashSet<>();
-      for (UnorderedPair<FilePath> rename : renames) {
-        result.add(rename.first);
-        result.add(rename.second);
+      if (renames != null) {
+        for (UnorderedPair<FilePath> rename : renames) {
+          result.add(rename.first);
+          result.add(rename.second);
+        }
       }
+
       return result;
     }
   }
