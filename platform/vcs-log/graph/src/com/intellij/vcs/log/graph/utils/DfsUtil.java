@@ -54,6 +54,7 @@ public class DfsUtil {
     Stack<Pair<Integer, Boolean>> stack = new Stack<>();
     stack.push(new Pair<>(start, true)); // commit + direction of travel
 
+    outer:
     while (!stack.empty()) {
       int currentNode = stack.peek().first;
       boolean down = stack.peek().second;
@@ -62,32 +63,26 @@ public class DfsUtil {
         visitor.enterNode(currentNode);
       }
 
-      boolean found = false;
       for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
         if (!visited.get(nextNode)) {
           stack.push(new Pair<>(nextNode, down));
-          found = true;
-          break;
+          continue outer;
         }
       }
 
-      if (!found) {
-        if (!visitedInSameDirection.get(currentNode)) {
-          visitedInSameDirection.set(currentNode, true);
-          visitor.exitNode(currentNode);
-        }
-        for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
-          if (!visited.get(nextNode)) {
-            stack.push(new Pair<>(nextNode, !down));
-            found = true;
-            break;
-          }
+      if (!visitedInSameDirection.get(currentNode)) {
+        visitedInSameDirection.set(currentNode, true);
+        visitor.exitNode(currentNode);
+      }
+
+      for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
+        if (!visited.get(nextNode)) {
+          stack.push(new Pair<>(nextNode, !down));
+          continue outer;
         }
       }
 
-      if (!found) {
-        stack.pop();
-      }
+      stack.pop();
     }
   }
 
