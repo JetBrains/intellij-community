@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
@@ -107,7 +108,7 @@ public class IndexDataGetter {
     private void addPath(int commit, @NotNull FilePath path) {
       Set<FilePath> paths = myCommitsToPaths.get(commit);
       if (paths == null) {
-        paths = ContainerUtil.newHashSet();
+        paths = new SmartHashSet<>();
         myCommitsToPaths.put(commit, paths);
       }
       paths.add(path);
@@ -116,7 +117,7 @@ public class IndexDataGetter {
     private void addRename(int commit, @NotNull Couple<FilePath> path) {
       Set<UnorderedPair<FilePath>> paths = myCommitsToRenames.get(commit);
       if (paths == null) {
-        paths = ContainerUtil.newHashSet();
+        paths = new SmartHashSet<>();
         myCommitsToRenames.put(commit, paths);
       }
       paths.add(new UnorderedPair<>(path.first, path.second));
@@ -178,7 +179,7 @@ public class IndexDataGetter {
       if (paths != null) return paths;
 
       Set<UnorderedPair<FilePath>> renames = myCommitsToRenames.get(commit);
-      Set<FilePath> result = ContainerUtil.newHashSet();
+      Set<FilePath> result = new SmartHashSet<>();
       for (UnorderedPair<FilePath> rename : renames) {
         result.add(rename.first);
         result.add(rename.second);
