@@ -156,6 +156,12 @@ public class PyCallExpressionHelper {
       .filter(Objects::nonNull)
       .map(resolveResult -> markResolveResult(resolveResult, resolveContext.getTypeEvalContext(), implicitOffset))
       .filter(Objects::nonNull)
+      // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
+      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getElement(), LinkedHashMap::new, Collectors.toList()))
+      .entrySet()
+      .stream()
+      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 
