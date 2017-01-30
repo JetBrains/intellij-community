@@ -116,6 +116,7 @@ import com.intellij.refactoring.rename.*;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -1691,6 +1692,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
+    }
+  }
+
+  @Override
+  public void testInlays(@NotNull String fileName, @NotNull String text) {
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    try {
+      checker.setUp();
+      checker.checkInlays(fileName, text);
+    }
+    finally {
+      checker.tearDown();
     }
   }
 
