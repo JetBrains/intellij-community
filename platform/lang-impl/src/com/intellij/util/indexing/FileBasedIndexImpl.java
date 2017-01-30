@@ -1565,6 +1565,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
 
   private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
+    LOG.debug("Updating index " + indexId + " for " + (file != null ? file.getPath() : "<unknown>"));
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
