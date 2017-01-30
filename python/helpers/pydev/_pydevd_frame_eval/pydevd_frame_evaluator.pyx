@@ -51,7 +51,6 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
         except:
             abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
-        main_debugger = get_global_debugger()
         file_type = get_file_type(abs_path_real_path_and_base[-1])  #we don't want to debug anything related to pydevd
         if file_type is not None:
             additional_info.is_tracing = False

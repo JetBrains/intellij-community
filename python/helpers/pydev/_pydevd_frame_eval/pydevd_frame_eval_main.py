@@ -8,9 +8,9 @@ if (sys.version_info[0] == 3 and sys.version_info[1] >= 6) or sys.version_info[0
 frame_eval_func = None
 stop_frame_eval = None
 
-use_frame_eval = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)
+USE_FRAME_EVAL = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)
 
-if use_frame_eval == 'NO':
+if USE_FRAME_EVAL == 'NO':
     frame_eval_func, stop_frame_eval = None, None
 
 else:
