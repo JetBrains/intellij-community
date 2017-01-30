@@ -23,28 +23,31 @@ import java.util.Map;
 public class ConsoleUpdaterUI implements UpdaterUI {
   private String myStatus;
 
+  @Override
   public void startProcess(String title) {
     System.out.println(title);
     Runner.logger().info("title: " + title);
   }
 
-  public void setProgress(int percentage) {
-  }
+  @Override
+  public void setProgress(int percentage) { }
 
-  public void setProgressIndeterminate() {
-  }
+  @Override
+  public void setProgressIndeterminate() { }
 
+  @Override
   public void setStatus(String status) {
     System.out.println(myStatus = status);
     Runner.logger().info("status: " + status);
   }
 
+  @Override
   public void showError(Throwable e) {
     e.printStackTrace();
   }
 
-  public void checkCancelled() throws OperationCancelledException {
-  }
+  @Override
+  public void checkCancelled() throws OperationCancelledException { }
 
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {
@@ -57,6 +60,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
     return false;
   }
 
+  @Override
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean hasErrors = false, hasConflicts = false;
 
