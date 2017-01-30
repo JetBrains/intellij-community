@@ -64,16 +64,18 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @Suppress("unused")
   @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
-  @JvmField var HIDE_TOOL_STRIPES = true
+  @JvmField
+  @Transient
+  var HIDE_TOOL_STRIPES = true
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by storedProperty(true)
   @get:OptionTag("HIDE_TOOL_STRIPES") var hideToolStripes by storedProperty(true)
+  @get:OptionTag("WIDESCREEN_SUPPORT") var wideScreenSupport by storedProperty(false)
+  @get:OptionTag("LEFT_HORIZONTAL_SPLIT") var leftGorizontalSplit by storedProperty(false)
+  @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightGorizontalSplit by storedProperty(false)
 
-  @JvmField var WIDESCREEN_SUPPORT = false
-  @JvmField var LEFT_HORIZONTAL_SPLIT = false
-  @JvmField var RIGHT_HORIZONTAL_SPLIT = false
   @JvmField var SHOW_EDITOR_TOOLTIP = true
   @JvmField var SHOW_MEMORY_INDICATOR = false
   @JvmField var ALLOW_MERGE_BUTTONS = true

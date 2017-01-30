@@ -111,9 +111,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
-    myWidescreen = UISettings.getInstance().WIDESCREEN_SUPPORT;
-    myLeftHorizontalSplit = UISettings.getInstance().LEFT_HORIZONTAL_SPLIT;
-    myRightHorizontalSplit = UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT;
+    myWidescreen = UISettings.getInstance().getWideScreenSupport();
+    myLeftHorizontalSplit = UISettings.getInstance().getLeftGorizontalSplit();
+    myRightHorizontalSplit = UISettings.getInstance().getRightGorizontalSplit();
     if (myWidescreen) {
       myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
     }
@@ -577,9 +577,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private void updateLayout() {
-    if (myWidescreen != UISettings.getInstance().WIDESCREEN_SUPPORT) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (myWidescreen != uiSettings.getWideScreenSupport()) {
       JComponent documentComponent = (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).getInnerComponent();
-      myWidescreen = UISettings.getInstance().WIDESCREEN_SUPPORT;
+      myWidescreen = uiSettings.getWideScreenSupport();
       if (myWidescreen) {
         myVerticalSplitter.setInnerComponent(null);
         myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
@@ -592,7 +593,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       myLayeredPane.add(myWidescreen ? myHorizontalSplitter : myVerticalSplitter, DEFAULT_LAYER);
       setDocumentComponent(documentComponent);
     }
-    if (myLeftHorizontalSplit != UISettings.getInstance().LEFT_HORIZONTAL_SPLIT) {
+    if (myLeftHorizontalSplit != uiSettings.getLeftGorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.LEFT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -602,9 +603,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                       ? first.getWindowInfo().getWeight()
                                                       : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
       }
-      myLeftHorizontalSplit = UISettings.getInstance().LEFT_HORIZONTAL_SPLIT;
+      myLeftHorizontalSplit = uiSettings.getLeftGorizontalSplit();
     }
-    if (myRightHorizontalSplit != UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT) {
+    if (myRightHorizontalSplit != uiSettings.getRightGorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.RIGHT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -614,7 +615,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                        ? first.getWindowInfo().getWeight()
                                                        : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
       }
-      myRightHorizontalSplit = UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT;
+      myRightHorizontalSplit = uiSettings.getRightGorizontalSplit();
     }
   }
 
@@ -803,10 +804,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           @Override
           public void uiSettingsChanged(UISettings uiSettings) {
             if (anchor == ToolWindowAnchor.LEFT) {
-              setOrientation(!uiSettings.LEFT_HORIZONTAL_SPLIT);
+              setOrientation(!uiSettings.getLeftGorizontalSplit());
             }
             else if (anchor == ToolWindowAnchor.RIGHT) {
-              setOrientation(!uiSettings.RIGHT_HORIZONTAL_SPLIT);
+              setOrientation(!uiSettings.getRightGorizontalSplit());
             }
           }
         }
@@ -819,14 +820,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             boolean isSplitterHorizontalNow = !splitter.isVertical();
             UISettings settings = UISettings.getInstance();
             if (anchor == ToolWindowAnchor.LEFT) {
-              if (settings.LEFT_HORIZONTAL_SPLIT != isSplitterHorizontalNow) {
-                settings.LEFT_HORIZONTAL_SPLIT = isSplitterHorizontalNow;
+              if (settings.getLeftGorizontalSplit() != isSplitterHorizontalNow) {
+                settings.setLeftGorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }
             if (anchor == ToolWindowAnchor.RIGHT) {
-              if (settings.RIGHT_HORIZONTAL_SPLIT != isSplitterHorizontalNow) {
-                settings.RIGHT_HORIZONTAL_SPLIT = isSplitterHorizontalNow;
+              if (settings.getRightGorizontalSplit() != isSplitterHorizontalNow) {
+                settings.setRightGorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }
@@ -896,8 +897,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         // Show component.
-        final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopDetector.isRemoteSession()) {
+        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopDetector.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
           final Graphics topGraphics = topImage.getGraphics();
@@ -927,7 +927,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             bottomGraphics.dispose();
           }
           // Start animation.
-          final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), uiSettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
