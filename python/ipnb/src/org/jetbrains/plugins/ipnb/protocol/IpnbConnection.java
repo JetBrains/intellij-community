@@ -48,7 +48,7 @@ public class IpnbConnection {
   private static final String SPAWN_URL = HUB_PREFIX + "/spawn";
   protected static final String KERNELS_URL = API_URL + "/kernels";
   
-  private static final int myAttemptToConnectNumber = 10;
+  private static final int ATTEMPT_TO_CONNECT_NUMBER = 10;
 
   // TODO: Serialize cookies for the authentication message
   protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
@@ -107,7 +107,7 @@ public class IpnbConnection {
         if (myXsrf == null) {
           initXSRF(myURI.toString() + "/user/" + username + "/tree?");
         }
-        final Boolean started = startIpnbServer();
+        final Boolean started = startJupyterNotebookServer();
         if (!started) {
           throw new IOException("Cannot start Jupyter Notebook");
         }
@@ -123,12 +123,12 @@ public class IpnbConnection {
     }
   }
 
-  private boolean startIpnbServer() throws IOException {
+  private boolean startJupyterNotebookServer() throws IOException {
     String serverStartUrl = getLocation(myURI + SPAWN_URL);
 
     if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
       if (!serverStartUrl.isEmpty()) {
-        for (int i = 0; i < myAttemptToConnectNumber; i++) {
+        for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
           final String username = IpnbSettings.getInstance(myProject).getUsername();
           final String locationPrefix = USER_PATH + "/" + username + "/tree";
           final String location = getLocation(myURI + serverStartUrl);
@@ -193,7 +193,9 @@ public class IpnbConnection {
       final int code = connection.getResponseCode();
       if (code != HttpURLConnection.HTTP_FORBIDDEN && code != HttpURLConnection.HTTP_UNAUTHORIZED) {
         final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
-        return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
+        if (!cookies.isEmpty()) {
+          return cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
+        }
       }
     }
     String message = connection == null ? "" : connection.getResponseCode() + " " + connection.getResponseMessage();
@@ -418,7 +420,7 @@ public class IpnbConnection {
   protected String getWebSocketURIBase() {
     final String scheme = myURI.getScheme();
     String prefix = scheme.equals("http") ? "ws://" : "wss://";
-    String hubPath = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() + "/" : "";
+    String hubPath = myIsHubServer ? USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() : "";
     return prefix + myURI.getAuthority() + hubPath + KERNELS_URL + "/" + myKernelId;
   }
 
