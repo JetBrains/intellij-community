@@ -32,7 +32,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -41,15 +40,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
+ * @author Tagir Valeev
  */
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
@@ -166,7 +163,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if(qualifierArgs.length != 1) return;
           PsiExpression qualifierArg = qualifierArgs[0];
 
-          if(canBePredicate(qualifierArg) != ThreeState.NO) {
+          if(adaptToPredicate(qualifierArg) != null) {
             holder.registerProblem(nameElement, "Can be merged with previous 'map' call",
                                    new SimplifyCallChainFix(new RemoveBooleanIdentityFix()));
           }
@@ -372,34 +369,45 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   /**
-   * Returns yes if expression can be used as j.u.f.Predicate, no if cannot,
-   * unsure if can be used as Predicate after wrapping with (expression)::apply.
+   * Returns the possible replacement of given expression to be used as j.u.f.Predicate,
+   * or null if it cannot be used as Predicate.
    *
    * @param expression expression to test
    * @return yes, no or unsure
    */
-  @NotNull
-  private static ThreeState canBePredicate(PsiExpression expression) {
+  @Nullable
+  private static String adaptToPredicate(PsiExpression expression) {
+    if(expression == null) return null;
+    String text = expression.getText();
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if(expression instanceof PsiFunctionalExpression) return ThreeState.YES;
-    if(expression == null) return ThreeState.NO;
-    PsiType type = expression.getType();
-    PsiType inType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, 0, false);
-    if(inType == null) return ThreeState.NO;
-    Project project = expression.getProject();
-    PsiClass predicateClass =
-      JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, expression.getResolveScope());
-    if(predicateClass == null) return ThreeState.NO;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiType wantedType = factory.createType(predicateClass, inType);
-    PsiExpression copy = factory.createExpressionFromText(expression.getText(), expression);
-    PsiType copyType = copy.getType();
-    if(copyType != null && wantedType.isAssignableFrom(copyType)) return ThreeState.YES;
-    PsiMethodReferenceExpression methodRef =
-      (PsiMethodReferenceExpression)factory.createExpressionFromText("(" + expression.getText() + ")::apply", expression);
-    PsiType methodRefType = methodRef.getType();
-    if(methodRefType != null && wantedType.isAssignableFrom(methodRefType)) return ThreeState.UNSURE;
-    return ThreeState.NO;
+    if (expression == null) return null;
+    if(expression instanceof PsiFunctionalExpression) return text;
+    if(expression instanceof PsiConditionalExpression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+      String thenBranch = adaptToPredicate(ternary.getThenExpression());
+      String elseBranch = adaptToPredicate(ternary.getElseExpression());
+      if(thenBranch == null || elseBranch == null) return null;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+      PsiConditionalExpression copy = (PsiConditionalExpression)factory.createExpressionFromText(text, expression);
+      Objects.requireNonNull(copy.getThenExpression()).replace(factory.createExpressionFromText(thenBranch, expression));
+      Objects.requireNonNull(copy.getElseExpression()).replace(factory.createExpressionFromText(elseBranch, expression));
+      return copy.getText();
+    }
+    String adapted = ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE) + "::apply";
+    PsiClassType type = ObjectUtils.tryCast(expression.getType(), PsiClassType.class);
+    if (type == null) return null;
+    if (type.rawType().equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION)) return adapted;
+    PsiClass typeClass = type.resolve();
+    // Disable inspection if type of expression is some subtype which defines its own 'apply' methods
+    // to avoid possible resolution clashes
+    if (typeClass == null) return null;
+    PsiMethod[] methods = typeClass.findMethodsByName("apply", true);
+    if (methods.length != 1 ||
+        methods[0].getContainingClass() == null ||
+        !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(methods[0].getContainingClass().getQualifiedName())) {
+      return null;
+    }
+    return adapted;
   }
 
   private static boolean isBooleanIdentity(PsiExpression arg) {
@@ -1217,18 +1225,15 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       String name = call.getMethodExpression().getReferenceName();
       if (name == null) return;
       PsiExpression[] args = qualifier.getArgumentList().getExpressions();
+      CommentTracker ct = new CommentTracker();
       if (args.length == 1) {
         PsiExpression arg = args[0];
-        PsiType argType = arg.getType();
-        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(argType);
-        if (canBePredicate(arg) == ThreeState.UNSURE && method != null) {
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-          String text = ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + "::" + method.getName();
-          arg.replace(factory.createExpressionFromText(text, arg));
-        }
+        String replacement = adaptToPredicate(ct.markUnchanged(arg));
+        if (replacement == null) return;
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        arg.replace(factory.createExpressionFromText(replacement, arg));
       }
       qualifier.getMethodExpression().handleElementRename(name);
-      CommentTracker ct = new CommentTracker();
       ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
     }
   }
