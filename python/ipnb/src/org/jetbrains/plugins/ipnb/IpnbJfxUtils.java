@@ -148,7 +148,7 @@ public class IpnbJfxUtils {
     boolean single;
     int end = StringUtil.indexOf(source, "$");
     single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
-    while (end > 0) {
+    while (end >= 0) {
       String substring = source.substring(start, end);
       if (start != 0) {
         result.append(escapeMath(inMath, single));
