@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.history;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,13 +31,12 @@ import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
+import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
@@ -136,57 +134,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     return 0;
   }
 
-  private static void walk(@NotNull LiteLinearGraph graph, int start, @NotNull NodeVisitor visitor) {
-    BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
-    BitSetFlags visitedInSameDirection = new BitSetFlags(graph.nodesCount(), false);
-
-    Stack<Pair<Integer, Boolean>> stack = new Stack<>();
-    stack.push(new Pair<>(start, true)); // commit + direction of travel
-
-    while (!stack.empty()) {
-      int currentNode = stack.peek().first;
-      boolean down = stack.peek().second;
-      if (!visited.get(currentNode)) {
-        visited.set(currentNode, true);
-        visitor.enterNode(currentNode);
-      }
-
-      boolean found = false;
-      for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
-        if (!visited.get(nextNode)) {
-          stack.push(new Pair<>(nextNode, down));
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        if (!visitedInSameDirection.get(currentNode)) {
-          visitedInSameDirection.set(currentNode, true);
-          visitor.exitNode(currentNode);
-        }
-        for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
-          if (!visited.get(nextNode)) {
-            stack.push(new Pair<>(nextNode, !down));
-            found = true;
-            break;
-          }
-        }
-      }
-
-      if (!found) {
-        stack.pop();
-      }
-    }
-  }
-
-  public interface NodeVisitor {
-    void enterNode(int node);
-
-    void exitNode(int node);
-  }
-
-  private static class FileHistoryRefiner implements NodeVisitor {
+  private static class FileHistoryRefiner implements DfsUtil.NodeVisitor {
     @NotNull private final VisibleGraph<Integer> myVisibleGraph;
     @NotNull private final IndexDataGetter.FileNamesData myNamesData;
     @NotNull private final Stack<FilePath> myPaths;
@@ -206,7 +154,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
     public boolean refine(@NotNull LinearGraph graph, int row, @NotNull FilePath startPath) {
       myPaths.push(startPath);
-      walk(LinearGraphUtils.asLiteLinearGraph(graph), row, this);
+      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(graph), row, this);
       return myWasChanged;
     }
 
