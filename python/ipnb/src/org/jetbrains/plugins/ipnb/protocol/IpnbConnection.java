@@ -112,7 +112,8 @@ public class IpnbConnection {
           throw new IOException("Cannot start Jupyter Notebook");
         }
       }
-      return getExistingKernelForSession(pathToFile);
+      final String kernelName = getDefaultKernelName();
+      return getExistingKernelForSession(pathToFile, kernelName);
     }
     else {
       if (myToken != null) {
@@ -223,37 +224,21 @@ public class IpnbConnection {
     return myURI + apiPrefix + API_URL + path;
   }
 
-  private String getExistingKernelForSession(@NotNull String pathToFile) {
+  private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) {
     try {
-      final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
-      if (connection instanceof HttpsURLConnection) {
-        final String kernelName = getDefaultKernelName();
-        if (kernelName.isEmpty()) return "";
-        final byte[] postData = createKernelPostParameters(pathToFile, kernelName);
-        final HttpsURLConnection httpsConnection = PyUtil.as(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
-                                                             HttpsURLConnection.class);
-        if (httpsConnection != null) {
-          httpsConnection.setRequestProperty("Content-Type", "application/json");
-          httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-          httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
-          httpsConnection.setRequestProperty("_xsrf", myXsrf);
-          httpsConnection.setUseCaches(false);
-          httpsConnection.setDoOutput(true);
-
-          final OutputStream outputStream = connection.getOutputStream();
-          try (DataOutputStream wr = new DataOutputStream(outputStream)) {
-            wr.write(postData);
-            wr.flush();
-          }
-          connection.connect();
-          final String response = getResponse(httpsConnection);
-          final SessionWrapper wrapper = new GsonBuilder().create().fromJson(response, SessionWrapper.class);
-
+      final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
+      HttpsURLConnection connection = createKernelIdConnection(postData, pathToFile);
+      if (connection != null) {
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+          final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
+          connection = createKernelIdConnection(oldParamsToPost, pathToFile);
+        }
+        
+        if (connection != null && connection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+          final String response = getResponse(connection);
+          final OldFormatSessionWrapper wrapper = new GsonBuilder().create().fromJson(response, OldFormatSessionWrapper.class);
           return wrapper.kernel.id;
         }
-      }
-      else {
-        throw new UnsupportedOperationException("Only HTTP URLs are supported");
       }
     }
     catch (IOException e) {
@@ -261,11 +246,41 @@ public class IpnbConnection {
     }
     return "";
   }
+  
+  @Nullable
+  private HttpsURLConnection createKernelIdConnection(byte[] postData, String pathToFile) throws IOException {
+    final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
+    if (connection instanceof HttpsURLConnection) {
+      final HttpsURLConnection httpsConnection = PyUtil.as(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
+                                                           HttpsURLConnection.class);
+      if (httpsConnection != null) {
+        httpsConnection.setRequestProperty("Content-Type", "application/json");
+        httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+        httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
+        httpsConnection.setRequestProperty("_xsrf", myXsrf);
+        httpsConnection.setUseCaches(false);
+        httpsConnection.setDoOutput(true);
 
-  private static byte[] createKernelPostParameters(@NotNull String pathToFile, String kernelName) {
-    final Gson gsonBuilder = new GsonBuilder().create();
-    final HubSessionWrapper hubSessionWrapper = new HubSessionWrapper(kernelName, pathToFile, "notebook");
-    return gsonBuilder.toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8); 
+        final OutputStream outputStream = connection.getOutputStream();
+        try (DataOutputStream wr = new DataOutputStream(outputStream)) {
+          wr.write(postData);
+          wr.flush();
+        }
+        httpsConnection.connect();
+        return httpsConnection;
+      }
+    }
+    return null;
+  }
+
+  private static byte[] createNewFormatKernelPostParameters(@NotNull String pathToFile, @NotNull String kernelName) {
+    final SessionWrapper hubSessionWrapper = new SessionWrapper(kernelName, pathToFile, "notebook");
+    return new GsonBuilder().create().toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8);
+  }
+
+  private static byte[] createOldFormatKernelPostParameters(@NotNull String pathToFile, @NotNull String kernelName) {
+    final OldFormatSessionWrapper sessionWrapper = new OldFormatSessionWrapper(kernelName, pathToFile);
+    return new GsonBuilder().create().toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);
   }
 
   private static boolean isLoginNeeded(@NotNull String redirectUrl) throws IOException {
@@ -801,13 +816,13 @@ public class IpnbConnection {
     return myExecCount;
   }
   
-  private static class HubSessionWrapper {
+  private static class SessionWrapper {
     KernelWrapper kernel;
     String name;
     String path;
     String type = "notebook";
 
-    public HubSessionWrapper(String kernelName, String path, String type) {
+    public SessionWrapper(String kernelName, String path, String type) {
       this.kernel = new KernelWrapper(kernelName);
       this.name = "";
       this.path = path;
@@ -815,11 +830,11 @@ public class IpnbConnection {
     }
   }
 
-  private static class SessionWrapper {
+  private static class OldFormatSessionWrapper {
     NotebookWrapper notebook;
     KernelWrapper kernel;
 
-    public SessionWrapper(String interpreterName, String filePath) {
+    public OldFormatSessionWrapper(String interpreterName, String filePath) {
       kernel = new KernelWrapper(interpreterName);
       notebook = new NotebookWrapper(filePath);
     }
