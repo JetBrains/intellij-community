@@ -152,6 +152,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
+    resolveLinksToBundledSchemes();
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
   }
 
@@ -182,6 +183,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
         createEditableCopy((BundledScheme)scheme, SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName());
+      }
+    }
+  }
+  
+  private void resolveLinksToBundledSchemes() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+        ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
       }
     }
   }

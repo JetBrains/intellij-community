@@ -21,6 +21,7 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -45,6 +46,7 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.EditorColors.*;
@@ -392,7 +394,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     DefaultColorSchemesManager manager = DefaultColorSchemesManager.getInstance();
     EditorColorsScheme defaultScheme = manager.getScheme(name);
     if (defaultScheme == null) {
-      defaultScheme = EmptyColorScheme.INSTANCE;
+      defaultScheme = new TemporaryParent(name);
     }
     return defaultScheme;
   }
@@ -940,5 +942,57 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
     EditorColorsScheme parent = ((AbstractColorsScheme)scheme).myParentScheme;
     return parent != null ? getBaseDefaultScheme(parent) : null;
+  }
+  
+  private static class TemporaryParent extends EditorColorsSchemeImpl {
+
+    private static Logger LOG = Logger.getInstance("#" + TemporaryParent.class.getName());
+    
+    private String myParentName;
+    private boolean isErrorReported;
+
+    public TemporaryParent(@NotNull String parentName) {
+      super(EmptyColorScheme.INSTANCE);
+      myParentName = parentName;
+    }
+
+    public String getParentName() {
+      return myParentName;
+    }
+
+    @Override
+    public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
+      reportError();
+      return super.getAttributes(key);
+    }
+
+    @Nullable
+    @Override
+    public Color getColor(ColorKey key) {
+      reportError();
+      return super.getColor(key);
+    }
+
+    private void reportError() {
+      if (!isErrorReported) {
+        LOG.error("Unresolved link to " + myParentName);
+        isErrorReported = true;
+      }
+    }
+  }
+
+  public void setParent(@NotNull EditorColorsScheme newParent) {
+    assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
+    myParentScheme = newParent;
+  }
+  
+  void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
+    if (myParentScheme instanceof TemporaryParent) {
+      String parentName = ((TemporaryParent)myParentScheme).getParentName();
+      EditorColorsScheme newParent = nameResolver.apply(parentName);
+      assert newParent != null : "Can not resolve '" + parentName + "' color scheme.";
+      assert newParent instanceof ReadOnlyColorsScheme : "Resolved parent color scheme must be read-only.";
+      myParentScheme = newParent;
+    }
   }
 }
