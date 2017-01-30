@@ -34,9 +34,13 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
     private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
     override fun setPath(path: String) {
-      super.setPath(path)
+      setPath(path, null)
+    }
 
-      if (Paths.get(path).exists()) {
+    override fun setPath(path: String, file: VirtualFile?) {
+      super.setPath(path, file)
+
+      if ((file != null && file.isValid) || Paths.get(path).exists()) {
         moduleComponentLoadPolicy = StateLoadPolicy.LOAD
       }
     }
