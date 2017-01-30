@@ -145,7 +145,7 @@ public class CodeCompletionPanel {
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
-    myCbSorting.setSelected(UISettings.getInstance().isSortLookupElementsLexicographically());
+    myCbSorting.setSelected(UISettings.getInstance().getSortLookupElementsLexicographically());
     
     myCbAutocompletion.setText("Autopopup code completion" + (PowerSaveMode.isEnabled() ? " (not available in Power Save mode)" : ""));
   }
@@ -193,7 +193,7 @@ public class CodeCompletionPanel {
     isModified |= isModified(myCbAutopopupJavaDoc, codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
-    isModified |= isModified(myCbSorting, UISettings.getInstance().isSortLookupElementsLexicographically());
+    isModified |= isModified(myCbSorting, UISettings.getInstance().getSortLookupElementsLexicographically());
 
     return isModified;
   }

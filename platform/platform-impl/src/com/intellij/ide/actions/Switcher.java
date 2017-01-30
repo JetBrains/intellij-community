@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ public class Switcher extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
@@ -390,6 +391,7 @@ public class Switcher extends AnAction implements DumbAware {
       ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(@NotNull ListSelectionEvent e) {
           if (!toolWindows.isSelectionEmpty() && !files.isSelectionEmpty()) {
             files.clearSelection();
@@ -535,6 +537,7 @@ public class Switcher extends AnAction implements DumbAware {
           return fullText;
         }
 
+        @Override
         public void valueChanged(@NotNull final ListSelectionEvent e) {
           ApplicationManager.getApplication().invokeLater(() -> updatePathLabel());
         }
@@ -561,6 +564,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(@NotNull ListSelectionEvent e) {
           if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
             toolWindows.getSelectionModel().clearSelection();
@@ -737,9 +741,11 @@ public class Switcher extends AnAction implements DumbAware {
       return ((KeyboardShortcut)shortcutSet.getShortcuts()[0]).getFirstKeyStroke().getModifiers();
     }
 
+    @Override
     public void keyTyped(@NotNull KeyEvent e) {
     }
 
+    @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
       boolean enter = e.getKeyCode() == VK_ENTER;
@@ -750,6 +756,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     KeyEvent lastEvent;
 
+    @Override
     public void keyPressed(@NotNull KeyEvent e) {
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive() || lastEvent == e) return;
       lastEvent = e;
@@ -938,11 +945,11 @@ public class Switcher extends AnAction implements DumbAware {
                 }
               }
               else {
-                boolean oldValue = UISettings.getInstance().REUSE_NOT_MODIFIED_TABS;
-                UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = false;
+                boolean oldValue = UISettings.getInstance().getReuseNotModifiedTabs();
+                UISettings.getInstance().setReuseNotModifiedTabs(false);
                 manager.openFile(file, true, true);
                 if (oldValue) {
-                  CommandProcessor.getInstance().executeCommand(project, () -> UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = true, "", null);
+                  CommandProcessor.getInstance().executeCommand(project, () -> UISettings.getInstance().setReuseNotModifiedTabs(true), "", null);
                 }
               }
             }
@@ -956,24 +963,21 @@ public class Switcher extends AnAction implements DumbAware {
       if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
         myPopup.cancel();
         final AnAction action = gotoFile;
-        SwingUtilities.invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(@NotNull final DataContext context) {
-            final DataContext dataContext = new DataContext() {
-              @Nullable
-              @Override
-              public Object getData(@NonNls String dataId) {
-                if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-                  return fileName;
-                }
-                return context.getData(dataId);
+        SwingUtilities.invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+          final DataContext dataContext = new DataContext() {
+            @Nullable
+            @Override
+            public Object getData(@NonNls String dataId) {
+              if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+                return fileName;
               }
-            };
-            final AnActionEvent event =
-              new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
-                                ActionManager.getInstance(), 0);
-            action.actionPerformed(event);
-          }
+              return context.getData(dataId);
+            }
+          };
+          final AnActionEvent event =
+            new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
+                              ActionManager.getInstance(), 0);
+          action.actionPerformed(event);
         }));
       }
     }
@@ -985,6 +989,7 @@ public class Switcher extends AnAction implements DumbAware {
       return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
     }
 
+    @Override
     public void mouseClicked(@NotNull MouseEvent e) {
     }
 
@@ -992,6 +997,7 @@ public class Switcher extends AnAction implements DumbAware {
     private JList mouseMoveSrc = null;
     private int mouseMoveListIndex = -1;
 
+    @Override
     public void mouseMoved(@NotNull MouseEvent e) {
       if (mouseMovedFirstTime) {
         mouseMovedFirstTime = false;
@@ -1021,21 +1027,26 @@ public class Switcher extends AnAction implements DumbAware {
       files.repaint();
     }
 
+    @Override
     public void mousePressed(@NotNull MouseEvent e) {
     }
 
+    @Override
     public void mouseReleased(@NotNull MouseEvent e) {
     }
 
+    @Override
     public void mouseEntered(@NotNull MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(@NotNull MouseEvent e) {
       mouseMoveSrc = null;
       mouseMoveListIndex = -1;
       repaintLists();
     }
 
+    @Override
     public void mouseDragged(@NotNull MouseEvent e) {
     }
 
@@ -1195,6 +1206,7 @@ public class Switcher extends AnAction implements DumbAware {
       mySwitcherPanel = switcherPanel;
     }
 
+    @Override
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
         Project project = mySwitcherPanel.project;

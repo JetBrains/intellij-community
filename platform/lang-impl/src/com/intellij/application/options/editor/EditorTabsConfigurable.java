@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.ide.ui.UINumericRange;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,7 +126,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
-    myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.REUSE_NOT_MODIFIED_TABS);
+    myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.getReuseNotModifiedTabs());
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
 
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
@@ -181,8 +181,8 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
     uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE = myActivateRightNeighbouringTabRadioButton.isSelected();
 
-    if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.REUSE_NOT_MODIFIED_TABS)) uiSettingsChanged = true;
-    uiSettings.REUSE_NOT_MODIFIED_TABS = myReuseNotModifiedTabsCheckBox.isSelected();
+    if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs())) uiSettingsChanged = true;
+    uiSettings.setReuseNotModifiedTabs(myReuseNotModifiedTabsCheckBox.isSelected());
 
     if (isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT, EDITOR_TABS_RANGE)) uiSettingsChanged = true;
     try {
@@ -201,7 +201,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     isModified |= isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS);
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
-    isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.REUSE_NOT_MODIFIED_TABS);
+    isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs());
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
     isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;

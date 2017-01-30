@@ -215,7 +215,7 @@ class LookupUi {
   }
 
   private void updateSorting() {
-    final boolean lexi = UISettings.getInstance().isSortLookupElementsLexicographically();
+    final boolean lexi = UISettings.getInstance().getSortLookupElementsLexicographically();
     mySortingLabel.setIcon(lexi ? AllIcons.Ide.LookupAlphanumeric : AllIcons.Ide.LookupRelevance);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
 
@@ -429,7 +429,7 @@ class LookupUi {
     }
 
     private AnAction createSortingAction(boolean checked) {
-      boolean currentSetting = UISettings.getInstance().isSortLookupElementsLexicographically();
+      boolean currentSetting = UISettings.getInstance().getSortLookupElementsLexicographically();
       final boolean newSetting = checked == currentSetting;
       return new DumbAwareAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null, checked ? PlatformIcons.CHECK_ICON : null) {
         @Override

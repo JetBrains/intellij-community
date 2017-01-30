@@ -223,7 +223,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private static boolean isAlphaSorted() {
-    return ourUISettings.isSortLookupElementsLexicographically();
+    return ourUISettings.getSortLookupElementsLexicographically();
   }
 
   @Override

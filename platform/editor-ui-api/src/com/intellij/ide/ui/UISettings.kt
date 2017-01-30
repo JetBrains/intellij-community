@@ -63,7 +63,10 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
   @JvmField var CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024
   @JvmField var EDITOR_TAB_LIMIT = 10
-  @JvmField var REUSE_NOT_MODIFIED_TABS = false
+
+  @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
+  var reuseNotModifiedTabs by storedProperty(false)
+
   @JvmField var ANIMATE_WINDOWS = true
   @JvmField var ANIMATION_DURATION = 300 // Milliseconds
   @JvmField var SHOW_TOOL_WINDOW_NUMBERS = true

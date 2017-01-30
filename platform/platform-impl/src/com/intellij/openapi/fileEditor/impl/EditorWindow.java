@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,7 +322,7 @@ public class EditorWindow {
     else if (parent instanceof EditorsSplitters) {
       parent.removeAll();
       parent.add(otherComponent, BorderLayout.CENTER);
-      ((JComponent)parent).revalidate();
+      parent.revalidate();
     }
     else {
       throw new IllegalStateException("Unknown container: " + parent);
@@ -957,10 +957,9 @@ public class EditorWindow {
   }
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
-    if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(siblingEditor.getFile()) == null) {
-      setEditor(siblingEditor, true);
-    }
-    else if (myTabbedPane == null && getTabCount() == 0) { // tabless mode and no file opened
+    if (myTabbedPane != null &&
+        getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT &&
+        findFileComposite(siblingEditor.getFile()) == null || myTabbedPane == null && getTabCount() == 0) {
       setEditor(siblingEditor, true);
     }
     else {
@@ -1148,12 +1147,14 @@ public class EditorWindow {
   }
 
   private boolean shouldCloseSelected() {
-    if (!UISettings.getInstance().REUSE_NOT_MODIFIED_TABS) return false;
-    if (!myOwner.getManager().getProject().isInitialized()) return false;
+    if (!UISettings.getInstance().getReuseNotModifiedTabs() || !myOwner.getManager().getProject().isInitialized()) {
+      return false;
+    }
+
     VirtualFile file = getSelectedFile();
-    if (file == null) return false;
-    if (!isFileOpen(file)) return false;
-    if (isFilePinned(file)) return false;
+    if (file == null || !isFileOpen(file) || isFilePinned(file)) {
+      return false;
+    }
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return false;
     Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
