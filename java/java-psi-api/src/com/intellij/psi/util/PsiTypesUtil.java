@@ -74,10 +74,11 @@ public class PsiTypesUtil {
         }
       }
 
+      PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
       StringBuilder buffer = new StringBuilder();
       buffer.append(PsiKeyword.NEW);
       buffer.append(" ");
-      buffer.append(componentType.getCanonicalText());
+      buffer.append(erasedComponentType.getCanonicalText());
       buffer.append("[0]");
       for (int i = 0; i < count; i++) {
         buffer.append("[]");
