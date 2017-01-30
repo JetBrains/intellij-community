@@ -22,12 +22,15 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -204,9 +207,26 @@ public class JavaExecutionStack extends XExecutionStack {
 
         // replace the rest with the related stack (if available)
         if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame) {
-          List<? extends XStackFrame> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
           if (!ContainerUtil.isEmpty(relatedStack)) {
-            myContainer.addStackFrames(relatedStack, true);
+            int i = 0;
+            for (StackFrameItem stackFrame : relatedStack) {
+              if (i > StackCapturingLineBreakpoint.MAX_STACK_LENGTH) {
+                myContainer.addStackFrames(Collections.singletonList(new XStackFrame() {
+                  @Override
+                  public void customizePresentation(@NotNull ColoredTextContainer component) {
+                    component.append("Too many frames, the rest is truncated...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+                  }
+                }), true);
+                return;
+              }
+              XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
+              if (showFrame(newFrame)) {
+                myContainer.addStackFrames(Collections.singletonList(newFrame), false);
+              }
+              i++;
+            }
+            myContainer.addStackFrames(Collections.emptyList(), true);
             return;
           }
         }
@@ -221,10 +241,10 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
-    if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames()) return true;
-    if (frame instanceof JavaStackFrame) {
-      StackFrameDescriptorImpl descriptor = ((JavaStackFrame)frame).getDescriptor();
-      return !descriptor.isSynthetic() && !descriptor.isInLibraryContent();
+    if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames() &&
+        frame instanceof JVMStackFrameInfoProvider) {
+      JVMStackFrameInfoProvider info = (JVMStackFrameInfoProvider)frame;
+      return !info.isSynthetic() && !info.isInLibraryContent();
     }
     return true;
   }

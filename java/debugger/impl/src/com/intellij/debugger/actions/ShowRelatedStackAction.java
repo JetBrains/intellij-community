@@ -39,14 +39,12 @@ public class ShowRelatedStackAction extends AnAction {
     Project project = e.getProject();
     List<StackFrameItem> stack = getRelatedStack(e);
     if (project != null && stack != null) {
-      DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-
-      DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+      DebugProcessImpl debugProcess = DebuggerAction.getDebuggerContext(e.getDataContext()).getDebugProcess();
       if (debugProcess == null) {
         return;
       }
 
-      new StackFramePopup(project, stack, debugProcess.getSearchScope()).show();
+      StackFramePopup.show(stack, debugProcess);
     }
   }
 
