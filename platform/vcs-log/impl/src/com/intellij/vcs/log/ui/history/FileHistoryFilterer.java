@@ -80,11 +80,12 @@ class FileHistoryFilterer extends VcsLogFilterer {
       if (visibleGraph instanceof VisibleGraphImpl) {
 
         int row = getCurrentRow(dataPack, visibleGraph, namesData);
-
-        FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
-        if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), row, myFilePath)) {
-          // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-          visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits());
+        if (row >= 0) {
+          FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
+          if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), row, myFilePath)) {
+            // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+            visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits());
+          }
         }
       }
     }
@@ -105,7 +106,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
         return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, head.getCommitHash(), visibleGraph, fileIndexData);
       }
     }
-    return 0;
+    return -1;
   }
 
   private int findAncestorRowAffectingFile(@NotNull PermanentGraphImpl<Integer> permanentGraph,
@@ -131,7 +132,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
       return ObjectUtils.assertNotNull(rowIndex);
     }
 
-    return 0;
+    return -1;
   }
 
   private static class FileHistoryRefiner implements DfsUtil.NodeVisitor {
