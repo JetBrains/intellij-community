@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -531,7 +531,7 @@ class Foo {
 
   void "test vertical arrows in semi-focused lookup"() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
     testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
@@ -1509,7 +1509,7 @@ class Foo {
   protected void tearDown() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false
+    UISettings.getInstance()setSortLookupElementsLexicographically(false)
 
     super.tearDown()
   }
@@ -1609,7 +1609,7 @@ class ListConfigKey {
   }
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
 
     myFixture.configureByText 'a.java', '''

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,7 +293,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     myFixture.addClass("package foo; public class ELXaaaaaaaaaaaaaaaaaaaa {}")
     invokeCompletion(getTestName(false) + ".java")
@@ -305,14 +305,14 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testReallyAlphaSorting() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     invokeCompletion(getTestName(false) + ".java")
     assert myFixture.lookupElementStrings.sort() == myFixture.lookupElementStrings
   }
 
   void testAlphaSortPackages() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     def pkgs = ['bar', 'foo', 'goo', 'roo', 'zoo']
     for (s in pkgs) {
@@ -325,7 +325,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testAlphaSortingStartMatchesFirst() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     checkPreferredItems 0, 'xxbar', 'xxfoo', 'xxgoo', 'barxx', 'fooxx', 'gooxx'
   }
 
@@ -702,7 +702,7 @@ class ContainerUtil extends ContainerUtilRt {
   }
 
   void testPreselectClosestExactPrefixItem() {
-    UISettings.instance.SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.instance.setSortLookupElementsLexicographically(true)
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
