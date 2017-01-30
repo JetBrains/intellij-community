@@ -34,7 +34,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Transient
-import org.jetbrains.annotations.NonNls
 import sun.swing.SwingUtilities2
 import java.awt.Font
 import java.awt.Graphics
@@ -56,21 +55,22 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @Property(filter = FontFilter::class) private var FONT_SCALE: Float = 0.toFloat()
 
-  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
-  var recentFilesLimit by storedProperty(50)
+  @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit by storedProperty(50)
 
   @JvmField var CONSOLE_COMMAND_HISTORY_LIMIT = 300
   @JvmField var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
   @JvmField var CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024
   @JvmField var EDITOR_TAB_LIMIT = 10
 
-  @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
-  var reuseNotModifiedTabs by storedProperty(false)
-
-  @JvmField var ANIMATE_WINDOWS = true
-  @JvmField var ANIMATION_DURATION = 300 // Milliseconds
-  @JvmField var SHOW_TOOL_WINDOW_NUMBERS = true
+  @Suppress("unused")
+  @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
   @JvmField var HIDE_TOOL_STRIPES = true
+
+  @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
+  @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
+  @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by storedProperty(true)
+  @get:OptionTag("HIDE_TOOL_STRIPES") var hideToolStripes by storedProperty(true)
+
   @JvmField var WIDESCREEN_SUPPORT = false
   @JvmField var LEFT_HORIZONTAL_SPLIT = false
   @JvmField var RIGHT_HORIZONTAL_SPLIT = false
@@ -116,7 +116,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField var SHOW_TABS_TOOLTIPS = true
   @JvmField var SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true
   @JvmField var NAVIGATE_TO_PREVIEW = false
-  @JvmField var SORT_BOOKMARKS = false
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
@@ -153,6 +152,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   }
 
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
@@ -162,14 +162,15 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
    * Notifies all registered listeners that UI settings has been changed.
    */
   fun fireUISettingsChanged() {
-    val support = ColorBlindnessSupport.get(COLOR_BLINDNESS)
-    IconLoader.setFilter(support?.filter)
+    @Suppress("DEPRECATION")
+    HIDE_TOOL_STRIPES = hideToolStripes
 
-    val app = ApplicationManager.getApplication()
-    if (app != null && this == instance) {
-      // if this is the main UISettings instance push event to bus and to all current components
+    IconLoader.setFilter(ColorBlindnessSupport.get(COLOR_BLINDNESS)?.filter)
+
+    // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
+    if (this === _instance) {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
-      app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
   }
 
@@ -192,13 +193,13 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
   }
 
-  override fun getState(): UISettings? {
-    return this
-  }
+  override fun getState() = this
 
-  override fun loadState(`object`: UISettings) {
-    XmlSerializerUtil.copyBean(`object`, this)
+  override fun loadState(state: UISettings) {
+    XmlSerializerUtil.copyBean(state, this)
     resetModificationCount()
+    @Suppress("DEPRECATION")
+    HIDE_TOOL_STRIPES = hideToolStripes
 
     // Check tab placement in editor
     if (EDITOR_TAB_PLACEMENT != TABS_NONE &&
@@ -231,8 +232,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     // find any other suitable font withing "preferred" fonts first.
     var fontIsValid = isValidFont(Font(FONT_FACE, Font.PLAIN, FONT_SIZE))
     if (!fontIsValid) {
-      @NonNls val preferredFonts = arrayOf("dialog", "Arial", "Tahoma")
-      for (preferredFont in preferredFonts) {
+      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
         if (isValidFont(Font(preferredFont, Font.PLAIN, FONT_SIZE))) {
           FONT_FACE = preferredFont
           fontIsValid = true
@@ -258,13 +258,23 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   }
 
   companion object {
+    const val ANIMATION_DURATION = 300 // Milliseconds
+
     /** Not tabbed pane.  */
-    @JvmField
-    val TABS_NONE = 0
+    const val TABS_NONE = 0
+
+    private @Volatile var _instance: UISettings? = null
 
     @JvmStatic
     val instance: UISettings
-      get() = ServiceManager.getService(UISettings::class.java)
+      get() {
+        var result = _instance
+        if (result == null) {
+          result = ServiceManager.getService(UISettings::class.java)
+          _instance = result
+        }
+        return result!!
+      }
 
     /**
      * Use this method if you are not sure whether the application is initialized.

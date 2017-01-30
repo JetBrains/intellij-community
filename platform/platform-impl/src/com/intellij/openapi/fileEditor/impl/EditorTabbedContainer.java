@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -194,7 +197,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
-    if (!uiSettings.HIDE_TOOL_STRIPES && !uiSettings.PRESENTATION_MODE) {
+    if (!uiSettings.getHideToolStripes() && !uiSettings.PRESENTATION_MODE) {
       border.top = !topIds.isEmpty() ? 1 : 0;
       border.bottom = !bottom.isEmpty() ? 1 : 0;
       border.left = !leftIds.isEmpty() ? 1 : 0;

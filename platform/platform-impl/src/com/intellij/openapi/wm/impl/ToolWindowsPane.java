@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         .setBounds(size.width - rightSize.width, topSize.height, rightSize.width, size.height - topSize.height - bottomSize.height);
       myBottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
 
-      if (UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE) {
+      if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().PRESENTATION_MODE) {
         myLayeredPane.setBounds(0, 0, size.width, size.height);
       }
       else {
@@ -426,7 +426,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private void updateToolStripesVisibility() {
     boolean oldVisible = myLeftStripe.isVisible();
 
-    final boolean showButtons = !UISettings.getInstance().HIDE_TOOL_STRIPES && !UISettings.getInstance().PRESENTATION_MODE;
+    final boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().PRESENTATION_MODE;
     boolean visible = showButtons || myStripesOverlayed;
     myLeftStripe.setVisible(visible);
     myRightStripe.setVisible(visible);
@@ -897,7 +897,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       try {
         // Show component.
         final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !RemoteDesktopDetector.isRemoteSession()) {
+        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopDetector.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
           final Graphics topGraphics = topImage.getGraphics();
@@ -1112,7 +1112,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !RemoteDesktopDetector.isRemoteSession()) {
+        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopDetector.isRemoteSession()) {
           final Rectangle bounds = myComponent.getBounds();
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
@@ -1138,7 +1138,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             bottomGraphics.dispose();
           }
           // Remove component from the layered pane and start animation.
-          final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), uiSettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
@@ -1250,7 +1250,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     @NotNull
     private Pair<BufferedImage, Reference<BufferedImage>> getImage(@Nullable Reference<BufferedImage> imageRef) {
-      LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
+      LOG.assertTrue(UISettings.getInstance().getAnimateWindows());
       BufferedImage image = SoftReference.dereference(imageRef);
       if (image == null || image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()) {
         final int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());

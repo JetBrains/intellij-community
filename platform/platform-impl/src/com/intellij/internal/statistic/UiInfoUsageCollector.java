@@ -84,7 +84,7 @@ class UiInfoUsageCollector extends UsagesCollector {
   }
 
   private static boolean stripes() {
-    return UISettings.getInstance().HIDE_TOOL_STRIPES;
+    return UISettings.getInstance().getHideToolStripes();
   }
 
   private static boolean status() {

@@ -163,7 +163,7 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
-      uiSettings.HIDE_TOOL_STRIPES = false;
+      uiSettings.setHideToolStripes(false);
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MAIN_TOOLBAR = false;
@@ -226,6 +226,7 @@ public class PyCharmEduInitialConfigurator {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               int count = 0;
 
+              @Override
               public void run() {
                 if (project.isDisposed()) return;
                 if (count++ < 3) { // we need to call this after ToolWindowManagerImpl.registerToolWindowsFromBeans
@@ -245,7 +246,7 @@ public class PyCharmEduInitialConfigurator {
             final VirtualFile baseDir = project.getBaseDir();
             final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(baseDir);
             if (directory != null) {
-              InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyToolSettings(
+              InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyToolSettings(
                 Key.<PyPep8Inspection>create(PyPep8Inspection.INSPECTION_SHORT_NAME), directory,
                 inspection -> Collections.addAll(inspection.ignoredErrors, codes)
               );

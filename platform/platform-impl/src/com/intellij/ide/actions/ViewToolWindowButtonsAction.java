@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +25,15 @@ public class ViewToolWindowButtonsAction extends ToggleAction implements DumbAwa
     super("Show Tool Buttons");
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
-    return !UISettings.getInstance().HIDE_TOOL_STRIPES;
+    return !UISettings.getInstance().getHideToolStripes();
   }
 
-  public void setSelected(AnActionEvent event,boolean state) {
+  @Override
+  public void setSelected(AnActionEvent event, boolean state) {
     UISettings uiSettings = UISettings.getInstance();
-    uiSettings.HIDE_TOOL_STRIPES=!state;
+    uiSettings.setHideToolStripes(!state);
     uiSettings.fireUISettingsChanged();
   }
 }

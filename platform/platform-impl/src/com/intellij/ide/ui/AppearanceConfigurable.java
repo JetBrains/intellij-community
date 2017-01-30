@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,11 +185,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
-    update |= settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
-    settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
-    update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
-    settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
+    settings.setAnimateWindows(myComponent.myAnimateWindowsCheckBox.isSelected());
+    update |= settings.getShowToolWindowsNumbers() != myComponent.myWindowShortcutsCheckBox.isSelected();
+    settings.setShowToolWindowsNumbers(myComponent.myWindowShortcutsCheckBox.isSelected());
+    update |= settings.getHideToolStripes() != !myComponent.myShowToolStripesCheckBox.isSelected();
+    settings.setHideToolStripes(!myComponent.myShowToolStripesCheckBox.isSelected());
     update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
     settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
     update |= settings.SHOW_MEMORY_INDICATOR != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
@@ -335,9 +335,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
-    myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
-    myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_TOOL_WINDOW_NUMBERS);
-    myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
+    myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
+    myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
+    myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
     myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
@@ -402,9 +402,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
     isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE;
 
-    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
-    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
-    isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
+    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
+    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
+    isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
     isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.ALLOW_MERGE_BUTTONS;
@@ -444,8 +444,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
       isModified |= ratio != settings.ALPHA_MODE_RATIO;
     }
-    int tooltipDelay = -1;
-    tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
+    int tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
     isModified |=  tooltipDelay != Registry.intValue("ide.tooltip.initialDelay");
 
     return isModified;

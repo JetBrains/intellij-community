@@ -109,5 +109,5 @@ internal class StoredProperty<T>(internal val defaultValue: T) : ReadWriteProper
 
   override fun hashCode() = value?.hashCode() ?: 0
 
-  override fun toString() = value?.toString() ?: super.toString()
+  override fun toString() = if (value === defaultValue) "" else value?.toString() ?: super.toString()
 }

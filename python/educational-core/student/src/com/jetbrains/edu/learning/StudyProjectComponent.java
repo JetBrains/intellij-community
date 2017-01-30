@@ -107,11 +107,9 @@ public class StudyProjectComponent implements ProjectComponent {
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
         Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
         if (course1 != null) {
-          final UISettings instance = UISettings.getInstance();
-          if (instance != null) {
-            instance.HIDE_TOOL_STRIPES = false;
-            instance.fireUISettingsChanged();
-          }
+          UISettings instance = UISettings.getInstance();
+          instance.setHideToolStripes(false);
+          instance.fireUISettingsChanged();
           registerShortcuts();
           EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
