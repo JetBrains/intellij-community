@@ -154,11 +154,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public boolean supportsProjectSchemes() {
-    return false;
-  }
-
-  @Override
   public boolean canDuplicateScheme(@NotNull EditorColorsScheme scheme) {
     return true;
   }

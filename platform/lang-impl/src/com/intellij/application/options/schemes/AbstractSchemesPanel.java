@@ -157,4 +157,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   public final void updateOnCurrentSettingsChange() {
     mySchemesCombo.updateSelected();
   }
+
+  /**
+   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be 
+   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes 
+   *         separators.
+   */
+  public abstract boolean supportsProjectSchemes();
 }

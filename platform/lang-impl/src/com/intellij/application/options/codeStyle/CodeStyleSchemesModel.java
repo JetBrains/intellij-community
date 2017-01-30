@@ -232,11 +232,6 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   @Override
-  public boolean supportsProjectSchemes() {
-    return true;
-  }
-
-  @Override
   public boolean canDuplicateScheme(@NotNull CodeStyleScheme scheme) {
     return !isProjectScheme(scheme);
   }

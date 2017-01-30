@@ -26,10 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @see AbstractSchemeActions
  */
 public interface SchemesModel<T extends Scheme> {
-  /**
-   * @return True if the model may contain both projects and IDE (application) schemes.
-   */
-  boolean supportsProjectSchemes();
 
   /**
    * @param scheme The scheme to check.

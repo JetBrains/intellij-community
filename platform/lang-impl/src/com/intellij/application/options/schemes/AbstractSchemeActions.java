@@ -74,7 +74,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
-    if (getModel().supportsProjectSchemes()) {
+    if (mySchemesPanel.supportsProjectSchemes()) {
       actions.add(new CopyToProjectAction());
       actions.add(new CopyToIDEAction());
       actions.add(new Separator());
