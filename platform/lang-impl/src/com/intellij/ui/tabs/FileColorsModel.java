@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class FileColorsModel implements Cloneable {
     predefinedScopeNameToPropertyKey = new THashMap<>();
     predefinedScopeNameToPropertyKey.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
     // These IDEs have TestScope registered (via PackagesScopesProvider or TestScopeProvider)
-    if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm()) {
+    if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm() || PlatformUtils.isGoIde()) {
         predefinedScopeNameToPropertyKey.put(TestsScope.NAME, "file.colors.enable.tests");
     }
 
