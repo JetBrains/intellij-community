@@ -44,6 +44,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -536,6 +537,7 @@ public class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().flushChangedAlarm();
     StoreUtil.save(ServiceKt.getStateStore(project), project);
   }
 

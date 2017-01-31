@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -147,7 +146,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }
 
-  @TestOnly fun flushChangedAlarm() {
+  override fun flushChangedAlarm() {
     changedFilesAlarm.flush()
   }
 
