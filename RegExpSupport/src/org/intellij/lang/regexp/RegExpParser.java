@@ -242,7 +242,6 @@ public class RegExpParser implements PsiParser {
   }
 
   private boolean parseClassdef(PsiBuilder builder) {
-    final PsiBuilder.Marker marker = builder.mark();
     int count = 0;
     while (true) {
       final IElementType token = builder.getTokenType();
@@ -267,12 +266,6 @@ public class RegExpParser implements PsiParser {
         parseNamedCharacter(builder);
       }
       else {
-        if (count > 1) {
-          marker.done(RegExpElementTypes.UNION);
-        }
-        else {
-          marker.drop();
-        }
         return count > 0;
       }
       count++;

@@ -173,12 +173,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         checkForDuplicates(classElement, seen);
       }
     }
-    else if (element instanceof RegExpUnion) {
-      final RegExpUnion union = (RegExpUnion)element;
-      for (RegExpClassElement classElement : union.getElements()) {
-        checkForDuplicates(classElement, seen);
-      }
-    }
   }
 
   @Override

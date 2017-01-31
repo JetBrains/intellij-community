@@ -3,23 +3,22 @@ REGEXP_FILE
     RegExpBranchImpl: <[abhgefdc]ij>
       RegExpClassImpl: <[abhgefdc]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <abhgefdc>
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
-          RegExpCharImpl: <h>
-            PsiElement(CHARACTER)('h')
-          RegExpCharImpl: <g>
-            PsiElement(CHARACTER)('g')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <f>
-            PsiElement(CHARACTER)('f')
-          RegExpCharImpl: <d>
-            PsiElement(CHARACTER)('d')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
+        RegExpCharImpl: <a>
+          PsiElement(CHARACTER)('a')
+        RegExpCharImpl: <b>
+          PsiElement(CHARACTER)('b')
+        RegExpCharImpl: <h>
+          PsiElement(CHARACTER)('h')
+        RegExpCharImpl: <g>
+          PsiElement(CHARACTER)('g')
+        RegExpCharImpl: <e>
+          PsiElement(CHARACTER)('e')
+        RegExpCharImpl: <f>
+          PsiElement(CHARACTER)('f')
+        RegExpCharImpl: <d>
+          PsiElement(CHARACTER)('d')
+        RegExpCharImpl: <c>
+          PsiElement(CHARACTER)('c')
         PsiElement(CLASS_END)(']')
       RegExpCharImpl: <i>
         PsiElement(CHARACTER)('i')
