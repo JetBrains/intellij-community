@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class SourceCodeChecker {
   private static IntStreamEx getLinesStream(List<Location> locations, PsiFile psiFile) {
     IntStreamEx stream = StreamEx.of(locations).mapToInt(Location::lineNumber);
     if (psiFile instanceof PsiCompiledFile) {
-      stream = stream.map(line -> DebuggerUtilsEx.bytecodeToSourceLine(psiFile, line));
+      stream = stream.map(line -> DebuggerUtilsEx.bytecodeToSourceLine(psiFile, line) + 1);
     }
     return stream.filter(line -> line > 0);
   }
