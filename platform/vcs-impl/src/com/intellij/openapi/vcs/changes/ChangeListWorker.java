@@ -205,14 +205,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
                                 @Nullable Object data) {
     final boolean contains = myMap.containsKey(name);
     LOG.assertTrue(!contains, "Attempt to create duplicate changelist " + name);
-    final LocalChangeListImpl newList = (LocalChangeListImpl)LocalChangeList.createEmptyChangeList(myProject, name);
+    final LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, id);
     newList.setData(data);
 
     if (description != null) {
       newList.setComment(description);
-    }
-    if (id != null) {
-      newList.setId(id);
     }
     myMap.put(name, newList);
     if (inUpdate) {

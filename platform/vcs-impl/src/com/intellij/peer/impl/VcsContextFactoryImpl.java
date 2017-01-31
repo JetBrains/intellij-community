@@ -102,7 +102,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   @NotNull
   public LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull final String name) {
-    return LocalChangeListImpl.createEmptyChangeListImpl(project, name);
+    return LocalChangeListImpl.createEmptyChangeListImpl(project, name, null);
   }
 
   @NotNull

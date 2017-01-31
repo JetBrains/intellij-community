@@ -24,7 +24,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   @NotNull private final Project myProject;
   @NotNull private final Set<Change> myChanges;
   private Set<Change> myReadChangesCache = null;
-  @NotNull private String myId;
+  @NotNull private final String myId;
   @NotNull private String myName;
   @NotNull private String myComment = "";
   @Nullable private Object myData;
@@ -34,13 +34,13 @@ public class LocalChangeListImpl extends LocalChangeList {
   private OpenTHashSet<Change> myChangesBeforeUpdate;
 
   @NotNull
-  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name) {
-    return new LocalChangeListImpl(project, name);
+  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
+    return new LocalChangeListImpl(project, name, id);
   }
 
-  private LocalChangeListImpl(@NotNull Project project, @NotNull String name) {
+  private LocalChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
     myProject = project;
-    myId = UUID.randomUUID().toString();
+    myId = id != null ? id : UUID.randomUUID().toString();
     myName = validateName(name);
 
     myChanges = ContainerUtil.newHashSet();
@@ -275,9 +275,5 @@ public class LocalChangeListImpl extends LocalChangeList {
   @Override
   public LocalChangeList copy() {
     return new LocalChangeListImpl(this);
-  }
-
-  public void setId(@NotNull String id) {
-    myId = id;
   }
 }
