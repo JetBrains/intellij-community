@@ -225,7 +225,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public void sortChildren() {
     if (isSorted()) return;
-    final List children = TreeUtil.childrenToArray(this);
+    final List children = TreeUtil.listChildren(this);
     Collections.sort(children, new DependencyNodeComparator());
     removeAllChildren();
     TreeUtil.addChildrenTo(this, children);

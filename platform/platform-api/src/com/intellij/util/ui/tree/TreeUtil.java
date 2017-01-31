@@ -345,7 +345,7 @@ public final class TreeUtil {
 
   public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
     //noinspection unchecked
-    final List<T> children = (List)childrenToArray(node);
+    final List<T> children = (List)listChildren(node);
     Collections.sort(children, comparator);
     for (int i = node.getChildCount() - 1; i >= 0; i--) {
       node.remove(i);
@@ -751,11 +751,19 @@ public final class TreeUtil {
     selectNode(tree, treeNode);
   }
 
+  /**
+   * @deprecated use {@link #listChildren(TreeNode)} instead
+   */
   @NotNull
-  public static ArrayList<TreeNode> childrenToArray(@NotNull final TreeNode node) {
+  public static ArrayList<TreeNode> childrenToArray(@NotNull TreeNode node) {
+    return (ArrayList<TreeNode>)listChildren(node);
+  }
+
+  @NotNull
+  public static List<TreeNode> listChildren(@NotNull final TreeNode node) {
     //ApplicationManager.getApplication().assertIsDispatchThread();
-    final int size = node.getChildCount();
-    final ArrayList<TreeNode> result = new ArrayList<>(size);
+    int size = node.getChildCount();
+    ArrayList<TreeNode> result = new ArrayList<>(size);
     for(int i = 0; i < size; i++){
       TreeNode child = node.getChildAt(i);
       LOG.assertTrue(child != null);

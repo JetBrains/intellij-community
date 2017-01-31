@@ -124,7 +124,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
   }
 
   private fun moveChildren(fromNode: N, toNode: N, model: DefaultTreeModel) {
-    val children = TreeUtil.childrenToArray(fromNode)
+    val children = TreeUtil.listChildren(fromNode)
     moveChildren(children, toNode, model)
   }
 
@@ -192,7 +192,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
     val nodeAsGroup = nodeData[node]?.group
     removeNode(node)
     if (nodeAsGroup != null) {
-      val childrenToKeep = TreeUtil.childrenToArray(node).filter { it in nodeData }
+      val childrenToKeep = TreeUtil.listChildren(node).filter { it in nodeData }
       if (childrenToKeep.isNotEmpty()) {
         val newGroupNode = getOrCreateNodeForModuleGroup(nodeAsGroup, rootNode, model, false)
         moveChildren(childrenToKeep, newGroupNode, model)
