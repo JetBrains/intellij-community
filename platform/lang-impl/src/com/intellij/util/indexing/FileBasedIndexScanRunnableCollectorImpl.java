@@ -87,7 +87,10 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       if (myProject.isDisposed()) {
         return tasks;
       }
-      contributedRoots = contributedRoots.append(provider.getAdditionalProjectLibrarySourceRoots(myProject));
+      contributedRoots = contributedRoots.append(
+        provider.getAdditionalProjectLibraries(myProject),
+        descriptor -> descriptor.getSourceRoots()
+      );
     }
     for (VirtualFile root : contributedRoots) {
       if (visitedRoots.add(root)) {

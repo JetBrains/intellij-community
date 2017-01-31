@@ -158,8 +158,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
         @NotNull
         @Override
-        public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
-          return myProject == project ? Collections.singletonList(myLibAdditionalSrcDir) : Collections.emptyList();
+        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+          return myProject == project ? Collections.singletonList(
+            SyntheticLibrary.newFixedLibrary(null, Collections.singletonList(myLibAdditionalSrcDir))
+          ) : Collections.emptyList();
         }
       }, getTestRootDisposable());
 

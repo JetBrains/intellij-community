@@ -151,6 +151,33 @@ public class VfsUtil extends VfsUtilCore {
     return toVirtualFileArray(ancestorsList);
   }
 
+  public static boolean contains(@NotNull VirtualFile file, @NotNull Collection<VirtualFile> roots) {
+    Set<VirtualFile> dirs = null;
+    for (VirtualFile root : roots) {
+      if (file.getFileSystem().equals(root.getFileSystem())) {
+        if (root.isDirectory()) {
+          if (dirs == null) {
+            dirs = new HashSet<>();
+          }
+          dirs.add(root);
+        }
+        else if (root.equals(file)) {
+          return true;
+        }
+      }
+    }
+    if (dirs != null) {
+      VirtualFile f = file;
+      while (f != null) {
+        if (dirs.contains(f)) {
+          return true;
+        }
+        f = f.getParent();
+      }
+    }
+    return false;
+  }
+
   /**
    * Gets the common ancestor for passed files, or {@code null} if the files do not have common ancestors.
    */
