@@ -56,7 +56,7 @@ abstract class SourceOperation extends Operation {
   static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
-    if(callType == null) return null;
+    if(callType == null || PsiType.VOID.equals(callType)) return null;
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     String name = method.getName();
