@@ -228,39 +228,32 @@ public class IpnbConnection {
     return myURI + apiPrefix + API_URL + path;
   }
 
-  private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) {
-    try {
-      final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
-      HttpsURLConnection connection = createKernelIdConnection(postData);
-      if (connection != null) {
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
-          final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
-          connection = createKernelIdConnection(oldParamsToPost);
-        }
-        
-        if (connection != null && connection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-          final String response = getResponse(connection);
-          final OldFormatSessionWrapper wrapper = new GsonBuilder().create().fromJson(response, OldFormatSessionWrapper.class);
-          return wrapper.kernel.id;
-        }
-      }
+  private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) throws IOException {
+    final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
+    String wrapper = getKernelId(postData);
+    if (wrapper != null) {
+      return wrapper;
     }
-    catch (IOException e) {
-      LOG.warn(e);
+    else {
+      final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
+      wrapper = getKernelId(oldParamsToPost);
+      return wrapper;
     }
-    return "";
   }
-  
+
   @Nullable
-  private HttpsURLConnection createKernelIdConnection(byte[] postData) throws IOException {
+  private String getKernelId(byte[] postData) throws IOException {
     final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
     if (connection instanceof HttpsURLConnection) {
-      final HttpsURLConnection httpsConnection = ObjectUtils.tryCast(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
-                                                           HttpsURLConnection.class);
+      final HttpsURLConnection httpsConnection =
+        ObjectUtils.tryCast(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
+                            HttpsURLConnection.class);
       if (httpsConnection != null) {
         httpsConnection.setRequestProperty("Content-Type", "application/json");
         httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-        httpsConnection.setRequestProperty("_xsrf", myXsrf);
+        if (myXsrf != null) {
+          httpsConnection.setRequestProperty("_xsrf", myXsrf);
+        }
         httpsConnection.setUseCaches(false);
         httpsConnection.setDoOutput(true);
 
@@ -270,7 +263,11 @@ public class IpnbConnection {
           wr.flush();
         }
         httpsConnection.connect();
-        return httpsConnection;
+        if (httpsConnection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+          final String response = getResponse(httpsConnection);
+          final OldFormatSessionWrapper wrapper = new GsonBuilder().create().fromJson(response, OldFormatSessionWrapper.class);
+          return wrapper.kernel.id;
+        }
       }
     }
     return null;
