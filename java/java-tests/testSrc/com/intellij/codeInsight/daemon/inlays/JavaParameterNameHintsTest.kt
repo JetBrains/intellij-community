@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
+class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
   fun check(text: String) {
-    checkInlays("A.java", text)
+    myFixture.testInlays("A.java", text)
   }
 
   fun `test insert literal arguments`() {
@@ -572,8 +572,6 @@ class Key {
   }
 
   fun `test poly and binary expressions`() {
-    try {
-      ParameterHintsPassFactory.setDebug(true)
       check("""
 class Test {
   void test() {
@@ -587,10 +585,6 @@ class Test {
   void yyy(int followTheSum) {}
 }
 """)
-    }
-    finally {
-      ParameterHintsPassFactory.setDebug(false)
-    }
   }
 
   fun `test incorrect pattern`() {

@@ -56,7 +56,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     private final String myParameterName;
 
     private InlineParameterValueFix(final String parameterName, final String value) {
-      myValue = StringUtil.unquoteString(value);
+      myValue = value;
       myParameterName = parameterName;
     }
 
@@ -68,7 +68,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, myValue);
+      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override

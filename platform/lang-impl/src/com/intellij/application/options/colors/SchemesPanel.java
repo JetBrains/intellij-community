@@ -108,5 +108,9 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
   public SchemesModel<EditorColorsScheme> getModel() {
     return myOptions;
   }
-  
+
+  @Override
+  public boolean supportsProjectSchemes() {
+    return false;
+  }
 }

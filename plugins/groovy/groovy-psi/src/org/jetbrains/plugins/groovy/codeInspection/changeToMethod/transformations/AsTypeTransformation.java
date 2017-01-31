@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations;
 
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,7 +37,11 @@ public class AsTypeTransformation extends Transformation<GrSafeCastExpression> {
 
   @Override
   protected boolean couldApply(@NotNull GrSafeCastExpression expression) {
-    return expression.getCastTypeElement() != null;
+    GrTypeElement typeElement = expression.getCastTypeElement();
+    if (typeElement == null ) return false;
+    PsiType type = typeElement.getType();
+    return type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0;
+
   }
 
   @Override

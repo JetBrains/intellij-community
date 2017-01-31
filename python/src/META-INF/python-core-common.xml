@@ -372,7 +372,7 @@
     <localInspection language="Python" shortName="PyCallByClassInspection" suppressId="PyCallByClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.different.class.call" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyCallByClassInspection"/>
     <localInspection language="Python" shortName="PyBroadExceptionInspection" suppressId="PyBroadException" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.too.broad.exception.clauses" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyBroadExceptionInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>
-    <localInspection language="Python" shortName="PyAugmentAssignmentInspection" suppressId="PyAugmentAssignment" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.augment.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAugmentAssignmentInspection"/>
+    <localInspection language="Python" shortName="PyAugmentAssignmentInspection" suppressId="PyAugmentAssignment" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.augment.assignment" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAugmentAssignmentInspection"/>
     <localInspection language="Python" shortName="PyChainedComparisonsInspection" suppressId="PyChainedComparisons" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.chained.comparisons" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyChainedComparisonsInspection"/>
     <localInspection language="Python" shortName="PyOldStyleClassesInspection" suppressId="PyOldStyleClasses" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.oldstyle.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOldStyleClassesInspection"/>
     <localInspection language="Python" shortName="PyCompatibilityInspection" suppressId="PyCompatibility" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.compatibility" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspection"/>
@@ -609,6 +609,9 @@
 
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
+
+    <toolWindow id="Data View" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
+    <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
   </extensions>
 
   <extensionPoints>

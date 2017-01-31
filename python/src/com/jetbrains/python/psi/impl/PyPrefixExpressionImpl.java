@@ -75,7 +75,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(PyResolveContext context) {
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 

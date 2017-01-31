@@ -57,7 +57,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private final JButton myCancelButton;
   private final JFrame myFrame;
 
-  private final Queue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<Runnable> myQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -143,30 +143,33 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private void startRequestDispatching() {
-    new Thread(() -> {
-      while (true) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          Runner.printStackTrace(e);
-          return;
-        }
-
-        final List<UpdateRequest> pendingRequests = new ArrayList<>();
-        UpdateRequest request;
-        while ((request = myQueue.poll()) != null) {
-          pendingRequests.add(request);
-        }
-
-        SwingUtilities.invokeLater(() -> {
-          for (UpdateRequest each : pendingRequests) {
-            each.perform();
+    new Thread("Updater UI Dispatcher") {
+      @Override
+      public void run() {
+        while (true) {
+          try {
+            //noinspection BusyWait
+            Thread.sleep(100);
           }
-        });
+          catch (InterruptedException e) {
+            Runner.printStackTrace(e);
+            return;
+          }
+
+          List<Runnable> pendingRequests = new ArrayList<>();
+          Runnable request;
+          while ((request = myQueue.poll()) != null) {
+            pendingRequests.add(request);
+          }
+
+          SwingUtilities.invokeLater(() -> {
+            for (Runnable each : pendingRequests) {
+              each.run();
+            }
+          });
+        }
       }
-    }, "swing updater dispatch").start();
+    }.start();
   }
 
   private void doCancel() {
@@ -217,7 +220,8 @@ public class SwingUpdaterUI implements UpdaterUI {
     System.exit(myApplied ? RESULT_REQUIRES_RESTART : 0);
   }
 
-  public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
+  @Override
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
@@ -366,14 +370,10 @@ public class SwingUpdaterUI implements UpdaterUI {
     boolean execute(UpdaterUI ui) throws OperationCancelledException;
   }
 
-  @FunctionalInterface
-  private interface UpdateRequest {
-    void perform();
-  }
-
   private static class MyTableModel extends AbstractTableModel {
-    public static final String[] COLUMNS = new String[]{"File", "Action", "Problem", "Solution"};
+    public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
     public static final int OPTIONS_COLUMN_INDEX = 3;
+
     private final List<Item> myItems = new ArrayList<>();
 
     public MyTableModel(List<ValidationResult> validationResults) {
@@ -382,6 +382,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       }
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMNS.length;
     }
@@ -402,12 +403,10 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == OPTIONS_COLUMN_INDEX) {
-        return ValidationResult.Option.class;
-      }
-      return super.getColumnClass(columnIndex);
+      return columnIndex == OPTIONS_COLUMN_INDEX ? ValidationResult.Option.class : super.getColumnClass(columnIndex);
     }
 
+    @Override
     public int getRowCount() {
       return myItems.size();
     }
@@ -424,6 +423,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       }
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       Item item = myItems.get(rowIndex);
       switch (columnIndex) {
@@ -457,8 +457,8 @@ public class SwingUpdaterUI implements UpdaterUI {
     }
 
     private static class Item {
-      ValidationResult validationResult;
-      ValidationResult.Option option;
+      private ValidationResult validationResult;
+      private ValidationResult.Option option;
 
       private Item(ValidationResult validationResult, ValidationResult.Option option) {
         this.validationResult = validationResult;

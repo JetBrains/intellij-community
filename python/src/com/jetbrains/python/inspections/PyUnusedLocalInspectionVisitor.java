@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -388,17 +389,17 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private boolean isRangeIteration(PyForStatement forStatement) {
+  private boolean isRangeIteration(@NotNull PyForStatement forStatement) {
     final PyExpression source = forStatement.getForPart().getSource();
     if (!(source instanceof PyCallExpression)) {
       return false;
     }
-    PyCallExpression expr = (PyCallExpression) source;
+    final PyCallExpression expr = (PyCallExpression)source;
     if (expr.isCalleeText("range", "xrange")) {
-      final PyCallable callee = expr.resolveCalleeFunction(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
-      if (callee != null && PyBuiltinCache.getInstance(forStatement).isBuiltin(callee)) {
-        return true;
-      }
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(forStatement);
+
+      return ContainerUtil.exists(expr.multiResolveCalleeFunction(resolveContext), builtinCache::isBuiltin);
     }
     return false;
   }

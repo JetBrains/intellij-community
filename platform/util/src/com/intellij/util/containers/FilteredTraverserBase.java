@@ -172,6 +172,30 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     return withTraversal(meta.traversal.unique(identity));
   }
 
+  @NotNull
+  public Self inRange(final Condition<? super T> rangeCondition) {
+    final TreeTraversal original = meta.traversal;
+    return withTraversal(new TreeTraversal(original.toString() + "(IN_RANGE)") {
+      @NotNull
+      @Override
+      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
+                                        @NotNull final Function<TT, ? extends Iterable<? extends TT>> tree) {
+        final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
+        final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
+        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+          @Override
+          public Iterable<? extends TT> fun(TT t) {
+            return JBIterable.from(tree.fun(t))
+              .skipWhile(notInRangeCondition)
+              .takeWhile(inRangeCondition);
+          }
+        }
+        WrappedTree wrappedTree = new WrappedTree();
+        return original.createIterator(JBIterable.from(roots).filter(inRangeCondition), wrappedTree);
+      }
+    });
+  }
+
   /**
    * Excludes the nodes by the specified condition from any traversal completely.
    * @see FilteredTraverserBase#expand(Condition)
@@ -240,8 +264,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @SuppressWarnings("unchecked")
   protected static class Meta<T> {
-    final Iterable<? extends T> roots;
     final TreeTraversal traversal;
+
+    final Iterable<? extends T> roots;
     final Cond<T> expand;
     final Cond<T> regard;
     final Cond<T> filter;

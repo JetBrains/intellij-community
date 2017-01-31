@@ -38,8 +38,8 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_REPO_NUM;
-import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_REPO_NUM;
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -150,7 +150,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
                                     new GitBranchPopupActions(repo.getProject(), repo).createActions(),
                                     GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
-    wrapWithMoreActionIfNeeded(popupGroup, rootActions, rootActions.size() > MAX_REPO_NUM ? DEFAULT_REPO_NUM : MAX_REPO_NUM);
+    wrapWithMoreActionIfNeeded(popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM);
     return popupGroup;
   }
 

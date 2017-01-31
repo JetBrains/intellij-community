@@ -48,7 +48,7 @@ public interface Transformations {
     .put(LEFT_SHIFT, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN))
     .put(RIGHT_SHIFT, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN))
     .put(RIGHT_SHIFT_UNSIGNED, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN))
-    .put(AS_TYPE, new SimpleBinaryTransformation(kAS))
+    .put(AS_TYPE, new AsTypeTransformation())
     .put(IS_CASE, new IsCaseTransformation())
     .put(EQUALS, new EqualsTransformation())
     .put(COMPARE_TO, new CompareToTransformation())

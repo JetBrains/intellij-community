@@ -66,7 +66,7 @@ import java.util.*;
 /**
  * @author egor
  */
-public class JavaStackFrame extends XStackFrame {
+public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
 
   private final DebugProcessImpl myDebugProcess;
@@ -667,5 +667,15 @@ public class JavaStackFrame extends XStackFrame {
       }
     });
     return rangeRef.get();
+  }
+
+  @Override
+  public boolean isSynthetic() {
+    return myDescriptor.isSynthetic();
+  }
+
+  @Override
+  public boolean isInLibraryContent() {
+    return myDescriptor.isInLibraryContent();
   }
 }

@@ -65,7 +65,7 @@ public class BackwardReferenceIndexWriter {
     if (isEnabled()) {
       boolean isRebuild = isRebuildInAllJavaModules(context);
 
-      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context))) {
+      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
         return;
       }

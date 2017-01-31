@@ -28,12 +28,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * <p>
+ * A standard set of scheme actions: copy, reset, rename, etc. used in {@link AbstractSchemesPanel}. More actions can be added via
+ * {@link #addAdditionalActions(List)} method. Available actions depend on {@link SchemesModel}. If schemes model supports both IDE and
+ * project schemes, {@link #copyToIDE(Scheme)} and {@link #copyToProject(Scheme)} must be overridden to do the actual job, default
+ * implementation for the methods does nothing.
+ * <p>
+ * Import and export actions are available only if there are importer/exporter implementations for the actual scheme type.
+ *
+ * @param <T> The actual scheme type.
+ * @see AbstractSchemesPanel
+ * @see SchemesModel
+ * @see SchemeImporter
+ * @see SchemeExporter
+ */
 public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
-  private AbstractSchemesPanel<T> mySchemesPanel;
-  
+  private final AbstractSchemesPanel<T> mySchemesPanel;
+
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
     mySchemesPanel = schemesPanel;
     mySchemeImportersNames = getSchemeImportersNames();
@@ -59,6 +74,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
+    if (mySchemesPanel.supportsProjectSchemes()) {
+      actions.add(new CopyToProjectAction());
+      actions.add(new CopyToIDEAction());
+      actions.add(new Separator());
+    }
     actions.add(new CopyAction());
     actions.add(new RenameAction());
     actions.add(new ResetAction());
@@ -86,7 +106,53 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return actions;
   }
   
+  @SuppressWarnings("unused")
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {}
+
+  private class CopyToProjectAction extends DumbAwareAction {
+
+    public CopyToProjectAction() {
+      super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      T currentScheme = getCurrentScheme();
+      if (currentScheme != null && !getModel().isProjectScheme(currentScheme)) {
+        copyToProject(currentScheme);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      T currentScheme = getCurrentScheme();
+      p.setEnabledAndVisible(currentScheme != null && !getModel().isProjectScheme(currentScheme));
+    }
+  }
+
+
+  private class CopyToIDEAction extends DumbAwareAction {
+
+    public CopyToIDEAction() {
+      super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      T currentScheme = getCurrentScheme();
+      if (currentScheme != null && getModel().isProjectScheme(currentScheme)) {
+        copyToIDE(currentScheme);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      T currentScheme = getCurrentScheme();
+      p.setEnabledAndVisible(currentScheme != null && getModel().isProjectScheme(currentScheme));
+    }
+  }
   
   private class ResetAction extends DumbAwareAction {
     
@@ -131,7 +197,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         duplicateScheme(currentScheme,
                         SchemeNameGenerator.getUniqueName(
                       SchemeManager.getDisplayName(currentScheme), 
-                      name -> mySchemesPanel.getModel().nameExists(name)));
+                      name -> mySchemesPanel.getModel().containsScheme(name)));
         currentScheme = getCurrentScheme();
         if (currentScheme != null)  {
           mySchemesPanel.startEdit();
@@ -252,29 +318,95 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       }
     }
   }
-  
+
+  /**
+   * Import a scheme using the given importer name.
+   *
+   * @param importerName The importer name.
+   * @see SchemeImporter
+   * @see SchemeImporterEP
+   */
   protected abstract void importScheme(@NotNull String importerName);
 
+  /**
+   * Reset scheme's settings to their default values (presets).
+   *
+   * @param scheme The scheme to reset.
+   */
   protected abstract void resetScheme(@NotNull T scheme);
-  
+
+  /**
+   * Creates a copy of the scheme with a different name.
+   *
+   * @param scheme  The scheme to copy.
+   * @param newName New name.
+   */
   protected abstract void duplicateScheme(@NotNull T scheme, @NotNull String newName);
-  
+
+  /**
+   * Delete the scheme.
+   *
+   * @param scheme The scheme to delete.
+   */
   protected abstract void deleteScheme(@NotNull T scheme);
-  
+
+  /**
+   * Export the scheme using the given exporter name.
+   *
+   * @param scheme The scheme to export.
+   * @param exporterName The exporter name.
+   * @see SchemeExporter
+   * @see SchemeExporterEP
+   */
   protected abstract void exportScheme(@NotNull T scheme, @NotNull String exporterName);
 
+  /**
+   * Make necessary configurable updates when another scheme has been selected.
+   *
+   * @param scheme The new current scheme.
+   */
   protected abstract void onSchemeChanged(@Nullable T scheme);
-  
+
+  /**
+   * Change scheme's name to the new one. Called when a user stops editing by pressing Enter.
+   *
+   * @param scheme The scheme to rename.
+   * @param newName New scheme name.
+   */
   protected abstract void renameScheme(@NotNull T scheme, @NotNull String newName);
+
+  /**
+   * Copy the scheme to project. The implementation may decide what name to use.
+   *
+   * @param scheme The scheme to copy.
+   */
+  protected void copyToProject(@NotNull T scheme) {
+  }
+
+  /**
+   * Copy the scheme to IDE (application). The implementation may decide what name to use.
+   *
+   * @param scheme The scheme to copy.
+   */
+  protected void copyToIDE(@NotNull T scheme) {
+  }
+
+  @NotNull
+  protected SchemesModel<T> getModel() {
+    return mySchemesPanel.getModel();
+  }
   
   @Nullable
   protected final T getCurrentScheme() {
     return mySchemesPanel.getSelectedScheme();
   }
-  
+
+  /**
+   * @return The actual scheme type.
+   */
   protected abstract Class<T> getSchemeType();
 
-  public AbstractSchemesPanel<T> getSchemesPanel() {
+  public final AbstractSchemesPanel<T> getSchemesPanel() {
     return mySchemesPanel;
   }
 }

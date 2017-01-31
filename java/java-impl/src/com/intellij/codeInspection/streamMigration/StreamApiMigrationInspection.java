@@ -242,7 +242,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   static boolean isAddAllCall(TerminalBlock tb) {
     PsiMethodCallExpression call = tb.getSingleMethodCall();
-    if (call == null) return false;
+    if (call == null || tb.getVariable().getType() instanceof PsiPrimitiveType) return false;
     if (!ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], tb.getVariable())) return false;
     if (!"add".equals(call.getMethodExpression().getReferenceName())) return false;
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();

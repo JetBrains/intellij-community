@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.memory.ui;
 
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,125 +26,97 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
-class StackFrameList extends JBList<StackFrameItem> {
-  private static final char ANONYMOUS_CLASS_DELIMITER = '$';
+class StackFrameList extends XDebuggerFramesList {
   private static final MyOpenFilesState myEditorState = new MyOpenFilesState();
 
-  private List<StackFrameItem> myStackFrames;
-  private final Project myProject;
-  private final GlobalSearchScope myScope;
-  private final MyListModel myModel = new MyListModel();
+  private final DebugProcessImpl myDebugProcess;
 
-  StackFrameList(@NotNull Project project,
-                 @NotNull List<StackFrameItem> stack,
-                 @NotNull GlobalSearchScope searchScope) {
-    super();
-
-    myStackFrames = new ArrayList<>(stack);
-    myProject = project;
-    myScope = searchScope;
-
-    setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    setModel(myModel);
-
-    setCellRenderer(new ColoredListCellRenderer<StackFrameItem>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends StackFrameItem> list,
-                                           StackFrameItem value, int index, boolean isSelected, boolean hasFocus) {
-        value.customizePresentation(this);
-        setIcon(null); // no icons in the list
-      }
-    });
+  StackFrameList(DebugProcessImpl debugProcess) {
+    super(debugProcess.getProject());
+    myDebugProcess = debugProcess;
   }
 
-  void setFrame(@NotNull List<StackFrameItem> stack) {
-    myModel.update(stack);
+  void setFrameItems(@NotNull List<StackFrameItem> items) {
+    setFrameItems(items, null);
   }
 
-  void navigateToSelectedValue(boolean focusOnEditor) {
-    StackFrameItem selectedValue = getSelectedValue();
-    if (selectedValue != null) {
-      navigateToFrame(selectedValue, focusOnEditor);
-    }
-  }
-
-  private void navigateToFrame(@NotNull StackFrameItem frame, boolean focusOnEditor) {
-    String path = frame.path();
-    int anonymousClassDelimiterIndex = path.indexOf(ANONYMOUS_CLASS_DELIMITER);
-    int pathLength = anonymousClassDelimiterIndex > 0 ? anonymousClassDelimiterIndex : path.length();
-    path = path.substring(0, pathLength);
-    PsiClass psiClass = DebuggerUtils.findClass(path, myProject, myScope);
-    if (psiClass != null) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        PsiElement navigationElement = psiClass.getNavigationElement();
-        VirtualFile file = PsiUtilCore.getVirtualFile(navigationElement);
-
-        if (file == null) {
-          file = psiClass.getContainingFile().getVirtualFile();
-        }
-
-        OpenFileHyperlinkInfo info =
-          new OpenFileHyperlinkInfo(myProject, file, frame.line() - 1);
-        OpenFileDescriptor descriptor = info.getDescriptor();
-        if (descriptor != null) {
-          FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
-          VirtualFile lastFile = myEditorState.myLastOpenedFile;
-          if (myEditorState.myIsNeedToCloseLastOpenedFile && lastFile != null &&
-              manager.isFileOpen(lastFile) && !lastFile.equals(descriptor.getFile())) {
-            manager.closeFile(myEditorState.myLastOpenedFile, false, true);
+  void setFrameItems(@NotNull List<StackFrameItem> items, Runnable onDone) {
+    clear();
+    if (!items.isEmpty()) {
+      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() throws Exception {
+          for (StackFrameItem frameInfo : items) {
+            StackFrameItem.CapturedStackFrame frame = frameInfo.createFrame(myDebugProcess);
+            DebuggerUIUtil.invokeLater(() -> getModel().addElement(frame));
           }
-
-          descriptor.setScrollType(ScrollType.CENTER);
-          descriptor.setUseCurrentWindow(true);
-
-          if (lastFile == null || !lastFile.equals(descriptor.getFile())) {
-            myEditorState.myIsNeedToCloseLastOpenedFile = !manager.isFileOpen(descriptor.getFile());
-          }
-
-          descriptor.navigateInEditor(myProject, focusOnEditor);
-          FileEditor[] editors = manager.getEditors(descriptor.getFile());
-          if (editors.length != 0) {
-            myEditorState.myLastOpenedFile = descriptor.getFile();
+          if (onDone != null) {
+            onDone.run();
           }
         }
       });
     }
   }
 
+  @Override
+  protected void onFrameChanged(Object selectedValue) {
+    navigateTo(selectedValue, false);
+  }
+
+  void navigateToSelectedValue(boolean focusOnEditor) {
+    navigateTo(getSelectedValue(), focusOnEditor);
+  }
+
+  private void navigateTo(Object frame, boolean focusOnEditor) {
+    if (frame instanceof XStackFrame) {
+      navigateToFrame((XStackFrame)frame, focusOnEditor);
+    }
+  }
+
+  private void navigateToFrame(@NotNull XStackFrame frame, boolean focusOnEditor) {
+    XSourcePosition position = frame.getSourcePosition();
+    if (position == null) return;
+
+    VirtualFile file = position.getFile();
+    int line = position.getLine();
+
+    Project project = myDebugProcess.getProject();
+
+    OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(project, file, line);
+    OpenFileDescriptor descriptor = info.getDescriptor();
+    if (descriptor != null) {
+      FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      VirtualFile lastFile = myEditorState.myLastOpenedFile;
+      if (myEditorState.myIsNeedToCloseLastOpenedFile && lastFile != null &&
+          manager.isFileOpen(lastFile) && !lastFile.equals(descriptor.getFile())) {
+        manager.closeFile(myEditorState.myLastOpenedFile, false, true);
+      }
+
+      descriptor.setScrollType(ScrollType.CENTER);
+      descriptor.setUseCurrentWindow(true);
+
+      if (lastFile == null || !lastFile.equals(descriptor.getFile())) {
+        myEditorState.myIsNeedToCloseLastOpenedFile = !manager.isFileOpen(descriptor.getFile());
+      }
+
+      descriptor.navigateInEditor(project, focusOnEditor);
+      FileEditor[] editors = manager.getEditors(descriptor.getFile());
+      if (editors.length != 0) {
+        myEditorState.myLastOpenedFile = descriptor.getFile();
+      }
+    }
+  }
+
   private static class MyOpenFilesState {
     VirtualFile myLastOpenedFile;
     boolean myIsNeedToCloseLastOpenedFile;
-  }
-
-  private class MyListModel extends AbstractListModel<StackFrameItem> {
-
-    void update(@NotNull List<StackFrameItem> newFrame) {
-      fireIntervalRemoved(this, 0, getSize());
-      myStackFrames = newFrame;
-      fireIntervalAdded(this, 0, getSize());
-    }
-
-    @Override
-    public int getSize() {
-      return myStackFrames.size();
-    }
-
-    @Override
-    public StackFrameItem getElementAt(int index) {
-      return myStackFrames.get(index);
-    }
   }
 }

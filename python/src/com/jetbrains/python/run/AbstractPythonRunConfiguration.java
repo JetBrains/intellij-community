@@ -172,7 +172,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   private void checkSdk() throws RuntimeConfigurationError {
     if (PlatformUtils.isPyCharm()) {
       final String path = getInterpreterPath();
-      if (path == null) {
+      if (StringUtil.isEmptyOrSpaces(path)) {
         throw new RuntimeConfigurationError("Please select a valid Python interpreter");
       }
     }

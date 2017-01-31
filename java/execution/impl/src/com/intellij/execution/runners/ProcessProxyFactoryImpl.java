@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMain;
@@ -37,35 +38,31 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
     String mainClass = javaParameters.getMainClass();
 
     if (ourMayUseLauncher && mainClass != null) {
-      String moduleName = javaParameters.getModuleName();
-      String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+      try {
+        ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
 
-      if (moduleName == null || new File(rtJarPath).isFile()) {
-        try {
-          ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
+        String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+        String port = String.valueOf(proxy.getPortNumber());
+        String binPath = PathManager.getBinPath();
 
-          String port = String.valueOf(proxy.getPortNumber());
-          String binPath = PathManager.getBinPath();
-
-          if (moduleName == null) {
-            JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-
-            ParametersList vmParametersList = javaParameters.getVMParametersList();
-            vmParametersList.defineProperty(AppMain.LAUNCHER_PORT_NUMBER, port);
-            vmParametersList.defineProperty(AppMain.LAUNCHER_BIN_PATH, binPath);
-
-            javaParameters.getProgramParametersList().prepend(mainClass);
-            javaParameters.setMainClass(AppMain.class.getName());
-          }
-          else {
-            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
-          }
-
-          return proxy;
+        if (new File(rtJarPath).isFile() && JavaSdkUtil.isAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
+          javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
         }
-        catch (Exception e) {
-          Logger.getInstance(ProcessProxy.class).warn(e);
+        else {
+          JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+
+          ParametersList vmParametersList = javaParameters.getVMParametersList();
+          vmParametersList.defineProperty(AppMain.LAUNCHER_PORT_NUMBER, port);
+          vmParametersList.defineProperty(AppMain.LAUNCHER_BIN_PATH, binPath);
+
+          javaParameters.getProgramParametersList().prepend(mainClass);
+          javaParameters.setMainClass(AppMain.class.getName());
         }
+
+        return proxy;
+      }
+      catch (Exception e) {
+        Logger.getInstance(ProcessProxy.class).warn(e);
       }
     }
 

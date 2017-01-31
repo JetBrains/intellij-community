@@ -27,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -299,7 +298,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
       RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
-      CodeStyleManager.getInstance(project).reformat(element);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {

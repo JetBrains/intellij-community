@@ -105,7 +105,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
       group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  public DefaultActionGroup createActionGroup(@NotNull final VirtualFile myFile,
+  public DefaultActionGroup createActionGroup(@Nullable final VirtualFile myFile,
                                               final Editor editor,
                                               final Document document,
                                               final byte[] bytes,
@@ -121,8 +121,8 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
        return createCharsetsActionGroup(clearItemText, null, charset -> {
-         assert myFile.isDirectory() || text != null : charset;
-         EncodingUtil.Magic8 safeToReload = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
+         assert myFile == null || myFile.isDirectory() || text != null : charset;
+         EncodingUtil.Magic8 safeToReload = myFile == null || myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
          boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
          if (!enabled) {
            EncodingUtil.Magic8 safeToConvert = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
@@ -132,12 +132,10 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
        }); // no 'clear'
      }
 
-     @Override
-     protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
-       if (virtualFile != null) {
-         ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
-       }
-     }
+      @Override
+      protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
+        ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
+      }
    }
    .createPopupActionGroup(null);
   }
@@ -145,9 +143,10 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
   // returns true if charset was changed, false if failed
   protected boolean chosen(final Document document,
                            final Editor editor,
-                           @NotNull final VirtualFile virtualFile,
+                           @Nullable final VirtualFile virtualFile,
                            byte[] bytes,
                            @NotNull final Charset charset) {
+    if (virtualFile == null) return false;
     String text = document.getText();
     EncodingUtil.Magic8 isSafeToConvert = EncodingUtil.isSafeToConvertTo(virtualFile, text, bytes, charset);
     EncodingUtil.Magic8 isSafeToReload = EncodingUtil.isSafeToReloadIn(virtualFile, text, bytes, charset);

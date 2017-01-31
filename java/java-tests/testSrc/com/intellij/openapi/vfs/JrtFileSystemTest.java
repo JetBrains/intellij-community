@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -36,25 +34,21 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   private Path myTestData;
+  private Path myTempPath;
   private VirtualFile myRoot;
-
-  @BeforeClass
-  public static void setUpClass() {
-    assumeTrue("skipped: java=" + SystemInfo.JAVA_VERSION, JrtFileSystem.isSupported());
-  }
 
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
-    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
-    Files.copy(myTestData.resolve("jrt-fs.jar"), myTempDir.getRoot().toPath().resolve("jrt-fs.jar"));
-    Path lib = Files.createDirectory(myTempDir.getRoot().toPath().resolve("lib"));
+    myTempPath = myTempDir.getRoot().toPath();
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Path lib = Files.createDirectory(myTempPath.resolve("lib"));
+    Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
@@ -73,14 +67,14 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void basicOps() throws IOException {
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
 
-    VirtualFile moduleRoot = myRoot.findChild("test1");
+    VirtualFile moduleRoot = myRoot.findChild("test.a");
     assertThat(moduleRoot).isNotNull();
     assertThat(JrtFileSystem.isModuleRoot(moduleRoot)).isTrue();
-    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("test", "module-info.class");
+    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("pkg_a", "module-info.class");
 
-    VirtualFile classFile = moduleRoot.findFileByRelativePath("test/pkg1/Class1.class");
+    VirtualFile classFile = moduleRoot.findFileByRelativePath("pkg_a/A.class");
     assertThat(classFile).isNotNull();
 
     byte[] bytes = classFile.contentsToByteArray();
@@ -90,18 +84,18 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void refresh() throws IOException {
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
 
-    Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
-    Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
-    Files.copy(myTestData.resolve("image2"), modules, StandardCopyOption.REPLACE_EXISTING);
-    Files.write(myTempDir.getRoot().toPath().resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Path modules = myTempPath.resolve("lib/modules");
+    Files.move(modules, myTempPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
+    Files.copy(myTestData.resolve("image2"), modules);
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
 
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();
     local.refresh(false, true);
 
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1", "test2");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
   }
 
   private static List<String> childNames(VirtualFile dir) {

@@ -21,12 +21,12 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -36,9 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * Tests parameter info available via ^P at call sites.
@@ -430,22 +429,45 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-22004
+  public void testMultiResolved() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadTest(1).get("<arg2>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("self: C1, x", "self: C2, x, y: str");
+        final List<String[]> highlighted = Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, new String[]{"y: str"});
+        final List<String[]> disabled = Arrays.asList(new String[]{"self: C1, "}, new String[]{"self: C2, "});
+
+        feignCtrlP(offset).check(texts, highlighted, disabled);
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
-   * @param offset offset of 'cursor' where ^P is pressed.
+   * @param offset offset of 'cursor' where Ctrl+P is pressed.
    * @return a {@link Collector} with collected hint info.
-   * @throws Exception if it fails
    */
+  @NotNull
   private Collector feignCtrlP(int offset) {
-    Collector collector = new Collector(myFixture.getProject(), myFixture.getFile(), offset);
-    PyParameterInfoHandler handler = new PyParameterInfoHandler();
-    final PyArgumentList parameterOwner = handler.findElementForParameterInfo(collector);
-    collector.setParameterOwner(parameterOwner); // finds arglist, sets items to show
+    final PyParameterInfoHandler handler = new PyParameterInfoHandler();
+
+    final Collector collector = new Collector(myFixture.getFile(), offset);
+    collector.setParameterOwner(handler.findElementForParameterInfo(collector));
+
     if (collector.getParameterOwner() != null) {
-      assertEquals("Collected one analysis result", 1, collector.myItems.length);
-      handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector); // moves offset to correct parameter
-      handler.updateUI((PyCallExpression.PyArgumentsMapping)collector.getItemsToShow()[0], collector); // sets hint text and flags
+      handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector);
+
+      for (Object itemToShow : collector.getItemsToShow()) {
+        //noinspection unchecked
+        handler.updateUI((Pair<PyCallExpression, PyCallExpression.PyMarkedCallee>)itemToShow, collector);
+      }
     }
+
     return collector;
   }
 
@@ -454,28 +476,38 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
    */
   private static class Collector implements ParameterInfoUIContextEx, CreateParameterInfoContext, UpdateParameterInfoContext {
 
+    @NotNull
     private final PsiFile myFile;
     private final int myOffset;
-    private int myIndex;
-    private Object[] myItems;
-    private final Project myProject;
-    private final Editor myEditor;
-    private PyArgumentList myParamOwner;
-    private String[] myTexts;
-    private EnumSet<Flag>[] myFlags;
 
-    private Collector(Project project, PsiFile file, int offset) {
-      myProject = project;
-      myEditor = null;
+    @NotNull
+    private final List<String[]> myListOfTexts;
+
+    @NotNull
+    private final List<EnumSet<Flag>[]> myListOfFlags;
+
+    @Nullable
+    private PyArgumentList myParameterOwner;
+
+    @NotNull
+    private Object[] myItemsToShow;
+
+    private int myIndex;
+
+    private Collector(@NotNull PsiFile file, int offset) {
       myFile = file;
       myOffset = offset;
+      myListOfTexts = new ArrayList<>();
+      myListOfFlags = new ArrayList<>();
+      myItemsToShow = ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override
-    public String setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background) {
-      assert texts.length == flags.length;
-      myTexts = texts;
-      myFlags = flags;
+    @NotNull
+    public String setupUIComponentPresentation(@NotNull String[] texts, @NotNull EnumSet<Flag>[] flags, @NotNull Color background) {
+      assertEquals(texts.length, flags.length);
+      myListOfTexts.add(texts);
+      myListOfFlags.add(flags);
       return StringUtil.join(texts, "");
     }
 
@@ -504,7 +536,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     public void setUIComponentEnabled(boolean enabled) { }
 
     @Override
-    public void setUIComponentEnabled(int index, boolean b) { }
+    public void setUIComponentEnabled(int index, boolean enabled) { }
 
     @Override
     public int getCurrentParameterIndex() {
@@ -515,14 +547,15 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     public void removeHint() { }
 
     @Override
-    public void setParameterOwner(PsiElement o) {
-      assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
-      myParamOwner = (PyArgumentList)o;
+    public void setParameterOwner(@Nullable PsiElement o) {
+      assertTrue("Found element is not `null` and not " + PyArgumentList.class.getName(), o == null || o instanceof PyArgumentList);
+      myParameterOwner = (PyArgumentList)o;
     }
 
     @Override
+    @Nullable
     public PsiElement getParameterOwner() {
-      return myParamOwner;
+      return myParameterOwner;
     }
 
     @Override
@@ -536,18 +569,20 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    @NotNull
     public Color getDefaultParameterColor() {
       return java.awt.Color.BLACK;
     }
 
     @Override
+    @NotNull
     public Object[] getItemsToShow() {
-      return myItems;
+      return myItemsToShow;
     }
 
     @Override
-    public void setItemsToShow(Object[] items) {
-      myItems = items;
+    public void setItemsToShow(@NotNull Object[] items) {
+      myItemsToShow = items;
     }
 
     @Override
@@ -575,10 +610,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     @Override
     public Project getProject() {
-      return myProject;
+      throw new UnsupportedOperationException();
     }
 
     @Override
+    @NotNull
     public PsiFile getFile() {
       return myFile;
     }
@@ -591,54 +627,73 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Editor getEditor() {
-      return myEditor;
+      throw new UnsupportedOperationException();
     }
 
-    /**
-     * Checks if hint data look as expected.
-     * @param text expected text of the hint, without formatting
-     * @param highlighted expected highlighted substrings of hint
-     * @param disabled expected disabled substrings of hint
-     */
-    public void check(String text, String[] highlighted, String[] disabled) {
-      assertEquals("Signature", text, StringUtil.join(myTexts, ""));
-      StringBuilder wrongs = new StringBuilder();
-      // see if highlighted matches
-      Set<String> highlightSet = new HashSet<>();
-      ContainerUtil.addAll(highlightSet, highlighted);
-      for (int i = 0; i < myTexts.length; i += 1) {
-        if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(myTexts[i])) {
-          wrongs.append("Highlighted unexpected '").append(myTexts[i]).append("'. ");
-        }
-      }
-      for (int i = 0; i < myTexts.length; i += 1) {
-        if (!myFlags[i].contains(Flag.HIGHLIGHT) && highlightSet.contains(myTexts[i])) {
-          wrongs.append("Not highlighted expected '").append(myTexts[i]).append("'. ");
-        }
-      }
-      // see if disabled matches
-      Set<String> disabledSet = new HashSet<>();
-      ContainerUtil.addAll(disabledSet, disabled);
-      for (int i = 0; i < myTexts.length; i += 1) {
-        if (myFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(myTexts[i])) {
-          wrongs.append("Highlighted a disabled '").append(myTexts[i]).append("'. ");
-        }
-      }
-      for (int i = 0; i < myTexts.length; i += 1) {
-        if (!myFlags[i].contains(Flag.DISABLE) && disabledSet.contains(myTexts[i])) {
-          wrongs.append("Not disabled expected '").append(myTexts[i]).append("'. ");
-        }
-      }
-      //
-      if (wrongs.length() > 0) fail(wrongs.toString());
-    }
-
-    public void check(String text, String[] highlighted) {
+    private void check(@NotNull String text, @NotNull String[] highlighted) {
       check(text, highlighted, ArrayUtil.EMPTY_STRING_ARRAY);
     }
 
-    public void assertNotFound() {
-      assertNull(myParamOwner);
+    private void check(@NotNull String text, @NotNull String[] highlighted, @NotNull String[] disabled) {
+      assertEquals("Number of collected hints is wrong", 1, myItemsToShow.length);
+      check(text, highlighted, disabled, 0);
+    }
+
+    private void check(@NotNull List<String> texts, @NotNull List<String[]> highlighted, @NotNull List<String[]> disabled) {
+      assertEquals("Number of collected hints is wrong", texts.size(), myItemsToShow.length);
+      for (int i = 0; i < texts.size(); i++) {
+        check(texts.get(i), highlighted.get(i), disabled.get(i), i);
+      }
+    }
+
+    /**
+     * Checks if hint data looks as expected.
+     *
+     * @param text        expected text of the hint, without formatting
+     * @param highlighted expected highlighted substrings of hint
+     * @param disabled    expected disabled substrings of hint
+     * @param index       hint index
+     */
+    private void check(@NotNull String text, @NotNull String[] highlighted, @NotNull String[] disabled, int index) {
+      final String[] hintText = myListOfTexts.get(index);
+      final EnumSet<Flag>[] hintFlags = myListOfFlags.get(index);
+
+      assertEquals("Signature", text, StringUtil.join(hintText, ""));
+
+      final StringBuilder wrongs = new StringBuilder();
+
+      // see if highlighted matches
+      final Set<String> highlightSet = new HashSet<>(Arrays.asList(highlighted));
+      for (int i = 0; i < hintText.length; i++) {
+        if (hintFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(hintText[i])) {
+          wrongs.append("Highlighted unexpected '").append(hintText[i]).append("'. ");
+        }
+      }
+      for (int i = 0; i < hintText.length; i++) {
+        if (!hintFlags[i].contains(Flag.HIGHLIGHT) && highlightSet.contains(hintText[i])) {
+          wrongs.append("Not highlighted expected '").append(hintText[i]).append("'. ");
+        }
+      }
+
+      // see if disabled matches
+      final Set<String> disabledSet = new HashSet<>(Arrays.asList(disabled));
+      for (int i = 0; i < hintText.length; i++) {
+        if (hintFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(hintText[i])) {
+          wrongs.append("Highlighted a disabled '").append(hintText[i]).append("'. ");
+        }
+      }
+      for (int i = 0; i < hintText.length; i++) {
+        if (!hintFlags[i].contains(Flag.DISABLE) && disabledSet.contains(hintText[i])) {
+          wrongs.append("Not disabled expected '").append(hintText[i]).append("'. ");
+        }
+      }
+      //
+
+      if (wrongs.length() > 0) fail(wrongs.toString());
+    }
+
+    private void assertNotFound() {
+      assertNull(myParameterOwner);
     }
   }
 }

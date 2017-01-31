@@ -367,6 +367,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     return charset == null ? myIdeEncodingManager.getDefaultCharset() : charset;
   }
 
+  @Nullable
+  public Charset getConfiguredDefaultCharset() {
+    return myProjectCharset;
+  }
+
   @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
     return true;

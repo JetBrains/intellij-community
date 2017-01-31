@@ -93,6 +93,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -1325,6 +1326,17 @@ public class DiffUtil {
       context.putUserData(DiffSettings.KEY, settings);
     }
     return settings;
+  }
+
+  @NotNull
+  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<K, V> defaultValue) {
+    TreeMap<K, V> result = new TreeMap<>();
+    for (Map.Entry<K, V> it : map.entrySet()) {
+      K key = it.getKey();
+      V value = it.getValue();
+      if (!value.equals(defaultValue.convert(key))) result.put(key, value);
+    }
+    return result;
   }
 
   //

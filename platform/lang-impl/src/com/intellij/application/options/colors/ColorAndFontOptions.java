@@ -154,11 +154,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public boolean supportsProjectSchemes() {
-    return false;
-  }
-
-  @Override
   public boolean canDuplicateScheme(@NotNull EditorColorsScheme scheme) {
     return true;
   }
@@ -189,7 +184,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public boolean nameExists(@NotNull String name) {
+  public boolean containsScheme(@NotNull String name) {
     return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
   }
 

@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.not;
@@ -59,15 +61,51 @@ public class ScratchFileActions {
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
+    private static final String ACTION_ID = "NewScratchFile";
+
+    private static final String SMALLER_IDE_CONTAINER_GROUP = "PlatformOpenProjectGroup";
+
+    private final String myActionText;
+
+    public NewFileAction() {
+      final Presentation templatePresentation = getTemplatePresentation();
+      templatePresentation.setIcon(ICON);
+      // A hacky way for customizing text in IDEs without File->New-> submenu
+      final AnAction group = ActionManager.getInstance().getActionOrStub(SMALLER_IDE_CONTAINER_GROUP);
+      if (group instanceof DefaultActionGroup
+          && ContainerUtil.find(((DefaultActionGroup)group).getChildActionsOrStubs(), action ->
+                                  action instanceof ActionStub && ((ActionStub)action).getId().equals(ACTION_ID)) != null) {
+        myActionText = "New " + ActionsBundle.actionText(ACTION_ID);
+      }
+      else {
+        myActionText = ActionsBundle.actionText(ACTION_ID);
+      }
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
+      getTemplatePresentation().setText(myActionText);
+
       String place = e.getPlace();
       boolean enabled = e.getProject() != null
                         && Registry.is("ide.scratch.enabled")
                         && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
+
+      updatePresentationTextAndIcon(e, presentation);
+    }
+
+    private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
+      presentation.setText(myActionText);
       presentation.setIcon(ICON);
+      if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+        final AnAction group = e.getActionManager().getAction(SMALLER_IDE_CONTAINER_GROUP);
+        if (group instanceof DefaultActionGroup
+            && Arrays.asList(((DefaultActionGroup)group).getChildren(e)).contains(this)) {
+          presentation.setIcon(null);
+        }
+      }
     }
 
     @Override

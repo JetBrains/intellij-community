@@ -175,7 +175,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
           handleModifier((KeyEvent)event);
           return false;
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
-          if (keyCode == myActionKeyCode) {
+          if (keyCode == myActionKeyCode && !hasOtherModifiers(keyEvent)) {
             if (event.getID() == KeyEvent.KEY_PRESSED) {
               return run(keyEvent);
             }

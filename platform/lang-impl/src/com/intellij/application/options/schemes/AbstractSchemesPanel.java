@@ -28,6 +28,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+/**
+ * Base panel for schemes combo box and related actions. When settings change, {@link #updateOnCurrentSettingsChange()} method must be
+ * called to reflect the change in schemes panel. The method should be added to settings model listener.
+ *
+ * @param <T> The actual scheme type.
+ * @see AbstractSchemeActions
+ * @see SchemesModel
+ */
 public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
   private SchemesCombo<T> mySchemesCombo;
@@ -88,21 +96,26 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     }
   }
 
-  public JComponent getToolbar() {
+  public final JComponent getToolbar() {
     return myToolbar;
   }
 
+  /**
+   * Creates schemes actions. Used when panel UI components are created.
+   * @return Scheme actions associated with the panel.
+   * @see AbstractSchemeActions
+   */
   protected abstract AbstractSchemeActions<T> createSchemeActions();
   
-  public T getSelectedScheme() {
+  public final T getSelectedScheme() {
     return mySchemesCombo.getSelectedScheme();
   }
   
-  public void selectScheme(@Nullable T scheme) {
+  public final void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
   }
   
-  public void resetSchemes(@NotNull Collection<T> schemes) {
+  public final void resetSchemes(@NotNull Collection<T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
   }
   
@@ -110,31 +123,45 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     removeAll();
   }
   
-  public void startEdit() {
+  public final void startEdit() {
     mySchemesCombo.startEdit();
   }
   
-  public void cancelEdit() {
+  public final void cancelEdit() {
     mySchemesCombo.cancelEdit();
   }
 
-  public void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
     myInfoLabel.setText(message);
     myInfoLabel.setForeground(messageType.getTitleForeground());
   }
 
-  public void clearInfo() {
+  public final void clearInfo() {
     myInfoLabel.setText(null);
   }
 
-  public AbstractSchemeActions<T> getActions() {
+  public final AbstractSchemeActions<T> getActions() {
     return myActions;
   }
 
+  /**
+   * @return Schemes model implementation.
+   * @see SchemesModel
+   */
   @NotNull
   public abstract SchemesModel<T> getModel();
 
-  public void updateOnCurrentSettingsChange() {
+  /**
+   * Must be called when any settings are changed.
+   */
+  public final void updateOnCurrentSettingsChange() {
     mySchemesCombo.updateSelected();
   }
+
+  /**
+   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be 
+   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes 
+   *         separators.
+   */
+  public abstract boolean supportsProjectSchemes();
 }

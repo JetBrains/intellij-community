@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,28 @@
  */
 package com.intellij.debugger.memory.ui;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import java.util.List;
 
 public class StackFramePopup {
-  private final Project myProject;
-  private final List<StackFrameItem> myStackFrame;
-  private final GlobalSearchScope myScope;
-
-  public StackFramePopup(@NotNull Project project,
-                         @NotNull List<StackFrameItem> stack,
-                         @NotNull GlobalSearchScope searchScope) {
-    myProject = project;
-    myStackFrame = stack;
-    myScope = searchScope;
-  }
-
-  public void show() {
-    StackFrameList list = new StackFrameList(myProject, myStackFrame, myScope);
-    list.addListSelectionListener(e -> {
-      if (!e.getValueIsAdjusting()) {
-        list.navigateToSelectedValue(false);
-      }
-    });
-
-    JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+  public static void show(@NotNull List<StackFrameItem> stack, DebugProcessImpl debugProcess) {
+    StackFrameList list = new StackFrameList(debugProcess);
+    list.setFrameItems(stack, () -> DebuggerUIUtil.invokeLater(() -> {
+      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Select stack frame")
         .setAutoSelectIfEmpty(true)
         .setResizable(false)
         .setItemChoosenCallback(() -> list.navigateToSelectedValue(true))
         .createPopup();
 
-    list.setSelectedIndex(1);
-    popup.showInFocusCenter();
+      list.setSelectedIndex(1);
+      popup.showInFocusCenter();
+    }));
   }
 }

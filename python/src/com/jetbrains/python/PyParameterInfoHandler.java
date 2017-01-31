@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,16 +33,16 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 
-/**
- * @author dcheryasov
- */
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyCallExpression.PyArgumentsMapping> {
-  private static  final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
+public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyMarkedCallee>> {
+
+  @NotNull
+  private static final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
 
   @Override
   public boolean couldShowInLookup() {
@@ -49,52 +50,62 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
+  @NotNull
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
-  public Object[] getParametersForDocumentation(final PyCallExpression.PyArgumentsMapping p, final ParameterInfoContext context) {
+  @NotNull
+  public Object[] getParametersForDocumentation(Pair<PyCallExpression, PyMarkedCallee> callAndCallee, ParameterInfoContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
-  public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
-    PyArgumentList argumentList = findArgumentList(context, -1);
+  @Nullable
+  public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+    final PyArgumentList argumentList = findArgumentList(context, -1);
+
     if (argumentList != null) {
-      final PyCallExpression callExpr = argumentList.getCallExpression();
-      if (callExpr != null) {
+      final PyCallExpression call = argumentList.getCallExpression();
+      if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
-        if (mapping.getMarkedCallee() != null) {
-          context.setItemsToShow(new Object[] { mapping });
-          return argumentList;
-        }
+
+        final Object[] items = call.multiResolveCallee(resolveContext)
+          .stream()
+          .map(markedCallee -> Pair.createNonNull(call, markedCallee))
+          .toArray();
+
+        context.setItemsToShow(items);
+
+        return argumentList;
       }
     }
+
     return null;
   }
 
-  private static PyArgumentList findArgumentList(final ParameterInfoContext context, int parameterListStart) {
-    final int offset = context.getOffset();
-    PyArgumentList argumentList = ParameterInfoUtils.findParentOfType(context.getFile(), offset - 1, PyArgumentList.class);
-    if (argumentList != null) {
-      final TextRange range = argumentList.getTextRange();
-      if (parameterListStart >= 0 && range.getStartOffset() != parameterListStart){
-        argumentList = PsiTreeUtil.getParentOfType(argumentList, PyArgumentList.class);
-      }
+  @Nullable
+  private static PyArgumentList findArgumentList(@NotNull ParameterInfoContext context, int parameterListStart) {
+    final PyArgumentList argumentList =
+      ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset() - 1, PyArgumentList.class);
+
+    if (argumentList != null && parameterListStart >= 0 && argumentList.getTextRange().getStartOffset() != parameterListStart) {
+      return PsiTreeUtil.getParentOfType(argumentList, PyArgumentList.class);
     }
+
     return argumentList;
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PyArgumentList element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull PyArgumentList element, @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextOffset(), this);
   }
 
   @Override
-  public PyArgumentList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  @Nullable
+  public PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return findArgumentList(context, context.getParameterListStart());
   }
 
@@ -103,88 +114,95 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    We cannot store an index since we cannot determine what is an argument until we actually map arguments to parameters.
    This is because a tuple in arguments may be a whole argument or map to a tuple parameter.
    */
-  public void updateParameterInfo(@NotNull final PyArgumentList argumentList, @NotNull final UpdateParameterInfoContext context) {
+  @Override
+  public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
     if (context.getParameterOwner() != argumentList) {
       context.removeHint();
       return;
     }
-    // align offset to nearest expression; context may point to a space, etc.
-    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(argumentList.getArguments());
-    int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
 
-    final TextRange argListTextRange = argumentList.getTextRange();
-    if (!argListTextRange.contains(alleged_cursor_offset) && argumentList.getText().endsWith(")")) {
+    // align offset to nearest expression; context may point to a space, etc.
+    final List<PyExpression> flattenedArguments = PyUtil.flattenedParensAndLists(argumentList.getArguments());
+    final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
+
+    if (!argumentList.getTextRange().contains(allegedCursorOffset) && argumentList.getText().endsWith(")")) {
       context.removeHint();
       return;
     }
-    PsiFile file = context.getFile();
-    CharSequence chars = file.getViewProvider().getContents();
+
+    final PsiFile file = context.getFile();
+    final CharSequence chars = file.getViewProvider().getContents();
+
     int offset = -1;
-    for (PyExpression arg : flat_args) {
-      TextRange range = arg.getTextRange();
-      // widen the range to include all whitespace around the arg
-      int left = CharArrayUtil.shiftBackward(chars, range.getStartOffset()-1, " \t\r\n");
+    for (PyExpression argument : flattenedArguments) {
+      final TextRange range = argument.getTextRange();
+
+      // widen the range to include all whitespace around the argument
+      final int left = CharArrayUtil.shiftBackward(chars, range.getStartOffset() - 1, " \t\r\n");
       int right = CharArrayUtil.shiftForwardCarefully(chars, range.getEndOffset(), " \t\r\n");
-      if (arg.getParent() instanceof PyListLiteralExpression || arg.getParent() instanceof PyTupleExpression) {
+      if (argument.getParent() instanceof PyListLiteralExpression || argument.getParent() instanceof PyTupleExpression) {
         right = CharArrayUtil.shiftForward(chars, range.getEndOffset(), " \t\r\n])");
       }
 
-      if (left <= alleged_cursor_offset && right >= alleged_cursor_offset) {
+      if (left <= allegedCursorOffset && right >= allegedCursorOffset) {
         offset = range.getStartOffset();
         break;
       }
     }
+
     context.setCurrentParameter(offset);
   }
 
+  @NotNull
+  @Override
   public String getParameterCloseChars() {
     return ",()"; // lpar may mean a nested tuple param, so it's included
   }
 
+  @Override
   public boolean tracksParameterIndex() {
     return false;
   }
 
   @Override
-  public void updateUI(final PyCallExpression.PyArgumentsMapping oldMapping, @NotNull final ParameterInfoUIContext context) {
-    if (oldMapping == null) return;
-    final PyCallExpression callExpression = oldMapping.getCallExpression();
+  public void updateUI(@NotNull Pair<PyCallExpression, PyMarkedCallee> callAndCallee, @NotNull ParameterInfoUIContext context) {
+    final PyCallExpression callExpression = callAndCallee.getFirst();
     PyPsiUtils.assertValid(callExpression);
-    // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
-    final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
-    final PyMarkedCallee marked = mapping.getMarkedCallee();
-    if (marked == null) return; // resolution failed
-    final PyCallable callable = marked.getCallable();
 
-    final List<PyParameter> parameterList = PyUtil.getParameters(callable, typeEvalContext);
-    final List<PyNamedParameter> namedParameters = new ArrayList<>(parameterList.size());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
+
+    final PyCallExpression.PyArgumentsMapping mapping =
+      PyCallExpressionHelper.mapArguments(callExpression, callAndCallee.getSecond(), typeEvalContext);
+    final PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+    if (markedCallee == null) return;
+
+    final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), typeEvalContext);
+    final List<PyNamedParameter> namedParameters = new ArrayList<>(parameters.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
     final Map<PyNamedParameter, Integer> parameterToIndex = new HashMap<>();
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<>();
 
-    final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags, typeEvalContext);
+    final List<String> hintsList = buildParameterListHint(parameters, namedParameters, parameterToIndex, hintFlags, typeEvalContext);
 
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
 
     // gray out enough first parameters as implicit (self, cls, ...)
-    for (int i=0; i < marked.getImplicitOffset(); i += 1) {
+    for (int i = 0; i < markedCallee.getImplicitOffset(); i++) {
       hintFlags.get(parameterToIndex.get(namedParameters.get(i))).add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
     }
 
-    final List<PyExpression> flattenedArgs = PyUtil.flattenedParensAndLists(callExpression.getArguments());
-    int lastParamIndex = collectHighlights(mapping, parameterList, parameterToIndex, hintFlags, flattenedArgs, currentParamOffset);
+    final List<PyExpression> flattenedArguments = PyUtil.flattenedParensAndLists(callExpression.getArguments());
+    final int lastParamIndex = collectHighlights(mapping, parameters, parameterToIndex, hintFlags, flattenedArguments, currentParamOffset);
 
-    highlightNext(marked, parameterList, namedParameters, parameterToIndex, hintFlags, flattenedArgs.isEmpty(), lastParamIndex);
+    highlightNext(markedCallee, parameters, namedParameters, parameterToIndex, hintFlags, flattenedArguments.isEmpty(), lastParamIndex);
 
     String[] hints = ArrayUtil.toStringArray(hintsList);
     if (context instanceof ParameterInfoUIContextEx) {
       final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
       EnumSet[] flags = new EnumSet[hintFlags.size()];
-      for (int i = 0; i < flags.length; i += 1) flags[i] = hintFlags.get(i);
+      for (int i = 0; i < flags.length; i++) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
         hints = new String[]{NO_PARAMS_MSG};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
@@ -194,7 +212,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       pic.setupUIComponentPresentation(hints, flags, context.getDefaultParameterColor());
     }
     else { // fallback, no highlight
-      StringBuilder signatureBuilder = new StringBuilder();
+      final StringBuilder signatureBuilder = new StringBuilder();
       if (hints.length > 1) {
         for (String s : hints) signatureBuilder.append(s);
       }

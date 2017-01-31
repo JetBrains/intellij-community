@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,9 +313,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) return;
 
+    ModuleManager moduleManager = ModuleManager.getInstance(this);
+    if (!(moduleManager instanceof ModuleManagerImpl)) {
+      return;
+    }
+
     double toDistribute = 1 - indicator.getFraction();
-    ModuleManagerImpl moduleManager = (ModuleManagerImpl)ModuleManager.getInstance(this);
-    int modulesCount = moduleManager.getModulePathsCount();
+    int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
     EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
     int editors = splitters.getEditorsCount();
 
@@ -323,7 +327,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (modulesCount != 0) {
 
       double step = modulesPart / modulesCount;
-      moduleManager.setProgressStep(step);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(step);
     }
 
     if (editors != 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -156,12 +155,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        final PyCallExpression callExpr = (PyCallExpression)callSite;
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
-        if (mapping.getMarkedCallee() != null) {
-          return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
-        }
+        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context), callSite);
       }
       else if ("__builtin__.tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);

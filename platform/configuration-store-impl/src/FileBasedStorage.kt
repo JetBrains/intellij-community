@@ -58,6 +58,8 @@ open class FileBasedStorage(file: Path,
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
 
+  var resolveVirtualFileOnlyOnWrite = false
+
   @Volatile var file = file
     private set
 
@@ -120,7 +122,7 @@ open class FileBasedStorage(file: Path,
         return loadLocalDataUsingIo()
       }
 
-      val file = virtualFile
+      val file = if (resolveVirtualFileOnlyOnWrite) cachedVirtualFile else virtualFile
       if (file == null || file.isDirectory || !file.isValid) {
         LOG.debug { "Document was not loaded for $fileSpec, not a file" }
       }

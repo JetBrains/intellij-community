@@ -25,7 +25,7 @@ import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
-public final class SimpleBinaryTransformation extends BinaryTransformation {
+public class SimpleBinaryTransformation extends BinaryTransformation {
 
   private final IElementType myOperator;
 

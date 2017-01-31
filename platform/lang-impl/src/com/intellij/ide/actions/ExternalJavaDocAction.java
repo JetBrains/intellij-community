@@ -90,10 +90,13 @@ public class ExternalJavaDocAction extends AnAction {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<String> urls = StringUtil.isEmptyOrSpaces(docUrl)
-                                ? ReadAction.compute(() -> 
-                                                                                      provider.getUrlFor(element, originalElement))
-                                : Collections.singletonList(docUrl);
+      List<String> urls;
+      if (StringUtil.isEmptyOrSpaces(docUrl)) {
+        urls = ReadAction.compute(() -> provider.getUrlFor(element, originalElement));
+      }
+      else {
+        urls = Collections.singletonList(docUrl);
+      }
       if (provider instanceof ExternalDocumentationProvider && urls != null && urls.size() > 1) {
         for (String url : urls) {
           List<String> thisUrlList = Collections.singletonList(url);

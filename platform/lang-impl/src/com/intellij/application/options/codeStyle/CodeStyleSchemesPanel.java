@@ -101,11 +101,6 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
       new CodeStyleSchemesActions(this) {
 
         @Override
-        protected CodeStyleSchemesModel getSchemesModel() {
-          return myModel;
-        }
-
-        @Override
         protected void onSchemeChanged(@Nullable CodeStyleScheme scheme) {
           if (!myIsReset) {
             ApplicationManager.getApplication().invokeLater(() -> onCombo());
@@ -127,5 +122,9 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
   public SchemesModel<CodeStyleScheme> getModel() {
     return myModel;
   }
-  
+
+  @Override
+  public boolean supportsProjectSchemes() {
+    return true;
+  }
 }

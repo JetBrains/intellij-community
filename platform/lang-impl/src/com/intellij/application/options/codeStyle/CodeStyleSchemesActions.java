@@ -19,19 +19,13 @@ import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.SchemeNameGenerator;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -43,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
-import java.util.List;
 
 abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleScheme> {
 
@@ -53,59 +46,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     super(schemesPanel);
   }
 
-
-  @Override
-  protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
-    defaultActions.add(0, new CopyToProjectAction());
-    defaultActions.add(1, new CopyToIDEAction());
-    defaultActions.add(2, new Separator());
-  }
-
-  private class CopyToProjectAction extends DumbAwareAction {
-
-    public CopyToProjectAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      CodeStyleScheme currentScheme = getCurrentScheme();
-      if (currentScheme != null && !getSchemesModel().isProjectScheme(currentScheme)) {
-        copyToProject(currentScheme);
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      CodeStyleScheme currentScheme = getCurrentScheme();
-      p.setEnabledAndVisible(currentScheme != null && !getSchemesModel().isProjectScheme(currentScheme));
-    }
-  }
-  
-  
-  private class CopyToIDEAction extends DumbAwareAction {
-
-    public CopyToIDEAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-       CodeStyleScheme currentScheme = getCurrentScheme();
-      if (currentScheme != null && getSchemesModel().isProjectScheme(currentScheme)) {
-        exportProjectScheme();
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      CodeStyleScheme currentScheme = getCurrentScheme();
-      p.setEnabledAndVisible(currentScheme != null && getSchemesModel().isProjectScheme(currentScheme));
-    }
-  }
-
   @Override
   protected void resetScheme(@NotNull CodeStyleScheme scheme) {
     if (Messages
@@ -113,21 +53,21 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
                               ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
         Messages.OK) {
       scheme.resetToDefaults();
-      getSchemesModel().fireSchemeChanged(scheme);
+      getModel().fireSchemeChanged(scheme);
     }
   }
 
   @Override
   protected void duplicateScheme(@NotNull CodeStyleScheme scheme, @NotNull String newName) {
-    if (!getSchemesModel().isProjectScheme(scheme)) {
-      CodeStyleScheme newScheme = getSchemesModel().createNewScheme(newName, getCurrentScheme());
-      getSchemesModel().addScheme(newScheme, true);
+    if (!getModel().isProjectScheme(scheme)) {
+      CodeStyleScheme newScheme = getModel().createNewScheme(newName, getCurrentScheme());
+      getModel().addScheme(newScheme, true);
     }
   }
 
   @Override
   protected void deleteScheme(@NotNull CodeStyleScheme scheme) {
-    getSchemesModel().removeScheme(scheme);
+    getModel().removeScheme(scheme);
   }
 
   @Override
@@ -138,12 +78,13 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     }
   }
 
-  private void exportProjectScheme() {
+  @Override
+  protected void copyToIDE(@NotNull CodeStyleScheme scheme) {
     String name =
-      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getSchemesModel().nameExists(schemeName));
-    CodeStyleScheme newScheme = getSchemesModel().exportProjectScheme(name);
-    getSchemesModel().setUsePerProjectSettings(false);
-    getSchemesModel().selectScheme(newScheme, null);
+      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName));
+    CodeStyleScheme newScheme = getModel().exportProjectScheme(name);
+    getModel().setUsePerProjectSettings(false);
+    getModel().selectScheme(newScheme, null);
     getSchemesPanel().startEdit();
   }
 
@@ -159,10 +100,10 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
         @Override
         protected void onSchemeSelected(CodeStyleScheme scheme) {
           if (scheme != null) {
-            getSchemesModel().addScheme(scheme, true);
+            getModel().addScheme(scheme, true);
           }
         }
-      }.show(getSchemesModel().getSchemes());
+      }.show(getModel().getSchemes());
     }
     else {
       final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(importerName, CodeStyleScheme.class);
@@ -198,13 +139,13 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
       final CodeStyleScheme
-        schemeImported = importer.importScheme(getSchemesModel().getProject(), selectedFile, currentScheme, schemeCreator);
+        schemeImported = importer.importScheme(getModel().getProject(), selectedFile, currentScheme, schemeCreator);
       if (schemeImported != null) {
         if (schemeCreator.isSchemeWasCreated()) {
-          getSchemesModel().fireSchemeListChanged();
+          getModel().fireSchemeListChanged();
         }
         else {
-          getSchemesModel().fireSchemeChanged(schemeImported);
+          getModel().fireSchemeChanged(schemeImported);
         }
         return schemeImported;
       }
@@ -219,8 +160,8 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     public CodeStyleScheme createNewScheme(@Nullable String targetName) {
       mySchemeWasCreated = true;
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-      CodeStyleScheme newScheme = getSchemesModel().createNewScheme(targetName, getCurrentScheme());
-      getSchemesModel().addScheme(newScheme, true);
+      CodeStyleScheme newScheme = getModel().createNewScheme(targetName, getCurrentScheme());
+      getModel().addScheme(newScheme, true);
       return newScheme;
     }
 
@@ -234,14 +175,15 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     return CodeStyleScheme.class;
   }
 
-  public void copyToProject(CodeStyleScheme scheme) {
+  @Override
+  public void copyToProject(@NotNull CodeStyleScheme scheme) {
     int copyToProjectConfirmation = Messages
       .showYesNoDialog(ApplicationBundle.message("settings.editor.scheme.copy.to.project.message", scheme.getName()),
                        ApplicationBundle.message("settings.editor.scheme.copy.to.project.title"), 
                        Messages.getQuestionIcon());
     if (copyToProjectConfirmation == Messages.YES) {
-      getSchemesModel().copyToProject(scheme);
-      getSchemesModel().setUsePerProjectSettings(true, true);
+      getModel().copyToProject(scheme);
+      getModel().setUsePerProjectSettings(true, true);
     }
   }
 
@@ -290,6 +232,11 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
       }
     }
   }
-  
-  protected abstract CodeStyleSchemesModel getSchemesModel();
+
+  @NotNull
+  @Override
+  protected CodeStyleSchemesModel getModel() {
+    return (CodeStyleSchemesModel)super.getModel();
+  }
+
 }
