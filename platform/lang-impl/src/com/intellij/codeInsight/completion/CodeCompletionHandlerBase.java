@@ -634,17 +634,18 @@ public class CodeCompletionHandlerBase {
 
   public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
     if (laterRunnable != null) {
-      final Runnable runnable1 = () -> {
-        if (!indicator.getProject().isDisposed()) {
+      ActionTracker tracker = new ActionTracker(indicator.getEditor(), indicator);
+      Runnable wrapper = () -> {
+        if (!indicator.getProject().isDisposed() && !tracker.hasAnythingHappened()) {
           laterRunnable.run();
         }
         indicator.disposeIndicator();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable1.run();
+        wrapper.run();
       }
       else {
-        TransactionGuard.getInstance().submitTransactionLater(indicator.getProject(), runnable1);
+        TransactionGuard.getInstance().submitTransactionLater(indicator, wrapper);
       }
     }
     else {
