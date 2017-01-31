@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.ssl.CertificateManager;
+import org.apache.http.client.utils.URIBuilder;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_17;
@@ -176,9 +177,21 @@ public class IpnbConnection {
   }
 
   private String login(@NotNull String username, @NotNull String password, @NotNull String loginUrl) throws IOException {
-    String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + URLEncoder.encode(username, "UTF-8") + "&" + "password=" + 
-                           URLEncoder.encode(password, "UTF-8");
-    
+    String urlParameters = null;
+    try {
+      urlParameters = new URIBuilder()
+        .addParameter("_xsrf=", myXsrf)
+        .addParameter("username", username)
+        .addParameter("password", password)
+        .build().toString();
+    }
+    catch (URISyntaxException e) {
+      LOG.warn(e.getMessage());
+    }
+
+    //String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + URLEncoder.encode(username, "UTF-8") + "&" + "password=" + 
+    //                       URLEncoder.encode(password, "UTF-8");
+    if (urlParameters == null) throw new IOException("Unable to login");
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
     final HttpsURLConnection connection = ObjectUtils.tryCast(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(),
                                                                              HTTPMethod.POST.name()), HttpsURLConnection.class);
