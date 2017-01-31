@@ -59,7 +59,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     private final Map<String, PackageSet> unnamedScopes = new THashMap<>();
   }
 
-  private volatile State myState = new State();
+  private State myState = new State();
   private final NamedScopeManager myNamedScopeManager;
 
   private boolean mySkipImportStatements;
