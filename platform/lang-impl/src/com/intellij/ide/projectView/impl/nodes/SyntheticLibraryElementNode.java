@@ -23,11 +23,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     SyntheticLibrary library = getLibrary();
-    return VfsUtil.contains(file, library.getSourceRoots());
+    return VfsUtilCore.isUnder(file, ContainerUtil.newHashSet(library.getSourceRoots()));
   }
 
   @NotNull
