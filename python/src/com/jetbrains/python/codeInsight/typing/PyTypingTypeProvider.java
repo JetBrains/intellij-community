@@ -348,30 +348,32 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static List<PyType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
-    boolean isGeneric = false;
+    if (!isGeneric(cls, context)) {
+      return Collections.emptyList();
+    }
+    final TypeEvalContext typeEvalContext = context.getTypeContext();
+    // XXX: Requires switching from stub to AST
+    return StreamEx.of(cls.getSuperClassExpressions())
+      .select(PySubscriptionExpression.class)
+      .map(PySubscriptionExpression::getIndexExpression)
+      .flatMap(e -> {
+        final PyTupleExpression tupleExpr = as(e, PyTupleExpression.class);
+        return tupleExpr != null ? StreamEx.of(tupleExpr.getElements()) : StreamEx.of(e);
+      })
+      .flatMap(e -> tryResolving(e, typeEvalContext).stream())
+      .map(e -> getGenericTypeFromTypeVar(e, context))
+      .select(PyType.class)
+      .distinct()
+      .toList();
+  }
+
+  private static boolean isGeneric(@NotNull PyClass cls, @NotNull Context context) {
     for (PyClassLikeType ancestor : cls.getAncestorTypes(context.getTypeContext())) {
       if (ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName())) {
-        isGeneric = true;
-        break;
+        return true;
       }
     }
-    if (isGeneric) {
-      // XXX: Requires switching from stub to AST
-      for (PyExpression expr : cls.getSuperClassExpressions()) {
-        if (expr instanceof PySubscriptionExpression) {
-          final PyExpression indexExpr = ((PySubscriptionExpression)expr).getIndexExpression();
-          final PyTupleExpression tupleExpr = as(indexExpr, PyTupleExpression.class);
-          final List<PyExpression> generics = tupleExpr != null ?
-                                              Arrays.asList(tupleExpr.getElements()) : Collections.singletonList(indexExpr);
-          return StreamEx.of(generics)
-            .flatMap(e -> tryResolving(e, context.getTypeContext()).stream())
-            .map(e -> as(getGenericTypeFromTypeVar(e, context), PyType.class))
-            .nonNull()
-            .toList();
-        }
-      }
-    }
-    return Collections.emptyList();
+    return false;
   }
 
   @Nullable
