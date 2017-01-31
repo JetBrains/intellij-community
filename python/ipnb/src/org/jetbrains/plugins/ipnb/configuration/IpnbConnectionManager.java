@@ -316,7 +316,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
       return false;
     }
-    return false;
+    return true;
   }
 
   @NotNull
