@@ -63,21 +63,17 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     if (myReadChangesCache != null) {
-      myReadChangesCache = ContainerUtil.newHashSet(origin.myReadChangesCache);
+      myReadChangesCache = origin.myReadChangesCache;
     }
   }
 
   @NotNull
   @Override
   public Set<Change> getChanges() {
-    createReadChangesCache();
-    return myReadChangesCache;
-  }
-
-  private void createReadChangesCache() {
     if (myReadChangesCache == null) {
       myReadChangesCache = Collections.unmodifiableSet(ContainerUtil.newHashSet(myChanges));
     }
+    return myReadChangesCache;
   }
 
   @NotNull
@@ -162,7 +158,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
-    createReadChangesCache();
     final Collection<Change> result = new ArrayList<>();
     myChangesBeforeUpdate = new OpenTHashSet<>(myChanges);
     for (Change oldBoy : myChangesBeforeUpdate) {
@@ -213,7 +208,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     removedChanges.addAll(removed);
     changesDetected = changesDetected || (!removedChanges.isEmpty());
 
-    myReadChangesCache = null;
     return changesDetected;
   }
 
