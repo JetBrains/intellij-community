@@ -310,6 +310,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         else if(message.startsWith(CONNECTION_REFUSED)) {
           showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: connection refused", new IpnbSettingsAdapter());
         }
+        
         LOG.warn("Jupyter Notebook connection refused: " + message);
       }
       return false;
@@ -364,9 +365,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  private static void showWarning(@NotNull IpnbFileEditor fileEditor,
-                                  @NotNull String message,
-                                  @Nullable HyperlinkAdapter listener) {
+  private static void showWarning(@NotNull final IpnbFileEditor fileEditor,
+                                  @NotNull final String message,
+                                  @Nullable final HyperlinkAdapter listener) {
     ApplicationManager.getApplication().invokeLater(() -> {
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
         message, null, MessageType.WARNING.getPopupBackground(), listener);
