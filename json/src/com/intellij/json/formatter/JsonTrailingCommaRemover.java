@@ -16,6 +16,7 @@
 package com.intellij.json.formatter;
 
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
@@ -38,6 +39,9 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
   @Override
   public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
     PsiElement rootPsi = element.getPsi();
+    if (rootPsi.getLanguage() != JsonLanguage.INSTANCE) {
+      return range;
+    }
     JsonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(rootPsi.getProject())
       .getCurrentSettings()
       .getCustomSettings(JsonCodeStyleSettings.class);
