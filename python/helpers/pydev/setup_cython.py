@@ -33,7 +33,7 @@ def process_args():
     return target_pydevd_name, target_frame_eval, force_cython
 
 
-def build_extension(dir_name, extension_name, target_pydevd_name, force_cython):
+def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, has_pxd=False):
     pyx_file = os.path.join(os.path.dirname(__file__), dir_name, "%s.pyx" % (extension_name,))
 
     if target_pydevd_name != extension_name:
@@ -49,6 +49,10 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython):
         new_c_file = os.path.join(os.path.dirname(__file__), dir_name, "%s.c" % (target_pydevd_name,))
         shutil.copy(pyx_file, new_pyx_file)
         pyx_file = new_pyx_file
+        if has_pxd:
+            pxd_file = os.path.join(os.path.dirname(__file__), dir_name, "%s.pxd" % (extension_name,))
+            new_pxd_file = os.path.join(os.path.dirname(__file__), dir_name, "%s.pxd" % (target_pydevd_name,))
+            shutil.copy(pxd_file, new_pxd_file)
         assert os.path.exists(pyx_file)
 
     try:
@@ -80,6 +84,12 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython):
             except:
                 import traceback
                 traceback.print_exc()
+            if has_pxd:
+                try:
+                    os.remove(new_pxd_file)
+                except:
+                    import traceback
+                    traceback.print_exc()
 
 
 target_pydevd_name, target_frame_eval, force_cython = process_args()
@@ -93,4 +103,4 @@ if sys.version_info[:2] == (3, 6):
     extension_name = "pydevd_frame_evaluator"
     if target_frame_eval is None:
         target_frame_eval = extension_name
-    build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython)
+    build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython, True)
