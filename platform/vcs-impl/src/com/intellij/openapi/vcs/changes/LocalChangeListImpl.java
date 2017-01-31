@@ -195,22 +195,8 @@ public class LocalChangeListImpl extends LocalChangeList {
     });
   }
 
-  boolean processChange(@NotNull Change change) {
-    LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
-              ChangesUtil.getFilePath(change).getPath());
-    if (myIsDefault) {
-      LOG.debug("[process change] adding because default");
-      addChange(change);
-      return true;
-    }
-
-    if (myChangesBeforeUpdate.contains(change)) {
-      LOG.debug("[process change] adding because equal to old: " + ChangesUtil.getFilePath(change).getPath());
-      addChange(change);
-      return true;
-    }
-    LOG.debug("[process change] not found");
-    return false;
+  boolean hadChangeBeforeUpdate(@NotNull Change change) {
+    return myChangesBeforeUpdate.contains(change);
   }
 
   boolean doneProcessingChanges(final List<Change> removedChanges, final List<Change> addedChanges) {

@@ -234,17 +234,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeListImpl list : myMap.values()) {
-      if (list.isDefault()) {
-        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
-        continue;
-      }
-      if (list.processChange(change)) {
-        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+      if (list.hadChangeBeforeUpdate(change)) {
+        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
+        list.addChange(change);
         myIdx.changeAdded(change, vcsKey);
         return;
       }
     }
-    myDefault.processChange(change);
+    LOG.debug("[addChangeToCorrespondingList] added to default list");
+    myDefault.addChange(change);
     myIdx.changeAdded(change, vcsKey);
   }
 
