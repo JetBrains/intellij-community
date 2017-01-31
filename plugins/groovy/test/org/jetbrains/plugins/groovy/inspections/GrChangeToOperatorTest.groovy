@@ -156,6 +156,8 @@ class Operators {
     doTest "a.rightShift(b, 1)"
     doTest "a.rightShiftUnsigned(b, 1)"
     doTest "a.asType(b, 1)"
+    doTest "a.n<caret>ext {return 1}"
+    doTest "a.pl<caret>us(1) {return 1}"
   }
 
   void testComplexBinaryExpression() {
@@ -250,6 +252,7 @@ class Operators {
     doTest "a.getAt(a, b)"
     doTest "a.putAt(b)"
     doTest "a.putAt(b, b, b)"
+    doTest "a.put<caret>At(b,b) {b}"
   }
 
   void testWithoutAdditionalParenthesesOption() {
