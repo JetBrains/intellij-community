@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.rt.execution.application.AppMain;
+import com.intellij.rt.execution.application.AppMainV2;
 
 import java.io.File;
 
@@ -52,11 +52,11 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
           JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
           ParametersList vmParametersList = javaParameters.getVMParametersList();
-          vmParametersList.defineProperty(AppMain.LAUNCHER_PORT_NUMBER, port);
-          vmParametersList.defineProperty(AppMain.LAUNCHER_BIN_PATH, binPath);
+          vmParametersList.defineProperty(AppMainV2.LAUNCHER_PORT_NUMBER, port);
+          vmParametersList.defineProperty(AppMainV2.LAUNCHER_BIN_PATH, binPath);
 
           javaParameters.getProgramParametersList().prepend(mainClass);
-          javaParameters.setMainClass(AppMain.class.getName());
+          javaParameters.setMainClass(AppMainV2.class.getName());
         }
 
         return proxy;
