@@ -7,7 +7,12 @@ public class Main {
             if (/*before*/!res/*within*/.isEmpty()) {
                 res += ", ";
             }
-            res = (res <caret>+ s);
+            if (s.contains("'")) {
+                res = (res <caret>+ '[' // bracket
+                                  + s + ']');
+            } else {
+                res = (res + s);
+            }
         }
         return res;
     }

@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -439,9 +440,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private void replaceInAssignment(PsiVariable variable,
-                                        List<PsiElement> results,
-                                        PsiAssignmentExpression assignment,
-                                        CommentTracker ct) {
+                                     List<PsiElement> results,
+                                     PsiAssignmentExpression assignment,
+                                     CommentTracker ct) {
       PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         if (rValue instanceof PsiPolyadicExpression &&
@@ -451,9 +452,14 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           if (operands.length > 1) {
             // s = s + ...;
             if (ExpressionUtils.isReferenceTo(operands[0], variable)) {
-              ct.delete(concat.getTokenBeforeOperand(operands[1]), operands[0]);
-              replaceAll(variable, rValue, results, ct);
-              results.add(ct.replace(assignment, variable.getName() + ".append(" + ct.text(rValue) + ")"));
+              StreamEx.iterate(operands[1], Objects::nonNull, PsiElement::getNextSibling).forEach(ct::markUnchanged);
+              String text = rValue.getText().substring(operands[1].getStartOffsetInParent());
+              PsiExpression added = JavaPsiFacade.getElementFactory(variable.getProject()).createExpressionFromText(text, assignment);
+              replaceAll(variable, added, results, ct);
+              StringBuilder replacement = ChangeToAppendUtil.buildAppendExpression(added, false, new StringBuilder(variable.getName()));
+              if (replacement != null) {
+                results.add(ct.replace(assignment, replacement.toString()));
+              }
               return;
             }
             // s = ... + s;
@@ -473,7 +479,15 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       }
       if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
         // s += ...;
-        results.add(ct.replace(assignment, variable.getName() + ".append(" + ((rValue == null) ? "" : ct.text(rValue)) + ")"));
+        String replacement = "";
+        if (rValue != null) {
+          StringBuilder sb =
+            ChangeToAppendUtil.buildAppendExpression(ct.markUnchanged(rValue), false, new StringBuilder(variable.getName()));
+          if (sb != null) {
+            replacement = sb.toString();
+          }
+        }
+        results.add(ct.replace(assignment, replacement));
       } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         results.add(ct.replace(assignment, variable.getName() + "=" + generateNewStringBuilder(rValue, ct)));
       }
