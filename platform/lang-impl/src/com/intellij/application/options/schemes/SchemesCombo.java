@@ -27,7 +27,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class SchemesCombo<T extends Scheme> {
   
@@ -160,9 +160,9 @@ public class SchemesCombo<T extends Scheme> {
     }
   }
   
-  private void addItems(@NotNull Collection<T> schemes, Function<T,Boolean> filter) {
+  private void addItems(@NotNull Collection<T> schemes, Predicate<T> filter) {
     for (T scheme : schemes) {
-      if (filter.apply(scheme)) {
+      if (filter.test(scheme)) {
         myComboBoxModel.addElement(new MySchemeListItem<>(scheme));
       }
     }
