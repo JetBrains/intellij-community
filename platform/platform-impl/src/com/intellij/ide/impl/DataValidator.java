@@ -83,6 +83,7 @@ public abstract class DataValidator<T> {
     ourValidators.put(CommonDataKeys.PROJECT.getName(), PROJECT_VALIDATOR);
     ourValidators.put(CommonDataKeys.EDITOR.getName(), EDITOR_VALIDATOR);
     ourValidators.put(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()), EDITOR_VALIDATOR);
+    ourValidators.put(CommonDataKeys.HOST_EDITOR.getName(), EDITOR_VALIDATOR);
   }
 
   public static class ArrayValidator<T> extends DataValidator<T[]> {
