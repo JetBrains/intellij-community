@@ -1,9 +1,9 @@
 import os
 import sys
 
-IS_PY36_OR_OLDER = False
-if (sys.version_info[0] == 3 and sys.version_info[1] >= 6) or sys.version_info[0] > 3:
-    IS_PY36_OR_OLDER = True
+IS_PY36 = False
+if sys.version_info[0] == 3 and sys.version_info[1] == 6:
+    IS_PY36 = True
 
 frame_eval_func = None
 stop_frame_eval = None
@@ -14,7 +14,7 @@ if USE_FRAME_EVAL == 'NO':
     frame_eval_func, stop_frame_eval = None, None
 
 else:
-    if IS_PY36_OR_OLDER:
+    if IS_PY36:
         try:
             from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval
         except ImportError:
