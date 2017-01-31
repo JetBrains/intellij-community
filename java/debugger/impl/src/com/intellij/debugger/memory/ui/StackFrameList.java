@@ -54,9 +54,17 @@ class StackFrameList extends XDebuggerFramesList {
       myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
+          boolean separator = false;
           for (StackFrameItem frameInfo : items) {
-            StackFrameItem.CapturedStackFrame frame = frameInfo.createFrame(myDebugProcess);
-            DebuggerUIUtil.invokeLater(() -> getModel().addElement(frame));
+            if (frameInfo == null) {
+              separator = true;
+            }
+            else {
+              StackFrameItem.CapturedStackFrame frame = frameInfo.createFrame(myDebugProcess);
+              frame.setWithSeparator(separator);
+              DebuggerUIUtil.invokeLater(() -> getModel().addElement(frame));
+              separator = false;
+            }
           }
           if (onDone != null) {
             onDone.run();
