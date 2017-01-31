@@ -44,11 +44,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListWorker");
 
   private final Project myProject;
-  private final Map<String, LocalChangeList> myMap;
+  private final Map<String, LocalChangeListImpl> myMap;
   // in fact, a kind of local change
   private final DeletedFilesHolder myLocallyDeleted;
   private final SwitchedFileHolder mySwitchedHolder;
-  private LocalChangeList myDefault;
+  private LocalChangeListImpl myDefault;
 
   private ChangeListsIndexes myIdx;
   private final ChangesDelta myDelta;
@@ -74,10 +74,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myDelta = worker.myDelta;
     myListsToDisappear = ContainerUtil.newLinkedHashSet(worker.myListsToDisappear);
 
-    LocalChangeList defaultList = null;
-    for (LocalChangeList changeList : worker.myMap.values()) {
-      final LocalChangeList copy = changeList.copy();
-
+    LocalChangeListImpl defaultList = null;
+    for (LocalChangeListImpl changeList : worker.myMap.values()) {
+      final LocalChangeListImpl copy = changeList.copy();
       final String changeListName = copy.getName();
       myMap.put(changeListName, copy);
       if (copy.isDefault()) {
@@ -131,7 +130,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         final Change oldChange = item.getFirst();
         final Change newChange = new Change(null, oldChange.getAfterRevision());
 
-        final LocalChangeListImpl list = (LocalChangeListImpl)myMap.get(item.getSecond());
+        final LocalChangeListImpl list = myMap.get(item.getSecond());
         list.removeChange(oldChange);
         list.addChange(newChange);
 
@@ -173,17 +172,17 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
    */
   @Nullable
   public String setDefault(final String name) {
-    final LocalChangeList newDefault = myMap.get(name);
+    final LocalChangeListImpl newDefault = myMap.get(name);
     if (newDefault == null) {
       return null;
     }
     String previousName = null;
     if (myDefault != null) {
-      ((LocalChangeListImpl)myDefault).setDefault(false);
+      myDefault.setDefault(false);
       previousName = myDefault.getName();
     }
 
-    ((LocalChangeListImpl)newDefault).setDefault(true);
+    newDefault.setDefault(true);
     myDefault = newDefault;
 
     return previousName;
@@ -222,9 +221,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public boolean addChangeToList(@NotNull final String name, final Change change, final VcsKey vcsKey) {
     LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
               (vcsKey == null ? null : vcsKey.getName()));
-    final LocalChangeList changeList = myMap.get(name);
+    final LocalChangeListImpl changeList = myMap.get(name);
     if (changeList != null) {
-      ((LocalChangeListImpl)changeList).addChange(change);
+      changeList.addChange(change);
       myIdx.changeAdded(change, vcsKey);
     }
     return changeList != null;
@@ -234,18 +233,18 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final String path = ChangesUtil.getFilePath(change).getPath();
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
-    for (LocalChangeList list : myMap.values()) {
+    for (LocalChangeListImpl list : myMap.values()) {
       if (list.isDefault()) {
         LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         continue;
       }
-      if (((LocalChangeListImpl) list).processChange(change)) {
+      if (list.processChange(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         myIdx.changeAdded(change, vcsKey);
         return;
       }
     }
-    ((LocalChangeListImpl)myDefault).processChange(change);
+    myDefault.processChange(change);
     myIdx.changeAdded(change, vcsKey);
   }
 
@@ -260,22 +259,22 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final String listName = list.getName();
 
     for (Change change : list.getChanges()) {
-      ((LocalChangeListImpl)myDefault).addChange(change);
+      myDefault.addChange(change);
     }
 
-    final LocalChangeList removed = myMap.remove(listName);
+    myMap.remove(listName);
     return true;
   }
 
   @Nullable
   public MultiMap<LocalChangeList, Change> moveChangesTo(final String name, final Change[] changes) {
-    final LocalChangeListImpl changeList = (LocalChangeListImpl)myMap.get(name);
+    final LocalChangeListImpl changeList = myMap.get(name);
     if (changeList != null) {
       final MultiMap<LocalChangeList, Change> result = new MultiMap<>();
-      for (LocalChangeList list : myMap.values()) {
+      for (LocalChangeListImpl list : myMap.values()) {
         if (list.equals(changeList)) continue;
         for (Change change : changes) {
-          final Change removedChange = ((LocalChangeListImpl)list).removeChange(change);
+          final Change removedChange = list.removeChange(change);
           if (removedChange != null) {
             changeList.addChange(removedChange);
             result.putValue(list, removedChange);
@@ -289,11 +288,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
     if (fromName.equals(toName)) return false;
-    final LocalChangeList list = myMap.get(fromName);
+    final LocalChangeListImpl list = myMap.get(fromName);
     final boolean canEdit = list != null && (!list.isReadOnly());
     if (canEdit) {
-      final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
-      listImpl.setName(toName);
+      list.setName(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
     }
@@ -302,12 +300,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @Nullable
   public String editComment(@NotNull final String fromName, final String newComment) {
-    final LocalChangeList list = myMap.get(fromName);
+    final LocalChangeListImpl list = myMap.get(fromName);
     if (list != null) {
       final String oldComment = list.getComment();
       if (!Comparing.equal(oldComment, newComment)) {
-        final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
-        listImpl.setComment(newComment);
+        list.setComment(newComment);
       }
       return oldComment;
     }
@@ -334,8 +331,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   // called NOT under ChangeListManagerImpl lock
   public void notifyStartProcessingChanges(final VcsModifiableDirtyScope scope) {
     final Collection<Change> oldChanges = new ArrayList<>();
-    for (LocalChangeList list : myMap.values()) {
-      final Collection<Change> affectedChanges = ((LocalChangeListImpl)list).startProcessingChanges(myProject, scope);
+    for (LocalChangeListImpl list : myMap.values()) {
+      final Collection<Change> affectedChanges = list.startProcessingChanges(myProject, scope);
       if (!affectedChanges.isEmpty()) {
         oldChanges.addAll(affectedChanges);
       }
@@ -364,18 +361,18 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     List<ChangeList> changedLists = new ArrayList<>();
     final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<>();
     final Map<LocalChangeListImpl, List<Change>> addedChanges = new HashMap<>();
-    for (LocalChangeList list : myMap.values()) {
+    for (LocalChangeListImpl list : myMap.values()) {
       final List<Change> removed = new ArrayList<>();
       final List<Change> added = new ArrayList<>();
-      final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
-      if (listImpl.doneProcessingChanges(removed, added)) {
+
+      if (list.doneProcessingChanges(removed, added)) {
         changedLists.add(list);
       }
       if (!removed.isEmpty()) {
-        removedChanges.put(listImpl, removed);
+        removedChanges.put(list, removed);
       }
       if (!added.isEmpty()) {
-        addedChanges.put(listImpl, added);
+        addedChanges.put(list, added);
       }
     }
     for (Map.Entry<LocalChangeListImpl, List<Change>> entry : removedChanges.entrySet()) {
@@ -790,16 +787,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public void removeRegisteredChangeFor(FilePath path) {
     myIdx.remove(path);
 
-    for (LocalChangeList list : myMap.values()) {
+    for (LocalChangeListImpl list : myMap.values()) {
       for (Change change : list.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
         if (afterRevision != null && afterRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl)list).removeChange(change);
+          list.removeChange(change);
           return;
         }
         final ContentRevision beforeRevision = change.getBeforeRevision();
         if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl)list).removeChange(change);
+          list.removeChange(change);
           return;
         }
       }

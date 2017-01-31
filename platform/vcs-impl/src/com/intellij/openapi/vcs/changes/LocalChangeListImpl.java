@@ -273,7 +273,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @Override
-  public LocalChangeList copy() {
+  public LocalChangeListImpl copy() {
     return new LocalChangeListImpl(this);
   }
 }
