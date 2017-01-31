@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
@@ -35,38 +34,34 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
-  private final TreeMap<FilePath, FileStatus> myFileToStatus;
-  private final Map<FilePath, Pair<VcsKey, VcsRevisionNumber>> myFileToVcs;
+  private final TreeMap<FilePath, Data> myMap;
 
   ChangeListsIndexes() {
-    myFileToStatus = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
-    myFileToVcs = new HashMap<>();
+    myMap = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
   }
 
   ChangeListsIndexes(final ChangeListsIndexes idx) {
-    myFileToStatus = new TreeMap<>(idx.myFileToStatus);
-    myFileToVcs = new HashMap<>(idx.myFileToVcs);
+    myMap = new TreeMap<>(idx.myMap);
   }
 
   void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
-    myFileToStatus.put(file, status);
-    myFileToVcs.put(file, Pair.create(key, number));
+    myMap.put(file, new Data(status, key, number));
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
     }
   }
 
   void remove(final FilePath file) {
-    myFileToStatus.remove(file);
-    myFileToVcs.remove(file);
+    myMap.remove(file);
   }
 
   public FileStatus getStatus(final VirtualFile file) {
-    return myFileToStatus.get(VcsUtil.getFilePath(file));
+    return getStatus(VcsUtil.getFilePath(file));
   }
 
   public FileStatus getStatus(@NotNull FilePath file) {
-    return myFileToStatus.get(file);
+    Data data = myMap.get(file);
+    return data != null ? data.status : null;
   }
 
   public void changeAdded(final Change change, final VcsKey key) {
@@ -95,8 +90,8 @@ public class ChangeListsIndexes {
   @Nullable
   private VcsKey getVcsForRevision(@Nullable ContentRevision revision) {
     if (revision != null) {
-      Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(revision.getFile());
-      return pair == null ? null : pair.getFirst();
+      Data data = myMap.get(revision.getFile());
+      return data != null ? data.vcsKey : null;
     }
     return null;
   }
@@ -130,9 +125,9 @@ public class ChangeListsIndexes {
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
     // this is old
-    final Set<FilePath> oldKeySet = newHashSet(myFileToVcs.keySet());
+    final Set<FilePath> oldKeySet = newHashSet(myMap.keySet());
     final Set<FilePath> toRemoveSet = newHashSet(oldKeySet);
-    final Set<FilePath> newKeySet = newIndexes.myFileToVcs.keySet();
+    final Set<FilePath> newKeySet = newIndexes.myMap.keySet();
     final Set<FilePath> toAddSet = newHashSet(newKeySet);
     toRemoveSet.removeAll(newKeySet);
     toAddSet.removeAll(oldKeySet);
@@ -140,31 +135,31 @@ public class ChangeListsIndexes {
     oldKeySet.removeAll(toRemoveSet);
 
     for (FilePath s : toRemoveSet) {
-      final Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(s);
-      toRemove.add(fromPairAndPath(s, pair));
+      final Data data = myMap.get(s);
+      toRemove.add(fromPairAndPath(s, data));
     }
     for (FilePath s : toAddSet) {
-      final Pair<VcsKey, VcsRevisionNumber> pair = newIndexes.myFileToVcs.get(s);
-      toAdd.add(fromPairAndPath(s, pair));
+      final Data data = newIndexes.myMap.get(s);
+      toAdd.add(fromPairAndPath(s, data));
     }
     for (FilePath s : oldKeySet) {
-      final Pair<VcsKey, VcsRevisionNumber> old = myFileToVcs.get(s);
-      final Pair<VcsKey, VcsRevisionNumber> newOne = newIndexes.myFileToVcs.get(s);
+      final Data old = myMap.get(s);
+      final Data newOne = newIndexes.myMap.get(s);
       assert old != null && newOne != null;
-      if (!old.equals(newOne)) {
+      if (!old.sameRevisions(newOne)) {
         toModify.add(new BeforeAfter<>(fromPairAndPath(s, old), fromPairAndPath(s, newOne)));
       }
     }
   }
 
-  private static BaseRevision fromPairAndPath(FilePath s, Pair<VcsKey, VcsRevisionNumber> pair) {
-    return new BaseRevision(pair.getFirst(), pair.getSecond(), s);
+  private static BaseRevision fromPairAndPath(FilePath s, Data data) {
+    return new BaseRevision(data.vcsKey, data.revision, s);
   }
 
   public List<BaseRevision> getAffectedFilesUnderVcs() {
     final List<BaseRevision> result = new ArrayList<>();
-    for (Map.Entry<FilePath, Pair<VcsKey, VcsRevisionNumber>> entry : myFileToVcs.entrySet()) {
-      final Pair<VcsKey, VcsRevisionNumber> value = entry.getValue();
+    for (Map.Entry<FilePath, Data> entry : myMap.entrySet()) {
+      final Data value = entry.getValue();
       result.add(fromPairAndPath(entry.getKey(), value));
     }
     return result;
@@ -172,6 +167,22 @@ public class ChangeListsIndexes {
 
   @NotNull
   public NavigableSet<FilePath> getAffectedPaths() {
-    return Sets.unmodifiableNavigableSet(myFileToStatus.navigableKeySet());
+    return Sets.unmodifiableNavigableSet(myMap.navigableKeySet());
+  }
+
+  private static class Data {
+    public final FileStatus status;
+    public final VcsKey vcsKey;
+    public final VcsRevisionNumber revision;
+
+    public Data(FileStatus status, VcsKey vcsKey, VcsRevisionNumber revision) {
+      this.status = status;
+      this.vcsKey = vcsKey;
+      this.revision = revision;
+    }
+
+    public boolean sameRevisions(@NotNull Data data) {
+      return Comparing.equal(vcsKey, data.vcsKey) && Comparing.equal(revision, data.revision);
+    }
   }
 }
