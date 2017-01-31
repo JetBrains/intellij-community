@@ -18,12 +18,14 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +48,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
+public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<String>("ChooseByNamePattern");
   private Component myOldFocusOwner = null;
@@ -255,7 +257,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         return;
       }
     }
-
+    Disposer.dispose(this);
+    myProject.putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, null);
     setDisposed(true);
     myAlarm.cancelAllRequests();
     if (myProject != null) {
@@ -469,5 +472,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public void repaintListImmediate() {
     myList.repaint();
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }
