@@ -301,10 +301,6 @@ public class IpnbConnection {
     return new GsonBuilder().create().toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);
   }
 
-  private static boolean isLoginNeeded(@NotNull String redirectUrl) throws IOException {
-    return redirectUrl.startsWith(DEFAULT_LOGIN_PATH) || redirectUrl.startsWith(HUB_PREFIX);
-  }
-
   @NotNull
   private String getLoginUrl() throws IOException {
     String location = "";
