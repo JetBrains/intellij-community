@@ -205,9 +205,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   private void doAddAction(@NotNull AnActionButton button) {
     int row = myTable.getSelectedRow();
-    Pair<Object, T> selectedRow = myModel.data.get(myTable.convertRowIndexToModel(row));
+    Object selectedTarget = row >= 0 ? myModel.data.get(myTable.convertRowIndexToModel(row)).first : null;
     VirtualFile toSelect = myFileToSelect != null ? myFileToSelect :
-                           row >= 0 ? ObjectUtils.tryCast(selectedRow.first, VirtualFile.class) : null;
+                           ObjectUtils.tryCast(selectedTarget, VirtualFile.class);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, true);
     Set<VirtualFile> chosen = ContainerUtil.newHashSet(FileChooser.chooseFiles(descriptor, myProject, toSelect));
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
