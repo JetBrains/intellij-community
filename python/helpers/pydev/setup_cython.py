@@ -89,7 +89,7 @@ if target_pydevd_name is None:
     target_pydevd_name = extension_name
 build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython)
 
-if sys.version_info >= (3, 6):
+if sys.version_info[:2] == (3, 6):
     extension_name = "pydevd_frame_evaluator"
     if target_frame_eval is None:
         target_frame_eval = extension_name
