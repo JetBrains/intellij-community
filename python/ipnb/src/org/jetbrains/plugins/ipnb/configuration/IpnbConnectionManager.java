@@ -293,6 +293,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
       return false;
     }
+    catch (UnsupportedOperationException e) {
+      showWarning(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter());
+    }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
