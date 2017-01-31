@@ -218,6 +218,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySelectionTouched = selectionTouched;
   }
 
+  @TestOnly
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
+
+  protected void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
+    myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
+  }
+
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 

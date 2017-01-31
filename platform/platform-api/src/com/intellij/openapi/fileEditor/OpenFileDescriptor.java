@@ -190,7 +190,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     }
   }
 
-  private static void unfoldCurrentLine(@NotNull final Editor editor) {
+  protected static void unfoldCurrentLine(@NotNull final Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     final TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
