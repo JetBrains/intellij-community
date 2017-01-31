@@ -722,6 +722,22 @@ public class PyTypingTest extends PyTestCase {
            "    expr = kwargs\n");
   }
 
+  public void testGenericInheritedSpecificAndGenericParameters() {
+    doTest("C[float]",
+           "from typing import TypeVar, Generic, Tuple, Iterator, Iterable\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class B(Generic[T]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class C(B[Tuple[int, T]], Generic[T]):\n" +
+           "    def __init__(self, x: T) -> None:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(3.14)\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
