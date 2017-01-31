@@ -5,12 +5,12 @@ except ImportError:
         import struct
         import sys
         try:
-            is_python_64bit = (struct.calcsize('P') == 8)
+            is_64bits = sys.maxsize > 2**32
         except:
             # In Jython this call fails, but this is Ok, we don't support Jython for speedups anyways.
             raise ImportError
         plat = '32'
-        if is_python_64bit:
+        if is_64bits:
             plat = '64'
 
         # We also accept things as:
