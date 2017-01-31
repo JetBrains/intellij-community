@@ -57,6 +57,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final ChangesDelta myDelta;
   private final Set<String> myListsToDisappear;
 
+  private final Map<LocalChangeListImpl, OpenTHashSet<Change>> myChangesBeforeUpdateMap = new HashMap<>();
+
   public ChangeListWorker(final Project project, final PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
     myMap = new LinkedHashMap<>();
@@ -237,7 +239,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeListImpl list : myMap.values()) {
-      if (list.getChangesBeforeUpdate().contains(change)) {
+      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
+      if (changesBeforeUpdate.contains(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
         list.addChange(change);
         myIdx.changeAdded(change, vcsKey);
@@ -393,11 +396,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
     }
     myListsToDisappear.clear();
+
+    myChangesBeforeUpdateMap.clear();
   }
 
   private Collection<Change> startProcessingChanges(@NotNull LocalChangeListImpl list, @Nullable final VcsDirtyScope scope) {
     OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>(list.getChanges());
-    list.setChangesBeforeUpdate(changesBeforeUpdate);
+    myChangesBeforeUpdateMap.put(list, changesBeforeUpdate);
 
     final Collection<Change> result = new ArrayList<>();
     for (Change oldBoy : changesBeforeUpdate) {
@@ -429,7 +434,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   private boolean doneProcessingChanges(@NotNull LocalChangeListImpl list, List<Change> removedChanges, List<Change> addedChanges) {
-    OpenTHashSet<Change> changesBeforeUpdate = list.getChangesBeforeUpdate();
+    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
     Set<Change> changes = list.getChanges();
     boolean changesDetected = (changes.size() != changesBeforeUpdate.size());
 
@@ -445,8 +450,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     removed.removeAll(changes);
     removedChanges.addAll(removed);
     changesDetected = changesDetected || (!removedChanges.isEmpty());
-
-    list.setChangesBeforeUpdate(null);
 
     return changesDetected;
   }

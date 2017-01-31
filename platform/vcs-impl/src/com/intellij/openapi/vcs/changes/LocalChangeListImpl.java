@@ -5,11 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -30,7 +28,6 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private boolean myIsDefault = false;
   private boolean myIsReadOnly = false;
-  private OpenTHashSet<Change> myChangesBeforeUpdate;
 
   @NotNull
   public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
@@ -56,10 +53,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     myData = origin.myData;
 
     myChanges = ContainerUtil.newHashSet(origin.myChanges);
-
-    if (myChangesBeforeUpdate != null) {
-      myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)origin.myChangesBeforeUpdate);
-    }
 
     if (myReadChangesCache != null) {
       myReadChangesCache = origin.myReadChangesCache;
@@ -154,14 +147,6 @@ public class LocalChangeListImpl extends LocalChangeList {
       return change;
     }
     return null;
-  }
-
-  void setChangesBeforeUpdate(OpenTHashSet<Change> changesBeforeUpdate) {
-    myChangesBeforeUpdate = changesBeforeUpdate;
-  }
-
-  OpenTHashSet<Change> getChangesBeforeUpdate() {
-    return myChangesBeforeUpdate;
   }
 
   public boolean equals(final Object o) {
