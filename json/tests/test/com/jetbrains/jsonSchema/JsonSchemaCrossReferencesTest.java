@@ -16,6 +16,9 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
@@ -500,6 +503,38 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void doCheck() {
         doDoTest(true, false);
+      }
+    });
+  }
+
+  public void testNavigateToDefinitionByRef() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/withReferenceToDefinitionSchema.json", false, Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "withReferenceToDefinitionSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"findDefinition\"", resolve.getText());
+        final PsiElement parent = resolve.getParent();
+        Assert.assertTrue(parent instanceof JsonProperty);
+        final JsonValue value = ((JsonProperty)parent).getValue();
+        Assert.assertTrue(value instanceof JsonObject);
+        final JsonProperty anEnum = ((JsonObject)value).findProperty("enum");
+        Assert.assertNotNull(anEnum);
+        Assert.assertEquals("[1,4,8]", anEnum.getValue().getText());
       }
     });
   }
