@@ -1,17 +1,17 @@
-## Stubs for logging.handlers (Python 2.4)
+# Stubs for logging.handlers (Python 2.4)
 
-from typing import Any, Callable, Optional, Tuple, Union, overload
-from logging import Handler, FileHandler, LogRecord
 import datetime
+from logging import Handler, FileHandler, LogRecord
+from socket import SocketType
+import ssl
+import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, overload
 if sys.version_info >= (3,):
     from queue import Queue
 else:
     from Queue import Queue
-from socket import SocketType
 # TODO update socket stubs to add SocketKind
 SocketKind = int
-import ssl
-import sys
 
 
 class WatchedFileHandler(Handler):

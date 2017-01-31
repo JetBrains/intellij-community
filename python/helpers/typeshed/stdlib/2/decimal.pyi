@@ -10,13 +10,13 @@ _ComparableNum = Union[Decimal, int, float]
 
 DecimalTuple = NamedTuple('DecimalTuple',
                           [('sign', int),
-                           ('digits', Sequence[int]), # TODO: Use Tuple[int, ...]
+                           ('digits', Sequence[int]),  # TODO: Use Tuple[int, ...]
                            ('exponent', int)])
 
 ROUND_DOWN = ...  # type: str
-ROUND_HALF_UP = ...  # type: str 
+ROUND_HALF_UP = ...  # type: str
 ROUND_HALF_EVEN = ...  # type: str
-ROUND_CEILING = ...  # type: str 
+ROUND_CEILING = ...  # type: str
 ROUND_FLOOR = ...  # type: str
 ROUND_UP = ...  # type: str
 ROUND_HALF_DOWN = ...  # type: str
@@ -54,7 +54,7 @@ def getcontext() -> Context: ...
 def localcontext(ctx: Optional[Context] = None) -> _ContextManager: ...
 
 class Decimal(SupportsAbs[Decimal], SupportsFloat, SupportsInt):
-    def __init__(cls, value: Union[_Decimal, float, str,
+    def __init__(cls, value: Union[_Decimal, float, str, unicode,
                                    Tuple[int, Sequence[int], int]] = ...,
                  context: Context = ...) -> None: ...
     @classmethod
@@ -155,16 +155,16 @@ class Decimal(SupportsAbs[Decimal], SupportsFloat, SupportsInt):
     def __format__(self, specifier, context=None, _localeconv=None) -> str: ...
 
 class _ContextManager:
-    new_context = ...  # type: Context 
+    new_context = ...  # type: Context
     saved_context = ...  # type: Context
     def __init__(self, new_context: Context) -> None: ...
     def __enter__(self): ...
     def __exit__(self, t, v, tb): ...
 
 class Context:
-    prec = ...  # type: int 
-    rounding = ...  # type: str 
-    Emin = ...  # type: int 
+    prec = ...  # type: int
+    rounding = ...  # type: str
+    Emin = ...  # type: int
     Emax = ...  # type: int
     capitals = ...  # type: int
     traps = ...  # type: Dict[type, bool]

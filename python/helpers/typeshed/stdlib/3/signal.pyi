@@ -118,8 +118,8 @@ SIGWINCH = ...  # type: _SIG
 SIGXCPU = ...  # type: _SIG
 SIGXFSZ = ...  # type: _SIG
 
-CTRL_C_EVENT = 0 # Windows
-CTRL_BREAK_EVENT = 0 # Windows
+CTRL_C_EVENT = 0  # Windows
+CTRL_BREAK_EVENT = 0  # Windows
 
 class struct_siginfo(Tuple[int, int, int, int, int, int, int]):
     def __init__(self, sequence: Iterable[int]) -> None: ...

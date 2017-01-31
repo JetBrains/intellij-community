@@ -2,7 +2,7 @@
 # Ron Murawski <ron@horizonchess.com>
 # 'bytes' support added by Jukka Lehtosalo
 
-# based on: http://docs.python.org/2.7/library/re.html
+# based on: http: //docs.python.org/2.7/library/re.html
 
 from typing import (
     List, Iterator, overload, Callable, Tuple, Sequence, Dict,
@@ -36,24 +36,24 @@ def compile(pattern: Pattern[AnyStr], flags: int = ...) -> Pattern[AnyStr]: ...
 @overload
 def search(pattern: Union[str, unicode], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
 @overload
-def search(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
+def search(pattern: Union[Pattern[str], Pattern[unicode]], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
 
 @overload
 def match(pattern: Union[str, unicode], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
 @overload
-def match(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
+def match(pattern: Union[Pattern[str], Pattern[unicode]], string: AnyStr, flags: int = ...) -> Match[AnyStr]: ...
 
 @overload
 def split(pattern: Union[str, unicode], string: AnyStr,
           maxsplit: int = ..., flags: int = ...) -> List[AnyStr]: ...
 @overload
-def split(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr,
+def split(pattern: Union[Pattern[str], Pattern[unicode]], string: AnyStr,
           maxsplit: int = ..., flags: int = ...) -> List[AnyStr]: ...
 
 @overload
 def findall(pattern: Union[str, unicode], string: AnyStr, flags: int = ...) -> List[Any]: ...
 @overload
-def findall(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr, flags: int = ...) -> List[Any]: ...
+def findall(pattern: Union[Pattern[str], Pattern[unicode]], string: AnyStr, flags: int = ...) -> List[Any]: ...
 
 # Return an iterator yielding match objects over all non-overlapping matches
 # for the RE pattern in string. The string is scanned left-to-right, and
@@ -63,7 +63,7 @@ def findall(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr, flags
 def finditer(pattern: Union[str, unicode], string: AnyStr,
              flags: int = ...) -> Iterator[Match[AnyStr]]: ...
 @overload
-def finditer(pattern: Union[Pattern[str],Pattern[unicode]], string: AnyStr,
+def finditer(pattern: Union[Pattern[str], Pattern[unicode]], string: AnyStr,
              flags: int = ...) -> Iterator[Match[AnyStr]]: ...
 
 @overload
@@ -73,10 +73,10 @@ def sub(pattern: Union[str, unicode], repl: AnyStr, string: AnyStr, count: int =
 def sub(pattern: Union[str, unicode], repl: Callable[[Match[AnyStr]], AnyStr],
         string: AnyStr, count: int = ..., flags: int = ...) -> AnyStr: ...
 @overload
-def sub(pattern: Union[Pattern[str],Pattern[unicode]], repl: AnyStr, string: AnyStr, count: int = ...,
+def sub(pattern: Union[Pattern[str], Pattern[unicode]], repl: AnyStr, string: AnyStr, count: int = ...,
         flags: int = ...) -> AnyStr: ...
 @overload
-def sub(pattern: Union[Pattern[str],Pattern[unicode]], repl: Callable[[Match[AnyStr]], AnyStr],
+def sub(pattern: Union[Pattern[str], Pattern[unicode]], repl: Callable[[Match[AnyStr]], AnyStr],
         string: AnyStr, count: int = ..., flags: int = ...) -> AnyStr: ...
 
 @overload
@@ -87,10 +87,10 @@ def subn(pattern: Union[str, unicode], repl: Callable[[Match[AnyStr]], AnyStr],
          string: AnyStr, count: int = ...,
          flags: int = ...) -> Tuple[AnyStr, int]: ...
 @overload
-def subn(pattern: Union[Pattern[str],Pattern[unicode]], repl: AnyStr, string: AnyStr, count: int = ...,
+def subn(pattern: Union[Pattern[str], Pattern[unicode]], repl: AnyStr, string: AnyStr, count: int = ...,
          flags: int = ...) -> Tuple[AnyStr, int]: ...
 @overload
-def subn(pattern: Union[Pattern[str],Pattern[unicode]], repl: Callable[[Match[AnyStr]], AnyStr],
+def subn(pattern: Union[Pattern[str], Pattern[unicode]], repl: Callable[[Match[AnyStr]], AnyStr],
          string: AnyStr, count: int = ...,
          flags: int = ...) -> Tuple[AnyStr, int]: ...
 

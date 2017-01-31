@@ -1,6 +1,11 @@
 from typing import Tuple, Union, Optional, Any, Dict, overload
 
-import select, socket, sys, time, warnings, os
+import os
+import select
+import socket
+import sys
+import time
+import warnings
 
 from errno import (EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL,
                    ENOTCONN, ESHUTDOWN, EINTR, EISCONN, EBADF, ECONNABORTED,

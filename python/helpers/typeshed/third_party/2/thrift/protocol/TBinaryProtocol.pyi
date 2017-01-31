@@ -4,14 +4,15 @@
 
 from typing import Any
 
-from .TProtocol import *
+from .TProtocol import TProtocolBase
+from .TProtocol import *  # noqa: F403
 
 class TBinaryProtocol(TProtocolBase):
-    VERSION_MASK = ... # type: Any
-    VERSION_1 = ... # type: Any
-    TYPE_MASK = ... # type: Any
-    strictRead = ... # type: Any
-    strictWrite = ... # type: Any
+    VERSION_MASK = ...  # type: Any
+    VERSION_1 = ...  # type: Any
+    TYPE_MASK = ...  # type: Any
+    strictRead = ...  # type: Any
+    strictWrite = ...  # type: Any
     def __init__(self, trans, strictRead=..., strictWrite=...) -> None: ...
     def writeMessageBegin(self, name, type, seqid): ...
     def writeMessageEnd(self): ...
@@ -54,8 +55,8 @@ class TBinaryProtocol(TProtocolBase):
     def readString(self): ...
 
 class TBinaryProtocolFactory:
-    strictRead = ... # type: Any
-    strictWrite = ... # type: Any
+    strictRead = ...  # type: Any
+    strictWrite = ...  # type: Any
     def __init__(self, strictRead=..., strictWrite=...) -> None: ...
     def getProtocol(self, trans): ...
 

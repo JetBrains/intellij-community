@@ -1,3 +1,5 @@
+from typing import List
+
 import xml.sax
 from xml.sax.xmlreader import InputSource
 from xml.sax.handler import ContentHandler, ErrorHandler

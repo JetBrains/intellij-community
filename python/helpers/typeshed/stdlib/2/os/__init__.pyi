@@ -2,17 +2,18 @@
 
 from typing import (
     List, Tuple, Union, Sequence, Mapping, IO, Any, Optional, AnyStr, Iterator,
-    MutableMapping, NamedTuple, overload
+    Dict, MutableMapping, NamedTuple, overload
 )
 from . import path
+from mypy_extensions import NoReturn
 
 error = OSError
-name = ... # type: str
+name = ...  # type: str
 
 class _Environ(MutableMapping[str, str]):
     def copy(self) -> Dict[str, str]: ...
 
-environ = ... # type: _Environ
+environ = ...  # type: _Environ
 
 def chdir(path: unicode) -> None: ...
 def fchdir(fd: int) -> None: ...
@@ -129,7 +130,7 @@ def mkdir(path: unicode, mode: int = ...) -> None: ...
 def makedirs(path: unicode, mode: int = ...) -> None: ...
 def pathconf(path: unicode, name: str) -> str: ...
 
-pathconf_names = ... # type: Mapping[str, int]
+pathconf_names = ...  # type: Mapping[str, int]
 
 def readlink(path: AnyStr) -> AnyStr: ...
 def remove(path: unicode) -> None: ...
@@ -169,7 +170,7 @@ EX_UNAVAILABLE = 0  # Unix only
 EX_SOFTWARE = 0  # Unix only
 EX_OSERR = 0     # Unix only
 EX_OSFILE = 0    # Unix only
-EX_CANTCREAT = 0 # Unix only
+EX_CANTCREAT = 0  # Unix only
 EX_IOERR = 0     # Unix only
 EX_TEMPFAIL = 0  # Unix only
 EX_PROTOCOL = 0  # Unix only
@@ -185,7 +186,7 @@ def execvpe(file: AnyStr, args: Union[Tuple[AnyStr], List[AnyStr]], env: Mapping
 def execv(path: AnyStr, args: Union[Tuple[AnyStr], List[AnyStr]]) -> None: ...
 def execve(path: AnyStr, args: Union[Tuple[AnyStr], List[AnyStr]], env: Mapping[AnyStr, AnyStr]) -> None: ...
 
-def _exit(n: int) -> None: ...
+def _exit(n: int) -> NoReturn: ...
 
 def fork() -> int: ...
 def forkpty() -> Tuple[int, int]: ...
@@ -198,11 +199,11 @@ def nice(increment: int) -> int: ...
 
 def spawnl(mode: int, path: AnyStr, arg0: AnyStr, *args: AnyStr) -> int: ...
 def spawnle(mode: int, path: AnyStr, arg0: AnyStr,
-            *args: Any) -> int: ... # Imprecise sig
+            *args: Any) -> int: ...  # Imprecise sig
 def spawnlp(mode: int, file: AnyStr, arg0: AnyStr,
             *args: AnyStr) -> int: ...  # Unix only TODO
 def spawnlpe(mode: int, file: AnyStr, arg0: AnyStr, *args: Any) -> int:
-    ... # Imprecise signature; Unix only TODO
+    ...  # Imprecise signature; Unix only TODO
 def spawnv(mode: int, path: AnyStr, args: List[AnyStr]) -> int: ...
 def spawnve(mode: int, path: AnyStr, args: List[AnyStr],
             env: Mapping[str, str]) -> int: ...
@@ -210,31 +211,31 @@ def spawnvp(mode: int, file: AnyStr, args: List[AnyStr]) -> int: ...  # Unix onl
 def spawnvpe(mode: int, file: AnyStr, args: List[AnyStr],
              env: Mapping[str, str]) -> int:
     ...  # Unix only
-def startfile(path: unicode, operation: str = ...) -> None: ... # Windows only
+def startfile(path: unicode, operation: str = ...) -> None: ...  # Windows only
 def system(command: unicode) -> int: ...
 def times() -> Tuple[float, float, float, float, float]: ...
-def wait() -> Tuple[int, int]: ... # Unix only
-def wait3(options: int) -> Tuple[int, int, Any]: ... # Unix only
-def wait4(pid: int, options: int) -> Tuple[int, int, Any]: ... # Unix only
+def wait() -> Tuple[int, int]: ...  # Unix only
+def wait3(options: int) -> Tuple[int, int, Any]: ...  # Unix only
+def wait4(pid: int, options: int) -> Tuple[int, int, Any]: ...  # Unix only
 def waitpid(pid: int, options: int) -> Tuple[int, int]: ...
 
 def confstr(name: Union[str, int]) -> Optional[str]: ...
-confstr_names = ... # type: Mapping[str, int]
+confstr_names = ...  # type: Mapping[str, int]
 
 def getloadavg() -> Tuple[float, float, float]: ...
 
 def sysconf(name: Union[str, int]) -> int: ...
-sysconf_names = ... # type: Mapping[str, int]
+sysconf_names = ...  # type: Mapping[str, int]
 
-curdir = ... # type: str
-pardir = ... # type: str
-sep = ... # type: str
-altsep = ... # type: str
-extsep = ... # type: str
-pathsep = ... # type: str
-defpath = ... # type: str
-linesep = ... # type: str
-devnull = ... # type: str
+curdir = ...  # type: str
+pardir = ...  # type: str
+sep = ...  # type: str
+altsep = ...  # type: str
+extsep = ...  # type: str
+pathsep = ...  # type: str
+defpath = ...  # type: str
+linesep = ...  # type: str
+devnull = ...  # type: str
 
 def urandom(n: int) -> str: ...
 
@@ -251,16 +252,16 @@ O_DSYNC = 0    # Unix only
 O_RSYNC = 0    # Unix only
 O_SYNC = 0     # Unix only
 O_NDELAY = 0   # Unix only
-O_NONBLOCK = 0 # Unix only
+O_NONBLOCK = 0  # Unix only
 O_NOCTTY = 0   # Unix only
 O_SHLOCK = 0   # Unix only
 O_EXLOCK = 0   # Unix only
 O_BINARY = 0     # Windows only
 O_NOINHERIT = 0  # Windows only
-O_SHORT_LIVED = 0# Windows only
+O_SHORT_LIVED = 0  # Windows only
 O_TEMPORARY = 0  # Windows only
 O_RANDOM = 0     # Windows only
-O_SEQUENTIAL = 0 # Windows only
+O_SEQUENTIAL = 0  # Windows only
 O_TEXT = 0       # Windows only
 O_ASYNC = 0      # Gnu extension if in C library
 O_DIRECT = 0     # Gnu extension if in C library
@@ -272,8 +273,8 @@ O_LARGEFILE = 0  # Gnu extension if in C library
 P_NOWAIT = 0
 P_NOWAITO = 0
 P_WAIT = 0
-#P_DETACH = 0  # Windows only
-#P_OVERLAY = 0  # Windows only
+# P_DETACH = 0  # Windows only
+# P_OVERLAY = 0  # Windows only
 
 # wait()/waitpid() options
 WNOHANG = 0  # Unix only

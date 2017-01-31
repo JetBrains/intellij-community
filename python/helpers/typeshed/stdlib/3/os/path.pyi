@@ -3,7 +3,8 @@
 
 # based on http://docs.python.org/3.2/library/os.path.html
 
-from typing import overload, List, Any, AnyStr, Tuple, BinaryIO, TextIO
+import sys
+from typing import overload, List, Any, AnyStr, Sequence, Tuple, BinaryIO, TextIO
 
 # ----- os.path variables -----
 supports_unicode_filenames = False
@@ -20,6 +21,9 @@ devnull = ...  # type: str
 # ----- os.path function stubs -----
 def abspath(path: AnyStr) -> AnyStr: ...
 def basename(path: AnyStr) -> AnyStr: ...
+
+if sys.version_info >= (3, 5):
+    def commonpath(paths: Sequence[AnyStr]) -> AnyStr: ...
 
 # NOTE: Empty List[bytes] results in '' (str) => fall back to Any return type.
 def commonprefix(list: List[AnyStr]) -> Any: ...
@@ -51,11 +55,11 @@ def relpath(path: AnyStr, start: AnyStr = ...) -> AnyStr: ...
 
 def samefile(path1: AnyStr, path2: AnyStr) -> bool: ...
 def sameopenfile(fp1: int, fp2: int) -> bool: ...
-#def samestat(stat1: stat_result,
+# def samestat(stat1: stat_result,
 #             stat2: stat_result) -> bool: ...  # Unix only
 
 def split(path: AnyStr) -> Tuple[AnyStr, AnyStr]: ...
 def splitdrive(path: AnyStr) -> Tuple[AnyStr, AnyStr]: ...
 def splitext(path: AnyStr) -> Tuple[AnyStr, AnyStr]: ...
 
-#def splitunc(path: str) -> Tuple[str, str]: ...  # Windows only, deprecated
+# def splitunc(path: str) -> Tuple[str, str]: ...  # Windows only, deprecated

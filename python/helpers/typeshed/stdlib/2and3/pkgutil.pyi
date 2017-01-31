@@ -1,6 +1,6 @@
 # Stubs for pkgutil
 
-from typing import Any, Callable, Generator, IO, Iterable, Optional, Tuple
+from typing import Any, Callable, Generator, IO, Iterable, List, Optional, Tuple
 import sys
 
 if sys.version_info >= (3,):

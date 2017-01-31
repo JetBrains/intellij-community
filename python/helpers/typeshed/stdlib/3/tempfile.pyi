@@ -14,19 +14,22 @@ template = ...  # type: str
 
 # function stubs
 def TemporaryFile(
-            mode: str = ..., buffering: int = ..., encoding: str = ...,
-            newline: str = ..., suffix: str = ..., prefix: str = ...,
-            dir: str = ...) -> BinaryIO:
+    mode: str = ..., buffering: int = ..., encoding: str = ...,
+    newline: str = ..., suffix: str = ..., prefix: str = ...,
+    dir: str = ...
+) -> BinaryIO:
     ...
 def NamedTemporaryFile(
-            mode: str = ..., buffering: int = ..., encoding: str = ...,
-            newline: str = ..., suffix: str = ..., prefix: str = ...,
-            dir: str = ..., delete: bool =...) -> BinaryIO:
+    mode: str = ..., buffering: int = ..., encoding: str = ...,
+    newline: str = ..., suffix: str = ..., prefix: str = ...,
+    dir: str = ..., delete: bool =...
+) -> BinaryIO:
     ...
 def SpooledTemporaryFile(
-            max_size: int = ..., mode: str = ..., buffering: int = ...,
-            encoding: str = ..., newline: str = ..., suffix: str = ...,
-            prefix: str = ..., dir: str = ...) -> BinaryIO:
+    max_size: int = ..., mode: str = ..., buffering: int = ...,
+    encoding: str = ..., newline: str = ..., suffix: str = ...,
+    prefix: str = ..., dir: str = ...
+) -> BinaryIO:
     ...
 
 class TemporaryDirectory:

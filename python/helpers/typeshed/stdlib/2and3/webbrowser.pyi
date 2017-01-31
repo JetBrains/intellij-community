@@ -14,18 +14,18 @@ def open_new(url: str) -> bool: ...
 def open_new_tab(url: str) -> bool: ...
 
 class BaseBrowser:
-    args = ... # type: List[str]
-    name = ... # type: str
-    basename = ... # type: str
+    args = ...  # type: List[str]
+    name = ...  # type: str
+    basename = ...  # type: str
     def __init__(self, name: str=...) -> None: ...
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
     def open_new(self, url: str) -> bool: ...
     def open_new_tab(self, url: str) -> bool: ...
 
 class GenericBrowser(BaseBrowser):
-    name = ... # type: List[str]
-    args = ... # type: str
-    basename = ... # type: str
+    args = ...  # type: List[str]
+    name = ...  # type: str
+    basename = ...  # type: str
     def __init__(self, name: str) -> None: ...
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
 
@@ -33,53 +33,53 @@ class BackgroundBrowser(GenericBrowser):
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
 
 class UnixBrowser(BaseBrowser):
-    raise_opts = ... # type: List[str]
-    background = ... # type: bool
-    redirect_stdout = ... # type: bool
-    remote_args = ... # type: List[str]
-    remote_action = ... # type: str
-    remote_action_newwin = ... # type: str
-    remote_action_newtab = ... # type: str
+    raise_opts = ...  # type: List[str]
+    background = ...  # type: bool
+    redirect_stdout = ...  # type: bool
+    remote_args = ...  # type: List[str]
+    remote_action = ...  # type: str
+    remote_action_newwin = ...  # type: str
+    remote_action_newtab = ...  # type: str
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
 
 class Mozilla(UnixBrowser):
-    raise_opts = ... # type: List[str]
-    remote_args = ... # type: List[str]
-    remote_action = ... # type: str
-    remote_action_newwin = ... # type: str
-    remote_action_newtab = ... # type: str
-    background = ... # type: bool
+    raise_opts = ...  # type: List[str]
+    remote_args = ...  # type: List[str]
+    remote_action = ...  # type: str
+    remote_action_newwin = ...  # type: str
+    remote_action_newtab = ...  # type: str
+    background = ...  # type: bool
 
 class Galeon(UnixBrowser):
-    raise_opts = ... # type: List[str]
-    remote_args = ... # type: List[str]
-    remote_action = ... # type: str
-    remote_action_newwin = ... # type: str
-    background = ... # type: bool
+    raise_opts = ...  # type: List[str]
+    remote_args = ...  # type: List[str]
+    remote_action = ...  # type: str
+    remote_action_newwin = ...  # type: str
+    background = ...  # type: bool
 
 if sys.version_info[:2] == (2, 7) or sys.version_info >= (3, 3):
     class Chrome(UnixBrowser):
-        remote_args = ... # type: List[str]
-        remote_action = ... # type: str
-        remote_action_newwin = ... # type: str
-        remote_action_newtab = ... # type: str
-        background = ... # type: bool
+        remote_args = ...  # type: List[str]
+        remote_action = ...  # type: str
+        remote_action_newwin = ...  # type: str
+        remote_action_newtab = ...  # type: str
+        background = ...  # type: bool
 
 class Opera(UnixBrowser):
-    raise_opts = ... # type: List[str]
-    remote_args = ... # type: List[str]
-    remote_action = ... # type: str
-    remote_action_newwin = ... # type: str
-    remote_action_newtab = ... # type: str
-    background = ... # type: bool
+    raise_opts = ...  # type: List[str]
+    remote_args = ...  # type: List[str]
+    remote_action = ...  # type: str
+    remote_action_newwin = ...  # type: str
+    remote_action_newtab = ...  # type: str
+    background = ...  # type: bool
 
 class Elinks(UnixBrowser):
-    remote_args = ... # type: List[str]
-    remote_action = ... # type: str
-    remote_action_newwin = ... # type: str
-    remote_action_newtab = ... # type: str
-    background = ... # type: bool
-    redirect_stdout = ... # type: bool
+    remote_args = ...  # type: List[str]
+    remote_action = ...  # type: str
+    remote_action_newwin = ...  # type: str
+    remote_action_newtab = ...  # type: str
+    background = ...  # type: bool
+    redirect_stdout = ...  # type: bool
 
 class Konqueror(BaseBrowser):
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
@@ -91,7 +91,7 @@ class WindowsDefault(BaseBrowser):
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
 
 class MacOSX(BaseBrowser):
-    name = ... # type: str
+    name = ...  # type: str
     def __init__(self, name: str) -> None: ...
     def open(self, url: str, new: int=..., autoraise: bool=...) -> bool: ...
 

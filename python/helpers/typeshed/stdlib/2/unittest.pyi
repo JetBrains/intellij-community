@@ -5,8 +5,8 @@
 # Only a subset of functionality is included.
 
 from typing import (
-    Any, Callable, Iterable, Tuple, List, TextIO, Sequence,
-    overload, TypeVar, Pattern
+    Any, Callable, Dict, Iterable, Tuple, List, TextIO, Sequence,
+    overload, Set, TypeVar, Union, Pattern
 )
 from abc import abstractmethod, ABCMeta
 
@@ -24,29 +24,29 @@ class Testable(metaclass=ABCMeta):
 # TODO ABC for test runners?
 
 class TestResult:
-    errors = ... # type: List[Tuple[Testable, str]]
-    failures = ... # type: List[Tuple[Testable, str]]
+    errors = ...  # type: List[Tuple[Testable, str]]
+    failures = ...  # type: List[Tuple[Testable, str]]
     testsRun = 0
-    shouldStop = ... # type: bool
+    shouldStop = ...  # type: bool
 
     def wasSuccessful(self) -> bool: ...
     def stop(self) -> None: ...
     def startTest(self, test: Testable) -> None: ...
     def stopTest(self, test: Testable) -> None: ...
     def addError(self, test: Testable,
-                  err: Tuple[type, Any, Any]) -> None: ... # TODO
+                  err: Tuple[type, Any, Any]) -> None: ...  # TODO
     def addFailure(self, test: Testable,
-                    err: Tuple[type, Any, Any]) -> None: ... # TODO
+                    err: Tuple[type, Any, Any]) -> None: ...  # TODO
     def addSuccess(self, test: Testable) -> None: ...
 
 class _AssertRaisesBaseContext:
-    expected = ... # type: Any
-    failureException = ... # type: type
+    expected = ...  # type: Any
+    failureException = ...  # type: type
     obj_name = ...  # type: str
-    expected_regex = ... # type: Pattern[str]
+    expected_regex = ...  # type: Pattern[str]
 
 class _AssertRaisesContext(_AssertRaisesBaseContext):
-    exception = ... # type: Any # TODO precise type
+    exception = ...  # type: Any # TODO precise type
     def __enter__(self) -> _AssertRaisesContext: ...
     def __exit__(self, exc_type, exc_value, tb) -> bool: ...
 
@@ -123,15 +123,15 @@ class TestCase(Testable):
                  msg: object = ...) -> None: ...
     def assertNotIn(self, first: _T, second: Iterable[_T],
                     msg: object = ...) -> None: ...
-    def assertIsInstance(self, obj: Any, cls: type,
+    def assertIsInstance(self, obj: Any, cls: Union[type, Tuple[type, ...]],
                          msg: object = ...) -> None: ...
-    def assertNotIsInstance(self, obj: Any, cls: type,
+    def assertNotIsInstance(self, obj: Any, cls: Union[type, Tuple[type, ...]],
                             msg: object = ...) -> None: ...
     def fail(self, msg: object = ...) -> None: ...
     def countTestCases(self) -> int: ...
     def defaultTestResult(self) -> TestResult: ...
     def id(self) -> str: ...
-    def shortDescription(self) -> str: ... # May return None
+    def shortDescription(self) -> str: ...  # May return None
     def addCleanup(function: Any, *args: Any, **kwargs: Any) -> None: ...
     def skipTest(self, reason: Any) -> None: ...
 
@@ -163,14 +163,14 @@ class SkipTest(Exception):
     ...
 
 # TODO precise types
-def skipUnless(condition: Any, reason: str) -> Any: ...
-def skipIf(condition: Any, reason: str) -> Any: ...
+def skipUnless(condition: Any, reason: Union[str, unicode]) -> Any: ...
+def skipIf(condition: Any, reason: Union[str, unicode]) -> Any: ...
 def expectedFailure(func: _FT) -> _FT: ...
-def skip(reason: str) -> Any: ...
+def skip(reason: Union[str, unicode]) -> Any: ...
 
 def main(module: str = ..., defaultTest: str = ...,
          argv: List[str] = ..., testRunner: Any = ...,
-         testLoader: Any = ...) -> None: ... # TODO types
+         testLoader: Any = ...) -> None: ...  # TODO types
 
 # private but occasionally used
 util = ...  # type: module

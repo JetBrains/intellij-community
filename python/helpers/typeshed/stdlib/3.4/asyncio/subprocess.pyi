@@ -1,17 +1,15 @@
-from typing import Any, AnyStr, Tuple, Union
-
-__all__ = ... # type: str
-
 from asyncio import events
 from asyncio import protocols
 from asyncio import streams
 from asyncio import transports
 from asyncio.coroutines import coroutine
+from typing import Any, AnyStr, Optional, Tuple, Union
 
+__all__ = ...  # type: str
 
-PIPE = ... # type: int
-STDOUT = ... # type: int
-DEVNULL = ... # type: int
+PIPE = ...  # type: int
+STDOUT = ...  # type: int
+DEVNULL = ...  # type: int
 
 class SubprocessStreamProtocol(streams.FlowControlMixin,
                                protocols.SubprocessProtocol):
@@ -35,26 +33,28 @@ class Process:
     def terminate(self) -> None: ...
     def kill(self) -> None: ...
     @coroutine
-    def communicate(self, input: bytes = ...) -> Tuple[bytes, bytes]: ...
+    def communicate(self, input: Optional[bytes] = ...) -> Tuple[bytes, bytes]: ...
 
 
 @coroutine
 def create_subprocess_shell(
-        *Args: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue #1236
-        stdin: int = ...,
-        stdout: int = ...,
-        stderr: int = ...,
-        loop: events.AbstractEventLoop = ...,
-        limit: int = ...,
-        **kwds: Any): ...
+    *Args: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue  #1236
+    stdin: int = ...,
+    stdout: int = ...,
+    stderr: int = ...,
+    loop: events.AbstractEventLoop = ...,
+    limit: int = ...,
+    **kwds: Any
+): ...
 
 @coroutine
 def create_subprocess_exec(
-        program: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue #1236
-        *args: Any,
-        stdin: int = ...,
-        stdout: int = ...,
-        stderr: int = ...,
-        loop: events.AbstractEventLoop = ...,
-        limit: int = ...,
-        **kwds: Any) -> Process: ...
+    program: Union[str, bytes],  # Union used instead of AnyStr due to mypy issue  #1236
+    *args: Any,
+    stdin: int = ...,
+    stdout: int = ...,
+    stderr: int = ...,
+    loop: events.AbstractEventLoop = ...,
+    limit: int = ...,
+    **kwds: Any
+) -> Process: ...

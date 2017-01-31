@@ -23,15 +23,27 @@ class ResultMixin(object):
     @property
     def port(self) -> int: ...
 
-class SplitResult(NamedTuple('SplitResult', [
-        ('scheme', str), ('netloc', str), ('path', str), ('query', str), ('fragment', str)
-    ]), ResultMixin):
+class SplitResult(
+    NamedTuple(
+        'SplitResult',
+        [
+            ('scheme', str), ('netloc', str), ('path', str), ('query', str), ('fragment', str)
+        ]
+    ),
+    ResultMixin
+):
     def geturl(self) -> str: ...
 
-class ParseResult(NamedTuple('ParseResult', [
-        ('scheme', str), ('netloc', str), ('path', str), ('params', str), ('query', str),
-        ('fragment', str)
-    ]), ResultMixin):
+class ParseResult(
+    NamedTuple(
+        'ParseResult',
+        [
+            ('scheme', str), ('netloc', str), ('path', str), ('params', str), ('query', str),
+            ('fragment', str)
+        ]
+    ),
+    ResultMixin
+):
     def geturl(self) -> str: ...
 
 def urlparse(url: Union[str, unicode], scheme: str = ...,

@@ -104,6 +104,9 @@ class RawConfigParser(_parser):
     def get(self, section: str, option: str, *, raw: bool = ..., vars: _section = ..., fallback: str = ...) -> str:  # type: ignore
         ...
 
+    # This is incompatible with Mapping so we ignore the type.
+    def items(self, section: str = ..., raw: bool = ..., vars: _section = ...) -> Iterable[Tuple[str, _section]]: ...  # type: ignore
+
     def set(self, section: str, option: str, value: str) -> None: ...
 
     def write(self,
@@ -129,7 +132,7 @@ class ConfigParser(RawConfigParser):
                  empty_lines_in_values: bool = ...,
                  default_section: str = ...,
                  interpolation: Interpolation = None,
-                 converters: _converters = {}) -> None: ...
+                 converters: _converters = ...) -> None: ...
 
 
 class Error(Exception):

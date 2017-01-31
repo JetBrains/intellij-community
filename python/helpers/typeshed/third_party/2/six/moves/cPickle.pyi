@@ -3,4 +3,4 @@
 #
 # Stubs for six.moves.cPickle (Python 2.7)
 
-from cPickle import *
+from cPickle import *  # noqa: F403

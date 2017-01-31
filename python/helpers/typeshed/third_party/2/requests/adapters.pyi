@@ -1,6 +1,6 @@
 # Stubs for requests.adapters (Python 3)
 
-from typing import Any
+from typing import Any, Container, Union, Tuple
 from . import models
 from .packages.urllib3 import poolmanager
 from .packages.urllib3 import response
@@ -13,6 +13,7 @@ from . import cookies
 from . import exceptions
 from . import auth
 
+PreparedRequest = models.PreparedRequest
 Response = models.Response
 PoolManager = poolmanager.PoolManager
 proxy_from_url = poolmanager.proxy_from_url
@@ -43,9 +44,11 @@ DEFAULT_RETRIES = ...  # type: Any
 
 class BaseAdapter:
     def __init__(self) -> None: ...
-    # TODO: "request" parameter not actually supported, added to please mypy.
-    def send(self, request=...): ...
-    def close(self): ...
+    def send(self, request: PreparedRequest, stream=False,
+             timeout: Union[None, float, Tuple[float, float]]=None,
+             verify=False,
+             cert: Union[None, Union[str, unicode, bytes], Container[Union[str, unicode]]]=None) -> Response: ...
+    def close(self) -> None: ...
 
 class HTTPAdapter(BaseAdapter):
     __attrs__ = ...  # type: Any

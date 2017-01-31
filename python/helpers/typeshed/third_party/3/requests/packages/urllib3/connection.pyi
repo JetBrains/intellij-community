@@ -3,6 +3,7 @@
 from typing import Any
 from . import packages
 from http.client import HTTPConnection as _HTTPConnection
+import ssl
 # from httplib import HTTPConnection as _HTTPConnection # python 2
 from . import exceptions
 from .packages import ssl_match_hostname
@@ -12,7 +13,6 @@ import http.client
 
 class DummyConnection: ...
 
-import ssl
 BaseSSLError = ssl.SSLError
 ConnectionError = __builtins__.ConnectionError
 HTTPException = http.client.HTTPException

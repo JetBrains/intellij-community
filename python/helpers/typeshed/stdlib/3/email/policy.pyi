@@ -1,13 +1,13 @@
 # Stubs for email.policy (Python 3.4)
 
-from typing import Any, Optional, Tuple, Union, Callable
+from abc import abstractmethod
+from typing import Any, List, Optional, Tuple, Union, Callable
 import sys
 from email.message import Message
 from email.errors import MessageDefect
 from email.header import Header
 if sys.version_info >= (3, 4):
     from email.contentmanager import ContentManager
-from abc import abstractmethod
 
 if sys.version_info >= (3, 3):
 

@@ -4,8 +4,8 @@
 
 from typing import Any
 
-IPV4LENGTH = ... # type: Any
-IPV6LENGTH = ... # type: Any
+IPV4LENGTH = ...  # type: Any
+IPV6LENGTH = ...  # type: Any
 
 class AddressValueError(ValueError): ...
 class NetmaskValueError(ValueError): ...
@@ -112,9 +112,9 @@ class IPv4Address(_BaseV4, _BaseAddress):
     def is_link_local(self): ...
 
 class IPv4Interface(IPv4Address):
-    network = ... # type: Any
-    netmask = ... # type: Any
-    hostmask = ... # type: Any
+    network = ...  # type: Any
+    netmask = ...  # type: Any
+    hostmask = ...  # type: Any
     def __init__(self, address) -> None: ...
     def __eq__(self, other): ...
     def __lt__(self, other): ...
@@ -129,9 +129,9 @@ class IPv4Interface(IPv4Address):
     def with_hostmask(self): ...
 
 class IPv4Network(_BaseV4, _BaseNetwork):
-    network_address = ... # type: Any
-    netmask = ... # type: Any
-    hosts = ... # type: Any
+    network_address = ...  # type: Any
+    netmask = ...  # type: Any
+    hosts = ...  # type: Any
     def __init__(self, address, strict=...) -> None: ...
     @property
     def is_global(self): ...
@@ -171,9 +171,9 @@ class IPv6Address(_BaseV6, _BaseAddress):
     def sixtofour(self): ...
 
 class IPv6Interface(IPv6Address):
-    network = ... # type: Any
-    netmask = ... # type: Any
-    hostmask = ... # type: Any
+    network = ...  # type: Any
+    netmask = ...  # type: Any
+    hostmask = ...  # type: Any
     def __init__(self, address) -> None: ...
     def __eq__(self, other): ...
     def __lt__(self, other): ...
@@ -192,8 +192,8 @@ class IPv6Interface(IPv6Address):
     def is_loopback(self): ...
 
 class IPv6Network(_BaseV6, _BaseNetwork):
-    network_address = ... # type: Any
-    netmask = ... # type: Any
+    network_address = ...  # type: Any
+    netmask = ...  # type: Any
     def __init__(self, address, strict=...) -> None: ...
     def hosts(self): ...
     @property

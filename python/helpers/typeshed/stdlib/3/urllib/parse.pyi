@@ -1,5 +1,5 @@
 # Stubs for urllib.parse
-from typing import List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping
+from typing import Any, List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping, Union, NamedTuple
 
 __all__ = (
     'urlparse',
@@ -40,10 +40,10 @@ class _ResultMixinBytes(_ResultMixinBase[str]):
 
 
 class _NetlocResultMixinBase(Generic[AnyStr]):
-    username = ... # type: AnyStr
-    password = ... # type: AnyStr
-    hostname = ... # type: AnyStr
-    port = ... # type: int
+    username = ...  # type: AnyStr
+    password = ...  # type: AnyStr
+    hostname = ...  # type: AnyStr
+    port = ...  # type: int
 
 class _NetlocResultMixinStr(_NetlocResultMixinBase[str], _ResultMixinStr): ...
 
@@ -51,42 +51,54 @@ class _NetlocResultMixinStr(_NetlocResultMixinBase[str], _ResultMixinStr): ...
 class _NetlocResultMixinBytes(_NetlocResultMixinBase[str], _ResultMixinBytes): ...
 
 class _DefragResultBase(tuple, Generic[AnyStr]):
-    url = ... # type: AnyStr
-    fragment = ... # type: AnyStr
+    url = ...  # type: AnyStr
+    fragment = ...  # type: AnyStr
 
-class _SplitResultBase(tuple, Generic[AnyStr]):
-    scheme = ... # type: AnyStr
-    netloc = ... # type: AnyStr
-    path = ... # type: AnyStr
-    query = ... # type: AnyStr
-    fragment = ... # type: AnyStr
 
-class _ParseResultBase(tuple, Generic[AnyStr]):
-    scheme = ... # type: AnyStr
-    netloc = ... # type: AnyStr
-    path = ... # type: AnyStr
-    params = ... # type: AnyStr
-    query = ... # type: AnyStr
-    fragment = ... # type: AnyStr
+_SplitResultBase = NamedTuple(
+    '_SplitResultBase',
+    [
+        ('scheme', str), ('netloc', str), ('path', str), ('query', str), ('fragment', str)
+    ]
+)
+_SplitResultBytesBase = NamedTuple(
+    '_SplitResultBytesBase',
+    [
+        ('scheme', bytes), ('netloc', bytes), ('path', bytes), ('query', bytes), ('fragment', bytes)
+    ]
+)
+
+_ParseResultBase = NamedTuple(
+    '_ParseResultBase',
+    [
+        ('scheme', str), ('netloc', str), ('path', str), ('params', str), ('query', str), ('fragment', str)
+    ]
+)
+_ParseResultBytesBase = NamedTuple(
+    '_ParseResultBytesBase',
+    [
+        ('scheme', bytes), ('netloc', bytes), ('path', bytes), ('params', bytes), ('query', bytes), ('fragment', bytes)
+    ]
+)
 
 # Structured result objects for string data
 class DefragResult(_DefragResultBase[str], _ResultMixinStr): ...
 
-class SplitResult(_SplitResultBase[str], _NetlocResultMixinStr): ...
+class SplitResult(_SplitResultBase, _NetlocResultMixinStr): ...
 
-class ParseResult(_ParseResultBase[str], _NetlocResultMixinStr): ...
+class ParseResult(_ParseResultBase, _NetlocResultMixinStr): ...
 
 # Structured result objects for bytes data
 class DefragResultBytes(_DefragResultBase[bytes], _ResultMixinBytes): ...
 
-class SplitResultBytes(_SplitResultBase[bytes], _NetlocResultMixinBytes): ...
+class SplitResultBytes(_SplitResultBytesBase, _NetlocResultMixinBytes): ...
 
-class ParseResultBytes(_ParseResultBase[bytes], _NetlocResultMixinBytes): ...
+class ParseResultBytes(_ParseResultBytesBase, _NetlocResultMixinBytes): ...
 
 
-def parse_qs(qs: str, keep_blank_values : bool = ..., strict_parsing : bool = ..., encoding : str = ..., errors: str = ...) -> Dict[str, List[str]]: ...
+def parse_qs(qs: str, keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...) -> Dict[str, List[str]]: ...
 
-def parse_qsl(qs: str, keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...) -> List[Tuple[str,str]]: ...
+def parse_qsl(qs: str, keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...) -> List[Tuple[str, str]]: ...
 
 @overload
 def quote(string: str, safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
@@ -111,17 +123,18 @@ def urldefrag(url: str) -> DefragResult: ...
 @overload
 def urldefrag(url: bytes) -> DefragResultBytes: ...
 
-@overload
-def urlencode(query: Mapping[AnyStr, AnyStr], doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
-@overload
-def urlencode(query: Sequence[Tuple[AnyStr, AnyStr]], doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
+def urlencode(query: Union[Mapping[Any, Any],
+                           Mapping[Any, Sequence[Any]],
+                           Sequence[Tuple[Any, Any]],
+                           Sequence[Tuple[Any, Sequence[Any]]]],
+              doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
 
 def urljoin(base: AnyStr, url: AnyStr, allow_fragments: bool = ...) -> AnyStr: ...
 
 @overload
-def urlparse(url: str, scheme: str = ..., allow_framgents: bool = ...) -> ParseResult: ...
+def urlparse(url: str, scheme: str = ..., allow_fragments: bool = ...) -> ParseResult: ...
 @overload
-def urlparse(url: bytes, scheme: bytes = ..., allow_framgents: bool = ...) -> ParseResultBytes: ...
+def urlparse(url: bytes, scheme: bytes = ..., allow_fragments: bool = ...) -> ParseResultBytes: ...
 
 @overload
 def urlsplit(url: str, scheme: str = ..., allow_fragments: bool = ...) -> SplitResult: ...

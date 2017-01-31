@@ -6,7 +6,7 @@ from typing import Any, IO
 import io
 from . import _collections
 from . import exceptions
-#from .packages import six
+# from .packages import six
 from . import connection
 from .util import response
 
@@ -14,8 +14,8 @@ HTTPHeaderDict = _collections.HTTPHeaderDict
 ProtocolError = exceptions.ProtocolError
 DecodeError = exceptions.DecodeError
 ReadTimeoutError = exceptions.ReadTimeoutError
-binary_type = str # six.binary_type
-PY3 = True # six.PY3
+binary_type = str  # six.binary_type
+PY3 = True  # six.PY3
 is_fp_closed = response.is_fp_closed
 
 class DeflateDecoder:

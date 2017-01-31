@@ -17,8 +17,8 @@ def reduce(function: Callable[[_T, _T], _T],
 def reduce(function: Callable[[_T, _S], _T],
            sequence: Iterable[_S], initial: _T) -> _T: ...
 
-WRAPPER_ASSIGNMENTS = ... # type: Sequence[str]
-WRAPPER_UPDATES = ... # type: Sequence[str]
+WRAPPER_ASSIGNMENTS = ...  # type: Sequence[str]
+WRAPPER_UPDATES = ...  # type: Sequence[str]
 
 def update_wrapper(wrapper: _AnyCallable, wrapped: _AnyCallable, assigned: Sequence[str] = ...,
                    updated: Sequence[str] = ...) -> None: ...

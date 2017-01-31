@@ -5,11 +5,11 @@
 from typing import Any
 from tornado.util import Configurable
 
-ssl = ... # type: Any
-certifi = ... # type: Any
-xrange = ... # type: Any
-ssl_match_hostname = ... # type: Any
-SSLCertificateError = ... # type: Any
+ssl = ...  # type: Any
+certifi = ...  # type: Any
+xrange = ...  # type: Any
+ssl_match_hostname = ...  # type: Any
+SSLCertificateError = ...  # type: Any
 
 def bind_sockets(port, address=..., family=..., backlog=..., flags=...): ...
 def bind_unix_socket(file, mode=..., backlog=...): ...
@@ -25,9 +25,9 @@ class Resolver(Configurable):
     def close(self): ...
 
 class ExecutorResolver(Resolver):
-    io_loop = ... # type: Any
-    executor = ... # type: Any
-    close_executor = ... # type: Any
+    io_loop = ...  # type: Any
+    executor = ...  # type: Any
+    close_executor = ...  # type: Any
     def initialize(self, io_loop=..., executor=..., close_executor=...): ...
     def close(self): ...
     def resolve(self, host, port, family=...): ...
@@ -39,8 +39,8 @@ class ThreadedResolver(ExecutorResolver):
     def initialize(self, io_loop=..., num_threads=...): ...
 
 class OverrideResolver(Resolver):
-    resolver = ... # type: Any
-    mapping = ... # type: Any
+    resolver = ...  # type: Any
+    mapping = ...  # type: Any
     def initialize(self, resolver, mapping): ...
     def close(self): ...
     def resolve(self, host, port, *args, **kwargs): ...

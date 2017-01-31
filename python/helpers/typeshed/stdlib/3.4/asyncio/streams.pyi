@@ -1,14 +1,15 @@
-from typing import Any, Callable, Generator, Iterable, Tuple
-
-ClientConnectedCallback = Callable[[Tuple[StreamReader, StreamWriter]], None]
 import socket
+from typing import Any, Callable, Generator, Iterable, Tuple
 
 from . import coroutines
 from . import events
 from . import protocols
 from . import transports
 
-__all__ = ... # type: str
+ClientConnectedCallback = Callable[[Tuple[StreamReader, StreamWriter]], None]
+
+
+__all__ = ...  # type: str
 
 class IncompleteReadError(EOFError):
     def __init__(self, partial: str, expected: int) -> None: ...
@@ -18,31 +19,34 @@ class LimitOverrunError(Exception):
 
 @coroutines.coroutine
 def open_connection(
-        host: str = ...,
-        port: int = ...,
-        *,
-        loop: events.AbstractEventLoop = ...,
-        limit: int = ...,
-        **kwds: Any) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
+    host: str = ...,
+    port: int = ...,
+    *,
+    loop: events.AbstractEventLoop = ...,
+    limit: int = ...,
+    **kwds: Any
+) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
 
 @coroutines.coroutine
 def start_server(
-        client_connected_cb: ClientConnectedCallback,
-        host: str = ...,
-        port: int = ...,
-        *,
-        loop: events.AbstractEventLoop = ...,
-        limit: int = ...,
-        **kwds: Any) -> Generator[Any, None, events.AbstractServer]: ...
+    client_connected_cb: ClientConnectedCallback,
+    host: str = ...,
+    port: int = ...,
+    *,
+    loop: events.AbstractEventLoop = ...,
+    limit: int = ...,
+    **kwds: Any
+) -> Generator[Any, None, events.AbstractServer]: ...
 
 if hasattr(socket, 'AF_UNIX'):
     @coroutines.coroutine
     def open_unix_connection(
-            path: str = ...,
-            *,
-            loop: events.AbstractEventLoop = ...,
-            limit: int = ...,
-            **kwds: Any)-> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
+        path: str = ...,
+        *,
+        loop: events.AbstractEventLoop = ...,
+        limit: int = ...,
+        **kwds: Any
+    ) -> Generator[Any, None, Tuple[StreamReader, StreamWriter]]: ...
 
     @coroutines.coroutine
     def start_unix_server(
@@ -79,6 +83,7 @@ class StreamWriter:
     def can_write_eof(self) -> bool: ...
     def close(self) -> None: ...
     def get_extra_info(self, name: str, default: Any = ...) -> Any: ...
+    @coroutines.coroutine
     def drain(self) -> None: ...
 
 class StreamReader:

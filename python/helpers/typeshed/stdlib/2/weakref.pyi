@@ -7,7 +7,7 @@ from _weakref import (getweakrefcount, getweakrefs, ref, proxy,
                       CallableProxyType, ProxyType, ReferenceType)
 from _weakrefset import WeakSet
 
-ProxyTypes = ... # type: Any
+ProxyTypes = ...  # type: Any
 
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
@@ -42,6 +42,6 @@ class WeakKeyDictionary(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
 
 # TODO: make generic
 class KeyedRef(ReferenceType):
-    key = ... # type: Any
+    key = ...  # type: Any
     def __new__(type, ob, callback, key): ...
     def __init__(self, ob, callback, key): ...

@@ -13,9 +13,10 @@ if sys.version_info >= (3, 3):
                           importlib.abc.InspectLoader):
         # MetaPathFinder
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
         if sys.version_info >= (3, 4):
             @classmethod
@@ -40,17 +41,17 @@ if sys.version_info >= (3, 3):
             def module_repr(module: types.ModuleType) -> str: ...  # type: ignore
         if sys.version_info >= (3, 4):
             @classmethod
-            def create_module(cls, spec: ModuleSpec) -> Optional[types.ModuleType]:
-                ...
+            def create_module(cls, spec: ModuleSpec) -> Optional[types.ModuleType]: ...
             @classmethod
             def exec_module(cls, module: types.ModuleType) -> None: ...
 else:
     class BuiltinImporter(importlib.abc.InspectLoader):
         # MetaPathFinder
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
         # InspectLoader
         @classmethod
@@ -69,9 +70,10 @@ if sys.version_info >= (3, 3):
     class FrozenImporter(importlib.abc.MetaPathFinder, importlib.abc.InspectLoader):
         # MetaPathFinder
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
         if sys.version_info >= (3, 4):
             @classmethod
@@ -104,9 +106,10 @@ else:
     class FrozenImporter(importlib.abc.InspectLoader):
         # MetaPathFinder
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
         # InspectLoader
         @classmethod
@@ -124,9 +127,10 @@ else:
 if sys.version_info >= (3, 3):
     class WindowsRegisteryFinder(importlib.abc.MetaPathFinder):
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
         if sys.version_info >= (3, 4):
             @classmethod
@@ -137,9 +141,10 @@ if sys.version_info >= (3, 3):
 else:
     class WindowsRegisteryFinder:
         @classmethod
-        def find_module(cls, fullname: str,
-                        path: Optional[Sequence[importlib.abc._Path]]
-                       ) -> Optional[importlib.abc.Loader]:
+        def find_module(
+            cls, fullname: str,
+            path: Optional[Sequence[importlib.abc._Path]]
+        ) -> Optional[importlib.abc.Loader]:
             ...
 
 if sys.version_info >= (3, 3):
@@ -148,22 +153,24 @@ else:
     class PathFinder: ...
 
 if sys.version_info >= (3, 3):
-    SOURCE_SUFFIXES = ... # type: List[str]
-    DEBUG_BYTECODE_SUFFIXES = ... # type: List[str]
-    OPTIMIZED_BYTECODE_SUFFIXES = ... # type: List[str]
-    BYTECODE_SUFFIXES = ... # type: List[str]
-    EXTENSION_SUFFIXES = ... # type: List[str]
+    SOURCE_SUFFIXES = ...  # type: List[str]
+    DEBUG_BYTECODE_SUFFIXES = ...  # type: List[str]
+    OPTIMIZED_BYTECODE_SUFFIXES = ...  # type: List[str]
+    BYTECODE_SUFFIXES = ...  # type: List[str]
+    EXTENSION_SUFFIXES = ...  # type: List[str]
 
     def all_suffixes() -> List[str]: ...
 
     class FileFinder(importlib.abc.PathEntryFinder):
-        path = ... # type: str
-        def __init__(self, path: str,
-                     *loader_details: Tuple[importlib.abc.Loader, List[str]]
-                    ) -> None: ...
+        path = ...  # type: str
+        def __init__(
+            self, path: str,
+            *loader_details: Tuple[importlib.abc.Loader, List[str]]
+        ) -> None: ...
         @classmethod
-        def path_hook(*loader_details: Tuple[importlib.abc.Loader, List[str]]
-                     ) -> Callable[[str], importlib.abc.PathEntryFinder]: ...
+        def path_hook(
+            *loader_details: Tuple[importlib.abc.Loader, List[str]]
+        ) -> Callable[[str], importlib.abc.PathEntryFinder]: ...
 
     class SourceFileLoader(importlib.abc.FileLoader,
                            importlib.abc.SourceLoader):

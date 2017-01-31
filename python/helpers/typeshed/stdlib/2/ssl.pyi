@@ -64,46 +64,46 @@ if sys.platform == 'win32':
     def enum_crls(store_name: str) -> _EnumRetType: ...
 
 
-CERT_NONE = ... # type: int
-CERT_OPTIONAL = ... # type: int
-CERT_REQUIRED = ... # type: int
+CERT_NONE = ...  # type: int
+CERT_OPTIONAL = ...  # type: int
+CERT_REQUIRED = ...  # type: int
 
-VERIFY_DEFAULT = ... # type: int
-VERIFY_CRL_CHECK_LEAF = ... # type: int
-VERIFY_CRL_CHECK_CHAIN = ... # type: int
-VERIFY_X509_STRICT = ... # type: int
-VERIFY_X509_TRUSTED_FIRST = ... # type: int
+VERIFY_DEFAULT = ...  # type: int
+VERIFY_CRL_CHECK_LEAF = ...  # type: int
+VERIFY_CRL_CHECK_CHAIN = ...  # type: int
+VERIFY_X509_STRICT = ...  # type: int
+VERIFY_X509_TRUSTED_FIRST = ...  # type: int
 
-PROTOCOL_SSLv23 = ... # type: int
-PROTOCOL_SSLv2 = ... # type: int
-PROTOCOL_SSLv3 = ... # type: int
-PROTOCOL_TLSv1 = ... # type: int
-PROTOCOL_TLSv1_1 = ... # type: int
-PROTOCOL_TLSv1_2 = ... # type: int
+PROTOCOL_SSLv23 = ...  # type: int
+PROTOCOL_SSLv2 = ...  # type: int
+PROTOCOL_SSLv3 = ...  # type: int
+PROTOCOL_TLSv1 = ...  # type: int
+PROTOCOL_TLSv1_1 = ...  # type: int
+PROTOCOL_TLSv1_2 = ...  # type: int
 
-OP_ALL = ... # type: int
-OP_NO_SSLv2 = ... # type: int
-OP_NO_SSLv3 = ... # type: int
-OP_NO_TLSv1 = ... # type: int
-OP_NO_TLSv1_1 = ... # type: int
-OP_NO_TLSv1_2 = ... # type: int
-OP_CIPHER_SERVER_PREFERENCE = ... # type: int
-OP_SINGLE_DH_USE = ... # type: int
-OP_SINGLE_ECDH_USE = ... # type: int
-OP_NO_COMPRESSION = ... # type: int
+OP_ALL = ...  # type: int
+OP_NO_SSLv2 = ...  # type: int
+OP_NO_SSLv3 = ...  # type: int
+OP_NO_TLSv1 = ...  # type: int
+OP_NO_TLSv1_1 = ...  # type: int
+OP_NO_TLSv1_2 = ...  # type: int
+OP_CIPHER_SERVER_PREFERENCE = ...  # type: int
+OP_SINGLE_DH_USE = ...  # type: int
+OP_SINGLE_ECDH_USE = ...  # type: int
+OP_NO_COMPRESSION = ...  # type: int
 
 HAS_ALPN = ...  # type: int
-HAS_ECDH = ... # type: bool
-HAS_SNI = ... # type: bool
-HAS_NPN = ... # type: bool
-CHANNEL_BINDING_TYPES = ... # type: List[str]
+HAS_ECDH = ...  # type: bool
+HAS_SNI = ...  # type: bool
+HAS_NPN = ...  # type: bool
+CHANNEL_BINDING_TYPES = ...  # type: List[str]
 
-OPENSSL_VERSION = ... # type: str
-OPENSSL_VERSION_INFO = ... # type: Tuple[int, int, int, int, int]
-OPENSSL_VERSION_NUMBER = ... # type: int
+OPENSSL_VERSION = ...  # type: str
+OPENSSL_VERSION_INFO = ...  # type: Tuple[int, int, int, int, int]
+OPENSSL_VERSION_NUMBER = ...  # type: int
 
-ALERT_DESCRIPTION_HANDSHAKE_FAILURE = ... # type: int
-ALERT_DESCRIPTION_INTERNAL_ERROR = ... # type: int
+ALERT_DESCRIPTION_HANDSHAKE_FAILURE = ...  # type: int
+ALERT_DESCRIPTION_INTERNAL_ERROR = ...  # type: int
 ALERT_DESCRIPTION_ACCESS_DENIED = ...  # type: int
 ALERT_DESCRIPTION_BAD_CERTIFICATE = ...  # type: int
 ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE = ...  # type: int
@@ -134,8 +134,8 @@ _PurposeType = NamedTuple('_PurposeType',
                          [('nid', int), ('shortname', str),
                           ('longname', str), ('oid', str)])
 class Purpose:
-    SERVER_AUTH = ... # type: _PurposeType
-    CLIENT_AUTH = ... # type: _PurposeType
+    SERVER_AUTH = ...  # type: _PurposeType
+    CLIENT_AUTH = ...  # type: _PurposeType
 
 
 class SSLSocket(socket.socket):
@@ -151,12 +151,12 @@ class SSLSocket(socket.socket):
 
 
 class SSLContext:
-    check_hostname = ... # type: bool
-    options = ... # type: int
+    check_hostname = ...  # type: bool
+    options = ...  # type: int
     @property
     def protocol(self) -> int: ...
-    verify_flags = ... # type: int
-    verify_mode = ... # type: int
+    verify_flags = ...  # type: int
+    verify_mode = ...  # type: int
     def __init__(self, protocol: int) -> None: ...
     def cert_store_stats(self) -> Dict[str, int]: ...
     def load_cert_chain(self, certfile: str, keyfile: Optional[str] = ...,

@@ -5,14 +5,14 @@ __all__ = ...  # type: List[str]
 
 
 class parserinfo(object):
-    JUMP = ... # type: List[str]
-    WEEKDAYS = ... # type: List[Tuple[str, str]]
-    MONTHS = ... # type: List[Tuple[str, str]]
-    HMS = ... # type: List[Tuple[str, str, str]]
-    AMPM = ... # type: List[Tuple[str, str]]
-    UTCZONE = ... # type: List[str]
-    PERTAIN = ... # type: List[str]
-    TZOFFSET = ... # type: Dict[str, int]
+    JUMP = ...  # type: List[str]
+    WEEKDAYS = ...  # type: List[Tuple[str, str]]
+    MONTHS = ...  # type: List[Tuple[str, str]]
+    HMS = ...  # type: List[Tuple[str, str, str]]
+    AMPM = ...  # type: List[Tuple[str, str]]
+    UTCZONE = ...  # type: List[str]
+    PERTAIN = ...  # type: List[str]
+    TZOFFSET = ...  # type: Dict[str, int]
 
     def __init__(self, dayfirst: bool=..., yearfirst: bool=...) -> None: ...
     def jump(self, name: unicode) -> bool: ...
@@ -33,7 +33,7 @@ class parser(object):
               ignoretz: bool = ..., tzinfos: Dict[Union[str, unicode], tzinfo] = None,
               **kwargs: Any) -> datetime: ...
 
-DEFAULTPARSER = ... # type: parser
+DEFAULTPARSER = ...  # type: parser
 def parse(timestr: Union[str, unicode, IO[unicode]],
           parserinfo: parserinfo = None,
           **kwargs: Any) -> datetime: ...

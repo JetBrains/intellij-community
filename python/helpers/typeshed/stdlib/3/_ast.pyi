@@ -2,13 +2,13 @@
 import typing
 from typing import Any, Optional, Union
 
-PyCF_ONLY_AST = ... # type: int
+PyCF_ONLY_AST = ...  # type: int
 
 identifier = str
 
 class AST:
-    _attributes = ... # type: typing.Tuple[str, ...]
-    _fields = ... # type: typing.Tuple[str, ...]
+    _attributes = ...  # type: typing.Tuple[str, ...]
+    _fields = ...  # type: typing.Tuple[str, ...]
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
 class mod(AST):

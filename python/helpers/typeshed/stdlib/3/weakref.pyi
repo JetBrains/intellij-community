@@ -13,7 +13,7 @@ _VT = TypeVar('_VT')
 
 class ReferenceType(Generic[_T]):
     # TODO rest of members
-    def __init__(o: _T, callback: Callable[[ReferenceType[_T]],
+    def __init__(self, o: _T, callback: Callable[[ReferenceType[_T]],
                                            Any] = ...) -> None: ...
     def __call__(self) -> Optional[_T]: ...
 

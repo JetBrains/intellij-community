@@ -4,9 +4,9 @@
 
 # Only a subset of functionality is included.
 
-DEFAULT_BUFFER_SIZE = 0
-
 from typing import List, BinaryIO, TextIO, IO, overload, Iterator, Iterable, Any, Union
+
+DEFAULT_BUFFER_SIZE = 0
 
 def open(file: Union[str, unicode, int],
          mode: unicode = ..., buffering: int = ..., encoding: unicode = ...,
@@ -49,7 +49,7 @@ class StringIO(TextIO):
     def __init__(self, initial_value: unicode = ...,
                  newline: unicode = ...) -> None: ...
     # TODO see comments in BinaryIO for missing functionality
-    name = ... # type: str
+    name = ...  # type: str
     def close(self) -> None: ...
     def closed(self) -> bool: ...
     def fileno(self) -> int: ...

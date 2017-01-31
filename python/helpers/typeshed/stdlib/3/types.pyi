@@ -9,6 +9,10 @@ from typing import (
     Union, overload
 )
 
+# ModuleType is exported from this module, but for circular import
+# reasons exists in its own stub file (with ModuleSpec and Loader).
+from _importlib_modulespec import ModuleType as ModuleType  # Exported
+
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
@@ -20,46 +24,48 @@ class FunctionType:
     __closure__ = ...  # type: Optional[Tuple[_Cell, ...]]
     __code__ = ...  # type: CodeType
     __defaults__ = ...  # type: Optional[Tuple[Any, ...]]
-    __dict__ = ...  # type: Dict[str, Any]
     __globals__ = ...  # type: Dict[str, Any]
     __name__ = ...  # type: str
+    __annotations__ = ...  # type: Dict[str, Any]
+    __kwdefaults__ = ...  # type: Dict[str, Any]
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
     def __get__(self, obj: Optional[object], type: Optional[type]) -> 'MethodType': ...
 LambdaType = FunctionType
 
 class CodeType:
     """Create a code object.  Not for the faint of heart."""
-    co_argcount = ... # type: int
-    co_kwonlyargcount = ... # type: int
-    co_nlocals = ... # type: int
-    co_stacksize = ... # type: int
-    co_flags = ... # type: int
-    co_code = ... # type: bytes
-    co_consts = ... # type: Tuple[Any, ...]
-    co_names = ... # type: Tuple[str, ...]
-    co_varnames = ... # type: Tuple[str, ...]
-    co_filename = ... # type: Optional[str]
-    co_name = ... # type: str
-    co_firstlineno = ... # type: int
-    co_lnotab = ... # type: bytes
-    co_freevars = ... # type: Tuple[str, ...]
-    co_cellvars = ... # type: Tuple[str, ...]
-    def __init__(self,
-            argcount: int,
-            kwonlyargcount: int,
-            nlocals: int,
-            stacksize: int,
-            flags: int,
-            codestring: bytes,
-            constants: Tuple[Any, ...],
-            names: Tuple[str, ...],
-            varnames: Tuple[str, ...],
-            filename: str,
-            name: str,
-            firstlineno: int,
-            lnotab: bytes,
-            freevars: Tuple[str, ...] = ...,
-            cellvars: Tuple[str, ...] = ...,
+    co_argcount = ...  # type: int
+    co_kwonlyargcount = ...  # type: int
+    co_nlocals = ...  # type: int
+    co_stacksize = ...  # type: int
+    co_flags = ...  # type: int
+    co_code = ...  # type: bytes
+    co_consts = ...  # type: Tuple[Any, ...]
+    co_names = ...  # type: Tuple[str, ...]
+    co_varnames = ...  # type: Tuple[str, ...]
+    co_filename = ...  # type: Optional[str]
+    co_name = ...  # type: str
+    co_firstlineno = ...  # type: int
+    co_lnotab = ...  # type: bytes
+    co_freevars = ...  # type: Tuple[str, ...]
+    co_cellvars = ...  # type: Tuple[str, ...]
+    def __init__(
+        self,
+        argcount: int,
+        kwonlyargcount: int,
+        nlocals: int,
+        stacksize: int,
+        flags: int,
+        codestring: bytes,
+        constants: Tuple[Any, ...],
+        names: Tuple[str, ...],
+        varnames: Tuple[str, ...],
+        filename: str,
+        name: str,
+        firstlineno: int,
+        lnotab: bytes,
+        freevars: Tuple[str, ...] = ...,
+        cellvars: Tuple[str, ...] = ...,
     ) -> None: ...
 
 class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
@@ -68,7 +74,8 @@ class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
 
-class SimpleNamespace(Any): ...
+# TODO: use __getattr__ and __setattr__ instead of inheriting from Any, pending mypy#521.
+class SimpleNamespace(Any): ...  # type: ignore
 
 class GeneratorType:
     gi_code = ...  # type: CodeType
@@ -105,25 +112,21 @@ class BuiltinFunctionType:
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 BuiltinMethodType = BuiltinFunctionType
 
-# ModuleType is exported from this module, but for circular import
-# reasons exists in its own stub file (with ModuleSpec and Loader).
-from _importlib_modulespec import ModuleType as ModuleType  # Exported
-
 class TracebackType:
-    tb_frame = ... # type: FrameType
-    tb_lasti = ... # type: int
-    tb_lineno = ... # type: int
-    tb_next = ... # type: TracebackType
+    tb_frame = ...  # type: FrameType
+    tb_lasti = ...  # type: int
+    tb_lineno = ...  # type: int
+    tb_next = ...  # type: TracebackType
 
 class FrameType:
-    f_back = ... # type: FrameType
-    f_builtins = ... # type: Dict[str, Any]
-    f_code = ... # type: CodeType
-    f_globals = ... # type: Dict[str, Any]
-    f_lasti = ... # type: int
-    f_lineno = ... # type: int
-    f_locals = ... # type: Dict[str, Any]
-    f_trace = ... # type: Callable[[], None]
+    f_back = ...  # type: FrameType
+    f_builtins = ...  # type: Dict[str, Any]
+    f_code = ...  # type: CodeType
+    f_globals = ...  # type: Dict[str, Any]
+    f_lasti = ...  # type: int
+    f_lineno = ...  # type: int
+    f_locals = ...  # type: Dict[str, Any]
+    f_trace = ...  # type: Callable[[], None]
 
     def clear(self) -> None: pass
 

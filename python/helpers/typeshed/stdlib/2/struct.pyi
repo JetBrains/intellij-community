@@ -16,8 +16,8 @@ def unpack_from(fmt: str, buffer: Any, offset: int = ...) -> Tuple[Any, ...]: ..
 def calcsize(fmt: str) -> int: ...
 
 class Struct:
-    format = ... # type: str
-    size = ... # type: int
+    format = ...  # type: str
+    size = ...  # type: int
 
     def __init__(self, format: str) -> None: ...
 

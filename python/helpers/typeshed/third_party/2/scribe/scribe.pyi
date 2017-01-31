@@ -5,7 +5,7 @@
 from typing import Any
 
 import fb303.FacebookService
-from .ttypes import *
+from .ttypes import *  # noqa: F403
 from thrift.Thrift import TProcessor
 
 class Iface(fb303.FacebookService.Iface):
@@ -23,8 +23,8 @@ class Processor(fb303.FacebookService.Processor, Iface, TProcessor):
     def process_Log(self, seqid, iprot, oprot): ...
 
 class Log_args:
-    thrift_spec = ... # type: Any
-    messages = ... # type: Any
+    thrift_spec = ...  # type: Any
+    messages = ...  # type: Any
     def __init__(self, messages=...) -> None: ...
     def read(self, iprot): ...
     def write(self, oprot): ...
@@ -33,8 +33,8 @@ class Log_args:
     def __ne__(self, other): ...
 
 class Log_result:
-    thrift_spec = ... # type: Any
-    success = ... # type: Any
+    thrift_spec = ...  # type: Any
+    success = ...  # type: Any
     def __init__(self, success=...) -> None: ...
     def read(self, iprot): ...
     def write(self, oprot): ...

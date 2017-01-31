@@ -1,11 +1,22 @@
-# Stubs for requests.api (Python 3)
+# Stubs for requests.api (Python 2)
 
-from typing import Union
+from typing import Union, Optional, Iterable, Mapping, Tuple
 
 from .models import Response
 
+ParamsMappingValueType = Union[str, unicode, int, float, Iterable[Union[str, unicode, int, float]]]
+
 def request(method: str, url: str, **kwargs) -> Response: ...
-def get(url: Union[str, unicode], **kwargs) -> Response: ...
+def get(url: Union[str, unicode],
+        params: Optional[
+            Union[Mapping[Union[str, unicode, int, float], ParamsMappingValueType],
+                  Union[str, unicode],
+                  Tuple[Union[str, unicode, int, float], ParamsMappingValueType],
+                  Mapping[str, ParamsMappingValueType],
+                  Mapping[unicode, ParamsMappingValueType],
+                  Mapping[int, ParamsMappingValueType],
+                  Mapping[float, ParamsMappingValueType]]] = None,
+        **kwargs) -> Response: ...
 def options(url: Union[str, unicode], **kwargs) -> Response: ...
 def head(url: Union[str, unicode], **kwargs) -> Response: ...
 def post(url: Union[str, unicode], data=..., json=...,

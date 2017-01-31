@@ -9,4 +9,3 @@ class sha(object):
 def new(string: str = ...) -> sha: ...
 blocksize = 0
 digest_size = 0
-

@@ -5,15 +5,15 @@
 from typing import Any
 from tornado.util import Configurable
 
-signal = ... # type: Any
+signal = ...  # type: Any
 
 class TimeoutError(Exception): ...
 
 class IOLoop(Configurable):
-    NONE = ... # type: Any
-    READ = ... # type: Any
-    WRITE = ... # type: Any
-    ERROR = ... # type: Any
+    NONE = ...  # type: Any
+    READ = ...  # type: Any
+    WRITE = ...  # type: Any
+    ERROR = ...  # type: Any
     @staticmethod
     def instance(): ...
     @staticmethod
@@ -55,7 +55,7 @@ class IOLoop(Configurable):
     def close_fd(self, fd): ...
 
 class PollIOLoop(IOLoop):
-    time_func = ... # type: Any
+    time_func = ...  # type: Any
     def initialize(self, impl, time_func=..., **kwargs): ...
     def close(self, all_fds=...): ...
     def add_handler(self, fd, handler, events): ...
@@ -71,17 +71,17 @@ class PollIOLoop(IOLoop):
     def add_callback_from_signal(self, callback, *args, **kwargs): ...
 
 class _Timeout:
-    deadline = ... # type: Any
-    callback = ... # type: Any
-    tiebreaker = ... # type: Any
+    deadline = ...  # type: Any
+    callback = ...  # type: Any
+    tiebreaker = ...  # type: Any
     def __init__(self, deadline, callback, io_loop) -> None: ...
     def __lt__(self, other): ...
     def __le__(self, other): ...
 
 class PeriodicCallback:
-    callback = ... # type: Any
-    callback_time = ... # type: Any
-    io_loop = ... # type: Any
+    callback = ...  # type: Any
+    callback_time = ...  # type: Any
+    io_loop = ...  # type: Any
     def __init__(self, callback, callback_time, io_loop=...) -> None: ...
     def start(self): ...
     def stop(self): ...

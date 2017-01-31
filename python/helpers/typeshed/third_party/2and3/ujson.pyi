@@ -4,25 +4,28 @@ from typing import Any, AnyStr, IO, Optional
 
 __version__ = ...  # type: str
 
-def encode(obj: Any,
+def encode(
+    obj: Any,
     ensure_ascii: bool = ...,
     double_precision: bool = ...,
     encode_html_chars: bool = ...,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,
     indent: int = ...,
-    ) -> str: ...
+) -> str: ...
 
-def dumps(obj: Any,
+def dumps(
+    obj: Any,
     ensure_ascii: bool = ...,
     double_precision: bool = ...,
     encode_html_chars: bool = ...,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,
     indent: int = ...,
-    ) -> str: ...
+) -> str: ...
 
-def dump(obj: Any,
+def dump(
+    obj: Any,
     fp: IO[str],
     ensure_ascii: bool = ...,
     double_precision: bool = ...,
@@ -30,16 +33,19 @@ def dump(obj: Any,
     escape_forward_slashes: bool = ...,
     sort_keys: bool = ...,
     indent: int = ...,
-    ) -> None: ...
+) -> None: ...
 
-def decode(s: AnyStr,
+def decode(
+    s: AnyStr,
     precise_float: bool = ...,
-    ) -> Any: ...
+) -> Any: ...
 
-def loads(s: AnyStr,
+def loads(
+    s: AnyStr,
     precise_float: bool = ...,
-    ) -> Any: ...
+) -> Any: ...
 
-def load(fp: IO[AnyStr],
+def load(
+    fp: IO[AnyStr],
     precise_float: bool = ...,
-    ) -> Any: ...
+) -> Any: ...

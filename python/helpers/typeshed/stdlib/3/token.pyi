@@ -56,7 +56,7 @@ OP = 0
 ERRORTOKEN = 0
 N_TOKENS = 0
 NT_OFFSET = 0
-tok_name = ... # type: Dict[int, str]
+tok_name = ...  # type: Dict[int, str]
 
 def ISTERMINAL(x: int) -> bool: pass
 def ISNONTERMINAL(x: int) -> bool: pass

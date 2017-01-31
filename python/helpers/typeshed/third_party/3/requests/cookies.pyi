@@ -1,12 +1,12 @@
 # Stubs for requests.cookies (Python 3)
 
 from typing import Any, MutableMapping
-#import cookielib
+# import cookielib
 from http import cookiejar as cookielib
 import collections
 from . import compat
 
-#cookielib = compat.cookielib
+# cookielib = compat.cookielib
 
 class MockRequest:
     type = ...  # type: Any

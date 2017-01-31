@@ -1,7 +1,7 @@
 # Stubs for tempfile
 # Ron Murawski <ron@horizonchess.com>
 
-# based on http://docs.python.org/3.3/library/tempfile.html
+# based on http: //docs.python.org/3.3/library/tempfile.html
 # Adapted for Python 2.7 by Michal Pokorny
 
 # TODO: Don't use basestring. Use Union[str, bytes] or AnyStr for arguments.
@@ -34,7 +34,7 @@ class _TemporaryFileWrapper(IO[str]):
     delete = ...  # type: bool
     file = ...  # type: IO
     name = ...  # type: Any
-    def __init__(self, file: IO, name, delete:bool = ...) -> None: ...
+    def __init__(self, file: IO, name, delete: bool = ...) -> None: ...
     def __del__(self) -> None: ...
     def __enter__(self) -> "_TemporaryFileWrapper": ...
     def __exit__(self, exc, value, tb) -> bool: ...
@@ -45,26 +45,32 @@ class _TemporaryFileWrapper(IO[str]):
 # TODO text files
 
 def TemporaryFile(
-        mode: Union[bytes, unicode] = ...,
-        bufsize: int = ...,
-        suffix: Union[bytes, unicode] = ...,
-        prefix: Union[bytes, unicode] = ...,
-        dir: Union[bytes, unicode] = ...) -> _TemporaryFileWrapper: ...
+    mode: Union[bytes, unicode] = ...,
+    bufsize: int = ...,
+    suffix: Union[bytes, unicode] = ...,
+    prefix: Union[bytes, unicode] = ...,
+    dir: Union[bytes, unicode] = ...
+) -> _TemporaryFileWrapper:
+    ...
+
 def NamedTemporaryFile(
-        mode: Union[bytes, unicode] = ...,
-        bufsize: int = ...,
-        suffix: Union[bytes, unicode] = ...,
-        prefix: Union[bytes, unicode] = ...,
-        dir: Union[bytes, unicode] = ...,
-        delete: bool = ...
-        ) -> _TemporaryFileWrapper: ...
+    mode: Union[bytes, unicode] = ...,
+    bufsize: int = ...,
+    suffix: Union[bytes, unicode] = ...,
+    prefix: Union[bytes, unicode] = ...,
+    dir: Union[bytes, unicode] = ...,
+    delete: bool = ...
+) -> _TemporaryFileWrapper:
+    ...
+
 def SpooledTemporaryFile(
-        max_size: int = ...,
-        mode: Union[bytes, unicode] = ...,
-        buffering: int = ...,
-        suffix: Union[bytes, unicode] = ...,
-        prefix: Union[bytes, unicode] = ...,
-        dir: Union[bytes, unicode] = ...) -> _TemporaryFileWrapper:
+    max_size: int = ...,
+    mode: Union[bytes, unicode] = ...,
+    buffering: int = ...,
+    suffix: Union[bytes, unicode] = ...,
+    prefix: Union[bytes, unicode] = ...,
+    dir: Union[bytes, unicode] = ...
+) -> _TemporaryFileWrapper:
     ...
 
 class TemporaryDirectory:

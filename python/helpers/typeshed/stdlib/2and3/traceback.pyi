@@ -1,6 +1,6 @@
 # Stubs for traceback
 
-from typing import Generator, IO, Iterator, Mapping, Optional, Tuple, Type
+from typing import Generator, IO, Iterator, List, Mapping, Optional, Tuple, Type
 from types import FrameType, TracebackType
 import sys
 

@@ -4,7 +4,7 @@
 
 from typing import Any
 
-version = ... # type: Any
+version = ...  # type: Any
 
 class ErrorHandler:
     def error(self, exception): ...
@@ -34,17 +34,17 @@ class DTDHandler:
 class EntityResolver:
     def resolveEntity(self, publicId, systemId): ...
 
-feature_namespaces = ... # type: Any
-feature_namespace_prefixes = ... # type: Any
-feature_string_interning = ... # type: Any
-feature_validation = ... # type: Any
-feature_external_ges = ... # type: Any
-feature_external_pes = ... # type: Any
-all_features = ... # type: Any
-property_lexical_handler = ... # type: Any
-property_declaration_handler = ... # type: Any
-property_dom_node = ... # type: Any
-property_xml_string = ... # type: Any
-property_encoding = ... # type: Any
-property_interning_dict = ... # type: Any
-all_properties = ... # type: Any
+feature_namespaces = ...  # type: Any
+feature_namespace_prefixes = ...  # type: Any
+feature_string_interning = ...  # type: Any
+feature_validation = ...  # type: Any
+feature_external_ges = ...  # type: Any
+feature_external_pes = ...  # type: Any
+all_features = ...  # type: Any
+property_lexical_handler = ...  # type: Any
+property_declaration_handler = ...  # type: Any
+property_dom_node = ...  # type: Any
+property_xml_string = ...  # type: Any
+property_encoding = ...  # type: Any
+property_interning_dict = ...  # type: Any
+all_properties = ...  # type: Any

@@ -6,24 +6,24 @@ from typing import Any, IO
 import io
 
 class GzipFile(io.BufferedIOBase):
-    myfileobj = ... # type: Any
-    max_read_chunk = ... # type: Any
-    mode = ... # type: Any
-    extrabuf = ... # type: Any
-    extrasize = ... # type: Any
-    extrastart = ... # type: Any
-    name = ... # type: Any
-    min_readsize = ... # type: Any
-    compress = ... # type: Any
-    fileobj = ... # type: Any
-    offset = ... # type: Any
-    mtime = ... # type: Any
+    myfileobj = ...  # type: Any
+    max_read_chunk = ...  # type: Any
+    mode = ...  # type: Any
+    extrabuf = ...  # type: Any
+    extrasize = ...  # type: Any
+    extrastart = ...  # type: Any
+    name = ...  # type: Any
+    min_readsize = ...  # type: Any
+    compress = ...  # type: Any
+    fileobj = ...  # type: Any
+    offset = ...  # type: Any
+    mtime = ...  # type: Any
     def __init__(self, filename: str = ..., mode: str = ..., compresslevel: int = ...,
                  fileobj: IO[str] = ..., mtime: float = ...) -> None: ...
     @property
     def filename(self): ...
-    size = ... # type: Any
-    crc = ... # type: Any
+    size = ...  # type: Any
+    crc = ...  # type: Any
     def write(self, data): ...
     def read(self, size=...): ...
     @property

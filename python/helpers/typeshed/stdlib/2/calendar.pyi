@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple, Sequence
 import datetime
 
 LocaleType = Tuple[Optional[str], Optional[str]]
@@ -73,6 +73,12 @@ def setfirstweekday(firstweekday: int) -> None: ...
 def format(cols: int, colwidth: int = ..., spacing: int = ...) -> str: ...
 def formatstring(cols: int, colwidth: int = ..., spacing: int = ...) -> str: ...
 def timegm(tuple: Tuple[int, ...]) -> int: ...
+
+# Data attributes
+day_name = ...  # type: Sequence[str]
+day_abbr = ...  # type: Sequence[str]
+month_name = ...  # type: Sequence[str]
+month_abbr = ...  # type: Sequence[str]
 
 # Below constants are not in docs or __all__, but enough people have used them
 # they are now effectively public.

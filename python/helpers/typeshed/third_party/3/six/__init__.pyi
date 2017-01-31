@@ -14,15 +14,21 @@ from typing import (
     Optional,
     Pattern,
     Tuple,
+    Type,
     TypeVar,
     Union,
     ValuesView,
     overload,
 )
-import typing
-
-import unittest
 import types
+import typing
+import unittest
+from mypy_extensions import NoReturn
+
+# Exports
+from io import StringIO as StringIO, BytesIO as BytesIO
+from builtins import next as next
+from functools import wraps as wraps
 
 _T = TypeVar('_T')
 _K = TypeVar('_K')
@@ -40,13 +46,10 @@ class_types = type,
 text_type = str
 binary_type = bytes
 
-MAXSIZE = ... # type: int
+MAXSIZE = ...  # type: int
 
-#def add_move
-#def remove_move
-
-from builtins import next as advance_iterator
-next = advance_iterator
+# def add_move
+# def remove_move
 
 def callable(obj: object) -> bool: ...
 
@@ -66,7 +69,7 @@ def get_function_globals(fun: types.FunctionType) -> Dict[str, Any]: ...
 def iterkeys(d: Mapping[_K, _V]) -> typing.Iterator[_K]: ...
 def itervalues(d: Mapping[_K, _V]) -> typing.Iterator[_V]: ...
 def iteritems(d: Mapping[_K, _V]) -> typing.Iterator[Tuple[_K, _V]]: ...
-#def iterlists
+# def iterlists
 
 def viewkeys(d: Mapping[_K, _V]) -> KeysView[_K]: ...
 def viewvalues(d: Mapping[_K, _V]) -> ValuesView[_V]: ...
@@ -80,7 +83,6 @@ def int2byte(i: int) -> bytes: ...
 def byte2int(bs: binary_type) -> int: ...
 def indexbytes(buf: binary_type, i: int) -> int: ...
 def iterbytes(buf: binary_type) -> typing.Iterator[int]: ...
-from io import StringIO as StringIO, BytesIO as BytesIO
 
 def assertCountEqual(self: unittest.TestCase, first: Iterable[_T], second: Iterable[_T], msg: str = None) -> None: ...
 @overload
@@ -91,12 +93,10 @@ def assertRegex(self: unittest.TestCase, text: AnyStr, expected_regex: Union[Any
 
 exec_ = exec
 
-def reraise(tp: type, value: Optional[BaseException], tb: Optional[types.TracebackType] = None) -> None: ...
+def reraise(tp: Optional[Type[BaseException]], value: Optional[BaseException], tb: Optional[types.TracebackType] = None) -> NoReturn: ...
 def raise_from(value: BaseException, from_value: BaseException) -> None: ...
 
 print_ = print
-
-from functools import wraps as wraps
 
 def with_metaclass(meta: type, *bases: type) -> type: ...
 def add_metaclass(metaclass: type) -> Callable[[_T], _T]: ...

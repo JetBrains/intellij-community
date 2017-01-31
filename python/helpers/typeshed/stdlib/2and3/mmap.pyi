@@ -1,15 +1,14 @@
 # Stubs for mmap
 
-from typing import (Optional, Sequence, Union, Generic, TypeVar, overload,
-                    Iterable, Container, Sized, Reversible)
 import sys
+from types import TracebackType
+from typing import (Optional, Sequence, Union, Generic, TypeVar, overload,
+                    Iterable, Container, Sized, Reversible, Type)
 
 
 _T = TypeVar('_T', str, bytes)
 
 # TODO already in PEP, have to get added to mypy
-from typing import Type
-from types import TracebackType
 _C = TypeVar('_C')
 class _ContextManager(Generic[_C]):
     def __enter__(self) -> _C: ...
@@ -18,19 +17,19 @@ class _ContextManager(Generic[_C]):
                  exc_tb: Optional[TracebackType]) -> bool: ...
 
 
-ACCESS_READ = ... # type: int
-ACCESS_WRITE = ... # type: int
-ACCESS_COPY = ... # type: int
+ACCESS_READ = ...  # type: int
+ACCESS_WRITE = ...  # type: int
+ACCESS_COPY = ...  # type: int
 
-ALLOCATIONGRANULARITY = ... # type: int
+ALLOCATIONGRANULARITY = ...  # type: int
 
 if sys.platform != 'win32':
-    MAP_PRIVATE = ... # type: int
-    MAP_SHARED = ... # type: int
-    PROT_READ = ... # type: int
-    PROT_WRITE = ... # type: int
+    MAP_PRIVATE = ...  # type: int
+    MAP_SHARED = ...  # type: int
+    PROT_READ = ...  # type: int
+    PROT_WRITE = ...  # type: int
 
-    PAGESIZE = ... # type: int
+    PAGESIZE = ...  # type: int
 
 class _mmap(Generic[_T]):
     if sys.platform == 'win32':
@@ -61,7 +60,7 @@ class _mmap(Generic[_T]):
 if sys.version_info >= (3,):
     class mmap(_mmap, _ContextManager[mmap], Iterable[bytes], Container[bytes],
                Sized, Reversible[bytes]):
-        closed = ... # type: bool
+        closed = ...  # type: bool
         def rfind(self, sub: bytes, start: int = ..., stop: int = ...) -> int: ...
         @overload
         def __getitem__(self, index: int) -> int: ...

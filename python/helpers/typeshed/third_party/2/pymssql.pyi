@@ -1,6 +1,6 @@
 from datetime import datetime, date, time
 
-from typing import Any, Tuple, Iterable, List, Optional, Union, Sequence
+from typing import Any, Dict, Tuple, Iterable, List, Optional, Union, Sequence
 
 Scalar = Union[int, float, str, datetime, date, time]
 Result = Union[Tuple[Scalar, ...], Dict[str, Scalar]]

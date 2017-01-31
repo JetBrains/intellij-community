@@ -5,17 +5,17 @@
 from typing import Any, AnyStr, Union, IO, Callable, Dict, List, Tuple, Sequence, Iterator, TypeVar, Optional, KeysView, ItemsView, Generator
 import io
 
-VERSION = ... # type: str
+VERSION = ...  # type: str
 
 _Ss = TypeVar('_Ss', str, bytes)
 _T = TypeVar('_T')
 _str_or_bytes = Union[str, bytes]
 
 class _ElementInterface(Sequence['_ElementInterface']):
-    tag = ... # type: _str_or_bytes
-    attrib = ... # type: Dict[_str_or_bytes, _str_or_bytes]
-    text = ... # type: Optional[_str_or_bytes]
-    tail = ... # type: Optional[_str_or_bytes]
+    tag = ...  # type: _str_or_bytes
+    attrib = ...  # type: Dict[_str_or_bytes, _str_or_bytes]
+    text = ...  # type: Optional[_str_or_bytes]
+    tail = ...  # type: Optional[_str_or_bytes]
     def __init__(self, tag: Union[AnyStr, Callable[..., '_ElementInterface']], attrib: Dict[AnyStr, AnyStr]) -> None: ...
     def makeelement(self, tag: _Ss, attrib: Dict[_Ss, _Ss]) -> '_ElementInterface': ...
     def __len__(self) -> int: ...
@@ -44,10 +44,10 @@ def SubElement(parent: _ElementInterface, tag: AnyStr, attrib: Dict[AnyStr, AnyS
 def Comment(text: _str_or_bytes=...) -> _ElementInterface: ...
 def ProcessingInstruction(target: str, text: str=...) -> _ElementInterface: ...
 
-PI = ... # type: Callable[..., _ElementInterface]
+PI = ...  # type: Callable[..., _ElementInterface]
 
 class QName:
-    text = ... # type: str
+    text = ...  # type: str
     def __init__(self, text_or_uri: str, tag: str=...) -> None: ...
 
 
@@ -78,7 +78,7 @@ def XML(text: AnyStr) -> _ElementInterface: ...
 def XMLID(text: AnyStr) -> Tuple[_ElementInterface, Dict[str, _ElementInterface]]: ...
 
 # TODO-improve this type
-fromstring = ... # type: Callable[..., _ElementInterface]
+fromstring = ...  # type: Callable[..., _ElementInterface]
 
 def tostring(element: _ElementInterface, encoding: str=...) -> AnyStr: ...
 
@@ -91,7 +91,7 @@ class TreeBuilder:
 
 class XMLTreeBuilder:
     # TODO-what is entity used for???
-    entity = ... # type: Any
+    entity = ...  # type: Any
     def __init__(self, html: int=..., target: TreeBuilder=...) -> None: ...
     def doctype(self, name: str, pubid: str, system: str) -> None: ...
     def close(self) -> Any: ...  # TODO-most of the time, this will be Element, but it can be anything target.close() returns

@@ -2,7 +2,7 @@
 
 import datetime as dt
 import sys
-from typing import Tuple, Optional, Any, Union, Mapping
+from typing import Dict, Tuple, Optional, Any, Union, Mapping
 from email.errors import MessageDefect
 if sys.version_info >= (3, 3):
     from email.policy import Policy

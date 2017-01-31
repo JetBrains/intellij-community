@@ -4,7 +4,7 @@
 
 from typing import Any
 
-log = ... # type: Any
+log = ...  # type: Any
 
 class DataWatch:
     def __init__(self, client, path, func=..., *args, **kwargs) -> None: ...
@@ -15,11 +15,11 @@ class ChildrenWatch:
     def __call__(self, func): ...
 
 class PatientChildrenWatch:
-    client = ... # type: Any
-    path = ... # type: Any
-    children = ... # type: Any
-    time_boundary = ... # type: Any
-    children_changed = ... # type: Any
+    client = ...  # type: Any
+    path = ...  # type: Any
+    children = ...  # type: Any
+    time_boundary = ...  # type: Any
+    children_changed = ...  # type: Any
     def __init__(self, client, path, time_boundary=...) -> None: ...
-    asy = ... # type: Any
+    asy = ...  # type: Any
     def start(self): ...

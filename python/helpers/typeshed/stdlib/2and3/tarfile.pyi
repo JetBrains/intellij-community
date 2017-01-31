@@ -1,7 +1,7 @@
-## Stubs for tarfile
+# Stubs for tarfile
 
 from typing import (
-    Callable, IO, Iterator, List, Mapping, Optional, Type,
+    Callable, IO, Iterable, Iterator, List, Mapping, Optional, Type,
     Union,
 )
 import sys
@@ -41,7 +41,7 @@ def open(name: Optional[str] = ..., mode: str = ...,
         errorlevel: Optional[int] = ...) -> TarFile: ...
 
 
-class TarFile:
+class TarFile(Iterable[TarInfo]):
     name = ...  # type: Optional[str]
     mode = ...  # type: str
     fileobj = ...  # type: Optional[IO[bytes]]

@@ -4,13 +4,13 @@
 
 from typing import Any
 
-ssl = ... # type: Any
+ssl = ...  # type: Any
 
 class TCPServer:
-    io_loop = ... # type: Any
-    ssl_options = ... # type: Any
-    max_buffer_size = ... # type: Any
-    read_chunk_size = ... # type: Any
+    io_loop = ...  # type: Any
+    ssl_options = ...  # type: Any
+    max_buffer_size = ...  # type: Any
+    read_chunk_size = ...  # type: Any
     def __init__(self, io_loop=..., ssl_options=..., max_buffer_size=..., read_chunk_size=...) -> None: ...
     def listen(self, port, address=...): ...
     def add_sockets(self, sockets): ...
