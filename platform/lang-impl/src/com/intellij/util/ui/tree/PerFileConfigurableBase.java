@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -556,7 +557,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderer.setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
       VirtualFile parent = file.getParent();
       if (parent != null) {
-        String parentPath = parent.getPath();
+        String parentPath = FileUtil.toSystemDependentName(parent.getPath());
         renderer.append(parentPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
         if (!parentPath.endsWith(File.separator)) {
           renderer.append(File.separator, SimpleTextAttributes.GRAY_ATTRIBUTES);
