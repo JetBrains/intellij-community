@@ -769,20 +769,15 @@ public class PyCallExpressionHelper {
   @NotNull
   public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                  @NotNull PyCallable callable,
-                                                                 @NotNull List<PyParameter> parameters,
                                                                  @NotNull TypeEvalContext context) {
-    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
-    return analyzeArguments(arguments, explicitParameters).getMappedParameters();
-  }
 
-  @NotNull
-  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                 @NotNull PyCallable callable,
-                                                                 @NotNull TypeEvalContext context) {
     final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
-    return mapArguments(callSite, callable, parameters, context);
+    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
+    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
+
+    return mappingResults.getMappedParameters();
   }
 
   @NotNull
