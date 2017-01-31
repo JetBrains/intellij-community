@@ -206,10 +206,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  public boolean startConnection(@Nullable IpnbCodePanel codePanel,
-                                 @NotNull String path,
-                                 @NotNull String urlString,
-                                 boolean showNotification) {
+  public boolean startConnection(@Nullable final IpnbCodePanel codePanel,
+                                 @NotNull final String path,
+                                 @NotNull final String urlString,
+                                 final boolean showNotification) {
     final boolean[] connectionOpened = {false};
     final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened);
 
