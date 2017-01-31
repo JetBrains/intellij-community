@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
   private JComboBox myPropertiesAlignmentCombo;
   private JPanel myPreviewPanel;
   private JPanel myPanel;
+  private JBCheckBox myRemoveTrailingCommaCheckbox;
 
   @SuppressWarnings("unchecked")
   public JsonCodeStylePanel(@NotNull CodeStyleSettings settings) {
@@ -89,12 +91,16 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
-    getCustomSettings(settings).PROPERTY_ALIGNMENT = getSelectedAlignmentType().getId();
+    JsonCodeStyleSettings jsonSettings = getCustomSettings(settings);
+    jsonSettings.PROPERTY_ALIGNMENT = getSelectedAlignmentType().getId();
+    jsonSettings.REMOVE_TRAILING_COMMA = myRemoveTrailingCommaCheckbox.isSelected();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return getCustomSettings(settings).PROPERTY_ALIGNMENT != getSelectedAlignmentType().getId();
+    JsonCodeStyleSettings jsonSettings = getCustomSettings(settings);
+    return jsonSettings.PROPERTY_ALIGNMENT != getSelectedAlignmentType().getId()
+           || jsonSettings.REMOVE_TRAILING_COMMA != myRemoveTrailingCommaCheckbox.isSelected();
   }
 
   @Nullable
@@ -105,8 +111,10 @@ public class JsonCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
+    JsonCodeStyleSettings jsonSettings = getCustomSettings(settings);
+    myRemoveTrailingCommaCheckbox.setSelected(jsonSettings.REMOVE_TRAILING_COMMA);
     for (int i = 0; i < myPropertiesAlignmentCombo.getItemCount(); i++) {
-      if (((PropertyAlignment)myPropertiesAlignmentCombo.getItemAt(i)).getId() == getCustomSettings(settings).PROPERTY_ALIGNMENT) {
+      if (((PropertyAlignment)myPropertiesAlignmentCombo.getItemAt(i)).getId() == jsonSettings.PROPERTY_ALIGNMENT) {
         myPropertiesAlignmentCombo.setSelectedIndex(i);
         break;
       }
