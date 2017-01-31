@@ -172,6 +172,10 @@ public class SystemInfo extends SystemInfoRt {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsNameAndVersion() {
+    return System.getProperty("os.name") + " " + System.getProperty("os.version");
+  }
+
   private static int normalize(int number) {
     return number > 9 ? 9 : number;
   }
