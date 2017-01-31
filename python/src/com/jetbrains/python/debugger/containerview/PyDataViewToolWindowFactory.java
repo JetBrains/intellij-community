@@ -34,12 +34,15 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.jetbrains.python.debugger.PyDebugProcess;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 public class PyDataViewToolWindowFactory implements ToolWindowFactory {
   private JBLabel myEmptyContent = new JBLabel("Run debugger to view available data ", SwingConstants.CENTER);
+
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
@@ -50,18 +53,7 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
       PyDataView.getInstance(project).init(toolWindow, session.getDebugProcess());
     }
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
-      @Override
-      public void processStarted(@NotNull XDebugProcess debugProcess) {
-        toolWindow.getContentManager().removeAllContents(true);
-        PyDataView.getInstance(project).init(toolWindow, debugProcess);
-      }
-
-      @Override
-      public void processStopped(@NotNull XDebugProcess debugProcess) {
-        createEmptyContent(toolWindow);
-      }
-    });
+    connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(toolWindow, project));
 
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(new ColoredByDefaultAction()));
   }
@@ -92,6 +84,36 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance(e.getProject()).setValue(PyDataView.COLORED_BY_DEFAULT, state, true);
+    }
+  }
+
+  private class ChangeContentXDebuggerManagerListener implements XDebuggerManagerListener {
+    private final ToolWindow myToolWindow;
+    private final Project myProject;
+
+    public ChangeContentXDebuggerManagerListener(ToolWindow toolWindow, Project project) {
+      myToolWindow = toolWindow;
+      myProject = project;
+    }
+
+    @Override
+    public void processStarted(@NotNull XDebugProcess debugProcess) {
+      if (getProcesses().isEmpty()) {
+        myToolWindow.getContentManager().removeAllContents(true);
+        PyDataView.getInstance(myProject).init(myToolWindow, debugProcess);
+      }
+    }
+
+    @NotNull
+    private List<? extends PyDebugProcess> getProcesses() {
+      return XDebuggerManager.getInstance(myProject).getDebugProcesses(PyDebugProcess.class);
+    }
+
+    @Override
+    public void processStopped(@NotNull XDebugProcess debugProcess) {
+      if (getProcesses().size() <= 1) {
+        createEmptyContent(myToolWindow);
+      }
     }
   }
 }
