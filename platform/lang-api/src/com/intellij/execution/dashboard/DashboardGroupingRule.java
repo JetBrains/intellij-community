@@ -18,12 +18,9 @@ package com.intellij.execution.dashboard;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Action for grouping items in a runtime dashboard tree.
@@ -40,32 +37,31 @@ public interface DashboardGroupingRule extends TreeAction {
 
   /**
    * Grouping rules are ordered and applied to dashboard nodes according to their priority.
-   * @return Rule's priority.
+   * The higher the priority, the higher groups produced by this rule are presented in the dashboard tree.
+   * @return rule's priority.
    */
   int getPriority();
 
   /**
    * @return {@code true} if grouping rule should always be applied to dashboard nodes.
    */
-  boolean isAlwaysEnable();
+  boolean isAlwaysEnabled();
 
   /**
-   * @return A list of groups which should be shown in the tree even if they do not contain any nodes.
+   * @return {@code false} if groups with single node should not added to the dashboard tree keeping such nodes ungrouped.
    */
-  @NotNull
-  default List<DashboardGroup> getPermanentGroups() {
-    return Collections.emptyList();
-  }
+  boolean shouldGroupSingleNodes();
 
   /**
-   * @param node Node which should be grouped by this grouping rule.
-   * @return A group which node belongs to or null if node could not be grouped by this rule.
+   * @param node node which should be grouped by this grouping rule.
+   * @return a group which node belongs to or {@code null} if node could not be grouped by this rule.
    */
   @Nullable
   DashboardGroup getGroup(AbstractTreeNode<?> node);
 
   interface Priorities {
-    int BY_FOLDER = 200;
+    int BY_RUN_CONFIG = 200;
+    int BY_FOLDER = 400;
     int BY_STATUS = 800;
     int BY_TYPE = 1000;
   }

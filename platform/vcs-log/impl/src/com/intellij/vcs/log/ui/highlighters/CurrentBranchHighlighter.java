@@ -72,7 +72,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "CURRENT_BRANCH";
+    @NotNull public static final String ID = "CURRENT_BRANCH";
 
     @NotNull
     @Override

@@ -63,7 +63,10 @@ class AsBooleanTransformation extends Transformation {
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return getBase(methodCall) != null && methodCall.getExpressionArguments().length == 0 && getPrefix(methodCall, options) != null;
+    return getBase(methodCall) != null
+           && methodCall.getExpressionArguments().length == 0
+           && getPrefix(methodCall, options) != null
+           && methodCall.getClosureArguments().length == 0;
   }
 
   @Override

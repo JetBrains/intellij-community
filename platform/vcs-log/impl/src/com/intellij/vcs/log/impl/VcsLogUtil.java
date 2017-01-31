@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -29,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,7 +168,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUiImpl logUi) {
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
     VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
     Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
     return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
@@ -208,6 +208,11 @@ public class VcsLogUtil {
 
   public static boolean maybeRegexp(@NotNull String text) {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
+  }
+
+  @NotNull
+  public static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
+    return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
   @NotNull

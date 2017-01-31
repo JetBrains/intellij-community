@@ -145,7 +145,7 @@ abstract class Operation {
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return myFn.getText() + ";\n" + code;
+      return myFn.getStatementText() + code;
     }
   }
 

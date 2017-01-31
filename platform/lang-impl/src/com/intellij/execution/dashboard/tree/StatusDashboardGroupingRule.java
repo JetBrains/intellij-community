@@ -25,11 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * @author konstantin.aleev
  */
@@ -56,43 +51,27 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
   }
 
   @Override
-  public boolean isAlwaysEnable() {
+  public boolean isAlwaysEnabled() {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<DashboardGroup> getPermanentGroups() {
-    return Arrays.stream(Status.values()).map(Status::getGroup).collect(Collectors.toList());
+  public boolean shouldGroupSingleNodes() {
+    return true;
   }
 
   @Nullable
   @Override
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
-      if (((DashboardRunConfigurationNode)node).isTerminated()) {
-        return Status.STOPPED.getGroup();
-      } else {
-        return Status.STARTED.getGroup();
+      DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
+      RuntimeDashboardContributor contributor = RuntimeDashboardContributor.getContributor(
+        runConfigurationNode.getConfigurationSettings().getType());
+      if (contributor != null) {
+        DashboardRunConfigurationStatus status = contributor.getStatus(runConfigurationNode);
+        return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
       }
     }
     return null;
-  }
-
-  public enum Status {
-    STARTED(ExecutionBundle.message("runtime.dashboard.started.group.name"), AllIcons.Toolwindows.ToolWindowRun),
-    STOPPED(ExecutionBundle.message("runtime.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
-
-    private final String myLabel;
-    private final Icon myIcon;
-
-    Status(String label, Icon icon) {
-      myLabel = label;
-      myIcon = icon;
-    }
-
-    public DashboardGroup getGroup() {
-      return new DashboardGroupImpl<>(this, myLabel, myIcon);
-    }
   }
 }

@@ -38,21 +38,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class VcsLogFilterer {
+public class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
-  @NotNull private final VcsLogStorage myStorage;
+  @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull protected final VcsLogIndex myIndex;
 
-  VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                 @NotNull VcsLogStorage storage,
-                 @NotNull TopCommitsCache topCommitsDetailsCache,
-                 @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
-                 @NotNull VcsLogIndex index) {
+  public VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
+                        @NotNull VcsLogStorage storage,
+                        @NotNull TopCommitsCache topCommitsDetailsCache,
+                        @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
+                        @NotNull VcsLogIndex index) {
     myStorage = storage;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
@@ -77,17 +77,37 @@ class VcsLogFilterer {
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), visibleRoots, filters);
     FilterResult filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
 
+    VisiblePack visiblePack =
+      createVisiblePack(dataPack, sortType, filters, matchingHeads, filterResult.matchingCommits, filterResult.canRequestMore);
+
+    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters);
+    return Pair.create(visiblePack, filterResult.commitCount);
+  }
+
+  @NotNull
+  protected VisiblePack createVisiblePack(@NotNull DataPack dataPack,
+                                          @NotNull PermanentGraph.SortType sortType,
+                                          @NotNull VcsLogFilterCollection filters,
+                                          @Nullable Set<Integer> matchingHeads,
+                                          @Nullable Set<Integer> matchingCommits,
+                                          boolean canRequestMore) {
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
+    return new VisiblePack(dataPack, visibleGraph, canRequestMore, filters);
+  }
+
+  @NotNull
+  protected VisibleGraph<Integer> createVisibleGraph(@NotNull DataPack dataPack,
+                                                     @NotNull PermanentGraph.SortType sortType,
+                                                     @Nullable Set<Integer> matchingHeads,
+                                                     @Nullable Set<Integer> matchingCommits) {
     VisibleGraph<Integer> visibleGraph;
-    if (matchesNothing(matchingHeads) || matchesNothing(filterResult.matchingCommits)) {
+    if (matchesNothing(matchingHeads) || matchesNothing(matchingCommits)) {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, filterResult.matchingCommits);
+      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, matchingCommits);
     }
-
-    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters);
-
-    return Pair.create(new VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters), filterResult.commitCount);
+    return visibleGraph;
   }
 
   @NotNull
@@ -295,6 +315,18 @@ class VcsLogFilterer {
     }
 
     return ContainerUtil.map2Set(commits, commitId -> myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+  }
+
+  public boolean affectedByIndexingRoots(@NotNull VcsLogFilterCollection filters, @NotNull List<VirtualFile> roots) {
+    List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
+    if (detailsFilters.isEmpty()) return false;
+
+    Set<VirtualFile> affectedRoots = VcsLogUtil.getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+    boolean needsIndex = !affectedRoots.isEmpty();
+    if (needsIndex) {
+      LOG.debug(filters + " are affected by indexing of " + affectedRoots);
+    }
+    return needsIndex;
   }
 
   private static class FilterResult {

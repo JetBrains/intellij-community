@@ -26,8 +26,12 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
@@ -36,6 +40,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -48,10 +53,9 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -69,11 +73,11 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Date;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 
@@ -86,7 +90,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
-  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
@@ -99,7 +103,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
     getEmptyText().setText("Changes Log");
 
@@ -130,7 +134,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getSelectionModel().addListSelectionListener(new MyListSelectionListener());
     getColumnModel().setColumnSelectionAllowed(false);
 
-    PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
     new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), this) {
       @Override
@@ -292,6 +295,30 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
+    }
+    else if (VcsDataKeys.VCS.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
+      if (roots.size() == 1) {
+        return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+      }
+    }
+    else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      if (selectedRows.length != 1) return null;
+      return getModel().getBranchesAtRow(selectedRows[0]);
+    }
+    else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      if (selectedRows.length == 0) return null;
+
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
+        sb.append(getModel().getValueAt(selectedRows[i], GraphTableModel.COMMIT_COLUMN).toString());
+        if (i != selectedRows.length - 1) sb.append("\n");
+      }
+      return sb.toString();
     }
     return null;
   }
@@ -583,12 +610,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
-    @NotNull private final VcsLogUiImpl myUi;
+    @NotNull private final AbstractVcsLogUi myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
 
-    RootCellRenderer(@NotNull VcsLogUiImpl ui) {
+    RootCellRenderer(@NotNull AbstractVcsLogUi ui) {
       super("", CENTER);
       myUi = ui;
     }

@@ -186,7 +186,7 @@ public class JBScrollPane extends SmoothScrollPane {
                     boolean isUnitScroll = MouseWheelEvent.WHEEL_UNIT_SCROLL == event.getScrollType();
                     JViewport viewport = pane.getViewport();
                     if (isUnitScroll && viewport instanceof JBViewport && isPreciseRotationSupported()) {
-                      ((JBViewport)viewport).updateViewPosition(event.isShiftDown(), 10 * event.getPreciseWheelRotation());
+                      ((JBViewport)viewport).updateViewPosition(event);
                     }
                     else {
                       oldListener.mouseWheelMoved(event);
@@ -753,7 +753,7 @@ public class JBScrollPane extends SmoothScrollPane {
   }
 
   /**
-   * Indicates whether the smooth scrolling is supported by any means.
+   * Indicates whether we can use MouseWheelEvent#getPreciseWheelRotation to scroll.
    *
    * @deprecated will be removed after fixing a blit-scrolling
    */

@@ -19,7 +19,7 @@ import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class SchemeNameGenerator {
   private final static String COPY_NAME_SUFFIX = "copy";
@@ -27,8 +27,8 @@ public class SchemeNameGenerator {
   private SchemeNameGenerator() {
   }
 
-  public static String getUniqueName(@NotNull String preferredName, @NotNull Function<String, Boolean> nameExistsFunction) {
-    if (nameExistsFunction.apply(preferredName)) {
+  public static String getUniqueName(@NotNull String preferredName, @NotNull Predicate<String> nameExistsPredicate) {
+    if (nameExistsPredicate.test(preferredName)) {
       int numberPos = preferredName.length() - 1;
       while (numberPos >= 0 && Character.isDigit(preferredName.charAt(numberPos))) {
         numberPos--;
@@ -37,11 +37,11 @@ public class SchemeNameGenerator {
       if (!baseName.endsWith(COPY_NAME_SUFFIX)) {
         baseName = preferredName + " " + COPY_NAME_SUFFIX;
       }
-      if (!nameExistsFunction.apply(baseName)) return baseName;
+      if (!nameExistsPredicate.test(baseName)) return baseName;
       int i = 1;
       while (true) {
         String newName = baseName + i;
-        if (!nameExistsFunction.apply(newName)) return newName;
+        if (!nameExistsPredicate.test(newName)) return newName;
         i++;
       }
     }
@@ -51,9 +51,9 @@ public class SchemeNameGenerator {
   
   public static String getUniqueName(@Nullable String preferredName,
                                      @Nullable Scheme parentScheme,
-                                     @NotNull Function<String, Boolean> nameExistsFunction) {
+                                     @NotNull Predicate<String> nameExistsPredicate) {
     assert preferredName != null || parentScheme != null : "Either preferredName or parentScheme must be non-null";
     String baseName = preferredName != null ? preferredName : parentScheme.getName();
-    return getUniqueName(baseName, nameExistsFunction);
+    return getUniqueName(baseName, nameExistsPredicate);
   }
 }

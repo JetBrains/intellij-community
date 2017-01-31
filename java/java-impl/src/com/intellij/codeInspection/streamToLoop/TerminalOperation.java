@@ -68,7 +68,7 @@ abstract class TerminalOperation extends Operation {
                                           @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
-        FunctionHelper fn = FunctionHelper.create(args[0], 1);
+        FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
         return fn == null ? null : new ForEachTerminalOperation(fn);
       }
       return null;
@@ -425,7 +425,7 @@ abstract class TerminalOperation extends Operation {
       String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
       String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), ResultKind.FINAL);
       myAccumulator.transform(context, acc, inVar.getName());
-      return myAccumulator.getText()+";\n";
+      return myAccumulator.getStatementText();
     }
   }
 
@@ -1067,7 +1067,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       myFn.transform(context, inVar.getName());
-      return myFn.getText()+";\n";
+      return myFn.getStatementText();
     }
   }
 

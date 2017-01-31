@@ -54,12 +54,18 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
       if (i == selection.getIndex()) index = changesToLocal.size();
       ContentRevision afterRevision = selection.getChanges().get(i).getAfterRevision();
       if (afterRevision != null && isValidAfterRevision(afterRevision)) {
-        changesToLocal.add(new Change(afterRevision, CurrentContentRevision.create(afterRevision.getFile())));
+        changesToLocal.add(new Change(afterRevision, getCurrentRevision(afterRevision, e)));
       }
     }
+
     if (!changesToLocal.isEmpty()) {
       showDiffForChange(project, changesToLocal, index);
     }
+  }
+
+  @NotNull
+  protected ContentRevision getCurrentRevision(@NotNull ContentRevision afterRevision, @NotNull AnActionEvent e) {
+    return CurrentContentRevision.create(afterRevision.getFile());
   }
 
   public void update(final AnActionEvent e) {

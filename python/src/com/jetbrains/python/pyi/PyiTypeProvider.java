@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -122,7 +121,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         }
 
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
+        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
 
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
@@ -202,13 +201,5 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       }
     }
     return false;
-  }
-
-  @NotNull
-  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                  @NotNull PyFunction function,
-                                                                  @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
-    return PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
   }
 }

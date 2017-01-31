@@ -40,7 +40,9 @@ public class UnaryTransformation extends Transformation {
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return getBase(methodCall)!= null && methodCall.getExpressionArguments().length == 0;
+    return getBase(methodCall)!= null
+           && methodCall.getExpressionArguments().length == 0
+           && methodCall.getClosureArguments().length == 0;
   }
 
   @Override

@@ -54,7 +54,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreferAnnotationMethods() throws Throwable {
-    checkPreferredItems(0, "name", "value", "Foo", "Anno")
+    checkPreferredItems(0, "name", "value", "String", "Foo", "Anno")
   }
 
   void testPreferSuperMethods() throws Throwable {
@@ -756,6 +756,15 @@ class ContainerUtil extends ContainerUtilRt {
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'String', 'String'
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
+  }
+
+  void testClassNameStatisticsDoesntDependOnExpectedType() {
+    checkPreferredItems 0, 'ConflictsUtil', 'ContainerUtil'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\n.foo();\nlong l = ConUt')
+    myFixture.completeBasic()
+
+    assertPreferredItems 0, 'ContainerUtil', 'ConflictsUtil'
   }
 
 }

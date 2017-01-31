@@ -18,12 +18,13 @@ public class IpnbConfigurable implements SearchableConfigurable {
   private JBTextField myFieldUrl;
   private TextFieldWithBrowseButton myWorkingDirField;
   private JBTextField myArgumentsField;
+  private JPasswordField myPasswordField;
+  private JBTextField myUsernameField;
   @NotNull private final Project myProject;
 
   public IpnbConfigurable(@NotNull Project project) {
     myProject = project;
-    final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory
-      .createSingleFolderDescriptor();
+    final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkingDirField.addBrowseFolderListener("Select Working Directory", null, myProject, fileChooserDescriptor);
     myFieldUrl.setText(IpnbSettings.getInstance(myProject).getURL());
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
@@ -56,7 +57,18 @@ public class IpnbConfigurable implements SearchableConfigurable {
     final String workingDirectory = StringUtil.notNullize(myWorkingDirField.getText());
     final String arguments = StringUtil.notNullize(myArgumentsField.getText());
 
-    return !url.equals(oldUrl) || !workingDirectory.equals(oldWorkingDirectory) || !arguments.equals(oldArguments);
+    return !url.equals(oldUrl) || !workingDirectory.equals(oldWorkingDirectory) || !arguments.equals(oldArguments)
+           || isCredentialsModified();
+  }
+
+  public boolean isCredentialsModified() {
+    final String oldUsername = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getUsername());
+    final String oldPassword = IpnbSettings.getInstance(myProject).getPassword();
+
+    final String username = StringUtil.notNullize(myUsernameField.getText());
+    final String password = StringUtil.notNullize(String.valueOf(myPasswordField.getPassword()));
+
+    return !oldUsername.equals(username) || !oldPassword.equals(password);
   }
 
   @Override
@@ -66,6 +78,11 @@ public class IpnbConfigurable implements SearchableConfigurable {
     IpnbSettings.getInstance(myProject).setURL(url);
     IpnbSettings.getInstance(myProject).setWorkingDirectory(myWorkingDirField.getText());
     IpnbSettings.getInstance(myProject).setArguments(myArgumentsField.getText());
+
+    if (isCredentialsModified()) {
+      IpnbSettings.getInstance(myProject).setUsername(myUsernameField.getText());
+      IpnbSettings.getInstance(myProject).setPassword(String.valueOf(myPasswordField.getPassword()));
+    }
   }
 
   @Override
@@ -73,6 +90,8 @@ public class IpnbConfigurable implements SearchableConfigurable {
     myFieldUrl.setText(IpnbSettings.getInstance(myProject).getURL());
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
     myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
+    myUsernameField.setText(IpnbSettings.getInstance(myProject).getUsername());
+    myPasswordField.setText(IpnbSettings.getInstance(myProject).getPassword());
   }
 
   @Override

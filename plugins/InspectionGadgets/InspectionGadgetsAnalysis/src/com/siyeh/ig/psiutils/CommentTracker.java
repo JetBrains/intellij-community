@@ -20,12 +20,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * A helper class to implement quick-fix which collects removed comments from the PSI and can restore them at once.
@@ -259,5 +262,15 @@ public class CommentTracker {
   private void addIgnored(PsiElement element) {
     if(element instanceof LeafPsiElement && !(element instanceof PsiComment)) return;
     ignoredParents.add(element);
+  }
+
+  public static String textWithSurroundingComments(PsiElement element) {
+    Predicate<PsiElement> commentOrWhiteSpace = e -> e instanceof PsiComment || e instanceof PsiWhiteSpace;
+    List<PsiElement> prev = StreamEx.iterate(element.getPrevSibling(), commentOrWhiteSpace, PsiElement::getPrevSibling).toList();
+    List<PsiElement> next = StreamEx.iterate(element.getNextSibling(), commentOrWhiteSpace, PsiElement::getNextSibling).toList();
+    if(StreamEx.of(prev, next).flatCollection(Function.identity()).anyMatch(PsiComment.class::isInstance)) {
+      return StreamEx.ofReversed(prev).append(element).append(next).map(PsiElement::getText).joining();
+    }
+    return element.getText();
   }
 }

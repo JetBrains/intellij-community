@@ -77,7 +77,7 @@ public class CompressedRefs {
   }
 
   @NotNull
-  Stream<VcsRef> streamBranches() {
+  public Stream<VcsRef> streamBranches() {
     return TroveUtil.streamValues(myBranches).flatMap(Collection::stream);
   }
 

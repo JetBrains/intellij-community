@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
-import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -22,7 +22,7 @@ import java.util.function.IntFunction;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxColorProvider extends JavaColorProvider {
+public class JavaFxColorProvider implements ElementColorProvider {
   private static final String COLOR = "color";
   private static final String RGB = "rgb";
   private static final String GRAY = "gray";

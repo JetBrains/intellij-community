@@ -706,7 +706,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
     int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
     if (line > -1) {
-      return SourcePosition.createFromLine(psiFile, line - 1);
+      return SourcePosition.createFromLine(psiFile, line);
     }
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -638,7 +639,7 @@ public class PyUtil {
     }
     else {
       final PsiReference reference = element.getReference();
-      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.emptyList();
     }
   }
 
@@ -649,34 +650,35 @@ public class PyUtil {
 
   @NotNull
   public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
-    if (resolveResults.length == 0) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> filtered = new ArrayList<>();
-    final int maxRate = getMaxRate(resolveResults);
-    for (ResolveResult resolveResult : resolveResults) {
-      final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
-      if (rate >= maxRate) {
-        final PsiElement element = resolveResult.getElement();
-        if (element != null) {
-          filtered.add(element);
-        }
-      }
-    }
-    return filtered;
+    if (resolveResults.length == 0) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(Arrays.asList(resolveResults));
+    return StreamEx
+      .of(resolveResults)
+      .filter(resolveResult -> getRate(resolveResult) >= maxRate)
+      .map(ResolveResult::getElement)
+      .nonNull()
+      .toList();
   }
 
-  private static int getMaxRate(@NotNull ResolveResult[] resolveResults) {
-    int maxRate = Integer.MIN_VALUE;
-    for (ResolveResult resolveResult : resolveResults) {
-      if (resolveResult instanceof RatedResolveResult) {
-        final int rate = ((RatedResolveResult)resolveResult).getRate();
-        if (rate > maxRate) {
-          maxRate = rate;
-        }
-      }
-    }
-    return maxRate;
+  @NotNull
+  public static <E extends ResolveResult> List<E> filterTopPriorityResults(@NotNull List<E> resolveResults) {
+    if (resolveResults.isEmpty()) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(resolveResults);
+    return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
+  }
+
+  private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
+    return resolveResults
+      .stream()
+      .mapToInt(PyUtil::getRate)
+      .max()
+      .orElse(Integer.MIN_VALUE);
+  }
+
+  private static int getRate(@NotNull ResolveResult resolveResult) {
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
   }
 
   /**
@@ -1564,68 +1566,12 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(context.getType(callable), context);
-    return parametersSet != null ? parametersSet : Collections.singletonList(Arrays.asList(callable.getParameterList().getParameters()));
-  }
-
-  @Nullable
-  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
-    if (callableTypeParameters != null) {
-      boolean allParametersDefined = true;
-      final List<PyParameter> parameters = new ArrayList<>();
-      for (PyCallableParameter callableParameter : callableTypeParameters) {
-        final PyParameter parameter = callableParameter.getParameter();
-        if (parameter == null) {
-          allParametersDefined = false;
-          break;
-        }
-        parameters.add(parameter);
-      }
-      if (allParametersDefined) {
-        return parameters;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<List<PyParameter>> getOverloadedParametersSet(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyUnionType) {
-      type = ((PyUnionType)type).excludeNull(context);
-    }
-
-    if (type instanceof PyCallableType) {
-      final List<PyParameter> results = getParametersOfCallableType((PyCallableType)type, context);
-      if (results != null) {
-        return Collections.singletonList(results);
-      }
-    }
-    else if (type instanceof PyUnionType) {
-      final List<List<PyParameter>> results = new ArrayList<>();
-      final Collection<PyType> members = ((PyUnionType)type).getMembers();
-      for (PyType member : members) {
-        if (member instanceof PyCallableType) {
-          final List<PyParameter> parameters = getParametersOfCallableType((PyCallableType)member, context);
-          if (parameters != null) {
-            results.add(parameters);
-          }
-        }
-      }
-      if (!results.isEmpty()) {
-        return results;
-      }
-    }
-
-    return null;
-  }
-
-  @NotNull
   public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(callable, context);
-    assert !parametersSet.isEmpty();
-    return parametersSet.get(0);
+    return Optional
+      .ofNullable(as(context.getType(callable), PyCallableType.class))
+      .map(callableType -> callableType.getParameters(context))
+      .map(callableParameters -> ContainerUtil.map(callableParameters, PyCallableParameter::getParameter))
+      .orElse(Arrays.asList(callable.getParameterList().getParameters()));
   }
 
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,

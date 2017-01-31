@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -26,6 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -202,22 +205,44 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if (!(element instanceof PsiVariable)) {
         return false;
       }
-      final PsiVariable variable = (PsiVariable)element;
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      return isAppended(variable, rhs);
+      return isAppended(referenceExpression, rhs);
     }
 
-    private static boolean isAppended(PsiVariable variable, PsiExpression expression) {
+    private static boolean isAppended(PsiReferenceExpression otherRef, PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if(expression instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         if (polyadicExpression.getOperationTokenType().equals(JavaTokenType.PLUS)) {
           for (PsiExpression operand : polyadicExpression.getOperands()) {
-            if (ExpressionUtils.isReferenceTo(operand, variable) || isAppended(variable, operand)) return true;
+            if (isSameReference(operand, otherRef) || isAppended(otherRef, operand)) return true;
           }
         }
       }
       return false;
+    }
+
+    private static boolean isSameReference(PsiExpression operand, PsiReferenceExpression ref) {
+      PsiReferenceExpression other = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
+      if (other == null) {
+        return false;
+      }
+      String name = other.getReferenceName();
+      if (name == null || !name.equals(ref.getReferenceName())) return false;
+      PsiExpression qualifier = ref.getQualifierExpression();
+      PsiExpression otherQualifier = other.getQualifierExpression();
+      if (qualifier == null && otherQualifier == null) return true;
+      if (qualifier == null && ref.resolve() instanceof PsiField) {
+        qualifier = ExpressionUtils.getQualifierOrThis(ref);
+      }
+      if (otherQualifier == null && other.resolve() instanceof PsiField) {
+        otherQualifier = ExpressionUtils.getQualifierOrThis(other);
+      }
+      if (qualifier == null || otherQualifier == null) return false;
+      if (qualifier instanceof PsiReferenceExpression) {
+        return isSameReference(otherQualifier, (PsiReferenceExpression)qualifier);
+      }
+      return PsiEquivalenceUtil.areElementsEquivalent(qualifier, otherQualifier);
     }
   }
 
@@ -415,9 +440,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private void replaceInAssignment(PsiVariable variable,
-                                        List<PsiElement> results,
-                                        PsiAssignmentExpression assignment,
-                                        CommentTracker ct) {
+                                     List<PsiElement> results,
+                                     PsiAssignmentExpression assignment,
+                                     CommentTracker ct) {
       PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         if (rValue instanceof PsiPolyadicExpression &&
@@ -427,9 +452,14 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           if (operands.length > 1) {
             // s = s + ...;
             if (ExpressionUtils.isReferenceTo(operands[0], variable)) {
-              ct.delete(concat.getTokenBeforeOperand(operands[1]), operands[0]);
-              replaceAll(variable, rValue, results, ct);
-              results.add(ct.replace(assignment, variable.getName() + ".append(" + ct.text(rValue) + ")"));
+              StreamEx.iterate(operands[1], Objects::nonNull, PsiElement::getNextSibling).forEach(ct::markUnchanged);
+              String text = rValue.getText().substring(operands[1].getStartOffsetInParent());
+              PsiExpression added = JavaPsiFacade.getElementFactory(variable.getProject()).createExpressionFromText(text, assignment);
+              replaceAll(variable, added, results, ct);
+              StringBuilder replacement = ChangeToAppendUtil.buildAppendExpression(added, false, new StringBuilder(variable.getName()));
+              if (replacement != null) {
+                results.add(ct.replace(assignment, replacement.toString()));
+              }
               return;
             }
             // s = ... + s;
@@ -449,7 +479,15 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       }
       if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
         // s += ...;
-        results.add(ct.replace(assignment, variable.getName() + ".append(" + ((rValue == null) ? "" : ct.text(rValue)) + ")"));
+        String replacement = "";
+        if (rValue != null) {
+          StringBuilder sb =
+            ChangeToAppendUtil.buildAppendExpression(ct.markUnchanged(rValue), false, new StringBuilder(variable.getName()));
+          if (sb != null) {
+            replacement = sb.toString();
+          }
+        }
+        results.add(ct.replace(assignment, replacement));
       } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         results.add(ct.replace(assignment, variable.getName() + "=" + generateNewStringBuilder(rValue, ct)));
       }

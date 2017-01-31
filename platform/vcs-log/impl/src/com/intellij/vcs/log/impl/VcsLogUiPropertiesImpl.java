@@ -37,7 +37,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
                              MainVcsLogUiProperties.SHOW_TAG_NAMES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX);
-  private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
+  private final Set<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
     public boolean SHOW_DETAILS_IN_CHANGES = true;
@@ -202,12 +202,12 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @Override
-  public void addChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+  public void addChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+  public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
   }
 
@@ -234,7 +234,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public boolean MATCH_CASE = false;
   }
 
-  public abstract static class MainVcsLogUiPropertiesListener implements VcsLogUiPropertiesListener {
+  public abstract static class MainVcsLogUiPropertiesListener implements PropertiesChangeListener {
     public abstract void onShowDetailsChanged();
 
     public abstract void onShowLongEdgesChanged();

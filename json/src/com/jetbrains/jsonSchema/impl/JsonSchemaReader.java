@@ -179,7 +179,7 @@ public class JsonSchemaReader {
     return !ref.startsWith("#/");
   }
 
-  @NotNull
+  @Nullable
   public static JsonSchemaObject findRelativeDefinition(@NotNull String ref, @NotNull JsonSchemaObject root) {
     if ("#".equals(ref)) {
       return root;
@@ -189,7 +189,7 @@ public class JsonSchemaReader {
     final String[] parts = ref.split("/");
     JsonSchemaObject current = root;
     for (int i = 0; i < parts.length; i++) {
-      if (current == null) throw new RuntimeException("Incorrect reference: " + ref);
+      if (current == null) return null;
       final String part = parts[i];
       if ("definitions".equals(part)) {
         if (i == (parts.length - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
@@ -206,7 +206,7 @@ public class JsonSchemaReader {
 
       current = current.getDefinitions().get(part);
     }
-    if (current == null) throw new RuntimeException("Incorrect reference: " + ref);
+    if (current == null) return null;
     return current;
   }
 }

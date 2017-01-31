@@ -16,6 +16,8 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"
+                    serviceImplementation="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
@@ -28,6 +30,9 @@
     <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
+
+    <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
+                        serviceImplementation="com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl"/>
   </extensions>
 
   <actions>
@@ -68,6 +73,16 @@
             text="Regex"/>
     <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"
             text="Match Case"/>
+    <action class="com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction" id="Vcs.Log.OpenRepositoryVersion"
+            use-shortcut-of="EditSource"/>
+    <action class="com.intellij.vcs.log.ui.actions.AnnotateRevisionAction" id="Vcs.Log.AnnotateRevisionAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowDiffWithLocalFromFileHistory" id="Vcs.Log.ShowDiffWithLocal"/>
+    <action class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" id="Vcs.Log.ShowDiff"
+            text="Show Diff"
+            icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff">
+      <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
+    </action>
+    <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
@@ -97,6 +112,23 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
+    <group id="Vcs.FileHistory.ContextMenu">
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Vcs.Log.ShowDiffWithLocal"/>
+      <reference id="Vcs.Log.CreatePatch"/>
+      <reference id="Vcs.GetVersion"/>
+      <reference id="Vcs.Log.AnnotateRevisionAction"/>
+      <reference id="VcsHistory.ShowAllAffected"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+    </group>
+    <group id="Vcs.FileHistory.Toolbar">
+      <reference id="Vcs.Log.ShowOtherBranches"/>
+      <reference id="Vcs.Log.Refresh"/>
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="VcsHistoryActionsGroup"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
+    </group>
 
     <group id="Log.KeymapGroup" text="Log">
       <reference ref="Vcs.Log.CreatePatch"/>
@@ -120,6 +152,25 @@
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
+
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+
+    <group id="FileHistory.KeymapGroup" text="File History">
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Vcs.Log.ShowDiffWithLocal"/>
+      <reference id="Vcs.Log.CreatePatch"/>
+      <reference id="Vcs.GetVersion"/>
+      <reference id="Vcs.Log.AnnotateRevisionAction"/>
+      <reference id="VcsHistory.ShowAllAffected"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+      <separator/>
+      <reference id="Vcs.Log.ShowOtherBranches"/>
+      <reference id="Vcs.Log.Refresh"/>
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="VcsHistoryActionsGroup"/>
       <reference ref="Vcs.Log.CloseLogTabAction"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>

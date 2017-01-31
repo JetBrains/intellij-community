@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +36,9 @@ import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final AbstractVcsLogUi myUi;
 
-  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiImpl ui) {
+  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull AbstractVcsLogUi ui) {
     myLogData = manager;
     myUi = ui;
   }

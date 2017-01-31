@@ -16,15 +16,15 @@
 
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class TreeBuilderUtil {
   }
 
   private static void _storePaths(JTree tree, DefaultMutableTreeNode root, List<Object> pathsToExpand, List<Object> selectionPaths, boolean storeElementsOnly) {
-    ArrayList childNodes = TreeUtil.childrenToArray(root);
+    List<TreeNode> childNodes = TreeUtil.listChildren(root);
     for (final Object childNode1 : childNodes) {
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
       TreePath path = new TreePath(childNode.getPath());

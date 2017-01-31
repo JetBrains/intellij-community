@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -108,7 +109,13 @@ public class EditorPaintingTest extends AbstractEditorTest {
     addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
     checkResult();
   }
-  
+
+  public void testInlayAtEmptyLine() throws Exception {
+    initText("\n");
+    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    checkResult();
+  }
+
   private static void setUniformEditorHighlighter(TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
@@ -414,6 +421,17 @@ public class EditorPaintingTest extends AbstractEditorTest {
       public Document getDocument() {
         return myDocument;
       }
+    }
+  }
+
+  private static class MyInlayRenderer implements EditorCustomElementRenderer {
+    @Override
+    public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
+
+    @Override
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+      g.setColor(JBColor.CYAN);
+      g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }
   }
 }

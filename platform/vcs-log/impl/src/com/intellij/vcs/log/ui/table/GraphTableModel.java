@@ -12,7 +12,7 @@ import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -37,13 +37,13 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int DOWN_PRELOAD_COUNT = 40;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull protected final VcsLogUiImpl myUi;
+  @NotNull protected final AbstractVcsLogUi myUi;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull VcsLogUiImpl ui) {
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull AbstractVcsLogUi ui) {
     myLogData = logData;
     myUi = ui;
     myDataPack = dataPack;

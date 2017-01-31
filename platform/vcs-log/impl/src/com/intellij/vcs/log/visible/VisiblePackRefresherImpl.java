@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.visible;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -23,12 +24,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +39,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class VisiblePackRefresherImpl implements VisiblePackRefresher {
+public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VcsLogFilterer myVisiblePackBuilder;
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final VcsLogIndex.IndexingFinishedListener myIndexingFinishedListener;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
@@ -53,12 +57,10 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
-                                  @NotNull PermanentGraph.SortType initialSortType) {
+                                  @NotNull PermanentGraph.SortType initialSortType,
+                                  @NotNull VcsLogFilterer builder) {
     myLogData = logData;
-    myVisiblePackBuilder =
-      new VcsLogFilterer(myLogData.getLogProviders(), myLogData.getStorage(), myLogData.getTopCommitsCache(),
-                         myLogData.getCommitDetailsGetter(),
-                         myLogData.getIndex());
+    myVisiblePackBuilder = builder;
     myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 
@@ -77,6 +79,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
         });
       }
     };
+
+    myIndexingFinishedListener = root -> myTaskController.request(new IndexingFinishedRequest(root));
+    myLogData.getIndex().addListener(myIndexingFinishedListener);
   }
 
   @Override
@@ -117,6 +122,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
   @Override
   public boolean isValid() {
     return myIsValid;
+  }
+
+  @Override
+  public void dispose() {
+    myLogData.getIndex().removeListener(myIndexingFinishedListener);
   }
 
   private class MyTask extends Task.Backgroundable {
@@ -162,6 +172,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
+      List<IndexingFinishedRequest> indexingRequests = ContainerUtil.findAll(requests, IndexingFinishedRequest.class);
 
       myRequestsToRun.addAll(moreCommitsRequests);
       if (filterRequest != null) {
@@ -200,15 +211,20 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
           return new SnapshotVisiblePackBuilder(myLogData.getStorage()).build(frozenVisiblePack);
         }
 
-        Request nonValidateRequest = ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest));
+        Request nonValidateRequest =
+          ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest) && !(request instanceof IndexingFinishedRequest));
 
+        // only doing something if there are some other requests or a relevant indexing request
         if (nonValidateRequest != null) {
-          // only doing something if there are some other requests
           return refresh(visiblePack, filterRequest, moreCommitsRequests);
         }
-        else {
-          return visiblePack;
+        else if (!indexingRequests.isEmpty()) {
+          if (myVisiblePackBuilder
+            .affectedByIndexingRoots(myFilters, ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+            return refresh(visiblePack, filterRequest, moreCommitsRequests);
+          }
         }
+        return visiblePack;
       }
     }
 
@@ -290,6 +306,24 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
 
     MoreCommitsRequest(@NotNull Runnable onLoaded) {
       this.onLoaded = onLoaded;
+    }
+  }
+
+  private static final class IndexingFinishedRequest implements Request {
+    @NotNull private final VirtualFile root;
+
+    IndexingFinishedRequest(@NotNull VirtualFile root) {
+      this.root = root;
+    }
+
+    @NotNull
+    public VirtualFile getRoot() {
+      return root;
+    }
+
+    @Override
+    public String toString() {
+      return "IndexingFinishedRequest for " + root;
     }
   }
 }

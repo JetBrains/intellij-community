@@ -150,7 +150,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
-      if (psiClass == null || psiClass instanceof PsiTypeParameter || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+      if (psiClass == null || !MethodReferenceResolver.canBeConstructed(psiClass)) return;
 
       if (eachReturnType.getArrayDimensions() == 0) {
         PsiMethod[] constructors = psiClass.getConstructors();
@@ -159,7 +159,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
           }
         }
-        if (constructors.length == 0 && params.length == 0 && MethodReferenceResolver.canBeConstructed(psiClass)) {
+        if (constructors.length == 0 && params.length == 0) {
           result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
         }
       }

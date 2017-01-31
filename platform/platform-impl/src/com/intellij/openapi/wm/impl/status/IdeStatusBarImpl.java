@@ -156,7 +156,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return this;
   }
 
-  IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
+  private IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty());
 

@@ -55,8 +55,13 @@ public class ConfigurationTypeDashboardGroupingRule implements DashboardGrouping
   }
 
   @Override
-  public boolean isAlwaysEnable() {
+  public boolean isAlwaysEnabled() {
     return false;
+  }
+
+  @Override
+  public boolean shouldGroupSingleNodes() {
+    return true;
   }
 
   @Nullable

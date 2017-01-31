@@ -5,7 +5,7 @@ def set_trace_in_qt():
     from _pydevd_bundle.pydevd_comm import get_global_debugger
     debugger = get_global_debugger()
     if debugger is not None:
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func)
 
 
 _patched_qt = False

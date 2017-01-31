@@ -1421,7 +1421,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager instanceof ProjectManagerEx) {
+      ((ProjectManagerEx)projectManager).flushChangedAlarm();
+    }
+
+    Project[] openProjects = projectManager.getOpenProjects();
     for (Project openProject : openProjects) {
       openProject.save();
     }

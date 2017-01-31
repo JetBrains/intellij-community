@@ -31,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.impl.VcsLogManager;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVersion;
@@ -208,7 +207,7 @@ public class GitTestUtil {
 
   public static GitLogProvider findGitLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogManager.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
+      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
         @Override
         public boolean value(VcsLogProvider provider) {
           return provider.getSupportedVcs().equals(GitVcs.getKey());

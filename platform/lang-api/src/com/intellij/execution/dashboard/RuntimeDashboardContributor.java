@@ -16,6 +16,8 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,13 +40,38 @@ public abstract class RuntimeDashboardContributor {
   }
 
   /**
-   * @return Configuration type for which contributor is registered.
+   * @return configuration type for which contributor is registered.
    */
   public ConfigurationType getType() {
     return myType;
   }
 
   public void updatePresentation(PresentationData presentation, DashboardNode node) {
+  }
+
+  /**
+   * Returns node's status. Subclasses may override this method to provide custom statuses.
+   * @param node dashboard node
+   * @return node's status. Returned status is used for grouping nodes by status.
+   */
+  public DashboardRunConfigurationStatus getStatus(DashboardRunConfigurationNode node) {
+    RunContentDescriptor descriptor = node.getDescriptor();
+    if (descriptor == null) {
+      return DashboardRunConfigurationStatus.STOPPED;
+    }
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler == null) {
+      return DashboardRunConfigurationStatus.STOPPED;
+    }
+    Integer exitCode = processHandler.getExitCode();
+    if (exitCode == null) {
+      return DashboardRunConfigurationStatus.STARTED;
+    }
+    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
+    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
+      return DashboardRunConfigurationStatus.STOPPED;
+    }
+    return DashboardRunConfigurationStatus.FAILED;
   }
 
   public static RuntimeDashboardContributor getContributor(ConfigurationType type) {

@@ -54,7 +54,12 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
   }
 
   @Override
-  public boolean isAlwaysEnable() {
+  public boolean isAlwaysEnabled() {
+    return true;
+  }
+
+  @Override
+  public boolean shouldGroupSingleNodes() {
     return true;
   }
 
@@ -70,5 +75,4 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
     }
     return null;
   }
-
 }

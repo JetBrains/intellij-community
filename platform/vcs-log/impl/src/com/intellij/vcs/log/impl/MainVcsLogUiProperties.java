@@ -50,12 +50,6 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   @Nullable
   List<String> getFilterValues(@NotNull String filterName);
 
-  @CalledInAwt
-  void addChangeListener(@NotNull VcsLogUiPropertiesListener listener);
-
-  @CalledInAwt
-  void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener);
-
   class VcsLogHighlighterProperty extends VcsLogUiProperty<Boolean> {
     private static final Map<String, VcsLogHighlighterProperty> ourProperties = ContainerUtil.newHashMap();
     @NotNull private final String myId;
@@ -79,9 +73,5 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
       }
       return property;
     }
-  }
-
-  interface VcsLogUiPropertiesListener {
-    <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
   }
 }

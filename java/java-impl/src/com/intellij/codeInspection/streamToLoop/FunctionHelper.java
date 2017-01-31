@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -35,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -61,6 +59,10 @@ abstract class FunctionHelper {
 
   final String getText() {
     return getExpression().getText();
+  }
+
+  String getStatementText() {
+    return getText() + ";\n";
   }
 
   abstract PsiExpression getExpression();
@@ -133,6 +135,12 @@ abstract class FunctionHelper {
   @Contract("null, _ -> null")
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount) {
+    return create(expression, paramCount, false);
+  }
+
+  @Contract("null, _, _ -> null")
+  @Nullable
+  static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
     if(expression == null) return null;
     PsiType type = expression instanceof PsiFunctionalExpression
                    ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
@@ -149,9 +157,23 @@ abstract class FunctionHelper {
       PsiParameterList list = lambda.getParameterList();
       if (list.getParametersCount() != paramCount) return null;
       String[] parameters = StreamEx.of(list.getParameters()).map(PsiVariable::getName).toArray(String[]::new);
-      PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      if (body == null) return null;
-      return new LambdaFunctionHelper(returnType, body, parameters);
+      PsiElement body = lambda.getBody();
+      PsiExpression lambdaExpression = LambdaUtil.extractSingleExpressionFromBody(body);
+      if (lambdaExpression == null) {
+        if (PsiType.VOID.equals(returnType) && body instanceof PsiCodeBlock) {
+          List<PsiReturnStatement> returns = getReturns(body);
+          if (!allowReturns && !returns.isEmpty()) return null;
+          // Return inside loop is not supported yet
+          for (PsiReturnStatement ret : returns) {
+            if (PsiTreeUtil.getParentOfType(ret, PsiLoopStatement.class, true, PsiLambdaExpression.class) != null) {
+              return null;
+            }
+          }
+          return new VoidBlockLambdaFunctionHelper((PsiCodeBlock)body, parameters);
+        }
+        return null;
+      }
+      return new LambdaFunctionHelper(returnType, lambdaExpression, parameters);
     }
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
@@ -262,8 +284,8 @@ abstract class FunctionHelper {
     };
   }
 
-  static boolean hasVarReference(PsiExpression expression, String name, StreamToLoopReplacementContext context) {
-    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+  static boolean hasVarReference(PsiElement expressionOrCodeBlock, String name, StreamToLoopReplacementContext context) {
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name + "->" + expressionOrCodeBlock.getText());
     PsiParameter var = lambda.getParameterList().getParameters()[0];
     PsiElement body = lambda.getBody();
     LOG.assertTrue(body != null);
@@ -277,19 +299,19 @@ abstract class FunctionHelper {
    *   If the replacement is a new name to the variable, the caller must take care that this new name was not used before.
    * </p>
    *
-   * @param expression an expression to search-and-replace references inside
+   * @param expressionOrCodeBlock an expression or code block to search-and-replace references inside
    * @param name a reference name to replace
    * @param replacement a replacement expression (new name or literal)
    * @param context context
    * @return resulting expression (might be the same as input expression)
    */
   @NotNull
-  static PsiExpression replaceVarReference(@NotNull PsiExpression expression,
-                                           String name,
-                                           String replacement,
-                                           StreamToLoopReplacementContext context) {
-    if(name.equals(replacement)) return expression;
-    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+  static <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
+                                                      String name,
+                                                      String replacement,
+                                                      StreamToLoopReplacementContext context) {
+    if (name.equals(replacement)) return expressionOrCodeBlock;
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name + "->" + expressionOrCodeBlock.getText());
     PsiParameter var = lambda.getParameterList().getParameters()[0];
     PsiElement body = lambda.getBody();
     LOG.assertTrue(body != null);
@@ -297,7 +319,27 @@ abstract class FunctionHelper {
     for (PsiReference ref : ReferencesSearch.search(var, new LocalSearchScope(body)).findAll()) {
       ref.getElement().replace(replacementExpression);
     }
-    return (PsiExpression)lambda.getBody();
+    //noinspection unchecked
+    return (T)lambda.getBody();
+  }
+
+  @NotNull
+  private static List<PsiReturnStatement> getReturns(PsiElement body) {
+    List<PsiReturnStatement> returns = new ArrayList<>();
+    body.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitClass(@NotNull PsiClass psiClass) { }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) { }
+
+      @Override
+      public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
+        super.visitReturnStatement(returnStatement);
+        returns.add(returnStatement);
+      }
+    });
+    return returns;
   }
 
   private static class MethodReferenceFunctionHelper extends FunctionHelper {
@@ -535,10 +577,10 @@ abstract class FunctionHelper {
   }
 
   private static class LambdaFunctionHelper extends FunctionHelper {
-    private String[] myParameters;
-    private PsiExpression myBody;
+    String[] myParameters;
+    PsiElement myBody;
 
-    LambdaFunctionHelper(PsiType returnType, PsiExpression body, String[] parameters) {
+    LambdaFunctionHelper(PsiType returnType, PsiElement body, String[] parameters) {
       super(returnType);
       myParameters = parameters;
       myBody = body;
@@ -551,7 +593,8 @@ abstract class FunctionHelper {
     }
 
     PsiExpression getExpression() {
-      return myBody;
+      // Usage logic presume that this method is called only if myBody is PsiExpression
+      return (PsiExpression)myBody;
     }
 
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
@@ -590,6 +633,26 @@ abstract class FunctionHelper {
       Project project = myBody.getProject();
       PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + var.getType() + ")" + getText(), myBody);
       suggestFromExpression(var, project, expr);
+    }
+  }
+
+  private static class VoidBlockLambdaFunctionHelper extends LambdaFunctionHelper {
+    VoidBlockLambdaFunctionHelper(PsiCodeBlock body, String[] parameters) {
+      super(PsiType.VOID, body, parameters);
+    }
+
+    @Override
+    String getStatementText() {
+      PsiElement[] children = myBody.getChildren();
+      // Keep everything except braces
+      return StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining().trim();
+    }
+
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      super.transform(context, argumentValues);
+      List<PsiReturnStatement> returns = getReturns(myBody);
+      String continueStatement = "continue;";
+      returns.forEach(ret -> ret.replace(context.createStatement(continueStatement)));
     }
   }
 }

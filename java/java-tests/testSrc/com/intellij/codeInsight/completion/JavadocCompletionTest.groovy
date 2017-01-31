@@ -665,6 +665,12 @@ class Foo {
     myFixture.checkResult "/** {@code null}<caret> */"
   }
 
+  void "test null inside code tag"() {
+    myFixture.configureByText 'a.java', "/** {@code nul<caret>} */"
+    myFixture.completeBasic()
+    myFixture.checkResult "/** {@code null<caret>} */"
+  }
+
   void "test completing inside qualified name"() {
     myFixture.configureByText 'a.java', "/** @see java.io.<caret> */"
     myFixture.completeBasic()

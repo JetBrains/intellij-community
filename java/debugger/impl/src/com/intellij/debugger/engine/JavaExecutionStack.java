@@ -210,6 +210,7 @@ public class JavaExecutionStack extends XExecutionStack {
           List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             int i = 0;
+            boolean separator = true;
             for (StackFrameItem stackFrame : relatedStack) {
               if (i > StackCapturingLineBreakpoint.MAX_STACK_LENGTH) {
                 myContainer.addStackFrames(Collections.singletonList(new XStackFrame() {
@@ -220,9 +221,15 @@ public class JavaExecutionStack extends XExecutionStack {
                 }), true);
                 return;
               }
-              XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
+              if (stackFrame == null) {
+                separator = true;
+                continue;
+              }
+              StackFrameItem.CapturedStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
               if (showFrame(newFrame)) {
+                newFrame.setWithSeparator(separator);
                 myContainer.addStackFrames(Collections.singletonList(newFrame), false);
+                separator = false;
               }
               i++;
             }

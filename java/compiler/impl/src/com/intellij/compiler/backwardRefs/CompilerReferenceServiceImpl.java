@@ -134,8 +134,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-          boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          boolean isUpToDate;
+          if (CompilerReferenceReader.exists(myProject)) {
+            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+            isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          } else {
+            isUpToDate = false;
+          }
           executeOnBuildThread(() -> {
             myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {

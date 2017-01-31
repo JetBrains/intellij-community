@@ -39,8 +39,9 @@ class PutAtTransformation extends Transformation {
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression[] arguments = methodCall.getExpressionArguments();
-    return getBase(methodCall) != null && arguments.length == 2;
+    return getBase(methodCall) != null
+           && methodCall.getExpressionArguments().length == 2
+           && methodCall.getClosureArguments().length == 0;
   }
 
   @Override

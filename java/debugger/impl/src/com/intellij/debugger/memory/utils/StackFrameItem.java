@@ -33,6 +33,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -81,6 +82,7 @@ public class StackFrameItem {
             vars = new ArrayList<>();
             List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
             if (!ContainerUtil.isEmpty(relatedStack)) {
+              res.add(null); // separator
               res.addAll(relatedStack);
               break;
             }
@@ -178,7 +180,8 @@ public class StackFrameItem {
     return new CapturedStackFrame(debugProcess, this);
   }
 
-  public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
+  public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
+                                                                        XDebuggerFramesList.ItemWithSeparatorAbove {
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
@@ -188,6 +191,8 @@ public class StackFrameItem {
     private final int myLineNumber;
 
     private final List<XNamedValue> myVariables;
+
+    private volatile boolean myWithSeparator;
 
     public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -217,7 +222,6 @@ public class StackFrameItem {
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      //component.setIcon(myFirst ? AllIcons.Actions.Menu_cut : JBUI.scale(EmptyIcon.create(6)));
       component.setIcon(JBUI.scale(EmptyIcon.create(6)));
       component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, StringUtil.getShortName(myPath)), getAttributes());
       String packageName = StringUtil.getPackageName(myPath);
@@ -243,6 +247,15 @@ public class StackFrameItem {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+
+    @Override
+    public boolean hasSeparatorAbove() {
+      return myWithSeparator;
+    }
+
+    public void setWithSeparator(boolean withSeparator) {
+      myWithSeparator = withSeparator;
     }
   }
 }

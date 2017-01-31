@@ -35,15 +35,13 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);
   @NotNull private final VcsLogData myLogData;
   @NotNull protected final VcsLogGraphTable myGraphTable;
-  @NotNull private final JBLoadingPanel myLoadingPanel;
 
   @Nullable private ListSelectionEvent myLastEvent;
   @Nullable private ProgressIndicator myLastRequest;
 
-  protected CommitSelectionListener(@NotNull VcsLogData data, @NotNull VcsLogGraphTable table, @NotNull JBLoadingPanel panel) {
+  protected CommitSelectionListener(@NotNull VcsLogData data, @NotNull VcsLogGraphTable table) {
     myLogData = data;
     myGraphTable = table;
-    myLoadingPanel = panel;
   }
 
   @Override
@@ -60,12 +58,12 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   public void processEvent() {
     int rows = myGraphTable.getSelectedRowCount();
     if (rows < 1) {
-      myLoadingPanel.stopLoading();
+      stopLoading();
       onEmptySelection();
     }
     else {
       onSelection(myGraphTable.getSelectedRows());
-      myLoadingPanel.startLoading();
+      startLoading();
 
       final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
@@ -78,7 +76,7 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
                            "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
             myLastRequest = null;
             onDetailsLoaded(detailsList);
-            myLoadingPanel.stopLoading();
+            stopLoading();
           }
         }, indicator);
     }
@@ -88,6 +86,10 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   protected List<Integer> getSelectionToLoad() {
     return Ints.asList(myGraphTable.getSelectedRows());
   }
+
+  protected abstract void startLoading();
+
+  protected abstract void stopLoading();
 
   @CalledInAwt
   protected abstract void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList);

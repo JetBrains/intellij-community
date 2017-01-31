@@ -38,6 +38,7 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
+import java.awt.event.MouseWheelEvent;
 
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
@@ -120,13 +121,15 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   /**
    * Updates a view position directly without using a corresponding scroll bar.
    *
-   * @param horizontal   {@code true} for horizontal scrolling, {@code false} for vertical scrolling
-   * @param preciseValue precise wheel rotation in pixels for the specified direction
+   * @param event a wheel event with a precise scrolling delta used to calculate an offset in pixels
    */
-  void updateViewPosition(boolean horizontal, double preciseValue) {
+  void updateViewPosition(MouseWheelEvent event) {
+    // Native code in our JDK uses 0.1 to convert pixels to units,
+    // so we use 10 to restore amount of pixels to scroll.
+    double preciseValue = 10 * event.getPreciseWheelRotation();
     int x = (int)myViewX;
     int y = (int)myViewY;
-    if (horizontal) {
+    if (event.isShiftDown()) {
       int old = x;
       myViewX = Math.max(0, myViewX + preciseValue);
       x = (int)myViewX;
