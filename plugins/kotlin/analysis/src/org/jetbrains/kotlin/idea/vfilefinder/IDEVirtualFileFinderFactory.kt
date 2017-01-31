@@ -17,9 +17,9 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.load.kotlin.JvmVirtualFileFinder
-import org.jetbrains.kotlin.load.kotlin.JvmVirtualFileFinderFactory
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
-class JvmIDEVirtualFileFinderFactory : JvmVirtualFileFinderFactory {
-    override fun create(scope: GlobalSearchScope): JvmVirtualFileFinder = JvmIDEVirtualFileFinder(scope)
+class IDEVirtualFileFinderFactory : VirtualFileFinderFactory {
+    override fun create(scope: GlobalSearchScope): VirtualFileFinder = IDEVirtualFileFinder(scope)
 }
