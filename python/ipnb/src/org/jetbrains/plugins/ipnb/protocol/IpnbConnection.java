@@ -127,20 +127,18 @@ public class IpnbConnection {
     String serverStartUrl = getLocation(myURI + SPAWN_URL);
 
     if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
-      if (!serverStartUrl.isEmpty()) {
-        for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
-          final String username = IpnbSettings.getInstance(myProject).getUsername();
-          final String locationPrefix = USER_PATH + "/" + username + "/tree";
-          final String location = getLocation(myURI + serverStartUrl);
-          if (location != null && location.startsWith(locationPrefix)) {
-            return true;
-          }
-          try {
-            TimeUnit.MILLISECONDS.sleep(500);
-          }
-          catch (InterruptedException e) {
-            LOG.warn(e.getMessage());
-          }
+      for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
+        final String username = IpnbSettings.getInstance(myProject).getUsername();
+        final String locationPrefix = USER_PATH + "/" + username + "/tree";
+        final String location = getLocation(myURI + serverStartUrl);
+        if (location != null && location.startsWith(locationPrefix)) {
+          return true;
+        }
+        try {
+          TimeUnit.MILLISECONDS.sleep(500);
+        }
+        catch (InterruptedException e) {
+          LOG.warn(e.getMessage());
         }
       }
     }
@@ -289,11 +287,11 @@ public class IpnbConnection {
 
   @NotNull
   private String getLoginUrl() throws IOException {
-    configureHttpsConnection();
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
     final HttpsURLConnection connection = ObjectUtils.tryCast(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
     if (connection != null) {
+      configureHttpsConnection();
       connection.setInstanceFollowRedirects(false);
       connection.connect();
       if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
