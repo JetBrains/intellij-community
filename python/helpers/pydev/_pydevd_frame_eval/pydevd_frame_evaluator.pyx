@@ -17,9 +17,8 @@ get_file_type = DONT_TRACE.get
 
 cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
     frame = <object> frame_obj
-    filepath = frame.f_code.co_filename
-    skip_file = False
-    breakpoints = None
+    cdef str filepath = frame.f_code.co_filename
+    cdef bint skip_file = exc
 
     for file in AVOID_RECURSION:
         # we can't call any other function without this check, because we can get stack overflow
