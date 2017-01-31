@@ -753,7 +753,7 @@ public class JBScrollPane extends SmoothScrollPane {
   }
 
   /**
-   * Indicates whether the smooth scrolling is supported by any means.
+   * Indicates whether we can use MouseWheelEvent#getPreciseWheelRotation to scroll.
    *
    * @deprecated will be removed after fixing a blit-scrolling
    */
