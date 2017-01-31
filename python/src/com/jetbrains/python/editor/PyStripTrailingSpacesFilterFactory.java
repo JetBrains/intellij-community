@@ -32,7 +32,7 @@ public class PyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpa
   }
 
   protected boolean isApplicableTo(@NotNull Language language) {
-    return language.is(PythonLanguage.INSTANCE);
+    return language.isKindOf(PythonLanguage.INSTANCE);
   }
 
   private static class PyStripTrailingSpacesFilter extends PsiBasedStripTrailingSpacesFilter {
