@@ -985,6 +985,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * Provides mapping from decompiled file line number to the original source code line numbers
+   * @param psiFile decompiled file
+   * @param originalLine zero-based decompiled file line number
+   * @return zero-based source code line number
+   */
   public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file != null) {
@@ -992,7 +998,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (mapping != null) {
         int line = mapping.bytecodeToSource(originalLine + 1);
         if (line > -1) {
-          return line;
+          return line - 1;
         }
       }
     }
