@@ -43,6 +43,11 @@ abstract class ModuleGrouper {
 
   abstract fun getGroupPathByModuleName(name: String): List<String>
 
+  /**
+   * If [module] itself can be considered as a group, returns its groups. Otherwise returns null.
+   */
+  abstract fun getModuleAsGroupPath(module: Module): List<String>?
+
   abstract fun getAllModules(): Array<Module>
 
   companion object {
@@ -76,6 +81,8 @@ private class QualifiedNameGrouper(project: Project, model: ModifiableModuleMode
   override fun getShortenedNameByFullModuleName(name: String) = StringUtil.getShortName(name)
 
   override fun getGroupPathByModuleName(name: String) = name.split('.').dropLast(1)
+
+  override fun getModuleAsGroupPath(module: Module) = getModuleName(module).split('.')
 }
 
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
@@ -87,4 +94,6 @@ private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleMod
   override fun getShortenedNameByFullModuleName(name: String) = name
 
   override fun getGroupPathByModuleName(name: String): List<String> = emptyList()
+
+  override fun getModuleAsGroupPath(module: Module) = null
 }

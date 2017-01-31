@@ -24,8 +24,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.ModuleGroupUtil;
-import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
@@ -54,6 +53,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,6 +93,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
     if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
+
+    if (editableObject2 instanceof Module && editableObject1 instanceof Facet) return 1;
+    if (editableObject1 instanceof Module && editableObject2 instanceof Facet) return -1;
 
     if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
     if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
@@ -166,7 +169,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected void loadTree() {
     createProjectNodes();
 
-    ((DefaultTreeModel)myTree.getModel()).reload();
+    getTreeModel().reload();
 
     myUiDisposed = false;
   }
@@ -217,27 +220,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
 
   private void createProjectNodes() {
-    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<>();
-    final Module[] modules = myModuleManager.getModules();
-    for (final Module module : modules) {
-      ModuleGrouper moduleGrouper = getModuleGrouper();
-      MyNode moduleNode = new ModuleNode(new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER, moduleGrouper));
-      boolean nodesAdded = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      nodesAdded |= addNodesFromExtensions(module, moduleNode);
-      if (nodesAdded) {
-        myTree.setShowsRootHandles(true);
-      }
-      final List<String> groupPath = myHideModuleGroups || myFlattenModules ? Collections.emptyList() : moduleGrouper.getGroupPath(module);
-      if (groupPath.isEmpty()) {
-        myRoot.add(moduleNode);
-      }
-      else {
-        final MyNode moduleGroupNode = ModuleGroupUtil
-          .buildModuleGroupPath(new ModuleGroup(groupPath), myRoot, moduleGroup2NodeMap,
-                                parentChildRelation -> parentChildRelation.getParent().add(parentChildRelation.getChild()),
-                                ModuleStructureConfigurable::createModuleGroupNode);
-        moduleGroupNode.add(moduleNode);
-      }
+    ModuleGrouper moduleGrouper = getModuleGrouper();
+    ModuleGroupingTreeHelper<MyNode> helper = ModuleGroupingTreeHelper.forEmptyTree(!myHideModuleGroups && !myFlattenModules,
+                                                                                    moduleGrouper, ModuleStructureConfigurable::createModuleGroupNode, this::createModuleNode, getNodeComparator());
+    helper.createModuleNodes(Arrays.asList(myModuleManager.getModules()), myRoot, getTreeModel());
+    if (containsSecondLevelNodes(myRoot)) {
+      myTree.setShowsRootHandles(true);
     }
     sortDescendants(myRoot);
     if (myProject.isDefault()) {  //do not add modules node in case of template project
@@ -252,13 +240,34 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
+  private static boolean containsSecondLevelNodes(TreeNode rootNode) {
+    int count = rootNode.getChildCount();
+    for (int i = 0; i < count; i++) {
+      TreeNode child = rootNode.getChildAt(i);
+      if (child.getChildCount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private ModuleNode createModuleNode(Module module, ModuleGrouper moduleGrouper) {
+    ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER, moduleGrouper);
+    List<String> groupPath = moduleGrouper.getModuleAsGroupPath(module);
+    ModuleNode node = new ModuleNode(configurable, groupPath != null ? new ModuleGroup(groupPath) : null);
+    myFacetEditorFacade.addFacetsNodes(module, node);
+    addNodesFromExtensions(module, node);
+    return node;
+  }
+
   @NotNull
   private static MyNode createModuleGroupNode(ModuleGroup moduleGroup) {
     final NamedConfigurable moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
                                                                              ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
                                                                              ProjectBundle.message("project.roots.module.groups.text"),
                                                                              PlatformIcons.CLOSED_MODULE_GROUP_ICON);
-    return new ModuleGroupNode(moduleGroupConfigurable, moduleGroup);
+    return new ModuleGroupNodeImpl(moduleGroupConfigurable, moduleGroup);
   }
 
   private void addRootNodesFromExtensions(final MyNode root, final Project project) {
@@ -267,53 +276,35 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
-    boolean nodesAdded = false;
+  private void addNodesFromExtensions(final Module module, final MyNode moduleNode) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
+      extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
     }
-    return nodesAdded;
   }
 
-  public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
+  public boolean updateProjectTree(final Module[] modules) {
     if (myRoot.getChildCount() == 0) return false; //isn't visible
-    final MyNode[] nodes = new MyNode[modules.length];
-    int i = 0;
+    List<Pair<MyNode, Module>> nodes = new ArrayList<>(modules.length);
     for (Module module : modules) {
       MyNode node = findModuleNode(module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
-      node.removeFromParent();
-      nodes[i++] = node;
+      nodes.add(Pair.create(node, module));
     }
-    for (final MyNode moduleNode : nodes) {
-      List<String> groupPath = myHideModuleGroups || myFlattenModules
-                               ? Collections.emptyList()
-                               : group != null ? group.getGroupPathList() : Collections.emptyList();
-      if (groupPath.isEmpty()) {
-        myRoot.add(moduleNode);
-      }
-      else {
-        final MyNode moduleGroupNode = getOrCreateModuleGroupNode(groupPath, null);
-        moduleGroupNode.add(moduleNode);
-      }
-      Module module = (Module)moduleNode.getConfigurable().getEditableObject();
-      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      addNodesFromExtensions(module, moduleNode);
-    }
-    sortDescendants(myRoot);
+    ModuleGroupingTreeHelper<MyNode> helper = createGroupingHelper();
+    helper.moveModuleNodesToProperGroup(nodes, myRoot, getTreeModel(), myTree);
     return true;
   }
 
-  private MyNode getOrCreateModuleGroupNode(List<String> groupPath, @Nullable DefaultTreeModel treeModel) {
-    return ModuleGroupUtil.updateModuleGroupPath(new ModuleGroup(groupPath), myRoot, group1 -> findNodeByObject(myRoot, group1),
-                                                 parentChildRelation -> {
-                                                   MyNode parent = parentChildRelation.getParent();
-                                                   parent.add(parentChildRelation.getChild());
-                                                   if (treeModel != null) {
-                                                     treeModel.nodesWereInserted(parent, new int[]{parent.getChildCount() - 1});
-                                                   }
-                                                 },
-                                                 ModuleStructureConfigurable::createModuleGroupNode);
+  private DefaultTreeModel getTreeModel() {
+    return (DefaultTreeModel)myTree.getModel();
+  }
+
+  @NotNull
+  private ModuleGroupingTreeHelper<MyNode> createGroupingHelper() {
+    return ModuleGroupingTreeHelper.forTree(myRoot, (node) -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
+                                            (node) -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
+                                            !myHideModuleGroups && !myFlattenModules, getModuleGrouper(), ModuleStructureConfigurable::createModuleGroupNode,
+                                            this::createModuleNode, getNodeComparator());
   }
 
   @Override
@@ -336,7 +327,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           if (node != null) {
             final TreeNode parent = node.getParent();
             node.removeFromParent();
-            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            getTreeModel().reload(parent);
           }
           myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
         }
@@ -553,7 +544,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void addModuleNode(final Module module) {
-    MyNode node = new ModuleNode(new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER, getModuleGrouper()));
     final TreePath selectionPath = myTree.getSelectionPath();
     MyNode parent = null;
     if (selectionPath != null) {
@@ -573,10 +563,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
     }
     if (parent == null) parent = myRoot;
-    addNode(node, parent);
-    myFacetEditorFacade.addFacetsNodes(module, node);
-    addNodesFromExtensions(module, node);
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+    MyNode node = createModuleNode(module, getModuleGrouper());
+    TreeUtil.insertNode(parent, node, getTreeModel(), getNodeComparator());
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
     daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));
@@ -632,9 +620,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private class ModuleNode extends MyNode {
-    public ModuleNode(@NotNull ModuleConfigurable configurable) {
+  private class ModuleNode extends MyNode implements ModuleGroupNode {
+    private final ModuleGroup myModuleAsGroup;
+
+    public ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
       super(configurable);
+      myModuleAsGroup = moduleAsGroup;
+    }
+
+    public ModuleGroup getModuleGroup() {
+      return myModuleAsGroup;
     }
 
     @NotNull
@@ -658,44 +653,35 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     protected void reloadNode(DefaultTreeModel treeModel) {
-      TreeNode parent = getParent();
-      List<String> actualPath = parent instanceof ModuleGroupNode ? ((ModuleGroupNode)parent).myModuleGroup.getGroupPathList() : Collections.emptyList();
-      List<String> expectedPath = getModuleGrouper().getGroupPath(getModule());
-      if (!actualPath.equals(expectedPath)) {
-        TreePath path = myTree.getSelectionPath();
-        boolean wasSelected = path != null && this.equals(path.getLastPathComponent());
-        boolean autoScrollWasEnabled = myAutoScrollEnabled;
-        try {
-          myAutoScrollEnabled = false;
-          MyNode newParent = getOrCreateModuleGroupNode(expectedPath, treeModel);
-          treeModel.removeNodeFromParent(this);
-          while (parent instanceof ModuleGroupNode && parent.getChildCount() == 0) {
-            TreeNode grandParent = parent.getParent();
-            treeModel.removeNodeFromParent((MutableTreeNode)parent);
-            parent = grandParent;
-          }
-
-          newParent.add(this);
-          treeModel.nodesWereInserted(newParent, new int[]{newParent.getChildCount() - 1});
-          if (wasSelected) {
-            myTree.expandPath(TreeUtil.getPath(myRoot, newParent));
-            myTree.setSelectionPath(TreeUtil.getPath(myRoot, this));
-          }
-        }
-        finally {
-          myAutoScrollEnabled = autoScrollWasEnabled;
-        }
+      boolean autoScrollWasEnabled = myAutoScrollEnabled;
+      try {
+        myAutoScrollEnabled = false;
+        ModuleGroupingTreeHelper<MyNode> helper = createGroupingHelper();
+        MyNode newNode = helper.moveModuleNodeToProperGroup(this, getModule(), myRoot, treeModel, myTree);
+        treeModel.reload(newNode);
       }
-      super.reloadNode(treeModel);
+      finally {
+        myAutoScrollEnabled = autoScrollWasEnabled;
+      }
     }
   }
 
-  private static class ModuleGroupNode extends MyNode {
+  private interface ModuleGroupNode extends MutableTreeNode {
+    @Nullable
+    ModuleGroup getModuleGroup();
+  }
+
+  private static class ModuleGroupNodeImpl extends MyNode implements ModuleGroupNode {
     private final ModuleGroup myModuleGroup;
 
-    public ModuleGroupNode(@NotNull NamedConfigurable configurable, ModuleGroup moduleGroup) {
+    public ModuleGroupNodeImpl(@NotNull NamedConfigurable configurable, @NotNull ModuleGroup moduleGroup) {
       super(configurable, true);
       myModuleGroup = moduleGroup;
+    }
+
+    @Override
+    public ModuleGroup getModuleGroup() {
+      return myModuleGroup;
     }
   }
 
@@ -796,7 +782,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myFlattenModules = state;
-      regroupModules(myFlattenModules);
+      regroupModules();
     }
   }
 
@@ -830,37 +816,20 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myHideModuleGroups = state;
-      regroupModules(state);
+      regroupModules();
     }
   }
 
-  private void regroupModules(boolean removeGroupNodes) {
+  private void regroupModules() {
     DefaultMutableTreeNode selection = null;
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
     }
-    ModuleGrouper grouper = getModuleGrouper();
-    for (Module module : grouper.getAllModules()) {
-      final List<String> groupPath = grouper.getGroupPath(module);
-      updateProjectTree(new Module[]{module}, !groupPath.isEmpty() ? new ModuleGroup(groupPath) : null);
-    }
-    if (removeGroupNodes) {
-      removeModuleGroups();
-    }
+    createGroupingHelper().moveAllModuleNodesToProperGroups(myRoot, getTreeModel());
     if (selection != null) {
       TreeUtil.selectInTree(selection, true, myTree);
     }
-  }
-
-  private void removeModuleGroups() {
-    for (int i = myRoot.getChildCount() - 1; i >= 0; i--) {
-      final MyNode node = (MyNode)myRoot.getChildAt(i);
-      if (node.getConfigurable().getEditableObject() instanceof ModuleGroup) {
-        node.removeFromParent();
-      }
-    }
-    ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
 
   @Override

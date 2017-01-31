@@ -332,16 +332,28 @@ public final class TreeUtil {
   }
 
   public static void sort(@NotNull final DefaultMutableTreeNode node, @Nullable Comparator comparator) {
-    final List<TreeNode> children = childrenToArray(node);
-    Collections.sort(children, comparator);
-    node.removeAllChildren();
-    addChildrenTo(node, children);
+    sortRecursively(node, comparator);
+  }
+
+  public static <T extends MutableTreeNode> void sortRecursively(@NotNull T node, @Nullable Comparator<? super T> comparator) {
+    sortChildren(node, comparator);
     for (int i = 0; i < node.getChildCount(); i++) {
-      sort((DefaultMutableTreeNode) node.getChildAt(i), comparator);
+      //noinspection unchecked
+      sortRecursively((T) node.getChildAt(i), comparator);
     }
   }
 
-  public static void addChildrenTo(@NotNull final MutableTreeNode node, @NotNull final List<TreeNode> children) {
+  public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
+    //noinspection unchecked
+    final List<T> children = (List)childrenToArray(node);
+    Collections.sort(children, comparator);
+    for (int i = node.getChildCount() - 1; i >= 0; i--) {
+      node.remove(i);
+    }
+    addChildrenTo(node, children);
+  }
+
+  public static void addChildrenTo(@NotNull final MutableTreeNode node, @NotNull final List<? extends TreeNode> children) {
     for (final Object aChildren : children) {
       final MutableTreeNode child = (MutableTreeNode)aChildren;
       node.insert(child, node.getChildCount());
