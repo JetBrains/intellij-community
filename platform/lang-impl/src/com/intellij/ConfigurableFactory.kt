@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
+import com.intellij.openapi.project.Project
 
 /**
  * Created by Kirill.Skrygan on 7/4/2016.
@@ -34,7 +35,7 @@ open class ConfigurableFactory : Disposable {
         return codeStyleConfigurableWrapper
     }
 
-    open fun getTodoConfigurable(): TodoConfigurable {
+    open fun getTodoConfigurable(project: Project): TodoConfigurable {
         return TodoConfigurable()
     }
 }
