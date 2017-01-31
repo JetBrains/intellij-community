@@ -220,12 +220,19 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   public static void stopProcess(@Nullable RunContentDescriptor descriptor) {
-    ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
+    stopProcess(descriptor != null ? descriptor.getProcessHandler() : null);
+  }
+
+  public static void stopProcess(@Nullable ProcessHandler processHandler) {
     if (processHandler == null) {
       return;
     }
 
+    processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, Boolean.TRUE);
+
     if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      // process termination was requested, but it's still alive
+      // in this case 'force quit' will be performed
       ((KillableProcess)processHandler).killProcess();
       return;
     }

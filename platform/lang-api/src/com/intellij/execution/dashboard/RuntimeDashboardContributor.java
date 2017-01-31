@@ -67,7 +67,11 @@ public abstract class RuntimeDashboardContributor {
     if (exitCode == null) {
       return DashboardRunConfigurationStatus.STARTED;
     }
-    return exitCode == 0 ? DashboardRunConfigurationStatus.STOPPED : DashboardRunConfigurationStatus.FAILED;
+    Boolean terminationRequested = processHandler.getUserData(ProcessHandler.TERMINATION_REQUESTED);
+    if (exitCode == 0 || (terminationRequested != null && terminationRequested)) {
+      return DashboardRunConfigurationStatus.STOPPED;
+    }
+    return DashboardRunConfigurationStatus.FAILED;
   }
 
   public static RuntimeDashboardContributor getContributor(ConfigurationType type) {
