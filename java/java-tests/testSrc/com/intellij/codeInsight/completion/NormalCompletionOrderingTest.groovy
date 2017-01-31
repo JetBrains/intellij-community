@@ -54,7 +54,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreferAnnotationMethods() throws Throwable {
-    checkPreferredItems(0, "name", "value", "Foo", "Anno")
+    checkPreferredItems(0, "name", "value", "String", "Foo", "Anno")
   }
 
   void testPreferSuperMethods() throws Throwable {
