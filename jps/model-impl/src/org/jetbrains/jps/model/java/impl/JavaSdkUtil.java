@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,7 @@ public class JavaSdkUtil {
       }
     }
     else if (new File(home, "lib/modules").exists()) {
-      File libDir = new File(home, "lib");
-      jarDirs = new File[]{libDir};
+      jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
     }
     else {
       File libDir = new File(home, isJre ? "lib" : "jre/lib");

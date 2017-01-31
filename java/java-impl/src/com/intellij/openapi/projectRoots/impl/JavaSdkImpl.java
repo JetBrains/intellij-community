@@ -606,14 +606,17 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
-    if (jrt != null) {
-      ContainerUtil.addAll(result, jrt.getChildren());
+    if (JrtFileSystem.isModularJdk(file.getPath())) {
+      VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
+      if (jrt != null) {
+        ContainerUtil.addAll(result, jrt.getChildren());
+      }
     }
-
-    for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
-      String url = VfsUtil.getUrlForLibraryRoot(root);
-      ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+    else {
+      for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
+        String url = VfsUtil.getUrlForLibraryRoot(root);
+        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+      }
     }
 
     Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
