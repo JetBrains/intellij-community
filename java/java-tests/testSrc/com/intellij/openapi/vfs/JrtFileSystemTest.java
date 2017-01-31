@@ -47,8 +47,8 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
     myTempPath = myTempDir.getRoot().toPath();
     Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
-    Files.copy(myTestData.resolve("jrt-fs.jar"), myTempPath.resolve("jrt-fs.jar"));
     Path lib = Files.createDirectory(myTempPath.resolve("lib"));
+    Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
@@ -67,14 +67,14 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void basicOps() throws IOException {
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
 
-    VirtualFile moduleRoot = myRoot.findChild("test1");
+    VirtualFile moduleRoot = myRoot.findChild("test.a");
     assertThat(moduleRoot).isNotNull();
     assertThat(JrtFileSystem.isModuleRoot(moduleRoot)).isTrue();
-    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("test", "module-info.class");
+    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("pkg_a", "module-info.class");
 
-    VirtualFile classFile = moduleRoot.findFileByRelativePath("test/pkg1/Class1.class");
+    VirtualFile classFile = moduleRoot.findFileByRelativePath("pkg_a/A.class");
     assertThat(classFile).isNotNull();
 
     byte[] bytes = classFile.contentsToByteArray();
@@ -84,7 +84,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void refresh() throws IOException {
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
 
     Path modules = myTempPath.resolve("lib/modules");
     Files.move(modules, myTempPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
@@ -95,7 +95,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     assertThat(local).isNotNull();
     local.refresh(false, true);
 
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1", "test2");
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
   }
 
   private static List<String> childNames(VirtualFile dir) {
