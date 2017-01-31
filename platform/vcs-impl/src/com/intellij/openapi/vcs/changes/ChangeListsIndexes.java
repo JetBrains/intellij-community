@@ -121,33 +121,37 @@ public class ChangeListsIndexes {
    * (for RemoteRevisionsCache and annotation listener)
    */
   public void getDelta(final ChangeListsIndexes newIndexes,
-                       final Set<BaseRevision> toRemove,
+                       Set<BaseRevision> toRemove,
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
-    // this is old
-    final Set<FilePath> oldKeySet = newHashSet(myMap.keySet());
-    final Set<FilePath> toRemoveSet = newHashSet(oldKeySet);
-    final Set<FilePath> newKeySet = newIndexes.myMap.keySet();
-    final Set<FilePath> toAddSet = newHashSet(newKeySet);
-    toRemoveSet.removeAll(newKeySet);
-    toAddSet.removeAll(oldKeySet);
-    // those that modified
-    oldKeySet.removeAll(toRemoveSet);
+    TreeMap<FilePath, Data> oldMap = myMap;
+    TreeMap<FilePath, Data> newMap = newIndexes.myMap;
+    Set<FilePath> oldFiles = oldMap.keySet();
+    Set<FilePath> newFiles = newMap.keySet();
+
+    final Set<FilePath> toRemoveSet = newHashSet(oldFiles);
+    toRemoveSet.removeAll(newFiles);
+
+    final Set<FilePath> toAddSet = newHashSet(newFiles);
+    toAddSet.removeAll(oldFiles);
+
+    final Set<FilePath> toModifySet = newHashSet(oldFiles);
+    toModifySet.removeAll(toRemoveSet);
 
     for (FilePath s : toRemoveSet) {
-      final Data data = myMap.get(s);
+      final Data data = oldMap.get(s);
       toRemove.add(fromPairAndPath(s, data));
     }
     for (FilePath s : toAddSet) {
-      final Data data = newIndexes.myMap.get(s);
+      final Data data = newMap.get(s);
       toAdd.add(fromPairAndPath(s, data));
     }
-    for (FilePath s : oldKeySet) {
-      final Data old = myMap.get(s);
-      final Data newOne = newIndexes.myMap.get(s);
-      assert old != null && newOne != null;
-      if (!old.sameRevisions(newOne)) {
-        toModify.add(new BeforeAfter<>(fromPairAndPath(s, old), fromPairAndPath(s, newOne)));
+    for (FilePath s : toModifySet) {
+      final Data oldData = oldMap.get(s);
+      final Data newData = newMap.get(s);
+      assert oldData != null && newData != null;
+      if (!oldData.sameRevisions(newData)) {
+        toModify.add(new BeforeAfter<>(fromPairAndPath(s, oldData), fromPairAndPath(s, newData)));
       }
     }
   }
