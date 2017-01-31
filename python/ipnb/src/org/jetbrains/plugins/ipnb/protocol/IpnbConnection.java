@@ -231,11 +231,11 @@ public class IpnbConnection {
   private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) {
     try {
       final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
-      HttpsURLConnection connection = createKernelIdConnection(postData, pathToFile);
+      HttpsURLConnection connection = createKernelIdConnection(postData);
       if (connection != null) {
         if (connection.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
           final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
-          connection = createKernelIdConnection(oldParamsToPost, pathToFile);
+          connection = createKernelIdConnection(oldParamsToPost);
         }
         
         if (connection != null && connection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
@@ -252,7 +252,7 @@ public class IpnbConnection {
   }
   
   @Nullable
-  private HttpsURLConnection createKernelIdConnection(byte[] postData, String pathToFile) throws IOException {
+  private HttpsURLConnection createKernelIdConnection(byte[] postData) throws IOException {
     final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
     if (connection instanceof HttpsURLConnection) {
       final HttpsURLConnection httpsConnection = PyUtil.as(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
@@ -260,7 +260,6 @@ public class IpnbConnection {
       if (httpsConnection != null) {
         httpsConnection.setRequestProperty("Content-Type", "application/json");
         httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-        httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
         httpsConnection.setRequestProperty("_xsrf", myXsrf);
         httpsConnection.setUseCaches(false);
         httpsConnection.setDoOutput(true);
