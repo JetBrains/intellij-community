@@ -171,9 +171,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
           || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
-        myChanges.remove(oldBoy);
-        LOG.debug("List: " + myName + ". removed change during processing: " + oldBoy);
-        myReadChangesCache = null;
+        removeChange(oldBoy);
       }
     }
     return result;
