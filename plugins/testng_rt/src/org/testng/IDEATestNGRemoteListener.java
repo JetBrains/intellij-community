@@ -210,14 +210,19 @@ public class IDEATestNGRemoteListener {
     final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
-    ComparisonFailureData notification;
-    try {
-      notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+    if (failureMessage != null) {
+      ComparisonFailureData notification;
+      try {
+        notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+      }
+      catch (Throwable e) {
+        notification = null;
+      }
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     }
-    catch (Throwable e) {
-      notification = null;
+    else {
+      attrs.put("message", "");
     }
-    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println();
     myPrintStream.println(MapSerializerUtil.asString("testFailed", attrs));
     onTestFinished(result);
