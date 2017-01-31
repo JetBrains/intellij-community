@@ -229,10 +229,10 @@ public class JsonSchemaWalker {
 
   private static List<JsonSchemaObject> gatherSchemas(JsonSchemaObject schema) {
     List<JsonSchemaObject> list = new ArrayList<>();
+    list.add(schema);
     if (schema.getAllOf() != null) {
-      list = schema.getAllOf();
+      list.addAll(schema.getAllOf());
     } else {
-      list.add(schema);
       if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
       if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
 

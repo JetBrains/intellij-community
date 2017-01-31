@@ -538,4 +538,34 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
     });
   }
+
+  public void testNavigateToDefinitionByRefInFileWithIncorrectReference() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/withIncorrectReferenceSchema.json", false, Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "withIncorrectReferenceSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"midia\"", resolve.getText());
+        final PsiElement parent = resolve.getParent();
+        Assert.assertTrue(parent instanceof JsonProperty);
+        Assert.assertEquals("midia", ((JsonProperty) parent).getName());
+        Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+        Assert.assertEquals("definitions", ((JsonProperty) parent.getParent().getParent()).getName());
+      }
+    });
+  }
 }
