@@ -221,7 +221,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                                                                                         showNotification,
                                                                                                         connectionOpened,
                                                                                                         format),
-                                                                       "Connection to Jupyter Notebook Server");
+                                                                       "Connecting to Jupyter Notebook Server");
     return isConnected != null ? isConnected : false;
   }
 
