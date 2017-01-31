@@ -95,7 +95,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   /**
    * @param expansion System-independent
    */
-  fun addMacro(key: String, expansion: String):Boolean {
+  fun addMacro(key: String, expansion: String): Boolean {
     LOG.assertTrue(!key.isEmpty())
 
     val value: String
@@ -113,7 +113,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       value = expansion
     }
 
-    // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
+    // e.g ModuleImpl.setModuleFilePath update macro value
     for (macro in macros) {
       if (key == macro.key) {
         macro.value = value
@@ -167,13 +167,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       key = storageClass.name!!
     }
 
-    return storageLock.read { storages.get(key) } ?: storageLock.write {
+    val storage = storageLock.read { storages.get(key) } ?: return storageLock.write {
       storages.getOrPut(key) {
         val storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
         storageCustomizer?.let { storage.it() }
         storage
       }
     }
+
+    storageCustomizer?.let { storage.it() }
+    return storage
   }
 
   fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }

@@ -71,15 +71,13 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
   }
 
   override fun setPath(path: String, file: VirtualFile?) {
-    if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
-      return
-    }
-
+    val isAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
+    // if file not null - update storage
     storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
-      (this as FileBasedStorage).setFile(file, null)
+      (this as FileBasedStorage).setFile(file, if (isAdded) null else Paths.get(path))
       // ModifiableModuleModel#newModule should always create a new module from scratch
       // https://youtrack.jetbrains.com/issue/IDEA-147530
-      resolveVirtualFileOnlyOnWrite = true
+      resolveVirtualFileOnlyOnWrite = isAdded
     })
   }
 }
