@@ -83,7 +83,7 @@ def main():
         print("Cannot import mypy. Did you install it?")
         sys.exit(1)
 
-    versions = [(3, 5), (3, 4), (3, 3), (3, 2), (2, 7)]
+    versions = [(3, 6), (3, 5), (3, 4), (3, 3), (3, 2), (2, 7)]
     if args.python_version:
         versions = [v for v in versions
                     if any(('%d.%d' % v).startswith(av) for av in args.python_version)]
@@ -124,8 +124,9 @@ def main():
             runs += 1
             flags = ['--python-version', '%d.%d' % (major, minor)]
             flags.append('--strict-optional')
-            ##flags.append('--fast-parser')  # Travis CI doesn't have typed_ast yet.
-            ##flags.append('--warn-unused-ignores')  # Fast parser and regular parser disagree.
+            if (major, minor) >= (3, 6):
+                flags.append('--fast-parser')
+            # flags.append('--warn-unused-ignores')  # Fast parser and regular parser disagree.
             sys.argv = ['mypy'] + flags + files
             if args.verbose:
                 print("running", ' '.join(sys.argv))

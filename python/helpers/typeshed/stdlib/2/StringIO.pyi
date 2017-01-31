@@ -3,10 +3,10 @@
 from typing import Any, IO, AnyStr, Iterator, Iterable, Generic, List
 
 class StringIO(IO[AnyStr], Generic[AnyStr]):
-    closed = ... # type: bool
-    softspace = ... # type: int
-    len = ... # type: int
-    name = ... # type: str
+    closed = ...  # type: bool
+    softspace = ...  # type: int
+    len = ...  # type: int
+    name = ...  # type: str
     def __init__(self, buf: AnyStr = ...) -> None: ...
     def __iter__(self) -> Iterator[AnyStr]: ...
     def next(self) -> AnyStr: ...

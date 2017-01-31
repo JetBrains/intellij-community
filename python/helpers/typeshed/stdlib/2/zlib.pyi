@@ -1,19 +1,19 @@
 # Stubs for zlib (Python 2.7)
 
-DEFLATED = ... # type: int
-DEF_MEM_LEVEL = ... # type: int
-MAX_WBITS = ... # type: int
-ZLIB_VERSION = ... # type: str
-Z_BEST_COMPRESSION = ... # type: int
-Z_BEST_SPEED = ... # type: int
-Z_DEFAULT_COMPRESSION = ... # type: int
-Z_DEFAULT_STRATEGY = ... # type: int
-Z_FILTERED = ... # type: int
-Z_FINISH = ... # type: int
-Z_FULL_FLUSH = ... # type: int
-Z_HUFFMAN_ONLY = ... # type: int
-Z_NO_FLUSH = ... # type: int
-Z_SYNC_FLUSH = ... # type: int
+DEFLATED = ...  # type: int
+DEF_MEM_LEVEL = ...  # type: int
+MAX_WBITS = ...  # type: int
+ZLIB_VERSION = ...  # type: str
+Z_BEST_COMPRESSION = ...  # type: int
+Z_BEST_SPEED = ...  # type: int
+Z_DEFAULT_COMPRESSION = ...  # type: int
+Z_DEFAULT_STRATEGY = ...  # type: int
+Z_FILTERED = ...  # type: int
+Z_FINISH = ...  # type: int
+Z_FULL_FLUSH = ...  # type: int
+Z_HUFFMAN_ONLY = ...  # type: int
+Z_NO_FLUSH = ...  # type: int
+Z_SYNC_FLUSH = ...  # type: int
 
 
 class error(Exception): ...

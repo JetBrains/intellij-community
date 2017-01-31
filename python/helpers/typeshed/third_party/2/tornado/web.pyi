@@ -5,18 +5,18 @@
 from typing import Any
 from tornado import httputil
 
-MIN_SUPPORTED_SIGNED_VALUE_VERSION = ... # type: Any
-MAX_SUPPORTED_SIGNED_VALUE_VERSION = ... # type: Any
-DEFAULT_SIGNED_VALUE_VERSION = ... # type: Any
-DEFAULT_SIGNED_VALUE_MIN_VERSION = ... # type: Any
+MIN_SUPPORTED_SIGNED_VALUE_VERSION = ...  # type: Any
+MAX_SUPPORTED_SIGNED_VALUE_VERSION = ...  # type: Any
+DEFAULT_SIGNED_VALUE_VERSION = ...  # type: Any
+DEFAULT_SIGNED_VALUE_MIN_VERSION = ...  # type: Any
 
 class RequestHandler:
-    SUPPORTED_METHODS = ... # type: Any
-    application = ... # type: Any
-    request = ... # type: Any
-    path_args = ... # type: Any
-    path_kwargs = ... # type: Any
-    ui = ... # type: Any
+    SUPPORTED_METHODS = ...  # type: Any
+    application = ...  # type: Any
+    request = ...  # type: Any
+    path_args = ...  # type: Any
+    path_kwargs = ...  # type: Any
+    ui = ...  # type: Any
     def __init__(self, application, request, **kwargs) -> None: ...
     def initialize(self): ...
     @property
@@ -97,13 +97,13 @@ def removeslash(method): ...
 def addslash(method): ...
 
 class Application(httputil.HTTPServerConnectionDelegate):
-    transforms = ... # type: Any
-    handlers = ... # type: Any
-    named_handlers = ... # type: Any
-    default_host = ... # type: Any
-    settings = ... # type: Any
-    ui_modules = ... # type: Any
-    ui_methods = ... # type: Any
+    transforms = ...  # type: Any
+    handlers = ...  # type: Any
+    named_handlers = ...  # type: Any
+    default_host = ...  # type: Any
+    settings = ...  # type: Any
+    ui_modules = ...  # type: Any
+    ui_methods = ...  # type: Any
     def __init__(self, handlers=..., default_host=..., transforms=..., **settings) -> None: ...
     def listen(self, port, address=..., **kwargs): ...
     def add_handlers(self, host_pattern, host_handlers): ...
@@ -114,35 +114,35 @@ class Application(httputil.HTTPServerConnectionDelegate):
     def log_request(self, handler): ...
 
 class _RequestDispatcher(httputil.HTTPMessageDelegate):
-    application = ... # type: Any
-    connection = ... # type: Any
-    request = ... # type: Any
-    chunks = ... # type: Any
-    handler_class = ... # type: Any
-    handler_kwargs = ... # type: Any
-    path_args = ... # type: Any
-    path_kwargs = ... # type: Any
+    application = ...  # type: Any
+    connection = ...  # type: Any
+    request = ...  # type: Any
+    chunks = ...  # type: Any
+    handler_class = ...  # type: Any
+    handler_kwargs = ...  # type: Any
+    path_args = ...  # type: Any
+    path_kwargs = ...  # type: Any
     def __init__(self, application, connection) -> None: ...
     def headers_received(self, start_line, headers): ...
-    stream_request_body = ... # type: Any
+    stream_request_body = ...  # type: Any
     def set_request(self, request): ...
     def data_received(self, data): ...
     def finish(self): ...
     def on_connection_close(self): ...
-    handler = ... # type: Any
+    handler = ...  # type: Any
     def execute(self): ...
 
 class HTTPError(Exception):
-    status_code = ... # type: Any
-    log_message = ... # type: Any
-    args = ... # type: Any
-    reason = ... # type: Any
+    status_code = ...  # type: Any
+    log_message = ...  # type: Any
+    args = ...  # type: Any
+    reason = ...  # type: Any
     def __init__(self, status_code, log_message=..., *args, **kwargs) -> None: ...
 
 class Finish(Exception): ...
 
 class MissingArgumentError(HTTPError):
-    arg_name = ... # type: Any
+    arg_name = ...  # type: Any
     def __init__(self, arg_name) -> None: ...
 
 class ErrorHandler(RequestHandler):
@@ -155,16 +155,16 @@ class RedirectHandler(RequestHandler):
     def get(self): ...
 
 class StaticFileHandler(RequestHandler):
-    CACHE_MAX_AGE = ... # type: Any
-    root = ... # type: Any
-    default_filename = ... # type: Any
+    CACHE_MAX_AGE = ...  # type: Any
+    root = ...  # type: Any
+    default_filename = ...  # type: Any
     def initialize(self, path, default_filename=...): ...
     @classmethod
     def reset(cls): ...
     def head(self, path): ...
-    path = ... # type: Any
-    absolute_path = ... # type: Any
-    modified = ... # type: Any
+    path = ...  # type: Any
+    absolute_path = ...  # type: Any
+    modified = ...  # type: Any
     def get(self, path, include_body=...): ...
     def compute_etag(self): ...
     def set_headers(self): ...
@@ -188,7 +188,7 @@ class StaticFileHandler(RequestHandler):
     def get_version(cls, settings, path): ...
 
 class FallbackHandler(RequestHandler):
-    fallback = ... # type: Any
+    fallback = ...  # type: Any
     def initialize(self, fallback): ...
     def prepare(self): ...
 
@@ -198,8 +198,8 @@ class OutputTransform:
     def transform_chunk(self, chunk, finishing): ...
 
 class GZipContentEncoding(OutputTransform):
-    CONTENT_TYPES = ... # type: Any
-    MIN_LENGTH = ... # type: Any
+    CONTENT_TYPES = ...  # type: Any
+    MIN_LENGTH = ...  # type: Any
     def __init__(self, request) -> None: ...
     def transform_first_chunk(self, status_code, headers, chunk, finishing): ...
     def transform_chunk(self, chunk, finishing): ...
@@ -207,10 +207,10 @@ class GZipContentEncoding(OutputTransform):
 def authenticated(method): ...
 
 class UIModule:
-    handler = ... # type: Any
-    request = ... # type: Any
-    ui = ... # type: Any
-    locale = ... # type: Any
+    handler = ...  # type: Any
+    request = ...  # type: Any
+    ui = ...  # type: Any
+    locale = ...  # type: Any
     def __init__(self, handler) -> None: ...
     @property
     def current_user(self): ...
@@ -240,21 +240,21 @@ class TemplateModule(UIModule):
     def html_body(self): ...
 
 class _UIModuleNamespace:
-    handler = ... # type: Any
-    ui_modules = ... # type: Any
+    handler = ...  # type: Any
+    ui_modules = ...  # type: Any
     def __init__(self, handler, ui_modules) -> None: ...
     def __getitem__(self, key): ...
     def __getattr__(self, key): ...
 
 class URLSpec:
-    regex = ... # type: Any
-    handler_class = ... # type: Any
-    kwargs = ... # type: Any
-    name = ... # type: Any
+    regex = ...  # type: Any
+    handler_class = ...  # type: Any
+    kwargs = ...  # type: Any
+    name = ...  # type: Any
     def __init__(self, pattern, handler, kwargs=..., name=...) -> None: ...
     def reverse(self, *args): ...
 
-url = ... # type: Any
+url = ...  # type: Any
 
 def create_signed_value(secret, name, value, version=..., clock=..., key_version=...): ...
 def decode_signed_value(secret, name, value, max_age_days=..., clock=..., min_version=...): ...

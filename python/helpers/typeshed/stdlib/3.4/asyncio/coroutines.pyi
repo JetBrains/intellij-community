@@ -1,6 +1,6 @@
 from typing import Any, Callable, Generator, TypeVar
 
-__all__ = ... # type: str
+__all__ = ...  # type: str
 
 _F = TypeVar('_F', bound=Callable[..., Any])
 

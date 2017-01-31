@@ -6,12 +6,12 @@ from typing import Any
 from thrift.Thrift import TException
 
 class TTransportException(TException):
-    UNKNOWN = ... # type: Any
-    NOT_OPEN = ... # type: Any
-    ALREADY_OPEN = ... # type: Any
-    TIMED_OUT = ... # type: Any
-    END_OF_FILE = ... # type: Any
-    type = ... # type: Any
+    UNKNOWN = ...  # type: Any
+    NOT_OPEN = ...  # type: Any
+    ALREADY_OPEN = ...  # type: Any
+    TIMED_OUT = ...  # type: Any
+    END_OF_FILE = ...  # type: Any
+    type = ...  # type: Any
     def __init__(self, type=..., message=...) -> None: ...
 
 class TTransportBase:
@@ -40,7 +40,7 @@ class TBufferedTransportFactory:
     def getTransport(self, trans): ...
 
 class TBufferedTransport(TTransportBase, CReadableTransport):
-    DEFAULT_BUFFER = ... # type: Any
+    DEFAULT_BUFFER = ...  # type: Any
     def __init__(self, trans, rbuf_size=...) -> None: ...
     def isOpen(self): ...
     def open(self): ...
@@ -82,7 +82,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
     def cstringio_refill(self, prefix, reqlen): ...
 
 class TFileObjectTransport(TTransportBase):
-    fileobj = ... # type: Any
+    fileobj = ...  # type: Any
     def __init__(self, fileobj) -> None: ...
     def isOpen(self): ...
     def close(self): ...
@@ -91,13 +91,13 @@ class TFileObjectTransport(TTransportBase):
     def flush(self): ...
 
 class TSaslClientTransport(TTransportBase, CReadableTransport):
-    START = ... # type: Any
-    OK = ... # type: Any
-    BAD = ... # type: Any
-    ERROR = ... # type: Any
-    COMPLETE = ... # type: Any
-    transport = ... # type: Any
-    sasl = ... # type: Any
+    START = ...  # type: Any
+    OK = ...  # type: Any
+    BAD = ...  # type: Any
+    ERROR = ...  # type: Any
+    COMPLETE = ...  # type: Any
+    transport = ...  # type: Any
+    sasl = ...  # type: Any
     def __init__(self, transport, host, service, mechanism=..., **sasl_kwargs) -> None: ...
     def open(self): ...
     def send_sasl_msg(self, status, body): ...

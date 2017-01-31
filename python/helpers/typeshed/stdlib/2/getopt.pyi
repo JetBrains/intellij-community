@@ -1,8 +1,8 @@
 from typing import List, Tuple
 
 class GetoptError(Exception):
-    opt = ... # type: str
-    msg = ... # type: str
+    opt = ...  # type: str
+    msg = ...  # type: str
     def __init__(self, msg: str, opt: str=...) -> None: ...
     def __str__(self) -> str: ...
 
@@ -13,5 +13,5 @@ def getopt(args: List[str], shortopts: str,
                                              List[str]]: ...
 
 def gnu_getopt(args: List[str], shortopts: str,
-           longopts: List[str]=...) -> Tuple[List[Tuple[str,str]],
+           longopts: List[str]=...) -> Tuple[List[Tuple[str, str]],
                                              List[str]]: ...

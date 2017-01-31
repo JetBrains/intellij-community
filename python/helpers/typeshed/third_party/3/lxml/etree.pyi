@@ -26,7 +26,7 @@ class _Element(Iterable['_Element']):
         pass
 
     attrib = ...  # type: MutableMapping[str, str]
-    text = ... # type: AnyStr
+    text = ...  # type: AnyStr
     tag = ...  # type: str
     def append(self, element: '_Element') -> '_Element': ...
     def __iter__(self) -> ElementChildIterator: ...

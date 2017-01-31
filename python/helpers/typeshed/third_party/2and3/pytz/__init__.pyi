@@ -11,7 +11,7 @@ country_timezones = ...  # type: Dict
 country_names = ...  # type: Dict
 
 
-class UTC(dt.tzinfo):
+class _UTCclass(dt.tzinfo):
     zone = ...  # type: str
     def fromutc(self, dt: dt.datetime) -> dt.datetime: ...
     def utcoffset(self, dt: Optional[dt.datetime]) -> dt.timedelta: ...  # type: ignore
@@ -20,6 +20,7 @@ class UTC(dt.tzinfo):
     def localize(self, dt: dt.datetime, is_dst: bool=...) -> dt.datetime: ...
     def normalize(self, dt: dt.datetime, is_dst: bool=...) -> dt.datetime: ...
 
-utc = ...  # type: UTC
+utc = ...  # type: _UTCclass
+UTC = ...  # type: _UTCclass
 
-def timezone(zone: str) -> UTC: ...
+def timezone(zone: str) -> dt.tzinfo: ...

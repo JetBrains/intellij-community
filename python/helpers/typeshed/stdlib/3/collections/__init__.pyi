@@ -5,20 +5,39 @@
 # TODO more abstract base classes (interfaces in mypy)
 
 # These are not exported.
+import sys
 from typing import (
-    TypeVar, Iterable, Generic, Iterator, Dict, overload,
-    Mapping, List, Tuple, Callable, Sized, Any, Type,
-    Optional, Union
+    TypeVar, Generic, Dict, overload, List, Tuple,
+    Callable, Any, Type, Optional, Union
 )
 # These are exported.
 # TODO reexport more.
 from typing import (
     Container as Container,
+    Hashable as Hashable,
+    Iterable as Iterable,
+    Iterator as Iterator,
+    Sized as Sized,
+    Generator as Generator,
+    ByteString as ByteString,
+    Awaitable as Awaitable,
+    Coroutine as Coroutine,
+    AsyncIterable as AsyncIterable,
+    AsyncIterator as AsyncIterator,
+    Reversible as Reversible,
+    Mapping as Mapping,
+    MappingView as MappingView,
+    ItemsView as ItemsView,
+    KeysView as KeysView,
+    ValuesView as ValuesView,
     MutableMapping as MutableMapping,
     Sequence as Sequence,
     MutableSequence as MutableSequence,
+    MutableSet as MutableSet,
     AbstractSet as Set,
 )
+if sys.version_info >= (3, 6):
+    from typing import AsyncGenerator as AsyncGenerator
 
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')
@@ -37,7 +56,7 @@ class MutableString(UserString, MutableSequence): ...
 # Technically, deque only derives from MutableSequence in 3.5.
 # But in practice it's not worth losing sleep over.
 class deque(MutableSequence[_T], Generic[_T]):
-    maxlen = ... # type: Optional[int] # TODO readonly
+    maxlen = ...  # type: Optional[int] # TODO readonly
     def __init__(self, iterable: Iterable[_T] = ...,
                  maxlen: int = ...) -> None: ...
     def append(self, x: _T) -> None: ...
@@ -147,16 +166,17 @@ class defaultdict(Dict[_KT, _VT], Generic[_KT, _VT]):
     def __missing__(self, key: _KT) -> _VT: ...
     # TODO __reversed__
 
-class ChainMap(Dict[_KT, _VT], Generic[_KT, _VT]):
-    @overload
-    def __init__(self) -> None: ...
-    @overload
-    def __init__(self, *maps: Mapping[_KT, _VT]) -> None: ...
+if sys.version_info >= (3, 3):
+    class ChainMap(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
+        @overload
+        def __init__(self) -> None: ...
+        @overload
+        def __init__(self, *maps: Mapping[_KT, _VT]) -> None: ...
 
-    @property
-    def maps(self) -> List[Mapping[_KT, _VT]]: ...
+        @property
+        def maps(self) -> List[Mapping[_KT, _VT]]: ...
 
-    def new_child(self, m: Mapping[_KT, _VT] = ...) -> ChainMap[_KT, _VT]: ...
+        def new_child(self, m: Mapping[_KT, _VT] = ...) -> ChainMap[_KT, _VT]: ...
 
-    @property
-    def parents(self) -> ChainMap[_KT, _VT]: ...
+        @property
+        def parents(self) -> ChainMap[_KT, _VT]: ...

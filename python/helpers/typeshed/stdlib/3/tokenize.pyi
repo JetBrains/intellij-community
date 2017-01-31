@@ -4,11 +4,11 @@
 
 from typing import Any, Union, TextIO
 from builtins import open as _builtin_open
-from token import *
+from token import *  # noqa: F403
 
-COMMENT = ... # type: Any
-NL = ... # type: Any
-ENCODING = ... # type: Any
+COMMENT = ...  # type: Any
+NL = ...  # type: Any
+ENCODING = ...  # type: Any
 
 class TokenInfo:
     @property
@@ -18,10 +18,10 @@ class TokenError(Exception): ...
 class StopTokenizing(Exception): ...
 
 class Untokenizer:
-    tokens = ... # type: Any
-    prev_row = ... # type: Any
-    prev_col = ... # type: Any
-    encoding = ... # type: Any
+    tokens = ...  # type: Any
+    prev_row = ...  # type: Any
+    prev_col = ...  # type: Any
+    encoding = ...  # type: Any
     def __init__(self): ...
     def add_whitespace(self, start): ...
     def untokenize(self, iterable): ...

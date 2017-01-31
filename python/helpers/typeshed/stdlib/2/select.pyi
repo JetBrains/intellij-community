@@ -71,16 +71,16 @@ def select(rlist, wlist, xlist, timeout: float = None) -> Tuple[List, List, List
 class error(Exception): ...
 
 class kevent(object):
-    data = ... # type: Any
-    fflags = ... # type: int
-    filter = ... # type: int
-    flags = ... # type: int
-    ident = ... # type: Any
-    udata = ... # type: Any
+    data = ...  # type: Any
+    fflags = ...  # type: int
+    filter = ...  # type: int
+    flags = ...  # type: int
+    ident = ...  # type: Any
+    udata = ...  # type: Any
     def __init__(self, *args, **kwargs) -> None: ...
 
 class kqueue(object):
-    closed = ... # type: bool
+    closed = ...  # type: bool
     def __init__(self) -> None: ...
     def close(self) -> None: ...
     def control(self, changelist: Optional[Iterable[kevent]], max_events: int, timeout: int = ...) -> List[kevent]: ...

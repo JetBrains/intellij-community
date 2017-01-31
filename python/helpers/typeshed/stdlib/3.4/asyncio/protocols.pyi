@@ -1,8 +1,8 @@
+from asyncio import transports
 from typing import AnyStr
 
-__all__ = ... # type: str
+__all__ = ...  # type: str
 
-from asyncio import transports
 
 class BaseProtocol:
     def connection_made(self, transport: transports.BaseTransport) -> None: ...

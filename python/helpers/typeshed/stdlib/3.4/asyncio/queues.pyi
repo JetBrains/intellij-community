@@ -1,10 +1,10 @@
-from typing import TypeVar, Generic
-
-__all__ = ... # type: str
-
+import sys
 from asyncio.events import AbstractEventLoop
 from .coroutines import coroutine
 from .futures import Future
+from typing import TypeVar, Generic
+
+__all__ = ...  # type: str
 
 
 class QueueEmpty(Exception): ...
@@ -33,6 +33,10 @@ class Queue(Generic[T]):
     @coroutine
     def get(self) -> Future[T]: ...
     def get_nowait(self) -> T: ...
+    if sys.version_info >= (3, 4):
+        @coroutine
+        def join(self) -> None: ...
+        def task_done(self) -> None: ...
 
 
 class PriorityQueue(Queue): ...
@@ -40,8 +44,8 @@ class PriorityQueue(Queue): ...
 
 class LifoQueue(Queue): ...
 
-
-class JoinableQueue(Queue):
-    def task_done(self) -> None: ...
-    @coroutine
-    def join(self) -> None: ...
+if sys.version_info < (3, 5):
+    class JoinableQueue(Queue):
+        def task_done(self) -> None: ...
+        @coroutine
+        def join(self) -> None: ...

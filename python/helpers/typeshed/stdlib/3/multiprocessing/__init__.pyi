@@ -23,11 +23,11 @@ class Pool():
     def apply(self,
               func: Callable[..., Any],
               args: Iterable[Any]=(),
-              kwds: Dict[str, Any]={}) -> Any: ...
+              kwds: Dict[str, Any]=...) -> Any: ...
     def apply_async(self,
                 func: Callable[..., Any],
                 args: Iterable[Any]=(),
-                kwds: Dict[str, Any]={},
+                kwds: Dict[str, Any]=...,
                 callback: Callable[..., None] = None,
                 error_callback: Callable[[BaseException], None] = None) -> AsyncResult: ...
     def map(self,
@@ -49,11 +49,11 @@ class Pool():
                        chunksize: Optional[int] = None) -> Iterable[Any]: ...
     def starmap(self,
                 func: Callable[..., Any],
-                iterable: Iterable[Any]=(),
+                iterable: Iterable[Iterable[Any]]=(),
                 chunksize: Optional[int] = None) -> List[Any]: ...
     def starmap_async(self,
                       func: Callable[..., Any],
-                      iterable: Iterable[Any] = (),
+                      iterable: Iterable[Iterable[Any]] = (),
                       chunksize: Optional[int] = None,
                       callback: Callable[..., None] = None,
                       error_callback: Callable[[BaseException], None] = None) -> AsyncResult: ...
@@ -96,3 +96,4 @@ class Value():
 
 # ----- multiprocessing function stubs -----
 def cpu_count() -> int: ...
+def freeze_support() -> None: ...

@@ -1,12 +1,14 @@
-## Stubs for logging (Python 3.4)
+# Stubs for logging (Python 3.4)
 
 from typing import (
-    Any, Callable, Iterable, Mapping, MutableMapping, Optional, IO, Tuple,
-    Text, Union,
-    overload,
+    Any, Callable, Dict, Iterable, Mapping, MutableMapping, Optional, IO,
+    Tuple, Text, Union, overload,
 )
+from string import Template
+from time import struct_time
 from types import TracebackType
 import sys
+import threading
 
 _SysExcInfoType = Union[Tuple[type, BaseException, TracebackType],
                         Tuple[None, None, None]]
@@ -15,7 +17,7 @@ if sys.version_info >= (3, 5):
 else:
     _ExcInfoType = Union[bool, _SysExcInfoType]
 _ArgsType = Union[Tuple[Any, ...], Dict[str, Any]]
-_FilterType = Union['Filter', Callable[[LogRecord], int]]
+_FilterType = Union['Filter', Callable[['LogRecord'], int]]
 
 
 class Logger:
@@ -23,10 +25,10 @@ class Logger:
     level = ...  # type: int
     parent = ...  # type: Union[Logger, PlaceHolder]
     propagate = ...  # type: bool
-    handlers = ... # type: List[Handler]
-    disabled = ... # type: int
+    handlers = ...  # type: List[Handler]
+    disabled = ...  # type: int
     def setLevel(self, lvl: Union[int, str]) -> None: ...
-    def isEnabledFor(self, lvl: int) -> None: ...
+    def isEnabledFor(self, lvl: int) -> bool: ...
     def getEffectiveLevel(self) -> int: ...
     def getChild(self, suffix: str) -> 'Logger': ...
     if sys.version_info > (3,):
@@ -116,7 +118,18 @@ DEBUG = ...  # type: int
 NOTSET = ...  # type: int
 
 
-class Handler:
+class Filterer(object):
+    filters = ...  # type: List[Filter]
+    def __init__(self) -> None: ...
+    def addFilter(self, filter: Filter) -> None: ...
+    def removeFilter(self, filter: Filter) -> None: ...
+    def filter(self, record) -> bool: ...
+
+
+class Handler(Filterer):
+    level = ...  # type: int
+    formatter = ...  # type: Optional[Formatter]
+    lock = ...  # type: Optional[threading.Lock]
     def __init__(self, level: int = ...) -> None: ...
     def createLock(self) -> None: ...
     def acquire(self) -> None: ...
@@ -135,6 +148,14 @@ class Handler:
 
 
 class Formatter:
+    converter = ...  # type: Callable[[Optional[float]], struct_time]
+    _fmt = ...  # type: Optional[str]
+    datefmt = ...  # type: Optional[str]
+    if sys.version_info >= (3,):
+        _style = ...  # type: PercentStyle
+        default_time_format = ...  # type: str
+        default_msec_format = ...  # type: str
+
     if sys.version_info >= (3,):
         def __init__(self, fmt: Optional[str] = ...,
                      datefmt: Optional[str] =...,
@@ -143,8 +164,9 @@ class Formatter:
         def __init__(self,
                      fmt: Optional[str] = ...,
                      datefmt: Optional[str] =...) -> None: ...
-    def format(self, record: LogRecord) -> str: ...
-    def formatTime(self, record: LogRecord, datefmt: str = ...) -> str: ...
+
+    def format(self, record: 'LogRecord') -> str: ...
+    def formatTime(self, record: 'LogRecord', datefmt: str = ...) -> str: ...
     def formatException(self, exc_info: _SysExcInfoType) -> str: ...
     if sys.version_info >= (3,):
         def formatStack(self, stack_info: str) -> str: ...
@@ -152,7 +174,7 @@ class Formatter:
 
 class Filter:
     def __init__(self, name: str = ...) -> None: ...
-    def filter(self, record: LogRecord) -> int: ...
+    def filter(self, record: 'LogRecord') -> int: ...
 
 
 class LogRecord:
@@ -240,7 +262,7 @@ class LoggerAdapter:
         def log(self,
                 lvl: int, msg: Text, *args: Any, exc_info: _ExcInfoType = ...,
                 extra: Dict[str, Any] = ..., **kwargs: Any) -> None: ...
-    def isEnabledFor(self, lvl: int) -> None: ...
+    def isEnabledFor(self, lvl: int) -> bool: ...
     if sys.version_info >= (3,):
         def getEffectiveLevel(self) -> int: ...
         def setLevel(self, lvl: Union[int, str]) -> None: ...
@@ -253,7 +275,7 @@ else:
     @overload
     def getLogger() -> Logger: ...
     @overload
-    def getLogger(name: str) -> Logger: ...
+    def getLogger(name: Union[Text, str]) -> Logger: ...
 def getLoggerClass() -> type: ...
 if sys.version_info >= (3,):
     def getLogRecordFactory() -> Callable[..., LogRecord]: ...
@@ -311,7 +333,7 @@ if sys.version_info >= (3,):
     def basicConfig(*, filename: str = ..., filemode: str = ...,
                     format: str = ..., datefmt: str = ..., style: str = ...,
                     level: int = ..., stream: IO[str] = ...,
-                    handlers: Iterable[Handler]) -> None: ...
+                    handlers: Iterable[Handler] = ...) -> None: ...
 else:
     @overload
     def basicConfig() -> None: ...
@@ -349,7 +371,27 @@ class PlaceHolder:
 
 # Below aren't in module docs but still visible
 
-class RootLogger(Logger):
-    pass
+class RootLogger(Logger): ...
 
 root = ...  # type: RootLogger
+
+
+if sys.version_info >= (3,):
+    class PercentStyle(object):
+        default_format = ...  # type: str
+        asctime_format = ...  # type: str
+        asctime_search = ...  # type: str
+        _fmt = ...  # type: str
+
+        def __init__(self, fmt) -> None: ...
+        def usesTime(self) -> bool: ...
+        def format(self, record: Any) -> str: ...
+
+    class StrFormatStyle(PercentStyle):
+        ...
+
+    class StringTemplateStyle(PercentStyle):
+        _tpl = ...  # type: Template
+
+    BASIC_FORMAT = ...  # type: str
+    _STYLES = ...  # type: Dict[str, Tuple[PercentStyle, str]]

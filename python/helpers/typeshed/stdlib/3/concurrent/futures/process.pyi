@@ -1,7 +1,7 @@
 from typing import Any, Callable, TypeVar, Iterable, Optional
 from ._base import Future, Executor
 
-EXTRA_QUEUED_CALLS = ... # type: Any
+EXTRA_QUEUED_CALLS = ...  # type: Any
 
 class BrokenProcessPool(RuntimeError): ...
 
@@ -12,4 +12,3 @@ class ProcessPoolExecutor(Executor):
     def submit(self, fn: Callable[..., _T], *args: Any, **kwargs: Any) -> Future[_T]: ...
     def map(self, func: Callable[..., _T], *iterables: Any, timeout: Optional[float] = ..., chunksize: int = ...) -> Iterable[_T]: ...
     def shutdown(self, wait: bool = ...) -> None: ...
-

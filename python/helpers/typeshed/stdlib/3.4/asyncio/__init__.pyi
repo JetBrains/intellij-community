@@ -37,15 +37,23 @@ from asyncio.transports import (
 )
 from asyncio.futures import (
     Future as Future,
+    CancelledError as CancelledError,
+    TimeoutError as TimeoutError,
+    InvalidStateError as InvalidStateError,
 )
 from asyncio.tasks import (
-    sleep as sleep,
-    Task as Task,
     FIRST_COMPLETED as FIRST_COMPLETED,
     FIRST_EXCEPTION as FIRST_EXCEPTION,
     ALL_COMPLETED as ALL_COMPLETED,
+    as_completed as as_completed,
+    ensure_future as ensure_future,
+    gather as gather,
+    run_coroutine_threadsafe as run_coroutine_threadsafe,
+    shield as shield,
+    sleep as sleep,
     wait as wait,
     wait_for as wait_for,
+    Task as Task,
 )
 from asyncio.events import (
     AbstractEventLoopPolicy as AbstractEventLoopPolicy,
@@ -64,7 +72,6 @@ from asyncio.queues import (
     Queue as Queue,
     PriorityQueue as PriorityQueue,
     LifoQueue as LifoQueue,
-    JoinableQueue as JoinableQueue,
     QueueFull as QueueFull,
     QueueEmpty as QueueEmpty,
 )
@@ -76,6 +83,9 @@ from asyncio.locks import (
     BoundedSemaphore as BoundedSemaphore,
 )
 
+if sys.version_info < (3, 5):
+    from asyncio.queues import JoinableQueue as JoinableQueue
+
 # TODO: It should be possible to instantiate these classes, but mypy
 # currently disallows this.
 # See https://github.com/python/mypy/issues/1843
@@ -86,4 +96,4 @@ DefaultEventLoopPolicy = ...  # type: Type[AbstractEventLoopPolicy]
 
 # TODO: AbstractChildWatcher (UNIX only)
 
-__all__ = ... # type: str
+__all__ = ...  # type: str

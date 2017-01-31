@@ -19,15 +19,15 @@ def iter_fields(node: AST) -> Iterator[typing.Tuple[str, Any]]: ...
 def literal_eval(node_or_string: Union[str, AST]) -> Any: ...
 def walk(node: AST) -> Iterator[AST]: ...
 
-PyCF_ONLY_AST = ... # type: int
+PyCF_ONLY_AST = ...  # type: int
 
 # ast classes
 
 identifier = str
 
 class AST:
-    _attributes = ... # type: typing.Tuple[str, ...]
-    _fields = ... # type: typing.Tuple[str, ...]
+    _attributes = ...  # type: typing.Tuple[str, ...]
+    _fields = ...  # type: typing.Tuple[str, ...]
     def __init__(self, *args, **kwargs) -> None: ...
 
 class mod(AST):

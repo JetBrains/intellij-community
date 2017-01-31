@@ -5,7 +5,7 @@
 from typing import Tuple, List, Union, TypeVar, Callable, Optional
 from .ElementTree import _ElementInterface
 
-xpath_tokenizer_re = ... # type: Callable[..., List[Tuple[str, str]]]
+xpath_tokenizer_re = ...  # type: Callable[..., List[Tuple[str, str]]]
 
 
 class xpath_descendant_or_self: ...

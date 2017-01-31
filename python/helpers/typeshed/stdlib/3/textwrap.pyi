@@ -1,25 +1,26 @@
 # Better textwrap stubs hand-written by o11c.
 # https://docs.python.org/3/library/textwrap.html
 from typing import (
-        Callable,
-        List,
+    Callable,
+    List,
 )
 
 class TextWrapper:
-    def __init__(self,
-            width: int = ...,
-            *,
-            initial_indent: str = ...,
-            subsequent_indent: str = ...,
-            expand_tabs: bool = ...,
-            tabsize: int = ...,
-            replace_whitespace: bool = ...,
-            fix_sentence_endings: bool = ...,
-            break_long_words: bool = ...,
-            break_on_hyphens: bool = ...,
-            drop_whitespace: bool = ...,
-            max_lines: int = ...,
-            placeholder: str = ...
+    def __init__(
+        self,
+        width: int = ...,
+        *,
+        initial_indent: str = ...,
+        subsequent_indent: str = ...,
+        expand_tabs: bool = ...,
+        tabsize: int = ...,
+        replace_whitespace: bool = ...,
+        fix_sentence_endings: bool = ...,
+        break_long_words: bool = ...,
+        break_on_hyphens: bool = ...,
+        drop_whitespace: bool = ...,
+        max_lines: int = ...,
+        placeholder: str = ...
     ) -> None:
         self.width = width
         self.initial_indent = initial_indent

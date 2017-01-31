@@ -8,8 +8,8 @@ PyCF_ONLY_AST = ...  # type: int
 identifier = str
 
 class AST:
-    _attributes = ... # type: typing.Tuple[str, ...]
-    _fields = ... # type: typing.Tuple[str, ...]
+    _attributes = ...  # type: typing.Tuple[str, ...]
+    _fields = ...  # type: typing.Tuple[str, ...]
     def __init__(self, *args, **kwargs) -> None: ...
 
 class mod(AST):

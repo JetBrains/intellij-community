@@ -13,16 +13,16 @@ class weekday(object):
 
     def __repr__(self) -> str: ...
 
-    weekday = ... # type: int
-    n = ... # type: int
+    weekday = ...  # type: int
+    n = ...  # type: int
 
-MO = ... # type: weekday
-TU = ... # type: weekday
-WE = ... # type: weekday
-TH = ... # type: weekday
-FR = ... # type: weekday
-SA = ... # type: weekday
-SU = ... # type: weekday
+MO = ...  # type: weekday
+TU = ...  # type: weekday
+WE = ...  # type: weekday
+TH = ...  # type: weekday
+FR = ...  # type: weekday
+SA = ...  # type: weekday
+SU = ...  # type: weekday
 
 
 class relativedelta(object):

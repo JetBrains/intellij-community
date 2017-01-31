@@ -6,10 +6,10 @@ from typing import Any
 
 NO = ...  # type: Any
 YES = ...  # type: Any
-TRUE = ... # type: Any
-FALSE = ... # type: Any
-ON = ... # type: Any
-OFF = ... # type: Any
+TRUE = ...  # type: Any
+FALSE = ...  # type: Any
+ON = ...  # type: Any
+OFF = ...  # type: Any
 N = ...  # type: Any
 S = ...  # type: Any
 W = ...  # type: Any

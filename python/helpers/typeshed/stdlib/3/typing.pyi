@@ -2,6 +2,7 @@
 
 import sys
 from abc import abstractmethod, ABCMeta
+from types import CodeType, FrameType
 
 # Definitions of special type checking related constructs.  Their definition
 # are not used, so their value does not matter.
@@ -15,6 +16,9 @@ Callable = object()
 Type = object()
 _promote = object()
 no_type_check = object()
+ClassVar = object()
+
+class GenericMeta(type): ...
 
 # Type aliases and type constructors
 
@@ -96,39 +100,86 @@ class Iterator(Iterable[_T_co], Generic[_T_co]):
 
 class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @abstractmethod
-    def __next__(self) -> _T_co:...
+    def __next__(self) -> _T_co: ...
 
     @abstractmethod
-    def send(self, value: _T_contra) -> _T_co:...
+    def send(self, value: _T_contra) -> _T_co: ...
 
     @abstractmethod
-    def throw(self, typ: BaseException, val: Any = None, tb: Any = None) -> None:...
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = None,
+              # TODO: tb should be TracebackType but that's defined in types
+              tb: Any = None) -> None: ...
 
     @abstractmethod
-    def close(self) -> None:...
+    def close(self) -> None: ...
 
     @abstractmethod
     def __iter__(self) -> 'Generator[_T_co, _T_contra, _V_co]': ...
 
+    gi_code = ...  # type: CodeType
+    gi_frame = ...  # type: FrameType
+    gi_running = ...  # type: bool
+    gi_yieldfrom = ...  # type: Optional[Generator]
+
+# TODO: Several types should only be defined if sys.python_version >= (3, 5):
+# Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection, ContextManager.
+# See https: //github.com/python/typeshed/issues/655 for why this is not easy.
+
 class Awaitable(Generic[_T_co]):
     @abstractmethod
-    def __await__(self) -> Generator[Any, None, _T_co]:...
+    def __await__(self) -> Generator[Any, None, _T_co]: ...
+
+class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
+    @abstractmethod
+    def send(self, value: _T_contra) -> _T_co: ...
+
+    @abstractmethod
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = None,
+              # TODO: tb should be TracebackType but that's defined in types
+              tb: Any = None) -> None: ...
+
+    @abstractmethod
+    def close(self) -> None: ...
+
 
 # NOTE: This type does not exist in typing.py or PEP 484.
 # The parameters corrrespond to Generator, but the 4th is the original type.
-class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_T_co],
+class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_V_co],
                          Generic[_T_co, _T_contra, _V_co, _S]):
     pass
 
 class AsyncIterable(Generic[_T_co]):
     @abstractmethod
-    def __anext__(self) -> Awaitable[_T_co]:...
+    def __anext__(self) -> Awaitable[_T_co]: ...
 
 class AsyncIterator(AsyncIterable[_T_co],
                     Generic[_T_co]):
     @abstractmethod
-    def __anext__(self) -> Awaitable[_T_co]:...
-    def __aiter__(self) -> 'AsyncIterator[_T_co]':...
+    def __anext__(self) -> Awaitable[_T_co]: ...
+    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
+
+if sys.version_info >= (3, 6):
+    class AsyncGenerator(AsyncIterator[_T_co], Generic[_T_co, _T_contra]):
+        @abstractmethod
+        def __anext__(self) -> Awaitable[_T_co]: ...
+
+        @abstractmethod
+        def asend(self, value: _T_contra) -> Awaitable[_T_co]: ...
+
+        @abstractmethod
+        def athrow(self, typ: Type[BaseException], val: Optional[BaseException] = None,
+                   tb: Any = None) -> Awaitable[_T_co]: ...
+
+        @abstractmethod
+        def aclose(self) -> Awaitable[_T_co]: ...
+
+        @abstractmethod
+        def __aiter__(self) -> 'AsyncGenerator[_T_co, _T_contra]': ...
+
+        ag_await = ...  # type: Any
+        ag_code = ...  # type: CodeType
+        ag_frame = ...  # type: FrameType
+        ag_running = ...  # type: bool
 
 class Container(Generic[_T_co]):
     @abstractmethod
@@ -189,7 +240,7 @@ class AbstractSet(Iterable[_T_co], Container[_T_co], Sized, Generic[_T_co]):
     # TODO: Argument can be a more general ABC?
     def isdisjoint(self, s: AbstractSet[Any]) -> bool: ...
 
-class FrozenSet(AbstractSet[_T], Generic[_T]): ...
+class FrozenSet(AbstractSet[_T_co], Generic[_T_co]): ...
 
 class MutableSet(AbstractSet[_T], Generic[_T]):
     @abstractmethod
@@ -224,13 +275,15 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
 
 class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
-    # see discussion in https://github.com/python/typing/pull/273.
+    # see discussion in https: //github.com/python/typing/pull/273.
     @abstractmethod
     def __getitem__(self, k: _KT) -> _VT_co:
         ...
     # Mixin methods
-    def get(self, k: _KT, default: _VT_co = ...) -> _VT_co:  # type: ignore
-        ...
+    @overload  # type: ignore
+    def get(self, k: _KT) -> Optional[_VT_co]: ...
+    @overload  # type: ignore
+    def get(self, k: _KT, default: Union[_VT_co, _T]) -> Union[_VT_co, _T]: ...
     def items(self) -> AbstractSet[Tuple[_KT, _VT_co]]: ...
     def keys(self) -> AbstractSet[_KT]: ...
     def values(self) -> ValuesView[_VT_co]: ...
@@ -255,7 +308,7 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     # the first overload, but by using overloading rather than a Union,
     # mypy will commit to using the first overload when the argument is
     # known to be a Mapping with unknown type parameters, which is closer
-    # to the behavior we want. See mypy issue #1430.
+    # to the behavior we want. See mypy issue  #1430.
     @overload
     def update(self, m: Mapping[_KT, _VT]) -> None: ...
     @overload
@@ -290,7 +343,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def readline(self, limit: int = ...) -> AnyStr: ...
     @abstractmethod
-    def readlines(self, hint: int = ...) -> list[AnyStr]: ...
+    def readlines(self, hint: int = ...) -> List[AnyStr]: ...
     @abstractmethod
     def seek(self, offset: int, whence: int = ...) -> int: ...
     @abstractmethod
@@ -340,11 +393,11 @@ class TextIO(IO[str]):
     @property
     def encoding(self) -> str: ...
     @property
-    def errors(self) -> str: ...
+    def errors(self) -> Optional[str]: ...
     @property
     def line_buffering(self) -> int: ...  # int on PyPy, bool on CPython
     @property
-    def newlines(self) -> Any: ... # None, str or tuple
+    def newlines(self) -> Any: ...  # None, str or tuple
     @abstractmethod
     def __enter__(self) -> TextIO: ...
 
@@ -375,7 +428,7 @@ class Match(Generic[AnyStr]):
               *groups: str) -> Sequence[AnyStr]: ...
 
     def groups(self, default: AnyStr = ...) -> Sequence[AnyStr]: ...
-    def groupdict(self, default: AnyStr = ...) -> dict[str, AnyStr]: ...
+    def groupdict(self, default: AnyStr = ...) -> Dict[str, AnyStr]: ...
     def start(self, group: Union[int, str] = ...) -> int: ...
     def end(self, group: Union[int, str] = ...) -> int: ...
     def span(self, group: Union[int, str] = ...) -> Tuple[int, int]: ...
@@ -393,9 +446,9 @@ class Pattern(Generic[AnyStr]):
     # New in Python 3.4
     def fullmatch(self, string: AnyStr, pos: int = ...,
                   endpos: int = ...) -> Optional[Match[AnyStr]]: ...
-    def split(self, string: AnyStr, maxsplit: int = ...) -> list[AnyStr]: ...
+    def split(self, string: AnyStr, maxsplit: int = ...) -> List[AnyStr]: ...
     def findall(self, string: AnyStr, pos: int = ...,
-                endpos: int = ...) -> list[Any]: ...
+                endpos: int = ...) -> List[Any]: ...
     def finditer(self, string: AnyStr, pos: int = ...,
                  endpos: int = ...) -> Iterator[Match[AnyStr]]: ...
 
@@ -415,15 +468,23 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable) -> dict[str, Any]: ...
+def get_type_hints(obj: Callable) -> Dict[str, Any]: ...
 
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 
 # Type constructors
 
-# NamedTuple is special-cased in the type checker; the initializer is ignored.
-def NamedTuple(typename: str, fields: Iterable[Tuple[str, Any]], *,
-               verbose: bool = ..., rename: bool = ..., module: str = None) -> Type[tuple]: ...
+# NamedTuple is special-cased in the type checker
+class NamedTuple(tuple):
+    _fields = ...  # type: Tuple[str, ...]
+
+    def __init__(self, typename: str, fields: Iterable[Tuple[str, Any]], *,
+                 verbose: bool = ..., rename: bool = ..., module: Any = ...) -> None: ...
+
+    @classmethod
+    def _make(cls, iterable: Iterable[Any]) -> NamedTuple: ...
+
+    def _asdict(self) -> dict: ...
+    def _replace(self, **kwargs: Any) -> NamedTuple: ...
 
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...
-

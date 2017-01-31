@@ -10,24 +10,24 @@ def urlretrieve(url, filename=..., reporthook=..., data=..., context=...): ...
 def urlcleanup() -> None: ...
 
 class ContentTooShortError(IOError):
-    content = ... # type: Any
+    content = ...  # type: Any
     def __init__(self, message, content) -> None: ...
 
 class URLopener:
-    version = ... # type: Any
-    proxies = ... # type: Any
-    key_file = ... # type: Any
-    cert_file = ... # type: Any
-    context = ... # type: Any
-    addheaders = ... # type: Any
-    tempcache = ... # type: Any
-    ftpcache = ... # type: Any
+    version = ...  # type: Any
+    proxies = ...  # type: Any
+    key_file = ...  # type: Any
+    cert_file = ...  # type: Any
+    context = ...  # type: Any
+    addheaders = ...  # type: Any
+    tempcache = ...  # type: Any
+    ftpcache = ...  # type: Any
     def __init__(self, proxies: Mapping[str, str] = ..., context=..., **x509) -> None: ...
     def __del__(self): ...
     def close(self): ...
     def cleanup(self): ...
     def addheader(self, *args): ...
-    type = ... # type: Any
+    type = ...  # type: Any
     def open(self, fullurl: str, data=...): ...
     def open_unknown(self, fullurl, data=...): ...
     def open_unknown_proxy(self, proxy, fullurl, data=...): ...
@@ -42,9 +42,9 @@ class URLopener:
     def open_data(self, url, data=...): ...
 
 class FancyURLopener(URLopener):
-    auth_cache = ... # type: Any
-    tries = ... # type: Any
-    maxtries = ... # type: Any
+    auth_cache = ...  # type: Any
+    tries = ...  # type: Any
+    maxtries = ...  # type: Any
     def __init__(self, *args, **kwargs) -> None: ...
     def http_error_default(self, url, fp, errcode, errmsg, headers): ...
     def http_error_302(self, url, fp, errcode, errmsg, headers, data=...): ...
@@ -62,17 +62,17 @@ class FancyURLopener(URLopener):
     def prompt_user_passwd(self, host, realm): ...
 
 class ftpwrapper:
-    user = ... # type: Any
-    passwd = ... # type: Any
-    host = ... # type: Any
-    port = ... # type: Any
-    dirs = ... # type: Any
-    timeout = ... # type: Any
-    refcount = ... # type: Any
-    keepalive = ... # type: Any
+    user = ...  # type: Any
+    passwd = ...  # type: Any
+    host = ...  # type: Any
+    port = ...  # type: Any
+    dirs = ...  # type: Any
+    timeout = ...  # type: Any
+    refcount = ...  # type: Any
+    keepalive = ...  # type: Any
     def __init__(self, user, passwd, host, port, dirs, timeout=..., persistent=...) -> None: ...
-    busy = ... # type: Any
-    ftp = ... # type: Any
+    busy = ...  # type: Any
+    ftp = ...  # type: Any
     def init(self): ...
     def retrfile(self, file, type): ...
     def endtransfer(self): ...
@@ -81,31 +81,31 @@ class ftpwrapper:
     def real_close(self): ...
 
 class addbase:
-    fp = ... # type: Any
-    read = ... # type: Any
-    readline = ... # type: Any
-    readlines = ... # type: Any
-    fileno = ... # type: Any
-    __iter__ = ... # type: Any
-    next = ... # type: Any
+    fp = ...  # type: Any
+    read = ...  # type: Any
+    readline = ...  # type: Any
+    readlines = ...  # type: Any
+    fileno = ...  # type: Any
+    __iter__ = ...  # type: Any
+    next = ...  # type: Any
     def __init__(self, fp) -> None: ...
     def close(self): ...
 
 class addclosehook(addbase):
-    closehook = ... # type: Any
-    hookargs = ... # type: Any
+    closehook = ...  # type: Any
+    hookargs = ...  # type: Any
     def __init__(self, fp, closehook, *hookargs) -> None: ...
     def close(self): ...
 
 class addinfo(addbase):
-    headers = ... # type: Any
+    headers = ...  # type: Any
     def __init__(self, fp, headers) -> None: ...
     def info(self): ...
 
 class addinfourl(addbase):
-    headers = ... # type: Any
-    url = ... # type: Any
-    code = ... # type: Any
+    headers = ...  # type: Any
+    url = ...  # type: Any
+    code = ...  # type: Any
     def __init__(self, fp, headers, url, code=...) -> None: ...
     def info(self): ...
     def getcode(self): ...

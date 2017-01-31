@@ -2,43 +2,43 @@
 
 # Based on http://docs.python.org/3.5/library/subprocess.html
 import sys
-from typing import Sequence, Any, Mapping, Callable, Tuple, IO, Optional, Union, List, Type
+from typing import Sequence, Any, AnyStr, Mapping, Callable, Tuple, IO, Optional, Union, List, Type
 from types import TracebackType
 
 
 if sys.version_info >= (3, 5):
     class CompletedProcess:
-        args = ...  # type: Union[List, str]
-        returncode = ... # type: int
-        stdout = ... # type: Union[str, bytes]
-        stderr = ... # type: Union[str, bytes]
+        args = ...  # type: Union[Sequence[str], str]
+        returncode = ...  # type: int
+        stdout = ...  # type: Any
+        stderr = ...  # type: Any
         def __init__(self, args: Union[List, str],
                      returncode: int,
-                     stdout: Union[str, bytes],
-                     stderr: Union[str, bytes]) -> None: ...
+                     stdout: Union[str, bytes, None] = ...,
+                     stderr: Union[str, bytes, None] = ...) -> None: ...
         def check_returncode(self) -> None: ...
 
     # Nearly same args as Popen.__init__ except for timeout, input, and check
     def run(args: Union[str, Sequence[str]],
-	    timeout: float = ...,
-	    input: Union[str, bytes] = ...,
-	    check: bool = ...,
-	    bufsize: int = ...,
-	    executable: str = ...,
-	    stdin: Any = ...,
-	    stdout: Any = ...,
-	    stderr: Any = ...,
-	    preexec_fn: Callable[[], Any] = ...,
-	    close_fds: bool = ...,
-	    shell: bool = ...,
-	    cwd: str = ...,
-	    env: Mapping[str, str] = ...,
-	    universal_newlines: bool = ...,
-	    startupinfo: Any = ...,
-	    creationflags: int = ...,
-	    restore_signals: bool = ...,
-	    start_new_session: bool = ...,
-	    pass_fds: Any = ...) -> CompletedProcess: ...
+            timeout: float = ...,
+            input: Union[str, bytes] = ...,
+            check: bool = ...,
+            bufsize: int = ...,
+            executable: str = ...,
+            stdin: Any = ...,
+            stdout: Any = ...,
+            stderr: Any = ...,
+            preexec_fn: Callable[[], Any] = ...,
+            close_fds: bool = ...,
+            shell: bool = ...,
+            cwd: str = ...,
+            env: Mapping[str, str] = ...,
+            universal_newlines: bool = ...,
+            startupinfo: Any = ...,
+            creationflags: int = ...,
+            restore_signals: bool = ...,
+            start_new_session: bool = ...,
+            pass_fds: Any = ...) -> CompletedProcess: ...
 
 # Same args as Popen.__init__
 if sys.version_info >= (3, 3):
@@ -180,8 +180,8 @@ else:
 
 
 # TODO types
-PIPE = ... # type: Any
-STDOUT = ... # type: Any
+PIPE = ...  # type: Any
+STDOUT = ...  # type: Any
 if sys.version_info >= (3, 3):
     DEVNULL = ...  # type: Any
     class SubprocessError(Exception): ...
@@ -191,7 +191,7 @@ if sys.version_info >= (3, 3):
 class CalledProcessError(Exception):
     returncode = 0
     cmd = ...  # type: str
-    output = b'' # May be None
+    output = b''  # May be None
 
     if sys.version_info >= (3, 5):
         stdout = b''
@@ -201,9 +201,9 @@ class CalledProcessError(Exception):
                  stderr: Optional[str] = ...) -> None: ...
 
 class Popen:
-    stdin = ... # type: IO[Any]
-    stdout = ... # type: IO[Any]
-    stderr = ... # type: IO[Any]
+    stdin = ...  # type: IO[Any]
+    stdout = ...  # type: IO[Any]
+    stderr = ...  # type: IO[Any]
     pid = 0
     returncode = 0
 
@@ -234,9 +234,9 @@ class Popen:
         def wait(self) ->int: ...
     # Return str/bytes
     if sys.version_info >= (3, 3):
-        def communicate(self, input: Union[str, bytes] = ..., timeout: float = ...) -> Tuple[Any, Any]: ...
+        def communicate(self, input: Optional[AnyStr] = ..., timeout: Optional[float] = ...) -> Tuple[Any, Any]: ...
     else:
-        def communicate(self, input: Union[str, bytes] = ...) -> Tuple[Any, Any]: ...
+        def communicate(self, input: Optional[AnyStr] = ...) -> Tuple[Any, Any]: ...
     def send_signal(self, signal: int) -> None: ...
     def terminate(self) -> None: ...
     def kill(self) -> None: ...

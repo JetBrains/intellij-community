@@ -9,7 +9,7 @@ _T = TypeVar('_T')
 _S = TypeVar('_S')
 
 def count(start: int = ...,
-          step: int = ...) -> Iterator[int]: ... # more general types?
+          step: int = ...) -> Iterator[int]: ...  # more general types?
 def cycle(iterable: Iterable[_T]) -> Iterator[_T]: ...
 
 def repeat(object: _T, times: int = ...) -> Iterator[_T]: ...

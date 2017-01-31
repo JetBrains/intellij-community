@@ -5,7 +5,7 @@
 from typing import Pattern, Dict, Generator, Tuple, List, Union, TypeVar, Callable, Optional
 from xml.etree.ElementTree import Element
 
-xpath_tokenizer_re = ... # type: Pattern
+xpath_tokenizer_re = ...  # type: Pattern
 
 _token = Tuple[str, str]
 _next = Callable[[], _token]
@@ -20,11 +20,11 @@ def prepare_descendant(next: _next, token: _token) -> _callback: ...
 def prepare_parent(next: _next, token: _token) -> _callback: ...
 def prepare_predicate(next: _next, token: _token) -> _callback: ...
 
-ops = ... # type: Dict[str, Callable[[_next, _token], _callback]]
+ops = ...  # type: Dict[str, Callable[[_next, _token], _callback]]
 
 class _SelectorContext:
-    parent_map = ... # type: Dict[Element, Element]
-    root = ... # type: Element
+    parent_map = ...  # type: Dict[Element, Element]
+    root = ...  # type: Element
     def __init__(self, root: Element) -> None: ...
 
 _T = TypeVar('_T')

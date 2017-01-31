@@ -4,40 +4,40 @@
 
 from typing import Any
 
-string_types = ... # type: Any
-bytes_types = ... # type: Any
-LOST_STATES = ... # type: Any
-ENVI_VERSION = ... # type: Any
-ENVI_VERSION_KEY = ... # type: Any
-log = ... # type: Any
+string_types = ...  # type: Any
+bytes_types = ...  # type: Any
+LOST_STATES = ...  # type: Any
+ENVI_VERSION = ...  # type: Any
+ENVI_VERSION_KEY = ...  # type: Any
+log = ...  # type: Any
 
 class KazooClient:
-    logger = ... # type: Any
-    handler = ... # type: Any
-    auth_data = ... # type: Any
-    default_acl = ... # type: Any
-    randomize_hosts = ... # type: Any
-    hosts = ... # type: Any
-    chroot = ... # type: Any
-    state = ... # type: Any
-    state_listeners = ... # type: Any
-    read_only = ... # type: Any
-    retry = ... # type: Any
-    Barrier = ... # type: Any
-    Counter = ... # type: Any
-    DoubleBarrier = ... # type: Any
-    ChildrenWatch = ... # type: Any
-    DataWatch = ... # type: Any
-    Election = ... # type: Any
-    NonBlockingLease = ... # type: Any
-    MultiNonBlockingLease = ... # type: Any
-    Lock = ... # type: Any
-    Party = ... # type: Any
-    Queue = ... # type: Any
-    LockingQueue = ... # type: Any
-    SetPartitioner = ... # type: Any
-    Semaphore = ... # type: Any
-    ShallowParty = ... # type: Any
+    logger = ...  # type: Any
+    handler = ...  # type: Any
+    auth_data = ...  # type: Any
+    default_acl = ...  # type: Any
+    randomize_hosts = ...  # type: Any
+    hosts = ...  # type: Any
+    chroot = ...  # type: Any
+    state = ...  # type: Any
+    state_listeners = ...  # type: Any
+    read_only = ...  # type: Any
+    retry = ...  # type: Any
+    Barrier = ...  # type: Any
+    Counter = ...  # type: Any
+    DoubleBarrier = ...  # type: Any
+    ChildrenWatch = ...  # type: Any
+    DataWatch = ...  # type: Any
+    Election = ...  # type: Any
+    NonBlockingLease = ...  # type: Any
+    MultiNonBlockingLease = ...  # type: Any
+    Lock = ...  # type: Any
+    Party = ...  # type: Any
+    Queue = ...  # type: Any
+    LockingQueue = ...  # type: Any
+    SetPartitioner = ...  # type: Any
+    Semaphore = ...  # type: Any
+    ShallowParty = ...  # type: Any
     def __init__(self, hosts=..., timeout=..., client_id=..., handler=..., default_acl=..., auth_data=..., read_only=..., randomize_hosts=..., connection_retry=..., command_retry=..., logger=..., **kwargs) -> None: ...
     @property
     def client_state(self): ...
@@ -83,9 +83,9 @@ class KazooClient:
     def reconfig_async(self, joining, leaving, new_members, from_config): ...
 
 class TransactionRequest:
-    client = ... # type: Any
-    operations = ... # type: Any
-    committed = ... # type: Any
+    client = ...  # type: Any
+    operations = ...  # type: Any
+    committed = ...  # type: Any
     def __init__(self, client) -> None: ...
     def create(self, path, value=..., acl=..., ephemeral=..., sequence=...): ...
     def delete(self, path, version=...): ...

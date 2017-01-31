@@ -32,9 +32,9 @@ def dump(obj: Any,
     **kwds: Any) -> None: ...
 
 def loads(s: str,
-    encoding: Any = ..., # ignored and deprecated
+    encoding: Any = ...,  # ignored and deprecated
     cls: Any = ...,
-    object_hook: Callable[[Dict], Any] = ...,
+    object_hook: Optional[Callable[[Dict], Any]] = ...,
     parse_float: Optional[Callable[[str], Any]] = ...,
     parse_int: Optional[Callable[[str], Any]] = ...,
     parse_constant: Optional[Callable[[str], Any]] = ...,
@@ -43,7 +43,7 @@ def loads(s: str,
 
 def load(fp: IO[str],
     cls: Any = ...,
-    object_hook: Callable[[Dict], Any] = ...,
+    object_hook: Optional[Callable[[Dict], Any]] = ...,
     parse_float: Optional[Callable[[str], Any]] = ...,
     parse_int: Optional[Callable[[str], Any]] = ...,
     parse_constant: Optional[Callable[[str], Any]] = ...,
@@ -85,4 +85,4 @@ class JSONDecoder(object):
             strict: bool=True,
             object_pairs_hook: Callable[[List[Tuple[str, Any]]], Any]=None) -> None: ...
     def decode(self, s: str) -> Any: ...
-    def raw_decode(self, s: str) -> Tuple[Any, int]: ...
+    def raw_decode(self, s: str, idx: int=...) -> Tuple[Any, int]: ...

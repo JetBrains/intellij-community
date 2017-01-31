@@ -1,5 +1,8 @@
-from typing import Any, Iterable, Optional, Tuple
 import datetime
+
+from time import struct_time
+from typing import Any, Iterable, List, Optional, Tuple, Sequence, Union
+
 
 LocaleType = Tuple[Optional[str], Optional[str]]
 
@@ -72,7 +75,13 @@ c = ...  # type: TextCalendar
 def setfirstweekday(firstweekday: int) -> None: ...
 def format(cols: int, colwidth: int = ..., spacing: int = ...) -> str: ...
 def formatstring(cols: int, colwidth: int = ..., spacing: int = ...) -> str: ...
-def timegm(tuple: Tuple[int, ...]) -> int: ...
+def timegm(tuple: Union[Tuple[int, ...], struct_time]) -> int: ...
+
+# Data attributes
+day_name = ...  # type: Sequence[str]
+day_abbr = ...  # type: Sequence[str]
+month_name = ...  # type: Sequence[str]
+month_abbr = ...  # type: Sequence[str]
 
 # Below constants are not in docs or __all__, but enough people have used them
 # they are now effectively public.

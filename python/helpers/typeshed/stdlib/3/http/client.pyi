@@ -125,17 +125,19 @@ else:
 
 class HTTPConnection:
     if sys.version_info >= (3, 4):
-        def __init__(self,
-                     host: str, port: Optional[int] = ...,
-                     timeout: int = ...,
-                     source_address: Optional[Tuple[str, int]] = ...) \
-                     -> None: ...
+        def __init__(
+            self,
+            host: str, port: Optional[int] = ...,
+            timeout: int = ...,
+            source_address: Optional[Tuple[str, int]] = ...
+        ) -> None: ...
     else:
-        def __init__(self,
-                     host: str, port: Optional[int] = ...,
-                     strict: bool = ..., timeout: int = ...,
-                     source_address: Optional[Tuple[str, int]] = ...) \
-                             -> None: ...
+        def __init__(
+            self,
+            host: str, port: Optional[int] = ...,
+            strict: bool = ..., timeout: int = ...,
+            source_address: Optional[Tuple[str, int]] = ...
+        )-> None: ...
     def request(self, method: str, url: str,
                 body: Optional[_DataType] = ...,
                 headers: Mapping[str, str] = ...) -> None: ...

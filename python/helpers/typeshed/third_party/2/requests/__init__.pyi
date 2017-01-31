@@ -12,7 +12,7 @@ __title__ = ...  # type: Any
 __build__ = ...  # type: Any
 __license__ = ...  # type: Any
 __copyright__ = ...  # type: Any
-__version__ = ... # type: Any
+__version__ = ...  # type: Any
 
 Request = models.Request
 Response = models.Response

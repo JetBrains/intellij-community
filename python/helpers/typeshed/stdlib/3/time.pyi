@@ -5,7 +5,7 @@
 # see: http://nullege.com/codes/search?cq=time
 
 import sys
-from typing import Tuple, Union
+from typing import Any, NamedTuple, Tuple, Union
 from types import SimpleNamespace
 
 TimeTuple = Tuple[int, int, int, int, int, int, int, int, int]
@@ -15,7 +15,7 @@ accept2dyear = False
 altzone = 0
 daylight = 0
 timezone = 0
-tzname = ... # type: Tuple[str, str]
+tzname = ...  # type: Tuple[str, str]
 
 if sys.version_info >= (3, 3) and sys.platform != 'win32':
     CLOCK_HIGHRES = 0  # Solaris only
@@ -26,27 +26,36 @@ if sys.version_info >= (3, 3) and sys.platform != 'win32':
     CLOCK_THREAD_CPUTIME_ID = 0  # Unix only
 
 
-# ----- classes/methods -----
-class struct_time:
-    # this is supposed to be a namedtuple object
-    # namedtuple is not yet implemented (see file: mypy/stubs/collections.py)
-    # see: http://docs.python.org/3.2/library/time.html#time.struct_time
-    # see: http://nullege.com/codes/search/time.struct_time
-    # TODO: namedtuple() object problem
-    #namedtuple __init__(self, int, int, int, int, int, int, int, int, int):
-    #    ...
-    tm_year = 0
-    tm_mon = 0
-    tm_mday = 0
-    tm_hour = 0
-    tm_min = 0
-    tm_sec = 0
-    tm_wday = 0
-    tm_yday = 0
-    tm_isdst = 0
-    if sys.version_info >= (3, 3):
-        tm_gmtoff = 0
-        tm_zone = 'GMT'
+if sys.version_info >= (3, 3):
+    class struct_time(
+        NamedTuple(
+            '_struct_time',
+            [('tm_year', int), ('tm_mon', int), ('tm_mday', int),
+             ('tm_hour', int), ('tm_min', int), ('tm_sec', int),
+             ('tm_wday', int), ('tm_yday', int), ('tm_isdst', int),
+             ('tm_zone', str), ('tm_gmtoff', int)]
+        )
+    ):
+        def __init__(
+            self,
+            o: Union[
+                Tuple[int, int, int, int, int, int, int, int, int],
+                Tuple[int, int, int, int, int, int, int, int, int, str],
+                Tuple[int, int, int, int, int, int, int, int, int, str, int]
+            ],
+            _arg: Any = ...,
+        ) -> None: ...
+else:
+    class struct_time(
+        NamedTuple(
+            '_struct_time',
+            [('tm_year', int), ('tm_mon', int), ('tm_mday', int),
+             ('tm_hour', int), ('tm_min', int), ('tm_sec', int),
+             ('tm_wday', int), ('tm_yday', int), ('tm_isdst', int)]
+        )
+    ):
+        def __init__(self, o: TimeTuple, _arg: Any = ...) -> None: ...
+
 
 # ----- functions -----
 def asctime(t: Union[TimeTuple, struct_time, None] = ...) -> str: ...  # return current time

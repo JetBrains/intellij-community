@@ -8,13 +8,13 @@ from yaml.error import YAMLError
 class ResolverError(YAMLError): ...
 
 class BaseResolver:
-    DEFAULT_SCALAR_TAG = ... # type: Any
-    DEFAULT_SEQUENCE_TAG = ... # type: Any
-    DEFAULT_MAPPING_TAG = ... # type: Any
-    yaml_implicit_resolvers = ... # type: Any
-    yaml_path_resolvers = ... # type: Any
-    resolver_exact_paths = ... # type: Any
-    resolver_prefix_paths = ... # type: Any
+    DEFAULT_SCALAR_TAG = ...  # type: Any
+    DEFAULT_SEQUENCE_TAG = ...  # type: Any
+    DEFAULT_MAPPING_TAG = ...  # type: Any
+    yaml_implicit_resolvers = ...  # type: Any
+    yaml_path_resolvers = ...  # type: Any
+    resolver_exact_paths = ...  # type: Any
+    resolver_prefix_paths = ...  # type: Any
     def __init__(self) -> None: ...
     def add_implicit_resolver(cls, tag, regexp, first): ...
     def add_path_resolver(cls, tag, path, kind=...): ...

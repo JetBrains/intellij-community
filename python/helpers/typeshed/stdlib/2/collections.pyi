@@ -7,9 +7,9 @@
 # NOTE: These are incomplete!
 
 from typing import (
-    Any, Dict, Generic, TypeVar, Iterable, Tuple, Callable, Mapping, overload, Iterator, Type,
-    Sized, Optional, List, Set, Sequence, Union, Reversible, MutableMapping, MutableSequence,
-    Container
+    Any, Container, Dict, Generic, TypeVar, Iterable, Tuple, Callable, Mapping, overload,
+    Iterator, Type, Sized, Optional, List, Set, Sequence, Union, Reversible,
+    MutableMapping, MutableSet, MutableSequence,
 )
 import typing
 
@@ -18,7 +18,7 @@ _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
 
 # namedtuple is special-cased in the type checker; the initializer is ignored.
-def namedtuple(typename: str, field_names: Union[str, Iterable[Any]], *,
+def namedtuple(typename: Union[str, unicode], field_names: Union[str, unicode, Iterable[Any]], *,
                verbose: bool = ..., rename: bool = ...) -> Type[tuple]: ...
 
 class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
@@ -92,17 +92,3 @@ class defaultdict(Dict[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, default_factory: Callable[[], _VT],
                  iterable: Iterable[Tuple[_KT, _VT]]) -> None: ...
     def __missing__(self, key: _KT) -> _VT: ...
-
-class ChainMap(Dict[_KT, _VT], Generic[_KT, _VT]):
-    @overload
-    def __init__(self) -> None: ...
-    @overload
-    def __init__(self, *maps: Mapping[_KT, _VT]) -> None: ...
-
-    @property
-    def maps(self) -> List[Mapping[_KT, _VT]]: ...
-
-    def new_child(self, m: Mapping[_KT, _VT] = ...) -> ChainMap[_KT, _VT]: ...
-
-    @property
-    def parents(self) -> ChainMap[_KT, _VT]: ...

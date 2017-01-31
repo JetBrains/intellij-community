@@ -12,16 +12,16 @@ class shlex:
     def pop_source(self) -> IO[Any]: ...
     def error_leader(self, file: str = ..., line: int = ...) -> str: ...
 
-    commenters = ... # type: str
-    wordchars = ... # type: str
-    whitespace = ... # type: str
-    escape = ... # type: str
-    quotes = ... # type: str
-    escapedquotes = ... # type: str
-    whitespace_split = ... # type: bool
-    infile = ... # type: IO[Any]
-    source = ... # type: Optional[str]
-    debug = ... # type: int
-    lineno = ... # type: int
-    token = ... # type: Any
-    eof = ... # type: Optional[str]
+    commenters = ...  # type: str
+    wordchars = ...  # type: str
+    whitespace = ...  # type: str
+    escape = ...  # type: str
+    quotes = ...  # type: str
+    escapedquotes = ...  # type: str
+    whitespace_split = ...  # type: bool
+    infile = ...  # type: IO[Any]
+    source = ...  # type: Optional[str]
+    debug = ...  # type: int
+    lineno = ...  # type: int
+    token = ...  # type: Any
+    eof = ...  # type: Optional[str]

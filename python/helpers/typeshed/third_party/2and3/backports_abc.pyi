@@ -8,12 +8,12 @@ def mk_gen(): ...
 def mk_awaitable(): ...
 def mk_coroutine(): ...
 
-Generator = ... # type: Any
-Awaitable = ... # type: Any
-Coroutine = ... # type: Any
+Generator = ...  # type: Any
+Awaitable = ...  # type: Any
+Coroutine = ...  # type: Any
 
 def isawaitable(obj): ...
 
-PATCHED = ... # type: Any
+PATCHED = ...  # type: Any
 
 def patch(patch_inspect=True): ...

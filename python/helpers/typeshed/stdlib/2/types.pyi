@@ -28,7 +28,7 @@ DictType = DictionaryType = dict
 class _Cell:
     cell_contents = ...  # type: Any
 
-class FunctionType:
+class FunctionType(object):
     func_closure = ...  # type: Optional[Tuple[_Cell, ...]]
     func_code = ...  # type: CodeType
     func_defaults = ...  # type: Optional[Tuple[Any, ...]]
@@ -39,7 +39,6 @@ class FunctionType:
     __closure__ = func_closure
     __code__ = func_code
     __defaults__ = func_defaults
-    __dict__ = func_dict
     __globals__ = func_globals
     __name__ = func_name
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -59,8 +58,8 @@ class CodeType:
     co_lnotab = ...  # type: str
     co_name = ...  # type: str
     co_names = ...  # type: Tuple[str, ...]
-    co_nlocals= ...  # type: int
-    co_stacksize= ...  # type: int
+    co_nlocals = ...  # type: int
+    co_stacksize = ...  # type: int
     co_varnames = ...  # type: Tuple[str, ...]
 
 class GeneratorType:
@@ -84,7 +83,12 @@ class UnboundMethodType:
     __func__ = im_func
     __self__ = im_self
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
-class InstanceType: ...
+
+class InstanceType:
+    __doc__ = ...  # type: Optional[str]
+    __class__ = ...  # type: type
+    __module__ = ...  # type: Any
+
 MethodType = UnboundMethodType
 
 class BuiltinFunctionType:
@@ -103,24 +107,24 @@ FileType = file
 XRangeType = xrange
 
 class TracebackType:
-    tb_frame = ... # type: FrameType
-    tb_lasti = ... # type: int
-    tb_lineno = ... # type: int
-    tb_next = ... # type: TracebackType
+    tb_frame = ...  # type: FrameType
+    tb_lasti = ...  # type: int
+    tb_lineno = ...  # type: int
+    tb_next = ...  # type: TracebackType
 
 class FrameType:
-    f_back = ... # type: FrameType
-    f_builtins = ... # type: Dict[str, Any]
-    f_code = ... # type: CodeType
-    f_exc_type = ... # type: None
-    f_exc_value = ... # type: None
-    f_exc_traceback = ... # type: None
-    f_globals = ... # type: Dict[str, Any]
-    f_lasti = ... # type: int
-    f_lineno = ... # type: int
-    f_locals = ... # type: Dict[str, Any]
-    f_restricted = ... # type: bool
-    f_trace = ... # type: Callable[[], None]
+    f_back = ...  # type: FrameType
+    f_builtins = ...  # type: Dict[str, Any]
+    f_code = ...  # type: CodeType
+    f_exc_type = ...  # type: None
+    f_exc_value = ...  # type: None
+    f_exc_traceback = ...  # type: None
+    f_globals = ...  # type: Dict[str, Any]
+    f_lasti = ...  # type: int
+    f_lineno = ...  # type: int
+    f_locals = ...  # type: Dict[str, Any]
+    f_restricted = ...  # type: bool
+    f_trace = ...  # type: Callable[[], None]
 
     def clear(self) -> None: pass
 

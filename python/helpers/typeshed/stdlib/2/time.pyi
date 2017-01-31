@@ -1,14 +1,14 @@
 """Stub file for the 'time' module."""
 # See https://docs.python.org/2/library/time.html
 
-from typing import NamedTuple, Tuple, Union, Any
+from typing import NamedTuple, Tuple, Union, Any, Optional
 
 # ----- variables and constants -----
 accept2dyear = False
 altzone = 0
 daylight = 0
 timezone = 0
-tzname = ... # type: Tuple[str, str]
+tzname = ...  # type: Tuple[str, str]
 
 class struct_time(NamedTuple('_struct_time',
                              [('tm_year', int), ('tm_mon', int), ('tm_mday', int),
@@ -25,12 +25,12 @@ def asctime(t: struct_time = ...) -> str:
 
 def clock() -> float: ...
 
-def ctime(secs: float = ...) -> str:
+def ctime(secs: Optional[float] = ...) -> str:
     raise ValueError()
 
-def gmtime(secs: float = ...) -> struct_time: ...
+def gmtime(secs: Optional[float] = ...) -> struct_time: ...
 
-def localtime(secs: float = ...) -> struct_time: ...
+def localtime(secs: Optional[float] = ...) -> struct_time: ...
 
 def mktime(t: struct_time) -> float:
     raise OverflowError()

@@ -4,13 +4,13 @@
 
 from typing import Any
 
-futures = ... # type: Any
+futures = ...  # type: Any
 
 class ReturnValueIgnoredError(Exception): ...
 
 class _TracebackLogger:
-    exc_info = ... # type: Any
-    formatted_tb = ... # type: Any
+    exc_info = ...  # type: Any
+    formatted_tb = ...  # type: Any
     def __init__(self, exc_info) -> None: ...
     def activate(self): ...
     def clear(self): ...
@@ -31,8 +31,8 @@ class Future:
     def set_exc_info(self, exc_info): ...
     def __del__(self): ...
 
-TracebackFuture = ... # type: Any
-FUTURES = ... # type: Any
+TracebackFuture = ...  # type: Any
+FUTURES = ...  # type: Any
 
 def is_future(x): ...
 
@@ -40,7 +40,7 @@ class DummyExecutor:
     def submit(self, fn, *args, **kwargs): ...
     def shutdown(self, wait=...): ...
 
-dummy_executor = ... # type: Any
+dummy_executor = ...  # type: Any
 
 def run_on_executor(*args, **kwargs): ...
 def return_future(f): ...

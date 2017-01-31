@@ -6,8 +6,8 @@ import sys
 class Extension:
     if sys.version_info >= (3,):
         def __init__(self,
-                     *, name: str = ...,
-                     sources: List[str] = ...,
+                     name: str,
+                     sources: List[str],
                      include_dirs: List[str] = ...,
                      define_macros: List[Tuple[str, Optional[str]]] = ...,
                      undef_macros: List[str] = ...,
@@ -23,8 +23,8 @@ class Extension:
                      optional: bool = ...) -> None: ...
     else:
         def __init__(self,
-                     *, name: str = ...,
-                     sources: List[str] = ...,
+                     name: str,
+                     sources: List[str],
                      include_dirs: List[str] = ...,
                      define_macros: List[Tuple[str, Optional[str]]] = ...,
                      undef_macros: List[str] = ...,

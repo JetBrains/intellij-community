@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Any, Iterable, Iterator, Callable, Tuple
+from typing import TypeVar, Generic, Any, Iterable, Iterator, Callable, Tuple, Union
 
 _T = TypeVar('_T')
 
@@ -26,7 +26,7 @@ class ThreadPoolExecutor(Executor):
     def __init__(self, max_workers: int) -> None: ...
 
 class ProcessPoolExecutor(Executor):
-    def __init__(self, max_workers: None) -> None: ...
+    def __init__(self, max_workers: Union[int, None] = ...) -> None: ...
 
 def wait(fs: Iterable[Future], timeout: float = ..., return_when: str = ...) -> Tuple[Iterable[Future], Iterable[Future]]: ...
 

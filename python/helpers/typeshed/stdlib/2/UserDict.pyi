@@ -1,11 +1,12 @@
 from typing import (Any, Container, Dict, Generic, Iterable, Iterator, List,
-                    Mapping, Sized, Tuple, TypeVar, overload)
+                    Mapping, Optional, Sized, Tuple, TypeVar, Union, overload)
 
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
+_T = TypeVar('_T')
 
 class UserDict(Dict[_KT, _VT], Generic[_KT, _VT]):
-    data = ... # type: Mapping[_KT, _VT]
+    data = ...  # type: Mapping[_KT, _VT]
 
     def __init__(self, initialdata: Mapping[_KT, _VT] = ...) -> None: ...
 
@@ -14,12 +15,15 @@ class UserDict(Dict[_KT, _VT], Generic[_KT, _VT]):
 class IterableUserDict(UserDict[_KT, _VT], Generic[_KT, _VT]):
     ...
 
-class DictMixin(Sized, Iterable[_KT], Container[_KT], Generic[_KT, _VT]):
+class DictMixin(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT]):
     def has_key(self, key: _KT) -> bool: ...
 
     # From  typing.Mapping[_KT, _VT]
     # (can't inherit because of keys())
-    def get(self, k: _KT, default: _VT = ...) -> _VT: ...
+    @overload
+    def get(self, k: _KT) -> Optional[_VT]: ...
+    @overload
+    def get(self, k: _KT, default: Union[_VT, _T]) -> Union[_VT, _T]: ...
     def values(self) -> List[_VT]: ...
     def items(self) -> List[Tuple[_KT, _VT]]: ...
     def iterkeys(self) -> Iterator[_KT]: ...

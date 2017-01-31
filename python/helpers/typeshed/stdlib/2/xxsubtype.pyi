@@ -2,7 +2,7 @@
 
 from typing import Any
 
-def bench(obj: Any, name: str, n:int = ...) -> float: ...
+def bench(obj: Any, name: str, n: int = ...) -> float: ...
 
 class spamdict(dict):
     state = ...  # type: int

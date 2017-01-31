@@ -13,7 +13,7 @@ class ConnectionDropped(KazooException): ...
 class LockTimeout(KazooException): ...
 class WriterNotClosedException(KazooException): ...
 
-EXCEPTIONS = ... # type: Any
+EXCEPTIONS = ...  # type: Any
 
 class RolledBackError(ZookeeperError): ...
 class SystemZookeeperError(ZookeeperError): ...
@@ -41,22 +41,22 @@ class SessionMovedError(ZookeeperError): ...
 class NotReadOnlyCallError(ZookeeperError): ...
 class ConnectionClosedError(SessionExpiredError): ...
 
-ConnectionLossException = ... # type: Any
-MarshallingErrorException = ... # type: Any
-SystemErrorException = ... # type: Any
-RuntimeInconsistencyException = ... # type: Any
-DataInconsistencyException = ... # type: Any
-UnimplementedException = ... # type: Any
-OperationTimeoutException = ... # type: Any
-BadArgumentsException = ... # type: Any
-ApiErrorException = ... # type: Any
-NoNodeException = ... # type: Any
-NoAuthException = ... # type: Any
-BadVersionException = ... # type: Any
-NoChildrenForEphemeralsException = ... # type: Any
-NodeExistsException = ... # type: Any
-InvalidACLException = ... # type: Any
-AuthFailedException = ... # type: Any
-NotEmptyException = ... # type: Any
-SessionExpiredException = ... # type: Any
-InvalidCallbackException = ... # type: Any
+ConnectionLossException = ...  # type: Any
+MarshallingErrorException = ...  # type: Any
+SystemErrorException = ...  # type: Any
+RuntimeInconsistencyException = ...  # type: Any
+DataInconsistencyException = ...  # type: Any
+UnimplementedException = ...  # type: Any
+OperationTimeoutException = ...  # type: Any
+BadArgumentsException = ...  # type: Any
+ApiErrorException = ...  # type: Any
+NoNodeException = ...  # type: Any
+NoAuthException = ...  # type: Any
+BadVersionException = ...  # type: Any
+NoChildrenForEphemeralsException = ...  # type: Any
+NodeExistsException = ...  # type: Any
+InvalidACLException = ...  # type: Any
+AuthFailedException = ...  # type: Any
+NotEmptyException = ...  # type: Any
+SessionExpiredException = ...  # type: Any
+InvalidCallbackException = ...  # type: Any

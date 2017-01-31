@@ -9,10 +9,10 @@ whitespace = ...  # type: str
 def atof(a: str) -> float:
     raise DeprecationWarning()
 
-def atoi(a: str, base:int = ...) -> int:
+def atoi(a: str, base: int = ...) -> int:
     raise DeprecationWarning()
 
-def atol(a: str, base:int = ...) -> long:
+def atol(a: str, base: int = ...) -> long:
     raise DeprecationWarning()
 
 def capitalize(s: str) -> str:
@@ -21,18 +21,18 @@ def capitalize(s: str) -> str:
 def count(s: str, sub: str, start: int = ..., end: int = ...) -> int:
     raise DeprecationWarning()
 
-def expandtabs(string:str, tabsize:int = ...) -> str:
+def expandtabs(string: str, tabsize: int = ...) -> str:
     raise DeprecationWarning()
     raise OverflowError()
 
 def find(s: str, sub: str, start: int = ..., end: int = ...) -> int:
     raise DeprecationWarning()
 
-def join(list: Sequence[str], sep:str = ...) -> str:
+def join(list: Sequence[str], sep: str = ...) -> str:
     raise DeprecationWarning()
     raise OverflowError()
 
-def joinfields(list: Sequence[str], sep:str = ...) -> str:
+def joinfields(list: Sequence[str], sep: str = ...) -> str:
     raise DeprecationWarning()
     raise OverflowError()
 
@@ -44,7 +44,7 @@ def lstrip(s: str) -> str:
 
 def maketrans(frm: str, to: str) -> str: ...
 
-def replace(s: str, old: str, new: str, maxsplit:int = ...) -> str:
+def replace(s: str, old: str, new: str, maxsplit: int = ...) -> str:
     raise DeprecationWarning()
 
 def rfind(s: str, sub: str, start: int = ..., end: int = ...) -> int:
@@ -70,4 +70,3 @@ def translate(s: str, table: str, deletechars: str = ...) -> str:
 
 def upper(s: str) -> str:
     raise DeprecationWarning()
-

@@ -10,6 +10,8 @@ pi = ...  # type: float
 if sys.version_info >= (3, 5):
     inf = ...  # type: float
     nan = ...  # type: float
+if sys.version_info >= (3, 6):
+    tau = ...  # type: float
 
 def acos(x: float) -> float: ...
 def acosh(x: float) -> float: ...

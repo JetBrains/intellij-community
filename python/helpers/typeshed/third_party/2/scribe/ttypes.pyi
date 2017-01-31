@@ -4,16 +4,16 @@
 
 from typing import Any
 
-fastbinary = ... # type: Any
+fastbinary = ...  # type: Any
 
 class ResultCode:
-    OK = ... # type: Any
-    TRY_LATER = ... # type: Any
+    OK = ...  # type: Any
+    TRY_LATER = ...  # type: Any
 
 class LogEntry:
-    thrift_spec = ... # type: Any
-    category = ... # type: Any
-    message = ... # type: Any
+    thrift_spec = ...  # type: Any
+    category = ...  # type: Any
+    message = ...  # type: Any
     def __init__(self, category=..., message=...) -> None: ...
     def read(self, iprot): ...
     def write(self, oprot): ...

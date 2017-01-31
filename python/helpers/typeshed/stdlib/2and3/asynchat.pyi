@@ -1,8 +1,9 @@
-from typing import Union, Tuple, Sequence
 from abc import abstractmethod
-
 import asyncore
 import socket
+import sys
+from typing import Union, Tuple, Sequence
+
 
 class simple_producer:
     def __init__(self, data: str, buffer_size: int = ...) -> None: ...
@@ -30,7 +31,6 @@ class async_chat (asyncore.dispatcher):
     def initiate_send(self) -> None: ...
     def discard_buffers(self) -> None: ...
 
-import sys
 if sys.version_info < (3, 0, 0):
     class fifo:
         def __init__(self, list: Sequence[Union[str, simple_producer]] = ...) -> None: ...

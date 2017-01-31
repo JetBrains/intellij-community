@@ -1,15 +1,15 @@
 from typing import TypeVar, Generic, Any, Iterable, Iterator, Callable, Tuple, Optional, Set
 from collections import namedtuple
 
-FIRST_COMPLETED = ... # type: Any
-FIRST_EXCEPTION = ... # type: Any
-ALL_COMPLETED = ... # type: Any
-PENDING = ... # type: Any
-RUNNING = ... # type: Any
-CANCELLED = ... # type: Any
-CANCELLED_AND_NOTIFIED = ... # type: Any
-FINISHED = ... # type: Any
-LOGGER = ... # type: Any
+FIRST_COMPLETED = ...  # type: Any
+FIRST_EXCEPTION = ...  # type: Any
+ALL_COMPLETED = ...  # type: Any
+PENDING = ...  # type: Any
+RUNNING = ...  # type: Any
+CANCELLED = ...  # type: Any
+CANCELLED_AND_NOTIFIED = ...  # type: Any
+FINISHED = ...  # type: Any
+LOGGER = ...  # type: Any
 
 class Error(Exception): ...
 class CancelledError(Error): ...

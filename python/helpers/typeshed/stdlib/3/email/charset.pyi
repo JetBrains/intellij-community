@@ -1,6 +1,6 @@
 # Stubs for email.charset (Python 3.4)
 
-from typing import Optional, Iterator, Any
+from typing import List, Optional, Iterator, Any
 
 class Charset:
     input_charset = ...  # type: str

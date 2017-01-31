@@ -36,7 +36,7 @@ def dump(obj: Any,
 def loads(s: Union[Text, bytes],
     encoding: Any = ...,
     cls: Any = ...,
-    object_hook: Callable[[Dict], Any] = ...,
+    object_hook: Optional[Callable[[Dict], Any]] = ...,
     parse_float: Optional[Callable[[str], Any]] = ...,
     parse_int: Optional[Callable[[str], Any]] = ...,
     parse_constant: Optional[Callable[[str], Any]] = ...,
@@ -46,7 +46,7 @@ def loads(s: Union[Text, bytes],
 def load(fp: IO[str],
     encoding: Optional[str] = ...,
     cls: Any = ...,
-    object_hook: Callable[[Dict], Any] = ...,
+    object_hook: Optional[Callable[[Dict], Any]] = ...,
     parse_float: Optional[Callable[[str], Any]] = ...,
     parse_int: Optional[Callable[[str], Any]] = ...,
     parse_constant: Optional[Callable[[str], Any]] = ...,
@@ -63,21 +63,21 @@ class JSONDecoder(object):
         strict: bool = ...,
         object_pairs_hook: Callable[..., Any] = ...) -> None: ...
 
-    def decode(self, s: Union[Text, bytes], _w = ...) -> Any: ...
+    def decode(self, s: Union[Text, bytes], _w: Any = ...) -> Any: ...
 
     def raw_decode(self,
         s: Union[Text, bytes],
         idx: int = ...) -> Tuple[Any, Any]: ...
 
 class JSONEncoder(object):
-    item_separator = ... # type: str
-    key_separator = ... # type: str
-    skipkeys = ... # type: bool
-    ensure_ascii = ... # type: bool
-    check_circular = ... # type: bool
-    allow_nan = ... # type: bool
-    sort_keys = ... # type: bool
-    indent = ... # type: int
+    item_separator = ...  # type: str
+    key_separator = ...  # type: str
+    skipkeys = ...  # type: bool
+    ensure_ascii = ...  # type: bool
+    check_circular = ...  # type: bool
+    allow_nan = ...  # type: bool
+    sort_keys = ...  # type: bool
+    indent = ...  # type: int
 
     def __init__(self,
         skipkeys: bool = ...,
@@ -95,4 +95,3 @@ class JSONEncoder(object):
     def encode(self, o: Any) -> str: ...
 
     def iterencode(self, o: Any, _one_shot: bool = ...) -> str: ...
-

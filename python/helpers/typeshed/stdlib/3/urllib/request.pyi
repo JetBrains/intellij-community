@@ -1,8 +1,8 @@
 # Stubs for urllib.request (Python 3.4)
 
 from typing import (
-    Any, Callable, List, IO, Mapping, Optional, Sequence, Tuple, TypeVar, Union,
-    overload,
+    Any, Callable, Dict, List, IO, Mapping, Optional, Sequence, Tuple, TypeVar,
+    Union, overload,
 )
 from http.client import HTTPResponse, HTTPMessage
 from http.cookiejar import CookieJar
@@ -16,18 +16,20 @@ _T = TypeVar('_T')
 _UrlopenRet = Union[HTTPResponse, addinfourl]
 
 
-def urlopen(url: Union[str, 'Request'], data: Optional[bytes] = ...,
-            timeout: float = ..., *, cafile: Optional[str] = ...,
-            capath: Optional[str] = ..., cadefault: bool = ...,
-            context: Optional[ssl.SSLContext] = ...) \
-            -> _UrlopenRet: ...
+def urlopen(
+    url: Union[str, 'Request'], data: Optional[bytes] = ...,
+    timeout: float = ..., *, cafile: Optional[str] = ...,
+    capath: Optional[str] = ..., cadefault: bool = ...,
+    context: Optional[ssl.SSLContext] = ...
+) -> _UrlopenRet: ...
 def install_opener(opener: OpenerDirector) -> None: ...
-def build_opener(*handlers: Union[BaseHandler, Callable[[], BaseHandler]]) \
-                 -> OpenerDirector: ...
+def build_opener(
+    *handlers: Union[BaseHandler, Callable[[], BaseHandler]]
+) -> OpenerDirector: ...
 def url2pathname(path: str) -> str: ...
 def pathname2url(path: str) -> str: ...
 def getproxies() -> Dict[str, str]: ...
-
+def parse_http_list(s: str) -> List[str]: ...
 
 class Request:
     if sys.version_info >= (3, 4):
