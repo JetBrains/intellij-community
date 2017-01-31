@@ -295,7 +295,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
-        myToken = askForToken(urlString);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          myToken = askForToken(urlString);
+        });
         if (myToken != null) {
           return setupConnection(codePanel, path, urlString, showNotification, connectionOpened, isNewFormat);
         }
