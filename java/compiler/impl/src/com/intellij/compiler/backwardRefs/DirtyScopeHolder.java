@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
@@ -28,6 +29,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -88,6 +91,16 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       connect.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
         if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
           myCompilationAffectedModules.add(messageText);
+        }
+      });
+
+      connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
+        public void beforeRootsChange(ModuleRootEvent event) {
+          final Module[] modules = ModuleManager.getInstance(myService.getProject()).getModules();
+          synchronized (myLock) {
+            ContainerUtil.addAll(myVFSChangedModules, modules);
+          }
         }
       });
     }
