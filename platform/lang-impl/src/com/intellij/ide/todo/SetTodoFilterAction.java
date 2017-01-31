@@ -85,7 +85,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
         @Override
         public void actionPerformed(AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable());
+          util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
         }
       }
     );
