@@ -223,7 +223,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static String getTagText(JTextField field, String defaultValue) {
     String fieldText = field.getText();
     if (StringUtil.isEmpty(field.getText())) {
-      field.setText(defaultValue);
       return defaultValue;
     }
     return fieldText;
