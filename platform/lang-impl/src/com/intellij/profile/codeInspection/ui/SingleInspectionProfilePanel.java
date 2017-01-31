@@ -748,7 +748,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         fillTreeData(filter, false);
       }
     }
-    TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
+    TreeUtil.sortRecursively(myRoot, new InspectionsConfigTreeComparator());
   }
 
   // TODO 134099: see IntentionDescriptionPanel#readHTML

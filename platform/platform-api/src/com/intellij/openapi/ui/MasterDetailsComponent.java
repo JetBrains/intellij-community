@@ -565,7 +565,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void sortDescendants(MyNode root) {
-    TreeUtil.sort(root, getNodeComparator());
+    TreeUtil.sortRecursively(root, getNodeComparator());
     ((DefaultTreeModel)myTree.getModel()).reload(root);
   }
 

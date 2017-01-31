@@ -230,7 +230,7 @@ public class FileTreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependencyNodeComparator());
+    TreeUtil.sortRecursively(myRoot, new DependencyNodeComparator());
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 

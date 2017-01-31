@@ -267,7 +267,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       myRoot.add(createNodeForObject(entry.getValue()));
     }
 
-    TreeUtil.sort(myRoot, GroupNodesComparator.getInstance());
+    TreeUtil.sortRecursively(myRoot, GroupNodesComparator.getInstance());
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
   }
 

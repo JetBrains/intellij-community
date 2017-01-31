@@ -116,7 +116,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       parent.add(node);
       myNodes.put(breakpoint, node);
     }
-    TreeUtil.sort(myRoot, myComparator);
+    TreeUtil.sortRecursively(myRoot, myComparator);
     myInBuild = true;
     ((DefaultTreeModel)(myTreeView.getModel())).nodeStructureChanged(myRoot);
     state.applyTo(myTreeView, myRoot);
