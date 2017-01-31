@@ -15,42 +15,35 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.DashboardGroup;
 import com.intellij.execution.dashboard.DashboardGroupingRule;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author konstantin.aleev
  */
-public class FolderDashboardGroupingRule implements DashboardGroupingRule {
-  @NonNls private static final String NAME = "FolderDashboardGroupingRule";
-
-  @Override
+public class RunConfigurationDashboardGroupingRule implements DashboardGroupingRule {
   @NotNull
-  public String getName() {
-    return NAME;
+  @Override
+  public ActionPresentation getPresentation() {
+    return new ActionPresentationData("", "", null);
   }
 
   @NotNull
   @Override
-  public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
-                                      ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
-                                      AllIcons.Actions.GroupByPackage);
+  public String getName() {
+    return "RunConfigurationDashboardGroupingRule";
   }
 
   @Override
   public int getPriority() {
-    return Priorities.BY_FOLDER;
+    return Priorities.BY_RUN_CONFIG;
   }
 
   @Override
@@ -60,7 +53,7 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
 
   @Override
   public boolean shouldGroupSingleNodes() {
-    return true;
+    return false;
   }
 
   @Nullable
@@ -68,10 +61,7 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
       RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
-      String folderName = configurationSettings.getFolderName();
-      if (folderName != null) {
-        return new DashboardGroupImpl<>(folderName, folderName, AllIcons.Nodes.Folder);
-      }
+      return new DashboardGroupImpl<>(configurationSettings, configurationSettings.getName(), configurationSettings.getConfiguration().getIcon());
     }
     return null;
   }

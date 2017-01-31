@@ -259,7 +259,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
 
   private void updateTreeIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null && RuntimeDashboardContributor.isShowInDashboard(settings.getType())) {
-      updateTree();
+      updateTree(true);
     }
   }
 
@@ -295,7 +295,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     rightGroup.add(collapseAllAction);
 
     rightGroup.add(new Separator());
-    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnable()).forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
+    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
 
     ActionToolbar rightActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, rightGroup, false);
     toolBarPanel.add(rightActionToolBar.getComponent());
@@ -307,8 +307,8 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   public void dispose() {
   }
 
-  public void updateTree() {
-    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate().doWhenDone(() -> {
+  public void updateTree(boolean withStructure) {
+    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
       // Remove nodes not presented in the tree from collapsed node values set.
       // Children retrieving is quick since grouping and run configuration nodes are already constructed.
       Set<Object> nodes = new HashSet<>();
@@ -355,7 +355,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
-      updateTree();
+      updateTree(true);
     }
   }
 }

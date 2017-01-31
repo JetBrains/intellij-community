@@ -19,10 +19,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RuntimeDashboardContent;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,7 +41,8 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
 
   @Override
   protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    return node.isTerminated();
+    Content content = node.getContent();
+    return content == null || RunContentManagerImpl.isTerminated(content);
   }
 
   @Override

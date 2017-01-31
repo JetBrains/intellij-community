@@ -101,7 +101,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
   public State getState() {
     State state = new State();
     state.ruleStates = myGroupers.stream()
-      .filter(grouper -> !grouper.getRule().isAlwaysEnable())
+      .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
       .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
       .collect(Collectors.toList());
     return state;
@@ -111,7 +111,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
   public void loadState(State state) {
     state.ruleStates.forEach(ruleState -> {
       for (DashboardGrouper grouper : myGroupers) {
-        if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnable()) {
+        if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
           return;
         }
