@@ -21,4 +21,8 @@ public class DeprecationUtil {
   @NonNls public static final String DEPRECATION_SHORT_NAME = "Deprecation";
   @NonNls public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
   @NonNls public static final String DEPRECATION_ID = "deprecation";
+
+  @NonNls public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
+  @NonNls public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
+  @NonNls public static final String FOR_REMOVAL_ID = "removal";
 }

@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInspection.deprecation.DeprecationInspection
+import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
@@ -296,9 +297,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testDeprecations() {
-    myFixture.enableInspections(DeprecationInspection())
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
     addFile("module-info.java", "@Deprecated module M2 { }", M2)
     highlight("""module M { requires <warning descr="'M2' is deprecated">M2</warning>; }""")
+  }
+
+  fun testMarkedForRemoval() {
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
+    addFile("module-info.java", "@Deprecated(forRemoval=true) module M2 { }", M2)
+    highlight("""module M { requires <warning descr="'M2' is deprecated and marked for removal">M2</warning>; }""")
   }
 
   fun testPackageConflicts() {
