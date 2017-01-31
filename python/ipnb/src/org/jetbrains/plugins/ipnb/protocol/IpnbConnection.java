@@ -267,9 +267,6 @@ public class IpnbConnection {
       if (httpsConnection != null) {
         httpsConnection.setRequestProperty("Content-Type", "application/json");
         httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
-        if (myXsrf != null) {
-          httpsConnection.setRequestProperty("_xsrf", myXsrf);
-        }
         httpsConnection.setUseCaches(false);
         httpsConnection.setDoOutput(true);
 
