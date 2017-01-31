@@ -371,9 +371,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     });
   }
 
-  public boolean startIpythonServer(@NotNull
-                                    final String initUrl, @NotNull
-                                    final IpnbFileEditor fileEditor) {
+  public boolean startIpythonServer(@NotNull final String initUrl, @NotNull final IpnbFileEditor fileEditor) {
     final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
     if (module == null) return false;
     final Sdk sdk = PythonSdkType.findPythonSdk(module);

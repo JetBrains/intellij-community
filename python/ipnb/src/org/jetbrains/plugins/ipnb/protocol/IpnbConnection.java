@@ -5,9 +5,9 @@ import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.jetbrains.python.psi.PyUtil;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_17;
@@ -90,7 +90,7 @@ public class IpnbConnection {
     CookieHandler.setDefault(myCookieManager);
     initXSRF(myURI.toString());
     
-    if (isRemote(myProject)) {
+    if (isRemote()) {
       String loginUrl = getLoginUrl();
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
@@ -105,7 +105,7 @@ public class IpnbConnection {
     initializeClients();
   }
 
-  private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
+  private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, @NotNull String loginUrl) throws IOException {
     IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
     final String username = ipnbSettings.getUsername();
     String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
@@ -177,8 +177,8 @@ public class IpnbConnection {
                            URLEncoder.encode(password, "UTF-8");
     
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
-    final HttpsURLConnection connection = PyUtil.as(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(), 
-                                                              HTTPMethod.POST.name()), HttpsURLConnection.class);
+    final HttpsURLConnection connection = ObjectUtils.tryCast(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(),
+                                                                             HTTPMethod.POST.name()), HttpsURLConnection.class);
     if (connection != null) {
       connection.setUseCaches(false);
       connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
@@ -207,7 +207,7 @@ public class IpnbConnection {
   private String getDefaultKernelName() {
     try {
       final String response = httpRequest(createApiUrl(KERNEL_SPECS_PATH), HTTPMethod.GET.name());
-      final JsonObject kernelSpecs = PyUtil.as(new JsonParser().parse(response), JsonObject.class);
+      final JsonObject kernelSpecs = ObjectUtils.tryCast(new JsonParser().parse(response), JsonObject.class);
       if (kernelSpecs != null && kernelSpecs.has("default")) {
         return kernelSpecs.get("default").getAsString();
       }
@@ -255,7 +255,7 @@ public class IpnbConnection {
   private HttpsURLConnection createKernelIdConnection(byte[] postData) throws IOException {
     final URLConnection connection = new URL(createApiUrl(SESSIONS_PATH)).openConnection();
     if (connection instanceof HttpsURLConnection) {
-      final HttpsURLConnection httpsConnection = PyUtil.as(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
+      final HttpsURLConnection httpsConnection = ObjectUtils.tryCast(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
                                                            HttpsURLConnection.class);
       if (httpsConnection != null) {
         httpsConnection.setRequestProperty("Content-Type", "application/json");
@@ -277,8 +277,8 @@ public class IpnbConnection {
   }
 
   private static byte[] createNewFormatKernelPostParameters(@NotNull String pathToFile, @NotNull String kernelName) {
-    final SessionWrapper hubSessionWrapper = new SessionWrapper(kernelName, pathToFile, "notebook");
-    return new GsonBuilder().create().toJson(hubSessionWrapper).getBytes(StandardCharsets.UTF_8);
+    final SessionWrapper sessionWrapper = new SessionWrapper(kernelName, pathToFile, "notebook");
+    return new GsonBuilder().create().toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);
   }
 
   private static byte[] createOldFormatKernelPostParameters(@NotNull String pathToFile, @NotNull String kernelName) {
@@ -295,7 +295,7 @@ public class IpnbConnection {
     configureHttpsConnection();
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
-    final HttpsURLConnection connection = PyUtil.as(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
+    final HttpsURLConnection connection = ObjectUtils.tryCast(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
     if (connection != null) {
       connection.setInstanceFollowRedirects(false);
       connection.connect();
@@ -499,8 +499,8 @@ public class IpnbConnection {
     return Message.create(header, parentHeader, metadata, content);
   }
 
-  public static boolean isRemote(Project project) {
-    return !IpnbSettings.getInstance(project).getUsername().isEmpty() && !IpnbSettings.getInstance(project).getPassword().isEmpty();
+  private boolean isRemote() {
+    return !IpnbSettings.getInstance(myProject).getUsername().isEmpty() && !IpnbSettings.getInstance(myProject).getPassword().isEmpty();
   }
 
   @SuppressWarnings("UnusedDeclaration")
