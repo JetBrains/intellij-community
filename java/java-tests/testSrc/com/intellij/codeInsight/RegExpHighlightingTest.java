@@ -130,6 +130,12 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]");
   }
 
+  public void testLegalCharacterRange() {
+    // Cyrillic Capital Letter Zemlya - Unicode Han Character 'to peel, pare' (Unicode Supplementary Character)
+    // without code point support 0x20731 wraps to 0x731 which would produce a "Illegal character range (to < from)" error
+    doTest("[\\x{A640}-\\x{20731}]");
+  }
+
   public void testQuoted() {
     doTest("[\\Qabc?*+.)<warning descr=\"Duplicate character ')' inside character class\">)</warning>]<warning descr=\"Duplicate character ']' inside character class\">]</warning>[<warning descr=\"Duplicate character ']' inside character class\">]</warning>\\E]");
   }

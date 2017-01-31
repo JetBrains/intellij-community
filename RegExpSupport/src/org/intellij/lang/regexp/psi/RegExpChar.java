@@ -16,7 +16,6 @@
 package org.intellij.lang.regexp.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a simple or escaped character
@@ -39,10 +38,6 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement, RegExpCharRa
     @NotNull
     Type getType();
 
-    /**
-     * Returns possibly unescaped character-value.
-     * Null if escape sequence is invalid.
-     */
-    @Nullable
-    Character getValue();
+    /** Returns unescaped character code point value, -1 if escape sequence is invalid. */
+    int getValue();
 }

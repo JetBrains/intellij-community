@@ -41,7 +41,6 @@ import java.util.Set;
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
   private static final Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
-  private static final String ILLEGAL_CHARACTER_RANGE_TO_FROM = "Illegal character range (to < from)";
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;
 
@@ -87,17 +86,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
     if (from instanceof RegExpChar && to instanceof RegExpChar) {
-      final Character t = ((RegExpChar)to).getValue();
-      final Character f = ((RegExpChar)from).getValue();
-      if (t != null && f != null) {
-        if (t < f) {
-          if (handleSurrogates(range, f, t)) return;
-          myHolder.createErrorAnnotation(range, ILLEGAL_CHARACTER_RANGE_TO_FROM);
-        }
-        else if (t == f) {
-          myHolder.createWarningAnnotation(range, "Redundant character range");
-        }
-      }
+      checkRange(range, ((RegExpChar)from).getValue(), ((RegExpChar)to).getValue());
     }
     else if (to instanceof RegExpSimpleClass) {
       myHolder.createErrorAnnotation(to, "Character class not allowed inside character range");
@@ -107,27 +96,39 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
-  private boolean handleSurrogates(RegExpCharRange range, Character f, Character t) {
+  private void checkRange(RegExpCharRange range, int fromCodePoint, int toCodePoint) {
+    if (fromCodePoint == -1 || toCodePoint == -1) {
+      return;
+    }
+    int errorStart = range.getTextOffset();
+    int errorEnd = errorStart + range.getTextLength();
     // \ud800\udc00-\udbff\udfff
-    final PsiElement prevSibling = range.getPrevSibling();
-    final PsiElement nextSibling = range.getNextSibling();
-
-    if (prevSibling instanceof RegExpChar && nextSibling instanceof RegExpChar) {
-      final Character prevSiblingValue = ((RegExpChar)prevSibling).getValue();
-      final Character nextSiblingValue = ((RegExpChar)nextSibling).getValue();
-
-      if (prevSiblingValue != null && nextSiblingValue != null &&
-          Character.isSurrogatePair(prevSiblingValue, f) && Character.isSurrogatePair(t, nextSiblingValue)) {
-        if (Character.toCodePoint(prevSiblingValue, f) > Character.toCodePoint(t, nextSiblingValue)) {
-          final TextRange prevSiblingRange = prevSibling.getTextRange();
-          final TextRange nextSiblingRange = nextSibling.getTextRange();
-          final TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
-          myHolder.createErrorAnnotation(errorRange, ILLEGAL_CHARACTER_RANGE_TO_FROM);
+    if (!Character.isSupplementaryCodePoint(fromCodePoint) && Character.isLowSurrogate((char)fromCodePoint)) {
+      final PsiElement prevSibling = range.getPrevSibling();
+      if (prevSibling instanceof RegExpChar) {
+        final int prevSiblingValue = ((RegExpChar)prevSibling).getValue();
+        if (!Character.isSupplementaryCodePoint(prevSiblingValue) && Character.isHighSurrogate((char)prevSiblingValue)) {
+          fromCodePoint = Character.toCodePoint((char)prevSiblingValue, (char)fromCodePoint);
+          errorStart -= prevSibling.getTextLength();
         }
-        return true;
       }
     }
-    return false;
+    if (!Character.isSupplementaryCodePoint(toCodePoint) && Character.isHighSurrogate((char)toCodePoint)) {
+      final PsiElement nextSibling = range.getNextSibling();
+      if (nextSibling instanceof RegExpChar) {
+        final int nextSiblingValue = ((RegExpChar)nextSibling).getValue();
+        if (!Character.isSupplementaryCodePoint(nextSiblingValue) && Character.isLowSurrogate((char)nextSiblingValue)) {
+          toCodePoint = Character.toCodePoint((char)toCodePoint, (char)nextSiblingValue);
+          errorEnd += nextSibling.getTextLength();
+        }
+      }
+    }
+    if (toCodePoint < fromCodePoint) {
+      myHolder.createErrorAnnotation(new TextRange(errorStart, errorEnd), "Illegal character range (to < from)");
+    }
+    else if (toCodePoint == fromCodePoint) {
+      myHolder.createWarningAnnotation(new TextRange(errorStart, errorEnd), "Redundant character range");
+    }
   }
 
   @Override
@@ -154,8 +155,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
     if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
-      final Character value = regExpChar.getValue();
-      if (value != null && !seen.add(value)) {
+      final int value = regExpChar.getValue();
+      if (value != -1 && !seen.add(value)) {
         myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' inside character class");
       }
     }
@@ -208,7 +209,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final RegExpChar.Type charType = ch.getType();
     if (charType == RegExpChar.Type.HEX || charType == RegExpChar.Type.UNICODE) {
-      if (ch.getValue() == null) {
+      if (ch.getValue() == -1) {
         myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
         return;
       }
