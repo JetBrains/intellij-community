@@ -110,12 +110,17 @@ class Operators {
       "a << b"          :"a.leftShift(b)",
       "a >> b"          :"a.rightShift(b)",
       "a >>> b"         :"a.rightShiftUnsigned(b)",
-      "a in b"          :"b.isCase(a)",
-      "a as String"     :"a.asType(String)",
-      "!(a a<caret>s String)"  :"!a.asType(String)"
+      "a in b"          :"b.isCase(a)"
     ].each {
       doTest it.key, it.value
     }
+  }
+
+  void testAsType() {
+    doTest "a as String", "a.asType(String)"
+    doTest "!(a a<caret>s String)", "!a.asType(String)"
+    doTest "a a<caret>s List<Integer>"
+    doTest "a a<caret>s List", "a.asType(List)"
   }
 
   void testCompareTo() {

@@ -201,7 +201,7 @@ class Operators {
   void testAsType() {
     doTest "a.asType(String)", "a as String"
     doTest "!a.asType(String)", "!(a as String)"
-    doTest "a.asType(String.class)"
+    doTest "a.asType(String.class)", "a as String"
     doTest "a.asType(a.getClass())"
     doTest "a.asType(UnknownClass)"
   }
