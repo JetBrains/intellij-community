@@ -159,7 +159,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
           }
         }
-        if (constructors.length == 0 && params.length == 0 && MethodReferenceResolver.canBeConstructed(psiClass)) {
+        if (constructors.length == 0 && params.length == 0) {
           result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
         }
       }
