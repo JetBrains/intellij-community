@@ -265,7 +265,7 @@ public class HighlightInfo implements Segment {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
-  HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                 @Nullable TextAttributesKey forcedTextAttributesKey,
                 @NotNull HighlightInfoType type,
                 int startOffset,
