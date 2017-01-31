@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -76,6 +74,12 @@ public class SchemesCombo<T extends Scheme> {
         stopEdit();
       }
     }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
+    nameEditorField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        stopEdit();
+      }
+    });
     return nameEditorField;
   }
   
