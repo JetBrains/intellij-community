@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,30 @@ public class StringConcatenationInLoop
     void bla() {
         while (true) {
             System.out.println("a" + "b" + "c");
+        }
+    }
+
+    String field;
+    StringConcatenationInLoop parent;
+
+    void fieldTest() {
+        for(int i=0; i<10; i++) {
+            field = this.field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = this.field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = parent.field + "x";
+        }
+        for(int i=0; i<10; i++) {
+            parent.field = this.field + "x";
+        }
+        for(int i=0; i<10; i++) {
+            parent.field = this.parent.field <warning descr="String concatenation '+' in loop">+</warning> "x";
         }
     }
 }

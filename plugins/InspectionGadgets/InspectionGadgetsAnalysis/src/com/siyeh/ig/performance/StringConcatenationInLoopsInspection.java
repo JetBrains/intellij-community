@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,6 +27,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -202,22 +204,44 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if (!(element instanceof PsiVariable)) {
         return false;
       }
-      final PsiVariable variable = (PsiVariable)element;
       final PsiExpression rhs = assignmentExpression.getRExpression();
-      return isAppended(variable, rhs);
+      return isAppended(referenceExpression, rhs);
     }
 
-    private static boolean isAppended(PsiVariable variable, PsiExpression expression) {
+    private static boolean isAppended(PsiReferenceExpression otherRef, PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if(expression instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         if (polyadicExpression.getOperationTokenType().equals(JavaTokenType.PLUS)) {
           for (PsiExpression operand : polyadicExpression.getOperands()) {
-            if (ExpressionUtils.isReferenceTo(operand, variable) || isAppended(variable, operand)) return true;
+            if (isSameReference(operand, otherRef) || isAppended(otherRef, operand)) return true;
           }
         }
       }
       return false;
+    }
+
+    private static boolean isSameReference(PsiExpression operand, PsiReferenceExpression ref) {
+      PsiReferenceExpression other = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
+      if (other == null) {
+        return false;
+      }
+      String name = other.getReferenceName();
+      if (name == null || !name.equals(ref.getReferenceName())) return false;
+      PsiExpression qualifier = ref.getQualifierExpression();
+      PsiExpression otherQualifier = other.getQualifierExpression();
+      if (qualifier == null && otherQualifier == null) return true;
+      if (qualifier == null && ref.resolve() instanceof PsiField) {
+        qualifier = ExpressionUtils.getQualifierOrThis(ref);
+      }
+      if (otherQualifier == null && other.resolve() instanceof PsiField) {
+        otherQualifier = ExpressionUtils.getQualifierOrThis(other);
+      }
+      if (qualifier == null || otherQualifier == null) return false;
+      if (qualifier instanceof PsiReferenceExpression) {
+        return isSameReference(otherQualifier, (PsiReferenceExpression)qualifier);
+      }
+      return PsiEquivalenceUtil.areElementsEquivalent(qualifier, otherQualifier);
     }
   }
 
