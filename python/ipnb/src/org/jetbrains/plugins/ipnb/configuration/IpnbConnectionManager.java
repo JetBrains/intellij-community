@@ -211,18 +211,16 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                  @NotNull final String urlString,
                                  final boolean showNotification) {
     final boolean[] connectionOpened = {false};
-    final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened);
 
     if (codePanel == null) return false;
     final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
     String pathToFile = getRelativePathToFile(file);
     if (pathToFile == null) return false;
     final boolean format = IpnbParser.isIpythonNewFormat(file);
-    Boolean isConnected = IpnbUtils.runCancellableProcessUnderProgress(myProject,
-                                                                       () -> setupConnection(codePanel, path, urlString,
-                                                                                             showNotification,
-                                                                                             connectionOpened, listener, pathToFile,
-                                                                                             format),
+    Boolean isConnected = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> setupConnection(codePanel, path, urlString,
+                                                                                                        showNotification,
+                                                                                                        connectionOpened,
+                                                                                                        format),
                                                                        "Connection to Jupyter Notebook Server");
     return isConnected != null ? isConnected : false;
   }
@@ -266,14 +264,18 @@ public final class IpnbConnectionManager implements ProjectComponent {
     };
   }
 
-  @Nullable
-  private Boolean setupConnection(@NotNull IpnbCodePanel codePanel,
+  
+  private boolean setupConnection(@NotNull IpnbCodePanel codePanel,
                                   @NotNull String path,
                                   @NotNull String urlString,
                                   boolean showNotification,
                                   boolean[] connectionOpened,
-                                  IpnbConnectionListenerBase listener, String pathToFile, boolean isNewFormat) {
+                                  boolean isNewFormat) {
     try {
+      final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened);
+      final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
+      final String pathToFile = getRelativePathToFile(file);
+      if (pathToFile == null) return false;
       final IpnbConnection connection = getConnection(urlString, listener, pathToFile, isNewFormat);
       int countAttempt = 0;
       while (!connectionOpened[0] && countAttempt < MAX_ATTEMPTS) {
@@ -295,7 +297,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
         myToken = askForToken(urlString);
         if (myToken != null) {
-          return setupConnection(codePanel, path, urlString, showNotification, connectionOpened, listener, pathToFile, isNewFormat);
+          return setupConnection(codePanel, path, urlString, showNotification, connectionOpened, isNewFormat);
         }
       }
       if (showNotification) {
@@ -310,7 +312,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
       return false;
     }
-    return null;
+    return false;
   }
 
   @NotNull
