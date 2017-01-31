@@ -151,7 +151,12 @@ public class IpnbConnection {
     URLConnection urlConnection = new URL(url).openConnection();
     if (urlConnection instanceof HttpURLConnection) {
       final HttpURLConnection connection = configureConnection((HttpURLConnection)urlConnection, HTTPMethod.GET.name());
-      return connection.getHeaderField("Location");
+      try {
+        return connection.getHeaderField("Location");
+      }
+      finally {
+        connection.disconnect();
+      }
     }
     return "";
   }
@@ -266,6 +271,7 @@ public class IpnbConnection {
           final OldFormatSessionWrapper wrapper = new GsonBuilder().create().fromJson(response, OldFormatSessionWrapper.class);
           return wrapper.kernel.id;
         }
+        httpsConnection.disconnect();
       }
     }
     return null;
@@ -303,8 +309,9 @@ public class IpnbConnection {
   }
 
   private void initXSRF(String url) {
+    URLConnection connection = null;
     try {
-      final URLConnection connection = new URL(url).openConnection();
+      connection = new URL(url).openConnection();
       connection.getHeaderFields();
       final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
       for (HttpCookie cookie : cookies) {
@@ -314,6 +321,11 @@ public class IpnbConnection {
       }
     }
     catch (IOException ignored) {
+    }
+    finally {
+      if (connection instanceof HttpURLConnection) {
+        ((HttpURLConnection)connection).disconnect();
+      }
     }
   }
 
@@ -450,6 +462,7 @@ public class IpnbConnection {
     }
     finally {
       reader.close();
+      connection.disconnect();
     }
   }
 
