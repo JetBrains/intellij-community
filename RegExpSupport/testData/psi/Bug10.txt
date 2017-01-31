@@ -4,14 +4,14 @@ REGEXP_FILE
       RegExpSimpleClassImpl: <\h>
         PsiElement(CHAR_CLASS)('\h')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpSimpleClassImpl: <\H>
         PsiElement(CHAR_CLASS)('\H')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpSimpleClassImpl: <\v>
         PsiElement(CHAR_CLASS)('\v')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpSimpleClassImpl: <\V>
         PsiElement(CHAR_CLASS)('\V')

@@ -60,7 +60,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < descr="((?:[^"\\]|\\")*)">
                   RegExpBranchImpl: < descr="((?:[^"\\]|\\")*)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <d>
                       PsiElement(CHARACTER)('d')
                     RegExpCharImpl: <e>
@@ -114,7 +114,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < type="([0-9A-Z_]+)">
                   RegExpBranchImpl: < type="([0-9A-Z_]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <t>
                       PsiElement(CHARACTER)('t')
                     RegExpCharImpl: <y>
@@ -164,7 +164,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < foreground="([0-9xa-f]+)">
                   RegExpBranchImpl: < foreground="([0-9xa-f]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <f>
                       PsiElement(CHARACTER)('f')
                     RegExpCharImpl: <o>
@@ -226,7 +226,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < background="([0-9xa-f]+)">
                   RegExpBranchImpl: < background="([0-9xa-f]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <b>
                       PsiElement(CHARACTER)('b')
                     RegExpCharImpl: <a>
@@ -288,7 +288,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < effectcolor="([0-9xa-f]+)">
                   RegExpBranchImpl: < effectcolor="([0-9xa-f]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <e>
                       PsiElement(CHARACTER)('e')
                     RegExpCharImpl: <f>
@@ -352,7 +352,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < effecttype="([A-Z]+)">
                   RegExpBranchImpl: < effecttype="([A-Z]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <e>
                       PsiElement(CHARACTER)('e')
                     RegExpCharImpl: <f>
@@ -405,7 +405,7 @@ REGEXP_FILE
                 RegExpPatternImpl: < fonttype="([0-9]+)">
                   RegExpBranchImpl: < fonttype="([0-9]+)">
                     RegExpCharImpl: < >
-                      PsiElement(CTRL_CHARACTER)(' ')
+                      PsiElement(CHARACTER)(' ')
                     RegExpCharImpl: <f>
                       PsiElement(CHARACTER)('f')
                     RegExpCharImpl: <o>
