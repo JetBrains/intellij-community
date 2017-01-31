@@ -133,7 +133,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (packages != null) {
             final PyPackage notebookPackage = PyPackageUtil.findPackage(packages, "notebook");
             if (notebookPackage != null && VersionComparatorUtil.compare(notebookPackage.getVersion(), "4.3.0") >= 0) {
-              myToken = askForToken(url);
+              ApplicationManager.getApplication().invokeAndWait(() -> {
+                myToken = askForToken(url);
+              });
               if (myToken == null) return false;
             }
           }
