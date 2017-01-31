@@ -88,6 +88,7 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
+    initXSRF(myURI.toString());
     
     if (isRemote(myProject)) {
       String loginUrl = getLoginUrl();
@@ -105,7 +106,6 @@ public class IpnbConnection {
   }
 
   private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, String loginUrl) throws IOException {
-    initXSRF(myURI.toString());
     IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
     final String username = ipnbSettings.getUsername();
     String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
