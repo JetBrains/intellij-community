@@ -194,7 +194,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       PsiExpression[] args = terminalCall.getArgumentList().getExpressions();
       if (args.length != 1) return null;
-      FunctionHelper fn = FunctionHelper.create(args[0], 1);
+      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
       if (fn == null) return null;
       PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
       if(elementType == null) return null;
@@ -606,7 +606,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
             if(fn != null) {
               fn.transform(this, ((ConditionalExpression.Optional)conditionalExpression).unwrap("").getTrueBranch());
               myPlaceholder = call.getParent();
-              return fn.getText() + ";\n" + getBreakStatement();
+              return fn.getStatementText() + getBreakStatement();
             }
           }
         }
@@ -699,6 +699,10 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     public PsiExpression createExpression(String text) {
       return myFactory.createExpressionFromText(text, myStatement);
+    }
+
+    public PsiStatement createStatement(String text) {
+      return myFactory.createStatementFromText(text, myStatement);
     }
 
     public PsiType createType(String text) {
