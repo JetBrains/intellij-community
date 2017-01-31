@@ -713,7 +713,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static String getPath(File jarFile) {
-    return jarFile.getAbsolutePath().replace(File.separatorChar, '/');
+    return FileUtil.toSystemIndependentName(jarFile.getAbsolutePath());
   }
 
   @Override
