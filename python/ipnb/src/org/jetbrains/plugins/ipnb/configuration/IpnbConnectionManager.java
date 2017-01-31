@@ -142,7 +142,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       }
     }
-    return startConnection(codePanel, path, url, true);
+    return startConnection(codePanel, path, url, isRemote);
   }
 
   private static String askForToken(@NotNull final String url) {
