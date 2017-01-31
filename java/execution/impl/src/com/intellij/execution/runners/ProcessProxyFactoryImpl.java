@@ -45,7 +45,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
         String port = String.valueOf(proxy.getPortNumber());
         String binPath = PathManager.getBinPath();
 
-        if (new File(rtJarPath).isFile() && JavaSdkUtil.isAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
+        if (new File(rtJarPath).isFile() && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
           javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
         }
         else {
