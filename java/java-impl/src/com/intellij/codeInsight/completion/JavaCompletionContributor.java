@@ -290,7 +290,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
-      SmartCastProvider.addCastVariants(parameters, element -> {
+      SmartCastProvider.addCastVariants(parameters, result.getPrefixMatcher(), element -> {
         registerClassFromTypeElement(element, session);
         result.addElement(PrioritizedLookupElement.withPriority(element, 1));
       });

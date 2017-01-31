@@ -1250,4 +1250,9 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testQualifyOuterClassCall() { doActionTest(); }
+
+  public void testExpressionSubtypesInCast() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String", "StringBuffer", "StringBuilder");
+  }
 }
