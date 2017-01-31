@@ -269,10 +269,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
     if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || PsiKeyword.VOID.equals(keyword)) {
       boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
-      boolean inTypeArg = psiElement().inside(PsiReferenceParameterList.class).accepts(myPosition);
-      return inCallArg || inTypeArg ? ThreeState.NO : ThreeState.UNSURE;
+      return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
     }
     return ThreeState.UNSURE;
+  }
+
+  static boolean isInMethodTypeArg(PsiElement position) {
+    return psiElement().inside(PsiReferenceParameterList.class).accepts(position);
   }
 
   private static boolean isOnTopLevelInVoidMethod(PsiStatement statement) {

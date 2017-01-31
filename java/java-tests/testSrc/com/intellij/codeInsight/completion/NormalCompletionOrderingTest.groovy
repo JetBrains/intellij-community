@@ -758,4 +758,13 @@ class ContainerUtil extends ContainerUtilRt {
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
   }
 
+  void testClassNameStatisticsDoesntDependOnExpectedType() {
+    checkPreferredItems 0, 'ConflictsUtil', 'ContainerUtil'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\n.foo();\nlong l = ConUt')
+    myFixture.completeBasic()
+
+    assertPreferredItems 0, 'ContainerUtil', 'ConflictsUtil'
+  }
+
 }
