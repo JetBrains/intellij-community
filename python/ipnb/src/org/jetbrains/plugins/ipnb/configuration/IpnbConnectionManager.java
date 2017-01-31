@@ -109,11 +109,13 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final String password = IpnbSettings.getInstance(myProject).getPassword();
     final boolean isRemote = !username.isEmpty() && !password.isEmpty();
     if (!isRemote) {
-      final Boolean serverStarted = IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> startIpythonServer(url, fileEditor), "Starting Ipython Server");
-      if (serverStarted == null || !serverStarted) {
-        return;
-      }
-      startConnection(codePanel, path, url, true);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        final boolean serverStarted = startIpythonServer(url, fileEditor);
+        if (!serverStarted) {
+          return;
+        }
+        GuiUtils.invokeLaterIfNeeded(() -> startConnection(codePanel, path, url, true), ModalityState.defaultModalityState());
+      });
     }
   }
 
