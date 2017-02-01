@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 /**
  * @author Vladislav.Soroka

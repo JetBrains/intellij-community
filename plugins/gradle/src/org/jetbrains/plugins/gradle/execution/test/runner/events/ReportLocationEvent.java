@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.io.File;
 

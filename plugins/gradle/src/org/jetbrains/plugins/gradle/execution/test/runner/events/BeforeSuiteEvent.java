@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 /**
  * @author Vladislav.Soroka

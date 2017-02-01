@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.XmlXpathHelper;
 
 /**
  * Created by eugene.petrenko@gmail.com
