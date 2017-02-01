@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.util;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -40,46 +39,25 @@ public class XmlXpathHelper {
    * validate, and is namespace aware.
    *
    * @param xml            the XML content to be parsed (must be well formed)
-   * @param namespaceAware whether the parser is namespace aware
    * @throws XmlParserException
    */
-  public XmlXpathHelper(String xml, boolean namespaceAware) throws XmlParserException {
+  public XmlXpathHelper(String xml) throws XmlParserException {
     xpath = XPathFactory.newInstance().newXPath();
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       InputSource is = new InputSource(new StringReader(xml));
-      factory.setNamespaceAware(namespaceAware);
+      factory.setNamespaceAware(false);
       factory.setValidating(false);
       xmlDocument = factory.newDocumentBuilder().parse(is);
     }
     catch (Exception ex) {
       throw new XmlParserException(ex);
-    }
-  }
-
-  public XmlXpathHelper(String xml) throws XmlParserException {
-    this(xml, false);
+    };
   }
 
   public String queryXml(final String xpathExpr) throws XmlParserException {
     try {
       return xmlDocument == null ? "" : xpath.evaluate(xpathExpr, xmlDocument);
-    }
-    catch (XPathExpressionException ex) {
-      throw new XmlParserException(ex);
-    }
-  }
-
-  /**
-   * Extracts the String value for the given expression.
-   *
-   * @param node
-   * @param expr
-   * @return
-   */
-  public String getValue(Node node, String expr) throws XmlParserException {
-    try {
-      return xpath.compile(expr).evaluate(node);
     }
     catch (XPathExpressionException ex) {
       throw new XmlParserException(ex);
