@@ -100,8 +100,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myShown) {
-          expandOnSizeChanged();
-          updateCachedUIValues();
+          processOnSizeChanged();
         }
       }
     });
@@ -117,23 +116,20 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
-  private void updateCachedUIValues() {
-    myPrevSize = getSize();
-    myUserSizeChanged = true;
-  }
-
-  private void expandOnSizeChanged() {
+  private void processOnSizeChanged() {
     Dimension newSize = ObjectUtils.assertNotNull(getSize());
     if (myPrevSize.height < newSize.height) {
       List<MoreAction> mores = getMoreActions();
       for (MoreAction more : mores) {
-        if (!getList().getScrollableTracksViewportHeight()) return;
+        if (!getList().getScrollableTracksViewportHeight()) break;
         if (!more.isExpanded()) {
           more.setExpanded(true);
           getListModel().refilter();
         }
       }
     }
+    myPrevSize = newSize;
+    myUserSizeChanged = true;
   }
 
   @NotNull
@@ -326,6 +322,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       super.customizeComponent(list, value, isSelected);
       myTextLabel.setIcon(null);
       myTextLabel.setDisabledIcon(null);
+      if (value instanceof PopupFactoryImpl.ActionItem) {
+        ((PopupFactoryImpl.ActionItem)value).setIconHovered(isSelected);
+      }
       myIconLabel.setIcon(myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
