@@ -104,17 +104,16 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
    * If [bulkOperation] is true, no events will be fired and new node will be added into arbitrary place in the children list
    */
   private fun insertModuleNode(moduleNode: N, parentNode: N, module: Module, model: DefaultTreeModel, bulkOperation: Boolean) {
-    val moduleAsGroup = grouper.getModuleAsGroupPath(module)
+    val moduleAsGroup = moduleAsGroup(module)
     if (moduleAsGroup != null) {
-      val moduleGroup = ModuleGroup(moduleAsGroup)
-      val oldModuleGroupNode = nodeForGroup[moduleGroup]
+      val oldModuleGroupNode = nodeForGroup[moduleAsGroup]
       if (oldModuleGroupNode != null) {
         moveChildren(oldModuleGroupNode, moduleNode, model)
         model.removeNodeFromParent(oldModuleGroupNode)
         removeNode(oldModuleGroupNode)
       }
-      nodeForGroup[moduleGroup] = moduleNode
-      nodeData[moduleNode] = ModuleTreeNodeData(module, moduleGroup)
+      nodeForGroup[moduleAsGroup] = moduleNode
+      nodeData[moduleNode] = ModuleTreeNodeData(module, moduleAsGroup)
     }
     else {
       nodeData[moduleNode] = ModuleTreeNodeData(module, null)
@@ -122,6 +121,8 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
 
     insertNode(moduleNode, parentNode, model, bulkOperation)
   }
+
+  private fun moduleAsGroup(module: Module) = grouper.getModuleAsGroupPath(module)?.let(::ModuleGroup)
 
   private fun moveChildren(fromNode: N, toNode: N, model: DefaultTreeModel) {
     val children = TreeUtil.listChildren(fromNode)
@@ -182,14 +183,16 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
   fun moveModuleNodeToProperGroup(node: N, module: Module, rootNode: N, model: DefaultTreeModel, tree: JTree): N {
     val actualGroup = ModuleGroup(grouper.getGroupPath(module))
     val parent = node.parent
-    val expectedParent = if (groupingEnabled) nodeForGroup[actualGroup] else rootNode
-    if (expectedParent == parent) return node
+    val nodeAsGroup = nodeData[node]?.group
+    val expectedParent = if (groupingEnabled && !actualGroup.groupPathList.isEmpty()) nodeForGroup[actualGroup] else rootNode
+    if (expectedParent == parent && nodeAsGroup == moduleAsGroup(module)) {
+      return node
+    }
 
     val selectionPath = tree.selectionPath
     val wasSelected = selectionPath?.lastPathComponent == node
     model.removeNodeFromParent(node)
 
-    val nodeAsGroup = nodeData[node]?.group
     removeNode(node)
     if (nodeAsGroup != null) {
       val childrenToKeep = TreeUtil.listChildren(node).filter { it in nodeData }

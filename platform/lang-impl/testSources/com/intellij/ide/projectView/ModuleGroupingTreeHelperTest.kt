@@ -181,6 +181,14 @@ class ModuleGroupingTreeHelperTest: PlatformTestCase() {
              b""")
   }
 
+  fun `test do not move node if its group wasn't changed`() {
+    val nodes = createHelper().createModuleNodes("a", "a.main")
+    nodes.forEach {
+      val newNode = createHelperFromTree().moveModuleNodeToProperGroup(it.first, it.second, root, model, tree)
+      assertSame(it.first, newNode)
+    }
+  }
+
   private fun moveModuleNodeToProperGroupAndCheckResult(node: Pair<MockModuleTreeNode, Module>,
                                                         expected: String) {
     val helper = createHelperFromTree()
