@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,28 +27,23 @@ public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (element instanceof PsiLiteralExpression) {
-      String value = getValue(((PsiLiteralExpression)element));
-      final PsiElement expressionList;
-      if (value != null && (expressionList = element.getParent()) instanceof PsiExpressionList) {
-        final PsiElement methodCall = expressionList.getParent();
-        final PsiExpression classAccess;
-        if (methodCall != null && (classAccess = getContext(methodCall)) != null) {
-          return new PsiReference[]{new JavaLangClassMemberReference((PsiLiteralExpression)element, classAccess)};
+      PsiLiteralExpression literal = (PsiLiteralExpression)element;
+      if (literal.getValue() instanceof String) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiExpressionList) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiMethodCallExpression) {
+            PsiReferenceExpression methodReference = ((PsiMethodCallExpression)grandParent).getMethodExpression();
+            PsiExpression qualifier = methodReference.getQualifierExpression();
+            if (qualifier instanceof PsiClassObjectAccessExpression ||
+                qualifier instanceof PsiMethodCallExpression ||
+                qualifier instanceof PsiReferenceExpression) {
+              return new PsiReference[]{new JavaLangClassMemberReference(literal, qualifier)};
+            }
+          }
         }
       }
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  private static PsiExpression getContext(PsiElement methodCall) {
-    final PsiClassObjectAccessExpression expression = PsiTreeUtil.findChildOfType(methodCall, PsiClassObjectAccessExpression.class);
-    return expression == null ? PsiTreeUtil.findChildOfType(methodCall, PsiMethodCallExpression.class) : expression;
-  }
-
-  @Nullable
-  private static String getValue(PsiLiteralExpression element) {
-    final Object value = element.getValue();
-    return value instanceof String ? (String)value : null;
   }
 }
