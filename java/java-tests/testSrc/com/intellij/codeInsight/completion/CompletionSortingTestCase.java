@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -48,7 +47,6 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
     try {
       LookupManager.getInstance(getProject()).hideActiveLookup();
       UISettings.getInstance().setSortLookupElementsLexicographically(false);
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
     }
     finally {
       super.tearDown();

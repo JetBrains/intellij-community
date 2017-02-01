@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -40,8 +41,13 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
 
   @Override
   protected void tearDown() throws Exception {
-    myItems = null;
-    super.tearDown();
+    try {
+      myItems = null;
+      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void configureByFile(String path) {

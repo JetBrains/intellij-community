@@ -108,7 +108,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     myFixture.addClass("package foo; class ImplInaccessible implements intf.Intf<String> {}");
 
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "()");
+    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "() -> ");
     myFixture.type('\n');
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }

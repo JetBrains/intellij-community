@@ -81,14 +81,8 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testUppercaseMatters2() throws Throwable {
-    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL
-      checkPreferredItems(0, "classLoader", "classLoader2")
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old
-    }
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL
+    checkPreferredItems(0, "classLoader", "classLoader2")
   }
 
   void testShorterShouldBePreselected() throws Throwable {
