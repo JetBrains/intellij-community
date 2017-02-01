@@ -79,14 +79,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myScriptTextField.addActionListener(listener);
 
     if (SystemInfo.isWindows) {
+      //TODO: enable it on Windows when it works there
       myEmulateTerminalCheckbox.setVisible(false);
     }
 
     myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        boolean selected = !myEmulateTerminalCheckbox.isSelected();
-        myShowCommandLineCheckbox.setEnabled(selected);
+        myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isSelected());
       }
     });
 
