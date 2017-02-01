@@ -80,6 +80,14 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
     return Collections.unmodifiableList(mySchemes);
   }
 
+  public String[] listNames() {
+    String[] names = new String[mySchemes.size()];
+    for (int i = 0; i < names.length; i ++) {
+      names[i] = mySchemes.get(i).getName();
+    }
+    return names;
+  }
+
   @NotNull
   public DefaultColorsScheme getFirstScheme() {
     return mySchemes.get(0);
