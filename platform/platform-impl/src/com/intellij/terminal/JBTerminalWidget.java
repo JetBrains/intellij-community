@@ -16,7 +16,6 @@
 package com.intellij.terminal;
 
 import com.google.common.base.Predicate;
-import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +28,6 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.HyperlinkFilter;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
@@ -44,7 +42,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
@@ -63,42 +60,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     setName("terminal");
 
     Disposer.register(parent, this);
-  }
-
-  public void addMessageFilter(Project project, Filter filter) {
-    addHyperlinkFilter(new HyperlinkFilter() {
-      @Override
-      public Result apply(String line) {
-        Filter.Result r = filter.applyFilter(line, line.length());
-        if (r != null) {
-          return new Result() {
-
-            @Override
-            public List<ResultItem> getResultItems() {
-              return r.getResultItems().stream().map((item -> new ResultItem() {
-                @Override
-                public int getStartOffset() {
-                  return item.getHighlightStartOffset();
-                }
-
-                @Override
-                public int getEndOffset() {
-                  return item.getHighlightEndOffset();
-                }
-
-                @Override
-                public void navigate() {
-                  item.getHyperlinkInfo().navigate(project);
-                }
-              })).collect(Collectors.toList());
-            }
-          };
-        }
-        else {
-          return null;
-        }
-      }
-    });
   }
 
   @Override

@@ -31,6 +31,8 @@ import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -46,6 +48,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JComponent anchor;
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
+  private JBCheckBox myEmulateTerminalCheckbox;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -73,6 +76,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       };
 
     myScriptTextField.addActionListener(listener);
+
+    myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        boolean selected = !myEmulateTerminalCheckbox.isSelected();
+        myShowCommandLineCheckbox.setEnabled(selected);
+      }
+    });
 
     setAnchor(myCommonOptionsForm.getAnchor());
   }
@@ -114,6 +125,16 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
     myShowCommandLineCheckbox.setSelected(showCommandLineAfterwards);
+  }
+
+  @Override
+  public boolean emulateTerminal() {
+    return myEmulateTerminalCheckbox.isSelected();
+  }
+
+  @Override
+  public void setEmulateTerminal(boolean emulateTerminal) {
+    myEmulateTerminalCheckbox.setSelected(emulateTerminal);
   }
 
   @Override
