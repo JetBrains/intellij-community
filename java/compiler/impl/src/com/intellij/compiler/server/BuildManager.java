@@ -1165,7 +1165,11 @@ public class BuildManager implements Disposable {
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
-    cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
+
+    final File projectSystemRoot = getProjectSystemDirectory(project);
+    if (projectSystemRoot != null) {
+      cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
+    }
 
     for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
       final List<String> args = provider.getVMArguments();
