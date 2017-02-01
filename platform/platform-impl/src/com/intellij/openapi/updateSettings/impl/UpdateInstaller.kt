@@ -59,7 +59,9 @@ object UpdateInstaller {
 
   @JvmStatic
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
-    indicator.text = IdeBundle.message("progress.downloading.plugins")
+    indicator.text = IdeBundle.message("update.downloading.plugins.progress")
+
+    UpdateChecker.saveDisabledToUpdatePlugins()
 
     val disabledToUpdate = UpdateChecker.disabledToUpdatePlugins
     val readyToInstall = mutableListOf<PluginDownloader>()

@@ -210,8 +210,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         if (updatePlugins) {
-          indicator.setText(IdeBundle.message("update.downloading.plugins.progress"));
-          UpdateChecker.saveDisabledToUpdatePlugins();
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 

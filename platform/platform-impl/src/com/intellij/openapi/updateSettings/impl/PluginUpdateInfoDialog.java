@@ -75,10 +75,9 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
     super.doOKAction();
 
     if (!myPlatformUpdate) {
-      new Task.Backgroundable(null, IdeBundle.message("progress.downloading.plugins"), true, PerformInBackgroundOption.DEAF) {
+      new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          UpdateChecker.saveDisabledToUpdatePlugins();
           boolean updated = UpdateInstaller.installPluginUpdates(myUploadedPlugins, indicator);
           if (updated) {
             ApplicationManager.getApplication().invokeLater(() -> PluginManagerMain.notifyPluginsUpdated(null), ModalityState.NON_MODAL);
