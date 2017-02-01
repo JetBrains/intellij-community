@@ -22,9 +22,12 @@ import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -33,12 +36,10 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,11 @@ public class StackFrameItem {
   private static VariableItem createVariable(Value value, String name, VariableItem.VarType varType) {
     String type = null;
     String valueText = "null";
-    if (value instanceof ObjectReference) {
+    if (value instanceof StringReference) {
+      valueText = ((StringReference)value).value();
+      type = value.type().name() + "@" + ((ObjectReference)value).uniqueID();
+    }
+    else if (value instanceof ObjectReference) {
       valueText = "";
       type = value.type().name() + "@" + ((ObjectReference)value).uniqueID();
     }
@@ -170,8 +175,19 @@ public class StackFrameItem {
 
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-      String type = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myType);
+      ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+      String type = Registry.is("debugger.showTypes") ? classRenderer.renderTypeName(myType) : null;
       Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING)) {
+        node.setPresentation(icon, new XStringValuePresentation(myValue) {
+          @Nullable
+          @Override
+          public String getType() {
+            return classRenderer.SHOW_STRINGS_TYPE ? type : null;
+          }
+        }, false);
+        return;
+      }
       node.setPresentation(icon, type, myValue, false);
     }
   }
