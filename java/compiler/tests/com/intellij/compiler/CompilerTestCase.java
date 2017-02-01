@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -22,7 +23,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.apache.log4j.Level;
 
@@ -65,6 +65,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void setUp() throws Exception {
     //System.out.println("================BEGIN "+getName()+"====================");
@@ -72,26 +73,11 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     //TranslatingCompilerFilesMonitor.ourDebugMode = true;
 
     mySemaphore = new Semaphore();
-    final Exception[] ex = {null};
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myUsedMakeToCompile = false;
-          CompilerTestCase.super.setUp();
-          //((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
-        }
-        catch (Exception e) {
-          ex[0] = e;
-        }
-        catch (Throwable th) {
-          ex[0] = new Exception(th);
-        }
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myUsedMakeToCompile = false;
+      super.setUp();
+      //((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
     });
-    if (ex[0] != null) {
-      throw ex[0];
-    }
     CompilerTestUtil.enableExternalCompiler();
     CompilerTestUtil.setupJavacForTests(myProject);
     CompilerTestUtil.saveApplicationSettings();
@@ -152,21 +138,14 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       //long start = System.currentTimeMillis();
       try {
-        final Exception[] ex = {null};
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            copyTestProjectFiles(new NewFilesFilter());
-          }
-          catch (Exception e) {
-            ex[0] = e;
-          }
+        ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, Exception>)() -> {
+          copyTestProjectFiles(new NewFilesFilter());
+          return null;
         });
-        if (ex[0] != null) {
-          throw ex[0];
-        }
         mySemaphore.down();
 
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         final List<String> generated = new ArrayList<>();
         final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
           @Override
@@ -277,55 +256,44 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
     CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
 
-    final Exception[] ex = new Exception[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, Exception>() {
       @Override
-      public void run() {
+      public Object compute() throws Exception {
+        myDataDir = getDataRootDir(testName);
+        myOriginalSourceDir = myDataDir.findFileByRelativePath(getSourceDirRelativePath());
 
-        try {
-          myDataDir = getDataRootDir(testName);
-          myOriginalSourceDir = myDataDir.findFileByRelativePath(getSourceDirRelativePath());
+        File dir = createTempDirectory();
+        myModuleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+        mySourceDir = createSourcesDir();
+        myClassesDir = createOutputDir();
 
-          File dir = createTempDirectory();
-          myModuleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-          mySourceDir = createSourcesDir();
-          myClassesDir = createOutputDir();
+        VirtualFile out = myModuleRoot.createChildDirectory(this, "out");
+        CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(out.getUrl());
+        createTestProjectStructure(myModuleRoot);
+        setupMainModuleRootModel();
 
-          VirtualFile out = myModuleRoot.createChildDirectory(this, "out");
-          CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(out.getUrl());
-          createTestProjectStructure(myModuleRoot);
-          setupMainModuleRootModel();
-
-          final File compilerSystemDir = CompilerPaths.getCompilerSystemDirectory(myProject);
-          compilerSystemDir.mkdirs();
-          final File[] files = CompilerPaths.getCompilerSystemDirectory().listFiles();
-          if (files != null) {
-            for (File file : files) {
-              if (file.isDirectory()) {
-                myFilesToDelete.add(file);
-              }
+        final File compilerSystemDir = CompilerPaths.getCompilerSystemDirectory(myProject);
+        compilerSystemDir.mkdirs();
+        final File[] files = CompilerPaths.getCompilerSystemDirectory().listFiles();
+        if (files != null) {
+          for (File file : files) {
+            if (file.isDirectory()) {
+              myFilesToDelete.add(file);
             }
           }
-
-          // load data
-          //if (new File(testDataPath).exists()) {
-          //  LOG.assertTrue(myDataDir != null, "Path \"" + testDataPath + "\" exists on disk but is not detected by VFS");
-          //}
-          myData = new CompilerTestData();
-          File file = new File(myDataDir.getPath().replace('/', File.separatorChar) + File.separator + DATA_FILE_NAME);
-          myData.readExternal(JDOMUtil.load(file));
-          PlatformTestUtil.saveProject(myProject);
-
         }
-        catch (Exception e) {
-          ex[0] = e;
-        }
+
+        // load data
+        //if (new File(testDataPath).exists()) {
+        //  LOG.assertTrue(myDataDir != null, "Path \"" + testDataPath + "\" exists on disk but is not detected by VFS");
+        //}
+        myData = new CompilerTestData();
+        File file = new File(myDataDir.getPath().replace('/', File.separatorChar) + File.separator + DATA_FILE_NAME);
+        myData.readExternal(JDOMUtil.load(file));
+        return null;
       }
     });
-
-    if (ex[0] != null) {
-      throw ex[0];
-    }
+    PlatformTestUtil.saveProject(myProject);
   }
 
   protected VirtualFile createOutputDir() throws IOException {
@@ -460,6 +428,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     runnable.run();
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -502,7 +471,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         clearMethod.setAccessible(true);
         clearMethod.invoke(cache);
       }
-      catch (Exception ingored2) {
+      catch (Exception ignored2) {
       }
     }
   }
