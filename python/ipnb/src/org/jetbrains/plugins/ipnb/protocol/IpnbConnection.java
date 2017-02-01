@@ -184,7 +184,7 @@ public class IpnbConnection {
     String urlParameters = null;
     try {
       urlParameters = new URIBuilder()
-        .addParameter("_xsrf=", myXsrf)
+        .addParameter("_xsrf", myXsrf)
         .addParameter("username", username)
         .addParameter("password", password)
         .build().toString();
@@ -192,9 +192,7 @@ public class IpnbConnection {
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
     }
-
-    //String urlParameters = "_xsrf=" + myXsrf + "&" + "username=" + URLEncoder.encode(username, "UTF-8") + "&" + "password=" + 
-    //                       URLEncoder.encode(password, "UTF-8");
+    
     if (urlParameters == null) throw new IOException("Unable to login");
     byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
     final HttpsURLConnection connection = ObjectUtils.tryCast(configureConnection((HttpURLConnection)new URL(myURI + loginUrl).openConnection(),
