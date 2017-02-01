@@ -156,7 +156,7 @@ class ModuleStoreTest {
     m1.removeContentRoot()
     m2.removeContentRoot()
 
-    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
     m1.assertChangesApplied()
     m2.assertChangesApplied()

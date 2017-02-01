@@ -1423,7 +1423,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     ProjectManager projectManager = ProjectManager.getInstance();
     if (projectManager instanceof ProjectManagerEx) {
-      ((ProjectManagerEx)projectManager).flushChangedAlarm();
+      ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
     }
 
     Project[] openProjects = projectManager.getOpenProjects();

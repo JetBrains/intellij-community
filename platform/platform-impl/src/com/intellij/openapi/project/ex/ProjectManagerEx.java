@@ -77,6 +77,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;
 
-  public void flushChangedAlarm() {
+  /**
+   * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
+   */
+  public void flushChangedProjectFileAlarm() {
   }
 }

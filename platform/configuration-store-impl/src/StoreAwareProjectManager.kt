@@ -146,7 +146,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }
 
-  override fun flushChangedAlarm() {
+  override fun flushChangedProjectFileAlarm() {
     changedFilesAlarm.flush()
   }
 

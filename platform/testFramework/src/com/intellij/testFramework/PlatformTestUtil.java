@@ -537,7 +537,7 @@ public class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().flushChangedAlarm();
+    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
     StoreUtil.save(ServiceKt.getStateStore(project), project);
   }
 
