@@ -316,6 +316,12 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
   }
 
+  override fun createConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
+    // Since we need module, no need to even try to create config with out of it
+    context?.module?: return null
+    return super.createConfigurationFromContext(context)
+  }
+
   override fun findOrCreateConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
     if (!isNewTestsModeEnabled()) {
       return null

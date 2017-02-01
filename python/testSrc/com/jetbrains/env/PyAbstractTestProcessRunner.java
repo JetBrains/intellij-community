@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
@@ -99,8 +100,8 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   public void assertAllTestsPassed() {
     final String consoleText = getAllConsoleText();
-    Assert.assertEquals(consoleText, 0, myProxyManager.getProxy().getChildren(Filter.NOT_PASSED).size());
-    Assert.assertEquals(consoleText, 0, getFailedTestsCount());
+    Assert.assertEquals(getFormattedTestTree() + consoleText, 0, myProxyManager.getProxy().getChildren(Filter.NOT_PASSED).size());
+    Assert.assertEquals(getFormattedTestTree() + consoleText, 0, getFailedTestsCount());
   }
 
   /**
@@ -123,6 +124,30 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   @NotNull
   public SMRootTestProxy getTestProxy() {
     return myProxyManager.getProxy();
+  }
+
+  /**
+   * @return Test tree using poorman's graphics
+   */
+  @NotNull
+  public final String getFormattedTestTree() {
+    final StringBuilder builder = new StringBuilder("Test tree:\n");
+
+    formatLevel(getTestProxy(), 0, builder);
+
+    return builder.toString();
+  }
+
+  private static void formatLevel(@NotNull final SMTestProxy test, final int level, @NotNull final StringBuilder builder) {
+    builder.append(StringUtil.repeat(".", level));
+    builder.append(test.getName());
+    if (test.isLeaf()) {
+      builder.append(test.isPassed() ? "(+)" : "(-)");
+    }
+    builder.append('\n');
+    for (SMTestProxy child : test.getChildren()) {
+      formatLevel(child, level + 1, builder);
+    }
   }
 
 
