@@ -113,7 +113,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       registerError(sign, getAppendedVariable(expression));
     }
 
-    private boolean checkExpression(PsiExpression expression) {
+    private static boolean checkExpression(PsiExpression expression) {
       if (!TypeUtils.isJavaLangString(expression.getType()) || ControlFlowUtils.isInExitStatement(expression) ||
           !ControlFlowUtils.isInLoop(expression)) return false;
 
@@ -133,14 +133,34 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
         if (variable != null) {
           PsiLoopStatement commonLoop = getOutermostCommonLoop(expression, variable);
-          return commonLoop != null && !ControlFlowUtils
-            .flowBreaksLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop);
+          return commonLoop != null &&
+                 !ControlFlowUtils.isExecutedOnceInLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop) &&
+                 !isUsedCompletely(variable, commonLoop);
         }
       }
       return false;
     }
 
-    private PsiLoopStatement getOutermostCommonLoop(PsiExpression expression, PsiVariable variable) {
+    private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
+      boolean notUsedCompletely = ReferencesSearch.search(variable, new LocalSearchScope(loop)).forEach(ref -> {
+        PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
+        if (expression == null) return true;
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
+          parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        }
+        if (parent instanceof PsiExpressionList ||
+            (parent instanceof PsiAssignmentExpression &&
+             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false))) {
+          PsiStatement statement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
+          return ControlFlowUtils.isExecutedOnceInLoop(statement, loop) || ControlFlowUtils.isVariableReassigned(statement, variable);
+        }
+        return true;
+      });
+      return !notUsedCompletely;
+    }
+
+    private static PsiLoopStatement getOutermostCommonLoop(PsiExpression expression, PsiVariable variable) {
       PsiElement stopAt = null;
       PsiCodeBlock block = getSurroundingBlock(expression);
       if(block != null) {

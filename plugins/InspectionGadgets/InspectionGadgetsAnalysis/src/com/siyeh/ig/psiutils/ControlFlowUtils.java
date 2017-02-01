@@ -16,7 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -600,6 +604,67 @@ public class ControlFlowUtils {
     return false;
   }
 
+  private static StreamEx<PsiExpression> conditions(PsiElement element) {
+    return StreamEx.iterate(element, e -> e != null &&
+                                          !(e instanceof PsiLambdaExpression) && !(e instanceof PsiMethod), PsiElement::getParent)
+      .pairMap((child, parent) -> parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getThenBranch() == child ? parent : null)
+      .select(PsiIfStatement.class)
+      .map(PsiIfStatement::getCondition)
+      .flatMap(cond -> cond instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)cond).getOperationTokenType().equals(
+        JavaTokenType.ANDAND) ? StreamEx.of(((PsiPolyadicExpression)cond).getOperands()) : StreamEx.of(cond));
+  }
+
+  /**
+   * @param statement statement to check
+   * @param loop      surrounding loop
+   * @return true if it could be statically determined that given statement is executed at most once
+   */
+  public static boolean isExecutedOnceInLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if (flowBreaksLoop(statement, loop)) return true;
+    if (loop instanceof PsiForStatement) {
+      // Check that we're inside counted loop which increments some loop variable and
+      // the code is executed under condition like if(var == something)
+      PsiDeclarationStatement initialization =
+        ObjectUtils.tryCast(((PsiForStatement)loop).getInitialization(), PsiDeclarationStatement.class);
+      PsiStatement update = ((PsiForStatement)loop).getUpdate();
+      if (initialization != null && update != null) {
+        PsiLocalVariable variable = StreamEx.of(initialization.getDeclaredElements()).select(PsiLocalVariable.class)
+          .findFirst(var -> VariableAccessUtils.variableIsIncremented(var, update) ||
+                            VariableAccessUtils.variableIsDecremented(var, update)).orElse(null);
+        if (variable != null) {
+          boolean hasLoopVarCheck = conditions(statement).select(PsiBinaryExpression.class)
+            .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
+            .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
+          if (hasLoopVarCheck) {
+            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+              PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
+              return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
+            });
+            if (notWritten) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if the variable is definitely reassigned to fresh value after executing given statement
+   * without intermediate usages (ignoring possible exceptions in-between)
+   *
+   * @param statement statement to start checking from
+   * @param variable variable to check
+   * @return true if variable is reassigned
+   */
+  public static boolean isVariableReassigned(PsiStatement statement, PsiVariable variable) {
+    for (PsiStatement sibling = nextExecutedStatement(statement); sibling != null; sibling = nextExecutedStatement(sibling)) {
+      PsiExpression rValue = ExpressionUtils.getAssignmentTo(sibling, variable);
+      if (rValue != null && !VariableAccessUtils.variableIsUsed(variable, rValue)) return true;
+      if (VariableAccessUtils.variableIsUsed(variable, sibling)) return false;
+    }
+    return false;
+  }
+
   /**
    * Checks whether control flow after executing given statement will definitely not go into the next iteration of given loop.
    *
@@ -610,27 +675,41 @@ public class ControlFlowUtils {
   @Contract("null, _ -> false")
   public static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement == null || statement == loop) return false;
-    for (PsiStatement sibling = nextExecutedStatement(statement); sibling != null; sibling = nextExecutedStatement(sibling)) {
+    for (PsiStatement sibling = statement; sibling != null; sibling = nextExecutedStatement(sibling)) {
       if(sibling instanceof PsiContinueStatement) return false;
       if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
       if(sibling instanceof PsiBreakStatement) {
         PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;
         PsiStatement exitedStatement = breakStatement.findExitedStatement();
         if(exitedStatement == loop) return true;
-        return flowBreaksLoop(exitedStatement, loop);
+        return flowBreaksLoop(nextExecutedStatement(exitedStatement), loop);
+      }
+      if (sibling instanceof PsiIfStatement || sibling instanceof PsiSwitchStatement) {
+        if (!PsiTreeUtil.collectElementsOfType(sibling, PsiContinueStatement.class).isEmpty()) return false;
+      }
+      if (sibling instanceof PsiLoopStatement) {
+        if (PsiTreeUtil.collectElements(sibling, e -> e instanceof PsiContinueStatement &&
+                                                      ((PsiContinueStatement)e).getLabelIdentifier() != null).length > 0) {
+          return false;
+        }
       }
     }
     return false;
   }
 
   @Nullable
-  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
-    PsiStatement next = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-    while (next instanceof PsiBlockStatement) {
-      PsiStatement[] statements = ((PsiBlockStatement)next).getCodeBlock().getStatements();
+  private static PsiStatement firstStatement(@Nullable PsiStatement statement) {
+    while (statement instanceof PsiBlockStatement) {
+      PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       if (statements.length == 0) break;
-      next = statements[0];
+      statement = statements[0];
     }
+    return statement;
+  }
+
+  @Nullable
+  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+    PsiStatement next = firstStatement(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class));
     if (next == null) {
       PsiElement parent = statement.getParent();
       if (parent instanceof PsiCodeBlock) {

@@ -839,6 +839,22 @@ public class ExpressionUtils {
     return true;
   }
 
+  /**
+   * If any operand of supplied binary expression refers to the supplied variable, returns other operand;
+   * otherwise returns null.
+   *
+   * @param binOp {@link PsiBinaryExpression} to extract the operand from
+   * @param variable variable to check against
+   * @return operand or null
+   */
+  @Contract("null, _ -> null; !null, null -> null")
+  public static PsiExpression getOtherOperand(@Nullable PsiBinaryExpression binOp, @Nullable PsiVariable variable) {
+    if(binOp == null || variable == null) return null;
+    if(isReferenceTo(binOp.getLOperand(), variable)) return binOp.getROperand();
+    if(isReferenceTo(binOp.getROperand(), variable)) return binOp.getLOperand();
+    return null;
+  }
+
   @Contract("null, _ -> false; _, null -> false")
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);

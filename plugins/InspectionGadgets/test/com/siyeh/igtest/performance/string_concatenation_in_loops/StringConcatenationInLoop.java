@@ -79,7 +79,7 @@ public class StringConcatenationInLoop
                 s += i;
                 {
                     {
-                        System.out.println(s);
+                        System.out.println(i);
                     }
                     break;
                 }
@@ -89,9 +89,36 @@ public class StringConcatenationInLoop
             if(i > 2) {
                 s <warning descr="String concatenation '+=' in loop">+=</warning> i;
                 {
-                    System.out.println(s);
+                    System.out.println(i);
                 }
-                System.out.println(s);
+                System.out.println(i);
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            if (i == 5) {
+                // concatenated only on single iteration
+                s += i;
+            }
+            System.out.println(i);
+        }
+        List<String> strings = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            s += i;
+            if (s.length() > 0) {
+                strings.add(s); // the whole string is used on every iteration anyways: it's useless to create a StringBuilder here
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+            if (i == 5 && s.length() > 0) {
+                strings.add(s); // the whole string is used, but only once: it's still reasonable to migrate to StringBuilder
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+            if (s.length() > 50) {
+                strings.add(s); // the whole string is used, but it's recreated after the usage: it's still reasonable to migrate to StringBuilder
+                s = "";
             }
         }
         for (int i = 0; i < 10; i++) {
