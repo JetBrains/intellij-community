@@ -29,10 +29,10 @@ import java.util.regex.Pattern
 class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
   private var isParamHintsEnabledBefore = false
-  
+
   companion object {
-    val pattern: Pattern = Pattern.compile("<hint\\s+text=\"([0-9a-zA-Z]+)\"/>")
-    
+    val pattern: Pattern = Pattern.compile("<hint\\s+text=\"([^\"\n\r]+)\"\\s*/>")
+
     private val default = ParameterNameHintsSettings()
   }
 
@@ -45,12 +45,12 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   fun tearDown() {
     EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
     val hintSettings = ParameterNameHintsSettings.getInstance()
-    
+
     hintSettings.loadState(default.state)
     hintSettings.isShowForParamsWithSameType = default.isShowForParamsWithSameType
     hintSettings.isDoNotShowIfMethodNameContainsParameterName = default.isDoNotShowIfMethodNameContainsParameterName
   }
-  
+
   fun checkInlays(fileName: String, text: String) {
     myFixture.configureByText(fileName, text)
 
@@ -60,7 +60,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val actualInlays = getActualInlays()
 
     assertEquals(expectedInlays.size, actualInlays.size)
-    
+
     actualInlays.zip(expectedInlays).forEach {
       assertEquals(it.second, it.first)
     }
@@ -70,7 +70,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     myFixture.doHighlighting()
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-    
+
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
       .filter { hintManager.isParameterHint(it) }
