@@ -384,8 +384,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType createCoroutineType(@Nullable PyType returnType) {
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
-
     if (returnType instanceof PyCollectionType) {
       final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
       if (classType != null) {

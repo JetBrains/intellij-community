@@ -41,7 +41,7 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
         .filter {
           val importedResult = it as? ImportedResolveResult
           val importElement = importedResult?.definer as? PyImportElement
-          if (importElement != null) importElement.asName != null else true
+          importElement == null || importElement.asName != null
         }
     else
       baseResults

@@ -112,25 +112,26 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       if (sdk == null) {
         return null;
       }
-      String tool = findToolInPackage(toolName, module, sdk, "PyQt4");
+      String tool = findToolInPackage(toolName, module, "PyQt4");
       if (tool != null) {
         return tool;
       }
-      return findToolInPackage(toolName, module, sdk, "PySide");
+      return findToolInPackage(toolName, module, "PySide");
    }
     // TODO
     return null;
   }
 
   @Nullable
-  private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
+  private static String findToolInPackage(String toolName, Module module, String name) {
     final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(name),
-                                                                              PyResolveImportUtil.fromSdk(module.getProject(), sdk));
+                                                                              PyResolveImportUtil.fromModule(module));
     return StreamEx.of(results).select(PsiDirectory.class)
       .map(directory -> directory.getVirtualFile().findChild(toolName + ".exe"))
-      .filter(file -> file != null)
-      .map(file -> file.getPath())
-      .findFirst().orElse(null);
+      .nonNull()
+      .map(VirtualFile::getPath)
+      .findFirst()
+      .orElse(null);
   }
 
   protected abstract String getToolName();
