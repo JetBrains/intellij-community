@@ -26,15 +26,18 @@ import com.intellij.openapi.util.registry.Registry
  * @author nik
  */
 fun getQualifiedNameModuleGrouper(project: Project): ModuleGrouper {
+  return runWithQualifiedModuleNamesEnabled { ModuleGrouper.instanceFor(project) }
+}
+
+fun <T> runWithQualifiedModuleNamesEnabled(action: () -> T): T {
   val property = Registry.get("project.qualified.module.names")
   return try {
     property.setValue(true)
-    ModuleGrouper.instanceFor(project)
+    action()
   }
   finally {
     property.setValue(false)
   }
-
 }
 
 fun renameModule(module: Module, newName: String) {
