@@ -54,10 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.table.TableStringConverter;
+import javax.swing.table.*;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
@@ -205,12 +202,16 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doAddAction(@NotNull AnActionButton button) {
+    TableCellEditor editor = myTable.getCellEditor();
+    if (editor != null) editor.cancelCellEditing();
+
     int row = myTable.getSelectedRow();
     Object selectedTarget = row >= 0 ? myModel.data.get(myTable.convertRowIndexToModel(row)).first : null;
     VirtualFile toSelect = myFileToSelect != null ? myFileToSelect :
                            ObjectUtils.tryCast(selectedTarget, VirtualFile.class);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, true);
     Set<VirtualFile> chosen = ContainerUtil.newHashSet(FileChooser.chooseFiles(descriptor, myProject, toSelect));
+    if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
     for (VirtualFile file : chosen) {
       if (!set.add(file)) continue;
@@ -229,6 +230,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doRemoveAction(@NotNull AnActionButton button) {
+    TableCellEditor editor = myTable.getCellEditor();
+    if (editor != null) editor.cancelCellEditing();
+
     int[] rows = myTable.getSelectedRows();
     int firstRow = rows[0];
     Object[] keys = new Object[rows.length];
@@ -244,7 +248,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doEditAction(@NotNull AnActionButton button) {
-    myTable.editCellAt(myTable.getSelectedRow(), 1);
+    TableUtil.editCellAt(myTable, myTable.getSelectedRow(), 1);
   }
 
   @Nullable
@@ -428,19 +432,25 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
     });
     myTable.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
-      VirtualFile targetFile;
+      T editorValue;
 
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         int modelRow = myTable.convertRowIndexToModel(row);
-        Object target = table.getModel().getValueAt(modelRow, 0);
-        if (!canEditTarget(target, (T)value)) return null;
-        targetFile = target instanceof Project ? null : (VirtualFile)target;
+        Pair<Object, T> pair = myModel.data.get(modelRow);
+        Object target = pair.first;
+        editorValue = pair.second; // (T)value
+        if (!canEditTarget(target, editorValue)) return null;
+        VirtualFile targetFile = target instanceof Project ? null : (VirtualFile)target;
 
-        JPanel panel = createActionPanel(target, () -> (T)value, chosen -> {
+        JPanel panel = createActionPanel(target, () -> editorValue, chosen -> {
+          editorValue = adjustChosenValue(target, chosen);
           TableUtil.stopEditing(myTable);
-          if (clearSubdirectoriesOnDemandOrCancel(false, targetFile)) {
-            myModel.setValueAt(adjustChosenValue(target, chosen), modelRow, column);
+          if (Comparing.equal(editorValue, chosen)) {
+            // do nothing
+          }
+          else if (clearSubdirectoriesOnDemandOrCancel(false, targetFile)) {
+            myModel.setValueAt(editorValue, modelRow, column);
             myModel.fireTableDataChanged();
             selectFile(targetFile);
           }
@@ -463,7 +473,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
       @Override
       public Object getCellEditorValue() {
-        return myModel.getValueAt(myTable.getEditingRow(), 1);
+        return editorValue;
       }
     });
   }
