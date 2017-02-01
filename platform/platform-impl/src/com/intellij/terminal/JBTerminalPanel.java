@@ -144,7 +144,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   @Override
-  public boolean dispatch(@NotNull AWTEvent e) {
+  public boolean dispatch(AWTEvent e) {
     if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
       dispatchEvent(e);
       return true;
@@ -233,7 +233,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected BufferedImage createBufferedImage(int width, int height) {
-    return UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
+    return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
 
 
@@ -285,8 +285,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences(),
-                                                           null);
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences());
   }
 
   @Override

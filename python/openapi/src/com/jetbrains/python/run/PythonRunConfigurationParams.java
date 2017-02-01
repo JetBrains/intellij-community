@@ -31,5 +31,8 @@ public interface PythonRunConfigurationParams {
 
   boolean showCommandLineAfterwards();
   void setShowCommandLineAfterwards(boolean showCommandLineAfterwards);
+
+  boolean emulateTerminal();
+  void setEmulateTerminal(boolean emulateTerminal);
 }
 
