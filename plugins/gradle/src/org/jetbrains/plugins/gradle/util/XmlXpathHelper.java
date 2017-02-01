@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -55,7 +56,93 @@ public class XmlXpathHelper {
     };
   }
 
-  public String queryXml(final String xpathExpr) throws XmlParserException {
+  @NotNull
+  public String getTestEventType() throws XmlXpathHelper.XmlParserException {
+    return queryXml("/ijLog/event/@type");
+  }
+
+  public String getTestName() throws XmlParserException {
+    return queryXml("/ijLog/event/test/descriptor/@name");
+  }
+
+  public String getParentTestId() throws XmlParserException {
+    return queryXml("/ijLog/event/test/@parentId");
+  }
+
+  public String getTestId() throws XmlParserException {
+    return queryXml("/ijLog/event/test/@id");
+  }
+
+  public String getTestClassName() throws XmlParserException {
+    return queryXml("/ijLog/event/test/descriptor/@className");
+  }
+
+  @NotNull
+  public String getTestEventResultType() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/@resultType");
+  }
+
+  public String getEventTitle() throws XmlParserException {
+    return queryXml("/ijLog/event/title");
+  }
+
+  public String isEventOpenSettings() throws XmlParserException {
+    return queryXml("/ijLog/event/@openSettings");
+  }
+
+  public String getEventMessage() throws XmlParserException {
+    return queryXml("/ijLog/event/message");
+  }
+
+  public String getTestEventTest() throws XmlParserException {
+    return queryXml("/ijLog/event/test/event");
+  }
+
+  public String getTestEventTestDescription() throws XmlParserException {
+    return queryXml("/ijLog/event/test/event/@destination");
+  }
+
+  public String getEventTestReport() throws XmlParserException {
+    return queryXml("/ijLog/event/@testReport");
+  }
+
+  public String getEventTestResultActualFilePath() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/actualFilePath");
+  }
+
+  public String getEventTestResultFilePath() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/filePath");
+  }
+
+  public String getEventTestResultExpected() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/expected");
+  }
+
+  public String getEventTestResultActual() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/actual");
+  }
+
+  public String getEventTestResultFailureType() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/failureType");
+  }
+
+  public String getEventTestResultStackTrace() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/stackTrace");
+  }
+
+  public String getEventTestResultErrorMsg() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/errorMsg");
+  }
+
+  public String getEventTestResultEndTime() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/@endTime");
+  }
+
+  public String getEventTestResultStartTime() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/@startTime");
+  }
+
+  private String queryXml(final String xpathExpr) throws XmlParserException {
     try {
       return xmlDocument == null ? "" : xpath.evaluate(xpathExpr, xmlDocument);
     }

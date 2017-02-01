@@ -32,7 +32,7 @@ public class ReportLocationEvent extends AbstractTestEvent {
 
   @Override
   public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testReport = eventXml.queryXml("/ijLog/event/@testReport");
+    final String testReport = eventXml.getEventTestReport();
     assert testReport != null;
     getProperties().setGradleTestReport(new File(testReport));
   }

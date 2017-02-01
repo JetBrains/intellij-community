@@ -45,11 +45,11 @@ public class ConfigurationErrorEvent extends AbstractTestEvent {
 
   @Override
   public void process(XmlXpathHelper xml) throws XmlXpathHelper.XmlParserException {
-    final String errorTitle = xml.queryXml("/ijLog/event/title");
+    final String errorTitle = xml.getEventTitle();
     assert errorTitle != null;
-    final String configurationErrorMsg = xml.queryXml("/ijLog/event/message");
+    final String configurationErrorMsg = xml.getEventMessage();
     assert configurationErrorMsg != null;
-    final boolean openSettings = Boolean.valueOf(xml.queryXml("/ijLog/event/@openSettings"));
+    final boolean openSettings = Boolean.valueOf(xml.isEventOpenSettings());
     final Project project = getProject();
     assert project != null;
     final String message =

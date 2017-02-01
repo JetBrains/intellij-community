@@ -53,7 +53,7 @@ public class GradleTestsExecutionConsoleOutputProcessor {
     try {
       final XmlXpathHelper xml = new XmlXpathHelper(trimmedText);
 
-      final TestEventType eventType = TestEventType.fromValue(xml.queryXml("/ijLog/event/@type"));
+      final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
       TestEvent testEvent = null;
       switch (eventType) {
         case CONFIGURATION_ERROR:

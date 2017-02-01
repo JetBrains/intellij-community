@@ -30,8 +30,8 @@ public class AfterSuiteEvent extends AbstractTestEvent {
 
   @Override
   public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testId = getTestId(eventXml);
-    final TestEventResult result = getTestEventResultType(eventXml);
+    final String testId = eventXml.getTestId();
+    final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
 
     addToInvokeLater(() -> {
       final SMTestProxy testProxy = findTestProxy(testId);

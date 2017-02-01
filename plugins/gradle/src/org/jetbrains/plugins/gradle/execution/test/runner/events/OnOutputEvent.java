@@ -32,9 +32,9 @@ public class OnOutputEvent extends AbstractTestEvent {
 
   @Override
   public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testId = getTestId(eventXml);
-    final String destination = eventXml.queryXml("/ijLog/event/test/event/@destination");
-    final String output = decode(eventXml.queryXml("/ijLog/event/test/event"));
+    final String testId = eventXml.getTestId();
+    final String destination = eventXml.getTestEventTestDescription();
+    final String output = decode(eventXml.getTestEventTest());
 
     SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
