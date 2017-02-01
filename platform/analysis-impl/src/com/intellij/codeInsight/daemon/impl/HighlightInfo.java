@@ -81,8 +81,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  @Nullable
-  private volatile RangeHighlighterEx highlighter;
+  private volatile RangeHighlighterEx highlighter;// modified in EDT only
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
@@ -162,13 +161,14 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
-  @Nullable
   public RangeHighlighterEx getHighlighter() {
     return highlighter;
   }
 
+  /**
+   * modified in EDT only
+   */
   public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     this.highlighter = highlighter;
   }
 
