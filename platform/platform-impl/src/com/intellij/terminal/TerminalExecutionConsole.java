@@ -24,6 +24,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.HyperlinkFilter;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,7 +58,7 @@ public class TerminalExecutionConsole implements ExecutionConsole {
     };
 
     TerminalSession session = myTerminalWidget
-      .createTerminalSession(new ProcessHandlerTtyConnector(processHandler, Charset.forName("UTF-8"))); //TODO: take charset from settings
+      .createTerminalSession(new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(project).getDefaultCharset()));
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
