@@ -764,11 +764,28 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiExpression intermediate = makeIntermediateExpression(factory);
       PsiExpression expression =
         myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(intermediate), myExpression) : intermediate;
-      return ".filter(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+      return "." + getOpName() + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+    }
+
+    @NotNull
+    String getOpName() {
+      return "filter";
     }
 
     PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
       return myExpression;
+    }
+  }
+
+  static class TakeWhileOp extends FilterOp {
+    TakeWhileOp(PsiExpression condition, PsiVariable variable, boolean negated) {
+      super(condition, variable, negated);
+    }
+
+    @NotNull
+    @Override
+    String getOpName() {
+      return "takeWhile";
     }
   }
 
