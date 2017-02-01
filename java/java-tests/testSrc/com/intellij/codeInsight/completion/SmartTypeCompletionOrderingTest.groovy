@@ -70,7 +70,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
     lookup.currentItem = lookup.items[4] //Container
     myFixture.type('\n\b')
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate()
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate()
     FileDocumentManager.instance.saveAllDocuments()
     invokeCompletion("/JComponentAddNew.java")
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")

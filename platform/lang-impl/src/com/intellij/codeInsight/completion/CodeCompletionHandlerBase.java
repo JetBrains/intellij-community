@@ -130,7 +130,7 @@ public class CodeCompletionHandlerBase {
     markCaretAsProcessed(caret);
 
     if (invokedExplicitly) {
-      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+      StatisticsUpdate.applyLastCompletionStatisticsUpdate();
     }
 
     checkNoWriteAccess();
@@ -564,10 +564,9 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.WatchingInsertionContext context = null;
     try {
-      Lookup lookup = indicator.getLookup();
-      CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(item, lookup);
+      StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
       context = insertItemHonorBlockSelection(indicator, item, completionChar, items, update);
-      CompletionLookupArranger.trackStatistics(context, update);
+      update.trackStatistics(context);
     }
     finally {
       afterItemInsertion(indicator, context == null ? null : context.getLaterRunnable());
@@ -579,7 +578,7 @@ public class CodeCompletionHandlerBase {
                                                                         final LookupElement item,
                                                                         final char completionChar,
                                                                         final List<LookupElement> items,
-                                                                        final CompletionLookupArranger.StatisticsUpdate update) {
+                                                                        final StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
@@ -657,7 +656,7 @@ public class CodeCompletionHandlerBase {
                                                                           final LookupElement item,
                                                                           final char completionChar,
                                                                           List<LookupElement> items,
-                                                                          final CompletionLookupArranger.StatisticsUpdate update,
+                                                                          final StatisticsUpdate update,
                                                                           final Editor editor,
                                                                           final PsiFile psiFile,
                                                                           final int caretOffset,
@@ -694,7 +693,7 @@ public class CodeCompletionHandlerBase {
       }
       EditorModificationUtil.scrollToCaret(editor);
     });
-    update.addSparedChars(indicator, item, context, completionChar);
+    update.addSparedChars(indicator, item, context);
     return context;
   }
 

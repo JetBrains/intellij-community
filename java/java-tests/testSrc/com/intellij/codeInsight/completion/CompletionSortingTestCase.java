@@ -91,7 +91,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   protected static void imitateItemSelection(final LookupImpl lookup, final int index) {
     final LookupElement item = lookup.getItems().get(index);
     lookup.setCurrentItem(item);
-    CompletionLookupArranger.collectStatisticChanges(item, lookup);
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    StatisticsUpdate.collectStatisticChanges(item);
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate();
   }
 }

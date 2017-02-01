@@ -500,7 +500,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     selectItem(myFixture.getLookupElements()[4], '\t');
     checkResultByFile("CorrectSelectionInsertion_after.xml");
     
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate();
 
     configureByFile("CorrectSelectionInsertion2.xml");
     myFixture.getEditor().getSelectionModel().removeSelection();

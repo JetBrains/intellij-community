@@ -487,7 +487,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     else {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
-    CompletionLookupArranger.cancelLastCompletionStatisticsUpdate();
+    StatisticsUpdate.cancelLastCompletionStatisticsUpdate();
   }
 
   @Override

@@ -22,22 +22,16 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,8 +46,6 @@ import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
-  @Nullable private static StatisticsUpdate ourPendingUpdate;
-  private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final Key<String> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
@@ -67,14 +59,6 @@ public class CompletionLookupArranger extends LookupArranger {
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
   private final List<LookupElement> myFrozenItems = new ArrayList<>();
-  static {
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      @Override
-      public void dispose() {
-        cancelLastCompletionStatisticsUpdate();
-      }
-    });
-  }
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private boolean myOverflow;
 
@@ -456,86 +440,6 @@ public class CompletionLookupArranger extends LookupArranger {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 
-  public static StatisticsUpdate collectStatisticChanges(LookupElement item, final Lookup lookup) {
-    applyLastCompletionStatisticsUpdate();
-
-    final StatisticsInfo base = StatisticsWeigher.getBaseStatisticsInfo(item, null);
-    if (base == StatisticsInfo.EMPTY) {
-      return new StatisticsUpdate(StatisticsInfo.EMPTY);
-    }
-
-    StatisticsUpdate update = new StatisticsUpdate(base);
-    ourPendingUpdate = update;
-    Disposer.register(update, new Disposable() {
-      @Override
-      public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourPendingUpdate = null;
-      }
-    });
-
-    return update;
-  }
-
-  public static void trackStatistics(InsertionContext context, final StatisticsUpdate update) {
-    if (ourPendingUpdate != update) {
-      return;
-    }
-
-    if (!context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET)) {
-      return;
-    }
-    
-    final Document document = context.getDocument();
-    int startOffset = context.getStartOffset();
-    int tailOffset = context.getEditor().getCaretModel().getOffset();
-    if (startOffset < 0 || tailOffset <= startOffset) {
-      return;
-    }
-
-    final RangeMarker marker = document.createRangeMarker(startOffset, tailOffset);
-    final DocumentAdapter listener = new DocumentAdapter() {
-      @Override
-      public void beforeDocumentChange(DocumentEvent e) {
-        if (!marker.isValid() || e.getOffset() > marker.getStartOffset() && e.getOffset() < marker.getEndOffset()) {
-          cancelLastCompletionStatisticsUpdate();
-        }
-      }
-    };
-
-    ourStatsAlarm.addRequest(() -> {
-      if (ourPendingUpdate == update) {
-        applyLastCompletionStatisticsUpdate();
-      }
-    }, 20 * 1000);
-
-    document.addDocumentListener(listener);
-    Disposer.register(update, new Disposable() {
-      @Override
-      public void dispose() {
-        document.removeDocumentListener(listener);
-        marker.dispose();
-        ourStatsAlarm.cancelAllRequests();
-      }
-    });
-  }
-
-  public static void cancelLastCompletionStatisticsUpdate() {
-    if (ourPendingUpdate != null) {
-      Disposer.dispose(ourPendingUpdate);
-      assert ourPendingUpdate == null;
-    }
-  }
-
-  public static void applyLastCompletionStatisticsUpdate() {
-    StatisticsUpdate update = ourPendingUpdate;
-    if (update != null) {
-      update.performUpdate();
-      Disposer.dispose(update);
-      assert ourPendingUpdate == null;
-    }
-  }
-
   private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
     for (final CompletionPreselectSkipper skipper : skippers) {
       if (skipper.skipElement(element, myLocation)) {
@@ -553,43 +457,6 @@ public class CompletionLookupArranger extends LookupArranger {
     myPrefixChanges++;
     myFrozenItems.clear();
     super.prefixChanged(lookup);
-  }
-
-  static class StatisticsUpdate implements Disposable {
-    private final StatisticsInfo myInfo;
-    private int mySpared;
-
-    public StatisticsUpdate(StatisticsInfo info) {
-      myInfo = info;
-    }
-
-    void performUpdate() {
-      myInfo.incUseCount();
-      ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics().registerInvocation(mySpared);
-    }
-
-    @Override
-    public void dispose() {
-    }
-
-    public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
-      String textInserted;
-      if (context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET) && 
-          context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET) && 
-          context.getTailOffset() >= context.getStartOffset()) {
-        textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
-      } else {
-        textInserted = item.getLookupString();
-      }
-      String withoutSpaces = StringUtil.replace(textInserted, new String[]{" ", "\t", "\n"}, new String[]{"", "", ""});
-      int spared = withoutSpaces.length() - indicator.getLookup().itemPattern(item).length();
-      if (!LookupEvent.isSpecialCompletionChar(completionChar) && withoutSpaces.contains(String.valueOf(completionChar))) {
-        spared--;
-      }
-      if (spared > 0) {
-        mySpared += spared;
-      }
-    }
   }
 
   private static class EmptyClassifier extends Classifier<LookupElement> {
