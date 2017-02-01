@@ -16,49 +16,53 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.HyperlinkFilter;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.util.CharUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author traff
  */
-public class TerminalExecutionConsole implements ExecutionConsole {
+public class TerminalExecutionConsole implements ConsoleView {
   private JBTerminalWidget myTerminalWidget;
+  private Project myProject;
+  private final AppendableTerminalDataStream myDataStream;
 
   public TerminalExecutionConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
+    myProject = project;
     final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase();
-    AppendableTerminalDataStream dataStream = new AppendableTerminalDataStream();
+    myDataStream = new AppendableTerminalDataStream();
 
 
     myTerminalWidget = new JBTerminalWidget(project, 200, 24, provider, this) {
       @Override
       protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-        return new TerminalStarter(terminal, connector, dataStream);
+        return new TerminalStarter(terminal, connector, myDataStream);
       }
     };
 
     TerminalSession session = myTerminalWidget
-      .createTerminalSession(new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(project).getDefaultCharset()));
+      .createTerminalSession(
+        new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(project).getDefaultCharset()));
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -69,17 +73,15 @@ public class TerminalExecutionConsole implements ExecutionConsole {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         try {
+          ConsoleViewContentType contentType = null;
           if (outputType != ProcessOutputTypes.STDOUT) {
-            ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(outputType);
-            dataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));
-          }
-          dataStream.append(event.getText());
-          if (outputType != ProcessOutputTypes.STDOUT) {
-            dataStream.append((char)CharUtils.ESC + "[39m"); //restore color
+            contentType = ConsoleViewContentType.getConsoleViewType(outputType);
           }
 
+          printText(event.getText(), contentType);
+
           if (outputType == ProcessOutputTypes.SYSTEM) {
-            dataStream.append('\r');
+            myDataStream.append('\r');
           }
         }
         catch (IOException e) {
@@ -93,48 +95,97 @@ public class TerminalExecutionConsole implements ExecutionConsole {
       }
     });
   }
+  
+  private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
+    if (contentType != null) {
+      myDataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));
+    }
 
-  public void addMessageFilter(Project project, Filter filter) {
-    myTerminalWidget.addHyperlinkFilter(new HyperlinkFilter() {
-      @Override
-      public Result apply(String line) {
-        Filter.Result r = filter.applyFilter(line, line.length());
-        if (r != null) {
-          return new Result() {
+    myDataStream.append(text);
 
-            @Override
-            public List<ResultItem> getResultItems() {
-              return r.getResultItems().stream().map((item -> new ResultItem() {
-                @Override
-                public int getStartOffset() {
-                  return item.getHighlightStartOffset();
-                }
-
-                @Override
-                public int getEndOffset() {
-                  return item.getHighlightEndOffset();
-                }
-
-                @Override
-                public void navigate() {
-                  item.getHyperlinkInfo().navigate(project);
-                }
-              })).collect(Collectors.toList());
-            }
-          };
-        }
-        else {
-          return null;
-        }
-      }
-    });
+    if (contentType != null) {
+      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore color
+    }
   }
 
   private static String encodeColor(Color color) {
-    StringBuilder sb = new StringBuilder();
-    sb.append((char)CharUtils.ESC).append("[").append("38;2;").append(color.getRed()).append(";").append(color.getGreen()).append(";")
-      .append(color.getBlue()).append("m");
-    return sb.toString();
+    return String.valueOf((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
+           color.getBlue() + "m";
+  }
+
+  public void addMessageFilter(Project project, Filter filter) {
+    myTerminalWidget.addMessageFilter(project, filter);
+  }
+
+  @Override
+  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    myTerminalWidget.getTerminal().writeCharacters(text);
+  }
+
+  @Override
+  public void clear() {
+    myTerminalWidget.getTerminal().clearScreen();
+  }
+
+  @Override
+  public void scrollTo(int offset) {
+  }
+
+  @Override
+  public void attachToProcess(ProcessHandler processHandler) {
+  }
+
+  @Override
+  public void setOutputPaused(boolean value) {
+
+  }
+
+  @Override
+  public boolean isOutputPaused() {
+    return false;
+  }
+
+  @Override
+  public boolean hasDeferredOutput() {
+    return false;
+  }
+
+  @Override
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
+  }
+
+  @Override
+  public void setHelpId(@NotNull String helpId) {
+  }
+
+  @Override
+  public void addMessageFilter(@NotNull Filter filter) {
+    addMessageFilter(myProject, filter);
+  }
+
+  @Override
+  public void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
+
+  }
+
+  @Override
+  public int getContentSize() {
+    return 0;
+  }
+
+  @Override
+  public boolean canPause() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] createConsoleActions() {
+    return AnAction.EMPTY_ARRAY;
+  }
+
+  @Override
+  public void allowHeavyFilters() {
   }
 
   @Override
