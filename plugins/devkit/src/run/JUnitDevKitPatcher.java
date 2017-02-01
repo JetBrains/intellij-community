@@ -21,9 +21,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -49,7 +47,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
-    Sdk jdk = IdeaJdk.findIdeaJdk(javaParameters.getJdk());
+    Sdk jdk = javaParameters.getJdk();
     if (jdk == null) return;
 
     ParametersList vm = javaParameters.getVMParametersList();
@@ -62,6 +60,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
+
+    jdk = IdeaJdk.findIdeaJdk(jdk);
+    if (jdk == null) return;
 
     String libPath = jdk.getHomePath() + File.separator + "lib";
     vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
