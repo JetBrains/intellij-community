@@ -41,29 +41,22 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
-  public ExternalLibrariesNode(Project project, ViewSettings viewSettings) {
+  public ExternalLibrariesNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, "External Libraries", viewSettings);
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    Project project = getProject();
-    if (project == null) {
-      return false;
-    }
+    Project project = Objects.requireNonNull(getProject());
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
-
     return someChildContainsFile(file, false);
   }
 
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
-    Project project = getProject();
-    if (project == null) {
-      return Collections.emptyList();
-    }
+    Project project = Objects.requireNonNull(getProject());
     List<AbstractTreeNode> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     Module[] modules = ModuleManager.getInstance(project).getModules();
