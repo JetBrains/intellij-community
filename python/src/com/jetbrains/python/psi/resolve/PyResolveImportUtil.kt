@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -130,15 +129,14 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
   val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile)
-  val sdk = module?.let { ModuleRootManager.getInstance(module).sdk }
-  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, sdk)
+  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, PythonSdkType.findPythonSdk(module))
 }
 
 /**
  * Creates a [PyQualifiedNameResolveContext] from a [module].
  */
 fun fromModule(module: Module): PyQualifiedNameResolveContext =
-    PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null, ModuleRootManager.getInstance(module).sdk)
+    PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null, PythonSdkType.findPythonSdk(module))
 
 /**
  * Creates a [PyQualifiedNameResolveContext] from an [sdk].
