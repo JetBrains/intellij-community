@@ -66,6 +66,11 @@ public class URLUtil {
 
   @NotNull
   public static InputStream openResourceStream(@NotNull URL url) throws IOException {
+    return openResourceStream(url, URLUtil.class);
+  }
+
+  @NotNull
+  public static InputStream openResourceStream(@NotNull URL url, Class resourceClass) throws IOException {
     try {
       return openStream(url);
     }
@@ -82,7 +87,7 @@ public class URLUtil {
         }
       }
       if (file != null && file.startsWith("/")) {
-        InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
+        InputStream resourceStream = resourceClass.getResourceAsStream(file);
         if (resourceStream != null) return resourceStream;
       }
       throw ex;
