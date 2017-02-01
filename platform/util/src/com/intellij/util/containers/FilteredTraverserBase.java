@@ -173,27 +173,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public Self inRange(final Condition<? super T> rangeCondition) {
-    final TreeTraversal original = meta.traversal;
-    return withTraversal(new TreeTraversal(original.toString() + "(IN_RANGE)") {
-      @NotNull
-      @Override
-      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
-                                        @NotNull final Function<TT, ? extends Iterable<? extends TT>> tree) {
-        final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
-        final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
-        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
-          @Override
-          public Iterable<? extends TT> fun(TT t) {
-            return JBIterable.from(tree.fun(t))
-              .skipWhile(notInRangeCondition)
-              .takeWhile(inRangeCondition);
-          }
-        }
-        WrappedTree wrappedTree = new WrappedTree();
-        return original.createIterator(JBIterable.from(roots).filter(inRangeCondition), wrappedTree);
-      }
-    });
+  public Self onRange(@NotNull Condition<? super T> rangeCondition) {
+    return withTraversal(meta.traversal.onRange(rangeCondition));
   }
 
   /**

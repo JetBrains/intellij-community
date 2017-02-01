@@ -142,8 +142,8 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
-  public final SyntaxTraverser<T> inRange(final TextRange range) {
-    return inRange(new Condition<T>() {
+  public final SyntaxTraverser<T> onRange(@NotNull final TextRange range) {
+    return onRange(new Condition<T>() {
       @Override
       public boolean value(T e){
         return api.rangeOf(e).intersects(range);
