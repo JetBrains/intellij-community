@@ -415,4 +415,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testNullableMethodReturningNotNull() { doTest(); }
 
+  public void testDivisionByZero() { doTestReportConstantReferences(); }
+
 }
