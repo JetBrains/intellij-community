@@ -122,7 +122,8 @@ class Operators {
       "a.xor(b)"               : "a ^ b",
       "a.leftShift(b)"         : "a << b",
       "a.rightShift(b)"        : "a >> b",
-      "a.rightShiftUnsigned(b)": "a >>> b"
+      "a.rightShiftUnsigned(b)": "a >>> b",
+      "a.plus({ b })"            : "a + { b }",
     ].each {
       doTest it.key, it.value
     }
@@ -154,8 +155,10 @@ class Operators {
     doTest "a.xor(b, 1)"
     doTest "a.leftShift(b, 1)"
     doTest "a.rightShift(b, 1)"
+    doTest "a.rightShift('a': 1, 'b':2)"
     doTest "a.rightShiftUnsigned(b, 1)"
     doTest "a.asType(b, 1)"
+    doTest "a.n<caret>ext({return 1})"
     doTest "a.n<caret>ext {return 1}"
     doTest "a.pl<caret>us(1) {return 1}"
   }
@@ -215,10 +218,6 @@ class Operators {
     doTest "(Boolean) a.eq<caret>uals(b)", "(Boolean) (a == b)"
   }
 
-  void testGetAtPutAt() {
-    doTest "(List) a.g<caret>etAt(b)", "(List) a[b]"
-    doTest "(List) a.g<caret>etAt(b + 1)", "(List) a[b + 1]"
-  }
 
   void testComplexNegatableBinaryExpression() {
     doTest(/!(1.toString().replace('1', '2')+"").equals(2.toString())/, /(1.toString().replace('1', '2') + "") != 2.toString()/)
@@ -253,6 +252,17 @@ class Operators {
     doTest "a.putAt(b)"
     doTest "a.putAt(b, b, b)"
     doTest "a.put<caret>At(b,b) {b}"
+    doTest "(List) a.g<caret>etAt(b)", "(List) a[b]"
+    doTest "(List) a.g<caret>etAt(b + 1)", "(List) a[b + 1]"
+    doTest "a.put<caret>At(b) { 1 }", "a[b] = { 1 }"
+
+    doTest(
+''' a.put<caret>At(b) { 
+    return 1 
+};''',
+'''a[b] = {
+    return 1
+};''')
   }
 
   void testWithoutAdditionalParenthesesOption() {

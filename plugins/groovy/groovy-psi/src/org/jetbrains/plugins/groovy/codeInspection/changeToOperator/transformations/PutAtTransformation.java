@@ -29,19 +29,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.
 class PutAtTransformation extends Transformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression[] arguments = methodCall.getExpressionArguments();
     GrExpression base = requireNonNull(getBase(methodCall));
-    GrExpression rhs = arguments[1];
-    rhs = checkPrecedenceForNonBinaryOps(arguments[1], ASSIGNMENT_PRECEDENCE) ? parenthesize(rhs) : rhs;
-    String result = format("%s[%s] = %s", base.getText(), arguments[0].getText(), rhs.getText());
+    GrExpression key = getArgument(methodCall, 0);
+    GrExpression rhs = getArgument(methodCall, 1);
+    rhs = checkPrecedenceForNonBinaryOps(rhs, ASSIGNMENT_PRECEDENCE) ? parenthesize(rhs) : rhs;
+    String result = format("%s[%s] = %s", base.getText(), key.getText(), rhs.getText());
     replaceExpression(methodCall, result);
   }
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return getBase(methodCall) != null
-           && methodCall.getExpressionArguments().length == 2
-           && methodCall.getClosureArguments().length == 0;
+    return getBase(methodCall) != null & checkArgumentsCount(methodCall, 2);
   }
 
   @Override

@@ -36,14 +36,11 @@ abstract class BinaryTransformation extends Transformation {
 
   @NotNull
   protected GrExpression getRhs(@NotNull GrMethodCall methodCall) {
-    GrExpression[] arguments = methodCall.getExpressionArguments();
-    return Objects.requireNonNull(arguments[0]);
+    return getArgument(methodCall, 0);
   }
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return getBase(methodCall) != null
-           && methodCall.getExpressionArguments().length == 1
-           && methodCall.getClosureArguments().length == 0;
+    return getBase(methodCall) != null && checkArgumentsCount(methodCall, 1);
   }
 }

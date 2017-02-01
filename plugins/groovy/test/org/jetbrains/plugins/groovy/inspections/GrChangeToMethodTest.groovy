@@ -99,6 +99,7 @@ class Operators {
   void testSimpleBinaryExpression() {
     [
       "a + b"           :"a.plus(b)",
+      "a + { b }"       :"a.plus({ b })",
       "a - b"           :"a.minus(b)",
       "a * b"           :"a.multiply(b)",
       "a / b"           :"a.div(b)",

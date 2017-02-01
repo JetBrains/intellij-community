@@ -40,4 +40,19 @@ public abstract class Transformation {
     GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
     return invokedExpression.getQualifierExpression();
   }
+
+  public boolean checkArgumentsCount(@NotNull GrMethodCall callExpression, int count) {
+    if (callExpression.getNamedArguments().length != 0) return false;
+    return callExpression.getExpressionArguments().length + callExpression.getClosureArguments().length ==  count;
+  }
+
+  @NotNull
+  public GrExpression getArgument(@NotNull GrMethodCall callExpression, int index) {
+    GrExpression[] expressionArguments = callExpression.getExpressionArguments();
+    if (index < expressionArguments.length) {
+      return expressionArguments[index];
+    }
+
+    return callExpression.getClosureArguments()[index - expressionArguments.length];
+  }
 }
