@@ -179,6 +179,8 @@ abstract class PyUniversalTestConfiguration(project: Project,
   val legacyConfigurationAdapter = PyUniversalTestLegacyConfigurationAdapter(this)
 
 
+  override fun isTestBased() = true
+
   private fun getTestSpecForPythonTarget(location: Location<*>): List<String> {
     if (location !is PsiLocation) {
       return emptyList()
