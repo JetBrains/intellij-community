@@ -35,6 +35,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
       createEmptyContent(toolWindow);
     }
     else {
-      PyDataView.getInstance(project).init(toolWindow, session.getDebugProcess());
+      PyDataView.getInstance(project).init(toolWindow, (PyFrameAccessor)session.getDebugProcess());
     }
     final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(toolWindow, project));
@@ -98,9 +99,9 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
 
     @Override
     public void processStarted(@NotNull XDebugProcess debugProcess) {
-      if (getProcesses().isEmpty()) {
+      if (getProcesses().isEmpty() && debugProcess instanceof PyDebugProcess) {
         myToolWindow.getContentManager().removeAllContents(true);
-        PyDataView.getInstance(myProject).init(myToolWindow, debugProcess);
+        PyDataView.getInstance(myProject).init(myToolWindow, ((PyDebugProcess)debugProcess));
       }
     }
 

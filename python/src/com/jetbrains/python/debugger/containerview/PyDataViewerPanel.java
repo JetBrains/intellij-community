@@ -29,16 +29,12 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebugProcess;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +57,7 @@ public class PyDataViewerPanel extends JPanel {
   private final static int ROWS_IN_DEFAULT_VIEW = 1000;
   private static final Logger LOG = Logger.getInstance(PyDataViewerPanel.class);
   private final Project myProject;
+  @NotNull private final PyFrameAccessor myFrameAccessor;
   private EditorTextField mySliceTextField;
   private JBTableWithRowHeaders myTable;
   private EditorTextField myFormatTextField;
@@ -69,15 +66,35 @@ public class PyDataViewerPanel extends JPanel {
   private boolean myColored;
   List<Listener> myListeners;
 
-  public PyDataViewerPanel(@NotNull Project project) {
+  public PyDataViewerPanel(@NotNull Project project, @NotNull PyFrameAccessor frameAccessor) {
     super(new BorderLayout());
     myProject = project;
+    myFrameAccessor = frameAccessor;
     myErrorLabel.setVisible(false);
     myErrorLabel.setForeground(JBColor.RED);
     myMainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
     add(myMainPanel, BorderLayout.CENTER);
     myColored = PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.COLORED_BY_DEFAULT, true);
     myListeners = new CopyOnWriteArrayList<>();
+    setupChangeListener();
+  }
+
+  private void setupChangeListener() {
+    if (myFrameAccessor instanceof PyDebugProcess) {
+      XDebugSession session = ((PyDebugProcess)myFrameAccessor).getSession();
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void stackFrameChanged() {
+          AsyncArrayTableModel model = getModel();
+          if (model != null) {
+            model.invalidateCache();
+            if (isShowing()) {
+              model.fireTableDataChanged();
+            }
+          }
+        }
+      });
+    }
   }
 
   public JBTable getTable() {
@@ -172,12 +189,8 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private PyDebugValue getDebugValue(String expression) {
-    PyDebugProcess process = getDebugProcess();
-    if (process == null) {
-      return null;
-    }
     try {
-      PyDebugValue value = process.evaluate(expression, false, true);
+      PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
       if (value.isErrorOnEval()) {
         setError(value.getValue());
         return null;
@@ -197,16 +210,6 @@ public class PyDataViewerPanel extends JPanel {
     for (Listener listener : myListeners) {
       listener.onNameChanged(PyDataView.EMPTY_TAB_NAME);
     }
-  }
-
-  @Nullable
-  private PyDebugProcess getDebugProcess() {
-    XDebugSession session = XDebuggerManager.getInstance(myProject).getCurrentSession();
-    if (session == null) {
-      return null;
-    }
-    XDebugProcess process = session.getDebugProcess();
-    return process instanceof PyDebugProcess ? ((PyDebugProcess)process) : null;
   }
 
   public String getFormat() {
@@ -261,11 +264,7 @@ public class PyDataViewerPanel extends JPanel {
     private List<PyDebugValue> getAvailableValues() {
       List<PyDebugValue> values = new ArrayList<>();
       try {
-        PyDebugProcess process = getDebugProcess();
-        if (process == null) {
-          return values;
-        }
-        XValueChildrenList list = process.loadFrame();
+        XValueChildrenList list = myFrameAccessor.loadFrame();
         if (list == null) {
           return values;
         }
