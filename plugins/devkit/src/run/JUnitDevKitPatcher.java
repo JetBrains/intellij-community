@@ -52,7 +52,10 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (module != null && PsiUtil.isIdeaProject(module.getProject()) && !vm.hasProperty(SYSTEM_CL_PROPERTY)) {
+    if (module != null &&
+        PsiUtil.isIdeaProject(module.getProject()) &&
+        !vm.hasProperty(SYSTEM_CL_PROPERTY) &&
+        !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
       String qualifiedName = UrlClassLoader.class.getName();
       PsiClass loader = ReadAction.compute(() -> facade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)));
