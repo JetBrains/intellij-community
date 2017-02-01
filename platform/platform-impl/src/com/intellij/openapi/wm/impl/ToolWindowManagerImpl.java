@@ -475,10 +475,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     List<ToolWindowEP> beans = new ArrayList<>(Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME)));
     Collections.reverse(beans);
 
-    checkConditionsInReadAction(beans, new ArrayList<>());
+    checkConditionsInReadAction(this, myProject, beans, new ArrayList<>());
   }
 
-  private void checkConditionsInReadAction(@NotNull List<ToolWindowEP> beans, @NotNull List<ToolWindowEP> checkedSuccessfully) {
+  public static void checkConditionsInReadAction(@NotNull ToolWindowManagerEx manager,
+                                           @NotNull Project project,
+                                           @NotNull List<ToolWindowEP> beans,
+                                           @NotNull List<ToolWindowEP> checkedSuccessfully) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Nullable
       @Override
@@ -487,15 +490,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           indicator.checkCanceled();
           ToolWindowEP bean = beans.remove(i);
           Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
-          if (!myProject.isDisposed() && condition.value(myProject)) {
+          if (!project.isDisposed() && condition.value(project)) {
             checkedSuccessfully.add(bean);
           }
         }
         return new Continuation(() -> {
-          if (!myProject.isDisposed()) {
+          if (!project.isDisposed()) {
             for (ToolWindowEP bean : checkedSuccessfully) {
-              if (getToolWindow(bean.id) == null) {
-                initToolWindow(bean);
+              if (manager.getToolWindow(bean.id) == null) {
+                manager.initToolWindow(bean);
               }
             }
           }
@@ -504,7 +507,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        checkConditionsInReadAction(beans, checkedSuccessfully);
+        checkConditionsInReadAction(manager, project, beans, checkedSuccessfully);
       }
     });
   }
@@ -885,12 +888,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private FloatingDecorator getFloatingDecorator(final String id) {
     return myId2FloatingDecorator.get(id);
   }
+
   /**
    * @return windowed decorator for the tool window with specified <code>ID</code>.
    */
   private WindowedDecorator getWindowedDecorator(String id) {
     return myId2WindowedDecorator.get(id);
   }
+
   /**
    * @return internal decorator for the tool window with specified <code>ID</code>.
    */
@@ -1285,9 +1290,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (info.isFloating()) {
         appendRemoveFloatingDecoratorCmd(info, commandsList);
       }
-      else  if (info.isWindowed()) {
-         appendRemoveWindowedDecoratorCmd(info, commandsList);
-       }
+      else if (info.isWindowed()) {
+        appendRemoveWindowedDecoratorCmd(info, commandsList);
+      }
       else { // floating and sliding windows
         appendRemoveDecoratorCmd(id, false, commandsList);
       }
@@ -2162,7 +2167,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         Rectangle windowBounds = window.getBounds();
         //Point windowLocation = windowBounds.getLocation();
         //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
-        window.setLocation(2 * windowBounds.x - point.x,  2 * windowBounds.y - point.y);
+        window.setLocation(2 * windowBounds.x - point.x, 2 * windowBounds.y - point.y);
         window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height);
       }
       finally {
