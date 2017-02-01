@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -96,6 +97,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     if (!myProject.isDefault()) {
+      ProjectRootManager.getInstance(myProject).incModificationCount();
       JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
   }
