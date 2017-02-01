@@ -16,9 +16,14 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Name file as "Your scheme name.xml" and put it to keymaps.
@@ -29,4 +34,10 @@ public interface BundledKeymapProvider {
 
   @NotNull
   List<String> getKeymapFileNames();
+
+  default <R> R load(@NotNull String key, @NotNull Function<InputStream, R> consumer) throws IOException {
+    try (InputStream stream = URLUtil.openResourceStream(new URL("file:///keymaps/" + key))) {
+      return consumer.apply(stream);
+    }
+  }
 }
