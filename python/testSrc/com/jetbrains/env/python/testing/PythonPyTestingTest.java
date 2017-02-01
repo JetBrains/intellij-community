@@ -10,7 +10,8 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -66,12 +67,13 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
         return new PyTestTestProcessRunner("", 0) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyTestRunConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalPyTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null);
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
-            configuration.setTestToRun(fullFilePath.getPath());
+            configuration.getTarget().setTarget(fullFilePath.getPath());
+            configuration.getTarget().setTargetType(TestTargetType.PATH);
           }
         };
       }
