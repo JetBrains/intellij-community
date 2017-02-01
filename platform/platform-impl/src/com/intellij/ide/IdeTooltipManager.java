@@ -550,6 +550,9 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
+        if (!isShowing() && layeredPane != null) {
+          AppUIUtil.targetToDevice(this, layeredPane);
+        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
