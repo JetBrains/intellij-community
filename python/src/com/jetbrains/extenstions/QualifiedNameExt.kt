@@ -19,14 +19,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
+import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Resolves qname of any symbol to appropriate PSI element.
  */
 fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElement? {
-  val facade = PyPsiFacadeImpl.getInstance(module.project)
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -36,7 +36,7 @@ fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElemen
   var lastElement: String? = null
   while (currentName.componentCount > 0 && element == null) {
 
-    element = facade.qualifiedNameResolver(currentName).fromModule(module).withMembers().firstResult()
+    element = resolveQualifiedName(currentName, fromModule(module).copyWithMembers()).firstOrNull()
     if (element != null) {
       break
     }
