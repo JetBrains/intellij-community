@@ -55,10 +55,10 @@ class GitBranchPopupActions {
   }
 
   ActionGroup createActions() {
-    return createActions(null, "");
+    return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo) {
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
@@ -77,8 +77,8 @@ class GitBranchPopupActions {
         .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
         .collect(toList());
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                              getNumOfTopShownBranches(localBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =
@@ -86,8 +86,8 @@ class GitBranchPopupActions {
         .sorted()
         .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
         .collect(toList());
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfFavorites(remoteBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfFavorites(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
   }
 

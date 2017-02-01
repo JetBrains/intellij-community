@@ -51,6 +51,8 @@ import static java.util.stream.Collectors.toList;
  */
 class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
+  static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
+  static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
@@ -121,16 +123,17 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     List<BranchActionGroup> localBranchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
         .collect(toList());
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfTopShownBranches(localBranchActions), SHOW_ALL_LOCALS_KEY);
     popupGroup.addSeparator("Common Remote Branches");
+
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
                                                       remoteBranch -> new GitBranchPopupActions.RemoteBranchActions(myProject,
                                                                                                                     allRepositories,
                                                                                                                     remoteBranch,
                                                                                                                     myCurrentRepository));
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfFavorites(remoteBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfFavorites(remoteBranchActions), SHOW_ALL_REMOTES_KEY);
   }
 
   @Nullable
@@ -151,13 +154,13 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
                                     new GitBranchPopupActions(repo.getProject(), repo).createActions(),
                                     GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
-    wrapWithMoreActionIfNeeded(popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM);
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM, null);
     return popupGroup;
   }
 
   @Override
   protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
-    popupGroup
-      .addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions, myRepoTitleInfo));
+    popupGroup.addAll(
+      new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
   }
 }

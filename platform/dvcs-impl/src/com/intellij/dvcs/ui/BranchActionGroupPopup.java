@@ -16,6 +16,7 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,6 +41,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -123,22 +125,28 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private void expandOnSizeChanged() {
     Dimension newSize = ObjectUtils.assertNotNull(getSize());
     if (myPrevSize.height < newSize.height) {
-      while (getList().getScrollableTracksViewportHeight()) {
-        MoreAction moreAction = getFirstNotExpandedMore();
-        if (moreAction == null) return;
-        moreAction.myIsExpanded = true;
-        getListModel().refilter();
+      List<MoreAction> mores = getMoreActions();
+      for (MoreAction more : mores) {
+        if (!getList().getScrollableTracksViewportHeight()) return;
+        if (!more.isExpanded()) {
+          more.setExpanded(true);
+          getListModel().refilter();
+        }
       }
     }
   }
 
-  private MoreAction getFirstNotExpandedMore() {
+  @NotNull
+  private List<MoreAction> getMoreActions() {
+    List<MoreAction> result = ContainerUtil.newArrayList();
     ListPopupModel model = getListModel();
     for (int i = 0; i < model.getSize(); i++) {
       MoreAction moreAction = getSpecificAction(model.getElementAt(i), MoreAction.class);
-      if (moreAction != null && !moreAction.myIsExpanded) return moreAction;
+      if (moreAction != null) {
+        result.add(moreAction);
+      }
     }
-    return null;
+    return result;
   }
 
   @NotNull
@@ -235,7 +243,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   protected boolean shouldBeShowing(@NotNull AnAction action) {
     if (!super.shouldBeShowing(action)) return false;
     if (getSpeedSearch().isHoldingFilter()) return !(action instanceof MoreAction);
-    if (action instanceof MoreAction) return !((MoreAction)action).myIsExpanded;
     if (action instanceof MoreHideableActionGroup) return ((MoreHideableActionGroup)action).shouldBeShown();
     return true;
   }
@@ -379,23 +386,52 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
-    private boolean myIsExpanded = false;
 
-    public MoreAction(int numberOfHiddenNodes) {
+    @NotNull private final Project myProject;
+    @Nullable private final String mySettingName;
+    private boolean myIsExpanded;
+    @NotNull private final String myToCollapseText;
+    @NotNull private final String myToExpandText;
+
+    public MoreAction(@NotNull Project project, int numberOfHiddenNodes, @Nullable String settingName) {
       super();
+      myProject = project;
+      mySettingName = settingName;
       assert numberOfHiddenNodes > 0;
-      getTemplatePresentation().setText(numberOfHiddenNodes + " more...");
+      myToExpandText = "Show " + numberOfHiddenNodes + " More...";
+      myToCollapseText = "Show Only Favorites";
+      setExpanded(settingName != null && PropertiesComponent.getInstance(project).getBoolean(settingName, false));
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myIsExpanded = true;
+      setExpanded(!myIsExpanded);
       InputEvent event = e.getInputEvent();
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
         if (dataProvider != null) {
           ObjectUtils.assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
         }
+      }
+    }
+
+    public boolean isExpanded() {
+      return myIsExpanded;
+    }
+
+    public void setExpanded(boolean isExpanded) {
+      myIsExpanded = isExpanded;
+      saveState();
+      updateActionText();
+    }
+    
+    private void updateActionText() {
+      getTemplatePresentation().setText(myIsExpanded ? myToCollapseText : myToExpandText);
+    }
+
+    public void saveState() {
+      if (mySettingName != null) {
+        PropertiesComponent.getInstance(myProject).setValue(mySettingName, myIsExpanded);
       }
     }
   }
@@ -414,15 +450,15 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     public boolean shouldBeShown() {
-      return myMoreAction.myIsExpanded;
+      return myMoreAction.isExpanded();
     }
   }
 
-  public static void wrapWithMoreActionIfNeeded(@NotNull DefaultActionGroup parentGroup,
-                                                @NotNull List<? extends ActionGroup> actionList,
-                                                int maxIndex) {
+  public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
+                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                int maxIndex, @Nullable String settingName) {
     if (actionList.size() > maxIndex) {
-      MoreAction moreAction = new MoreAction(actionList.size() - maxIndex);
+      MoreAction moreAction = new MoreAction(project, actionList.size() - maxIndex, settingName);
       for (int i = 0; i < actionList.size(); i++) {
         parentGroup.add(i < maxIndex ? actionList.get(i) : new HideableActionGroup(actionList.get(i), moreAction));
       }
