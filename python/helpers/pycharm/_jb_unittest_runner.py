@@ -19,7 +19,7 @@ if __name__ == '__main__':
         else:
             discovery_args.append(path)
         additional_args = discovery_args + additional_args
-    else:
+    elif targets:
         additional_args += targets
     args += additional_args
     jb_doc_args("unittests", args)
