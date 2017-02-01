@@ -100,15 +100,15 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         if (((firstCh == 'l' || firstCh == 't') || (caseInsensitive && (firstCh == 'L' || firstCh == 'T')))) {
           @NonNls String name = TreeUtil.getTokenText(lexer);
           seenContentType = Comparing.strEqual("language", name, !caseInsensitive) || Comparing.strEqual("type", name, !caseInsensitive);
+          return;
         }
-        return;
       }
       if (seenStyle && !seenTag) {
         seenStylesheetType = false;
         if (firstCh == 't' || caseInsensitive && firstCh == 'T') {
           seenStylesheetType = Comparing.strEqual(TreeUtil.getTokenText(lexer), "type", !caseInsensitive);
+          return;
         }
-        return;
       }
 
       if (firstCh !='o' && firstCh !='s' && (!caseInsensitive || (firstCh !='S' && firstCh !='O'))) {
