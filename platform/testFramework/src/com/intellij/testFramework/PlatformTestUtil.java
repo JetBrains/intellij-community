@@ -83,6 +83,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 
 /**
@@ -356,15 +357,19 @@ public class PlatformTestUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static StringBuilder print(AbstractTreeStructure structure,
-                                    Object node,
-                                    int currentLevel,
-                                    @Nullable Comparator comparator,
-                                    int maxRowCount,
-                                    char paddingChar,
-                                    @Nullable Queryable.PrintInfo printInfo) {
+  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                    int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
+    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
+  }
+
+  public static String print(AbstractTreeStructure structure, Object node, Function<Object, String> nodePresenter) {
+    return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
+  }
+
+  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                     int maxRowCount, char paddingChar, Function<Object, String> nodePresenter) {
     StringBuilder buffer = new StringBuilder();
-    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
     return buffer;
   }
 
@@ -376,11 +381,11 @@ public class PlatformTestUtil {
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
-                             @Nullable Queryable.PrintInfo printInfo) {
+                             Function<Object, String> nodePresenter) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
-    buffer.append(toString(node, printInfo)).append("\n");
+    buffer.append(nodePresenter.apply(node)).append("\n");
     currentLine++;
     Object[] children = structure.getChildElements(node);
 
@@ -391,7 +396,7 @@ public class PlatformTestUtil {
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
-      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, printInfo);
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, nodePresenter);
     }
 
     return currentLine;
@@ -435,7 +440,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
