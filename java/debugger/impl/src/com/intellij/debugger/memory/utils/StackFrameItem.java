@@ -145,12 +145,8 @@ public class StackFrameItem {
   private static VariableItem createVariable(Value value, String name, VariableItem.VarType varType) {
     String type = null;
     String valueText = "null";
-    if (value instanceof StringReference) {
-      valueText = ((StringReference)value).value();
-      type = value.type().name() + "@" + ((ObjectReference)value).uniqueID();
-    }
-    else if (value instanceof ObjectReference) {
-      valueText = "";
+    if (value instanceof ObjectReference) {
+      valueText = value instanceof StringReference ? ((StringReference)value).value() : "";
       type = value.type().name() + "@" + ((ObjectReference)value).uniqueID();
     }
     else if (value != null) {
