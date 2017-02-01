@@ -174,7 +174,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         List<Value> argumentValues = null;
 
         for (StackCapturingLineBreakpoint b : captureBreakpoints) {
-          if (StringUtil.equals(b.myCapturePoint.myInsertClassName, className) &&
+          String insertClassName = b.myCapturePoint.myInsertClassName;
+          if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
               StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
             if (argumentValues == null) {
               argumentValues = frame.getArgumentValues();
