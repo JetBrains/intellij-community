@@ -305,7 +305,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
       if (showNotification) {
         final String message = e.getMessage();
-        if (message.startsWith(IpnbConnection.UNABLE_LOGIN)) {
+        if (message.startsWith(IpnbConnection.UNABLE_LOGIN_MESSAGE)) {
           showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter());
         }
         else if(message.startsWith(CONNECTION_REFUSED)) {
