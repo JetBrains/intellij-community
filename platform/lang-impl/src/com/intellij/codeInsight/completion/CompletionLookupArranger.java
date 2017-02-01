@@ -161,7 +161,8 @@ public class CompletionLookupArranger extends LookupArranger {
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
-    final String invariant = presentation.getItemText() + "\0###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
+    String tail = getTailTextOrSpace(presentation);
+    String invariant = presentation.getItemText() + "\0###" + String.format("%02d", tail.length()) + tail + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
     element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 

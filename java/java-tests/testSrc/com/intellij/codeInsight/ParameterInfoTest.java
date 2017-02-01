@@ -226,7 +226,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
                                         "void bar2(int a);" +
                                         "}");
     LookupElement[] elements = myFixture.completeBasic();
-    assertEquals("(int a)", LookupElementPresentation.renderElement(elements[1]).getTailText());
+    assertEquals("(String a)", LookupElementPresentation.renderElement(elements[1]).getTailText());
     myFixture.getLookup().setCurrentItem(elements[1]);
     myFixture.type('\n');
 
@@ -234,7 +234,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals("<html>String a</html>", parameterPresentation(1, -1));
     assertEquals("<html>int a</html>", parameterPresentation(2, -1));
 
-    checkHighlighted(2);
+    checkHighlighted(1);
   }
 
   public void testHighlightConstructorJustChosenInCompletion() {
@@ -249,7 +249,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
                        "class Bar2 {}");
     myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
     LookupElement[] elements = myFixture.completeBasic();
-    assertEquals("(String a) (default package)", LookupElementPresentation.renderElement(elements[2]).getTailText());
+    assertEquals("(boolean a) (default package)", LookupElementPresentation.renderElement(elements[2]).getTailText());
     myFixture.getLookup().setCurrentItem(elements[2]);
     myFixture.type('\n');
     myFixture.checkResult("class Foo {{ new Bar(<caret>) }}");
@@ -258,7 +258,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals("<html>String a</html>", parameterPresentation(1, -1));
     assertEquals("<html>int a</html>", parameterPresentation(2, -1));
 
-    checkHighlighted(1);
+    checkHighlighted(0);
   }
 
   private void checkHighlighted(int lineIndex) {

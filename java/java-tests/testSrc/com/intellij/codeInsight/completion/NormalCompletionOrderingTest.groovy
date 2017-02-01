@@ -767,4 +767,10 @@ class ContainerUtil extends ContainerUtilRt {
     assertPreferredItems 0, 'ContainerUtil', 'ConflictsUtil'
   }
 
+  void testPreferListAddWithoutIndex() {
+    checkPreferredItems 0, 'add', 'add', 'addAll', 'addAll'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('int index')
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[3]).tailText.contains('int index')
+  }
+
 }
