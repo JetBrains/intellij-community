@@ -140,7 +140,7 @@ public class PlatformTestUtil {
   }
 
   @Nullable
-  protected static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
+  private static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
@@ -169,7 +169,7 @@ public class PlatformTestUtil {
     return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
   }
   
-  public static String print(JTree tree, Object root, 
+  private static String print(JTree tree, Object root,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
                              @Nullable Condition<String> nodePrintCondition) {
@@ -181,13 +181,7 @@ public class PlatformTestUtil {
     return buffer.toString();
   }
 
-  public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    return printAsList(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
-  }
-
-  private static Collection<String> printAsList(JTree tree, Object root, 
-                                                boolean withSelection,
-                                                @Nullable Queryable.PrintInfo printInfo,
+  private static Collection<String> printAsList(JTree tree, Object root, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
@@ -248,18 +242,14 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    assertTreeEqualIgnoringNodesOrder(tree, expected, false);
+    final Collection<String> actualNodesPresentation = printAsList(tree, tree.getModel().getRoot(), false, null, null);
+    final List<String> expectedNodes = StringUtil.split(expected, "\n");
+    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
-  }
-
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, checkSelected, null);
-    final List<String> expectedNodes = StringUtil.split(expected, "\n");
-    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
 
   @TestOnly
