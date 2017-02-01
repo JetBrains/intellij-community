@@ -94,6 +94,12 @@ abstract class TerminalOperation extends Operation {
       PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
       return optionalElementType == null ? null : new FindTerminalOperation(optionalElementType.getCanonicalText());
     }
+    if(name.equals("toList") && args.length == 0) {
+      return ToCollectionTerminalOperation.toList(resultType);
+    }
+    if(name.equals("toSet") && args.length == 0) {
+      return ToCollectionTerminalOperation.toSet(resultType);
+    }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new MatchTerminalOperation(fn, name);
@@ -170,8 +176,7 @@ abstract class TerminalOperation extends Operation {
         return ToCollectionTerminalOperation.toList(resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
-        return new ToCollectionTerminalOperation(resultType,
-                                                 FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
+        return ToCollectionTerminalOperation.toSet(resultType);
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
@@ -719,7 +724,14 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     private static ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
-      return new ToCollectionTerminalOperation(resultType, FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
+      return new ToCollectionTerminalOperation(resultType,
+                                               FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
+    }
+
+    @NotNull
+    private static ToCollectionTerminalOperation toSet(@NotNull PsiType resultType) {
+      return new ToCollectionTerminalOperation(resultType,
+                                               FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
     }
   }
 

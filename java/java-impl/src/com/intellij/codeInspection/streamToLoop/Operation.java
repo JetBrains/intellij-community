@@ -71,6 +71,17 @@ abstract class Operation {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new FilterOperation(fn);
     }
+    if(name.equals("takeWhile") && args.length == 1) {
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
+      return fn == null ? null : new TakeWhileOperation(fn);
+    }
+    if(name.equals("dropWhile") && args.length == 1) {
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
+      return fn == null ? null : new DropWhileOperation(fn);
+    }
+    if (name.equals("nonNull") && args.length == 0) { // StreamEx
+      return new FilterOperation(new FunctionHelper.InlinedFunctionHelper(PsiType.BOOLEAN, 1, "{0} != null"));
+    }
     if(name.equals("sorted") && !(inType instanceof PsiPrimitiveType)) {
       return new SortedOperation(args.length == 1 ? args[0] : null);
     }
@@ -135,6 +146,33 @@ abstract class Operation {
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       return "if(" + myFn.getText() + ") {\n" + code + "}\n";
+    }
+  }
+
+  static class TakeWhileOperation extends LambdaIntermediateOperation {
+    public TakeWhileOperation(FunctionHelper fn) {
+      super(fn);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      return "if(" + BoolUtils.getNegatedExpressionText(myFn.getExpression()) + ") {\n" +
+             context.getBreakStatement() + "}\n" + code;
+    }
+  }
+
+  static class DropWhileOperation extends LambdaIntermediateOperation {
+    public DropWhileOperation(FunctionHelper fn) {
+      super(fn);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String dropping = context.declare("dropping", "boolean", "true");
+      return "if(" + dropping + ") {\n" +
+             "if(" + myFn.getText() + ") {\ncontinue;\n}\n" +
+             dropping + "=false;\n" +
+             "}\n" + code;
     }
   }
 

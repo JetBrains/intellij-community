@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -56,9 +57,9 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
-  private static final Set<String> SUPPORTED_TERMINALS = StreamEx.of("count", "sum", "summaryStatistics", "reduce", "collect",
-                                                                     "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch",
-                                                                     "toArray", "average", "forEach", "forEachOrdered", "min", "max").toSet();
+  private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
+    "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
 
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 

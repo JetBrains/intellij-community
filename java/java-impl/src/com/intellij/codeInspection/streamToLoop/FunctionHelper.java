@@ -552,7 +552,7 @@ abstract class FunctionHelper {
     }
   }
 
-  private static class InlinedFunctionHelper extends FunctionHelper {
+  static class InlinedFunctionHelper extends FunctionHelper {
     private final int myArgCount;
     private final String myTemplate;
     private PsiExpression myExpression;

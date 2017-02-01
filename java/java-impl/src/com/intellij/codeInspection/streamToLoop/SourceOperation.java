@@ -19,6 +19,7 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -65,30 +66,36 @@ abstract class SourceOperation extends Operation {
     String className = aClass.getQualifiedName();
     if(className == null) return null;
     if ((name.equals("range") || name.equals("rangeClosed")) && args.length == 2 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && (className.equals(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) ||
-                              className.equals(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM))) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       return new RangeSource(args[0], args[1], name.equals("rangeClosed"));
     }
     if (name.equals("of") && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
-      if(args.length == 1) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+      if (method.getParameterList().getParametersCount() != 1) return null;
+      if (args.length == 1) {
         PsiType type = args[0].getType();
-        if(type instanceof PsiArrayType) {
-          PsiType componentType = ((PsiArrayType)type).getComponentType();
-          if(StreamApiUtil.getStreamElementType(callType).isAssignableFrom(componentType)) {
-            return new ForEachSource(args[0]);
-          }
+        PsiType componentType = null;
+        if (type instanceof PsiArrayType) {
+          componentType = ((PsiArrayType)type).getComponentType();
         }
+        else if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) {
+          componentType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+        }
+        PsiType elementType = StreamApiUtil.getStreamElementType(callType);
+        if (componentType != null && elementType.isAssignableFrom(componentType)) {
+          return new ForEachSource(args[0]);
+        }
+        if (type == null || !elementType.isAssignableFrom(type)) return null;
       }
       return new ExplicitSource(call);
     }
     if (name.equals("generate") && args.length == 1 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       FunctionHelper fn = FunctionHelper.create(args[0], 0);
       return fn == null ? null : new GenerateSource(fn, null);
     }
     if (name.equals("iterate") && args.length == 2 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       FunctionHelper fn = FunctionHelper.create(args[1], 1);
       return fn == null ? null : new IterateSource(args[0], fn);
     }
@@ -155,7 +162,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myCall = (PsiMethodCallExpression)replaceVarReference(myCall, oldName, newName, context);
+      myCall = replaceVarReference(myCall, oldName, newName, context);
     }
 
     @Override
@@ -313,7 +320,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myCall = (PsiMethodCallExpression)replaceVarReference(myCall, oldName, newName, context);
+      myCall = replaceVarReference(myCall, oldName, newName, context);
     }
 
     @Override
