@@ -112,12 +112,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           DebugProcessImpl process = suspendContext.getDebugProcess();
           Map<ObjectReference, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
           if (stacks == null) {
-            stacks = new LinkedHashMap<ObjectReference, List<StackFrameItem>>() {
-              @Override
-              protected boolean removeEldestEntry(Map.Entry eldest) {
-                return size() > MAX_STORED_STACKS;
-              }
-            };
+            stacks = new CapturedStacksMap();
             process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
           }
           Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myCapturePoint.myParamNo, null);
@@ -134,6 +129,13 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     catch (EvaluateException ignored) {
     }
     return false;
+  }
+
+  private static class CapturedStacksMap extends LinkedHashMap<ObjectReference, List<StackFrameItem>> {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry eldest) {
+      return size() > MAX_STORED_STACKS;
+    }
   }
 
   @Override
