@@ -98,10 +98,10 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      ant.exec(command: "$communityHome/build/conf/nsis3.sh" +
-                        " ${buildContext.paths.communityHome}")
+      ant.exec(command: "\"$communityHome/build/conf/install_nsis3.sh\"" +
+                        " \"${buildContext.paths.communityHome}\"")
 
-      ant.exec(command: "${buildContext.paths.communityHome}/nsis/nsis-3.01/bin/makensis" +
+      ant.exec(command: "\"${buildContext.paths.communityHome}/nsis/nsis-3.01/bin/makensis\"" +
       " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
       " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                  " -DNSIS_DIR=\"${box}/NSIS\"" +
