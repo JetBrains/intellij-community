@@ -95,7 +95,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     else if (myConfig.emulateTerminal()) {
       setRunWithPty(true);
 
-      final ProcessHandler processHandler = startProcess();
+      final ProcessHandler processHandler = startProcess(patchers);
 
       TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
 
