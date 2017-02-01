@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,14 +187,6 @@ public abstract class TokenSets {
 
   public static final TokenSet BRACES = TokenSet.create(GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mRBRACK, GroovyTokenTypes.mLPAREN,
                                                         GroovyTokenTypes.mRPAREN, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
-
-  public static final TokenSet ASSIGN_OP_SET = TokenSet.create(GroovyTokenTypes.mASSIGN, GroovyTokenTypes.mBAND_ASSIGN,
-                                                               GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBSR_ASSIGN,
-                                                               GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mDIV_ASSIGN,
-                                                               GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMOD_ASSIGN,
-                                                               GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mSL_ASSIGN,
-                                                               GroovyTokenTypes.mSR_ASSIGN,
-                                                               GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR_STAR_ASSIGN);
 
   public static final TokenSet UNARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS,
                                                               GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mINC);
