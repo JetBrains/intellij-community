@@ -273,6 +273,15 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "MyEnum.bar", "MyEnum", "MyEnum.foo")
   }
 
+  void testPreferExpectedEnumConstantsDespiteStats() {
+    checkPreferredItems 0, "const1", "const2", "constx1", "constx2"
+    myFixture.lookup.currentItem = myFixture.lookupElements[2]
+
+    myFixture.type('\n);\nmethodX(cons')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'constx1', 'constx2', 'const1', 'const2'
+  }
+
   void testPreferElse() {
     checkPreferredItems(0, "else", "element")
   }
