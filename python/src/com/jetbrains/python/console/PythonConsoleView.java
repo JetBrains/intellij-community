@@ -213,10 +213,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void executeInConsole(final String code) {
     TransactionGuard.submitTransaction(this, () -> {
+      final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
       String oldText = document.getText();
       ApplicationManager.getApplication().runWriteAction(() -> {
-        setInputText(code);
+        setInputText(codeToExecute);
         PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         if (psiFile != null) {
