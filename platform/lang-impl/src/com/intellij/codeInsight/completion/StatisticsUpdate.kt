@@ -70,7 +70,9 @@ class StatisticsUpdate
 
     val document = context.document
     val startOffset = context.startOffset
-    val tailOffset = context.editor.caretModel.offset
+    val tailOffset =
+      if (context.editor.selectionModel.hasSelection()) context.editor.selectionModel.selectionStart
+      else context.editor.caretModel.offset
     if (startOffset < 0 || tailOffset <= startOffset) {
       return
     }

@@ -210,7 +210,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
                                             PsiExpressionList argList,
                                             TextRange argRange) {
     Template template = TemplateManager.getInstance(method.getProject()).createTemplate("", "");
-    template.addTextSegment(argList.getText().substring(0, caretOffset - argRange.getStartOffset()));
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (i > 0) {
@@ -254,7 +253,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     Template template = createArgTemplate(method, caretOffset, argList, argRange);
 
-    context.getDocument().deleteString(argRange.getStartOffset(), argRange.getEndOffset());
+    context.getDocument().deleteString(caretOffset, argRange.getEndOffset());
     TemplateManager.getInstance(method.getProject()).startTemplate(editor, template);
 
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
