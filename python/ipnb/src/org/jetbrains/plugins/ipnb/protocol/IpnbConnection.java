@@ -51,7 +51,6 @@ public class IpnbConnection {
   private static final String SESSIONS_PATH = "/sessions";
   private static final String USER_PATH = "/user";
   private static final String HUB_PREFIX = "/hub";
-  private static final String SPAWN_URL = HUB_PREFIX + "/spawn";
   private static final String XSRF_TOKEN_HEADER = "X-XSRFToken";
   private static final String USERNAME_PARAMETER = "username";
   private static final String PASSWORD_PARAMETER = "password";
@@ -65,6 +64,7 @@ public class IpnbConnection {
                                               "\"channel\":\"shell\" }";
   public static final String AUTHENTICATION_NEEDED = "Authentication needed";
   public static final String UNABLE_LOGIN_MESSAGE = "Unable to login: ";
+  public static final String CANNOT_START_JUPYTER = "Cannot start Jupyter Notebook";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
@@ -128,32 +128,29 @@ public class IpnbConnection {
       if (myXsrf == null) {
         initXSRF(myURI.toString() + USER_PATH + "/" + username + TREE_PATH);
       }
-      final Boolean started = startJupyterNotebookServer();
+      final Boolean started = startJupyterNotebookServer(username);
       if (!started) {
-        throw new IOException("Cannot start Jupyter Notebook");
+        throw new IOException(CANNOT_START_JUPYTER);
       }
     }
     final String kernelName = getDefaultKernelName();
     return getExistingKernelForSession(pathToFile, kernelName);
   }
 
-  private boolean startJupyterNotebookServer() throws IOException {
-    String serverStartUrl = getLocation(myURI + SPAWN_URL);
-
-    if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
-      for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
-        final String username = IpnbSettings.getInstance(myProject).getUsername();
-        final String locationPrefix = USER_PATH + "/" + username + TREE_PATH;
-        final String location = getLocation(myURI + serverStartUrl);
-        if (location != null && location.startsWith(locationPrefix)) {
-          return true;
-        }
-        try {
-          TimeUnit.MILLISECONDS.sleep(500);
-        }
-        catch (InterruptedException e) {
-          LOG.warn(e.getMessage());
-        }
+  private boolean startJupyterNotebookServer(@NotNull String username) throws IOException {
+    String serverStartUrl = USER_PATH + "/" + username;
+    
+    for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
+      final String locationPrefix = USER_PATH + "/" + username + TREE_PATH;
+      final String location = getLocation(myURI + serverStartUrl);
+      if (location != null && location.startsWith(locationPrefix)) {
+        return true;
+      }
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e.getMessage());
       }
     }
     
