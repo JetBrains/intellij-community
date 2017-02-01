@@ -215,6 +215,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       GCUtil.tryGcSoftlyReachableObjects();
     }
 
+    System.gc();
+
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
       List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
       myProjects.clear();
