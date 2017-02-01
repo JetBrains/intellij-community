@@ -71,7 +71,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, checkSingleLine(text)))
   }
 
-  private fun checkSingleLine(text: String): Boolean {
+  fun checkSingleLine(text: String): Boolean {
     val pyFile: PyFile =PyElementGenerator.getInstance(project).createDummyFile(myConsoleView.virtualFile.getUserData(LanguageLevel.KEY), text) as PyFile
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
 
