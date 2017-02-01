@@ -189,15 +189,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
                                 IntentionAction... quickFixActions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
-    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
     childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
   }
 
 
   @Override
   public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
-    super .visitXmlProcessingInstruction(processingInstruction);
+    super.visitXmlProcessingInstruction(processingInstruction);
     PsiElement parent = processingInstruction.getParent();
 
     if (parent instanceof XmlProlog && processingInstruction.getText().startsWith("<?xml")) {
@@ -219,14 +219,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
-                                    final int offset,
                                     int length,
                                     @NotNull String localizedMessage,
                                     IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
       if (length == -1) length = textRange.getLength();
-      final int startOffset = textRange.getStartOffset() + offset;
+      final int startOffset = textRange.getStartOffset();
 
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(warning).range(childByRole, startOffset, startOffset + length).descriptionAndTooltip(localizedMessage).create();
 
