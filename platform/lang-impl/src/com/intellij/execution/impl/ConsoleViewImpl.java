@@ -944,7 +944,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void rehighlightHyperlinksAndFoldings() {
+  @SuppressWarnings("WeakerAccess") // Used in Rider
+  public void rehighlightHyperlinksAndFoldings() {
     if (myEditor == null || myProject.isDisposed()) return;
 
     clearHyperlinkAndFoldings();
