@@ -50,7 +50,6 @@ public class StatisticsWeigher extends CompletionWeigher {
     private final CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = ContainerUtil.newIdentityHashMap();
     private final Set<LookupElement> myNoStats = ContainerUtil.newIdentityTroveSet();
-    private int myPrefixChanges;
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
       super(next, "stats");
@@ -67,19 +66,9 @@ public class StatisticsWeigher extends CompletionWeigher {
       super.addElement(element, context);
     }
 
-    private void checkPrefixChanged(ProcessingContext context) {
-      int actualPrefixChanges = context.get(CompletionLookupArranger.PREFIX_CHANGES).intValue();
-      if (myPrefixChanges != actualPrefixChanges) {
-        myPrefixChanges = actualPrefixChanges;
-        myWeights.clear();
-      }
-    }
-
     @NotNull
     @Override
     public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull final ProcessingContext context) {
-      checkPrefixChanged(context);
-
       List<LookupElement> initialList = getInitialNoStatElements(source, context);
       Iterable<LookupElement> rest = withoutInitial(source, initialList);
       Collection<List<LookupElement>> byWeight = buildMapByWeight(rest).descendingMap().values();
@@ -162,7 +151,6 @@ public class StatisticsWeigher extends CompletionWeigher {
     @NotNull
     @Override
     public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
-      checkPrefixChanged(context);
       return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement)));
     }
 
