@@ -78,7 +78,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Emulate terminal in output panel"/>
+          <text value="Emulate terminal in output console"/>
         </properties>
       </component>
     </children>
