@@ -181,7 +181,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private void checkCallSite(@NotNull PyCallSiteExpression callSite) {
+    private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet =
         new ArrayList<>();
