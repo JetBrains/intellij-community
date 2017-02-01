@@ -539,7 +539,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
 
-  void testInlays(@NotNull String fileName, @NotNull String text);
+  void testInlays();
 
   void assertPreferredCompletionItems(int selected, @NotNull String... expected);
 

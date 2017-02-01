@@ -1696,11 +1696,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInlays(@NotNull String fileName, @NotNull String text) {
+  public void testInlays() {
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
       checker.setUp();
-      checker.checkInlays(fileName, text);
+      checker.checkInlays();
     }
     finally {
       checker.tearDown();

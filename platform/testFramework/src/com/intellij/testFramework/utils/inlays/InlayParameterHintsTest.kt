@@ -21,8 +21,10 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.junit.Assert.assertEquals
+import junit.framework.ComparisonFailure
 import java.util.regex.Pattern
 
 
@@ -51,18 +53,20 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     hintSettings.isDoNotShowIfMethodNameContainsParameterName = default.isDoNotShowIfMethodNameContainsParameterName
   }
 
-  fun checkInlays(fileName: String, text: String) {
-    myFixture.configureByText(fileName, text)
-
+  fun checkInlays() {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
+    val originalText = document.text
     val expectedInlays = extractInlays(document)
     val actualInlays = getActualInlays()
 
-    assertEquals(expectedInlays.size, actualInlays.size)
+    if (expectedInlays.size != actualInlays.size || actualInlays.zip(expectedInlays).any { it.second != it.first }) {
+      val proposedText = StringBuilder(document.text)
+      actualInlays.asReversed().forEach { proposedText.insert(it.offset, "<hint text=\"${it.text}\" />") }
 
-    actualInlays.zip(expectedInlays).forEach {
-      assertEquals(it.second, it.first)
+      VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
+        throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
+      } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
     }
   }
 
