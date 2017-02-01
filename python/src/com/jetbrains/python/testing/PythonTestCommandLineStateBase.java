@@ -85,7 +85,11 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
-    return new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
+    final PythonTRunnerConsoleProperties properties = new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
+    if (myConfiguration.isTestBased()) {
+      properties.makeIdTestBased();
+    }
+    return properties;
   }
 
   @Nullable

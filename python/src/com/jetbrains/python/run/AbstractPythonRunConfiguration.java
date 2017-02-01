@@ -86,6 +86,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myMappingSettings = mappingSettings;
   }
 
+  public boolean isTestBased() {
+    return false;
+  }
+
   public static List<Module> getValidModules(Project project) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     List<Module> result = Lists.newArrayList();
@@ -230,7 +234,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
-    if ( !mySkipModuleSerialization) {
+    if (!mySkipModuleSerialization) {
       getConfigurationModule().readExternal(element);
     }
 
@@ -247,7 +251,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
-  public void writeExternal(@NotNull  Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
@@ -256,7 +260,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
-    if ( !mySkipModuleSerialization) {
+    if (!mySkipModuleSerialization) {
       getConfigurationModule().writeExternal(element);
     }
 
