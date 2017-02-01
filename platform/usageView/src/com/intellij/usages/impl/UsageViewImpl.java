@@ -985,7 +985,9 @@ public class UsageViewImpl implements UsageView {
   }
 
   public void refreshUsages() {
-    reset();
+    if (!myPresentation.isOpenInNewTab()) {
+      reset();
+    }
     doReRun();
   }
 
