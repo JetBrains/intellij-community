@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,9 @@ open class DefaultKeymap {
 
         LOG.catchAndLog {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
+            override fun read(): Element {
+              return JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
+            }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }

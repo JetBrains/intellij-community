@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -26,5 +27,6 @@ import java.util.List;
 public interface BundledKeymapProvider {
   ExtensionPointName<BundledKeymapProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledKeymapProvider");
 
+  @NotNull
   List<String> getKeymapFileNames();
 }
