@@ -27,14 +27,20 @@ import java.util.Collection;
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
  * When provided by {@link AdditionalLibraryRootsProvider}, a library of this type contributes the followings:
  * <ul>
- *   <li>Source libraries roots ({@link #getSourceRoots()}) extends {@link com.intellij.psi.search.GlobalSearchScope#allScope(Project)}
+ *   <li>Source libraries roots ({@link #getSourceRoots()}) extend {@link com.intellij.psi.search.GlobalSearchScope#allScope(Project)}
  *   (in UI, "Project and Libraries" scope).
- *   Files contained in the returned roots are considered as library source files:
+ *   Files contained inside the returned roots are considered as library source files:
  *   {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} returns {@code true} for them.
  *   <br>
- *   Unlike to {@code library.getFiles(OrderRootType.SOURCES)}, these source roots are not indexed and
- *   are not included in the classpath.</li>
+ *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
  *   <li>An item in "External Libraries" in Project view if {@link #getName()} is not-null</li>
+ * </ul>
+ * <p/>
+ * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
+ * <ul>
+ *   <li>{@link com.intellij.navigation.ItemPresentation} or {@link com.intellij.navigation.ColoredItemPresentation}</li>
+ *   <li>{@link com.intellij.navigation.LocationPresentation}</li>
+ *   <li>{@link com.intellij.pom.Navigatable} or {@link com.intellij.pom.NavigatableWithText}</li>
  * </ul>
  * @see AdditionalLibraryRootsProvider
  */
