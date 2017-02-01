@@ -1571,11 +1571,9 @@ public class PyUtil {
 
   @NotNull
   public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    return Optional
-      .ofNullable(as(context.getType(callable), PyCallableType.class))
-      .map(callableType -> callableType.getParameters(context))
-      .map(callableParameters -> ContainerUtil.map(callableParameters, PyCallableParameter::getParameter))
-      .orElse(Arrays.asList(callable.getParameterList().getParameters()));
+    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(callable, context);
+    assert !parametersSet.isEmpty();
+    return parametersSet.get(0);
   }
 
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
