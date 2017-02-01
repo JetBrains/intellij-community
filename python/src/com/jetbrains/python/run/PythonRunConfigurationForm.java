@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
@@ -76,6 +77,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       };
 
     myScriptTextField.addActionListener(listener);
+
+    if (SystemInfo.isWindows) {
+      myEmulateTerminalCheckbox.setVisible(false);
+    }
 
     myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
       @Override
