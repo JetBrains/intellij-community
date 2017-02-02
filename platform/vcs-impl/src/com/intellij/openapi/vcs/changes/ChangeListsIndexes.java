@@ -140,31 +140,31 @@ public class ChangeListsIndexes {
 
     for (FilePath s : toRemoveSet) {
       final Data data = oldMap.get(s);
-      toRemove.add(fromPairAndPath(s, data));
+      toRemove.add(createBaseRevision(s, data));
     }
     for (FilePath s : toAddSet) {
       final Data data = newMap.get(s);
-      toAdd.add(fromPairAndPath(s, data));
+      toAdd.add(createBaseRevision(s, data));
     }
     for (FilePath s : toModifySet) {
       final Data oldData = oldMap.get(s);
       final Data newData = newMap.get(s);
       assert oldData != null && newData != null;
       if (!oldData.sameRevisions(newData)) {
-        toModify.add(new BeforeAfter<>(fromPairAndPath(s, oldData), fromPairAndPath(s, newData)));
+        toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
       }
     }
   }
 
-  private static BaseRevision fromPairAndPath(FilePath s, Data data) {
-    return new BaseRevision(data.vcsKey, data.revision, s);
+  private static BaseRevision createBaseRevision(FilePath path, Data data) {
+    return new BaseRevision(data.vcsKey, data.revision, path);
   }
 
   public List<BaseRevision> getAffectedFilesUnderVcs() {
     final List<BaseRevision> result = new ArrayList<>();
     for (Map.Entry<FilePath, Data> entry : myMap.entrySet()) {
       final Data value = entry.getValue();
-      result.add(fromPairAndPath(entry.getKey(), value));
+      result.add(createBaseRevision(entry.getKey(), value));
     }
     return result;
   }
