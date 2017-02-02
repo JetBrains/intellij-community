@@ -169,7 +169,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
-        || isIgnoredChange(oldBoy, project)) {
+          || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
         myChanges.remove(oldBoy);
         LOG.debug("List: " + myName + ". removed change during processing: " + oldBoy);
@@ -222,12 +222,12 @@ public class LocalChangeListImpl extends LocalChangeList {
         addedChanges.add(newChange);
       }
     }
-    changesDetected |= (! addedChanges.isEmpty());
+    changesDetected |= (!addedChanges.isEmpty());
     final List<Change> removed = new ArrayList<>(myChangesBeforeUpdate);
     // since there are SAME objects...
     removed.removeAll(myChanges);
     removedChanges.addAll(removed);
-    changesDetected = changesDetected || (! removedChanges.isEmpty());
+    changesDetected = changesDetected || (!removedChanges.isEmpty());
 
     myReadChangesCache = null;
     return changesDetected;

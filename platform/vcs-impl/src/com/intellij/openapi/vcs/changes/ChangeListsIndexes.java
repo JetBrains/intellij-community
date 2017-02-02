@@ -64,7 +64,7 @@ public class ChangeListsIndexes {
   public FileStatus getStatus(final VirtualFile file) {
     return myFileToStatus.get(VcsUtil.getFilePath(file));
   }
-  
+
   public FileStatus getStatus(@NotNull FilePath file) {
     return myFileToStatus.get(file);
   }
@@ -109,7 +109,7 @@ public class ChangeListsIndexes {
     }
     if (beforeRevision != null) {
       if (afterRevision != null) {
-        if (! Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
+        if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
           add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
         }
       } else {
@@ -151,7 +151,7 @@ public class ChangeListsIndexes {
       final Pair<VcsKey, VcsRevisionNumber> old = myFileToVcs.get(s);
       final Pair<VcsKey, VcsRevisionNumber> newOne = newIndexes.myFileToVcs.get(s);
       assert old != null && newOne != null;
-      if (! old.equals(newOne)) {
+      if (!old.equals(newOne)) {
         toModify.add(new BeforeAfter<>(fromPairAndPath(s, old), fromPairAndPath(s, newOne)));
       }
     }
