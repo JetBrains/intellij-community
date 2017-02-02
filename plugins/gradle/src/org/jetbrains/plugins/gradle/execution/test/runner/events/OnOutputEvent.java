@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 /**
@@ -30,7 +31,7 @@ public class OnOutputEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
+  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testId = eventXml.getTestId();
     final String destination = eventXml.getTestEventTestDescription();
     final String output = decode(eventXml.getTestEventTest());

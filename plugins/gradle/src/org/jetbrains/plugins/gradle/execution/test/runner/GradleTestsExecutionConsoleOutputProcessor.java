@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
-import org.jetbrains.plugins.gradle.execution.test.runner.events.XmlXpathHelper;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventXmlXPathView;
 
 /**
  * Created by eugene.petrenko@gmail.com
@@ -51,7 +51,7 @@ public class GradleTestsExecutionConsoleOutputProcessor {
     }
 
     try {
-      final XmlXpathHelper xml = new XmlXpathHelper(trimmedText);
+      final TestEventXmlView xml = new TestEventXmlXPathView(trimmedText);
 
       final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
       TestEvent testEvent = null;
@@ -84,7 +84,7 @@ public class GradleTestsExecutionConsoleOutputProcessor {
         testEvent.process(xml);
       }
     }
-    catch (XmlXpathHelper.XmlParserException e) {
+    catch (TestEventXmlXPathView.XmlParserException e) {
       LOG.error("Gradle test events parser error", e);
     }
   }

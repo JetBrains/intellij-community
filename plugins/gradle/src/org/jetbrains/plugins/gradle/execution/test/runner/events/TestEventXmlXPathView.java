@@ -26,12 +26,12 @@ import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 
 /**
- * {@link XmlXpathHelper} utility class for query of XML using XPath expressions.
+ * {@link TestEventXmlXPathView} utility class for query of XML using XPath expressions.
  *
  * @author Vladislav.Soroka
  * @since 2/20/14
  */
-public class XmlXpathHelper {
+public class TestEventXmlXPathView implements TestEventXmlView {
   private final XPath xpath;
   private Document xmlDocument;
 
@@ -42,7 +42,7 @@ public class XmlXpathHelper {
    * @param xml            the XML content to be parsed (must be well formed)
    * @throws XmlParserException
    */
-  public XmlXpathHelper(String xml) throws XmlParserException {
+  public TestEventXmlXPathView(String xml) throws XmlParserException {
     xpath = XPathFactory.newInstance().newXPath();
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -57,114 +57,138 @@ public class XmlXpathHelper {
   }
 
   @NotNull
-  public String getTestEventType() throws XmlXpathHelper.XmlParserException {
+  @Override
+  public String getTestEventType() throws TestEventXmlXPathView.XmlParserException {
     return queryXml("/ijLog/event/@type");
   }
 
+  @NotNull
+  @Override
   public String getTestName() throws XmlParserException {
     return queryXml("/ijLog/event/test/descriptor/@name");
   }
 
+  @NotNull
+  @Override
   public String getParentTestId() throws XmlParserException {
     return queryXml("/ijLog/event/test/@parentId");
   }
 
+  @NotNull
+  @Override
   public String getTestId() throws XmlParserException {
     return queryXml("/ijLog/event/test/@id");
   }
 
+  @NotNull
+  @Override
   public String getTestClassName() throws XmlParserException {
     return queryXml("/ijLog/event/test/descriptor/@className");
   }
 
   @NotNull
+  @Override
   public String getTestEventResultType() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/@resultType");
   }
 
+  @NotNull
+  @Override
   public String getEventTitle() throws XmlParserException {
     return queryXml("/ijLog/event/title");
   }
 
+  @NotNull
+  @Override
   public String isEventOpenSettings() throws XmlParserException {
     return queryXml("/ijLog/event/@openSettings");
   }
 
+  @NotNull
+  @Override
   public String getEventMessage() throws XmlParserException {
     return queryXml("/ijLog/event/message");
   }
 
+  @NotNull
+  @Override
   public String getTestEventTest() throws XmlParserException {
     return queryXml("/ijLog/event/test/event");
   }
 
+  @NotNull
+  @Override
   public String getTestEventTestDescription() throws XmlParserException {
     return queryXml("/ijLog/event/test/event/@destination");
   }
 
+  @NotNull
+  @Override
   public String getEventTestReport() throws XmlParserException {
     return queryXml("/ijLog/event/@testReport");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultActualFilePath() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/actualFilePath");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultFilePath() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/filePath");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultExpected() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/expected");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultActual() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/actual");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultFailureType() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/failureType");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultStackTrace() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/stackTrace");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultErrorMsg() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/errorMsg");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultEndTime() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/@endTime");
   }
 
+  @NotNull
+  @Override
   public String getEventTestResultStartTime() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/@startTime");
   }
 
+  @NotNull
   private String queryXml(final String xpathExpr) throws XmlParserException {
     try {
       return xmlDocument == null ? "" : xpath.evaluate(xpathExpr, xmlDocument);
     }
     catch (XPathExpressionException ex) {
       throw new XmlParserException(ex);
-    }
-  }
-
-  /**
-   * {@link XmlParserException} indicates errors during xml processing.
-   */
-  public static class XmlParserException extends Exception {
-    public XmlParserException(final Throwable cause) {
-      super(cause);
-    }
-
-    public XmlParserException(final String message, final Throwable cause) {
-      super(message, cause);
-    }
-
-    public XmlParserException(final String message) {
-      super(message);
     }
   }
 }
