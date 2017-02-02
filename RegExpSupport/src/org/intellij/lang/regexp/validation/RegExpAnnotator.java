@@ -83,16 +83,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
-    final RegExpCharRange.Endpoint from = range.getFrom();
-    final RegExpCharRange.Endpoint to = range.getTo();
-    if (from instanceof RegExpChar && to instanceof RegExpChar) {
-      checkRange(range, ((RegExpChar)from).getValue(), ((RegExpChar)to).getValue());
-    }
-    else if (to instanceof RegExpSimpleClass) {
-      myHolder.createErrorAnnotation(to, "Character class not allowed inside character range");
-    }
-    else if (from.getText().equals(to.getText())) {
-      myHolder.createWarningAnnotation(range, "Redundant character range");
+    final RegExpChar from = range.getFrom();
+    final RegExpChar to = range.getTo();
+    if (to != null) {
+      checkRange(range, from.getValue(), to.getValue());
     }
   }
 

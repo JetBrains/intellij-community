@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a simple, escaped, encoded or named character
  */
-public interface RegExpChar extends RegExpAtom, RegExpClassElement, RegExpCharRange.Endpoint {
+public interface RegExpChar extends RegExpAtom, RegExpClassElement {
     /** Character type */
     enum Type {
         /** a plain character ("a") */

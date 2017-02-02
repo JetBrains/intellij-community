@@ -130,6 +130,11 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]");
   }
 
+  public void testIllegalCharacterRange4() {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
+    doTest("[<error descr=\"Illegal character range (to < from)\">\\N{LATIN SMALL LETTER Z}-\\N{LATIN SMALL LETTER A}</error>]");
+  }
+
   public void testLegalCharacterRange() {
     // Cyrillic Capital Letter Zemlya - Unicode Han Character 'to peel, pare' (Unicode Supplementary Character)
     // without code point support 0x20731 wraps to 0x731 which would produce a "Illegal character range (to < from)" error

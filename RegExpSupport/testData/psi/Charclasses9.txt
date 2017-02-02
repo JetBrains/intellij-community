@@ -6,12 +6,12 @@ REGEXP_FILE
       RegExpClassImpl: <[b-&&[cd]]>
         PsiElement(CLASS_BEGIN)('[')
         RegExpIntersectionImpl: <b-&&[cd]>
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
-          RegExpCharImpl: <->
+          RegExpCharRangeImpl: <b->
+            RegExpCharImpl: <b>
+              PsiElement(CHARACTER)('b')
             PsiElement(MINUS)('-')
-          PsiErrorElement:Illegal character range
-            <empty list>
+            PsiErrorElement:Illegal character range
+              <empty list>
           PsiElement(ANDAND)('&&')
           RegExpClassImpl: <[cd]>
             PsiElement(CLASS_BEGIN)('[')
