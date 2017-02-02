@@ -153,7 +153,7 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(getTestRootDisposable());
+      disposeRootDisposable();
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
@@ -179,6 +179,10 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  protected final void disposeRootDisposable() {
+    Disposer.dispose(getTestRootDisposable());
   }
 
   protected void addTmpFileToKeep(@NotNull File file) {
