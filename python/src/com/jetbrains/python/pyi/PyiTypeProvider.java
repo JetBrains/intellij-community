@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -212,7 +213,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                   @NotNull PyFunction function,
                                                                   @NotNull TypeEvalContext context) {
-    final Map<PyExpression, PyNamedParameter> map = PyCallExpressionHelper.mapArguments(callSite, function, context);
+    final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
+    final Map<PyExpression, PyNamedParameter> map = PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
     final PyCallExpression callExpr = as(callSite, PyCallExpression.class);
     if (callExpr != null && callExpr.getArguments().length != map.size()) {
       return null;
