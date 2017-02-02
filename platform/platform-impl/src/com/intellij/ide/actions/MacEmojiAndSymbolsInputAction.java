@@ -16,19 +16,20 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 
 public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
+  public MacEmojiAndSymbolsInputAction() {
+    // it's not currently possible to use &, when text is set in resource bundle
+    getTemplatePresentation().setText("Emoji & Symbols", false);
+  }
+
   @Override
   public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(SystemInfo.isMac);
-    // it's not currently possible to use &, when text is set in resource bundle
-    presentation.setText("Emoji & Symbols", false);
+    e.getPresentation().setEnabledAndVisible(SystemInfo.isMac);
   }
 
   @Override
