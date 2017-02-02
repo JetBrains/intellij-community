@@ -88,15 +88,19 @@ class UnifiedFragmentBuilder {
     int linesBefore = totalLines;
     int linesAfter;
 
-    int startOffset1 = myDocument1.getLineStartOffset(startLine1);
-    int endOffset1 = myDocument1.getLineEndOffset(endLine1);
-    appendTextSide(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
+    if (lines1 >= 0) {
+      int startOffset1 = myDocument1.getLineStartOffset(startLine1);
+      int endOffset1 = myDocument1.getLineEndOffset(endLine1);
+      appendTextSide(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
+    }
 
     int linesBetween = totalLines;
 
-    int startOffset2 = myDocument2.getLineStartOffset(startLine2);
-    int endOffset2 = myDocument2.getLineEndOffset(endLine2);
-    appendTextSide(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
+    if (lines2 >= 0) {
+      int startOffset2 = myDocument2.getLineStartOffset(startLine2);
+      int endOffset2 = myDocument2.getLineEndOffset(endLine2);
+      appendTextSide(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
+    }
 
     linesAfter = totalLines;
 
@@ -120,10 +124,12 @@ class UnifiedFragmentBuilder {
 
     int lines1 = endLine1 - startLine1;
     int lines2 = endLine2 - startLine2;
-    int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
-    int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
+    if (myMasterSide.select(lines1, lines2) >= 0) {
+      int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
+      int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
 
-    appendText(myMasterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2);
+      appendText(myMasterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2);
+    }
   }
 
   private void appendTextSide(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
