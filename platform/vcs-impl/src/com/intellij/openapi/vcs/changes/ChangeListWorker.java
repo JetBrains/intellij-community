@@ -820,11 +820,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @Override
   public String toString() {
-    return "ChangeListWorker{" +
-           "myMap=" +
-           StringUtil.join(myMap.values(), list -> "list: " + list.getName() + " changes: " + StringUtil.join(list.getChanges(),
-                                                                                                              change -> change.toString(),
-                                                                                                              ", "), "\n") +
-           '}';
+    return String.format("ChangeListWorker{myMap=%s}", StringUtil.join(myMap.values(), list -> {
+      return String.format("list: %s changes: %s", list.getName(), StringUtil.join(list.getChanges(), ", "));
+    }, "\n"));
   }
 }
