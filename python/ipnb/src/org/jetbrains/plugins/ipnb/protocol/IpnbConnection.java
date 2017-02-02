@@ -307,9 +307,9 @@ public class IpnbConnection {
   private String getLoginUrl() throws IOException {
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
-    final HttpsURLConnection connection = ObjectUtils.tryCast(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
-    if (connection != null) {
+    if (myURI.getScheme().equals("https")) {
       configureHttpsConnection();
+      final HttpsURLConnection connection = (HttpsURLConnection)new URL(loginUrl).openConnection();
       connection.setInstanceFollowRedirects(false);
       connection.connect();
       if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
