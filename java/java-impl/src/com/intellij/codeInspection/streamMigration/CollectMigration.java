@@ -627,8 +627,6 @@ class CollectMigration extends BaseStreamApiMigration {
     static StringBuilderTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call, PsiMethodCallExpression delimiterAppend) {
       if (tb.getCountExpression() != null) return null;
       if (call == null || !MethodCallUtils.isCallToMethod(call, null, null, "append", new PsiType[]{null})) return null;
-      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (qualifierExpression == null) return null;
       PsiLocalVariable targetBuilder = extractQualifierVariable(tb, call);
       if (targetBuilder == null) return null;
       if (delimiterAppend != null &&
