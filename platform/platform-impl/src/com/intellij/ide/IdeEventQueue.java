@@ -1141,8 +1141,13 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent event) {
+    doPostEvent(event);
+  }
+
+  // return true if posted, false if consumed immediately
+  boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
-      if (listener.consumePostedEvent(event)) return;
+      if (listener.consumePostedEvent(event)) return false;
     }
 
     myFrequentEventDetector.eventHappened(event);
@@ -1150,6 +1155,7 @@ public class IdeEventQueue extends EventQueue {
       myKeyboardEventsPosted.incrementAndGet();
     }
     super.postEvent(event);
+    return true;
   }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
