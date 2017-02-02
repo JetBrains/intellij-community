@@ -208,6 +208,8 @@ public class LocalChangeListImpl extends LocalChangeList {
     removedChanges.addAll(removed);
     changesDetected = changesDetected || (!removedChanges.isEmpty());
 
+    myChangesBeforeUpdate = null;
+
     return changesDetected;
   }
 
