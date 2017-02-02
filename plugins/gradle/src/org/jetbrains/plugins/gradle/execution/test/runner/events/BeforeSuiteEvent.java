@@ -32,7 +32,7 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
   @Override
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testId = eventXml.getTestId();
-    final String parentTestId = eventXml.getParentTestId();
+    final String parentTestId = eventXml.getTestParentId();
     final String name = eventXml.getTestName();
     final String fqClassName = eventXml.getTestClassName();
 

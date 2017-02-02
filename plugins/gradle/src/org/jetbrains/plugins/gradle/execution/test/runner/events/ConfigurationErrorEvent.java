@@ -46,7 +46,7 @@ public class ConfigurationErrorEvent extends AbstractTestEvent {
   public void process(@NotNull final TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
     final String errorTitle = xml.getEventTitle();
     final String configurationErrorMsg = xml.getEventMessage();
-    final boolean openSettings = Boolean.valueOf(xml.isEventOpenSettings());
+    final boolean openSettings = xml.isEventOpenSettings();
     final Project project = getProject();
     assert project != null;
     final String message =

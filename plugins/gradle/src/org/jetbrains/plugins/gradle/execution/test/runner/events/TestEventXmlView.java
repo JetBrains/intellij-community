@@ -28,7 +28,7 @@ public interface TestEventXmlView {
   String getTestName() throws XmlParserException;
 
   @NotNull
-  String getParentTestId() throws XmlParserException;
+  String getTestParentId() throws XmlParserException;
 
   @NotNull
   String getTestId() throws XmlParserException;
@@ -42,8 +42,7 @@ public interface TestEventXmlView {
   @NotNull
   String getEventTitle() throws XmlParserException;
 
-  @NotNull
-  String isEventOpenSettings() throws XmlParserException;
+  boolean isEventOpenSettings() throws XmlParserException;
 
   @NotNull
   String getEventMessage() throws XmlParserException;

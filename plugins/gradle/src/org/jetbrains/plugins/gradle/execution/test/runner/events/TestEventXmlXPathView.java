@@ -70,7 +70,7 @@ public class TestEventXmlXPathView implements TestEventXmlView {
 
   @NotNull
   @Override
-  public String getParentTestId() throws XmlParserException {
+  public String getTestParentId() throws XmlParserException {
     return queryXml("/ijLog/event/test/@parentId");
   }
 
@@ -98,10 +98,9 @@ public class TestEventXmlXPathView implements TestEventXmlView {
     return queryXml("/ijLog/event/title");
   }
 
-  @NotNull
   @Override
-  public String isEventOpenSettings() throws XmlParserException {
-    return queryXml("/ijLog/event/@openSettings");
+  public boolean isEventOpenSettings() throws XmlParserException {
+    return Boolean.parseBoolean(queryXml("/ijLog/event/@openSettings"));
   }
 
   @NotNull
