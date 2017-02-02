@@ -148,7 +148,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
   }
 
   override fun readExternal(element: Element) {
-    configManager.legacyConfig.readExternal(element)
+    (configManager.legacyConfig as JDOMExternalizable).readExternal(element)
     containsLegacyInformation = configManager.isLoaded()
     if (project.isInitialized) {
       copyFromLegacyIfNeeded()
@@ -157,7 +157,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
 
   override fun writeExternal(element: Element) {
     if (containsLegacyInformation ?: return) {
-      configManager.legacyConfig.writeExternal(element)
+      (configManager.legacyConfig as JDOMExternalizable).writeExternal(element)
     }
   }
 
