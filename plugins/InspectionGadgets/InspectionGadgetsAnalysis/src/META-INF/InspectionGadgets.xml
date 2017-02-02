@@ -2032,7 +2032,7 @@
                      implementationClass="com.siyeh.ig.performance.StringBufferToStringInConcatenationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StringConcatenationInLoop" alternativeId="StringContatenationInLoop" shortName="StringConcatenationInLoops"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.concatenation.in.loops.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringConcatenationInLoopsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationInsideStringBufferAppend" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.concatenation.inside.string.buffer.append.display.name" groupBundle="messages.InspectionsBundle"

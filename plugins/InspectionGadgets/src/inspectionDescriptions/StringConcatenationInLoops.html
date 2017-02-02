@@ -1,14 +1,12 @@
 <html>
 <body>
-Reports String concatenation in loops. For performance reasons, it
-is preferable to replace such concatenation with explicit calls to
-<b>StringBuilder.append()</b> or
-<b>StringBuffer.append()</b>
+Reports String concatenation in loops. As every String concatenation copies the whole String, usually it is preferable to replace
+it with explicit calls to <b>StringBuilder.append()</b> or <b>StringBuffer.append()</b>.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate that this inspection should only warn when the same variable
-is appended to inside the loop.
-<p>
-
+  Sometimes quick-fix actions are available which allow you to convert <code>String</code> variable to <code>StringBuilder</code> or
+  introduce a new <code>StringBuilder</code>. Be careful if the original code handles <code>null</code> value specially: the replacement
+  might not be semantically correct after that. Also it's not guaranteed that the automatic replacement will always be more performant.
+</p>
 </body>
 </html>
