@@ -57,6 +57,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private final Alarm myRelayoutAlarm = new Alarm();
   private final Runnable myRelayoutRunnable = () -> {
+    if (myLayeredPane == null) {
+      return;
+    }
     relayout();
     fireRelayout();
   };
