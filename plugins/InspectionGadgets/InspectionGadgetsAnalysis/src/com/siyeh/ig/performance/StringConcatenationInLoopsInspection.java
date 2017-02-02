@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -296,6 +295,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     if (var instanceof PsiLocalVariable) {
       fixes.add(new ReplaceWithStringBuilderFix(var));
       PsiLoopStatement loop = getOutermostCommonLoop(expression, var);
+      // Do not add IntroduceStringBuilderFix if there's only 0 or 1 reference to the variable outside loop:
+      // in this case the result is usually similar to ReplaceWithStringBuilderFix or worse
       if (ReferencesSearch.search(var).findAll().stream()
             .map(PsiReference::getElement).filter(e -> !PsiTreeUtil.isAncestor(loop, e, true))
             .limit(2).count() > 1) {
@@ -331,7 +332,6 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     void replaceAll(PsiVariable variable,
                     PsiVariable builderVariable,
                     PsiElement scope,
-                    List<PsiElement> results,
                     CommentTracker ct) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
@@ -339,21 +339,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       for(PsiReference ref : refs) {
         PsiElement target = ref.getElement();
         if(target instanceof PsiReferenceExpression && target.isValid()) {
-          replace(variable, builderVariable, results, (PsiReferenceExpression)target, ct);
+          replace(variable, builderVariable, (PsiReferenceExpression)target, ct);
         }
       }
     }
 
     private void replace(PsiVariable variable,
                          PsiVariable builderVariable,
-                         List<PsiElement> results,
                          PsiReferenceExpression ref,
                          CommentTracker ct) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
       if(parent instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
         if(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) == ref) {
-          replaceInAssignment(variable, builderVariable, results, assignment, ct);
+          replaceInAssignment(variable, builderVariable, assignment, ct);
           return;
         } else {
           // ref is r-value
@@ -365,7 +364,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       }
       PsiMethodCallExpression methodCallExpression = ExpressionUtils.getCallForQualifier(ref);
       if(methodCallExpression != null) {
-        replaceInCallQualifier(builderVariable, results, methodCallExpression, ct);
+        replaceInCallQualifier(builderVariable, methodCallExpression, ct);
         return;
       }
       if(parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
@@ -391,7 +390,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
         if (operands.length > 1 && operands[0] == ref && TypeUtils.isJavaLangString(operands[1].getType())) return;
       }
-      results.add(ct.replace(ref, builderVariable.getName() + ".toString()"));
+      ct.replace(ref, builderVariable.getName() + ".toString()");
     }
 
     private static boolean canAcceptBuilderInsteadOfString(PsiMethodCallExpression call) {
@@ -405,9 +404,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                                             (PsiType[])null);
     }
 
-    private static void replaceInCallQualifier(PsiVariable variable, List<PsiElement> results,
-                                               PsiMethodCallExpression call,
-                                               CommentTracker ct) {
+    private static void replaceInCallQualifier(PsiVariable variable, PsiMethodCallExpression call, CommentTracker ct) {
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -447,18 +444,18 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                 ParenthesesUtils.areParenthesesNeeded(emptyCheck, (PsiExpression)callParent, true)) {
               emptyCheck = factory.createExpressionFromText("(" + emptyCheck.getText() + ")", call);
             }
-            results.add(ct.replace(toReplace, emptyCheck));
+            ct.replace(toReplace, emptyCheck);
             return;
           }
           default:
         }
       }
       PsiExpression qualifier = Objects.requireNonNull(call.getMethodExpression().getQualifierExpression());
-      results.add(ct.replace(qualifier, variable.getName() + ".toString()"));
+      ct.replace(qualifier, variable.getName() + ".toString()");
     }
 
     private void replaceInAssignment(PsiVariable variable,
-                                     PsiVariable builderVariable, List<PsiElement> results,
+                                     PsiVariable builderVariable,
                                      PsiAssignmentExpression assignment,
                                      CommentTracker ct) {
       PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
@@ -473,11 +470,11 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
               StreamEx.iterate(operands[1], Objects::nonNull, PsiElement::getNextSibling).forEach(ct::markUnchanged);
               String text = rValue.getText().substring(operands[1].getStartOffsetInParent());
               PsiExpression added = JavaPsiFacade.getElementFactory(variable.getProject()).createExpressionFromText(text, assignment);
-              replaceAll(variable, builderVariable, added, results, ct);
+              replaceAll(variable, builderVariable, added, ct);
               StringBuilder replacement =
                 ChangeToAppendUtil.buildAppendExpression(added, false, new StringBuilder(builderVariable.getName()));
               if (replacement != null) {
-                results.add(ct.replace(assignment, replacement.toString()));
+                ct.replace(assignment, replacement.toString());
               }
               return;
             }
@@ -485,15 +482,15 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             PsiExpression lastOp = operands[operands.length - 1];
             if (ExpressionUtils.isReferenceTo(lastOp, variable)) {
               ct.delete(concat.getTokenBeforeOperand(lastOp), lastOp);
-              replaceAll(variable, builderVariable, rValue, results, ct);
-              results.add(ct.replace(assignment, builderVariable.getName() + ".insert(0," + ct.text(rValue) + ")"));
+              replaceAll(variable, builderVariable, rValue, ct);
+              ct.replace(assignment, builderVariable.getName() + ".insert(0," + ct.text(rValue) + ")");
               return;
             }
           }
         }
       }
       if(rValue != null) {
-        replaceAll(variable, builderVariable, rValue, results, ct);
+        replaceAll(variable, builderVariable, rValue, ct);
         rValue = assignment.getRExpression();
       }
       if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
@@ -506,18 +503,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             replacement = sb.toString();
           }
         }
-        results.add(ct.replace(assignment, replacement));
+        ct.replace(assignment, replacement);
       } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        results.add(ct.replace(assignment, builderVariable.getName() + "=" + generateNewStringBuilder(rValue, ct)));
-      }
-    }
-
-    protected static void cleanUp(Project project, List<PsiElement> results) {
-      for (PsiElement result : results) {
-        if (result.isValid()) {
-          result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
-          CodeStyleManager.getInstance(project).reformat(result);
-        }
+        ct.replace(assignment, builderVariable.getName() + "=" + generateNewStringBuilder(rValue, ct));
       }
     }
   }
@@ -550,9 +538,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       }
       PsiVariable builderVariable = (PsiVariable)declaration.getDeclaredElements()[0];
       PsiExpression builderInitializer = Objects.requireNonNull(builderVariable.getInitializer());
-      List<PsiElement> results = new ArrayList<>();
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, builderVariable, loop, results, ct);
+      replaceAll(variable, builderVariable, loop, ct);
       String toString = variable.getName() + " = " + newName + ".toString();";
 
       PsiExpression initializer = variable.getInitializer();
@@ -622,17 +609,15 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       variable.normalizeDeclaration();
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null) return;
-      List<PsiElement> results = new ArrayList<>();
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, variable, null, results, ct);
-      results.add(ct.replace(typeElement, "java.lang." + myTargetType));
+      replaceAll(variable, variable, null, ct);
+      ct.replace(typeElement, "java.lang." + myTargetType);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
-        results.add(ct.replace(initializer, generateNewStringBuilder(initializer, ct)));
+        ct.replace(initializer, generateNewStringBuilder(initializer, ct));
       }
       PsiStatement commentPlace = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
       ct.insertCommentsBefore(commentPlace == null ? variable : commentPlace);
-      cleanUp(project, results);
     }
 
     @Nls
