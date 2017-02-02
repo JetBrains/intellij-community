@@ -261,6 +261,11 @@ public class MessageBusImpl implements MessageBus {
   @Override
   public void dispose() {
     checkNotDisposed();
+
+    for (MessageBusImpl childBus : myChildBuses) {
+      childBus.dispose();
+    }
+
     Disposer.dispose(myConnectionDisposable);
     Queue<DeliveryJob> jobs = myMessageQueue.get();
     if (!jobs.isEmpty()) {
