@@ -199,6 +199,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if (fn == null) return null;
       PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
       if(elementType == null) return null;
+      elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
       TerminalOperation terminal = new TerminalOperation.ForEachTerminalOperation(fn);
       SourceOperation source = new SourceOperation.ForEachSource(qualifier);
       OperationRecord terminalRecord = new OperationRecord();
