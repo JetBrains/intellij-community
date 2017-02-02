@@ -136,8 +136,8 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      if(myQualifier instanceof PsiReferenceExpression) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      if (myQualifier instanceof PsiReferenceExpression) {
         String name = ((PsiReferenceExpression)myQualifier).getReferenceName();
         if(name != null) {
           String singularName = StringUtil.unpluralize(name);
@@ -264,8 +264,8 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(outVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, outVar, 0);
     }
 
     @Override
@@ -306,10 +306,17 @@ abstract class SourceOperation extends Operation {
       if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
         bound = context.declare("bound", outVar.getType(), bound);
       }
+      String loopVar = outVar.getName();
+      String reassign = "";
+      if (outVar.isFinal()) {
+        loopVar = context.registerVarName(Arrays.asList("i", "j", "idx"));
+        reassign = outVar.getDeclaration(loopVar);
+      }
       return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + " = " + myOrigin.getText() + ";" +
-             outVar + (myInclusive ? "<=" : "<") + bound + ";" +
-             outVar + "++) {\n" +
+             "for(" + outVar.getType() + " " + loopVar + " = " + myOrigin.getText() + ";" +
+             loopVar + (myInclusive ? "<=" : "<") + bound + ";" +
+             loopVar + "++) {\n" +
+             reassign +
              code + "}\n";
     }
   }
@@ -334,7 +341,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
       String name = myCall.getMethodExpression().getReferenceName();
       if (name != null) {
         String unpluralized = StringUtil.unpluralize(name);
