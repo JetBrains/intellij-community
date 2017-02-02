@@ -29,10 +29,13 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.HyperlinkFilter;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.model.hyperlinks.HyperlinkFilter;
+import com.jediterm.terminal.model.hyperlinks.LinkInfo;
+import com.jediterm.terminal.model.hyperlinks.LinkResult;
+import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
@@ -55,7 +58,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     this(project, 80, 24, settingsProvider, parent);
   }
 
-  public JBTerminalWidget(Project project, int columns, int lines, JBTerminalSystemSettingsProviderBase settingsProvider, Disposable parent) {
+  public JBTerminalWidget(Project project,
+                          int columns,
+                          int lines,
+                          JBTerminalSystemSettingsProviderBase settingsProvider,
+                          Disposable parent) {
     super(columns, lines, settingsProvider);
     myProject = project;
     mySettingsProvider = settingsProvider;
@@ -112,24 +119,24 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public List<TerminalAction> getActions() {
-     List<TerminalAction> actions = super.getActions();
-     if (!mySettingsProvider.overrideIdeShortcuts()) {
-       actions
-         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, new Predicate<KeyEvent>() {
-           @Override
-           public boolean apply(KeyEvent input) {
-             if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
-               ToolWindowManager.getInstance(myProject).activateEditorComponent();
-               return true;
-             }
-             else {
-               return false;
-             }
-           }
-         }).withHidden(true));
-     }
-     return actions;
-  };
+    List<TerminalAction> actions = super.getActions();
+    if (!mySettingsProvider.overrideIdeShortcuts()) {
+      actions
+        .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, new Predicate<KeyEvent>() {
+          @Override
+          public boolean apply(KeyEvent input) {
+            if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
+              ToolWindowManager.getInstance(myProject).activateEditorComponent();
+              return true;
+            }
+            else {
+              return false;
+            }
+          }
+        }).withHidden(true));
+    }
+    return actions;
+  }
 
   @Override
   public void dispose() {
@@ -178,31 +185,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   public void addMessageFilter(Project project, Filter filter) {
     addHyperlinkFilter(new HyperlinkFilter() {
       @Override
-      public Result apply(String line) {
+      public LinkResult apply(String line) {
         Filter.Result r = filter.applyFilter(line, line.length());
         if (r != null) {
-          return new Result() {
-
-            @Override
-            public List<ResultItem> getResultItems() {
-              return r.getResultItems().stream().map((item -> new ResultItem() {
-                @Override
-                public int getStartOffset() {
-                  return item.getHighlightStartOffset();
-                }
-
-                @Override
-                public int getEndOffset() {
-                  return item.getHighlightEndOffset();
-                }
-
-                @Override
-                public void navigate() {
-                  item.getHyperlinkInfo().navigate(project);
-                }
-              })).collect(Collectors.toList());
-            }
-          };
+          return new LinkResult(r.getResultItems().stream().map(
+            (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(), new LinkInfo(
+              () -> item.getHyperlinkInfo().navigate(project))))).collect(Collectors.toList()));
         }
         else {
           return null;
