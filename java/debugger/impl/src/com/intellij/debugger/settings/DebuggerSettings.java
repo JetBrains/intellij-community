@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
 
 @State(
   name = "DebuggerSettings",
@@ -91,7 +88,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
-  private List<CapturePoint> myCapturePoints = new CopyOnWriteArrayList<>();
+  private List<CapturePoint> myCapturePoints = new ArrayList<>();
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
@@ -173,7 +170,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
-      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
+      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
+      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
   }
 
   @Override
@@ -188,12 +186,27 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       for (int idx = 0; idx < mySteppingFilters.length; idx++) {
         cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
       }
+      cloned.myCapturePoints = cloneCapturePoints();
       return cloned;
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
     return null;
+  }
+
+  List<CapturePoint> cloneCapturePoints() {
+    try {
+      ArrayList<CapturePoint> res = new ArrayList<>(myCapturePoints.size());
+      for (CapturePoint point : myCapturePoints) {
+        res.add(point.clone());
+      }
+      return res;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
   }
 
   @Tag("capture-points")

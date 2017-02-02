@@ -36,6 +36,8 @@ import java.util.List;
  * @author egor
  */
 public class CaptureConfigurable implements SearchableConfigurable {
+  private MyTableModel myTableModel;
+
   @NotNull
   @Override
   public String getId() {
@@ -45,9 +47,9 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Nullable
   @Override
   public JComponent createComponent() {
-    MyTableModel tableModel = new MyTableModel();
+    myTableModel = new MyTableModel();
 
-    JBTable table = new JBTable(tableModel);
+    JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
 
     TableColumnModel columnModel = table.getColumnModel();
@@ -57,7 +59,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          tableModel.addRow();
+          myTableModel.addRow();
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -86,23 +88,24 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int INSERT_METHOD_COLUMN = 5;
     public static final int INSERT_KEY_EXPR = 6;
 
-    String[] columnNames = new String[]{"", "Class name", "Method name", "Param index", "Insert class name", "Insert method name", "Insert key expression"};
-    List<CapturePoint> capturePoints = DebuggerSettings.getInstance().getCapturePoints();
+    static final String[] COLUMN_NAMES =
+      new String[]{"", "Class name", "Method name", "Param index", "Insert class name", "Insert method name", "Insert key expression"};
+    List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
 
     public String getColumnName(int column) {
-      return columnNames[column];
+      return COLUMN_NAMES[column];
     }
 
     public int getRowCount() {
-      return capturePoints.size();
+      return myCapturePoints.size();
     }
 
     public int getColumnCount() {
-      return columnNames.length;
+      return COLUMN_NAMES.length;
     }
 
     public Object getValueAt(int row, int col) {
-      CapturePoint point = capturePoints.get(row);
+      CapturePoint point = myCapturePoints.get(row);
       switch (col) {
         case ENABLED_COLUMN:
           return point.myEnabled;
@@ -127,7 +130,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
     }
 
     public void setValueAt(Object value, int row, int col) {
-      CapturePoint point = capturePoints.get(row);
+      CapturePoint point = myCapturePoints.get(row);
       switch (col) {
         case ENABLED_COLUMN:
           point.myEnabled = (boolean)value;
@@ -165,14 +168,14 @@ public class CaptureConfigurable implements SearchableConfigurable {
     }
 
     public void addRow() {
-      capturePoints.add(new CapturePoint());
+      myCapturePoints.add(new CapturePoint());
       int lastRow = getRowCount() - 1;
       fireTableRowsInserted(lastRow, lastRow);
     }
 
     public void removeRow(final int row) {
       if (row >= 0 && row < getRowCount()) {
-        capturePoints.remove(row);
+        myCapturePoints.remove(row);
         fireTableRowsDeleted(row, row);
       }
     }
@@ -180,17 +183,18 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    return false;
+    return !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-
+    DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
   }
 
   @Override
   public void reset() {
-
+    myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.fireTableDataChanged();
   }
 
   @Nls
