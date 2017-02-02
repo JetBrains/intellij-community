@@ -16,6 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -89,6 +91,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   private List<CapturePoint> myCapturePoints = new ArrayList<>();
+  private final EventDispatcher<CapturePointsSettingsListener> myDispatcher = EventDispatcher.create(CapturePointsSettingsListener.class);
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
@@ -219,6 +222,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @SuppressWarnings("unused")
   public void setCapturePoints(List<CapturePoint> capturePoints) {
     myCapturePoints = capturePoints;
+    myDispatcher.getMulticaster().capturePointsChanged();
+  }
+
+  public void addCapturePointsSettingsListener(CapturePointsSettingsListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   public static class ContentState implements Cloneable {
@@ -316,5 +324,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     public ContentState clone() throws CloneNotSupportedException {
       return (ContentState)super.clone();
     }
+  }
+
+  public interface CapturePointsSettingsListener extends EventListener{
+    void capturePointsChanged();
   }
 }
