@@ -235,7 +235,7 @@ class DependencyResolverImpl implements DependencyResolver {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it))
       if (dependencies && !dependencies.isEmpty() && it.dependencies.isEmpty()) {
         runtimeDependencies.remove(it)
-        ((AbstractExternalDependency)it).scope = dependencies.first().scope
+        ((AbstractExternalDependency)it).scope = dependencies.find{true}.scope
       }
       else {
         resolvedMap.put(resolve(it), it)
@@ -455,7 +455,7 @@ class DependencyResolverImpl implements DependencyResolver {
       providedConfigurations.add(myProject.configurations.findByName('providedRuntime'))
     }
     providedConfigurations.each {
-      def (providedDependencies, resolvedProvidedFileDependencies) = resolveDependencies(it, providedScope)
+      def (providedDependencies, _) = resolveDependencies(it, providedScope)
       new DependencyTraverser(providedDependencies).each {
         Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it))
         if (!dependencies.isEmpty()) {
@@ -493,13 +493,13 @@ class DependencyResolverImpl implements DependencyResolver {
         result.removeAll(toRemove)
       }
       else if (toRemove.size() > 1) {
-        toRemove.drop(1)
+        toRemove = toRemove.drop(1)
         result.removeAll(toRemove)
       }
       if(!toRemove.isEmpty()) {
         def retained = it - toRemove
         if(!retained.isEmpty()) {
-          def retainedDependency = retained.first() as AbstractExternalDependency
+          def retainedDependency = retained.find{true} as AbstractExternalDependency
           if(retainedDependency instanceof AbstractExternalDependency && retainedDependency.scope != 'COMPILE') {
             if(isCompileScope) retainedDependency.scope = 'COMPILE'
             else if(isProvidedScope) retainedDependency.scope = 'PROVIDED'
@@ -722,7 +722,7 @@ class DependencyResolverImpl implements DependencyResolver {
         else if (it instanceof Dependency) {
           def artifactsResult = artifactMap.get(toMyModuleIdentifier(it.name, it.group))
           if (artifactsResult && !artifactsResult.isEmpty()) {
-            def artifact = artifactsResult.first()
+            def artifact = artifactsResult.find{true}
             def packaging = artifact.extension ?: 'jar'
             def classifier = artifact.classifier
             File sourcesFile = resolveLibraryByPath(artifact.file, scope)?.source
@@ -821,7 +821,7 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependency.projectDependencyArtifacts = it.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
                   if(it.artifacts.size() == 1) {
-                    def publishArtifact = it.allArtifacts.first()
+                    def publishArtifact = it.allArtifacts.find{true}
                     dependency.classifier = publishArtifact.classifier
                     dependency.packaging = publishArtifact.extension ?: 'jar'
                   }
@@ -846,7 +846,7 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependency.projectDependencyArtifacts = it.allArtifacts.files.files
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
                   if(it.artifacts.size() == 1) {
-                    def publishArtifact = it.allArtifacts.first()
+                    def publishArtifact = it.allArtifacts.find{true}
                     dependency.classifier = publishArtifact.classifier
                     dependency.packaging = publishArtifact.extension ?: 'jar'
                   }
@@ -861,7 +861,7 @@ class DependencyResolverImpl implements DependencyResolver {
                   def files = []
                   def artifacts = it.getArtifacts()
                   if (artifacts && !artifacts.isEmpty()) {
-                    def artifact = artifacts.first()
+                    def artifact = artifacts.find{true}
                     if (artifact.hasProperty("archiveTask") &&
                         (artifact.archiveTask instanceof org.gradle.api.tasks.bundling.AbstractArchiveTask)) {
                       def archiveTask = artifact.archiveTask as AbstractArchiveTask
