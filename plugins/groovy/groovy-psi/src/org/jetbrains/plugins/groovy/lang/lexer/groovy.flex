@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -139,8 +139,6 @@ mREGEX_ESC = \\ "/"
 /// Regexes ////////////////////////////////////////////////////////////////
 
 mREGEX_CONTENT = ({mREGEX_ESC} | [^"/""$"])+
-
-mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \$\$ | \$\/ | \/[^\/\$] )+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -620,19 +618,14 @@ mGSTRING_LITERAL = \"\"
                                              }
                                              return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END; }
 
-  "$$"                                    {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
+  [^$/]+                                  { return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
+  "$$" | "$/" | "/"                       { return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
+  "$" /[^_[:letter:]{]                    { return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 
   "$"                                     {
                                              yybegin(IN_DOLLAR_SLASH_REGEX_DOLLAR);
                                              return GroovyTokenTypes.mDOLLAR;
                                           }
-
-  {mDOLLAR_SLASH_REGEX_CONTENT}? "$"
-    /[^"{"[:letter:]"_"]                  {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
-
-  "/"                                     {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
-
-  {mDOLLAR_SLASH_REGEX_CONTENT}           {  return GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT; }
 }
 
 <IN_DOLLAR_SLASH_REGEX_DOLLAR> {
