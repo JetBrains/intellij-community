@@ -56,20 +56,6 @@ public final class PythonTestConfigurationType implements ConfigurationType {
   }
 
   public PythonTestConfigurationType() {
-    /*
-    According to PyUniversalTestLegacyInteropKt we need to call "projectInitialized" when it is initialized
-     */
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-      @Override
-      public void projectComponentsInitialized(@NotNull
-                                               final Project project) {
-        if (project.isInitialized()) {
-          PyUniversalTestLegacyInteropKt.projectInitialized(project);
-          return;
-        }
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> PyUniversalTestLegacyInteropKt.projectInitialized(project));
-      }
-    });
   }
 
   @Override

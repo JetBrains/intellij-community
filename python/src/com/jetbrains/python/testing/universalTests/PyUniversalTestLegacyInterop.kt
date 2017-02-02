@@ -1,17 +1,20 @@
 package com.jetbrains.python.testing.universalTests
 
-import com.intellij.execution.RunConfigurationProducerService
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.messages.MessageBus
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
@@ -25,7 +28,6 @@ import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration
 import com.jetbrains.python.testing.pytest.PyTestRunConfiguration
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration
 import org.jdom.Element
-import org.picocontainer.MutablePicoContainer
 
 /**
  * Module to support legacy configurations.
@@ -43,45 +45,46 @@ import org.picocontainer.MutablePicoContainer
 fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests")
 
 /**
+ * Call when container is ready
+ */
+fun init(bus: MessageBus) {
+  disableUnneededConfigurationProducer()
+
+  // Delegate to project initialization
+  bus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+    override fun projectComponentsInitialized(project: Project) {
+      if (project.isInitialized) {
+        projectInitialized(project)
+        return
+      }
+      StartupManager.getInstance(project).runWhenProjectIsInitialized { projectInitialized(project) }
+    }
+  })
+}
+
+/**
  * To be called when project initialized to copy old configs to new one
  */
-fun projectInitialized(project: Project) {
+private fun projectInitialized(project: Project) {
   assert(project.isInitialized, { "Project is not initialized yet" })
   RunManager.getInstance(project).allConfigurationsList.filterIsInstance(PyUniversalTestConfiguration::class.java).forEach {
     it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
   }
-
-  disableUnneededConfigurationProducer(project)
 }
 
 /**
  * It is impossible to have 2 producers for one type (class cast exception may take place), so we need to disable either old or new one
  */
-private fun disableUnneededConfigurationProducer(project: Project) {
-  val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+private fun disableUnneededConfigurationProducer() {
+  val extensionPoint = Extensions.getArea(null).getExtensionPoint(RunConfigurationProducer.EP_NAME)
 
-  @Suppress("UNCHECKED_CAST")
-  val newProducers = container.getComponentInstancesOfType(
-    PyUniversalTestsConfigurationProducer::class.java) as List<RunConfigurationProducer<*>>
-
-
-  @Suppress("UNCHECKED_CAST")
-  val legacyProducers = container.getComponentInstancesOfType(
-    PythonTestLegacyConfigurationProducer::class.java) as List<RunConfigurationProducer<*>>
-
-
-  val producersToRemove = if (isNewTestsModeEnabled()) {
-    legacyProducers
+  val newMode = isNewTestsModeEnabled()
+  extensionPoint.extensions.forEach {
+    if ((it is PyUniversalTestsConfigurationProducer && !newMode) ||
+        (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
+      extensionPoint.unregisterExtension(it)
+    }
   }
-  else {
-    newProducers
-  }
-
-  val configurationProducerService = RunConfigurationProducerService.getInstance(project)
-  // First, enable all
-  (legacyProducers + newProducers).forEach { configurationProducerService.removeIgnoredProducer(it.javaClass) }
-  // Then, disable one that need to be disabled
-  producersToRemove.forEach { configurationProducerService.addIgnoredProducer(it.javaClass) }
 }
 
 private fun getVirtualFileByPath(path: String): VirtualFile? {
@@ -162,7 +165,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
   }
 
   fun copyFromLegacyIfNeeded() {
-    assert(project.isInitialized, {"Initialized project required"})
+    assert(project.isInitialized, { "Initialized project required" })
     if (containsLegacyInformation ?: return && !(legacyInformationCopiedToNew ?: false)) {
       configManager.copyFromLegacy()
       legacyInformationCopiedToNew = true
