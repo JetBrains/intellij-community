@@ -147,6 +147,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   public static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
+    if (StringUtil.isEmpty(capturePoint.myClassName)) {
+      return;
+    }
     StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess.getProject(), capturePoint);
     breakpoint.createRequest(debugProcess);
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
