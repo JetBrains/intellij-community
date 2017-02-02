@@ -38,8 +38,21 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
+  private AppScheduledExecutorService service;
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    service = new AppScheduledExecutorService(getName());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    service.shutdownAppScheduledExecutorService();
+    assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
+    super.tearDown();
+  }
+
   public void testDelayedWorks() throws InterruptedException, TimeoutException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
 
@@ -92,13 +105,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(4, log.get(0).runnable);
     List<Thread> threads = Arrays.asList(log.get(1).currentThread, log.get(2).currentThread, log.get(3).currentThread);
     assertEquals(threads.toString(), 3, new HashSet<>(threads).size()); // must be executed in parallel
-
-    service.shutdownAppScheduledExecutorService();
-    assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
   public void testMustNotBeAbleToShutdown() {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     try {
       service.shutdown();
       fail();
@@ -110,9 +119,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       fail();
     }
     catch (Exception ignored) {
-    }
-    finally {
-      service.shutdownAppScheduledExecutorService();
     }
   }
 
@@ -144,9 +150,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
-  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws InterruptedException, ExecutionException,
-                                                                                  TimeoutException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
+  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws Exception {
     // pre-start one thread
     Future<?> future = service.submit(EmptyRunnable.getInstance());
     future.get();
@@ -167,7 +171,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertFalse(f3.isDone());
 
     TimeoutUtil.sleep(delay+200+300);
-    assertTrue(f1.isDone());
+    waitFor(f1::isDone);
 
     waitFor(f2::isDone);
     waitFor(f3::isDone);
@@ -179,13 +183,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       System.err.println(ThreadDumper.dumpThreadsToString());
     }
     assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
-
-    service.shutdownAppScheduledExecutorService();
-    assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
   public void testDelayedTasksThatFiredAtTheSameTimeAreExecutedConcurrently() throws InterruptedException, ExecutionException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     int delay = 500;
 
@@ -206,8 +206,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     Set<Thread> usedThreads = ContainerUtil.map2Set(log, logInfo -> logInfo.currentThread);
 
     assertEquals(N, usedThreads.size());
-    service.shutdownAppScheduledExecutorService();
-    assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
   public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException, ExecutionException {
