@@ -8,8 +8,7 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="groovy-rt-constants" />
     <orderEntry type="library" scope="PROVIDED" name="griffon-rt" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Slf4j" level="project" />
