@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElementVisitor;
 public class RegExpElementVisitor extends PsiElementVisitor {
 
     public void visitRegExpElement(RegExpElement element) {
+        visitElement(element);
     }
 
     public void visitRegExpChar(RegExpChar ch) {
@@ -51,7 +52,7 @@ public class RegExpElementVisitor extends PsiElementVisitor {
     }
 
     public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
-        visitRegExpElement(namedCharacter);
+        visitRegExpChar(namedCharacter);
     }
 
     public void visitRegExpBranch(RegExpBranch branch) {

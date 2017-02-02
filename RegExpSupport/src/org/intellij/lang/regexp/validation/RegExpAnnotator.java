@@ -478,12 +478,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
-      super.visitRegExpNamedCharacter(namedCharacter);
-      myLength++;
-    }
-
-    @Override
     public void visitRegExpBackref(RegExpBackref backref) {
       super.visitRegExpBackref(backref);
       if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {

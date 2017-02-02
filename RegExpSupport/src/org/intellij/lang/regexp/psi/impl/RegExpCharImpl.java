@@ -17,7 +17,6 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.regexp.RegExpTT;
@@ -47,8 +46,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.HEX;
         } else if (UNICODE_CHARS.contains(t)) {
             return Type.UNICODE;
-        } else if (t == TokenType.ERROR_ELEMENT) {
-            return Type.INVALID;
+        } else if (t == RegExpTT.NAMED_CHARACTER) {
+            return Type.NAMED;
         } else {
             return Type.CHAR;
         }
@@ -92,6 +91,15 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         return '\b';
                     case 'c':
                         return (char)(ch ^ 64);
+                    case 'N':
+                        if (length < idx + 3 || s.charAt(idx + 1) != '{' || s.charAt(length - 1) != '}') {
+                            return -1;
+                        }
+                        final int codePoint = UnicodeCharacterNames.getCodePoint(s.substring(idx + 2, length - 1));
+                        if (codePoint == -1) {
+                            return -1;
+                        }
+                        return codePoint;
                     case 'x':
                       if (length <= idx + 1) return -1;
                       if (s.charAt(idx + 1) == '{') {
