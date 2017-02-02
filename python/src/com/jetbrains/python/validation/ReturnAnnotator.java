@@ -18,13 +18,7 @@ package com.jetbrains.python.validation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
@@ -35,12 +29,8 @@ public class ReturnAnnotator extends PyAnnotator {
     if (function == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
     }
-    if (function != null && node.getExpression() != null) {
-      final PyType returnType = TypeEvalContext.codeAnalysis(function.getProject(), function.getContainingFile()).getReturnType(function);
-      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
-      if (classType != null && PyTypingTypeProvider.ASYNC_GENERATOR.equals(classType.getClassQName())) {
-        getHolder().createErrorAnnotation(node, "non-empty 'return' inside asynchronous generator");
-      }
+    if (function != null && node.getExpression() != null && function.isGenerator() && (function.isAsync() && function.isAsyncAllowed())) {
+      getHolder().createErrorAnnotation(node, "non-empty 'return' inside asynchronous generator");
     }
   }
 

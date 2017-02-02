@@ -738,6 +738,33 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(3.14)\n");
   }
 
+  public void testAsyncGeneratorAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doTest("AsyncGenerator[int, str]",
+             "from typing import AsyncGenerator\n" +
+             "\n" +
+             "async def g() -> AsyncGenerator[int, str]:\n" +
+             "    s = (yield 42)\n" +
+             "    \n" +
+             "expr = g()");
+    });
+  }
+
+  public void testCoroutineReturnsGenerator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
+             "from typing import Generator\n" +
+             "\n" +
+             "async def coroutine() -> Generator[int, Any, Any]:\n" +
+             "    def gen():\n" +
+             "        yield 42\n" +
+             "    \n" +
+             "    return gen()\n" +
+             "    \n" +
+             "expr = coroutine()");
+    });
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

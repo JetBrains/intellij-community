@@ -384,10 +384,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType createCoroutineType(@Nullable PyType returnType) {
-    if (returnType instanceof PyCollectionType) {
-      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
-      if (classType != null) {
-        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
+    if (isGenerator()) {
+      // Re-wrap typing.Generator[Y, S, R] into typing.AsyncGenerator[Y, Any] 
+      if (returnType instanceof PyCollectionType) {
+        final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
+        if (classType != null && PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
           final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
           final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
                                                                                          PyResolveImportUtil.fromFoothold(this));
@@ -398,11 +399,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           }
         }
       }
+      // Leave the type as is
+      return returnType;
     }
-
-    final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.COROUTINE),
-                                                                           PyResolveImportUtil.fromFoothold(this)), PyClass.class);
-    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
+    else {
+      final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.COROUTINE),
+                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
+      return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
+    }
   }
 
   public PyFunction asMethod() {
