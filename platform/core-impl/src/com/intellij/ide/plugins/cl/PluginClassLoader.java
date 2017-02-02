@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
-    Class c = tryLoadingClass(name, resolve);
+    Class c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -69,11 +70,11 @@ public class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, final boolean resolve) {
+  private Class tryLoadingClass(@NotNull String name, final boolean resolve, @Nullable Set<ClassLoader> visited) {
     Class c = loadClassInsideSelf(name);
 
     if (c == null) {
-      c = loadClassFromParents(name);
+      c = loadClassFromParents(name, visited);
     }
 
     if (c != null) {
@@ -87,10 +88,15 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Nullable
-  private Class loadClassFromParents(final String name) {
+  private Class loadClassFromParents(final String name, Set<ClassLoader> visited) {
     for (ClassLoader parent : myParents) {
+      if (visited == null) visited = ContainerUtilRt.<ClassLoader>newHashSet(this);
+      if (!visited.add(parent)) {
+        continue;
+      }
+
       if (parent instanceof PluginClassLoader) {
-        Class c = ((PluginClassLoader)parent).tryLoadingClass(name, false);
+        Class c = ((PluginClassLoader)parent).tryLoadingClass(name, false, visited);
         if (c != null) {
           return c;
         }
