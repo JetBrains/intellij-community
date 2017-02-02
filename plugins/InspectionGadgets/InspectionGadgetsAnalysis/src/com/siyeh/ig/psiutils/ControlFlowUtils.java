@@ -16,15 +16,23 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+
+import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
 public class ControlFlowUtils {
 
@@ -724,6 +732,115 @@ public class ControlFlowUtils {
       }
     }
     return next;
+  }
+
+  /**
+   * Checks whether variable can be referenced between start and loop entry. Back-edges are also considered, so the actual place
+   * where it referenced might be outside of (start, loop entry) interval.
+   *
+   * @param flow ControlFlow to analyze
+   * @param start start point
+   * @param loop loop to check
+   * @param variable variable to analyze
+   * @return true if variable can be referenced between start and stop points
+   */
+  private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
+                                                             final int start,
+                                                             final PsiLoopStatement loop,
+                                                             final PsiVariable variable) {
+    final int loopStart = flow.getStartOffset(loop);
+    final int loopEnd = flow.getEndOffset(loop);
+    if(start == loopStart) return false;
+
+    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, start);
+    // DFS visits instructions mainly in backward direction while here visiting in forward direction
+    // greatly reduces number of iterations.
+    Collections.reverse(edges);
+
+    BitSet referenced = new BitSet();
+    boolean changed = true;
+    while(changed) {
+      changed = false;
+      for(ControlFlowUtil.ControlFlowEdge edge: edges) {
+        int from = edge.myFrom;
+        int to = edge.myTo;
+        if(referenced.get(from)) {
+          // jump to the loop start from within the loop is not considered as loop entry
+          if(to == loopStart && (from < loopStart || from >= loopEnd)) {
+            return true;
+          }
+          if(!referenced.get(to)) {
+            referenced.set(to);
+            changed = true;
+          }
+          continue;
+        }
+        if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
+          referenced.set(from);
+          referenced.set(to);
+          if(to == loopStart) return true;
+          changed = true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns an {@link InitializerUsageStatus} for given variable with respect to given loop
+   * @param var a variable to determine an initializer usage status for
+   * @param loop a loop where variable is used
+   * @return initializer usage status for variable
+   */
+  @NotNull
+  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement loop) {
+    if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
+    if(isDeclarationJustBefore(var, loop)) return DECLARED_JUST_BEFORE;
+    // Check that variable is declared in the same method or the same lambda expression
+    if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
+       PsiTreeUtil.getParentOfType(loop, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
+    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
+    if(block == null) return UNKNOWN;
+    final ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(loop.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException ignored) {
+      return UNKNOWN;
+    }
+    int start = controlFlow.getEndOffset(var.getInitializer())+1;
+    int stop = controlFlow.getStartOffset(loop);
+    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, loop, var)) return UNKNOWN;
+    if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
+    return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
+  }
+
+  static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
+    PsiElement declaration = var.getParent();
+    PsiElement nextStatementParent = nextStatement.getParent();
+    if(nextStatementParent instanceof PsiLabeledStatement) {
+      nextStatement = (PsiStatement)nextStatementParent;
+    }
+    if(declaration instanceof PsiDeclarationStatement) {
+      PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
+      if (ArrayUtil.getLastElement(elements) == var && nextStatement.equals(
+        PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public enum InitializerUsageStatus {
+    // Variable is declared just before the wanted place
+    DECLARED_JUST_BEFORE,
+    // All initial value usages go through wanted place and at wanted place the variable value is guaranteed to be the initial value
+    AT_WANTED_PLACE_ONLY,
+    // At wanted place the variable value is guaranteed to have the initial value, but this initial value might be used somewhere else
+    AT_WANTED_PLACE,
+    // It's not guaranteed that the variable value at wanted place is initial value
+    UNKNOWN
   }
 
   private static class NakedBreakFinder extends JavaRecursiveElementWalkingVisitor {

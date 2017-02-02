@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +29,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -42,9 +42,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.getInitializerUsageStatus;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 
 /**
  * @author Tagir Valeev
@@ -146,7 +146,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
-      if (terminal.getStatus() == InitializerUsageStatus.UNKNOWN) return null;
+      if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
       terminal = includePostStatements(terminal, tb.getMainLoop());
     }
     return terminal;
@@ -238,7 +238,7 @@ class CollectMigration extends BaseStreamApiMigration {
                    PsiMethodCallExpression addCall,
                    PsiLoopStatement loop,
                    InitializerUsageStatus status) {
-      super(target, loop, ConstructionUtils.isEmptyCollectionInitializer(target.getInitializer()) ? status : InitializerUsageStatus.UNKNOWN);
+      super(target, loop, ConstructionUtils.isEmptyCollectionInitializer(target.getInitializer()) ? status : ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
       myTargetType = target.getType();
       myInitializer = target.getInitializer();
       myElement = element;
@@ -249,7 +249,7 @@ class CollectMigration extends BaseStreamApiMigration {
                    PsiExpression initializer,
                    PsiVariable element,
                    PsiMethodCallExpression addCall) {
-      super(null, null, InitializerUsageStatus.UNKNOWN);
+      super(null, null, ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
       myTargetType = targetType;
       myInitializer = initializer;
       myElement = element;
@@ -576,7 +576,7 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiLocalVariable target = getTargetVariable();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
       target.getTypeElement().replace(factory.createTypeElementFromText(CommonClassNames.JAVA_LANG_STRING, target));
-      if (getStatus() == InitializerUsageStatus.AT_WANTED_PLACE) {
+      if (getStatus() == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE) {
         PsiExpression initializer = target.getInitializer();
         if (initializer != null) {
           initializer.replace(factory.createExpressionFromText("\"\"", target));
@@ -758,7 +758,7 @@ class CollectMigration extends BaseStreamApiMigration {
     final PsiExpression myCreateExpression;
 
     RecreateTerminal(CollectTerminal upstream, PsiLocalVariable variable, String intermediate, PsiExpression createExpression) {
-      super(variable, null, InitializerUsageStatus.DECLARED_JUST_BEFORE);
+      super(variable, null, ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE);
       myUpstream = upstream;
       myIntermediate = intermediate;
       myCreateExpression = createExpression;
@@ -782,7 +782,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Override
     public void cleanUp() {
-      if (myUpstream.getStatus() != InitializerUsageStatus.AT_WANTED_PLACE) {
+      if (myUpstream.getStatus() != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE) {
         myUpstream.getTargetVariable().delete();
       }
       myUpstream.cleanUp();
@@ -814,7 +814,7 @@ class CollectMigration extends BaseStreamApiMigration {
     @Contract("_, null -> null")
     @Nullable
     public static ToArrayTerminal tryWrap(CollectTerminal terminal, PsiElement element) {
-      if (terminal.getStatus() == InitializerUsageStatus.UNKNOWN) return null;
+      if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
       if (!(element instanceof PsiExpressionStatement) && !(element instanceof PsiDeclarationStatement)
           && !(element instanceof PsiReturnStatement)) {
         return null;
@@ -883,7 +883,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Nullable
     public static NewListTerminal tryWrap(CollectTerminal terminal, PsiElement element) {
-      if (terminal.getStatus() == InitializerUsageStatus.UNKNOWN) return null;
+      if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
       PsiLocalVariable collectionVariable = terminal.getTargetVariable();
       String intermediateSteps = getIntermediateStepsFromInitializer(collectionVariable);
       if (intermediateSteps == null) return null;

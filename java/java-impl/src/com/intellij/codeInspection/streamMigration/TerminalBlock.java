@@ -318,7 +318,7 @@ class TerminalBlock {
     PsiExpressionList argumentList = initializer.getArgumentList();
     if (argumentList == null ||
         argumentList.getExpressions().length != 0 ||
-        getInitializerUsageStatus(var, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
+        ControlFlowUtils.getInitializerUsageStatus(var, getMainLoop()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }
     return var;
