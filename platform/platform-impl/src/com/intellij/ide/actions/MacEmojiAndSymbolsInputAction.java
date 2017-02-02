@@ -27,6 +27,7 @@ public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(SystemInfo.isMac);
+    // it's not currently possible to use &, when text is set in resource bundle
     presentation.setText("Emoji & Symbols", false);
   }
 
