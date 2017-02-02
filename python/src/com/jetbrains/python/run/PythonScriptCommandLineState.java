@@ -69,7 +69,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                  final CommandLinePatcher... patchers) throws ExecutionException {
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
-        return super.execute(executor, ArrayUtil.append(patchers, new CommandLinePatcher() {
+        return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
           @Override
           public void patchCommandLine(GeneralCommandLine commandLine) {
             commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER).addParameterAt(1, "--cmd-line");
@@ -109,7 +109,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       return new DefaultExecutionResult(executeConsole, processHandler, AnAction.EMPTY_ARRAY);
     }
     else {
-      return super.execute(executor, patchers);
+      return super.execute(executor, processStarter, patchers);
     }
   }
 

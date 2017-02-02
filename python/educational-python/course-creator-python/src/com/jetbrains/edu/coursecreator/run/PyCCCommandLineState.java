@@ -100,7 +100,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     CCUtils.updateResources(myRunConfiguration.getProject(), myTask, myTaskDir);
     ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.flushWindows(myTask, myTaskDir));
 
-    return super.execute(executor, patchers);
+    return super.execute(executor, processStarter, patchers);
   }
 
   @Override
