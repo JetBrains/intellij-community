@@ -205,11 +205,7 @@ public class HtmlParsing {
         xmlText = terminateText(xmlText);
         parseProcessingInstruction();
       }
-      else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-        xmlText = terminateText(xmlText);
-        parseReference();
-      }
-      else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
+      else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN || tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
         xmlText = startText(xmlText);
         parseReference();
       }
