@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
+    private static final TokenSet WHITE_SPACE_TOKENS = TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
     private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
     private static final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
                                                                              RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
@@ -59,8 +60,7 @@ public class RegExpParserDefinition implements ParserDefinition {
     @Override
     @NotNull
     public TokenSet getWhitespaceTokens() {
-        // trick to hide quote tokens from parser... should actually go into the lexer
-        return TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
+        return WHITE_SPACE_TOKENS;
     }
 
     @Override
