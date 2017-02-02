@@ -62,18 +62,28 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     if (type != null) {
       final PsiClass psiClass = getPsiClass();
       if (psiClass != null) {
-        PsiMember member;
-        if (type == Type.FIELD || type == Type.DECLARED_FIELD) {
-          member = psiClass.findFieldByName(name, false);
-        } else {
-          final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-          member = methods.length == 0 ? null : methods[0];
-        }
+        switch (type) {
 
-        return member;
+          case FIELD: {
+            PsiField field = psiClass.findFieldByName(name, true);
+            return isPublic(field) ? field : null;
+          }
+
+          case DECLARED_FIELD:
+            return psiClass.findFieldByName(name, false);
+
+          case METHOD: {
+            final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+            return ContainerUtil.find(methods, JavaLangClassMemberReference::isPublic);
+          }
+
+          case DECLARED_METHOD: {
+            final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
+            return methods.length == 0 ? null : methods[0];
+          }
+        }
       }
     }
-
     return null;
   }
 
