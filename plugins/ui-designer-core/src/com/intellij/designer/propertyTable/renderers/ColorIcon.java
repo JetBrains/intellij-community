@@ -18,6 +18,7 @@ package com.intellij.designer.propertyTable.renderers;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -42,6 +43,7 @@ public final class ColorIcon extends EmptyIcon {
   }
 
   @Override
+  @NotNull
   protected ColorIcon copy() {
     return new ColorIcon(this);
   }

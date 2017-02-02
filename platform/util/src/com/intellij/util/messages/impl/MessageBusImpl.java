@@ -56,7 +56,7 @@ public class MessageBusImpl implements MessageBus {
    * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
    * Sorting by these vectors lexicographically gives DFS order
    */
-  private final AtomicReference<List<Integer>> myOrderRef = new AtomicReference<List<Integer>>();
+  private final AtomicReference<List<Integer>> myOrderRef = new AtomicReference<List<Integer>>(Collections.<Integer>emptyList());
 
   private final ConcurrentMap<Topic, Object> mySyncPublishers = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = ContainerUtil.newConcurrentMap();
@@ -82,8 +82,7 @@ public class MessageBusImpl implements MessageBus {
   private final Disposable myConnectionDisposable;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    myOwner = owner + " of " + owner.getClass();
-    myConnectionDisposable = Disposer.newDisposable(myOwner);
+    this(owner);
     myParentBus = (MessageBusImpl)parentBus;
     myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
@@ -93,7 +92,6 @@ public class MessageBusImpl implements MessageBus {
   private MessageBusImpl(Object owner) {
     myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
-    myOrderRef.set(Collections.<Integer>emptyList());
   }
 
   @Override
