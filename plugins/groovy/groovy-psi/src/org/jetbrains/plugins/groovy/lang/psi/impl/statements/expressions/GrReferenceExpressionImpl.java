@@ -52,15 +52,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
-import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
  * @author ilyas
@@ -102,11 +101,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       filtered.add(result);
     }
     return filtered;
-  }
-
-  @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return _resolve(false, false, true, upToArgument);
   }
 
   @Override
@@ -492,7 +486,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
       }
 
-      final GroovyResolveResult[] results = _resolve(forceRValue, incompleteCode, false, null);
+      final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode);
       if (results.length == 0) {
         return GroovyResolveResult.EMPTY_ARRAY;
       }
@@ -514,21 +508,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final long time = ResolveProfiler.finish();
       ResolveProfiler.write("ref", this, time);
     }
-  }
-
-  @NotNull
-  private GroovyResolveResult[] _resolve(boolean forceRValue,
-                                         boolean incomplete,
-                                         boolean allVariants,
-                                         @Nullable GrExpression upToArgument) {
-    final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder()
-      .setForceRValue(forceRValue)
-      .setIncomplete(incomplete)
-      .setAllVariants(allVariants)
-      .setUpToArgument(upToArgument)
-      .build(this);
-    new GrReferenceResolveRunner(this, processor).resolveReferenceExpression();
-    return processor.getCandidatesArray();
   }
 
   @Override

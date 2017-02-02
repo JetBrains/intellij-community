@@ -20,6 +20,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
@@ -32,8 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
 
-class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
+private class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
   fun resolveReferenceExpression(): Boolean {
     val processNonCode = PsiTreeUtil.skipParentsOfType(
@@ -151,4 +153,22 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     return true
   }
+}
+
+fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<out GroovyResolveResult> {
+  val processor = GroovyResolverProcessorBuilder.builder()
+    .setAllVariants(true)
+    .setUpToArgument(upToArgument)
+    .build(this)
+  GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
+  return processor.candidatesArray
+}
+
+fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Array<out GroovyResolveResult> {
+  val processor = GroovyResolverProcessorBuilder.builder()
+    .setForceRValue(forceRValue)
+    .setIncomplete(incomplete)
+    .build(this)
+  GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
+  return processor.candidatesArray
 }
