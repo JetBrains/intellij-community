@@ -58,10 +58,7 @@ public class IpnbConnection {
   private static final String DEFAULT_KERNEL_SPEC_NAME = "default";
   private static final String TREE_PATH = "/tree";
   private static final int ATTEMPT_TO_CONNECT_NUMBER = 10;
-
-  // TODO: Serialize cookies for the authentication message
-  protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
-                                              "\"channel\":\"shell\" }";
+  
   public static final String AUTHENTICATION_NEEDED = "Authentication needed";
   public static final String UNABLE_LOGIN_MESSAGE = "Unable to login: ";
   public static final String CANNOT_START_JUPYTER = "Cannot start Jupyter Notebook";
@@ -94,7 +91,6 @@ public class IpnbConnection {
     myURI = new URI(uri);
     myListener = listener;
     myToken = token;
-    mySessionId = UUID.randomUUID().toString();
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
@@ -108,12 +104,14 @@ public class IpnbConnection {
       String loginUrl = getLoginUrl();
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
+      mySessionId = myHeaders.get(SM.COOKIE);
     }
     else {
       if (myToken != null) {
         myHeaders.put(HttpHeaders.AUTHORIZATION, "token " + myToken);
       }
       myKernelId = startKernel();
+      mySessionId = UUID.randomUUID().toString();
     }
     
     initializeClients();
@@ -349,7 +347,8 @@ public class IpnbConnection {
     myShellClient = new WebSocketClient(getShellURI(), draft, myHeaders, 0) {
       @Override
       public void onOpen(@NotNull ServerHandshake handshakeData) {
-        send(authMessage);
+        final Message message = createMessage("connect_request", UUID.randomUUID().toString(), null, null);
+        send(new Gson().toJson(message));
         myIsShellOpen = true;
         notifyOpen();
       }
@@ -509,11 +508,14 @@ public class IpnbConnection {
     content.add("user_expressions", new JsonObject());
     content.addProperty("allow_stdin", false);
 
-    return createMessage("execute_request", content, messageId);
+    return createMessage("execute_request", messageId, content, USERNAME_PARAMETER);
   }
 
-  private Message createMessage(String messageType, JsonObject content, String messageId) {
-    final Header header = Header.create(messageId, USERNAME_PARAMETER, mySessionId, messageType);
+  private Message createMessage(@NotNull String messageType,
+                                @NotNull String messageId,
+                                @Nullable JsonObject content,
+                                @Nullable String username) {
+    final Header header = Header.create(messageId, username, mySessionId, messageType);
     final JsonObject parentHeader = new JsonObject();
 
     final JsonObject metadata = new JsonObject();
@@ -776,7 +778,8 @@ public class IpnbConnection {
 
     @Override
     public void onOpen(ServerHandshake handshakeData) {
-      send(authMessage);
+      final Message message = createMessage("connect_request", UUID.randomUUID().toString(), null, null);
+      send(new Gson().toJson(message));
       myIsIOPubOpen = true;
       notifyOpen();
     }
