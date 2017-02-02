@@ -51,7 +51,7 @@ public class GradleTestsExecutionConsoleOutputProcessor {
     }
 
     try {
-      final TestEventXmlView xml = new TestEventXmlXPathView(trimmedText);
+      final TestEventXmlView xml = new TestEventXPPXmlView(trimmedText);
 
       final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
       TestEvent testEvent = null;

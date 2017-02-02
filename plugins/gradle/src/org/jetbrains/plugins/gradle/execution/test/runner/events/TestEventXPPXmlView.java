@@ -47,7 +47,7 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   private String myEventTestResultStartTime;
   private String myTestName;
 
-  public TestEventXPPXmlView(@NotNull final String xml) throws Exception {
+  public TestEventXPPXmlView(@NotNull final String xml) throws XmlParserException {
     final HierarchicalStreamReader parser = DRIVER.createReader(new StringReader(xml));
 
     if (!"ijLog".equals(parser.getNodeName())) throw new RuntimeException("root element must be 'ijLog'");
