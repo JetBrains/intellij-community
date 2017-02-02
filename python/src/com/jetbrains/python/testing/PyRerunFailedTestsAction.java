@@ -123,7 +123,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       if (getTestSpecs().isEmpty()) {
         throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
       }
-      return super.execute(executor, patchers);
+      return super.execute(executor, processStarter, patchers);
     }
 
     @NotNull
