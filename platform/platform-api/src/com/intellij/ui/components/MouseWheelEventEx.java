@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentSettings;
+
 import java.awt.event.MouseWheelEvent;
 
 /**
@@ -44,8 +47,15 @@ class MouseWheelEventEx {
    * @return negative values for scrolling up, positive values for scrolling down
    * 0.0 when absolute deltas are not supported or not available
    */
-  static double getScrollingDelta(MouseWheelEvent e) {
-    // This API is temporary disabled as there's no way to detect relative deltas.
-    return 0.0D;//SystemInfo.isJetbrainsJvm && SystemInfo.isMac ? 10.0D * e.getPreciseWheelRotation() : 0.0D;
+  static double getAbsoluteDelta(MouseWheelEvent e) {
+    ComponentSettings settings = ComponentSettings.getInstance();
+
+    return settings.isPixelPerfectScrollingEnabled()
+           ? areAbsoluteDeltasSupported() ? 10.0D * e.getPreciseWheelRotation() : 0.0D
+           : 0.0D;
+  }
+
+  private static boolean areAbsoluteDeltasSupported() {
+    return SystemInfo.isJetbrainsJvm && SystemInfo.isMac;
   }
 }

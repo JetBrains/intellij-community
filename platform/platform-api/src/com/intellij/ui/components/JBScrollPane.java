@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -744,9 +745,10 @@ public class JBScrollPane extends SmoothScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && (isPreciseRotationSupported() || isTrueSmoothScrollingEnabled())) {
+    if (ignore && (isPreciseRotationSupported() ||
+                   (isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().isHighPrecisionScrollingEnabled()))) {
       double rotation = event.getPreciseWheelRotation();
-      double delta = MouseWheelEventEx.getScrollingDelta(event);
+      double delta = MouseWheelEventEx.getAbsoluteDelta(event);
       ignore = (rotation == 0.0D || !Double.isFinite(rotation)) && (delta == 0.0D || !Double.isFinite(delta));
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
