@@ -74,6 +74,13 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTe
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
 
 /**
+ * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
+ * We just save its name and provide it again to rerun
+ */
+private class PyTargetBasedPsiLocation(val target: ConfigurationTarget, element: PsiElement) : PsiLocation<PsiElement>(element)
+
+
+/**
  * @return factory chosen by user in "test runner" settings
  */
 private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
@@ -85,17 +92,18 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 
 
 private object PyUniversalTestsLocator : SMTestLocator {
-  override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): MutableList<Location<PsiElement>> {
+  override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
-      return ArrayList()
+      return listOf()
     }
-    val result = QualifiedName.fromDottedString(path).toElement(scope.module,
-                                                                TypeEvalContext.userInitiated(project, null))
-    if (result != null) {
-      return arrayListOf(PsiLocation.fromPsiElement(result))
+    val element = QualifiedName.fromDottedString(path).toElement(scope.module,
+                                                                 TypeEvalContext.userInitiated(project, null))
+    if (element != null) {
+      // Path is qualified name of python test according to runners protocol
+      return listOf(PyTargetBasedPsiLocation(ConfigurationTarget(path, TestTargetType.PYTHON), element))
     }
     else {
-      return ArrayList()
+      return listOf()
     }
   }
 }
@@ -182,6 +190,11 @@ abstract class PyUniversalTestConfiguration(project: Project,
   override fun isTestBased() = true
 
   private fun getTestSpecForPythonTarget(location: Location<*>): List<String> {
+
+    if (location is PyTargetBasedPsiLocation) {
+      return listOf(location.target.targetType.optionName, location.target.target)
+    }
+
     if (location !is PsiLocation) {
       return emptyList()
     }
@@ -318,7 +331,7 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
 
   override fun createConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
     // Since we need module, no need to even try to create config with out of it
-    context?.module?: return null
+    context?.module ?: return null
     return super.createConfigurationFromContext(context)
   }
 
@@ -336,7 +349,16 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
     if (sourceElement == null || configuration == null) {
       return false
     }
+
     val nameAndTarget = getNameAndTargetForConfig(configuration, sourceElement.get()) ?: return false
+
+    val location = context?.location
+    if (location is PyTargetBasedPsiLocation) {
+      configuration.name = location.target.target
+      location.target.copyTo(configuration.target)
+      return true
+    }
+
     configuration.name = nameAndTarget.first
     nameAndTarget.second.copyTo(configuration.target)
     return true
