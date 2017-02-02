@@ -589,4 +589,8 @@
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="control M" replace-all="true"/>
   </action>
+
+  <action id="EmojiAndSymbols">
+    <keyboard-shortcut first-keystroke="control meta SPACE"/>
+  </action>
 </keymap>

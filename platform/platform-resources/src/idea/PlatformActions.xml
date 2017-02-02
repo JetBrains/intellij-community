@@ -336,6 +336,8 @@
           </group>
         </group>
         <reference ref="TemplateParametersNavigation"/>
+        <separator/>
+        <action id="EmojiAndSymbols" class="com.intellij.ide.actions.MacEmojiAndSymbolsInputAction"/>
       </group>
 
       <!-- View -->
