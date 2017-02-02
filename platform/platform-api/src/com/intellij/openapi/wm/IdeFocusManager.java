@@ -52,6 +52,10 @@ import java.awt.event.KeyEvent;
 
 public abstract class IdeFocusManager implements FocusRequestor {
 
+  public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
+    return requestFocus(c, false);
+  }
+
   /**
    * Finds most suitable component to request focus to. For instance you may pass a JPanel instance,
    * this method will traverse into it's children to find focusable component
