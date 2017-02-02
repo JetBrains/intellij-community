@@ -1,19 +1,18 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * @author yole
@@ -157,83 +156,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     return null;
   }
 
-  Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
-    final Collection<Change> result = new ArrayList<>();
-    myChangesBeforeUpdate = new OpenTHashSet<>(myChanges);
-    for (Change oldBoy : myChangesBeforeUpdate) {
-      final ContentRevision before = oldBoy.getBeforeRevision();
-      final ContentRevision after = oldBoy.getAfterRevision();
-      if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
-          || isIgnoredChange(oldBoy, project)) {
-        result.add(oldBoy);
-        removeChange(oldBoy);
-      }
-    }
-    return result;
+  void setChangesBeforeUpdate(OpenTHashSet<Change> changesBeforeUpdate) {
+    myChangesBeforeUpdate = changesBeforeUpdate;
   }
 
-  private static boolean isIgnoredChange(@NotNull Change change, @NotNull Project project) {
-    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), project);
-    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), project);
-    return beforeRevIgnored && afterRevIgnored;
-  }
-
-  private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) {
-        return false;
-      }
-      VirtualFile vFile = revision.getFile().getVirtualFile();
-      return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
-    });
-  }
-
-  boolean hadChangeBeforeUpdate(@NotNull Change change) {
-    return myChangesBeforeUpdate.contains(change);
-  }
-
-  boolean doneProcessingChanges(final List<Change> removedChanges, final List<Change> addedChanges) {
-    boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
-
-    for (Change newChange : myChanges) {
-      Change oldChange = findOldChange(newChange);
-      if (oldChange == null) {
-        addedChanges.add(newChange);
-      }
-    }
-    changesDetected |= (!addedChanges.isEmpty());
-    final List<Change> removed = new ArrayList<>(myChangesBeforeUpdate);
-    // since there are SAME objects...
-    removed.removeAll(myChanges);
-    removedChanges.addAll(removed);
-    changesDetected = changesDetected || (!removedChanges.isEmpty());
-
-    myChangesBeforeUpdate = null;
-
-    return changesDetected;
-  }
-
-  @Nullable
-  private Change findOldChange(final Change newChange) {
-    Change oldChange = myChangesBeforeUpdate.get(newChange);
-    if (oldChange != null && sameBeforeRevision(oldChange, newChange) &&
-        newChange.getFileStatus().equals(oldChange.getFileStatus())) {
-      return oldChange;
-    }
-    return null;
-  }
-
-  private static boolean sameBeforeRevision(final Change change1, final Change change2) {
-    final ContentRevision b1 = change1.getBeforeRevision();
-    final ContentRevision b2 = change2.getBeforeRevision();
-    if (b1 != null && b2 != null) {
-      final VcsRevisionNumber rn1 = b1.getRevisionNumber();
-      final VcsRevisionNumber rn2 = b2.getRevisionNumber();
-      final boolean isBinary1 = (b1 instanceof BinaryContentRevision);
-      final boolean isBinary2 = (b2 instanceof BinaryContentRevision);
-      return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0 && isBinary1 == isBinary2;
-    }
-    return b1 == null && b2 == null;
+  OpenTHashSet<Change> getChangesBeforeUpdate() {
+    return myChangesBeforeUpdate;
   }
 
   public boolean equals(final Object o) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -25,11 +26,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,7 +216,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.put(name, newList);
     if (inUpdate) {
       // scope is not important: nothing had been added jet, nothing to move to "old state" members
-      newList.startProcessingChanges(myProject, null);      // this is executed only when use through GATE
+      startProcessingChanges(newList, null); // this is executed only when use through GATE
     }
     return newList.copy();
   }
@@ -234,7 +237,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeListImpl list : myMap.values()) {
-      if (list.hadChangeBeforeUpdate(change)) {
+      if (list.getChangesBeforeUpdate().contains(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
         list.addChange(change);
         myIdx.changeAdded(change, vcsKey);
@@ -330,7 +333,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public void notifyStartProcessingChanges(final VcsModifiableDirtyScope scope) {
     final Collection<Change> oldChanges = new ArrayList<>();
     for (LocalChangeListImpl list : myMap.values()) {
-      final Collection<Change> affectedChanges = list.startProcessingChanges(myProject, scope);
+      final Collection<Change> affectedChanges = startProcessingChanges(list, scope);
       if (!affectedChanges.isEmpty()) {
         oldChanges.addAll(affectedChanges);
       }
@@ -363,7 +366,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final List<Change> removed = new ArrayList<>();
       final List<Change> added = new ArrayList<>();
 
-      if (list.doneProcessingChanges(removed, added)) {
+      if (doneProcessingChanges(list, removed, added)) {
         changedLists.add(list);
       }
       if (!removed.isEmpty()) {
@@ -390,6 +393,85 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
     }
     myListsToDisappear.clear();
+  }
+
+  private Collection<Change> startProcessingChanges(@NotNull LocalChangeListImpl list, @Nullable final VcsDirtyScope scope) {
+    OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>(list.getChanges());
+    list.setChangesBeforeUpdate(changesBeforeUpdate);
+
+    final Collection<Change> result = new ArrayList<>();
+    for (Change oldBoy : changesBeforeUpdate) {
+      final ContentRevision before = oldBoy.getBeforeRevision();
+      final ContentRevision after = oldBoy.getAfterRevision();
+      if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
+          || isIgnoredChange(oldBoy, myProject)) {
+        result.add(oldBoy);
+        list.removeChange(oldBoy);
+      }
+    }
+    return result;
+  }
+
+  private static boolean isIgnoredChange(@NotNull Change change, @NotNull Project project) {
+    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), project);
+    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), project);
+    return beforeRevIgnored && afterRevIgnored;
+  }
+
+  private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return false;
+      }
+      VirtualFile vFile = revision.getFile().getVirtualFile();
+      return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
+    });
+  }
+
+  private boolean doneProcessingChanges(@NotNull LocalChangeListImpl list, List<Change> removedChanges, List<Change> addedChanges) {
+    OpenTHashSet<Change> changesBeforeUpdate = list.getChangesBeforeUpdate();
+    Set<Change> changes = list.getChanges();
+    boolean changesDetected = (changes.size() != changesBeforeUpdate.size());
+
+    for (Change newChange : changes) {
+      Change oldChange = findOldChange(changesBeforeUpdate, newChange);
+      if (oldChange == null) {
+        addedChanges.add(newChange);
+      }
+    }
+    changesDetected |= (!addedChanges.isEmpty());
+    final List<Change> removed = new ArrayList<>(changesBeforeUpdate);
+    // since there are SAME objects...
+    removed.removeAll(changes);
+    removedChanges.addAll(removed);
+    changesDetected = changesDetected || (!removedChanges.isEmpty());
+
+    list.setChangesBeforeUpdate(null);
+
+    return changesDetected;
+  }
+
+  @Nullable
+  private static Change findOldChange(OpenTHashSet<Change> changesBeforeUpdate, Change newChange) {
+    Change oldChange = changesBeforeUpdate.get(newChange);
+    if (oldChange != null && sameBeforeRevision(oldChange, newChange) &&
+        newChange.getFileStatus().equals(oldChange.getFileStatus())) {
+      return oldChange;
+    }
+    return null;
+  }
+
+  private static boolean sameBeforeRevision(final Change change1, final Change change2) {
+    final ContentRevision b1 = change1.getBeforeRevision();
+    final ContentRevision b2 = change2.getBeforeRevision();
+    if (b1 != null && b2 != null) {
+      final VcsRevisionNumber rn1 = b1.getRevisionNumber();
+      final VcsRevisionNumber rn2 = b2.getRevisionNumber();
+      final boolean isBinary1 = (b1 instanceof BinaryContentRevision);
+      final boolean isBinary2 = (b2 instanceof BinaryContentRevision);
+      return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0 && isBinary1 == isBinary2;
+    }
+    return b1 == null && b2 == null;
   }
 
   @NotNull
