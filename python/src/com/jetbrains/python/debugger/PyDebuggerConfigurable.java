@@ -15,16 +15,22 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
 
 /**
  * @author traff
@@ -37,6 +43,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private JButton myClearCacheButton;
   private JCheckBox mySupportGevent;
   private JBCheckBox mySupportQt;
+  private JBLabel warningIcon;
 
   private final Project myProject;
 
@@ -90,5 +97,13 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   }
 
   public void disposeUIResources() {
+  }
+
+  private void createUIComponents() {
+    warningIcon = new JBLabel(AllIcons.General.BalloonWarning);
+    IdeTooltipManager.getInstance().setCustomTooltip(
+      warningIcon,
+      new TooltipWithClickableLinks.ForBrowser(warningIcon,
+                                               DEBUGGER_WARNING_MESSAGE));
   }
 }
