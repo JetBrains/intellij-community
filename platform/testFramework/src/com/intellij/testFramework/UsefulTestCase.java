@@ -819,8 +819,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && testName.contains("Performance") ||
-           className != null && className.contains("Performance");
+    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
+           className != null && StringUtil.containsIgnoreCase(className, "performance");
   }
 
   /**
