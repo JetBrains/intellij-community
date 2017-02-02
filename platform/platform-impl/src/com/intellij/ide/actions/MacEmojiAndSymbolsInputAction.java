@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 
-public class MacEmojiAndSymbolsInputAction extends AnAction {
+public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
