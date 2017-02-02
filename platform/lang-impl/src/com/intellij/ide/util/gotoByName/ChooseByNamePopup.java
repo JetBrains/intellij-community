@@ -258,12 +258,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
     Disposer.dispose(this);
-    myProject.putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, null);
     setDisposed(true);
     myAlarm.cancelAllRequests();
-    if (myProject != null) {
-      myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
-    }
+
 
     cleanupUI(isOk);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -476,6 +473,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   public void dispose() {
-
+    myProject.putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, null);
+    myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
   }
 }
