@@ -221,7 +221,10 @@ abstract class FunctionHelper {
       }
     }
     else if(type instanceof PsiCapturedWildcardType) {
-      return ((PsiCapturedWildcardType)type).getUpperBound();
+      PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
+      if(capturedWildcardType.getLowerBound().equals(PsiType.NULL)) {
+        return capturedWildcardType.getUpperBound();
+      }
     }
     return type;
   }
