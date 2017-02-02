@@ -441,7 +441,13 @@ class DependencyResolverImpl implements DependencyResolver {
       def scopes = ideaPlugin.model.module.scopes
       def providedPlusScopes = scopes.get(providedScope)
       if (providedPlusScopes && providedPlusScopes.get("plus")) {
-        providedConfigurations.addAll(providedPlusScopes.get("plus"))
+        // filter default 'compileClasspath' for slight optimization since it has been already processed as compile dependencies
+        def ideaPluginProvidedConfigurations = providedPlusScopes.get("plus").findAll { it.name != "compileClasspath"}
+        ideaPluginProvidedConfigurations.each {
+          def (providedDependencies, _) = resolveDependencies(it, providedScope)
+          new DependencyTraverser(providedDependencies).each { resolvedMap.put(resolve(it), it) }
+          result.addAll(providedDependencies)
+        }
       }
     }
     if (sourceSet.name == 'main' && myProject.plugins.findPlugin(WarPlugin)) {
