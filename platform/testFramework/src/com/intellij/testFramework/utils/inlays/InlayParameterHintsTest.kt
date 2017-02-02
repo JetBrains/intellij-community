@@ -49,8 +49,6 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val hintSettings = ParameterNameHintsSettings.getInstance()
 
     hintSettings.loadState(default.state)
-    hintSettings.isShowForParamsWithSameType = default.isShowForParamsWithSameType
-    hintSettings.isDoNotShowIfMethodNameContainsParameterName = default.isDoNotShowIfMethodNameContainsParameterName
   }
 
   fun checkInlays() {

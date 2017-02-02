@@ -15,13 +15,18 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
-
+  
+  companion object {
+    fun getInstance() = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
+  }
+  
   override fun getMethodInfo(element: PsiElement): MethodInfo? {
     if (element is PsiCallExpression) {
       val resolvedElement = element.resolveMethodGenerics().element
@@ -82,4 +87,18 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "org.slf4j.Logger.*"
   )
   
+  val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
+                                                            "Do not show if method name contains parameter name", 
+                                                            true)
+  
+  val isShowForParamsWithSameType = Option("java.multiple.params.same.type", 
+                                           "Show for non-literals in case of multiple params with the same type", 
+                                           false)
+  
+  override fun getSupportedOptions(): List<Option> {
+    return listOf(
+      isDoNotShowIfMethodNameContainsParameterName, 
+      isShowForParamsWithSameType
+    )
+  }
 }
