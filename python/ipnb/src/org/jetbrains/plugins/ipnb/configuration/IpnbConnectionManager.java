@@ -544,7 +544,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     shutdownKernels();
   }
 
-  private void shutdownKernels() {
+  public void shutdownKernels() {
     for (IpnbConnection connection : myKernels.values()) {
       if (!connection.isAlive()) continue;
       connection.shutdown();

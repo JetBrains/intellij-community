@@ -73,15 +73,21 @@ public class IpnbConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    String url = StringUtil.notNullize(myFieldUrl.getText());
-    url = StringUtil.trimEnd(url, "/");
-    IpnbSettings.getInstance(myProject).setURL(url);
     IpnbSettings.getInstance(myProject).setWorkingDirectory(myWorkingDirField.getText());
     IpnbSettings.getInstance(myProject).setArguments(myArgumentsField.getText());
+    
+    String url = StringUtil.notNullize(myFieldUrl.getText());
+    url = StringUtil.trimEnd(url, "/");
+    final boolean urlModified = !url.equals(IpnbSettings.getInstance(myProject).getURL());
+    if (urlModified) {
+      IpnbSettings.getInstance(myProject).setURL(url);
+      IpnbConnectionManager.getInstance(myProject).shutdownKernels();
+    }
 
     if (isCredentialsModified()) {
       IpnbSettings.getInstance(myProject).setUsername(myUsernameField.getText());
       IpnbSettings.getInstance(myProject).setPassword(String.valueOf(myPasswordField.getPassword()));
+      IpnbConnectionManager.getInstance(myProject).shutdownKernels();
     }
   }
 
