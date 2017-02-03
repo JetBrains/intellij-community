@@ -520,12 +520,12 @@ class Foo {
     String toType = "ArrayIndexOutOfBoundsException ind"
     testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 1
 
-    UISettings.instance.CYCLE_SCROLLING = false
+    UISettings.instance.cycleScrolling = false
     try {
       testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
     }
     finally {
-      UISettings.instance.CYCLE_SCROLLING = true
+      UISettings.instance.cycleScrolling = true
     }
   }
 
@@ -536,12 +536,12 @@ class Foo {
     String toType = "fo"
     testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
 
-    UISettings.instance.CYCLE_SCROLLING = false
+    UISettings.instance.cycleScrolling = false
     try {
       testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
-      UISettings.instance.CYCLE_SCROLLING = true
+      UISettings.instance.cycleScrolling = true
     }
   }
 
