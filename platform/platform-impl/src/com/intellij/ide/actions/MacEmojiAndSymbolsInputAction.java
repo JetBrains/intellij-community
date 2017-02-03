@@ -25,6 +25,7 @@ public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
   public MacEmojiAndSymbolsInputAction() {
     // it's not currently possible to use &, when text is set in resource bundle
     getTemplatePresentation().setText("Emoji & Symbols", false);
+    setEnabledInModalContext(true);
   }
 
   @Override
