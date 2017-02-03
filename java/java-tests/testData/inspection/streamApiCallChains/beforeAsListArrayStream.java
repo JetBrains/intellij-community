@@ -4,6 +4,6 @@ import java.util.Arrays;
 
 class AsListArrayStream {
   String max(String[] args) {
-    return Arrays.asL<caret>ist(args).stream().max(String::compareTo);
+    return Arrays.asList(args).st<caret>ream().max(String::compareTo);
   }
 }
