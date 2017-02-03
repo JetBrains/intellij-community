@@ -38,12 +38,10 @@ public abstract class AdditionalLibraryRootsProvider {
   public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");
 
   /**
-   * Returns of collection of {@link SyntheticLibrary}.
+   * Returns a collection of {@link SyntheticLibrary}.
    * This method is suitable when it's easier to collect all additional library roots associated with {@code Project},
    * instead of {@code Module}. E.g. JavaScript libraries can be associated with files or folders allowing more
    * fine-grained control.
-   * Files contained in the returned libraries roots are considered as library source files:
-   * {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} should return {@code true} for them.
    *
    * @param project  Project instance
    * @return a collection of {@link SyntheticLibrary}
