@@ -185,10 +185,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public void reset() {
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.reset();
-    }
-
+    clearPanels();
     onCurrentSchemeChanged();
   }
 
@@ -200,8 +197,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public void apply() throws ConfigurationException {
-    final NewCodeStyleSettingsPanel[] panels = getPanels();
-    for (NewCodeStyleSettingsPanel panel : panels) {
+    for (NewCodeStyleSettingsPanel panel : getPanels()) {
       if (panel.isModified()) panel.apply();
     }
   }

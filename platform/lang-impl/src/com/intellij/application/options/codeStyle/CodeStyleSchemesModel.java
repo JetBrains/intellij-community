@@ -167,11 +167,6 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
     CodeStyleSchemesImpl.getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
-
-    // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
-    // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
-    // button processing
-    mySettingsToClone.clear();
   }
 
   @SuppressWarnings("unused")
