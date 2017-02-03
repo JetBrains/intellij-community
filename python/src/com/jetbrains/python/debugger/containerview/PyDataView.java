@@ -15,14 +15,15 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -32,10 +33,15 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "Data View";
@@ -64,12 +70,51 @@ public class PyDataView implements DumbAware {
     window.show(null);
   }
 
+  public void closeRelatedTabs(@NotNull PyDebugProcess process) {
+    for (TabInfo info : myTabs.getTabs()) {
+      PyFrameAccessor frameAccessor = getPanel(info).getFrameAccessor();
+      if (frameAccessor instanceof PyDebugProcess) {
+        if (frameAccessor == process) {
+          ApplicationManager.getApplication().invokeLater(() -> myTabs.removeTab(info));
+        }
+      }
+    }
+  }
+
+  public void updateTabs(@NotNull ProcessHandler handler) {
+    for (TabInfo info : myTabs.getTabs()) {
+      PyDataViewerPanel panel = getPanel(info);
+      PyFrameAccessor accessor = panel.getFrameAccessor();
+      if (!(accessor instanceof PyDebugProcess)) {
+        continue;
+      }
+      boolean shouldBeShown = Comparing.equal(handler, ((PyDebugProcess)accessor).getProcessHandler());
+      info.setHidden(!shouldBeShown);
+    }
+    if (myTabs.getSelectedInfo() == null) {
+      PyFrameAccessor accessor = getFrameAccessor(handler);
+      if (accessor != null) {
+        addTab(accessor);
+      }
+    }
+  }
+
+  @Nullable
+  private PyFrameAccessor getFrameAccessor(@NotNull ProcessHandler handler) {
+    for (PyDebugProcess process : XDebuggerManager.getInstance(myProject).getDebugProcesses(PyDebugProcess.class)) {
+      if (Comparing.equal(handler, process.getProcessHandler())) {
+        return process;
+      }
+    }
+    return null;
+  }
+
   public static PyDataView getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, PyDataView.class);
   }
 
   public void init(@NotNull ToolWindow toolWindow, @NotNull PyFrameAccessor frameAccessor) {
-    myTabs = new JBRunnerTabs(myProject, ActionManager.getInstance(), IdeFocusManager.findInstance(), myProject);
+    myTabs = new PyDataViewTabs(myProject);
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "", false);
@@ -93,7 +138,7 @@ public class PyDataView implements DumbAware {
 
   private TabInfo addTab(@NotNull PyFrameAccessor frameAccessor) {
     if (hasOnlyEmptyTab()) {
-      myTabs.removeAllTabs();
+      myTabs.removeTab(myTabs.getSelectedInfo());
     }
     PyDataViewerPanel panel = new PyDataViewerPanel(myProject, frameAccessor);
     TabInfo info = new TabInfo(panel);
@@ -108,7 +153,7 @@ public class PyDataView implements DumbAware {
   }
 
   private boolean hasOnlyEmptyTab() {
-    if (myTabs.getTabCount() != 1) {
+    if (getVisibleTabs().size() != 1) {
       return false;
     }
     TabInfo info = myTabs.getSelectedInfo();
@@ -116,6 +161,10 @@ public class PyDataView implements DumbAware {
       return false;
     }
     return getPanel(info).getSliceTextField().getText().isEmpty();
+  }
+
+  private List<TabInfo> getVisibleTabs() {
+    return myTabs.getTabs().stream().filter(tabInfo -> !tabInfo.isHidden()).collect(Collectors.toList());
   }
 
 
@@ -147,7 +196,7 @@ public class PyDataView implements DumbAware {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myTabs.removeTab(myInfo);
-      if (myTabs.getTabCount() == 0) {
+      if (getVisibleTabs().isEmpty()) {
         addTab(myFrameAccessor);
       }
     }

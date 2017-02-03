@@ -97,6 +97,11 @@ public class PyDataViewerPanel extends JPanel {
     }
   }
 
+  @NotNull
+  public PyFrameAccessor getFrameAccessor() {
+    return myFrameAccessor;
+  }
+
   public JBTable getTable() {
     return myTable;
   }
