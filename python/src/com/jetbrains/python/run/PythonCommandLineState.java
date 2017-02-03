@@ -138,7 +138,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor,
-                                 ProcessStarter processStarter,
+                                 PythonProcessStarter processStarter,
                                  CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(processStarter, patchers);
     final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
@@ -190,7 +190,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    * @throws ExecutionException
-   * @deprecated use {@link #startProcess(ProcessStarter, CommandLinePatcher...)} instead
+   * @deprecated use {@link #startProcess(PythonProcessStarter, CommandLinePatcher...)} instead
    */
   @Deprecated
   @NotNull
@@ -207,7 +207,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @throws ExecutionException
    */
   @NotNull
-  protected ProcessHandler startProcess(ProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
+  protected ProcessHandler startProcess(PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
@@ -223,7 +223,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  protected final ProcessStarter getDefaultPythonProcessStarter() {
+  protected final PythonProcessStarter getDefaultPythonProcessStarter() {
     return (config, commandLine) -> {
       Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
       final ProcessHandler processHandler;
@@ -600,7 +600,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new UrlFilter();
   }
 
-  public interface ProcessStarter {
+  public interface PythonProcessStarter {
     @NotNull
     ProcessHandler start(@NotNull AbstractPythonRunConfiguration config,
                          @NotNull GeneralCommandLine commandLine) throws ExecutionException;

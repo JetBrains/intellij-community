@@ -65,7 +65,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   public ExecutionResult execute(Executor executor,
-                                 ProcessStarter processStarter,
+                                 PythonProcessStarter processStarter,
                                  final CommandLinePatcher... patchers) throws ExecutionException {
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
