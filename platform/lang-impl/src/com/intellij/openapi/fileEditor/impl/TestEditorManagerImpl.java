@@ -55,6 +55,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
 
   private final Project myProject;
+  private int counter = 0;
 
   private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
@@ -159,8 +160,15 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void createSplitter(int orientation, EditorWindow window) {
-
+    String containerName = createNewTabbedContainerName();
+    myTestEditorSplitter.setActiveTabGroup(containerName);
   }
+
+  private String createNewTabbedContainerName() {
+    counter++;
+    return "SplitTabContainer" + ((Object) counter).toString();
+  }
+
 
   @Override
   public void changeSplitterOrientation() {
