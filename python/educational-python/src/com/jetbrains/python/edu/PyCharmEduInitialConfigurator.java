@@ -76,7 +76,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,11 +254,6 @@ public class PyCharmEduInitialConfigurator {
         });
       }
     });
-
-    /*
-    According to PyUniversalTestLegacyInteropKt we need to call "init"
-     */
-    PyUniversalTestLegacyInteropKt.init(bus);
   }
 
   private static void patchMainMenu() {
