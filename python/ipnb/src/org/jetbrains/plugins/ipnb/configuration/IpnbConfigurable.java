@@ -7,11 +7,16 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 public class IpnbConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
@@ -20,15 +25,45 @@ public class IpnbConfigurable implements SearchableConfigurable {
   private JBTextField myArgumentsField;
   private JPasswordField myPasswordField;
   private JBTextField myUsernameField;
+  private JBLabel myWarningLabel;
   @NotNull private final Project myProject;
 
   public IpnbConfigurable(@NotNull Project project) {
     myProject = project;
+    myWarningLabel.setForeground(new JBColor(new Color(164, 145, 52), new Color(187, 181, 41)));
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkingDirField.addBrowseFolderListener("Select Working Directory", null, myProject, fileChooserDescriptor);
     myFieldUrl.setText(IpnbSettings.getInstance(myProject).getURL());
+    myFieldUrl.addFocusListener(createUrlProtocolValidationListener());
+    myUsernameField.addFocusListener(createUrlProtocolValidationListener());
+    myPasswordField.addFocusListener(createUrlProtocolValidationListener());
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
     myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
+  }
+
+  @NotNull
+  private FocusAdapter createUrlProtocolValidationListener() {
+    return new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        setWarningLabelText();
+      }
+    };
+  }
+
+  private void setWarningLabelText() {
+    final boolean isRemote = !myUsernameField.getText().isEmpty() && myPasswordField.getPassword().length > 0;
+    final String url = myFieldUrl.getText();
+    if (isRemote && !url.startsWith("https")) {
+      myWarningLabel.setText("Only HTTPS urls are supported in remote notebooks");
+      return;
+    }
+    if (!isRemote && url.startsWith("https")) {
+      myWarningLabel.setText("Only HTTP urls are supported in local notebooks");
+      return;
+    }
+
+    myWarningLabel.setText("");
   }
 
   @Nls
@@ -98,6 +133,8 @@ public class IpnbConfigurable implements SearchableConfigurable {
     myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
     myUsernameField.setText(IpnbSettings.getInstance(myProject).getUsername());
     myPasswordField.setText(IpnbSettings.getInstance(myProject).getPassword());
+
+    setWarningLabelText();
   }
 
   @Override
