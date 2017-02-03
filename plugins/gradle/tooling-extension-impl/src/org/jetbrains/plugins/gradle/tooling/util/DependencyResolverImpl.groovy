@@ -235,7 +235,8 @@ class DependencyResolverImpl implements DependencyResolver {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it))
       if (dependencies && !dependencies.isEmpty() && it.dependencies.isEmpty()) {
         runtimeDependencies.remove(it)
-        ((AbstractExternalDependency)it).scope = dependencies.find{true}.scope
+        ((AbstractExternalDependency)it).scope = compileScope
+        dependencies.each {((AbstractExternalDependency)it).scope = compileScope}
       }
       else {
         resolvedMap.put(resolve(it), it)
@@ -436,6 +437,12 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedConfigurations = new LinkedHashSet<Configuration>()
     resolvedMap = ArrayListMultimap.create()
     new DependencyTraverser(result).each { resolvedMap.put(resolve(it), it) }
+
+    if (sourceSet.name == 'main' && myProject.plugins.findPlugin(WarPlugin)) {
+      providedConfigurations.add(myProject.configurations.findByName('providedCompile'))
+      providedConfigurations.add(myProject.configurations.findByName('providedRuntime'))
+    }
+
     final IdeaPlugin ideaPlugin = myProject.getPlugins().findPlugin(IdeaPlugin.class)
     if (ideaPlugin) {
       def scopes = ideaPlugin.model.module.scopes
@@ -443,16 +450,15 @@ class DependencyResolverImpl implements DependencyResolver {
       if (providedPlusScopes && providedPlusScopes.get("plus")) {
         // filter default 'compileClasspath' for slight optimization since it has been already processed as compile dependencies
         def ideaPluginProvidedConfigurations = providedPlusScopes.get("plus").findAll { it.name != "compileClasspath"}
+        // since gradle 3.4 'idea' plugin PROVIDED scope.plus contains 'providedCompile' and 'providedRuntime' configurations
+        // see https://github.com/gradle/gradle/commit/c46897ae840c5ebb32946009c83d861ee194ab96#diff-0fa13ec419e839ef2d355b7feb88b815R432
+        ideaPluginProvidedConfigurations.removeAll(providedConfigurations)
         ideaPluginProvidedConfigurations.each {
           def (providedDependencies, _) = resolveDependencies(it, providedScope)
           new DependencyTraverser(providedDependencies).each { resolvedMap.put(resolve(it), it) }
           result.addAll(providedDependencies)
         }
       }
-    }
-    if (sourceSet.name == 'main' && myProject.plugins.findPlugin(WarPlugin)) {
-      providedConfigurations.add(myProject.configurations.findByName('providedCompile'))
-      providedConfigurations.add(myProject.configurations.findByName('providedRuntime'))
     }
     providedConfigurations.each {
       def (providedDependencies, _) = resolveDependencies(it, providedScope)

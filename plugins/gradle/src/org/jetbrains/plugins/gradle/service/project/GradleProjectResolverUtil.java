@@ -336,12 +336,6 @@ public class GradleProjectResolverUtil {
 
         if (prevScope.isForProductionCompile()) continue;
         if (prevScope.isForProductionRuntime() && currentScope.isForProductionRuntime()) continue;
-        // consider dependency that exists in both PROVIDED and RUNTIME scope as COMPILE one
-        if(prevScope == DependencyScope.PROVIDED && currentScope == DependencyScope.RUNTIME) {
-          if(seenDependency instanceof AbstractExternalDependency) {
-            ((AbstractExternalDependency)seenDependency).setScope(DependencyScope.COMPILE.name());
-          }
-        }
       }
 
       dependencyMap.put(new DefaultExternalDependencyId(dependency.getId()), dependency);
