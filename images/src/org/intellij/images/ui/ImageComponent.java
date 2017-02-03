@@ -24,6 +24,7 @@ import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -200,9 +201,13 @@ public class ImageComponent extends JComponent {
         return grid.isVisible();
     }
 
+    @Nullable
     public String getDescription() {
         BufferedImage image = getDocument().getValue();
-        return ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+        if (image != null) {
+            return ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+        }
+        return null;
     }
 
     public void setCanvasSize(int width, int height) {

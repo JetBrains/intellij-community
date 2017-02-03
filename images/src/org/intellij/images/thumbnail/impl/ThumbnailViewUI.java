@@ -268,7 +268,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 setFileName(file.getName());
                 String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
                 if (!isFileSizeVisible()) {
-                    toolTipText += " [" + getImageComponent().getDescription() + "]";
+                    String description = getImageComponent().getDescription();
+                    if (description != null) {
+                        toolTipText += " [" + description + "]";
+                    }
                 }
                 setToolTipText(toolTipText);
                 setDirectory(file.isDirectory());
