@@ -23,4 +23,6 @@ if __name__ == '__main__':
         additional_args += targets
     args += additional_args
     jb_doc_args("unittests", args)
-    main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner())
+    test_runner = unittestpy.TeamcityTestRunner()
+    test_runner.buffer = True
+    main(argv=args, module=None, testRunner=test_runner)

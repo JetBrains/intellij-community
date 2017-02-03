@@ -34,10 +34,9 @@ import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.simple.MergeInnerDifferences;
-import com.intellij.diff.tools.util.base.HighlightPolicy;
-import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.text.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -598,31 +597,31 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull DiffRequest request,
-                                           @NotNull CharSequence text1,
-                                           @NotNull CharSequence text2,
-                                           @NotNull DiffConfig config,
-                                           @NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
+  public static TwosideTextDiffProvider createTextDiffProvider(@Nullable Project project,
+                                                               @NotNull ContentDiffRequest request,
+                                                               @NotNull TextDiffSettings settings,
+                                                               @NotNull Runnable rediff) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, diffComputer);
 
-    List<LineFragment> fragments;
-    if (diffComputer != null) {
-      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
-    }
-    else {
-      if (config.innerFragments) {
-        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
-      }
-      else {
-        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
-      }
-    }
+    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff);
+    if (smartProvider != null) return smartProvider;
 
-    indicator.checkCanceled();
-    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
-                                                         config.policy, config.squashFragments, config.trimFragments);
+    return new SimpleTextDiffProvider(settings, rediff);
+  }
+
+  @NotNull
+  public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
+                                                                                @NotNull ContentDiffRequest request,
+                                                                                @NotNull TextDiffSettings settings,
+                                                                                @NotNull Runnable rediff) {
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
+
+    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff);
+    if (smartProvider != null) return smartProvider;
+
+    return new SimpleTextDiffProvider.NoIgnore(settings, rediff);
   }
 
   @Nullable
@@ -833,8 +832,13 @@ public class DiffUtil {
 
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
-    TextRange otherRange = getLinesRange(document, line1, line2);
-    return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
+    return getLinesRange(document, line1, line2).subSequence(document.getImmutableCharSequence());
+  }
+
+  @NotNull
+  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
+    assert sequence.length() == lineOffsets.getTextLength();
+    return getLinesRange(lineOffsets, line1, line2, false).subSequence(sequence);
   }
 
   /**
@@ -860,6 +864,21 @@ public class DiffUtil {
       return new TextRange(startOffset, endOffset);
     }
   }
+
+  @NotNull
+  public static TextRange getLinesRange(@NotNull LineOffsets lineOffsets, int line1, int line2, boolean includeNewline) {
+    if (line1 == line2) {
+      int lineStartOffset = line1 < lineOffsets.getLineCount() ? lineOffsets.getLineStart(line1) : lineOffsets.getTextLength();
+      return new TextRange(lineStartOffset, lineStartOffset);
+    }
+    else {
+      int startOffset = lineOffsets.getLineStart(line1);
+      int endOffset = lineOffsets.getLineEnd(line2 - 1);
+      if (includeNewline && endOffset < lineOffsets.getTextLength()) endOffset++;
+      return new TextRange(startOffset, endOffset);
+    }
+  }
+
 
   public static int getOffset(@NotNull Document document, int line, int column) {
     if (line < 0) return 0;
@@ -1033,14 +1052,16 @@ public class DiffUtil {
 
   @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
-                                                   @NotNull List<? extends Document> documents,
+                                                   @NotNull List<? extends CharSequence> sequences,
+                                                   @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
-                        (side1, side2) -> compareLineMergeContents(fragment, documents, policy, side1, side2));
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
   }
 
   private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
-                                                  @NotNull List<? extends Document> documents,
+                                                  @NotNull List<? extends CharSequence> sequences,
+                                                  @NotNull List<LineOffsets> lineOffsets,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ThreeSide side1,
                                                   @NotNull ThreeSide side2) {
@@ -1051,15 +1072,17 @@ public class DiffUtil {
 
     if (end2 - start2 != end1 - start1) return false;
 
-    Document document1 = side1.select(documents);
-    Document document2 = side2.select(documents);
+    CharSequence sequence1 = side1.select(sequences);
+    CharSequence sequence2 = side2.select(sequences);
+    LineOffsets offsets1 = side1.select(lineOffsets);
+    LineOffsets offsets2 = side2.select(lineOffsets);
 
     for (int i = 0; i < end1 - start1; i++) {
       int line1 = start1 + i;
       int line2 = start2 + i;
 
-      CharSequence content1 = getLinesContent(document1, line1, line1 + 1);
-      CharSequence content2 = getLinesContent(document2, line2, line2 + 1);
+      CharSequence content1 = getLinesContent(sequence1, offsets1, line1, line1 + 1);
+      CharSequence content2 = getLinesContent(sequence2, offsets2, line2, line2 + 1);
       if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
     }
 
@@ -1367,24 +1390,6 @@ public class DiffUtil {
   // Helpers
   //
 
-  public static class DiffConfig {
-    @NotNull public final ComparisonPolicy policy;
-    public final boolean innerFragments;
-    public final boolean squashFragments;
-    public final boolean trimFragments;
-
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean innerFragments, boolean squashFragments, boolean trimFragments) {
-      this.policy = policy;
-      this.innerFragments = innerFragments;
-      this.squashFragments = squashFragments;
-      this.trimFragments = trimFragments;
-    }
-
-    public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
-      this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
-           ignorePolicy.isShouldTrimChunks());
-    }
-  }
 
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;

@@ -990,7 +990,7 @@ public class JBTabsImpl extends JComponent
       });
       myDeferredFocusRequest = () -> {
         queued.set(true);
-        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true).notify(result);
+        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, toFocus, myProject, new Exception()), true).notify(result);
       };
       return result;
     }

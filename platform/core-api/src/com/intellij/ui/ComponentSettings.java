@@ -16,8 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,6 +27,18 @@ import java.awt.*;
  * IDE-agnostic component settings.
  */
 public class ComponentSettings {
+  private static final RegistryValue HIGH_PRECISION_SCROLLING = Registry.get("idea.true.smooth.scrolling.high.precision");
+
+  private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
+
+  private static final RegistryValue SCROLLING_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation");
+  private static final RegistryValue SCROLLBAR_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar");
+  private static final RegistryValue MOUSE_WHEEL_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel");
+  private static final RegistryValue PRECISION_TOUCHPAD_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad");
+  private static final RegistryValue OTHER_SOURCES_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.other");
+
+  private static final RegistryValue DYNAMIC_SCROLLBARS = Registry.get("idea.true.smooth.scrolling.dynamic.scrollbars");
+
   private boolean mySmoothScrollingEnabled = true;
   private boolean myRemoteDesktopConnected;
   private boolean myPowerSaveModeEnabled;
@@ -36,7 +49,8 @@ public class ComponentSettings {
     return ourInstance;
   }
 
-  public boolean isSmoothScrollingEligibleFor(Component component) {
+  // Returns whether "true smooth scrolling" is applicable to the particular component
+  public boolean isTrueSmoothScrollingEligibleFor(Component component) {
     return SystemProperties.isTrueSmoothScrollingEnabled() &&
            !ApplicationManager.getApplication().isUnitTestMode() &&
            mySmoothScrollingEnabled &&
@@ -44,6 +58,39 @@ public class ComponentSettings {
            !myPowerSaveModeEnabled &&
            component != null &&
            component.isShowing();
+  }
+
+  // Returns whether high-precision scrolling events are enabled
+  public boolean isHighPrecisionScrollingEnabled() {
+    return HIGH_PRECISION_SCROLLING.asBoolean();
+  }
+
+  // Returns whether pixel-perfect scrolling events are enabled (requires high-precision events to be effective)
+  public boolean isPixelPerfectScrollingEnabled() {
+    return PIXEL_PERFECT_SCROLLING.asBoolean();
+  }
+
+  // Returns whether scrolling interpolation is enabled for particular input source
+  public boolean isInterpolationEnabledFor(InputSource source) {
+    if (!SCROLLING_INTERPOLATION.asBoolean()) {
+      return false;
+    }
+
+    switch (source) {
+      case SCROLLBAR:
+        return SCROLLBAR_INTERPOLATION.asBoolean();
+      case MOUSE_WHEEL:
+        return MOUSE_WHEEL_INTERPOLATION.asBoolean();
+      case PRECISION_TOUCHPAD:
+        return PRECISION_TOUCHPAD_INTERPOLATION.asBoolean();
+      default:
+        return OTHER_SOURCES_INTERPOLATION.asBoolean();
+    }
+  }
+
+  // Returns whether dymaics scrollbars are enabled (currently applies only to editor's horizontal scrollbar)
+  public boolean areDynamicScrollbarsEnabled() {
+    return DYNAMIC_SCROLLBARS.asBoolean();
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

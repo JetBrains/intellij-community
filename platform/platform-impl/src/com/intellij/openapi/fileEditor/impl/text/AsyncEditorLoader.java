@@ -167,7 +167,7 @@ public class AsyncEditorLoader {
     myEditor.getScrollingModel().enableAnimation();
 
     if (FileEditorManager.getInstance(myProject).getSelectedTextEditor() == myEditor) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myTextEditor.getPreferredFocusedComponent(), true);
+      IdeFocusManager.getInstance(myProject).requestFocusInProject(myTextEditor.getPreferredFocusedComponent(), myProject);
     }
     EditorNotifications.getInstance(myProject).updateNotifications(myTextEditor.myFile);
   }

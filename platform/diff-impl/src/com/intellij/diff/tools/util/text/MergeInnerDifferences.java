@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.simple;
+package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.util.TextRange;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MergeInnerDifferences {
+public final class MergeInnerDifferences {
   @Nullable private final List<TextRange> myLeft;
   @Nullable private final List<TextRange> myBase;
   @Nullable private final List<TextRange> myRight;
@@ -33,6 +33,9 @@ public class MergeInnerDifferences {
     myRight = right;
   }
 
+  /**
+   * NB: ranges might overlap and might be not in order
+   */
   @Nullable
   public List<TextRange> get(@NotNull ThreeSide side) {
     return side.select(myLeft, myBase, myRight);

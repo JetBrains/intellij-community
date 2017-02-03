@@ -234,7 +234,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return null;
   }
 
-  @SuppressWarnings({"deprecation", "SSBasedInspection"})
   @Override
   public void show() {
     super.show();

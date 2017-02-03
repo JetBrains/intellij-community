@@ -909,6 +909,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(condition.value("makefile"));
   }
 
+  public void testRegExpSOEWhenMatch() throws InterruptedException {
+    String text = "package com.intellij.demo;\n" +
+                  "\n";
+    for(int i = 0; i < 10; ++i) text += text;
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel(";((?:\\n|.)*export default )(?:DS.Model)(.extend((?:\\n|.)*assets: DS.attr(?:\\n|.)*});)");
+    findModel.setRegularExpressions(true);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(!findResult.isStringFound());
+  }
+
   public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
     String text = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     FindModel findModel = FindManagerTestUtils.configureFindModel("(x+x+)+y");

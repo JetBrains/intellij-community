@@ -366,7 +366,7 @@ public class RegExpLexerTest extends LexerTestCase {
                     "CLASS_END (']')\n" +
                     "CLASS_END (']')", lexer);
     doTest("[ \\]]", "CLASS_BEGIN ('[')\n" +
-                     "CTRL_CHARACTER (' ')\n" +
+                     "CHARACTER (' ')\n" +
                      "ESC_CHARACTER ('\\]')\n" +
                      "CLASS_END (']')", lexer);
     doTest("[\\Q\\E]]", "CLASS_BEGIN ('[')\n" +
@@ -416,7 +416,7 @@ public class RegExpLexerTest extends LexerTestCase {
                     "ESC_CHARACTER ('\\]')\n" +
                     "CLASS_END (']')", lexer3);
     doTest("[ \\]]", "CLASS_BEGIN ('[')\n" +
-                     "CTRL_CHARACTER (' ')\n" +
+                     "CHARACTER (' ')\n" +
                      "ESC_CHARACTER ('\\]')\n" +
                      "CLASS_END (']')", lexer3);
   }
@@ -457,7 +457,7 @@ public class RegExpLexerTest extends LexerTestCase {
                                         "CHARACTER ('<')\n" +
                                         "CHARACTER ('a')\n" +
                                         "CHARACTER ('>')\n" +
-                                        "CTRL_CHARACTER (' ')\n" +
+                                        "CHARACTER (' ')\n" +
                                         "CHARACTER ('(')\n" +
                                         "CHARACTER ('?')\n" +
                                         "CHARACTER ('<')\n" +

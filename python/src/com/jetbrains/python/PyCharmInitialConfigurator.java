@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropKt;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ import javax.swing.*;
  * @author yole
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
-public class PyCharmInitialConfigurator {
+public final class PyCharmInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
 
   public PyCharmInitialConfigurator(MessageBus bus, final PropertiesComponent propertiesComponent, final FileTypeManager fileTypeManager) {
@@ -71,19 +72,27 @@ public class PyCharmInitialConfigurator {
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
     }
 
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-            showInitialConfigurationDialog();
-          });
-        }
-      });
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+        bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+          @Override
+          public void welcomeScreenDisplayed() {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+              showInitialConfigurationDialog();
+            });
+          }
+        });
+      }
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
+
+
+    /*
+    According to PyUniversalTestLegacyInteropKt we need to call "init"
+     */
+    PyUniversalTestLegacyInteropKt.init(bus);
   }
 
   private static void showInitialConfigurationDialog() {

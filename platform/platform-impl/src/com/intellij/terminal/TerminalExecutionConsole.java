@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
@@ -49,7 +50,13 @@ public class TerminalExecutionConsole implements ConsoleView {
 
   public TerminalExecutionConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     myProject = project;
-    final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase();
+    final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
+      @Override
+      public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
+        return HyperlinkStyle.HighlightMode.ALWAYS;
+      }
+    };
+
     myDataStream = new AppendableTerminalDataStream();
 
 

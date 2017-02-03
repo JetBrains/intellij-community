@@ -1,8 +1,6 @@
 // "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -18,5 +16,25 @@ public class Main {
       for (String s : list) {
           System.out.println(s);
       }
+  }
+
+  public static <T extends Collection<?>> T test(T collection) {
+      for (Object o : collection) {
+          System.out.println(o);
+      }
+      return collection;
+  }
+
+  public interface SomeInterface {
+
+    Set<? extends SomeInterface> nodes();
+
+    default void accept(Visitor visitor) {
+        for (SomeInterface child : new LinkedHashSet<>(this.nodes())) {
+            child.accept(visitor);
+        }
+    }
+
+    interface Visitor { }
   }
 }

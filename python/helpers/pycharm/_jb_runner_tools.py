@@ -143,6 +143,9 @@ PARSE_FUNC = None
 
 class NewTeamcityServiceMessages(_old_service_messages):
     def message(self, messageName, **properties):
+        # Intellij may fail to process message if it has char just before it.
+        # Space before message has no visible affect, but saves from such cases
+        print(" ")
         if messageName == "enteredTheMatrix":
             _old_service_messages.message(self, messageName, **properties)
             return
@@ -158,11 +161,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
         properties["nodeId"] = str(current)
         properties["parentNodeId"] = str(parent)
 
-        # TODO: Dirty hack, to be fixed
-        # For some reason events are processed in background (invoke-n-wait) on Java side
-        # That leads to "test not opened" error sometimes
-        # Artificial sleep fixes this error until further investigation
-        time.sleep(0.05)
         _old_service_messages.message(self, messageName, **properties)
 
     def _test_to_list(self, test_name):

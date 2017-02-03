@@ -2213,7 +2213,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(1, errors.size());
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", errors.get(0).getDescription());
 
-    errors.get(0).highlighter.dispose();
+    errors.get(0).getHighlighter().dispose();
 
     errors = highlightErrors();
     assertEmpty(errors);

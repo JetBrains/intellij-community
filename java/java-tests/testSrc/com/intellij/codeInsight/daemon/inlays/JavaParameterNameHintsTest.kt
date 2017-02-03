@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -601,7 +602,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
@@ -615,7 +616,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
@@ -629,7 +630,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -644,7 +645,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -658,7 +659,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {

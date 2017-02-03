@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
@@ -146,7 +148,19 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       .limit(1);
   }
 
-  public static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
+  public static void recreateAll(DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
+    if (!ContainerUtil.isEmpty(bpts)) {
+      bpts.forEach(debugProcess.getRequestsManager()::deleteRequest);
+      bpts.clear();
+    }
+    if (Registry.is("debugger.capture.points")) {
+      DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    }
+  }
+
+  private static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
     if (StringUtil.isEmpty(capturePoint.myClassName)) {
       return;
     }

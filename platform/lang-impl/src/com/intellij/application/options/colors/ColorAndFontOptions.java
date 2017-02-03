@@ -1312,6 +1312,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           public void fontChanged() {
             for (NewColorAndFontPanel panel : getPanels()) {
               panel.updatePreview();
+              panel.updateSchemesPanel();
             }
           }
         });

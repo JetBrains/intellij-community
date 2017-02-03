@@ -264,10 +264,15 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
               result.append('(').append(argumentText).append(')');
             }
             else {
-              if (StringUtil.startsWithChar(argumentText, '+')) {
-                result.append(' ');
+              if (type instanceof PsiArrayType) {
+                result.append("String.valueOf(").append(argumentText).append(")");
               }
-              result.append(argumentText);
+              else {
+                if (StringUtil.startsWithChar(argumentText, '+')) {
+                  result.append(' ');
+                }
+                result.append(argumentText);
+              }
             }
           }
           else {

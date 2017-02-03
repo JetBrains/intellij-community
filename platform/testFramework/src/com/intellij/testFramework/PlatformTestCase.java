@@ -450,6 +450,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private void runTearDownActions(Project project) {
     new RunAll()
+      .append(this::disposeRootDisposable)
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication, false);

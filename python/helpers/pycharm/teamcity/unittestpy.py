@@ -5,7 +5,7 @@ import datetime
 import re
 
 from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import is_string, get_class_fullname, convert_error_to_string
+from teamcity.common import is_string, get_class_fullname, convert_error_to_string, limit_output, split_output
 
 _real_stdout = sys.stdout
 
@@ -19,7 +19,7 @@ class TeamcityTestResult(TestResult):
         self.test_started_datetime_map = {}
         self.failed_tests = set()
         self.subtest_failures = {}
-        self.messages = TeamcityServiceMessages(stream)
+        self.messages = TeamcityServiceMessages(_real_stdout)
 
     def get_test_id(self, test):
         if is_string(test):
@@ -143,9 +143,23 @@ class TeamcityTestResult(TestResult):
         self.messages.testStarted(test_id, captureStandardOutput='true', flowId=test_id)
 
     def stopTest(self, test):
-        super(TeamcityTestResult, self).stopTest(test)
-
         test_id = self.get_test_id(test)
+
+        if self.buffer:
+            # Do not allow super() method to print output by itself
+            self._mirrorOutput = False
+
+            output = sys.stdout.getvalue()
+            if output:
+                for chunk in split_output(limit_output(output)):
+                    self.messages.testStdOut(test_id, chunk, flowId=test_id)
+
+            error = sys.stderr.getvalue()
+            if error:
+                for chunk in split_output(limit_output(error)):
+                    self.messages.testStdErr(test_id, chunk, flowId=test_id)
+
+        super(TeamcityTestResult, self).stopTest(test)
 
         if test_id not in self.failed_tests and self.subtest_failures.get(test_id, []):
             self.report_fail(test, "Subtest failed", "")

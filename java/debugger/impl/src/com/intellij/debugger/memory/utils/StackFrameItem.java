@@ -174,7 +174,7 @@ public class StackFrameItem {
       ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       String type = Registry.is("debugger.showTypes") ? classRenderer.renderTypeName(myType) : null;
       Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
-      if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING)) {
+      if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
           @Nullable
           @Override

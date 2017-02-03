@@ -199,6 +199,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if (fn == null) return null;
       PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
       if(elementType == null) return null;
+      elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
       TerminalOperation terminal = new TerminalOperation.ForEachTerminalOperation(fn);
       SourceOperation source = new SourceOperation.ForEachSource(qualifier);
       OperationRecord terminalRecord = new OperationRecord();
@@ -301,7 +302,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      allOperations(operations).forEach(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar));
       PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
       LOG.assertTrue(statement != null);
       CommentTracker ct = new CommentTracker();
@@ -352,6 +352,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private static void registerVariables(List<OperationRecord> operations, StreamToLoopReplacementContext context) {
+      allOperations(operations).forEach(or -> or.myOperation.preprocessVariables(context, or.myInVar, or.myOutVar));
       allOperations(operations).map(or -> or.myOperation).forEach(op -> op.registerReusedElements(context::registerReusedElement));
       allOperations(operations).map(or -> or.myInVar).distinct().forEach(var -> var.register(context));
     }

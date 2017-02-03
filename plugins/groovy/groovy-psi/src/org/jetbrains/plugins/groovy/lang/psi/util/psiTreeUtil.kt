@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
+
+fun PsiElement.getParents(strict: Boolean = false) = treeSequence(if (strict) this.parent else this) { it.parent }
 
 /**
  * Creates sequence of pairs of elements corresponding to tree walk up by contexts.
@@ -55,10 +56,11 @@ private fun treeIterator(start: PsiElement?, next: (PsiElement) -> PsiElement?) 
     }
   }
 
-fun treeWalkUp(place: PsiElement, processor: PsiScopeProcessor): Boolean {
-  val state = ResolveState.initial()
-  for ((scope, lastParent) in place.getContexts()) {
-    if (!scope.processDeclarations(processor, state, lastParent, place)) return false
+@JvmOverloads
+fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial()): Boolean {
+  for ((scope, lastParent) in getContexts()) {
+    if (!scope.processDeclarations(processor, state, lastParent, this)) return false
+    processor.handleEvent(DECLARATION_SCOPE_PASSED, scope)
   }
   return true
 }

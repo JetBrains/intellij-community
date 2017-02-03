@@ -1,5 +1,6 @@
-// "Replace Stream API chain with loop" "true"
+// "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,5 +21,18 @@ public class Test {
               list.add(n);
           }
       }
+  }
+
+  private long counter(Class<? extends Array> list) {
+      long count = 0L;
+      for (Iterator<? extends Array> it = stream(list).iterator(); it.hasNext(); ) {
+          Array array = it.next();
+          count++;
+      }
+      return count;
+  }
+
+  public <E> Stream<E> stream(Class<E> clazz) {
+    return null;
   }
 }

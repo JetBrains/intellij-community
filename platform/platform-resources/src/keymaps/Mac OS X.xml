@@ -385,4 +385,8 @@
     <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="5"/>
     <keyboard-shortcut first-keystroke="meta alt MULTIPLY" second-keystroke="NUMPAD5"/>
   </action>
+
+  <action id="EmojiAndSymbols">
+    <keyboard-shortcut first-keystroke="control meta SPACE"/>
+  </action>
 </keymap>

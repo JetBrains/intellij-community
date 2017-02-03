@@ -106,14 +106,14 @@ abstract class FunctionHelper {
     return null;
   }
 
-  void suggestVariableName(StreamVariable var, int index) {
+  void preprocessVariable(StreamToLoopReplacementContext context, StreamVariable var, int index) {
     String name = getParameterName(index);
     if (name != null) {
       var.addBestNameCandidate(name);
     }
   }
 
-  void suggestOutputNames(StreamVariable var) {}
+  void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {}
 
   List<String> suggestFinalOutputNames(StreamToLoopReplacementContext context, String desiredName, String worstCaseName) {
     List<String> candidates = Arrays.asList(JavaCodeStyleManager.getInstance(context.getProject())
@@ -221,7 +221,10 @@ abstract class FunctionHelper {
       }
     }
     else if(type instanceof PsiCapturedWildcardType) {
-      return ((PsiCapturedWildcardType)type).getUpperBound();
+      PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
+      if(capturedWildcardType.getLowerBound().equals(PsiType.NULL)) {
+        return capturedWildcardType.getUpperBound();
+      }
     }
     return type;
   }
@@ -430,11 +433,10 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void suggestOutputNames(StreamVariable var) {
+    void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
       // myMethodRef is physical at this point
       Project project = myMethodRef.getProject();
-      PsiTypeCastExpression castExpr = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(project)
-          .createExpressionFromText("(" + myType + ")" + myMethodRef.getText(), myMethodRef);
+      PsiTypeCastExpression castExpr = (PsiTypeCastExpression)context.createExpression("(" + myType + ")" + myMethodRef.getText());
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
       PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
       if(lambda != null) {
@@ -629,9 +631,27 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void suggestOutputNames(StreamVariable var) {
+    void preprocessVariable(StreamToLoopReplacementContext context, StreamVariable var, int index) {
+      super.preprocessVariable(context, var, index);
+      boolean hasClassOrLambda =
+        StreamEx.ofTree(myBody, e -> StreamEx.of(e.getChildren())).anyMatch(e -> e instanceof PsiLambdaExpression || e instanceof PsiClass);
+      if (hasClassOrLambda) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(getParameterName(index) + "->" + myBody.getText());
+        PsiParameter parameter = lambda.getParameterList().getParameters()[0];
+        PsiElement body = lambda.getBody();
+        LOG.assertTrue(body != null);
+        boolean mayBeNotFinal = ReferencesSearch.search(parameter, new LocalSearchScope(body))
+          .forEach(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
+        if (!mayBeNotFinal) {
+          var.markFinal();
+        }
+      }
+    }
+
+    @Override
+    void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
       Project project = myBody.getProject();
-      PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + var.getType() + ")" + getText(), myBody);
+      PsiExpression expr = context.createExpression("(" + var.getType() + ")" + getText());
       suggestFromExpression(var, project, expr);
     }
   }

@@ -420,8 +420,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myAccumulator.suggestVariableName(inVar, 1);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myAccumulator.preprocessVariable(context, inVar, 1);
     }
 
     @Override
@@ -545,8 +545,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -569,7 +569,7 @@ abstract class TerminalOperation extends Operation {
   interface CollectorOperation {
     // Non-trivial finishers are not supported
     default void transform(StreamToLoopReplacementContext context, String item) {}
-    default void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
+    default void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
     default void registerReusedElements(Consumer<PsiElement> consumer) {}
     String getSupplier();
     String getAccumulatorUpdater(StreamVariable inVar, String acc);
@@ -823,9 +823,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myKeyExtractor.suggestVariableName(inVar, 0);
-      myValueExtractor.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myKeyExtractor.preprocessVariable(context, inVar, 0);
+      myValueExtractor.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -890,9 +890,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myKeyExtractor.suggestVariableName(inVar, 0);
-      myCollector.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myKeyExtractor.preprocessVariable(context, inVar, 0);
+      myCollector.preprocessVariables(context, inVar, outVar);
     }
 
     @Override
@@ -931,9 +931,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myPredicate.suggestVariableName(inVar, 0);
-      myCollector.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myPredicate.preprocessVariable(context, inVar, 0);
+      myCollector.preprocessVariables(context, inVar, outVar);
     }
 
     @Override
@@ -971,8 +971,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myMapper.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myMapper.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -1007,7 +1007,7 @@ abstract class TerminalOperation extends Operation {
     private void createVariable(StreamToLoopReplacementContext context, String item) {
       myMapper.transform(context, item);
       myVariable = new StreamVariable(myMapper.getResultType());
-      myDownstream.suggestNames(myVariable, StreamVariable.STUB);
+      myDownstream.preprocessVariables(context, myVariable, StreamVariable.STUB);
       myMapper.suggestFinalOutputNames(context, null, null).forEach(myVariable::addOtherNameCandidate);
       myVariable.register(context);
     }
@@ -1067,8 +1067,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -1101,8 +1101,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myOrigin.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myOrigin.preprocessVariables(context, inVar, outVar);
     }
 
     @Override

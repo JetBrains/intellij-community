@@ -1864,7 +1864,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     return isReleased ? new Dimension()
-                      : SystemProperties.isTrueSmoothScrollingEnabled()
+                      : SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().areDynamicScrollbarsEnabled()
                         ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                         : myView.getPreferredSize();
   }
@@ -2794,10 +2794,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setValue(int value) {
       ComponentSettings settings = ComponentSettings.getInstance();
-      if (settings.isSmoothScrollingEligibleFor(myEditorComponent) &&
+
+      MyScrollPane scrollPane = (MyScrollPane)myScrollPane;
+
+      InputSource source = scrollPane.getInputSource(getValueIsAdjusting());
+
+      if (settings.isTrueSmoothScrollingEligibleFor(myEditorComponent) &&
           settings.isInterpolationEligibleFor(this) &&
+          settings.isInterpolationEnabledFor(source) &&
           myScrollingModel.isAnimationEnabled()) {
-        myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
+
+          myInterpolator.setTarget(value, scrollPane.getInitialDelay(source));
       }
       else {
         super.setValue(value);

@@ -326,7 +326,8 @@ HEX_CHAR=[0-9a-fA-F]
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   "-"                   { return RegExpTT.MINUS; }
-  [\n\b\t\r\f ]         { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
+  " "                   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
+  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
 
@@ -413,6 +414,7 @@ HEX_CHAR=[0-9a-fA-F]
   [^\r\n]*[\r\n]?  { yypopstate(); return RegExpTT.COMMENT; }
 }
 
-[\n\b\t\r\f ]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
+" "            { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
+[\n\b\t\r\f]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
 
 {ANY}        { return RegExpTT.CHARACTER; }

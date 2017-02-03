@@ -53,7 +53,7 @@ abstract class Operation {
 
   public void registerReusedElements(Consumer<PsiElement> consumer) {}
 
-  public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
+  public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
 
   @Nullable
   static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
@@ -133,8 +133,8 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
   }
 
@@ -193,9 +193,9 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      super.suggestNames(inVar, outVar);
-      myFn.suggestOutputNames(outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      super.preprocessVariables(context, inVar, outVar);
+      myFn.suggestOutputNames(context, outVar);
     }
 
     @Override
@@ -253,8 +253,11 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      String name = myFn.getParameterName(0);
+      if (name != null) {
+        inVar.addBestNameCandidate(name);
+      }
     }
 
     @Override

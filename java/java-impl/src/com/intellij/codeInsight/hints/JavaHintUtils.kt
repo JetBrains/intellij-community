@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -67,7 +66,8 @@ object JavaInlayHintsProvider {
     with(resultSet) {
       getVarArgInlay(info)?.let { add(it) }
 
-      if (ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType) {
+      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      if (hintsProvider.isShowForParamsWithSameType.get()) {
         addAll(createSameTypeInlays(args))
       }
 
@@ -82,7 +82,8 @@ object JavaInlayHintsProvider {
     if (params.isEmpty()) return false
     if (params.size == 1) {
       if (isBuilderLike(callExpression, method) || isSetterNamed(method)) return false
-      if (ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName
+      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) return false
     }
     return true

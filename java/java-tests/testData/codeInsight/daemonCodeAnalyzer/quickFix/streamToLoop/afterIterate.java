@@ -1,6 +1,7 @@
 // "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
 import java.util.ArrayList;
+import java.util.function.Supplier;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,11 +72,31 @@ public class Main {
       return stat;
   }
 
+  static void print(Supplier<String> messageSupplier) {
+    System.out.println(messageSupplier.get());
+  }
+
   public static void main(String[] args) {
     System.out.println(test());
     System.out.println(testUseName());
     System.out.println(testNested());
     System.out.println(testNestedRename());
     System.out.println(String.join("|", testNestedUseName()).length());
+
+      // convert to loop
+      for (int j = 1; j < 2; j++) {
+          int x1 = j;
+          if (x1 > 0) {
+              print(() -> "attempt #" + x1);
+          }
+      }
+
+      // convert to loop
+      for (int x = 1; x < 2; x++) {
+          if (x > 0) {
+              int i = x + 1;
+              print(() -> "attempt #" + i);
+          }
+      }
   }
 }

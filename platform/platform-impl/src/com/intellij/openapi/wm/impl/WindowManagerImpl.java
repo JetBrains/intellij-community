@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -562,6 +563,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       myProject2Frame.put(project, frame);
       frame.setExtendedState(myFrameExtendedState);
       frame.setVisible(true);
+      if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
+        frame.toBack();
+      }
     }
 
     frame.addWindowListener(myActivationListener);

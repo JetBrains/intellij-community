@@ -102,8 +102,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertThat("Premature error", stderr, isEmptyString());
         Assert.assertThat("Wrong number of failed tests", runner.getFailedTestsCount(), equalTo(1));
+        final int expectedNumberOfTests = (runner.getCurrentRerunStep() == 0 ? 2 : 1);
+        Assert.assertThat("Wrong number tests", runner.getAllTestsCount(), equalTo(expectedNumberOfTests));
       }
       @NotNull
       @Override

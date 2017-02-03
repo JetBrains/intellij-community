@@ -1,5 +1,6 @@
 // "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
+import java.util.function.Supplier;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,11 +30,28 @@ public class Main {
     return IntStream.range(0, 20).filter(x -> x > 2).flatMap(limit -> Stream.iterate(String.valueOf(limit), x -> x + limit).limit(limit).mapToInt(x -> x.length())).summaryStatistics();
   }
 
+  static void print(Supplier<String> messageSupplier) {
+    System.out.println(messageSupplier.get());
+  }
+
   public static void main(String[] args) {
     System.out.println(test());
     System.out.println(testUseName());
     System.out.println(testNested());
     System.out.println(testNestedRename());
     System.out.println(String.join("|", testNestedUseName()).length());
+
+    IntStream.range(1, 2)  // convert to loop
+      .filter(x -> x > 0)
+      .forEach(i -> {
+        print(() -> "attempt #" + i);
+      });
+
+    IntStream.range(1, 2)  // convert to loop
+      .filter(x -> x > 0)
+      .map(x -> x + 1)
+      .forEach(i -> {
+        print(() -> "attempt #" + i);
+      });
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.regexp.psi;
+package com.intellij.diff.tools.util.text;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * A union of two or more class elements: [abc]
- * @author Bas Leijdekkers
- */
-public interface RegExpUnion extends RegExpClassElement {
+import java.util.List;
+
+public interface TextDiffProvider {
+  @NotNull
+  List<AnAction> getToolbarActions();
 
   @NotNull
-  RegExpClassElement[] getElements();
+  List<AnAction> getPopupActions();
 }

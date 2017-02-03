@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import org.jdom.Element
 
 
@@ -30,8 +27,6 @@ private object XmlTagHelper {
   val ADDED = "added"
   val REMOVED = "removed"
   val PATTERN = "pattern"
-  val DO_NOT_SHOW_IF_PARAM_NAME_CONTAINED_IN_METHOD_NAME = "showIfParamNameContained"
-  val SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE = "showWhenMultipleParamsWithSameType"
 }
 
 
@@ -63,10 +58,8 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val myRemovedPatterns = hashMapOf<String, Set<String>>()
   private val myAddedPatterns = hashMapOf<String, Set<String>>()
-
-  var isDoNotShowIfMethodNameContainsParameterName: Boolean = true
-  var isShowForParamsWithSameType: Boolean = false
-
+  private val myOptions = hashMapOf<String, Boolean>()
+  
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
     setAddedPatterns(language, patternsBefore + pattern)
@@ -98,27 +91,22 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
         blacklists.addLanguagePatternElements(language, patterns, XmlTagHelper.ADDED)
       }
     }
-
-    if (!isDoNotShowIfMethodNameContainsParameterName) {
-      root.getOrCreateChild(XmlTagHelper.DO_NOT_SHOW_IF_PARAM_NAME_CONTAINED_IN_METHOD_NAME)
-        .setAttribute("value", isDoNotShowIfMethodNameContainsParameterName.toString())
+    
+    myOptions.forEach { id, value ->
+      val element = Element("option")
+      element.setAttribute("id", id)
+      element.setAttribute("value", value.toString())
+      root.addContent(element)
     }
-
-    if (isShowForParamsWithSameType) {
-      root.getOrCreateChild(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE)
-        .setAttribute("value", isShowForParamsWithSameType.toString())
-    }
-
+    
     return root
   }
 
   override fun loadState(state: Element) {
     myAddedPatterns.clear()
     myRemovedPatterns.clear()
-
-    isDoNotShowIfMethodNameContainsParameterName = true
-    isShowForParamsWithSameType = false
-
+    myOptions.clear()
+    
     val allBlackLists = state
       .getChild(XmlTagHelper.BLACKLISTS)
       ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
@@ -128,21 +116,30 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       myAddedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.ADDED)
       myRemovedPatterns[language] = blacklist.extractPatterns(XmlTagHelper.REMOVED)
     }
-
-    isDoNotShowIfMethodNameContainsParameterName = state
-      .getBooleanValue(XmlTagHelper.DO_NOT_SHOW_IF_PARAM_NAME_CONTAINED_IN_METHOD_NAME, true)
-
-    isShowForParamsWithSameType = state
-      .getBooleanValue(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE, false)
-  }
-
-  private fun Element.getBooleanValue(childName: String, defaultValue: Boolean): Boolean {
-    return getChild(childName)?.getAttributeValue("value")?.toBoolean() ?: defaultValue
+    
+    state.getChildren("option").forEach { 
+      val id = it.getAttributeValue("id")
+      val value = it.getAttributeValue("value").toBoolean()
+      myOptions[id] = value
+    }
   }
   
   companion object {
     @JvmStatic
-    fun getInstance() = service<ParameterNameHintsSettings>()
+    fun getInstance(): ParameterNameHintsSettings = ServiceManager.getService(ParameterNameHintsSettings::class.java)
+  }
+
+  fun getOption(optionId: String): Boolean? {
+    return myOptions[optionId]
+  }
+
+  fun setOption(optionId: String, value: Boolean?) {
+    if (value == null) {
+      myOptions.remove(optionId)
+    }
+    else {
+      myOptions[optionId] = value 
+    }
   }
 
   private fun getAddedPatterns(language: Language): Set<String> {

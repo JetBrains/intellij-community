@@ -153,7 +153,7 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(getTestRootDisposable());
+      disposeRootDisposable();
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
@@ -179,6 +179,10 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  protected final void disposeRootDisposable() {
+    Disposer.dispose(getTestRootDisposable());
   }
 
   protected void addTmpFileToKeep(@NotNull File file) {
@@ -815,8 +819,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && testName.contains("Performance") ||
-           className != null && className.contains("Performance");
+    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
+           className != null && StringUtil.containsIgnoreCase(className, "performance");
   }
 
   /**
