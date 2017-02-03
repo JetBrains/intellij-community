@@ -120,7 +120,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  public ExecutionResult execute(Executor executor, ProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(processStarter, patchers);
     final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
 
