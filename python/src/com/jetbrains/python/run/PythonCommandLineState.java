@@ -193,6 +193,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @deprecated use {@link #startProcess(ProcessStarter, CommandLinePatcher...)} instead
    */
   @Deprecated
+  @NotNull
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
     return startProcess(getDefaultPythonProcessStarter(), patchers);
   }
@@ -205,6 +206,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return handler of the started process
    * @throws ExecutionException
    */
+  @NotNull
   protected ProcessHandler startProcess(ProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
