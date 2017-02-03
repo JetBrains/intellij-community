@@ -132,12 +132,7 @@ public class PlatformTestUtil {
   public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(t);
-      }
-    });
+    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
 
   @Nullable
@@ -334,6 +329,7 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return null;
     AWTEvent event1 = eventQueue.getNextEvent();
@@ -824,21 +820,13 @@ public class PlatformTestUtil {
     final File tempDirectory1;
     final File tempDirectory2;
 
-    final JarFile jarFile1 = new JarFile(file1);
-    try {
-      final JarFile jarFile2 = new JarFile(file2);
-      try {
+    try (JarFile jarFile1 = new JarFile(file1)) {
+      try (JarFile jarFile2 = new JarFile(file2)) {
         tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
         tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
         ZipUtil.extract(jarFile1, tempDirectory1, null);
         ZipUtil.extract(jarFile2, tempDirectory2, null);
       }
-      finally {
-        jarFile2.close();
-      }
-    }
-    finally {
-      jarFile1.close();
     }
 
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
@@ -852,7 +840,7 @@ public class PlatformTestUtil {
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
-  public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
+  public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
       Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
@@ -937,7 +925,7 @@ public class PlatformTestUtil {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static final OutputStream NULL = new OutputStream() {
     @Override
-    public void write(int b) throws IOException { }
+    public void write(int b) { }
   };
 
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
