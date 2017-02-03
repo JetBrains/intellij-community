@@ -219,7 +219,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
 
   private static void assertNoDots(@NotNull String component) {
     if (component.contains(".")) {
-      throw new IllegalArgumentException("Components of QualifiedName cannot contain dots inside them");
+      throw new IllegalArgumentException("Components of QualifiedName cannot contain dots inside them, but got: " + component);
     }
   }
 }
