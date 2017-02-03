@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -34,6 +35,8 @@ import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.console.PydevConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
@@ -85,15 +88,32 @@ public class PyDataViewerPanel extends JPanel {
       session.addSessionListener(new XDebugSessionListener() {
         @Override
         public void stackFrameChanged() {
-          AsyncArrayTableModel model = getModel();
-          if (model != null) {
-            model.invalidateCache();
-            if (isShowing()) {
-              model.fireTableDataChanged();
-            }
-          }
+          updateModel();
         }
       });
+    }
+    if (myFrameAccessor instanceof PydevConsoleCommunication) {
+      ((PydevConsoleCommunication)myFrameAccessor).addCommunicationListener(new ConsoleCommunicationListener() {
+        @Override
+        public void commandExecuted(boolean more) {
+          ApplicationManager.getApplication().invokeLater(() -> updateModel());
+        }
+
+        @Override
+        public void inputRequested() {
+
+        }
+      });
+    }
+  }
+
+  private void updateModel() {
+    AsyncArrayTableModel model = getModel();
+    if (model != null) {
+      model.invalidateCache();
+      if (isShowing()) {
+        model.fireTableDataChanged();
+      }
     }
   }
 
