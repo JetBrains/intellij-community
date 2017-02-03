@@ -26,5 +26,8 @@
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
       <category>RegExp</category>
     </intentionAction>
+
+    <localInspection groupName="RegExp" language="RegExp" shortName="RepeatedSpace" displayName="Consecutive spaces" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
   </extensions>
 </idea-plugin>
