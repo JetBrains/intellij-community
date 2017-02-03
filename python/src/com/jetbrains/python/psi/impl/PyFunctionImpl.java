@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
@@ -94,6 +95,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   private CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
+  private AtomicReference<Boolean> myIsGenerator = new AtomicReference<>();
 
   @Nullable
   @Override
@@ -588,6 +590,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
+    myIsGenerator.set(null);
   }
 
   public Property getProperty() {
@@ -703,26 +706,31 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
-    final Ref<Boolean> result = new Ref<>(false);
-    getStatementList().accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyYieldExpression(PyYieldExpression node) {
-        result.set(true);
-      }
-
-      @Override
-      public void visitPyFunction(PyFunction node) {
-        // Ignore nested functions
-      }
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (!result.get()) {
-          super.visitElement(element);
+    Boolean result = myIsGenerator.get();
+    if (result == null) {
+      Ref<Boolean> containsYield = Ref.create(false);
+      getStatementList().accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyYieldExpression(PyYieldExpression node) {
+          containsYield.set(true);
         }
-      }
-    });
-    return result.get();
+
+        @Override
+        public void visitPyFunction(PyFunction node) {
+          // Ignore nested functions
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+          if (!containsYield.get()) {
+            super.visitElement(element);
+          }
+        }
+      });
+      result = containsYield.get();
+      myIsGenerator.set(result);
+    }
+    return result;
   }
 
   @Override
