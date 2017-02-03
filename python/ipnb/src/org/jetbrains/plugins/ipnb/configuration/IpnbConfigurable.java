@@ -50,7 +50,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     final String oldUrl = IpnbSettings.getInstance(myProject).getURL();
-    final String oldWorkingDirectory = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getWorkingDirectory());
+    final String oldWorkingDirectory = IpnbSettings.getInstance(myProject).getWorkingDirectory();
     final String oldArguments = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getArguments());
 
     final String url = StringUtil.trimEnd(StringUtil.notNullize(myFieldUrl.getText()), "/");

@@ -37,9 +37,9 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
     myWorkingDirectory = workingDirectory;
   }
 
-  @Nullable
+  @NotNull
   public String getWorkingDirectory() {
-    return myWorkingDirectory;
+    return StringUtil.notNullize(myWorkingDirectory);
   }
 
   public String getArguments() {
