@@ -373,10 +373,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           return;
         }
       }
-      // todo: regular expressions, format
-      /*if (schema.getPattern() != null) {
-        LOG.info("Unsupported property used: 'pattern'");
+      if (schema.getPattern() != null) {
+        if (!schema.checkByPattern(value)) {
+          error("String is violating the pattern: '" + schema.getPattern() + "'", propValue);
+        }
       }
+      // I think we are not gonna to support format, there are a couple of RFCs there to check upon..
+      /*
       if (schema.getFormat() != null) {
         LOG.info("Unsupported property used: 'format'");
       }*/

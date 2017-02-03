@@ -33,11 +33,14 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Irina.Chernushina on 9/21/2015.
@@ -358,6 +361,29 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                      "  \"a2\": \"auto!\",\n" +
                      "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
                      "}");
+  }
+
+  public void testPatternForPropertyValue() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"withPattern\": {\n" +
+                          "      \"pattern\": \"p[0-9]\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    final String correctText = "{\n" +
+                               "  \"withPattern\": \"p1\"\n" +
+                               "}";
+    final String wrongText = "{\n" +
+                             "  \"withPattern\": <warning descr=\"String is violating the pattern: 'p[0-9]'\">\"wrong\"</warning>\n" +
+                             "}";
+    testImpl(schema, correctText);
+    testImpl(schema, wrongText);
+  }
+
+  public void testRegexp() throws Exception {
+    final Matcher matcher = Pattern.compile("^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$").matcher("(112)555-1212");
+    Assert.assertTrue(matcher.matches());
   }
 
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
