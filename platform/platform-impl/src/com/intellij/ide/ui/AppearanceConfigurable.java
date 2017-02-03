@@ -216,11 +216,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.getWideScreenSupport() != myComponent.myWidescreenLayoutCheckBox.isSelected();
     settings.setWideScreenSupport(myComponent.myWidescreenLayoutCheckBox.isSelected());
 
-    update |= settings.getLeftGorizontalSplit() != myComponent.myLeftLayoutCheckBox.isSelected();
-    settings.setLeftGorizontalSplit(myComponent.myLeftLayoutCheckBox.isSelected());
+    update |= settings.getLeftHorizontalSplit() != myComponent.myLeftLayoutCheckBox.isSelected();
+    settings.setLeftHorizontalSplit(myComponent.myLeftLayoutCheckBox.isSelected());
 
-    update |= settings.getRightGorizontalSplit() != myComponent.myRightLayoutCheckBox.isSelected();
-    settings.setRightGorizontalSplit(myComponent.myRightLayoutCheckBox.isSelected());
+    update |= settings.getRightHorizontalSplit() != myComponent.myRightLayoutCheckBox.isSelected();
+    settings.setRightHorizontalSplit(myComponent.myRightLayoutCheckBox.isSelected());
 
     update |= settings.NAVIGATE_TO_PREVIEW != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
     settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
@@ -352,8 +352,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
-    myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftGorizontalSplit());
-    myComponent.myRightLayoutCheckBox.setSelected(settings.getRightGorizontalSplit());
+    myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
+    myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
@@ -417,8 +417,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
-    isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftGorizontalSplit();
-    isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightGorizontalSplit();
+    isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
+    isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
 

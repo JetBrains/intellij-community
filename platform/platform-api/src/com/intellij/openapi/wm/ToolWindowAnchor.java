@@ -59,8 +59,8 @@ public final class ToolWindowAnchor {
   }
 
   public boolean isSplitVertically() {
-    return this == LEFT && !UISettings.getInstance().getLeftGorizontalSplit()
-           || this == RIGHT && !UISettings.getInstance().getRightGorizontalSplit();
+    return this == LEFT && !UISettings.getInstance().getLeftHorizontalSplit()
+           || this == RIGHT && !UISettings.getInstance().getRightHorizontalSplit();
   }
 
   @NotNull

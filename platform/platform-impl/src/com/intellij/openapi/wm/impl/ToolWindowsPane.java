@@ -112,8 +112,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
     myWidescreen = UISettings.getInstance().getWideScreenSupport();
-    myLeftHorizontalSplit = UISettings.getInstance().getLeftGorizontalSplit();
-    myRightHorizontalSplit = UISettings.getInstance().getRightGorizontalSplit();
+    myLeftHorizontalSplit = UISettings.getInstance().getLeftHorizontalSplit();
+    myRightHorizontalSplit = UISettings.getInstance().getRightHorizontalSplit();
     if (myWidescreen) {
       myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
     }
@@ -593,7 +593,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       myLayeredPane.add(myWidescreen ? myHorizontalSplitter : myVerticalSplitter, DEFAULT_LAYER);
       setDocumentComponent(documentComponent);
     }
-    if (myLeftHorizontalSplit != uiSettings.getLeftGorizontalSplit()) {
+    if (myLeftHorizontalSplit != uiSettings.getLeftHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.LEFT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -603,9 +603,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                       ? first.getWindowInfo().getWeight()
                                                       : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
       }
-      myLeftHorizontalSplit = uiSettings.getLeftGorizontalSplit();
+      myLeftHorizontalSplit = uiSettings.getLeftHorizontalSplit();
     }
-    if (myRightHorizontalSplit != uiSettings.getRightGorizontalSplit()) {
+    if (myRightHorizontalSplit != uiSettings.getRightHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.RIGHT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -615,7 +615,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                        ? first.getWindowInfo().getWeight()
                                                        : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
       }
-      myRightHorizontalSplit = uiSettings.getRightGorizontalSplit();
+      myRightHorizontalSplit = uiSettings.getRightHorizontalSplit();
     }
   }
 
@@ -804,10 +804,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           @Override
           public void uiSettingsChanged(UISettings uiSettings) {
             if (anchor == ToolWindowAnchor.LEFT) {
-              setOrientation(!uiSettings.getLeftGorizontalSplit());
+              setOrientation(!uiSettings.getLeftHorizontalSplit());
             }
             else if (anchor == ToolWindowAnchor.RIGHT) {
-              setOrientation(!uiSettings.getRightGorizontalSplit());
+              setOrientation(!uiSettings.getRightHorizontalSplit());
             }
           }
         }
@@ -820,14 +820,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             boolean isSplitterHorizontalNow = !splitter.isVertical();
             UISettings settings = UISettings.getInstance();
             if (anchor == ToolWindowAnchor.LEFT) {
-              if (settings.getLeftGorizontalSplit() != isSplitterHorizontalNow) {
-                settings.setLeftGorizontalSplit(isSplitterHorizontalNow);
+              if (settings.getLeftHorizontalSplit() != isSplitterHorizontalNow) {
+                settings.setLeftHorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }
             if (anchor == ToolWindowAnchor.RIGHT) {
-              if (settings.getRightGorizontalSplit() != isSplitterHorizontalNow) {
-                settings.setRightGorizontalSplit(isSplitterHorizontalNow);
+              if (settings.getRightHorizontalSplit() != isSplitterHorizontalNow) {
+                settings.setRightHorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }
