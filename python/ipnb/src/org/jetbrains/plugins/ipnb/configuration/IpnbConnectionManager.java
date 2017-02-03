@@ -308,8 +308,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
         if (message.startsWith(IpnbConnection.UNABLE_LOGIN_MESSAGE)) {
           showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter());
         }
-        else if(message.startsWith(CONNECTION_REFUSED)) {
-          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: connection refused", new IpnbSettingsAdapter());
+        else if (message.startsWith(CONNECTION_REFUSED) || message.startsWith(IpnbConnection.CANNOT_START_JUPYTER)) {
+          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: cannot connect to Jupyter server", 
+                      new IpnbSettingsAdapter());
         }
         
         LOG.warn("Jupyter Notebook connection refused: " + message);
