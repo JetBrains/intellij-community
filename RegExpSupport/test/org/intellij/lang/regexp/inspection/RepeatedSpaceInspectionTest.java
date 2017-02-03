@@ -15,19 +15,13 @@
  */
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
-import org.intellij.lang.regexp.RegExpFileType;
+import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-
-import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RepeatedSpaceInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
     highlightTest("<warning descr=\"2 consecutive spaces in RegExp\">  </warning>");
@@ -45,25 +39,9 @@ public class RepeatedSpaceInspectionTest extends LightPlatformCodeInsightFixture
     quickfixTest("     ", " {5}", "Replace with ' {5}'");
   }
 
-  private void highlightTest(@Language("RegExp") String code) {
-    myFixture.enableInspections(new RepeatedSpaceInspection());
-    myFixture.configureByText(RegExpFileType.INSTANCE, code);
-    myFixture.testHighlighting();
-  }
-
-  private void quickfixTest(@Language("RegExp") String before, @Language("RegExp") String after, String hint) {
-    myFixture.enableInspections(new RepeatedSpaceInspection());
-    myFixture.configureByText(RegExpFileType.INSTANCE, before);
-    final IntentionAction intention = findIntention(hint);
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResult(after);
-  }
-
-  public IntentionAction findIntention(@NotNull final String hint) {
-    final List<IntentionAction> intentions = myFixture.filterAvailableIntentions(hint);
-    Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());
-    Assert.assertFalse("Too many quickfixes found for \"" + hint + "\": " + intentions + "]", intentions.size() > 1);
-    return intentions.get(0);
+  @Override
+  @NotNull
+  protected LocalInspectionTool getInspection() {
+    return new RepeatedSpaceInspection();
   }
 }
