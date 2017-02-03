@@ -25,44 +25,28 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.jetbrains.python.debugger.PyDebugProcess;
-import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.List;
-
 public class PyDataViewToolWindowFactory implements ToolWindowFactory {
   public static final String EMPTY_TEXT = "Run debugger to view available data ";
-  private JBLabel myEmptyContent = new JBLabel(EMPTY_TEXT, SwingConstants.CENTER);
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session == null) {
-      createEmptyContent(toolWindow);
-    }
-    else {
-      PyDataView.getInstance(project).init(toolWindow, (PyFrameAccessor)session.getDebugProcess());
-    }
+    PyDataView.getInstance(project).init(toolWindow);
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(toolWindow, project));
+    connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(project));
 
     connection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
@@ -89,14 +73,6 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(new ColoredByDefaultAction()));
   }
 
-  private void createEmptyContent(@NotNull ToolWindow toolWindow) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ContentManager manager = toolWindow.getContentManager();
-      manager.removeAllContents(true);
-      manager.addContent(ContentFactory.SERVICE.getInstance().createContent(myEmptyContent, "", false));
-    });
-  }
-
   @Override
   public void init(ToolWindow window) {
     window.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, null);
@@ -119,25 +95,15 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
   }
 
   private static class ChangeContentXDebuggerManagerListener implements XDebuggerManagerListener {
-    private final ToolWindow myToolWindow;
     private final Project myProject;
 
-    public ChangeContentXDebuggerManagerListener(ToolWindow toolWindow, Project project) {
-      myToolWindow = toolWindow;
+    public ChangeContentXDebuggerManagerListener(Project project) {
       myProject = project;
     }
 
     @Override
     public void processStarted(@NotNull XDebugProcess debugProcess) {
-      if (getProcesses().isEmpty() && debugProcess instanceof PyDebugProcess) {
-        myToolWindow.getContentManager().removeAllContents(true);
-        PyDataView.getInstance(myProject).init(myToolWindow, ((PyDebugProcess)debugProcess));
-      }
-    }
 
-    @NotNull
-    private List<? extends PyDebugProcess> getProcesses() {
-      return XDebuggerManager.getInstance(myProject).getDebugProcesses(PyDebugProcess.class);
     }
 
     @Override

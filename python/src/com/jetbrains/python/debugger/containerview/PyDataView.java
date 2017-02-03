@@ -113,14 +113,13 @@ public class PyDataView implements DumbAware {
     return ServiceManager.getService(project, PyDataView.class);
   }
 
-  public void init(@NotNull ToolWindow toolWindow, @NotNull PyFrameAccessor frameAccessor) {
+  public void init(@NotNull ToolWindow toolWindow) {
     myTabs = new PyDataViewTabs(myProject);
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "", false);
     content.setCloseable(true);
     toolWindow.getContentManager().addContent(content);
-    addTab(frameAccessor);
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       @Override
       public void stateChanged() {
