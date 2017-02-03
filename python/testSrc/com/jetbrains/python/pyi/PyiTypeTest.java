@@ -101,6 +101,10 @@ public class PyiTypeTest extends PyTestCase {
     doTest("int");
   }
 
+  public void testCoroutineType() {
+    doTest("Coroutine[Any, Any, int]");
+  }
+
   public void testPyiOnPythonPath() {
     addPyiStubsToContentRoot(myFixture);
     doTest("int");

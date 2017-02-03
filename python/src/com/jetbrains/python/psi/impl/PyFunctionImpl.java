@@ -38,10 +38,10 @@ import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -187,12 +187,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PyType type = getReturnType(context);
-    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
-  }
-
-  @Nullable
-  private PyType getReturnType(@NotNull TypeEvalContext context) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
@@ -200,15 +194,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
+    PyType inferredType = null;
     if (context.allowReturnTypes(this)) {
       final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
       if (yieldTypeRef != null) {
-        return yieldTypeRef.get();
+        inferredType = yieldTypeRef.get();
       }
-      return getReturnStatementType(context);
+      else {
+        inferredType = getReturnStatementType(context);
+      } 
     }
 
-    return null;
+    if (isAsync() && isAsyncAllowed()) {
+      return createAsyncType(inferredType);
+    }
+    return inferredType;
   }
 
   @Nullable
@@ -383,12 +383,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private PyType createCoroutineType(@Nullable PyType returnType) {
-    if (isGenerator()) {
-      // Re-wrap typing.Generator[Y, S, R] into typing.AsyncGenerator[Y, Any] 
-      if (returnType instanceof PyCollectionType) {
-        final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
-        if (classType != null && PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
+  private PyType createAsyncType(@Nullable PyType returnType) {
+    if (returnType instanceof PyCollectionType) {
+      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
+      if (classType != null) {
+        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
           final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
           final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
                                                                                          PyResolveImportUtil.fromFoothold(this));
@@ -397,16 +396,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
             return new PyCollectionTypeImpl(asyncGenerator, false,
                                             Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
           }
+          else {
+            return null;
+          }
         }
       }
-      // Leave the type as is
-      return returnType;
     }
-    else {
-      final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.COROUTINE),
-                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
-      return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
-    }
+
+    return PyTypingTypeProvider.wrapInCoroutineType(returnType, this);
   }
 
   public PyFunction asMethod() {

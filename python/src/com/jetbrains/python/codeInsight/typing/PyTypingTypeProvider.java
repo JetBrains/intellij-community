@@ -26,6 +26,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyCustomType;
@@ -36,6 +37,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterType
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -239,11 +241,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression value = getReturnTypeAnnotation(function);
       if (value != null) {
         final Ref<PyType> typeRef = getType(value, new Context(context));
-        final PyType type = Ref.deref(typeRef);
-        if (isInit && type instanceof PyNoneType) {
-          return null;
+        if (typeRef != null) {
+          if (isInit && typeRef.get() instanceof PyNoneType) {
+            return null;
+          }
+          if (function.isAsync() && function.isAsyncAllowed() && !function.isGenerator()) {
+            return Ref.create(wrapInCoroutineType(typeRef.get(), callable));
+          }
+          return typeRef;
         }
-        return typeRef;
       }
     }
     return null;
@@ -714,6 +720,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return qualifiedNameOwner.getQualifiedName();
     }
     return null;
+  }
+
+  @Nullable
+  public static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
+    final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(COROUTINE),
+                                                                           PyResolveImportUtil.fromFoothold(resolveAnchor)), PyClass.class);
+    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
   }
 
   private static class Context {
