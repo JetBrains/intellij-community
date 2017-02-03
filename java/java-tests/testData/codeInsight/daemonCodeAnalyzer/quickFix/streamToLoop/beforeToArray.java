@@ -36,6 +36,18 @@ public class Main {
     return Stream.of(objects).filter(Number.class::isInstance).toArray(Number[]::new);
   }
 
+  public static class RawTypeProblem {
+    private static Class<?>[] resolver(String list) {
+      return Arrays.stream(list.split(","))  // convert to loop
+        .map(RawTypeProblem::loadType)
+        .toArray(Class[]::new);
+    }
+
+    private static Class<?> loadType(String typeName) {
+      return null;
+    }
+  }
+
   public static void main(String[] args) {
     System.out.println(Arrays.asList(test(new int[] {1,2,3})));
     System.out.println(Arrays.asList(test2d(new int[] {1,2,3})));

@@ -72,6 +72,22 @@ public class Main {
       return list.toArray(new Number[0]);
   }
 
+  public static class RawTypeProblem {
+    private static Class<?>[] resolver(String list) {
+        // convert to loop
+        List<Class<?>> result = new ArrayList<>();
+        for (String s : list.split(",")) {
+            Class<?> aClass = loadType(s);
+            result.add(aClass);
+        }
+        return result.toArray(new Class[0]);
+    }
+
+    private static Class<?> loadType(String typeName) {
+      return null;
+    }
+  }
+
   public static void main(String[] args) {
     System.out.println(Arrays.asList(test(new int[] {1,2,3})));
     System.out.println(Arrays.asList(test2d(new int[] {1,2,3})));
