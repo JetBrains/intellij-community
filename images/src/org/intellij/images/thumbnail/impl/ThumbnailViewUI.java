@@ -59,7 +59,10 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final VirtualFileListener vfsListener = new VFSListener();
@@ -263,7 +266,11 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (value instanceof VirtualFile) {
                 VirtualFile file = (VirtualFile) value;
                 setFileName(file.getName());
-                setToolTipText(IfsUtil.getReferencePath(thumbnailView.getProject(), file));
+                String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
+                if (!isFileSizeVisible()) {
+                    toolTipText += " [" + getImageComponent().getDescription() + "]";
+                }
+                setToolTipText(toolTipText);
                 setDirectory(file.isDirectory());
                 if (file.isDirectory()) {
                     int imagesCount = 0;

@@ -115,13 +115,12 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private void paintImage(Graphics g, ThumbnailComponent tc) {
         ImageComponent imageComponent = tc.getImageComponent();
-        BufferedImage image = imageComponent.getDocument().getValue();
 
         int blankHeight = ImagesIcons.ThumbnailBlank.getIconHeight();
 
         if (imageComponent.isFileSizeVisible()) {
             // Paint image info (and reduce height of text from available height)
-            blankHeight -= paintImageCaps(g, image);
+            blankHeight -= paintImageCaps(g, imageComponent);
             // Paint image format (and reduce height of text from available height)
             blankHeight -= paintFormatText(tc, g);
         }
@@ -130,8 +129,8 @@ public class ThumbnailComponentUI extends ComponentUI {
         paintThumbnail(g, imageComponent, blankHeight);
     }
 
-    private int paintImageCaps(Graphics g, BufferedImage image) {
-        String description = ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+    private int paintImageCaps(Graphics g, ImageComponent imageComponent) {
+        String description = imageComponent.getDescription();
 
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);

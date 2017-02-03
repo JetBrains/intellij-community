@@ -19,6 +19,7 @@
 package org.intellij.images.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
@@ -197,6 +198,11 @@ public class ImageComponent extends JComponent {
 
     public boolean isGridVisible() {
         return grid.isVisible();
+    }
+
+    public String getDescription() {
+        BufferedImage image = getDocument().getValue();
+        return ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
     }
 
     public void setCanvasSize(int width, int height) {
