@@ -866,5 +866,8 @@
     <component>
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropInitializer</implementation-class>
+    </component>
   </application-components>
 </idea-plugin>

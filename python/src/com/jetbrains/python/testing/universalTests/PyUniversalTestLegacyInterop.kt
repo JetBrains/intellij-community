@@ -45,22 +45,25 @@ import org.jdom.Element
 fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniversalTests")
 
 /**
- * Call when container is ready
+ * Should be installed as application component
  */
-fun init(bus: MessageBus) {
-  disableUnneededConfigurationProducer()
+class PyUniversalTestLegacyInteropInitializer {
+  init {
+    disableUnneededConfigurationProducer()
 
-  // Delegate to project initialization
-  bus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-    override fun projectComponentsInitialized(project: Project) {
-      if (project.isInitialized) {
-        projectInitialized(project)
-        return
+    // Delegate to project initialization
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+      override fun projectComponentsInitialized(project: Project) {
+        if (project.isInitialized) {
+          projectInitialized(project)
+          return
+        }
+        StartupManager.getInstance(project).runWhenProjectIsInitialized { projectInitialized(project) }
       }
-      StartupManager.getInstance(project).runWhenProjectIsInitialized { projectInitialized(project) }
-    }
-  })
+    })
+  }
 }
+
 
 /**
  * To be called when project initialized to copy old configs to new one

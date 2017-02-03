@@ -29,12 +29,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropKt;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 /**
+ * Initialize PyCharm.
+ *
+ * This class is called <strong>only in PyCharm</strong>.
+ * It does not work in plugin
  * @author yole
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
@@ -85,12 +88,6 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
-
-
-    /*
-    According to PyUniversalTestLegacyInteropKt we need to call "init"
-     */
-    PyUniversalTestLegacyInteropKt.init(bus);
   }
 
   private static void showInitialConfigurationDialog() {
