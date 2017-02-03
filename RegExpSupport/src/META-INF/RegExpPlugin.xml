@@ -29,5 +29,8 @@
 
     <localInspection groupName="RegExp" language="RegExp" shortName="RepeatedSpace" displayName="Consecutive spaces" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="SingleCharAlternation" displayName="Single character alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
   </extensions>
 </idea-plugin>

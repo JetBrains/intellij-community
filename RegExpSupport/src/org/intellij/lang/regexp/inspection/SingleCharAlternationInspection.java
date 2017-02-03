@@ -1,0 +1,108 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.intellij.lang.regexp.inspection;
+
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.psi.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public class SingleCharAlternationInspection extends LocalInspectionTool {
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new SingleCharAlternationVisitor(holder);
+  }
+
+  private static class SingleCharAlternationVisitor extends RegExpElementVisitor {
+
+    private final ProblemsHolder myHolder;
+
+    public SingleCharAlternationVisitor(ProblemsHolder holder) {
+      myHolder = holder;
+    }
+
+    @Override
+    public void visitRegExpPattern(RegExpPattern pattern) {
+      final RegExpBranch[] branches = pattern.getBranches();
+      if (branches.length < 2) {
+        return;
+      }
+      for (RegExpBranch branch : branches) {
+        final RegExpAtom[] atoms = branch.getAtoms();
+        if (atoms.length != 1 || !(atoms[0] instanceof RegExpChar)) {
+          return;
+        }
+      }
+      final String text = buildReplacementText(pattern);
+      myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
+    }
+
+    private static class SingleCharAlternationFix implements LocalQuickFix {
+
+      private final String myText;
+
+      public SingleCharAlternationFix(String text) {
+        myText = text;
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getName() {
+        return "Replace with '" + myText + '\'';
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "Replace alternation with character class";
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final PsiElement element = descriptor.getPsiElement();
+        if (!(element instanceof RegExpPattern)) {
+          return;
+        }
+        final RegExpPattern pattern = (RegExpPattern)element;
+        final String text = buildReplacementText(pattern);
+        final RegExpBranch branch = RegExpFactory.createBranchFromText(text, element);
+        pattern.replace(branch.getAtoms()[0]);
+      }
+    }
+  }
+
+  static String buildReplacementText(RegExpPattern pattern) {
+    final StringBuilder text = new StringBuilder("[");
+    for (RegExpBranch branch : pattern.getBranches()) {
+      text.append(branch.getText());
+    }
+    text.append("]");
+    return text.toString();
+  }
+}
