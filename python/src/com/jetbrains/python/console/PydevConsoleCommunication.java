@@ -34,6 +34,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import org.apache.xmlrpc.WebServer;
@@ -685,5 +686,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   public void setConsoleView(PythonConsoleView consoleView) {
     myConsoleView = consoleView;
+  }
+
+  @Override
+  public void showNumericContainer(PyDebugValue value) {
+    PyViewNumericContainerAction.showNumericViewer(myProject, value);
   }
 }
