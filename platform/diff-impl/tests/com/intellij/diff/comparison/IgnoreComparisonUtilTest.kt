@@ -286,9 +286,7 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
   }
 
 
-  fun testBadCases() {
-    // TODO
-
+  fun `test trim vs trimExpand for inner ranges`() {
     Test("X M Y Z", "A B Y C",
          "+     +", "+     +",
          " --    ", " --    ")
@@ -297,6 +295,16 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     Test("X M Y Z", "A B Y C",
          "  +    ", "  +    ",
          "--    -", "--    -")
+      .run()
+
+    Test("X MZ Y Z", "A BZ Y C",
+         "  +     ", "  +     ",
+         "----   -", "----   -")
+      .run()
+
+    Test("ZX M Y Z", "A B Y C",
+         " +     +", "+     +",
+         "----    ", " --    ")
       .run()
   }
 
