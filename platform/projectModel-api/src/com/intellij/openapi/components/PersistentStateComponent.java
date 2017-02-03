@@ -44,4 +44,10 @@ public interface PersistentStateComponent<T> {
    * @see com.intellij.util.xmlb.XmlSerializerUtil#copyBean(Object, Object) 
    */
   void loadState(T state);
+
+  /**
+   * This method is called when component is initialized but no state is persisted.
+   */
+  default void noStateLoaded() {
+  }
 }

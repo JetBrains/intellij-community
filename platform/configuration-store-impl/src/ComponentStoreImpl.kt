@@ -352,7 +352,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exists)
-    if (defaultState != null) {
+    if (defaultState == null) {
+      component.noStateLoaded()
+    }
+    else {
       component.loadState(defaultState)
     }
     return true
