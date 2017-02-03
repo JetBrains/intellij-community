@@ -40,6 +40,7 @@ import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,14 +72,20 @@ public class PyDataView implements DumbAware {
   }
 
   public void closeRelatedTabs(@NotNull PyDebugProcess process) {
+    List<TabInfo> tabsToRemove = new ArrayList<>();
     for (TabInfo info : myTabs.getTabs()) {
       PyFrameAccessor frameAccessor = getPanel(info).getFrameAccessor();
       if (frameAccessor instanceof PyDebugProcess) {
         if (frameAccessor == process) {
-          ApplicationManager.getApplication().invokeLater(() -> myTabs.removeTab(info));
+          tabsToRemove.add(info);
         }
       }
     }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (TabInfo info : tabsToRemove) {
+        myTabs.removeTab(info);
+      }
+    });
   }
 
   public void updateTabs(@NotNull ProcessHandler handler) {
