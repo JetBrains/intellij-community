@@ -20,6 +20,7 @@
     </component>
     <component>
       <implementation-class>com.jetbrains.python.PyCharmInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
     </component>
   </application-components>
 

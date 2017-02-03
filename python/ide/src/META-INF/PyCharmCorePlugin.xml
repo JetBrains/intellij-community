@@ -5,6 +5,7 @@
   <application-components>
     <component>
       <implementation-class>com.jetbrains.python.PyCharmInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
     </component>
     <component>
       <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>

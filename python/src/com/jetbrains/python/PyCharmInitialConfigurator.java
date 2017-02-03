@@ -72,18 +72,16 @@ public final class PyCharmInitialConfigurator {
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-        bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-          @Override
-          public void welcomeScreenDisplayed() {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-              showInitialConfigurationDialog();
-            });
-          }
-        });
-      }
+    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+        @Override
+        public void welcomeScreenDisplayed() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+            showInitialConfigurationDialog();
+          });
+        }
+      });
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
