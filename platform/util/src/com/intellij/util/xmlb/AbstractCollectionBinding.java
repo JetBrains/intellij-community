@@ -36,7 +36,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   private Map<Class<?>, Binding> itemBindings;
 
   protected final Class<?> itemType;
-  private final AbstractCollection annotation;
+  protected final AbstractCollection annotation;
 
   public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
