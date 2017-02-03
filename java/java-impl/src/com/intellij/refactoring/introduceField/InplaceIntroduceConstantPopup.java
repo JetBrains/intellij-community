@@ -15,12 +15,14 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -236,6 +238,24 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return handler instanceof IntroduceConstantHandler && super.startsOnTheSameElement(handler, element);
+  }
+
+  @Override
+  protected boolean startsOnTheSameElements(Editor editor,
+                                            RefactoringActionHandler handler,
+                                            PsiElement[] elements) {
+    if (elements.length == 0 && handler instanceof IntroduceConstantHandler) {
+      PsiVariable variable = getVariable();
+      if (variable != null) {
+        PsiReference reference = TargetElementUtil.findReference(editor);
+        if (reference instanceof PsiReferenceExpression &&
+            reference.resolve() == null &&
+            Comparing.strEqual(variable.getName(), ((PsiReferenceExpression)reference).getReferenceName())) {
+          return true;
+        }
+      }
+    }
+    return elements.length == 1 && startsOnTheSameElement(handler, elements[0]);
   }
 
   @Override
