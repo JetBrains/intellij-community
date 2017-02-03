@@ -128,7 +128,7 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
  * Creates a [PyQualifiedNameResolveContext] from a [foothold] element.
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
-  val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile)
+  val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
   return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, PythonSdkType.findPythonSdk(module))
 }
 
