@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean selected = UISettings.getInstance().PRESENTATION_MODE;
+    boolean selected = UISettings.getInstance().getPresentationMode();
     //noinspection ConditionalExpressionWithIdenticalBranches
     e.getPresentation().setText(selected ? ActionsBundle.message("action.TogglePresentationMode.exit")
                                          : ActionsBundle.message("action.TogglePresentationMode.enter"));
@@ -67,7 +67,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     UISettings settings = UISettings.getInstance();
     Project project = e.getProject();
 
-    setPresentationMode(project, !settings.PRESENTATION_MODE);
+    setPresentationMode(project, !settings.getPresentationMode());
   }
 
   //public static void restorePresentationMode() {
@@ -78,7 +78,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   public static void setPresentationMode(final Project project, final boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
-    settings.PRESENTATION_MODE = inPresentation;
+    settings.setPresentationMode(inPresentation);
 
     final boolean layoutStored = storeToolWindows(project);
 

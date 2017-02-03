@@ -60,7 +60,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       SwingConstants.RIGHT,
       UISettings.TABS_NONE,
     }));
-    myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer(myEditorTabPlacement.getRenderer()));
+    myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
     myEditorTabPlacement.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -119,15 +119,15 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     myShowTabsTooltipsCheckBox.setSelected(uiSettings.SHOW_TABS_TOOLTIPS);
-    myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
+    myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.getScrollTabLayoutInEditor());
     myHideTabsCheckbox.setEnabled(myScrollTabLayoutInEditorCheckBox.isSelected());
-    myHideTabsCheckbox.setSelected(uiSettings.HIDE_TABS_IF_NEED);
-    myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
+    myHideTabsCheckbox.setSelected(uiSettings.getHideTabsIfNeed());
+    myEditorTabPlacement.setSelectedItem(uiSettings.getEditorTabPlacement());
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.getReuseNotModifiedTabs());
-    myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
+    myShowCloseButtonOnCheckBox.setSelected(uiSettings.getShowCloseButton());
 
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
       myCloseNonModifiedFilesFirstRadio.setSelected(true);
@@ -156,18 +156,18 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS)) uiSettingsChanged = true;
     uiSettings.SHOW_TABS_TOOLTIPS = myShowTabsTooltipsCheckBox.isSelected();
 
-    if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR)) uiSettingsChanged = true;
-    uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
+    if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.getScrollTabLayoutInEditor())) uiSettingsChanged = true;
+    uiSettings.setScrollTabLayoutInEditor(myScrollTabLayoutInEditorCheckBox.isSelected());
 
-    if (isModified(myHideTabsCheckbox, uiSettings.HIDE_TABS_IF_NEED)) uiSettingsChanged = true;
-    uiSettings.HIDE_TABS_IF_NEED = myHideTabsCheckbox.isSelected();
+    if (isModified(myHideTabsCheckbox, uiSettings.getHideTabsIfNeed())) uiSettingsChanged = true;
+    uiSettings.setHideTabsIfNeed(myHideTabsCheckbox.isSelected());
 
-    if (isModified(myShowCloseButtonOnCheckBox, uiSettings.SHOW_CLOSE_BUTTON)) uiSettingsChanged = true;
-    uiSettings.SHOW_CLOSE_BUTTON = myShowCloseButtonOnCheckBox.isSelected();
+    if (isModified(myShowCloseButtonOnCheckBox, uiSettings.getShowCloseButton())) uiSettingsChanged = true;
+    uiSettings.setShowCloseButton(myShowCloseButtonOnCheckBox.isSelected());
 
     final int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
-    if (uiSettings.EDITOR_TAB_PLACEMENT != tabPlacement) uiSettingsChanged = true;
-    uiSettings.EDITOR_TAB_PLACEMENT = tabPlacement;
+    if (uiSettings.getEditorTabPlacement() != tabPlacement) uiSettingsChanged = true;
+    uiSettings.setEditorTabPlacement(tabPlacement);
 
     boolean hide = myHideKnownExtensions.isSelected();
     if (uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS != hide) uiSettingsChanged = true;
@@ -203,13 +203,13 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
     isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs());
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
-    isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
+    isModified |= tabPlacement != uiSettings.getEditorTabPlacement();
     isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;
     isModified |= myShowDirectoryInTabCheckBox.isSelected() != uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES;
 
-    isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
-    isModified |= myHideTabsCheckbox.isSelected() != uiSettings.HIDE_TABS_IF_NEED;
-    isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.SHOW_CLOSE_BUTTON;
+    isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.getScrollTabLayoutInEditor();
+    isModified |= myHideTabsCheckbox.isSelected() != uiSettings.getHideTabsIfNeed();
+    isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.getShowCloseButton();
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
@@ -234,7 +234,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   private static final class MyTabsPlacementComboBoxRenderer extends ListCellRendererWrapper<Integer> {
-    public MyTabsPlacementComboBoxRenderer(final ListCellRenderer listCellRenderer) {
+    public MyTabsPlacementComboBoxRenderer() {
       super();
     }
 

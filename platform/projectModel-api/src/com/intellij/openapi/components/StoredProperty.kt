@@ -33,6 +33,10 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     modificationCount = 0
   }
 
+  protected fun incrementModificationCount() {
+    modificationCount++
+  }
+
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
     for (property in properties) {
       if (property.name == accessor.name) {

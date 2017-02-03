@@ -158,6 +158,7 @@ public class StudyEditInputAction extends DumbAwareAction {
     return closableTab;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     showInput(e.getProject());
   }
@@ -200,7 +201,7 @@ public class StudyEditInputAction extends DumbAwareAction {
     public void update(final AnActionEvent e) {
       e.getPresentation().setIcon(AllIcons.Actions.Close);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
-      e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
+      e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Delete test");
     }
 

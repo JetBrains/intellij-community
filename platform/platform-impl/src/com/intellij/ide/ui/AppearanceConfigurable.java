@@ -95,8 +95,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
     myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
     myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
@@ -170,8 +170,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE) {
-      settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType()) {
+      settings.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
           c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
@@ -180,8 +180,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE) {
-      settings.EDITOR_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem();
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType()) {
+      settings.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
       shouldUpdateUI = true;
     }
 
@@ -194,10 +194,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
     update |= settings.getShowMemoryIndicator() != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
     settings.setShowMemoryIndicator(myComponent.myShowMemoryIndicatorCheckBox.isSelected());
-    update |= settings.ALLOW_MERGE_BUTTONS != myComponent.myAllowMergeButtons.isSelected();
-    settings.ALLOW_MERGE_BUTTONS = myComponent.myAllowMergeButtons.isSelected();
-    update |= settings.CYCLE_SCROLLING != myComponent.myCycleScrollingCheckBox.isSelected();
-    settings.CYCLE_SCROLLING = myComponent.myCycleScrollingCheckBox.isSelected();
+    update |= settings.getAllowMergeButtons() != myComponent.myAllowMergeButtons.isSelected();
+    settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
+    update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
+    settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
     if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
@@ -330,8 +330,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
     //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
 
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
@@ -340,8 +340,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.getShowMemoryIndicator());
-    myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
-    myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
+    myComponent.myAllowMergeButtons.setSelected(settings.getAllowMergeButtons());
+    myComponent.myCycleScrollingCheckBox.setSelected(settings.getCycleScrolling());
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
@@ -399,16 +399,16 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
-    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
-    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE;
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
 
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.getShowMemoryIndicator();
-    isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.ALLOW_MERGE_BUTTONS;
-    isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
+    isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.getAllowMergeButtons();
+    isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.getCycleScrolling();
 
     isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
 

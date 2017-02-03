@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -545,7 +545,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void flipTabs() {
     /*
     if (myTabs == null) {
-      myTabs = new EditorTabs (this, UISettings.getInstance().EDITOR_TAB_PLACEMENT);
+      myTabs = new EditorTabs (this, UISettings.getInstance().getEditorTabPlacement());
       remove (mySplitters);
       add (myTabs, BorderLayout.CENTER);
       initTabs ();
@@ -985,7 +985,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
-    if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE || UISettings.getInstance().getPresentationMode()) {
       window.clear();
     }
   }
@@ -1450,7 +1450,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (myProject.isDisposed()) return;
-      setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
+      setTabsMode(UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
 
       ToolWindowManager.getInstance(myProject).invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -1866,14 +1866,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
-      setTabsMode(uiSettings.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !uiSettings.PRESENTATION_MODE);
+      setTabsMode(uiSettings.getEditorTabPlacement() != UISettings.TABS_NONE && !uiSettings.getPresentationMode());
 
       for (EditorsSplitters each : getAllSplitters()) {
-        each.setTabsPlacement(uiSettings.EDITOR_TAB_PLACEMENT);
+        each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize(uiSettings.EDITOR_TAB_LIMIT);
 
         // Tab layout policy
-        if (uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR) {
+        if (uiSettings.getScrollTabLayoutInEditor()) {
           each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         }
         else {

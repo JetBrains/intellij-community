@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
     int size;
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getPresentationMode()) {
       size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
     }
     else {

@@ -414,7 +414,7 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> filesData = new ArrayList<>();
       final ArrayList<FileInfo> editors = new ArrayList<>();
       if (!pinned) {
-        if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+        if (UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
           for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
             editors.add(new FileInfo(pair.first, pair.second, project));
           }
@@ -432,7 +432,7 @@ public class Switcher extends AnAction implements DumbAware {
         for (int i = 0; i < len; i++) {
           if (isPinnedMode()
               && selectedFiles.contains(recentFiles[i])
-              && UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
             continue;
           }
 
@@ -450,7 +450,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE || !isPinnedMode()) {
+              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode()) {
                 firstRecentMarked = true;
               }
             }

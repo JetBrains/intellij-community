@@ -74,7 +74,7 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = !UISettings.getInstance().HIDE_TABS_IF_NEED ? new Icon() {
+  private static final Icon MODIFIED_ICON = !UISettings.getInstance().getHideTabsIfNeed() ? new Icon() {
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
@@ -122,13 +122,13 @@ public class EditorWindow {
 
     myTabbedPane = null;
 
-    final int tabPlacement = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
-    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE) {
+    final int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
+    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().getPresentationMode()) {
       createTabs();
     }
 
     // Tab layout policy
-    if (UISettings.getInstance().SCROLL_TAB_LAYOUT_IN_EDITOR) {
+    if (UISettings.getInstance().getScrollTabLayoutInEditor()) {
       setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     } else {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
@@ -262,7 +262,7 @@ public class EditorWindow {
 
         if (disposeIfNeeded && getTabCount() == 0) {
           removeFromSplitter();
-          if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+          if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
             final EditorsSplitters owner = getOwner();
             if (owner != null) {
               final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
@@ -422,7 +422,7 @@ public class EditorWindow {
   }
 
   void setTabsPlacement(final int tabPlacement) {
-    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE) {
+    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().getPresentationMode()) {
       if (myTabbedPane == null) {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();
@@ -887,7 +887,7 @@ public class EditorWindow {
     }
 
     final Icon modifiedIcon;
-    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || !UISettings.getInstance().HIDE_TABS_IF_NEED) {
+    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || !UISettings.getInstance().getHideTabsIfNeed()) {
       modifiedIcon =
         UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
@@ -900,7 +900,7 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    int xShift = !UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 0;
+    int xShift = !UISettings.getInstance().getHideTabsIfNeed() ? 4 : 0;
     result.setIcon(baseIcon, i++, xShift, 0);
     if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);

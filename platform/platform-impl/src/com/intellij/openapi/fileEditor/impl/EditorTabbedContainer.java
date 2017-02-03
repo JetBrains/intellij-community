@@ -140,7 +140,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
     });
 
-    setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
+    setTabPlacement(UISettings.getInstance().getEditorTabPlacement());
 
     updateTabBorder();
 
@@ -197,7 +197,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
-    if (!uiSettings.getHideToolStripes() && !uiSettings.PRESENTATION_MODE) {
+    if (!uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode()) {
       border.top = !topIds.isEmpty() ? 1 : 0;
       border.bottom = !bottom.isEmpty() ? 1 : 0;
       border.left = !leftIds.isEmpty() ? 1 : 0;
@@ -420,7 +420,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     public void update(final AnActionEvent e) {
       e.getPresentation().setIcon(AllIcons.Actions.Close);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
-      e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
+      e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Close. Alt-click to close others.");
     }
 

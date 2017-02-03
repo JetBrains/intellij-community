@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public Font getFont(EditorFontType key) {
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getPresentationMode()) {
       final Font font = myFonts.get(key);
       return new Font(font.getName(), font.getStyle(), UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
@@ -306,7 +306,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public void readExternal(@NotNull Element parentNode) {
-    UISettings settings = UISettings.getInstance();
+    UISettings settings = UISettings.getInstanceOrNull();
     ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
     myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
@@ -787,8 +787,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @Override
   public int getConsoleFontSize() {
     String font = getConsoleFontName();
-    UISettings uiSettings = UISettings.getInstance();
-    if ((uiSettings == null || !uiSettings.PRESENTATION_MODE) && myConsoleFontPreferences.hasSize(font)) {
+    UISettings uiSettings = UISettings.getInstanceOrNull();
+    if ((uiSettings == null || !uiSettings.getPresentationMode()) && myConsoleFontPreferences.hasSize(font)) {
       return myConsoleFontPreferences.getSize(font);
     }
     return getEditorFontSize();

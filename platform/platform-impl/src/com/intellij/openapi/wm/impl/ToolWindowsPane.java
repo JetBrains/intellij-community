@@ -169,7 +169,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         .setBounds(size.width - rightSize.width, topSize.height, rightSize.width, size.height - topSize.height - bottomSize.height);
       myBottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
 
-      if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().PRESENTATION_MODE) {
+      if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
         myLayeredPane.setBounds(0, 0, size.width, size.height);
       }
       else {
@@ -426,7 +426,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private void updateToolStripesVisibility() {
     boolean oldVisible = myLeftStripe.isVisible();
 
-    final boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().PRESENTATION_MODE;
+    final boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().getPresentationMode();
     boolean visible = showButtons || myStripesOverlayed;
     myLeftStripe.setVisible(visible);
     myRightStripe.setVisible(visible);

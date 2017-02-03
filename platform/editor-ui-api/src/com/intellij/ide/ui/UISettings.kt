@@ -68,6 +68,36 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @Transient
   var HIDE_TOOL_STRIPES = true
 
+  @Suppress("unused")
+  @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
+  @JvmField
+  @Transient
+  var CYCLE_SCROLLING = true
+
+  @Suppress("unused")
+  @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
+  @JvmField
+  @Transient
+  var SHOW_MAIN_TOOLBAR = false
+
+  @Suppress("unused")
+  @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
+  @JvmField
+  @Transient
+  var SHOW_CLOSE_BUTTON = true
+
+  @Suppress("unused")
+  @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
+  @JvmField
+  @Transient
+  var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
+
+  @Suppress("unused")
+  @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
+  @JvmField
+  @Transient
+  var PRESENTATION_MODE = false
+
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by storedProperty(true)
@@ -77,24 +107,24 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightGorizontalSplit by storedProperty(false)
   @get:OptionTag("SHOW_EDITOR_TOOLTIP") var showEditorToolTip by storedProperty(true)
   @get:OptionTag("SHOW_MEMORY_INDICATOR") var showMemoryIndicator by storedProperty(false)
+  @get:OptionTag("ALLOW_MERGE_BUTTONS") var allowMergeButtons by storedProperty(true)
+  @get:OptionTag("SHOW_MAIN_TOOLBAR") var showMainToolbar by storedProperty(false)
+  @get:OptionTag("SHOW_STATUS_BAR") var showStatusBar by storedProperty(true)
+  @get:OptionTag("SHOW_NAVIGATION_BAR") var showNavigationBar by storedProperty(true)
+  @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS") var alwaysShowWindowsButton by storedProperty(false)
+  @get:OptionTag("CYCLE_SCROLLING") var cycleScrolling by storedProperty(true)
+  @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR") var scrollTabLayoutInEditor by storedProperty(true)
+  @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by storedProperty(true)
+  @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by storedProperty(true)
+  @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(1)
 
-  @JvmField var ALLOW_MERGE_BUTTONS = true
-  @JvmField var SHOW_MAIN_TOOLBAR = false
-  @JvmField var SHOW_STATUS_BAR = true
-  @JvmField var SHOW_NAVIGATION_BAR = true
-  @JvmField var ALWAYS_SHOW_WINDOW_BUTTONS = false
-  @JvmField var CYCLE_SCROLLING = true
-  @JvmField var SCROLL_TAB_LAYOUT_IN_EDITOR = true
-  @JvmField var HIDE_TABS_IF_NEED = true
-  @JvmField var SHOW_CLOSE_BUTTON = true
-  @JvmField var EDITOR_TAB_PLACEMENT = 1
   @JvmField var HIDE_KNOWN_EXTENSION_IN_TABS = false
   @JvmField var SHOW_ICONS_IN_QUICK_NAVIGATION = true
   @JvmField var CLOSE_NON_MODIFIED_FILES_FIRST = false
   @JvmField var ACTIVATE_MRU_EDITOR_ON_CLOSE = false
   @JvmField var ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false
-  @JvmField var IDE_AA_TYPE = AntialiasingType.SUBPIXEL
-  @JvmField var EDITOR_AA_TYPE = AntialiasingType.SUBPIXEL
+  @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
+  @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @JvmField var COLOR_BLINDNESS: ColorBlindness? = null
   @JvmField var MOVE_MOUSE_ON_DEFAULT_BUTTON = false
   @JvmField var ENABLE_ALPHA_MODE = false
@@ -111,8 +141,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField var HIDE_NAVIGATION_ON_FOCUS_LOSS = true
   @JvmField var DND_WITH_PRESSED_ALT_ONLY = false
   @JvmField var DEFAULT_AUTOSCROLL_TO_SOURCE = false
-  @Transient
-  @JvmField var PRESENTATION_MODE = false
+  @Transient var presentationMode = false
   @JvmField var PRESENTATION_MODE_FONT_SIZE = 24
   @JvmField var MARK_MODIFIED_TABS_WITH_ASTERISK = false
   @JvmField var SHOW_TABS_TOOLTIPS = true
@@ -147,7 +176,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   private fun tweakPlatformDefaults() {
     // TODO[anton] consider making all IDEs use the same settings
     if (PlatformUtils.isAppCode()) {
-      SCROLL_TAB_LAYOUT_IN_EDITOR = true
+      scrollTabLayoutInEditor = true
       ACTIVATE_RIGHT_EDITOR_ON_CLOSE = true
       SHOW_ICONS_IN_MENUS = false
     }
@@ -164,8 +193,10 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
    * Notifies all registered listeners that UI settings has been changed.
    */
   fun fireUISettingsChanged() {
-    @Suppress("DEPRECATION")
-    HIDE_TOOL_STRIPES = hideToolStripes
+    updateDeprecatedProperties()
+
+    // todo remove when all old properties will be converted
+    incrementModificationCount()
 
     IconLoader.setFilter(ColorBlindnessSupport.get(COLOR_BLINDNESS)?.filter)
 
@@ -174,6 +205,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
+  }
+
+  @Suppress("DEPRECATION")
+  private fun updateDeprecatedProperties() {
+    HIDE_TOOL_STRIPES = hideToolStripes
+    SHOW_MAIN_TOOLBAR = showMainToolbar
+    CYCLE_SCROLLING = cycleScrolling
+    SHOW_CLOSE_BUTTON = showCloseButton
+    EDITOR_AA_TYPE = editorAAType
+    PRESENTATION_MODE = presentationMode
   }
 
   private fun initDefFont() {
@@ -200,16 +241,15 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   override fun loadState(state: UISettings) {
     XmlSerializerUtil.copyBean(state, this)
     resetModificationCount()
-    @Suppress("DEPRECATION")
-    HIDE_TOOL_STRIPES = hideToolStripes
+    updateDeprecatedProperties()
 
     // Check tab placement in editor
-    if (EDITOR_TAB_PLACEMENT != TABS_NONE &&
-        EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
-        EDITOR_TAB_PLACEMENT != SwingConstants.LEFT &&
-        EDITOR_TAB_PLACEMENT != SwingConstants.BOTTOM &&
-        EDITOR_TAB_PLACEMENT != SwingConstants.RIGHT) {
-      EDITOR_TAB_PLACEMENT = SwingConstants.TOP
+    if (editorTabPlacement != TABS_NONE &&
+        editorTabPlacement != SwingConstants.TOP &&
+        editorTabPlacement != SwingConstants.LEFT &&
+        editorTabPlacement != SwingConstants.BOTTOM &&
+        editorTabPlacement != SwingConstants.RIGHT) {
+      editorTabPlacement = SwingConstants.TOP
     }
 
     // Check that alpha delay and ratio are valid
@@ -269,13 +309,21 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
     @JvmStatic
     val instance: UISettings
+      get() = instanceOrNull!!
+
+    @JvmStatic
+    val instanceOrNull: UISettings?
       get() {
         var result = _instance
         if (result == null) {
+          if (ApplicationManager.getApplication() == null) {
+            return null
+          }
+
           result = ServiceManager.getService(UISettings::class.java)
           _instance = result
         }
-        return result!!
+        return result
       }
 
     /**
@@ -338,17 +386,17 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       setupFractionalMetrics(g2d)
     }
 
-  /**
-   * @see #setupAntialiasing(Graphics)
-   */
-  public static void setupComponentAntialiasing(JComponent component) {
-    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
-  }
+    /**
+     * @see #setupAntialiasing(Graphics)
+     */
+    @JvmStatic
+    fun setupComponentAntialiasing(component: JComponent) {
+      component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent())
+    }
 
-  public static void setupEditorAntialiasing(JComponent component) {
-    AntialiasingType aaType = getInstance().EDITOR_AA_TYPE;
-    if (aaType != null) {
-      component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaType.getTextInfo());
+    @JvmStatic
+    fun setupEditorAntialiasing(component: JComponent) {
+      instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
     }
   }
 }

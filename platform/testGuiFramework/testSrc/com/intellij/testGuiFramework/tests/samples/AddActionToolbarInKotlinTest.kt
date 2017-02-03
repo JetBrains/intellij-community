@@ -20,16 +20,14 @@ import com.intellij.testGuiFramework.impl.GuiTestCase
 import org.junit.Ignore
 import org.junit.Test
 
-
 class AddActionToolbarInKotlinTestTest : GuiTestCase() {
-
   @Test @Ignore
   @Throws(Exception::class)
   fun testAddActionToolbar() {
 
     simpleProject {
 
-      if (!UISettings.instance.SHOW_MAIN_TOOLBAR) invokeMenuPath("View", "Toolbar")
+      if (!UISettings.instance.showMainToolbar) invokeMenuPath("View", "Toolbar")
       shortcut(keyStroke = "meta comma")
 
       dialog("Preferences") {

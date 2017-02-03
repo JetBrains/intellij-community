@@ -87,9 +87,9 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
                                   @NotNull DaemonCodeAnalyzerSettings ds,
                                   String before, String after, boolean value) {
     // @formatter:off
-    p.setValue(before + "SHOW_STATUS_BAR",          valueOf(ui.SHOW_STATUS_BAR));           ui.SHOW_STATUS_BAR          = p.getBoolean(after + "SHOW_STATUS_BAR",  value); 
-    p.setValue(before + "SHOW_MAIN_TOOLBAR",        valueOf(ui.SHOW_MAIN_TOOLBAR));         ui.SHOW_MAIN_TOOLBAR        = p.getBoolean(after + "SHOW_MAIN_TOOLBAR", value); 
-    p.setValue(before + "SHOW_NAVIGATION_BAR",      valueOf(ui.SHOW_NAVIGATION_BAR));       ui.SHOW_NAVIGATION_BAR      = p.getBoolean(after + "SHOW_NAVIGATION_BAR", value); 
+    p.setValue(before + "SHOW_STATUS_BAR",          valueOf(ui.getShowStatusBar()));           ui.setShowStatusBar(p.getBoolean(after + "SHOW_STATUS_BAR",  value));
+    p.setValue(before + "SHOW_MAIN_TOOLBAR",        valueOf(ui.getShowMainToolbar()));         ui.setShowMainToolbar(p.getBoolean(after + "SHOW_MAIN_TOOLBAR", value));
+    p.setValue(before + "SHOW_NAVIGATION_BAR",      valueOf(ui.getShowNavigationBar()));       ui.setShowNavigationBar(p.getBoolean(after + "SHOW_NAVIGATION_BAR", value));
 
     p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN", valueOf(eo.IS_FOLDING_OUTLINE_SHOWN));  eo.IS_FOLDING_OUTLINE_SHOWN = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN", value); 
     p.setValue(before + "IS_WHITESPACES_SHOWN",     valueOf(eo.IS_WHITESPACES_SHOWN));      eo.IS_WHITESPACES_SHOWN     = p.getBoolean(after + "IS_WHITESPACES_SHOWN", value); 
@@ -102,7 +102,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "SHOW_METHOD_SEPARATORS",   valueOf(ds.SHOW_METHOD_SEPARATORS));    ds.SHOW_METHOD_SEPARATORS   = p.getBoolean(after + "SHOW_METHOD_SEPARATORS", value);
     
     p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.getHideToolStripes()));         ui.setHideToolStripes(p.getBoolean(after + "HIDE_TOOL_STRIPES", !value));
-    p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
+    p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.getEditorTabPlacement()));      ui.setEditorTabPlacement(p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE));
     // @formatter:on
   }
 

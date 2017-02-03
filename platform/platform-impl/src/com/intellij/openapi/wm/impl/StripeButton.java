@@ -310,6 +310,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     updateState();
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -358,7 +359,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private void updateState() {
     ToolWindowImpl window = myDecorator.getToolWindow();
     boolean toShow = window.isAvailable() || window.isPlaceholderMode();
-    if (UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
+    if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
       setVisible(window.isShowStripeButton() || isSelected());
     }
     else {

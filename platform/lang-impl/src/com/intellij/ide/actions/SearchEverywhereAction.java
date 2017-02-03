@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -722,7 +722,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     registerDataProvider(panel, project);
     final RelativePoint showPoint;
     if (parent != null) {
-      int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
+      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
       if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
         height -= 20;
       }

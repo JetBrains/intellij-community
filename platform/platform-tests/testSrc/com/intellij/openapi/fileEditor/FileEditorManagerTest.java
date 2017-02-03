@@ -117,8 +117,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testStoringCaretStateForFileWithFoldingsWithNoTabs() throws Exception {
-    int savedValue = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
-    UISettings.getInstance().EDITOR_TAB_PLACEMENT = UISettings.TABS_NONE;
+    int savedValue = UISettings.getInstance().getEditorTabPlacement();
+    UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     try {
       VirtualFile file = getFile("/src/Test.java");
       assertNotNull(file);
@@ -151,7 +151,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       assertEquals(textLength, editor.getSelectionModel().getSelectionEnd());
     }
     finally {
-      UISettings.getInstance().EDITOR_TAB_PLACEMENT = savedValue;
+      UISettings.getInstance().setEditorTabPlacement(savedValue);
     }
   }
 

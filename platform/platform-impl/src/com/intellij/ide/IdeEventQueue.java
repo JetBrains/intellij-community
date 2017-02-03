@@ -1064,11 +1064,11 @@ public class IdeEventQueue extends EventQueue {
           myWaitingForAltRelease = false;
         }
         else {
-          if (ApplicationManager.getApplication() == null ||
-              UISettings.getInstance() == null ||
+          UISettings uiSettings = UISettings.getInstanceOrNull();
+          if (uiSettings == null ||
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
-              !(UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().PRESENTATION_MODE)) {
+              !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
             return false;
           }
 

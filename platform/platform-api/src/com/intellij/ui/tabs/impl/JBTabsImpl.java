@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -328,7 +328,7 @@ public class JBTabsImpl extends JComponent
       entry.getValue().setInactiveStateImage(null);
     }
     boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
+    boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
     boolean wasSingleRow = isSingleRow();
     if (oldHideTabsIfNeed != newHideTabsIfNeed) {
       if (mySingleRowLayout != null) {

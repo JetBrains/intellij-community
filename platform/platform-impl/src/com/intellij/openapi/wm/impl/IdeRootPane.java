@@ -319,11 +319,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility(){
-    myToolbar.setVisible(UISettings.getInstance().SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
+    myToolbar.setVisible(UISettings.getInstance().getShowMainToolbar() && !UISettings.getInstance().getPresentationMode());
   }
 
   private void updateStatusBarVisibility(){
-    myStatusBar.setVisible(UISettings.getInstance().SHOW_STATUS_BAR && !UISettings.getInstance().PRESENTATION_MODE);
+    myStatusBar.setVisible(UISettings.getInstance().getShowStatusBar() && !UISettings.getInstance().getPresentationMode());
   }
 
   public void installNorthComponents(final Project project) {

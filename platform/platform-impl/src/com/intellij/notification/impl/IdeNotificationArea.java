@@ -109,7 +109,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
-    if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
       setVisible(true);
       setIcon(icon);
     }

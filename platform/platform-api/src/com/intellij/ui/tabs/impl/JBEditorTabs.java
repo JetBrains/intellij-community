@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().HIDE_TABS_IF_NEED && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
@@ -118,6 +118,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
 
 
+  @Override
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -167,6 +168,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 
+  @Override
   public boolean isAlphabeticalMode() {
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
@@ -232,6 +234,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return getPainter().getEmptySpaceColor();
   }
 
+  @Override
   protected void paintSelectionAndBorder(Graphics2D g2d) {
     if (getSelectedInfo() == null || isHideTabs()) return;
 
@@ -253,6 +256,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return getPainter().getBackgroundColor();
   }
 
+  @Override
   public Color getForeground() {
     return UIUtil.getLabelForeground();
   }

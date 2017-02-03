@@ -76,7 +76,7 @@ class UiInfoUsageCollector extends UsagesCollector {
   }
 
   private static int tabPlace() {
-    return UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+    return UISettings.getInstance().getEditorTabPlacement();
   }
 
   private static int recent() {
@@ -88,14 +88,14 @@ class UiInfoUsageCollector extends UsagesCollector {
   }
 
   private static boolean status() {
-    return UISettings.getInstance().SHOW_STATUS_BAR;
+    return UISettings.getInstance().getShowStatusBar();
   }
 
   private static boolean toolbar() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    return UISettings.getInstance().getShowMainToolbar();
   }
 
   private static boolean navbar() {
-    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    return UISettings.getInstance().getShowNavigationBar();
   }
 }

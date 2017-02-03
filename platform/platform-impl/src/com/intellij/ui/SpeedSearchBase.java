@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (isMatchingElement(element, _s)) return element;
     }
 
-    if (UISettings.getInstance().CYCLE_SCROLLING) {
+    if (UISettings.getInstance().getCycleScrolling()) {
       final ListIterator<Object> i = getElementIterator(0);
       while (i.hasNext()) {
         final Object element = i.next();
@@ -259,7 +259,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (isMatchingElement(element, _s)) return element;
     }
 
-    if (UISettings.getInstance().CYCLE_SCROLLING) {
+    if (UISettings.getInstance().getCycleScrolling()) {
       final ListIterator<Object> i = getElementIterator(getElementCount());
       while (i.hasPrevious()) {
         final Object element = i.previous();
