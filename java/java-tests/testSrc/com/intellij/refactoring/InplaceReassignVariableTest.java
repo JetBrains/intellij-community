@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 
 public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTest {
@@ -54,6 +55,7 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
       invokeRefactoring();
       ReassignVariableUtil.reassign(getEditor());
       assertNull(TemplateManagerImpl.getTemplateState(getEditor()));
+      assertNull(AbstractInplaceIntroducer.getActiveIntroducer(getEditor()));
 
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
