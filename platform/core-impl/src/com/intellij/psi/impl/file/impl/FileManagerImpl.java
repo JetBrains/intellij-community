@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -52,14 +53,13 @@ import java.util.concurrent.ConcurrentMap;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
+  private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
 
   private final PsiManagerImpl myManager;
   private final FileIndexFacade myFileIndex;
 
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = ContainerUtil.createConcurrentWeakValueMap();
-  // BOTH key and value are weakly reachable because light files should not leak too
-  private final ConcurrentMap<VirtualFile, FileViewProvider> myLightVFileToViewProviderMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
 
   private boolean myInitialized;
   private boolean myDisposed;
@@ -88,7 +88,6 @@ public class FileManagerImpl implements FileManager {
   public void processQueue() {
     // just to call processQueue()
     myVFileToViewProviderMap.remove(NULL);
-    myLightVFileToViewProviderMap.remove(NULL);
   }
 
   @TestOnly
@@ -195,7 +194,6 @@ public class FileManagerImpl implements FileManager {
         markInvalidated(provider);
       }
       myVFileToViewProviderMap.clear();
-      myLightVFileToViewProviderMap.clear();
     }
     finally {
       DebugUtil.finishPsiModification();
@@ -225,7 +223,7 @@ public class FileManagerImpl implements FileManager {
 
     viewProvider = createFileViewProvider(file, true);
     if (file instanceof LightVirtualFile) {
-      return ConcurrencyUtil.cacheOrGet(myLightVFileToViewProviderMap, file, viewProvider);
+      return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, viewProvider);
   }
@@ -234,7 +232,7 @@ public class FileManagerImpl implements FileManager {
   public FileViewProvider findCachedViewProvider(@NotNull final VirtualFile file) {
     FileViewProvider viewProvider = getFromInjected(file);
     if (viewProvider == null) viewProvider = myVFileToViewProviderMap.get(file);
-    if (viewProvider == null) viewProvider = myLightVFileToViewProviderMap.get(file);
+    if (viewProvider == null) viewProvider = file.getUserData(myPsiHardRefKey);
     return viewProvider;
   }
 
@@ -267,13 +265,11 @@ public class FileManagerImpl implements FileManager {
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (fileViewProvider == null) {
         myVFileToViewProviderMap.remove(virtualFile);
-        myLightVFileToViewProviderMap.remove(virtualFile);
       }
       else {
         if (virtualFile instanceof LightVirtualFile) {
-          myLightVFileToViewProviderMap.put(virtualFile, fileViewProvider);
-        }
-        else {
+          virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
+        } else {
           myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
         }
       }
@@ -505,12 +501,13 @@ public class FileManagerImpl implements FileManager {
     if (document != null) {
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).associatePsi(document, null);
     }
+    virtualFile.putUserData(myPsiHardRefKey, null);
   }
 
   @Nullable
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file) {
     FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
-    if (fileViewProvider == null) fileViewProvider = myLightVFileToViewProviderMap.get(file);
+    if (fileViewProvider == null) fileViewProvider = file.getUserData(myPsiHardRefKey);
     return fileViewProvider instanceof SingleRootFileViewProvider
            ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
