@@ -73,11 +73,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
-  public JBOptionButton(Action action, Action[] options, boolean paintDefaultWhenSingle) {
-    this(action, options);
-    myPaintDefaultIfSingle = paintDefaultWhenSingle;
-  }
-
   @Override
   public void addNotify() {
     super.addNotify();
@@ -415,5 +410,9 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   public void setOkToProcessDefaultMnemonics(boolean ok) {
     myOkToProcessDefaultMnemonics = ok;
+  }
+
+  public void setPaintDefaultIfSingle(boolean value) {
+    myPaintDefaultIfSingle = value;
   }
 }

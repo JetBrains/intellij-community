@@ -19,6 +19,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -317,7 +318,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
     public AbstractStringBuilderFix(PsiVariable variable) {
       myName = variable.getName();
-      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ? "StringBuilder" : "StringBuffer";
+      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
+                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
     }
 
     @NotNull
@@ -326,7 +328,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         return ct.text(initializer);
       }
       String text = initializer == null || ExpressionUtils.isLiteral(initializer, "") ? "" : ct.text(initializer);
-      return "new java.lang." + myTargetType + "(" + text + ")";
+      return "new " + myTargetType + "(" + text + ")";
     }
 
     void replaceAll(PsiVariable variable,
@@ -526,7 +528,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       ControlFlowUtils.InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(variable, loop);
       String newName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(variable.getName() + "Builder", loop, true);
       String newStringBuilder =
-        "java.lang." + myTargetType + " " + newName + "=new java.lang." + myTargetType + "(" + variable.getName() + ");";
+        myTargetType + " " + newName + "=new " + myTargetType + "(" + variable.getName() + ");";
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       Object marker = new Object();
       PsiTreeUtil.mark(loop, marker);
@@ -584,7 +586,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, myTargetType);
+      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, StringUtil.getShortName(myTargetType));
     }
 
     @Nls
@@ -611,7 +613,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if (typeElement == null) return;
       CommentTracker ct = new CommentTracker();
       replaceAll(variable, variable, null, ct);
-      ct.replace(typeElement, "java.lang." + myTargetType);
+      ct.replace(typeElement, myTargetType);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         ct.replace(initializer, generateNewStringBuilder(initializer, ct));
@@ -624,7 +626,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, myTargetType);
+      return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, StringUtil.getShortName(myTargetType));
     }
 
     @Nls

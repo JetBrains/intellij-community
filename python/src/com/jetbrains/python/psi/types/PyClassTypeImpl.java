@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +52,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.*;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.resolveTopLevelMember;
 
 /**
  * @author yole
@@ -246,7 +250,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (inherited) {
+    if (inherited && !PyNames.INIT.equals(name) && !PyNames.NEW.equals(name)) {
       final List<? extends RatedResolveResult> typeMembers = resolveMetaClassMember(name, location, direction, resolveContext);
       if (typeMembers != null) {
         return typeMembers;
