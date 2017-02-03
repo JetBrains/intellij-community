@@ -61,20 +61,6 @@ internal class BeanWithProperty {
 }
 
 internal class XmlSerializerTest {
-  @Test fun internalVar() {
-    @Tag("bean")
-    class Foo {
-      internal var PLACES_MAP = ""
-    }
-
-    val data = Foo()
-    data.PLACES_MAP = "new"
-    doSerializerTest("""
-    <bean>
-      <option name="PLACES_MAP" value="new" />
-    </bean>""", data)
-  }
-
   @Test fun annotatedInternalVar() {
     @Tag("bean")
     class Foo {
