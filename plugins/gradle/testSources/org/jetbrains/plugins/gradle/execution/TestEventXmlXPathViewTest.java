@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.execution.test.runner.events;
+package org.jetbrains.plugins.gradle.execution;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventXmlView;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventXmlXPathView;
 
-/**
- * @author Vladislav.Soroka
- * @since 2/28/14
- */
-public interface TestEvent {
-  void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;
+public class TestEventXmlXPathViewTest extends TestEventXmlViewTestCase {
+  @NotNull
+  @Override
+  protected TestEventXmlView load(@NotNull final String xml) throws Exception {
+    return new TestEventXmlXPathView(xml);
+  }
 }

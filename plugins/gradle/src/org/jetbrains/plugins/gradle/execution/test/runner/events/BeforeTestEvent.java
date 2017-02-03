@@ -18,9 +18,9 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.util.List;
 
@@ -35,11 +35,11 @@ public class BeforeTestEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testId = getTestId(eventXml);
-    final String parentTestId = getParentTestId(eventXml);
-    final String name = getTestName(eventXml);
-    final String fqClassName = getTestClassName(eventXml);
+  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+    final String testId = eventXml.getTestId();
+    final String parentTestId = eventXml.getTestParentId();
+    final String name = eventXml.getTestName();
+    final String fqClassName = eventXml.getTestClassName();
 
     String locationUrl = findLocationUrl(name, fqClassName);
     final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
