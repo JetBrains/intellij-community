@@ -191,7 +191,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   /**
    * Process is finished. Do all checks you need to make sure your test passed.
    *
-   * @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff.
+   * @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
+   *               {@link PyAbstractTestProcessRunner#getFormattedTestTree()}
    *               Check concrete runner documentation
    * @param stdout process stdout
    * @param stderr process stderr
