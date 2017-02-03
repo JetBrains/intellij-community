@@ -86,7 +86,7 @@ public interface TestEventXmlView {
   /**
    * {@link XmlParserException} indicates errors during xml processing.
    */
-  public static class XmlParserException extends Exception {
+  class XmlParserException extends Exception {
     public XmlParserException(final Throwable cause) {
       super(cause);
     }
