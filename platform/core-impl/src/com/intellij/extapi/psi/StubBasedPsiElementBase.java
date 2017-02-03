@@ -22,7 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -143,11 +145,17 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return mySubstrateRef.getNode();
   }
 
-  private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, @NotNull FileElement fileElement) {
+  private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, @NotNull final FileElement fileElement) {
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
     String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : "is null";
-    String astString = DebugUtil.treeToString(fileElement, true);
+    String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true, new Computable<String>() {
+      @Override
+      public String compute() {
+        return DebugUtil.treeToString(fileElement, true);
+      }
+    });
+    if (astString == null) astString = "failed to compute";
     if (!ourTraceStubAstBinding) {
       stubString = StringUtil.trimLog(stubString, 1024);
       astString = StringUtil.trimLog(astString, 1024);
