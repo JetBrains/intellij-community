@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
@@ -52,6 +54,7 @@ public class PyDataView implements DumbAware {
 
   @NotNull private final Project myProject;
   private JBEditorTabs myTabs;
+  private final Map<ProcessHandler, TabInfo> mySelectedInfos = new ConcurrentHashMap<>();
 
   public PyDataView(@NotNull Project project) {
     myProject = project;
@@ -89,6 +92,7 @@ public class PyDataView implements DumbAware {
   }
 
   public void updateTabs(@NotNull ProcessHandler handler) {
+    saveSelectedInfo();
     for (TabInfo info : myTabs.getTabs()) {
       PyDataViewerPanel panel = getPanel(info);
       PyFrameAccessor accessor = panel.getFrameAccessor();
@@ -98,10 +102,29 @@ public class PyDataView implements DumbAware {
       boolean shouldBeShown = Comparing.equal(handler, ((PyDebugProcess)accessor).getProcessHandler());
       info.setHidden(!shouldBeShown);
     }
+    restoreSelectedInfo(handler);
     if (myTabs.getSelectedInfo() == null) {
       PyFrameAccessor accessor = getFrameAccessor(handler);
       if (accessor != null) {
         addTab(accessor);
+      }
+    }
+  }
+
+  private void restoreSelectedInfo(@NotNull ProcessHandler handler) {
+    TabInfo savedSelection = mySelectedInfos.get(handler);
+    if (savedSelection != null) {
+      myTabs.select(savedSelection, true);
+      mySelectedInfos.remove(handler);
+    }
+  }
+
+  private void saveSelectedInfo() {
+    TabInfo selectedInfo = myTabs.getSelectedInfo();
+    if (!hasOnlyEmptyTab() && selectedInfo != null) {
+      PyFrameAccessor accessor = getPanel(selectedInfo).getFrameAccessor();
+      if (accessor instanceof PyDebugProcess) {
+        mySelectedInfos.put(((PyDebugProcess)accessor).getProcessHandler(), selectedInfo);
       }
     }
   }
