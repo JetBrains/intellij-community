@@ -79,7 +79,7 @@ class KotlinXmlSerializerTest {
   }
 }
 
-private enum class IgnorePolicy constructor(val text: String) {
+private enum class IgnorePolicy(val text: String) {
   DEFAULT("Do not ignore"),
   TRIM_WHITESPACES("Trim whitespaces"),
   IGNORE_WHITESPACES("Ignore whitespaces"),

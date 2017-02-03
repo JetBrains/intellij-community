@@ -419,38 +419,9 @@ public class ReflectionUtil {
       return constructor.newInstance();
     }
     catch (Exception e) {
-      // support Kotlin data classes - pass null as default value
-      for (Annotation annotation : aClass.getAnnotations()) {
-        String name = annotation.annotationType().getName();
-        if (name.equals("kotlin.Metadata") || name.equals("kotlin.jvm.internal.KotlinClass")) {
-          Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-          Exception exception = e;
-          ctorLoop:
-          for (Constructor<?> constructor1 : constructors) {
-            try {
-              try {
-                constructor1.setAccessible(true);
-              }
-              catch (Throwable ignored) { }
-
-              Class<?>[] parameterTypes = constructor1.getParameterTypes();
-              for (Class<?> type : parameterTypes) {
-                if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
-                  continue ctorLoop;
-                }
-              }
-
-              @SuppressWarnings("unchecked")
-              T t = (T)constructor1.newInstance(new Object[parameterTypes.length]);
-              return t;
-            }
-            catch (Exception e1) {
-              exception = e1;
-            }
-          }
-
-          ExceptionUtil.rethrow(exception);
-        }
+      T t = createAsDataClass(aClass);
+      if (t != null) {
+        return t;
       }
 
       ExceptionUtil.rethrow(e);
@@ -458,6 +429,66 @@ public class ReflectionUtil {
 
     // error will be thrown
     //noinspection ConstantConditions
+    return null;
+  }
+
+  @Nullable
+  private static <T> T createAsDataClass(@NotNull Class<T> aClass) {
+    // support Kotlin data classes - pass null as default value
+    for (Annotation annotation : aClass.getAnnotations()) {
+      String name = annotation.annotationType().getName();
+      if (!name.equals("kotlin.Metadata") && !name.equals("kotlin.jvm.internal.KotlinClass")) {
+        continue;
+      }
+
+      Constructor<?>[] constructors = aClass.getDeclaredConstructors();
+      Exception exception = null;
+      List<Constructor<?>> defaultCtors = new SmartList<Constructor<?>>();
+      ctorLoop:
+      for (Constructor<?> constructor : constructors) {
+        try {
+          try {
+            constructor.setAccessible(true);
+          }
+          catch (Throwable ignored) {
+          }
+
+          Class<?>[] parameterTypes = constructor.getParameterTypes();
+          for (Class<?> type : parameterTypes) {
+            if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
+              defaultCtors.add(constructor);
+              continue ctorLoop;
+            }
+          }
+
+          //noinspection unchecked
+          return (T)constructor.newInstance(new Object[parameterTypes.length]);
+        }
+        catch (Exception e) {
+          exception = e;
+        }
+      }
+
+      for (Constructor<?> constructor : defaultCtors) {
+        try {
+          try {
+            constructor.setAccessible(true);
+          }
+          catch (Throwable ignored) {
+          }
+
+          //noinspection unchecked
+          return (T)constructor.newInstance();
+        }
+        catch (Exception e) {
+          exception = e;
+        }
+      }
+
+      if (exception != null) {
+        ExceptionUtil.rethrow(exception);
+      }
+    }
     return null;
   }
 
