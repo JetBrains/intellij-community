@@ -124,20 +124,28 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    * @param event a wheel event with a precise scrolling delta used to calculate an offset in pixels
    */
   void updateViewPosition(MouseWheelEvent event) {
-    // Native code in our JDK uses 0.1 to convert pixels to units,
+    Component view = getView();
+    if (view == null) return; // nothing to scroll
+
+    // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
     // so we use 10 to restore amount of pixels to scroll.
-    double preciseValue = 10 * event.getPreciseWheelRotation();
+    int unitSizeInPixels = 10;
+    if (!SystemInfo.isMac) {
+      Font font = view.getFont();
+      unitSizeInPixels = event.getScrollAmount() * (font != null ? font.getSize() : JBUI.scale(10));
+    }
+    double delta = unitSizeInPixels * event.getPreciseWheelRotation();
     int x = (int)myViewX;
     int y = (int)myViewY;
     if (event.isShiftDown()) {
       int old = x;
-      myViewX = Math.max(0, myViewX + preciseValue);
+      myViewX = Math.max(0, myViewX + delta);
       x = (int)myViewX;
       if (x == old) return; // nothing changed
     }
     else {
       int old = y;
-      myViewY = Math.max(0, myViewY + preciseValue);
+      myViewY = Math.max(0, myViewY + delta);
       y = (int)myViewY;
       if (y == old) return; // nothing changed
     }

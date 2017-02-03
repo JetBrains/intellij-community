@@ -762,11 +762,20 @@ public class JBScrollPane extends SmoothScrollPane {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isPreciseRotationSupported() {
-    return SystemInfo.isJetbrainsJvm &&
-           SystemInfo.isMac &&
-           Registry.is("ide.scroll.precise") &&
-           !isTrueSmoothScrollingEnabled(); // do not use both implementations
+    if (PRECISE_ROTATION_SUPPORTED) {
+      if (SystemInfo.isMac) return Registry.is("ide.scroll.precise.rotation.mac");
+      if (SystemInfo.isWindows) return Registry.is("ide.scroll.precise.rotation.windows");
+    }
+    return false;
   }
+
+  /**
+   * Indicates whether the system property "idea.true.smooth.scrolling" is not set to "true"
+   * (it is needed to avoid possible conflicts with another scrolling implementation)
+   * and the current JVM contains our fixes for MouseWheelEvent#getPreciseWheelRotation.
+   */
+  private static final boolean PRECISE_ROTATION_SUPPORTED = !isTrueSmoothScrollingEnabled() &&
+                                                            (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9"));
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
