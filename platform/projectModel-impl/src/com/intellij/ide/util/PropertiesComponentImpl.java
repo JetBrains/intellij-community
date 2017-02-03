@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
-  private final Map<String, String> myMap = new LinkedHashMap<String, String>();
+  private final Map<String, String> myMap = new LinkedHashMap<>();
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
