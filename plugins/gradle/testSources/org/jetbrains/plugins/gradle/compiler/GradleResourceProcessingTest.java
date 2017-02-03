@@ -97,7 +97,7 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
   }
 
   @Test
-  public void testResourceProcessingWithIdeaGradlePluginCustomization() throws Exception {
+  public void testResourceProcessingWithIdeaPluginCustomization() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     importProject(
@@ -119,7 +119,7 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
   }
 
   @Test
-  public void testResourceProcessingWithIdeaGradlePluginCustomization_MergedProject() throws Exception {
+  public void testResourceProcessingWithIdeaPluginCustomization_Merged() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     importProjectUsingSingeModulePerGradleProject(

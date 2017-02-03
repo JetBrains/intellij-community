@@ -52,5 +52,5 @@ public class PowerSaveMode {
     void powerSaveStateChanged();
   }
 
-  public static Topic<Listener> TOPIC = Topic.create("PowerSaveMode.Listener", Listener.class);
+  public static final Topic<Listener> TOPIC = Topic.create("PowerSaveMode.Listener", Listener.class);
 }

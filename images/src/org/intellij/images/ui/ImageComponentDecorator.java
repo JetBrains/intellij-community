@@ -43,4 +43,16 @@ public interface ImageComponentDecorator {
   void setGridVisible(boolean visible);
 
   boolean isGridVisible();
+  
+  default boolean isFileSizeVisible() {
+    return true;
+  }
+  
+  default void setFileSizeVisible(boolean visible) {}
+  
+  default boolean isFileNameVisible() {
+    return true;
+  }
+  
+  default void setFileNameVisible(boolean visible) {}
 }

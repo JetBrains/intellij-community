@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
+class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
   fun check(text: String) {
-    checkInlays("A.java", text)
+    myFixture.configureByText("A.java", text)
+    myFixture.testInlays()
   }
 
   fun `test insert literal arguments`() {
@@ -51,11 +53,11 @@ class Groo {
   fun `test do not show for Exceptions`() {
     check("""
 class Fooo {
-  
+
   public void test() {
     Throwable t = new IllegalStateException("crime");
   }
-  
+
 }
 """)
   }
@@ -77,7 +79,7 @@ class Fooo {
 
 }""")
   }
-  
+
 
   fun `test no hints for generic builders`() {
     check("""
@@ -98,7 +100,7 @@ class Stream<T> {
 """)
   }
 
-  
+
   fun `test do not show hints on setters`() {
     check("""class Groo {
 
@@ -114,7 +116,7 @@ class Stream<T> {
 
 }""")
   }
-  
+
 
   fun `test single varargs hint`() {
     check("""
@@ -150,7 +152,7 @@ public class VarArgTest {
 """)
   }
 
-  
+
   fun `test multiple vararg hint`() {
     check("""
 public class VarArgTest {
@@ -167,8 +169,8 @@ public class VarArgTest {
 }
 """)
   }
-  
-  
+
+
   fun `test do not inline known subsequent parameter names`() {
     check("""
 public class Test {
@@ -196,7 +198,7 @@ public class Test {
 }
 """)
   }
-  
+
 
   fun `test show if can be assigned`() {
     check("""
@@ -234,10 +236,6 @@ public class CharSymbol {
   }
 
   fun `test inline literal arguments with crazy settings`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
@@ -246,34 +244,34 @@ public class Test {
   }
 }
 """)
-  
+
   }
 
 
   fun `test ignored methods`() {
     check("""
 public class Test {
-  
+
   List<String> list = new ArrayList<>();
   StringBuilder builder = new StringBuilder();
 
   public void main() {
     System.out.println("A");
     System.out.print("A");
-    
+
     list.add("sss");
     list.get(1);
     list.set(1, "sss");
-    
+
     setNewIndex(10);
     "sss".contains("s");
     builder.append("sdfsdf");
     "sfsdf".startWith("s");
     "sss".charAt(3);
-    
+
     clearStatus(<hint text="updatedRecently"/>false);
   }
-  
+
   void print(String s) {}
   void println(String s) {}
   void get(int index) {}
@@ -287,10 +285,6 @@ public class Test {
   }
 
   fun `test hints for generic arguments`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 
 class QList<E> {
@@ -373,7 +367,7 @@ public class VarArgTest {
   fun `test if any param matches inline all`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
     check(<hint text="x"/>10, <hint text="paramNameLength"/>1000);
   }
@@ -388,7 +382,7 @@ public class VarArgTest {
   fun `test inline common name pair if more that 2 args`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
     String s = "su";
     check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, s);
@@ -404,11 +398,11 @@ public class VarArgTest {
   fun `test ignore String methods`() {
     check("""
 class Test {
-  
+
   public void main() {
     String.format("line", "eee", "www");
   }
-  
+
 }
 """)
   }
@@ -416,7 +410,7 @@ class Test {
   fun `test inline common name pair if more that 2 args xxx`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
     check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, <hint text="x"/>"su");
   }
@@ -431,7 +425,7 @@ public class VarArgTest {
   fun `test inline this`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
     check(<hint text="test"/>this, <hint text="endIndex"/>1000);
   }
@@ -446,7 +440,7 @@ public class VarArgTest {
   fun `test inline strange methods`() {
     check("""
 public class Test {
-  
+
   void main() {
     createContent(<hint text="manager"/>null);
     createNewContent(<hint text="test"/>this);
@@ -470,13 +464,13 @@ class Builder {
 }
 
 class Test {
-  
+
   public void test() {
     Builder builder = new Builder();
     builder.await(<hint text="value"/>true);
     builder.bwait(false).timeWait(100);
   }
-  
+
 }
 """)
   }
@@ -502,7 +496,7 @@ class Test {
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
 public class Test {
-  
+
   public void test() {
     debug("Error message");
     info("Error message", new Object());
@@ -510,11 +504,11 @@ public class Test {
 
   void debug(String message) {}
   void info(String message, Object error) {}
-  
+
 }
 """)
   }
-  
+
   fun `test show single`() {
     check("""
 class Test {
@@ -539,13 +533,13 @@ class Test {
   fun `test do not show for setters`() {
     check("""
 class Test {
-  
+
   void main() {
     set(10);
   }
-  
+
   void set(int newValue) {}
-  
+
 }
 """)
   }
@@ -564,13 +558,13 @@ class Test {
   fun `test more blacklisted items`() {
     check("""
 class Test {
-  
+
   void test() {
     System.getProperty("aaa");
     System.setProperty("aaa", "bbb");
     new Key().create(10);
   }
-  
+
 }
 
 class Key {
@@ -580,11 +574,11 @@ class Key {
   }
 
   fun `test poly and binary expressions`() {
-    check("""
+      check("""
 class Test {
   void test() {
     xxx(<hint text="followTheSum"/>100);
-    check(<hint text="isShow">1 + 1);
+    check(<hint text="isShow"/>1 + 1);
     check(<hint text="isShow"/>1 + 1 + 1);
     yyy(<hint text="followTheSum"/>200);
   }
@@ -600,7 +594,7 @@ class Test {
     check("""
 class Test {
   void test() {
-    check(<hint text="isShow"/>1000);  
+    check(<hint text="isShow"/>1000);
   }
   void check(int isShow) {}
 }
@@ -608,7 +602,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
@@ -622,7 +616,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
@@ -636,7 +630,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -651,7 +645,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -665,7 +659,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {

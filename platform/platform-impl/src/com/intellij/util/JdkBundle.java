@@ -63,10 +63,12 @@ public class JdkBundle {
     myBundled = bundled;
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
     return createBundle(jvm, boot, bundled, true);
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled, boolean matchArch) {
     String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
     return createBundle(jvm, homeSubPath, boot, bundled, matchArch);
@@ -100,7 +102,7 @@ public class JdkBundle {
       return null; // Skip jre
     }
 
-    JdkBundle bundle = new JdkBundle(jvm, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
+    JdkBundle bundle = new JdkBundle(absJvmLocation, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
     // init already computed bitness
     bundle.bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
     return bundle;
@@ -134,12 +136,7 @@ public class JdkBundle {
   }
 
   static public boolean isBundledJDK(@NotNull JdkBundle bundle) {
-    return FileUtil.filesEqual(bundle.getAbsoluteLocation(), getBundledJDKAbsoluteLocation());
-  }
-
-  @NotNull
-  File getAbsoluteLocation() {
-    return myBundled ? new File(PathManager.getHomePath(), myBundleAsFile.getPath()) : myBundleAsFile;
+    return FileUtil.filesEqual(bundle.getLocation(), getBundledJDKAbsoluteLocation());
   }
 
   @NotNull
@@ -173,7 +170,7 @@ public class JdkBundle {
   public Bitness getBitness() {
     if (bitness == null) {
       String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
-      Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(getAbsoluteLocation(), homeSubPath);
+      Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(getLocation(), homeSubPath);
       assert nameArchVersionAndUpdate.first.second != null;
       bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
     }

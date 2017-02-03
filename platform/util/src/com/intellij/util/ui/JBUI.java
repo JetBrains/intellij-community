@@ -76,7 +76,7 @@ public class JBUI {
    * @see UIUtil#isJDKManagedHiDPIScreen()
    * @see UIUtil#isJDKManagedHiDPIScreen(Graphics2D)
    * @see UIUtil#drawImage(Graphics, Image, int, int, int, int, ImageObserver)
-   * @see UIUtil#createImage(Graphics2D, int, int, int)
+   * @see UIUtil#createImage(Graphics, int, int, int)
    * @see UIUtil#createImage(int, int, int)
    */
   public enum ScaleType {
@@ -137,7 +137,7 @@ public class JBUI {
   /**
    * The system scale factor, corresponding to the default monitor device.
    */
-  public static final Float SYSTEM_SCALE_FACTOR = sysScale();
+  private static final Float SYSTEM_SCALE_FACTOR = sysScale();
 
   /**
    * The user space scale factor.
@@ -189,12 +189,7 @@ public class JBUI {
     UIUtil.initSystemFontData();
     Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
-    int size;
-    if (fdata != null) {
-      size = fdata.getSecond();
-    } else {
-      size = Fonts.label().getSize();
-    }
+    int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
     return size / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
@@ -424,14 +419,13 @@ public class JBUI {
    * @return whether HiDPI-awareness is assumed for the scale factor
    */
   public static boolean isHiDPI(@Nullable Graphics2D g, ScaleType type) {
-    return g != null ? isHiDPI(g.getDeviceConfiguration().getDevice(), type) :
-                       isHiDPI((GraphicsDevice)null, type);
+    return isHiDPI(g == null ? null : g.getDeviceConfiguration().getDevice(), type);
   }
 
   /**
    * Returns whether the scale factor associated with the graphics device assumes HiDPI-awareness.
    *
-   * @param g the graphics device
+   * @param gd the graphics device
    * @param type the type of the scale factor
    * @return whether HiDPI-awareness is assumed for the scale factor
    */
@@ -461,7 +455,7 @@ public class JBUI {
    * Equivalent of {@link #isHiDPI(Graphics2D, ScaleType)} called for the graphics of specified component.
    *
    * @see #isHiDPI(Graphics2D, ScaleType)
-   * @param component if it's <code>null</code> the graphics of the default screen device will be used
+   * @param component if it's {@code null} the graphics of the default screen device will be used
    */
   public static boolean isHiDPI(@Nullable Component component) {
     Graphics graphics = component != null? component.getGraphics() : null;
@@ -559,25 +553,12 @@ public class JBUI {
     }
   }
 
-  public static class ComboBox {
-    /**
-     *        JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
-     *        comboBox.setEditable(true);
-     *        comboBox.setEditor(JBUI.ComboBox.compositeComboboxEditor(new JTextField(), new JLabel(AllIcons.Icon_CE)));
-     *
-     *        @param components an array of JComponent objects. The first one is the editable text component.
-     */
-/*    public static ComboBoxCompositeEditor compositeComboboxEditor  (JComponent ... components) {
-      return new ComboBoxCompositeEditor(components);
-    }*/
-  }
-
   /**
    * An Icon dynamically sticking to JBUI.scale to meet HiDPI.
    *
    * @author tav
    */
-  public static abstract class JBIcon implements Icon {
+  public abstract static class JBIcon implements Icon {
     private float myInitialJBUIScale = currentJBUIScale();
 
     protected JBIcon() {}
@@ -643,7 +624,7 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class ScalableJBIcon extends JBIcon implements ScalableIcon {
+  public abstract static class ScalableJBIcon extends JBIcon implements ScalableIcon {
     private float myScale = 1f;
 
     protected ScalableJBIcon() {}
@@ -718,7 +699,7 @@ public class JBUI {
    * @author tav
    * @author Aleksey Pivovarov
    */
-  public static abstract class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
+  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
     private CachingScalableJBIcon myScaledIconCache;
 
     protected CachingScalableJBIcon() {}
@@ -835,7 +816,7 @@ public class JBUI {
 
     @Override
     public boolean needUpdateJBUIScale(@Nullable Graphics2D g) {
-      return needUpdateJBUIScale() || (g != null && needUpdateJBUIScale(sysScale(g), ScaleType.SYS));
+      return needUpdateJBUIScale() || g != null && needUpdateJBUIScale(sysScale(g), ScaleType.SYS);
     }
 
     @Override
@@ -851,8 +832,8 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class AuxJBIcon extends JBIcon implements JBUIScaleTrackable {
-    private JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class AuxJBIcon extends JBIcon implements JBUIScaleTrackable {
+    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
 
     @Override
     public boolean updateJBUIScale() {
@@ -885,8 +866,8 @@ public class JBUI {
    *
    * @author tav
    */
-  public static abstract class AuxScalableJBIcon extends CachingScalableJBIcon implements JBUIScaleTrackable {
-    private JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class AuxScalableJBIcon extends CachingScalableJBIcon implements JBUIScaleTrackable {
+    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
 
     protected AuxScalableJBIcon() {}
 

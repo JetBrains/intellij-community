@@ -17,15 +17,13 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     private static final TokenSet OCT_CHARS = TokenSet.create(RegExpTT.OCT_CHAR, RegExpTT.BAD_OCT_VALUE);
@@ -48,23 +46,21 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.HEX;
         } else if (UNICODE_CHARS.contains(t)) {
             return Type.UNICODE;
-        } else if (t == TokenType.ERROR_ELEMENT) {
-            return Type.INVALID;
+        } else if (t == RegExpTT.NAMED_CHARACTER) {
+            return Type.NAMED;
         } else {
             return Type.CHAR;
         }
     }
 
     @Override
-    @Nullable
-    public Character getValue() {
+    public int getValue() {
       final String s = getUnescapedText();
       if (s.equals("\\") && getType() == Type.CHAR) return '\\';
       return unescapeChar(s);
     }
 
-    @Nullable
-    private static Character unescapeChar(String s) {
+    private static int unescapeChar(String s) {
         final int length = s.length();
         assert length > 0;
 
@@ -95,21 +91,30 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         return '\b';
                     case 'c':
                         return (char)(ch ^ 64);
+                    case 'N':
+                        if (length < idx + 3 || s.charAt(idx + 1) != '{' || s.charAt(length - 1) != '}') {
+                            return -1;
+                        }
+                        final int codePoint = UnicodeCharacterNames.getCodePoint(s.substring(idx + 2, length - 1));
+                        if (codePoint == -1) {
+                            return -1;
+                        }
+                        return codePoint;
                     case 'x':
-                      if (length <= idx + 1) return null;
+                      if (length <= idx + 1) return -1;
                       if (s.charAt(idx + 1) == '{') {
                         final char c = s.charAt(length - 1);
-                        return (c != '}') ? null : parseNumber(s, idx + 2, 16);
+                        return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
                       }
                       if (length == 3) {
                           return parseNumber(s, idx + 1, 16);
                       }
-                      return length == 4 ? parseNumber(s, idx + 1, 16) : null;
+                      return length == 4 ? parseNumber(s, idx + 1, 16) : -1;
                     case 'u':
-                        if (length <= idx + 1) return null;
+                        if (length <= idx + 1) return -1;
                         if (length > idx + 1 && s.charAt(idx + 1) == '{') {
                             final char c = s.charAt(length - 1);
-                            return (c != '}') ? null : parseNumber(s, idx + 2, 16);
+                            return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
                         }
                         if (length != 6) {
                             return ch;
@@ -130,10 +135,10 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             }
         }
 
-        return null;
+        return -1;
     }
 
-    private static Character parseNumber(String s, int offset, int radix) {
+    private static int parseNumber(String s, int offset, int radix) {
         int sum = 0;
         int i = offset;
         for (; i < s.length(); i++) {
@@ -143,11 +148,11 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             }
             sum = sum * radix + digit;
             if (sum > Character.MAX_CODE_POINT) {
-                return null;
+                return -1;
             }
         }
-        if (i - offset <= 0) return null; // no digits found
-        return (char)sum;
+        if (i - offset <= 0) return -1; // no digits found
+        return sum;
     }
 
     @Override

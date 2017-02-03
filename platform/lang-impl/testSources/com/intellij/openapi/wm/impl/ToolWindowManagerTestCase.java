@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -35,6 +36,7 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
   public void setUp() throws Exception {
     super.setUp();
     myManager = new ToolWindowManagerImpl(getProject(), WindowManagerEx.getInstanceEx(), ActionManager.getInstance());
+    Disposer.register(getTestRootDisposable(), myManager);
     myOldManager = (ToolWindowManagerEx)((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myManager);
     myManager.projectOpened();
   }

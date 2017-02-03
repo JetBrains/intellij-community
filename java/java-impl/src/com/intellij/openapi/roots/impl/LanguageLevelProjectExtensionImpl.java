@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -64,9 +65,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     if (myLanguageLevel != null) {
       element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
     }
-    Boolean aBoolean = getDefault();
-    if (aBoolean != null) {
-      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
+
+    if (!myProject.isDefault()) {
+      Boolean aBoolean = getDefault();
+      if (aBoolean != null) {
+        element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
+      }
     }
   }
 
@@ -93,6 +97,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     if (!myProject.isDefault()) {
+      ProjectRootManager.getInstance(myProject).incModificationCount();
       JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
   }

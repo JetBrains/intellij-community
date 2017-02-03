@@ -19,7 +19,7 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class LibraryTableBase implements PersistentStateComponentWithModificationTracker<Element>, LibraryTable, Disposable {
+public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
@@ -88,7 +88,6 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
     }
   }
 
-  @Override
   public long getStateModificationCount() {
     return myModificationCount;
   }

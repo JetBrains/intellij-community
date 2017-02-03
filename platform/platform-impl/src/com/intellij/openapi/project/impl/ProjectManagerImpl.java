@@ -28,6 +28,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -48,6 +49,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.GCUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +104,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
             listener.projectClosed(project);
           }
           ZipHandler.clearFileAccessorCache();
+          LaterInvocator.purgeExpiredItems();
         }
 
         @Override
@@ -208,10 +211,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return; // Check for leaked projects ~ every 20 tests
     }
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    for (int i = 0; i < 3 && getLeakedProjects().count() >= MAX_LEAKY_PROJECTS; i++) {
+      GCUtil.tryGcSoftlyReachableObjects();
+    }
+
+    System.gc();
 
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
-      List<Project> copy = getLeakedProjects().collect(Collectors.toList());
+      List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
       myProjects.clear();
       throw new TooManyProjectLeakedException(copy);
     }
@@ -255,8 +262,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project loadProject(@NotNull String filePath) throws IOException {
+    return loadProject(filePath, null);
+  }
+
+  @Override
+  @Nullable
+  public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      ProjectImpl project = createProject(null, new File(filePath).getAbsolutePath(), false);
+      ProjectImpl project = createProject(projectName, new File(filePath).getAbsolutePath(), false);
       initProject(project, null);
       return project;
     }
@@ -693,7 +706,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     for (ProjectManagerListener listener : myListeners) {
       try {
-        if (!listener.canCloseProject(project)) return false;
+        if (!listener.canCloseProject(project)) {
+          LOG.debug("close canceled by " + listener);
+          return false;
+        }
       }
       catch (Throwable e) {
         LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception

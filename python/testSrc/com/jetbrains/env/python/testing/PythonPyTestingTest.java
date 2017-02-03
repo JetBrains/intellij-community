@@ -3,6 +3,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -10,7 +11,8 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -66,12 +68,13 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
         return new PyTestTestProcessRunner("", 0) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyTestRunConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalPyTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null);
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
-            configuration.setTestToRun(fullFilePath.getPath());
+            configuration.getTarget().setTarget(fullFilePath.getPath());
+            configuration.getTarget().setTargetType(TestTargetType.PATH);
           }
         };
       }
@@ -81,8 +84,9 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertThat("No directory found in output", stdout,
-                          Matchers.containsString(String.format("Directory %s", myFixture.getTempDirPath())));
+        final String projectDir = myFixture.getProject().getBaseDir().getPath();
+        Assert.assertThat("No directory found in output", runner.getConsole().getText(),
+                          Matchers.containsString(String.format("Directory %s", PathUtil.toSystemDependentName(projectDir))));
       }
     });
   }
@@ -129,17 +133,15 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          /**
-           * We can't rerun one subtest (yield), so we rerun whole "test_even"
-           */
-          assertEquals(stderr, 7, runner.getAllTestsCount());
-          assertEquals(stderr, 3, runner.getPassedTestsCount());
-          assertEquals(stderr, 4, runner.getFailedTestsCount());
+          // Pytest supports [1] notation, so we only rerun failed
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }
-        assertEquals(stderr, 9, runner.getAllTestsCount());
-        assertEquals(stderr, 5, runner.getPassedTestsCount());
-        assertEquals(stderr, 4, runner.getFailedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 9, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 5, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
         Assert
           .assertThat("No test stdout", MockPrinter.fillPrinter(runner.findTestByName("testOne")).getStdOut(),
                       Matchers.startsWith("I am test1"));

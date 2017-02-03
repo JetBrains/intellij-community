@@ -15,15 +15,13 @@
  */
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.AbstractQuery;
 import com.intellij.util.FilteredQuery;
@@ -139,12 +137,12 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       Query<PsiClass> directQuery = DirectClassInheritorsSearch.search(parameters.getClassToProcess(), parameters.getScope(), parameters.isIncludeAnonymous());
       if (parameters.getNameCondition() != Conditions.<String>alwaysTrue()) {
         directQuery = new FilteredQuery<>(directQuery, psiClass -> parameters.getNameCondition()
-          .value(ApplicationManager.getApplication().runReadAction((Computable<String>)psiClass::getName)));
+          .value(ReadAction.compute(psiClass::getName)));
       }
       return AbstractQuery.wrapInReadAction(directQuery);
     }
     return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
-                                             psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
+                                             psiClass -> ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
   /**
@@ -163,7 +161,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)() -> {
+    return search(aClass, ReadAction.compute(() -> {
       if (!aClass.isValid()) {
         throw new ProcessCanceledException();
       }

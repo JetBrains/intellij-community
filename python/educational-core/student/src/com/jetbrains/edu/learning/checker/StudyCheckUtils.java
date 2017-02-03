@@ -131,15 +131,19 @@ public class StudyCheckUtils {
     }
     VirtualFile answerFile = pair.getFirst();
     TaskFile answerTaskFile = pair.getSecond();
-    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
-      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document == null) {
-        continue;
+    try {
+      for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
+        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        if (document == null) {
+          continue;
+        }
+        StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
+                                     virtualFile, document);
       }
-      StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
-                                   virtualFile, document);
     }
-    StudyUtils.deleteFile(answerFile);
+    finally {
+      StudyUtils.deleteFile(answerFile);
+    }
   }
 
 

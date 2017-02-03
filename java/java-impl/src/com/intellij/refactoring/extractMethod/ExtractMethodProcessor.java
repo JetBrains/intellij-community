@@ -1169,7 +1169,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         });
       }
-      else if (!PsiUtil.isLanguageLevel8OrHigher(method)){
+      else if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)){
         method.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();

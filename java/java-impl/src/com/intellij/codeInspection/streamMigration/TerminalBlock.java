@@ -186,6 +186,18 @@ class TerminalBlock {
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
+      if(PsiUtil.isLanguageLevel9OrHigher(first.getContainingFile()) && first instanceof PsiIfStatement) {
+        PsiIfStatement ifStatement = (PsiIfStatement)first;
+        PsiExpression condition = ifStatement.getCondition();
+        if(ifStatement.getElseBranch() == null && condition != null) {
+          PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+          if(ControlFlowUtils.statementBreaksLoop(thenStatement, getMainLoop())) {
+            TakeWhileOp op = new TakeWhileOp(condition, myVariable, true);
+            PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+            return new TerminalBlock(this, op, myVariable, leftOver);
+          }
+        }
+      }
       // extract map
       if(first instanceof PsiDeclarationStatement) {
         PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
@@ -306,7 +318,7 @@ class TerminalBlock {
     PsiExpressionList argumentList = initializer.getArgumentList();
     if (argumentList == null ||
         argumentList.getExpressions().length != 0 ||
-        getInitializerUsageStatus(var, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
+        ControlFlowUtils.getInitializerUsageStatus(var, getMainLoop()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }
     return var;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -470,8 +473,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
-      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
+    CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 
@@ -716,15 +718,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    VirtualFile file = position.getFile().getVirtualFile();
-    if (file == null) {
-      file = position.getFile().getOriginalFile().getVirtualFile();
+  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+    if (position != null) {
+      VirtualFile file = position.getFile().getVirtualFile();
+      if (file == null) {
+        file = position.getFile().getOriginalFile().getVirtualFile();
+      }
+      if (file != null) {
+        return new JavaXSourcePosition(position, file);
+      }
     }
-    if (file == null) {
-      return null;
-    }
-    return new JavaXSourcePosition(position, file);
+    return null;
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
@@ -981,6 +985,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * Provides mapping from decompiled file line number to the original source code line numbers
+   * @param psiFile decompiled file
+   * @param originalLine zero-based decompiled file line number
+   * @return zero-based source code line number
+   */
   public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file != null) {
@@ -988,10 +998,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (mapping != null) {
         int line = mapping.bytecodeToSource(originalLine + 1);
         if (line > -1) {
-          return line;
+          return line - 1;
         }
       }
     }
     return -1;
+  }
+
+  public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      if (file == null) {
+        return true;
+      }
+      else {
+        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
+      }
+    });
   }
 }

@@ -45,7 +45,6 @@ public class JUnit4TestListener extends RunListener {
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
-  private int myFinishedCount = 0;
 
   private Description myCurrentTest;
   private Map myWaitingQueue = new LinkedHashMap();
@@ -130,7 +129,6 @@ public class JUnit4TestListener extends RunListener {
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (Description)myStartedSuites.remove(i);
-      myFinishedCount = 0;
       myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
     }
 
@@ -195,7 +193,6 @@ public class JUnit4TestListener extends RunListener {
 
   private void testFinishedNoDumping(final String methodName) {
     if (methodName != null) {
-      myFinishedCount++;
       final long duration = currentTime() - myCurrentTestStart;
       myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) +
                             (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
@@ -216,16 +213,13 @@ public class JUnit4TestListener extends RunListener {
         testFailure(failure, description, messageName, CLASS_CONFIGURATION);
         classConfigurationFinished(description);
       }
-
-      if (myFinishedCount == 0) {
-        //only setup failures
+      if (myStartedSuites.isEmpty() || !description.equals(myStartedSuites.get(myStartedSuites.size() - 1))) {
         for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
           Description next = (Description)iterator.next();
           testStarted(next);
           testFailure(isIgnored ? failure : null, next, MapSerializerUtil.TEST_IGNORED);
           testFinished(next);
         }
-        myFinishedCount = 0;
       }
     }
     else {

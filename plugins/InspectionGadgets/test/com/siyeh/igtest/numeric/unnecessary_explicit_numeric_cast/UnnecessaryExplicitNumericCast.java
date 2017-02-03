@@ -83,3 +83,8 @@ public class UnnecessaryExplicitNumericCast {
   }
 
 }
+enum Numeric {
+  A((byte)10);
+
+  Numeric(byte b) {}
+}

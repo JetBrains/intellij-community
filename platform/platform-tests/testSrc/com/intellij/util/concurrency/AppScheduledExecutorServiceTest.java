@@ -20,9 +20,11 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
@@ -36,7 +38,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
-  public void testDelayedWorks() throws InterruptedException {
+  public void testDelayedWorks() throws InterruptedException, TimeoutException {
     final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
@@ -81,15 +83,10 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertTrue(f4.isDone());
 
     TimeoutUtil.sleep(delay/2);
-    long time = System.currentTimeMillis();
-    while (!f1.isDone() ||
-          !f2.isDone() ||
-          !f3.isDone() ||
-          !f4.isDone()) {
-      if (System.currentTimeMillis() > time + 10000) {
-        throw new AssertionError("Unfinished after 10 seconds");
-      }
-    }
+    waitFor(f1::isDone);
+    waitFor(f2::isDone);
+    waitFor(f3::isDone);
+    waitFor(f4::isDone);
 
     assertEquals(4, log.size());
     assertEquals(4, log.get(0).runnable);
@@ -147,7 +144,8 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
-  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws InterruptedException, ExecutionException {
+  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws InterruptedException, ExecutionException,
+                                                                                  TimeoutException {
     final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     // pre-start one thread
     Future<?> future = service.submit(EmptyRunnable.getInstance());
@@ -170,8 +168,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     TimeoutUtil.sleep(delay+200+300);
     assertTrue(f1.isDone());
-    assertTrue(f2.isDone());
-    assertTrue(f3.isDone());
+
+    waitFor(f2::isDone);
+    waitFor(f3::isDone);
     assertEquals(1, service.getBackendPoolExecutorSize());
 
     assertEquals(3, log.size());
@@ -241,5 +240,13 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       assertTrue(future.isDone());
     }
     assertEquals(log.toString(), N, log.size());
+  }
+
+  private static void waitFor(@NotNull BooleanSupplier runnable) throws TimeoutException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() < start + 60000) {
+      if (runnable.getAsBoolean()) return;
+    }
+    throw new TimeoutException();
   }
 }

@@ -17,13 +17,12 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -41,9 +40,8 @@ public class ImplementationSearcher {
   @Nullable
   PsiElement[] searchImplementations(Editor editor, PsiElement element, int offset) {
     TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-    boolean onRef = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
-    return searchImplementations(element, editor, onRef && ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
+    boolean onRef = ReadAction.compute(() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
+    return searchImplementations(element, editor, onRef && ReadAction.compute(() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
   }
 
   @Nullable
@@ -60,8 +58,7 @@ public class ImplementationSearcher {
   }
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<SearchScope>)() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+    return ReadAction.compute(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
   }
 
   @Nullable("For the case the search has been cancelled")
@@ -90,7 +87,7 @@ public class ImplementationSearcher {
   }
 
   private static void dumbModeNotification(@NotNull PsiElement element) {
-    Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)() -> element.getProject());
+    Project project = ReadAction.compute(() -> element.getProject());
     DumbService.getInstance(project).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 

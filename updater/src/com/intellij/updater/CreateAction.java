@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.updater;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -34,18 +31,28 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger().info("building PatchFile");
-    patchOutput.putNextEntry(new ZipEntry(myPath));
+    patchOutput.putNextEntry(new ZipEntry(getPath()));
+
     if (!newerFile.isDirectory()) {
-      if (Utils.isLink(newerFile)) {
+      FileType type = getFileType(newerFile);
+      writeFileType(patchOutput, type);
+      if (type == FileType.SYMLINK) {
         writeLinkInfo(newerFile, patchOutput);
-      } else {
-        writeExecutableFlag(patchOutput, newerFile);
+      }
+      else {
         Utils.copyFileToStream(newerFile, patchOutput);
       }
     }
 
     patchOutput.closeEntry();
+  }
+
+  private static void writeLinkInfo(File file, OutputStream out) throws IOException {
+    String target = Utils.readLink(file);
+    if (target.isEmpty()) throw new IOException("Invalid link: " + file);
+    byte[] bytes = target.getBytes("UTF-8");
+    out.write(bytes.length);
+    out.write(bytes);
   }
 
   @Override
@@ -58,7 +65,7 @@ public class CreateAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, myPath,
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(),
                                   ValidationResult.Action.CREATE,
                                   ValidationResult.ALREADY_EXISTS_MESSAGE,
                                   options);
@@ -76,25 +83,28 @@ public class CreateAction extends PatchAction {
     Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
-    ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
+    ZipEntry entry = Utils.getZipEntry(patchFile, getPath());
     if (entry.isDirectory()) {
       if (!toFile.mkdir()) {
-        throw new IOException("Unable to create directory " + myPath);
+        throw new IOException("Unable to create directory " + getPath());
       }
-    } else {
-      InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
-      try {
-        int filePermissions = in.read();
-        if (filePermissions > 1 ) {
-          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+    }
+    else {
+      try (InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry)) {
+        if (in == null) {
+          throw new IOException("Invalid entry " + getPath());
+        }
+
+        FileType type = readFileType(in);
+        if (type == FileType.SYMLINK) {
+          Utils.createLink(readLinkInfo(in), toFile);
         }
         else {
           Utils.copyStreamToFile(in, toFile);
-          Utils.setExecutable(toFile, filePermissions == 1 );
+          if (type == FileType.EXECUTABLE_FILE) {
+            Utils.setExecutable(toFile);
+          }
         }
-      }
-      finally {
-        in.close();
       }
     }
   }
@@ -111,6 +121,13 @@ public class CreateAction extends PatchAction {
     if (file != null && !file.isDirectory()) {
       Utils.delete(file);
     }
+  }
+
+  private static String readLinkInfo(InputStream in) throws IOException {
+    int length = in.read();
+    if (length <= 0) throw new IOException("Stream format error");
+    byte[] bytes = Utils.readBytes(in, length);
+    return new String(bytes, "UTF-8");
   }
 
   protected void doBackup(File toFile, File backupFile) {

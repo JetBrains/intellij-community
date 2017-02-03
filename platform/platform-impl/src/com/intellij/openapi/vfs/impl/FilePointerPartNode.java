@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ class FilePointerPartNode {
 
   private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   void checkConsistency() {
-    if (UNIT_TEST && !ApplicationInfoImpl.isInPerformanceTest()) {
+    if (UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       doCheckConsistency(false);
     }
   }
@@ -196,8 +197,7 @@ class FilePointerPartNode {
       pointersUnder += pointersToStore;
       return newNode;
     }
-    // else there is no match
-    // split
+    // else there is no match, split
     // try to make "/" start the splitted part
     if (index > start + 1 && index != path.length() && path.charAt(index - 1) == '/') index--;
     String pathRest = path.substring(index);
@@ -251,10 +251,10 @@ class FilePointerPartNode {
   @Nullable("null means this node's myFileAndUrl became invalid (e.g. after splitting into two other nodes)")
   // returns pair.second != null always
   Pair<VirtualFile, String> update() {
-    long lastUpdated = myLastUpdated;
-    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
+    final long lastUpdated = myLastUpdated;
+    final Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
     if (fileAndUrl == null) return null;
-    long fsModCount = ourManagingFS.getStructureModificationCount();
+    final long fsModCount = ourManagingFS.getStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;
@@ -290,7 +290,11 @@ class FilePointerPartNode {
     Pair<VirtualFile, String> result;
     if (changed) {
       result = Pair.create(file, url);
-      myFileAndUrl = result;
+      synchronized (VirtualFilePointerManager.getInstance()) {
+        Pair<VirtualFile, String> storedFileAndUrl = myFileAndUrl;
+        if (storedFileAndUrl == null || storedFileAndUrl != fileAndUrl) return null; // somebody splitted this node in the meantime, try to re-compute
+        myFileAndUrl = result;
+      }
     }
     else {
       result = fileAndUrl;

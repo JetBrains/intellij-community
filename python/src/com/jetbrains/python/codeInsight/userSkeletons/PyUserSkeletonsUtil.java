@@ -32,6 +32,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -132,7 +133,9 @@ public class PyUserSkeletonsUtil {
       final VirtualFile directory = getUserSkeletonsDirectory();
       if (directory != null) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
-        PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
+        PsiElement fileSkeleton = PyResolveImportUtil.resolveModuleAt(QualifiedName.fromDottedString(qName), psiDirectory,
+                                                                      PyResolveImportUtil.fromFoothold(foothold))
+          .stream().findFirst().orElse(null);
         if (fileSkeleton instanceof PsiDirectory) {
           fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton, foothold);
         }
@@ -190,6 +193,10 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
+        // TODO: Delete user-skeletons altogether, meanwhile disabled user-skeletons for modules already covered by PyTypeShed
+        if (PyTypeShed.INSTANCE.getWHITE_LIST().contains(moduleName)) {
+          return null;
+        }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
         for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
           final QualifiedName restored = provider.getCanonicalPath(qName, null);

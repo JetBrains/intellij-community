@@ -16,7 +16,6 @@
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,7 +133,7 @@ public class GitNewResetDialog extends DialogWrapper {
   }
 
   private static boolean isMultiRepo(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class).moreThanOneRoot();
+    return GitRepositoryManager.getInstance(project).moreThanOneRoot();
   }
 
   @NotNull

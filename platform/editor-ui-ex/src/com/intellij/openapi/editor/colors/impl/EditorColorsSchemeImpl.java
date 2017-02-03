@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.function.Function;
 
 import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 
@@ -84,5 +87,65 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     newScheme.setName(getName());
     newScheme.setDefaultMetaInfo(this);
     return newScheme;
+  }
+
+  @Override
+  protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
+    return compareAttributes(otherScheme, new ArrayList<>());
+  }
+
+  @Override
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
+    return compareColors(otherScheme, new ArrayList<>());
+  }
+
+  private boolean compareAttributes(@NotNull AbstractColorsScheme otherScheme,
+                                    @NotNull Collection<Function<TextAttributesKey, Boolean>> filters) {
+    for (TextAttributesKey key : myAttributesMap.keySet()) {
+      if (!isTextAttributeKeyIgnored(filters, key) && !getAttributes(key).equals(otherScheme.getAttributes(key))) {
+        return false;
+      }
+    }
+    filters.add(key -> myAttributesMap.containsKey(key));
+    if (myParentScheme instanceof EditorColorsSchemeImpl &&
+        !((EditorColorsSchemeImpl)myParentScheme).compareAttributes(otherScheme, filters)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isTextAttributeKeyIgnored(@NotNull Collection<Function<TextAttributesKey, Boolean>> filters,
+                                                   TextAttributesKey key) {
+    for (Function<TextAttributesKey, Boolean> filter : filters) {
+      if (filter.apply(key)) return true;
+    }
+    return false;
+  }
+  
+  private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
+                                    @NotNull Collection<Function<ColorKey, Boolean>> filters) {
+    for (ColorKey key : myColorsMap.keySet()) {
+      Color thisColor = getColor(key);
+      Color otherColor = otherScheme.getColor(key);
+      if (thisColor == null) {
+        return otherColor == null;
+      }
+      if (!isColorKeyIgnored(filters, key) && !thisColor.equals(otherColor)) {
+        return false;
+      }
+    }
+    filters.add(key -> myColorsMap.containsKey(key));
+    if (myParentScheme instanceof EditorColorsSchemeImpl &&
+        !((EditorColorsSchemeImpl)myParentScheme).compareColors(otherScheme, filters)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isColorKeyIgnored(@NotNull Collection<Function<ColorKey, Boolean>> filters, ColorKey key) {
+    for (Function<ColorKey,Boolean> filter : filters) {
+      if (filter.apply(key)) return false;
+    }
+    return true;
   }
 }

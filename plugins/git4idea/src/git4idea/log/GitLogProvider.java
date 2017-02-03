@@ -541,9 +541,13 @@ public class GitLogProvider implements VcsLogProvider {
       return (T)Boolean.TRUE;
     }
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
-      return (T)Boolean.valueOf(Registry.is("vcs.log.index.git"));
+      return (T)Boolean.valueOf(isIndexingOn());
     }
     return null;
+  }
+
+  public static boolean isIndexingOn() {
+    return Registry.is("vcs.log.index.git");
   }
 
   private static String prepareParameter(String paramName, String value) {

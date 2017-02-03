@@ -40,4 +40,6 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
     return new PyUnitTestProcessRunner(myScriptName, 0);
   }
+
+
 }

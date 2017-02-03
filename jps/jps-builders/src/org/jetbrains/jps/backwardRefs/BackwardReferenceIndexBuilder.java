@@ -55,19 +55,21 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-    final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
-    for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
-      boolean allAreDummyOrCompiled = true;
-      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
-        if (target instanceof ModuleBuildTarget && !myCompiledTargets.contains(target) && !targetIndex.isDummy(target)) {
-          allAreDummyOrCompiled = false;
+    if (BackwardReferenceIndexWriter.getInstance() != null) {
+      final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
+      for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
+        boolean allAreDummyOrCompiled = true;
+        for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+          if (target instanceof ModuleBuildTarget && !myCompiledTargets.contains(target) && !targetIndex.isDummy(target)) {
+            allAreDummyOrCompiled = false;
+          }
+        }
+        if (allAreDummyOrCompiled) {
+          context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, module.getName()));
         }
       }
-      if (allAreDummyOrCompiled) {
-        context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, module.getName()));
-      }
+      myCompiledTargets.clear();
     }
-    myCompiledTargets.clear();
 
     BackwardReferenceIndexWriter.closeIfNeed();
   }
@@ -82,21 +84,22 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    if (dirtyFilesHolder.hasRemovedFiles()) {
-      final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
-      if (writer != null) {
-        for (ModuleBuildTarget target : chunk.getTargets()) {
-          final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
-          writer.processDeletedFiles(files);
+    final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
+    if (writer != null && dirtyFilesHolder.hasRemovedFiles()) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
+        writer.processDeletedFiles(files);
+      }
+    }
+
+    if (writer != null) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (context.getScope().isWholeTargetAffected(target)) {
+          myCompiledTargets.add(target);
         }
       }
     }
 
-    for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (context.getScope().isWholeTargetAffected(target)) {
-        myCompiledTargets.add(target);
-      }
-    }
     return null;
   }
 }

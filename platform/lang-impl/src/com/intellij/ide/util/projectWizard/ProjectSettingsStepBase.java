@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,7 +297,9 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
     if (index > 0) {
-      myLocationField.getTextField().select(index + 1, projectLocation.length());
+      JTextField textField = myLocationField.getTextField();
+      textField.select(index + 1, projectLocation.length());
+      textField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
     }
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();

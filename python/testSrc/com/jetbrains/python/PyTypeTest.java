@@ -65,9 +65,9 @@ public class PyTypeTest extends PyTestCase {
   public void testBinaryExprType() {
     doTest("int",
            "expr = 1 + 2");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '1' + '2'");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '%s' % ('a')");
     doTest("List[int]",
            "expr = [1] + [2]");
@@ -461,7 +461,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyOfUnionType() {
-    doTest("int", "def f():\n" +
+    doTest("Optional[int]", "def f():\n" +
                   "    '''\n" +
                   "    :rtype: int or slice\n" +
                   "    '''\n" +
@@ -535,7 +535,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorFunctionType() {
-    doTest("__generator[str, Any, int]",
+    doTest("Generator[str, Any, int]",
            "def f():\n" +
            "    yield 'foo'\n" +
            "    return 0\n" +
@@ -550,7 +550,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7021
   public void testGeneratorComprehensionType() {
-    doTest("__generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
+    doTest("Generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
   }
 
   // PY-7021
@@ -1227,21 +1227,6 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
-  // PY-18427
-  public void testConditionalTypeInDocstring() {
-    doTest("Union[str, int]",
-           "if something:\n" +
-           "    Type = int\n" +
-           "else:\n" +
-           "    Type = str\n" +
-           "\n" +
-           "def f(expr):\n" +
-           "    '''\n" +
-           "    :type expr: Type\n" +
-           "    '''\n" +
-           "    pass\n");
-  }
-
   // PY-18254
   public void testFunctionTypeCommentInStubs() {
     doMultiFileTest("MyClass",
@@ -1619,6 +1604,19 @@ public class PyTypeTest extends PyTestCase {
            "    if not foo:\n" +
            "        return None\n" +
            "    expr = foo");
+  }
+
+  // PY-22037
+  public void testAncestorPropertyReturnsSelf() {
+    doTest("Child",
+           "class Master(object):\n" +
+           "    @property\n" +
+           "    def me(self):\n" +
+           "        return self\n" +
+           "class Child(Master):\n" +
+           "    pass\n" +
+           "child = Child()\n" +
+           "expr = child.me");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

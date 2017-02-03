@@ -15,9 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.junit.Test;
@@ -53,21 +51,7 @@ public class ConcurrentMapsTest {
   @Test(timeout = TIMEOUT)
   public void testWeakHashMapWithIdentityStrategy() {
     WeakHashMap<Object, Object> map = new WeakHashMap<>(10,0.5f,ContainerUtil.identityStrategy());
-    Ref<Object> key = Ref.create(new Object());
-    Ref<Object> value = Ref.create(new Object());
-    map.put(key.get(), value.get());
-
-    assertSame(value.get(), map.get(key.get()));
-    value.set(null);
-    key.set(null);
-    do {
-      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
-      System.gc();
-    }
-    while (!map.processQueue());
-    assertEquals(0, map.underlyingMapSize());
-    UsefulTestCase.assertEmpty(map.keySet());
-    assertTrue(map.isEmpty());
+    checkKeyIsTossedAfterGCPressure(map);
   }
 
   @Test(timeout = TIMEOUT)
@@ -100,10 +84,6 @@ public class ConcurrentMapsTest {
     checkKeyIsTossedAfterGCPressure(map);
   }
 
-  public static void tryGcSoftlyReachableObjects() {
-    GCUtil.tryGcSoftlyReachableObjects();
-  }
-
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftTossedSoftKeysAreRemoved() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
@@ -116,7 +96,7 @@ public class ConcurrentMapsTest {
     checkKeyIsTossedAfterGCPressure(map);
   }
 
-  private void checkKeyIsTossedAfterGCPressure(ConcurrentMap<Object, Object> map) {
+  private void checkKeyIsTossedAfterGCPressure(Map<Object, Object> map) {
     map.put(new Object(), new Object());
 
     //noinspection SizeReplaceableByIsEmpty
@@ -124,7 +104,7 @@ public class ConcurrentMapsTest {
       map.put(this, this);  // to run processQueues();
       map.remove(this);
 
-      tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (map.size() != 0);
@@ -260,7 +240,7 @@ public class ConcurrentMapsTest {
     map.put(new Object(), new Object());
 
     do {
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -277,7 +257,7 @@ public class ConcurrentMapsTest {
     map.put(new Object(), new Object());
 
     do {
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -287,7 +267,7 @@ public class ConcurrentMapsTest {
     map.put(hardKey, new Object());
 
     do {
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -297,7 +277,7 @@ public class ConcurrentMapsTest {
     map.put(new Object(), hardValue);
 
     do {
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.processQueue());
@@ -383,7 +363,7 @@ public class ConcurrentMapsTest {
       map.put(this, this);  // to run processQueues();
       map.remove(this);
 
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.isEmpty());
@@ -393,7 +373,7 @@ public class ConcurrentMapsTest {
       map.put(this, this);  // to run processQueues();
       map.remove(this);
 
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.isEmpty());
@@ -403,7 +383,7 @@ public class ConcurrentMapsTest {
       map.put(this, this);  // to run processQueues();
       map.remove(this);
 
-      tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       System.gc();
     }
     while (!map.isEmpty());
@@ -416,11 +396,11 @@ public class ConcurrentMapsTest {
     map.put("a", o);
     map.put("b", new Object());
 
-    tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertEquals(1, map.size());
 
     o = null;
-    tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertTrue(map.isEmpty());
   }
 

@@ -108,6 +108,7 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.font.TextHitInfo;
+import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
@@ -132,7 +133,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
-  private static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
+  public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -504,14 +505,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                                  !IdeBackgroundUtil.isBackgroundImageSet(project));
+    myVerticalScrollBar.setOpaque(shouldScrollBarBeOpaque(project));
     myPanel = new JPanel();
 
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                                                    !IdeBackgroundUtil.isBackgroundImageSet(project));
-
+    if (myVerticalScrollBar.isOpaque()) {
+      //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
+      myScrollPane.getHorizontalScrollBar().setOpaque(true);
+    }
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
         JComponent component = getPermanentHeaderComponent();
@@ -551,6 +552,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       new MacGestureSupportForEditor(getComponent());
     }
 
+  }
+
+  static boolean shouldScrollBarBeOpaque(Project project) {
+    if (IdeBackgroundUtil.isBackgroundImageSet(project)) return false;
+    return JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -904,7 +910,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // To have both the hardware acceleration and the background image we need to completely redesign JViewport machinery to support
       // independent layers, which is (probably) possible, but it's a rather cumbersome task.
       // Smooth scrolling still works event without the blit-acceleration, but with suboptimal performance and CPU usage.
-      if (IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
+      if (SystemProperties.isTrueSmoothScrollingEnabled() && IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
         JComponent component = new JComponent() {}; // transparent
         component.setPreferredSize(new Dimension(1, 1));
         layeredPane.add(component, JLayeredPane.POPUP_LAYER);
@@ -1217,8 +1223,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.xyToVisualPosition(p);
   }
 
+  @Override
   @NotNull
-  Point offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    return myView.xyToVisualPosition(p);
+  }
+
+  @NotNull
+  Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
     return myView.offsetToXY(offset, leanTowardsLargerOffsets, false);
   }
   
@@ -1279,6 +1291,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition visible) {
+    Point2D point2D = myView.visualPositionToXY(visible);
+    return new Point((int)point2D.getX(), (int)point2D.getY());
+  }
+
+  @Override
+  @NotNull
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition visible) {
     return myView.visualPositionToXY(visible);
   }
 
@@ -1845,7 +1864,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     return isReleased ? new Dimension()
-                      : SystemProperties.isTrueSmoothScrollingEnabled()
+                      : SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().areDynamicScrollbarsEnabled()
                         ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                         : myView.getPreferredSize();
   }
@@ -2763,8 +2782,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
         When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
-                !IdeBackgroundUtil.isBackgroundImageSet(myProject));
+      setOpaque(shouldScrollBarBeOpaque(myProject));
     }
 
     /**
@@ -2776,10 +2794,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setValue(int value) {
       ComponentSettings settings = ComponentSettings.getInstance();
-      if (settings.isSmoothScrollingEligibleFor(myEditorComponent) &&
+
+      MyScrollPane scrollPane = (MyScrollPane)myScrollPane;
+
+      InputSource source = scrollPane.getInputSource(getValueIsAdjusting());
+
+      if (settings.isTrueSmoothScrollingEligibleFor(myEditorComponent) &&
           settings.isInterpolationEligibleFor(this) &&
+          settings.isInterpolationEnabledFor(source) &&
           myScrollingModel.isAnimationEnabled()) {
-        myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
+
+          myInterpolator.setTarget(value, scrollPane.getInitialDelay(source));
       }
       else {
         super.setValue(value);

@@ -69,17 +69,10 @@ public class CompressedAppendableFile {
     myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
-        synchronized (CompressedAppendableFile.this) {
-          force();
-          myChunkLengthTable = null;
-          myChunkTableLength = 0;
-          myChunkOffsetTable = null;
-          myNextChunkBuffer = null;
-          myBufferPosition = 0;
-          if (doDebug) myCompressedChunksFileOffsets.clear();
-        }
+        dropCaches();
       }
     });
+    file.getParentFile().mkdirs();
   }
 
   public synchronized <Data> Data read(final long addr, KeyDescriptor<Data> descriptor) throws IOException {
@@ -285,6 +278,7 @@ public class CompressedAppendableFile {
       saveNextChunkIfNeeded();
     }
 
+    if (myUncompressedFileLength == -1) length();
     myUncompressedFileLength += size;
     myDirty = true;
   }
@@ -400,11 +394,13 @@ public class CompressedAppendableFile {
   private void saveIncompleteChunk() {
     if (myNextChunkBuffer != null && myBufferPosition != 0 && myDirty) {
 
+      File incompleteChunkFile = getIncompleteChunkFile();
+
       try {
         saveNextChunkIfNeeded();
         if (myBufferPosition != 0) {
           BufferedOutputStream stream =
-            new BufferedOutputStream(new FileOutputStream(getIncompleteChunkFile()));
+            new BufferedOutputStream(new FileOutputStream(incompleteChunkFile));
           try {
             stream.write(myNextChunkBuffer, 0, myBufferPosition);
           }
@@ -416,8 +412,7 @@ public class CompressedAppendableFile {
             }
           }
         }
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
         throw new RuntimeException(ex);
       }
       myDirty = false;
@@ -427,6 +422,17 @@ public class CompressedAppendableFile {
   @NotNull
   private File getIncompleteChunkFile() {
     return new File(myBaseFile.getPath() + ".at");
+  }
+
+  public synchronized void dropCaches() {
+    // TODO:
+    //force();
+    //myChunkLengthTable = null;
+    //myChunkTableLength = 0;
+    //myChunkOffsetTable = null;
+    //myNextChunkBuffer = null;
+    //myBufferPosition = 0;
+    //if (doDebug) myCompressedChunksFileOffsets.clear();
   }
 
   public synchronized void force() {

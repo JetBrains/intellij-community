@@ -157,7 +157,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
             new ClassPreparedListener(className, debugSession) {
               @Override
               public void onClassPrepared(@NotNull ReferenceType referenceType) {
-                trackClass(referenceType, type, activated);
+                trackClass(referenceType, type, myIsTrackersActivated.get());
               }
             };
           }
@@ -235,7 +235,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);
 
     myDebugSessionListener = new MyDebuggerSessionListener();
-    debugSession.addSessionListener(myDebugSessionListener);
+    debugSession.addSessionListener(myDebugSessionListener, this);
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
@@ -329,6 +329,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   @Override
   public void dispose() {
     myLastSuspendContext = null;
+    myConstructorTrackedClasses.clear();
   }
 
   public void setActive(boolean active) {

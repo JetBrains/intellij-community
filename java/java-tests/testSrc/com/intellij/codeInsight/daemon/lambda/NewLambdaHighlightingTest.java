@@ -335,6 +335,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCollectLambdaAdditionalConstraintsByGroundType() throws Exception {
+    doTest();
+  }
+
   public void testInferTypeParametersFromFunctionalInterfaceInputs() throws Exception {
     doTest();
   }

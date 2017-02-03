@@ -20,7 +20,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -93,7 +92,7 @@ public class GitRebaseProcess {
     myCustomMode = customMode;
     mySaver = rebaseSpec.getSaver();
 
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myNotifier = VcsNotifier.getInstance(myProject);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);

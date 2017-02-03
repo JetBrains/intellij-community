@@ -794,7 +794,7 @@ shortcuts:
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} х64.lnk" \
+  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
 skip_desktop_shortcut:
@@ -1195,7 +1195,7 @@ keep_current_user:
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} х64.lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"

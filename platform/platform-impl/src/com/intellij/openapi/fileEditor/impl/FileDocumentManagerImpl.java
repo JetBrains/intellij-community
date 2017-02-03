@@ -28,9 +28,9 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.extensions.Extensions;
@@ -179,24 +179,31 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         }
 
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
-          document.addDocumentListener(
-            new DocumentAdapter() {
-              @Override
-              public void documentChanged(DocumentEvent e) {
-                final Document document = e.getDocument();
-                myUnsavedDocuments.add(document);
-                final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-                Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-                String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-                document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+          document.addDocumentListener(new PrioritizedDocumentListener() {
+            @Override
+            public void beforeDocumentChange(DocumentEvent event) {
+            }
 
-                // avoid documents piling up during batch processing
-                if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
-                  saveAllDocumentsLater();
-                }
+            @Override
+            public int getPriority() {
+              return Integer.MIN_VALUE;
+            }
+
+            @Override
+            public void documentChanged(DocumentEvent e) {
+              final Document document = e.getDocument();
+              myUnsavedDocuments.add(document);
+              final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+              Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+              String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+              document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+
+              // avoid documents piling up during batch processing
+              if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
+                saveAllDocumentsLater();
               }
             }
-          );
+          });
         }
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,6 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
     if (indicator != null) {
       return indicator;
     }
-    LOG.info("No progress indicator");
     return new EmptyProgressIndicator();
   }
 }

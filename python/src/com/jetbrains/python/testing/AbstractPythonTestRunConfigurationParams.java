@@ -35,8 +35,8 @@ public interface AbstractPythonTestRunConfigurationParams {
   String getMethodName();
   void setMethodName(String methodName);
 
-  AbstractPythonTestRunConfiguration.TestType getTestType();
-  void setTestType(AbstractPythonTestRunConfiguration.TestType testType);
+  AbstractPythonLegacyTestRunConfiguration.TestType getTestType();
+  void setTestType(AbstractPythonLegacyTestRunConfiguration.TestType testType);
 
   boolean usePattern();
   void usePattern(boolean isPureUnittest);

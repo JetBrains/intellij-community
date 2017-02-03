@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -60,6 +61,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+
+  private static CodeStyleSettings myDefaults;
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
@@ -1048,5 +1051,23 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     QuoteStyle(String quote) {
       this.quote = quote;
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof CodeStyleSettings)) return false;
+    if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
+    for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
+      if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;
+    }
+    return true;
+  }
+
+  public static CodeStyleSettings getDefaults() {
+    if (myDefaults == null) {
+      myDefaults = new CodeStyleSettings();
+    }
+    return myDefaults;
   }
 }

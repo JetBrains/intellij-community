@@ -48,13 +48,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
-  private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
+  private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  public CompileContextImpl(CompileScope scope,
-                            ProjectDescriptor pd,
-                            MessageHandler delegateMessageHandler,
-                            Map<String, String> builderParams,
-                            CanceledStatus cancelStatus) throws ProjectBuildException {
+  CompileContextImpl(CompileScope scope,
+                     ProjectDescriptor pd,
+                     MessageHandler delegateMessageHandler,
+                     Map<String, String> builderParams,
+                     CanceledStatus cancelStatus) {
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
@@ -69,6 +69,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  @Override
   public void setCompilationStartStamp(Collection<BuildTarget<?>> targets, long stamp) {
     synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
@@ -151,6 +152,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myScope;
   }
 
+  @Override
   public void processMessage(BuildMessage msg) {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       Utils.ERRORS_DETECTED_KEY.set(this, Boolean.TRUE);

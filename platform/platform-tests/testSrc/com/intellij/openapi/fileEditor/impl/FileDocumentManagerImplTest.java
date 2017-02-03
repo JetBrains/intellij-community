@@ -20,6 +20,9 @@ import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -45,6 +48,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDocumentManagerImplTest extends PlatformTestCase {
   private FileDocumentManagerImpl myDocumentManager;
@@ -592,5 +596,33 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1, "y"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
+  }
+
+  public void testDocumentUnsavedInsideChangeListener() throws IOException {
+    VirtualFile file = createFile("a.txt", "a");
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    Document document = manager.getDocument(file);
+    assertFalse(manager.isDocumentUnsaved(document));
+
+    AtomicInteger invoked = new AtomicInteger();
+    DocumentListener listener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent e) {
+        assertFalse(manager.isDocumentUnsaved(document));
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        invoked.incrementAndGet();
+        assertTrue(manager.isDocumentUnsaved(document));
+      }
+    };
+    document.addDocumentListener(listener, getTestRootDisposable());
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, getTestRootDisposable());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "b"));
+
+    assertTrue(manager.isDocumentUnsaved(document));
+    assertEquals(2, invoked.get());
   }
 }

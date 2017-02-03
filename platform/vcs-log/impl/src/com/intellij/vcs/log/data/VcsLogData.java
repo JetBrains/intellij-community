@@ -77,7 +77,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    */
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -99,8 +99,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
     if (invalidator.isValid()) {
-      myHashMap = createLogHashMap();
-      myIndex = new VcsLogPersistentIndex(myProject, myHashMap, progress, logProviders, myFatalErrorsConsumer, this);
+      myStorage = createStorage();
+      myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
     }
     else {
       // this is not recoverable
@@ -110,22 +110,22 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       String message = "Could not delete " + PersistentUtil.LOG_CACHE + "\nDelete it manually and restart IDEA.";
       LOG.error(message);
       myFatalErrorsConsumer.displayFatalErrorMessage(message);
-      myHashMap = new InMemoryStorage();
+      myStorage = new InMemoryStorage();
       myIndex = new EmptyIndex();
     }
 
-    myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
-    myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, myIndex, this);
-    myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, myIndex, this);
+    myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
+    myMiniDetailsGetter = new MiniDetailsGetter(myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
+    myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, myIndex, this);
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
+    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
 
   @NotNull
-  private VcsLogStorage createLogHashMap() {
+  private VcsLogStorage createStorage() {
     VcsLogStorage hashMap;
     try {
       hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
@@ -158,25 +158,20 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myRefresher.getCurrentDataPack();
   }
 
-  @NotNull
-  public VisiblePackBuilder createVisiblePackBuilder() {
-    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter, myIndex);
-  }
-
   @Override
   @Nullable
   public CommitId getCommitId(int commitIndex) {
-    return myHashMap.getCommitId(commitIndex);
+    return myStorage.getCommitId(commitIndex);
   }
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-    return myHashMap.getCommitIndex(hash, root);
+    return myStorage.getCommitIndex(hash, root);
   }
 
   @NotNull
-  public VcsLogStorage getHashMap() {
-    return myHashMap;
+  public VcsLogStorage getStorage() {
+    return myStorage;
   }
 
   public void initialize() {

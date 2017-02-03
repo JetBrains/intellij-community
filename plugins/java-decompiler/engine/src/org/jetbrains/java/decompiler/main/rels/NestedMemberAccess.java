@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,19 +149,21 @@ public class NestedMemberAccess {
 
               InvocationExprent invexpr = (InvocationExprent)exprCore;
 
-              if ((invexpr.isStatic() && invexpr.getLstParameters().size() == parcount) ||
-                  (!invexpr.isStatic() && invexpr.getInstance().type == Exprent.EXPRENT_VAR
+              boolean isStatic = invexpr.isStatic();
+              if ((isStatic && invexpr.getLstParameters().size() == parcount) ||
+                  (!isStatic && invexpr.getInstance().type == Exprent.EXPRENT_VAR
                    && ((VarExprent)invexpr.getInstance()).getIndex() == 0 && invexpr.getLstParameters().size() == parcount - 1)) {
 
                 boolean equalpars = true;
 
+                int index = isStatic ? 0 : 1;
                 for (int i = 0; i < invexpr.getLstParameters().size(); i++) {
                   Exprent parexpr = invexpr.getLstParameters().get(i);
-                  if (parexpr.type != Exprent.EXPRENT_VAR ||
-                      ((VarExprent)parexpr).getIndex() != i + (invexpr.isStatic() ? 0 : 1)) {
+                  if (parexpr.type != Exprent.EXPRENT_VAR || ((VarExprent)parexpr).getIndex() != index) {
                     equalpars = false;
                     break;
                   }
+                  index += mtdesc.params[i + (isStatic ? 0 : 1)].stackSize;
                 }
 
                 if (equalpars) {

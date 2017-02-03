@@ -40,10 +40,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
@@ -175,7 +172,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
 
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
 
     if (changed) {
       stateChanged();
@@ -367,7 +364,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     }
   }
 
-  private void stateChanged() {
+  void stateChanged() {
     if (Registry.is("store.track.module.root.manager.changes", false)) {
       LOG.error("ModelRootManager state changed");
     }

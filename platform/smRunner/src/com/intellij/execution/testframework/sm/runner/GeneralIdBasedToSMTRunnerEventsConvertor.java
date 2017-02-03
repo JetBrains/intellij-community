@@ -178,7 +178,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       Node node = findNodeToTerminate(testFinishedEvent);
       if (node != null) {
         SMTestProxy testProxy = node.getProxy();
-        testProxy.setDuration(testFinishedEvent.getDuration());
+        if (testFinishedEvent.getDuration() != 0) {
+          // Setting 0 here explicitly stops test from calculating its duration based on its children
+          // 0 is almost always means we did not get it any duration from test runner, so it is sane to calculate it based on parent
+          testProxy.setDuration(testFinishedEvent.getDuration());
+        }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
         if (node.getState() != State.FAILED) {

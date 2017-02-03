@@ -1,13 +1,12 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -21,9 +20,8 @@ public abstract class FileIndexBase implements FileIndex {
   protected final DirectoryIndex myDirectoryIndex;
   private final VirtualFileFilter myContentFilter = file -> {
     assert file != null;
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
-      !isScopeDisposed() && isInContent(file)
-    );
+    return ReadAction.compute(() ->
+      !isScopeDisposed() && isInContent(file));
   };
 
   public FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {

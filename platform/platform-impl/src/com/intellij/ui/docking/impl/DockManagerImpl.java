@@ -547,7 +547,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     }
 
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent) {
         if (myCurrentDragSession != null) {
           stopCurrentDragSession();

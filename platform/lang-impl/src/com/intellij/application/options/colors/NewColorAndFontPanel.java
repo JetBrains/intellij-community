@@ -107,6 +107,7 @@ public class NewColorAndFontPanel extends JPanel {
     optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void settingsChanged() {
+        mySchemesPanel.updateOnCurrentSettingsChange();
         optionsPanel.applyChangesToScheme();
         previewPanel.updateView();
       }
@@ -188,6 +189,10 @@ public class NewColorAndFontPanel extends JPanel {
 
   public void updatePreview() {
     myPreviewPanel.updateView();
+  }
+  
+  public void updateSchemesPanel() {
+    mySchemesPanel.updateOnCurrentSettingsChange();
   }
 
   public void addDescriptionListener(final ColorAndFontSettingsListener listener) {

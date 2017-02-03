@@ -270,6 +270,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
   }
+  //
+  //@Override
+  //public PsiElement getNavigationElement() {
+  //  final PsiElement element = PyiUtil.getOriginalElement(this);
+  //  return element != null ? element : super.getNavigationElement();
+  //}
 
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     for (Language lang : getViewProvider().getLanguages()) {
@@ -411,6 +417,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   @Override
   public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+    return multiResolveName(name, true);
+  }
+
+  @NotNull
+  @Override
+  public List<RatedResolveResult> multiResolveName(@NotNull String name, boolean exported) {
     final List<RatedResolveResult> results = RecursionManager.doPreventingRecursion(this, false,
                                                                                     () -> getExportedNameCache().multiResolve(name));
     if (results != null && !results.isEmpty()) {

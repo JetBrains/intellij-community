@@ -51,7 +51,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
     }
   };
 
-  public GradleClassFinder(Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
+  public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
     myBuildClasspathManager = buildClasspathManager;
   }

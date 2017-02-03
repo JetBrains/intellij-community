@@ -461,6 +461,8 @@
 
     <extensionPoint name="runtimeDashboardContributor"
                     interface="com.intellij.execution.dashboard.RuntimeDashboardContributor"/>
+    <extensionPoint name="runtimeDashboardGroupingRule"
+                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>

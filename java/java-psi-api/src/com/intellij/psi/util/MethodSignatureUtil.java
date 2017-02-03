@@ -88,7 +88,7 @@ public class MethodSignatureUtil {
     PsiSubstitutor substitutor = signature.getSubstitutor();
     PsiType[] erasedTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
-      erasedTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]), substitutor);
+      erasedTypes[i] = TypeConversionUtil.erasure(parameterTypes[i], substitutor);
     }
     return erasedTypes;
   }

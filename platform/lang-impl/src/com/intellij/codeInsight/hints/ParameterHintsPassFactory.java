@@ -90,7 +90,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .filter((e) -> e != null)
         .collect(Collectors.toList());
-
+      
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
 
@@ -135,9 +135,11 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
         if (!presentationManager.isParameterHint(inlay)) continue;
         int offset = inlay.getOffset();
+        
         String newText = myAnnotations.remove(offset);
-        if (delayRemoval(inlay, caretMap)) continue;
         String oldText = presentationManager.getHintText(inlay);
+        
+        if (delayRemoval(inlay, caretMap)) continue;
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);

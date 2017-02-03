@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
@@ -59,15 +60,31 @@ public class ScratchFileActions {
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
+    private static final String ACTION_ID = "NewScratchFile";
+
+    private static final String SMALLER_IDE_CONTAINER_GROUP = "PlatformOpenProjectGroup";
+
+    private final String myActionText;
+
+    public NewFileAction() {
+      final Presentation templatePresentation = getTemplatePresentation();
+      templatePresentation.setIcon(ICON);
+      // A hacky way for customizing text in IDEs without File->New-> submenu
+      myActionText = (isIdeWithoutNewSubmenu() ? "New " : "") + ActionsBundle.actionText(ACTION_ID);
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
+      getTemplatePresentation().setText(myActionText);
+
       String place = e.getPlace();
       boolean enabled = e.getProject() != null
                         && Registry.is("ide.scratch.enabled")
                         && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
-      presentation.setIcon(ICON);
+
+      updatePresentationTextAndIcon(e, presentation);
     }
 
     @Override
@@ -91,6 +108,22 @@ public class ScratchFileActions {
       else {
         LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
       }
+    }
+
+    private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
+      presentation.setText(myActionText);
+      presentation.setIcon(ICON);
+      if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+        if (isIdeWithoutNewSubmenu()) {
+          presentation.setIcon(null);
+        }
+      }
+    }
+
+    private boolean isIdeWithoutNewSubmenu() {
+      final AnAction group = ActionManager.getInstance().getActionOrStub(SMALLER_IDE_CONTAINER_GROUP);
+      return group instanceof DefaultActionGroup && ContainerUtil.find(((DefaultActionGroup)group).getChildActionsOrStubs(), action ->
+        action == this || (action instanceof ActionStub && ((ActionStub)action).getId().equals(ACTION_ID))) != null;
     }
   }
 

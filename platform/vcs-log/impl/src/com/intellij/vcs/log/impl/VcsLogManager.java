@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -30,13 +29,13 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
-  public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   @NotNull private final Project myProject;
@@ -109,25 +107,31 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
-    VcsLogUiImpl ui = createLogUi(logId, contentTabName, null);
+    AbstractVcsLogUi ui = createLogUi(logId, contentTabName);
     return new VcsLogPanel(this, ui);
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
-    MainVcsLogUiProperties properties = myUiProperties.createProperties(logId);
-    VcsLogFiltererImpl filterer = new VcsLogFiltererImpl(myProject, myLogData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
-    VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
-    if (filter != null) {
-      ui.getFilterUi().setFilter(filter);
-    }
+  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
+    return createLogUi(contentTabName, getMainLogUiFactory(logId));
+  }
+
+  @NotNull
+  public VcsLogUiFactory<? extends VcsLogUiImpl> getMainLogUiFactory(@NotNull String logId) {
+    return new MainVcsLogUiFactory(logId);
+  }
+
+  @NotNull
+  public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
+                                                    @NotNull VcsLogUiFactory<U> factory) {
+    U ui = factory.createLogUi(myProject, myLogData, myColorManager);
 
     Disposable disposable;
     if (contentTabName != null) {
-      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getFilterer());
+      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getRefresher());
     }
     else {
-      disposable = myPostponableRefresher.addLogWindow(ui.getFilterer());
+      disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
     }
     Disposer.register(ui, disposable);
 
@@ -152,7 +156,7 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
-    VcsLogProvider[] allLogProviders = Extensions.getExtensions(LOG_PROVIDER_EP, project);
+    VcsLogProvider[] allLogProviders = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project);
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
@@ -239,6 +243,33 @@ public class VcsLogManager implements Disposable {
     @Override
     public void displayFatalErrorMessage(@NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+    }
+  }
+
+  @FunctionalInterface
+  public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData,
+                  @NotNull VcsLogColorManager colorManager);
+  }
+
+  private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
+    private final String myLogId;
+
+    public MainVcsLogUiFactory(@NotNull String logId) {
+      myLogId = logId;
+    }
+
+    @Override
+    public VcsLogUiImpl createLogUi(@NotNull Project project,
+                                    @NotNull VcsLogData logData,
+                                    @NotNull VcsLogColorManager manager) {
+      MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
+      VisiblePackRefresherImpl refresher =
+        new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
+                                     new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
+                                                        logData.getTopCommitsCache(),
+                                                        logData.getCommitDetailsGetter(), logData.getIndex()));
+      return new VcsLogUiImpl(logData, project, manager, properties, refresher);
     }
   }
 }

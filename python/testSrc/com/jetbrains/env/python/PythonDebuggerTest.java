@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -29,9 +27,9 @@ import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -82,16 +80,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py");
+    unittests("tests_pydevd_python/test_debugger.py", null);
   }
 
   @Test
   @Staging
   public void testPydevMonkey() {
-    unittests("tests_pydevd_python/test_pydev_monkey.py");
+    unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
 
-  private void unittests(final String script) {
+  @Test
+  @Staging
+  public void testBytecodeModification() {
+    unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
+  }
+
+  private void unittests(final String script, @Nullable Set<String> tags) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
 
       @NotNull
@@ -112,6 +116,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         runner.assertAllTestsPassed();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        if (tags == null) {
+          return super.getTags();
+        }
+        return tags;
       }
     });
   }
@@ -1097,6 +1110,61 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         eval("x").hasValue("2");
+        resume();
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testResumeAfterStepping() throws Exception {
+    // This test case is important for frame evaluation debugging, because we reuse old tracing function for stepping and there were
+    // some problems with switching between frame evaluation and tracing
+    runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 5);
+        toggleBreakpoint(getScriptName(), 12);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        stepOver();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("c").hasValue("3");
+        resume();
+        waitForPause();
+        eval("d").hasValue("4");
+        resume();
+        waitForPause();
+        eval("t").hasValue("1");
+        resume();
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testAddBreakWhileRunning() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        toggleBreakpoint(getScriptName(), 5);
+        resume();
+        waitForPause();
+        eval("d").hasValue("4");
         resume();
       }
     });

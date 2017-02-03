@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,16 @@ public class DeleteAction extends PatchAction {
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE);
     if (result != null) return result;
 
-    if (myPatch.validateDeletion(myPath) && toFile.exists() && isModified(toFile)) {
+    if (myPatch.validateDeletion(getPath()) && toFile.exists() && isModified(toFile)) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.DELETE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.DELETE, ValidationResult.Option.KEEP};
-      ValidationResult.Action action = myChecksum == Digester.INVALID ? ValidationResult.Action.VALIDATE : ValidationResult.Action.DELETE;
-      String message = myChecksum == Digester.INVALID ? "Unexpected file" : "Modified";
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, myPath, action, message, options);
+      boolean invalid = getChecksum() == Digester.INVALID;
+      ValidationResult.Action action = invalid ? ValidationResult.Action.VALIDATE : ValidationResult.Action.DELETE;
+      String message = invalid ? "Unexpected file" : "Modified";
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, message, options);
     }
+
     return null;
   }
 

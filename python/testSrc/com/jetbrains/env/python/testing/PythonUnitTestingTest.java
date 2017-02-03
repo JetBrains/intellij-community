@@ -23,6 +23,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
+import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -59,8 +60,8 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(2, runner.getAllTestsCount());
-        assertEquals(2, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
     });
@@ -91,6 +92,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   /**
    * Ensure rerun test works even if test is declared in parent
+   * See https://github.com/JetBrains/teamcity-messages/issues/117
    */
   @Test
   public void testRerunDerivedClass() throws Exception {
@@ -100,8 +102,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertThat("Premature error", stderr, isEmptyString());
         Assert.assertThat("Wrong number of failed tests", runner.getFailedTestsCount(), equalTo(1));
+        final int expectedNumberOfTests = (runner.getCurrentRerunStep() == 0 ? 2 : 1);
+        Assert.assertThat("Wrong number tests", runner.getAllTestsCount(), equalTo(expectedNumberOfTests));
       }
       @NotNull
       @Override
@@ -201,9 +204,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(3, runner.getAllTestsCount());
-        assertEquals(1, runner.getPassedTestsCount());
-        assertEquals(2, runner.getFailedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 3, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
       }
     });
   }
@@ -213,7 +216,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testUTRunnerByPattern() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "./_args_separator_*pattern.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "*pattern.py") {
 
 
       @Override
@@ -221,9 +224,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(4, runner.getAllTestsCount());
-        assertEquals(2, runner.getPassedTestsCount());
-        assertEquals(2, runner.getFailedTestsCount());
+        assertEquals(runner.getFormattedTestTree(),4, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(),2, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(),2, runner.getFailedTestsCount());
       }
     });
   }
@@ -246,12 +249,12 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         assertEquals(1, runner.getFailedTestsCount());
       }
     });
-
   }
 
   @Test
   public void testClass() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
+                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX + "test_file.GoodTest") {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -266,7 +269,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
   public void testMethod() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest::test_passes") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
+                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX +
+                                                           "test_file.GoodTest.test_passes") {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -313,7 +318,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                         runner.getAllConsoleText()),
                           fileNames.size() >= 3);
         // UnitTest highlights file name
-        Assert.assertThat("Bad line highlighted", fileNames, everyItem(endsWith(fileName)));
+        Assert.assertThat("Bad line highlighted", fileNames, hasItem(endsWith(fileName)));
       }
     });
   }
@@ -336,14 +341,14 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testRelativeImports() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", "relative_imports/tests/test_imps.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(1, runner.getAllTestsCount());
-        assertEquals(1, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(),1, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(),1, runner.getPassedTestsCount());
       }
     });
   }

@@ -19,7 +19,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -27,6 +29,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.GCUtil
 
@@ -161,8 +164,8 @@ class B {
     assert file.treeElement
 
     GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.stub
     assert !file.treeElement
+    assert file.stub
 
     assert psiClass.nameIdentifier
     assert !file.stub
@@ -190,8 +193,8 @@ class B {
     assert file.classes[0].nameIdentifier
     GCUtil.tryGcSoftlyReachableObjects()
 
-    assert !((PsiFileImpl)file).getTreeElement()
-    assert !((PsiFileImpl)file).getStub()
+    assert !((PsiFileImpl)file).treeElement
+    assertNoStubLoaded(file)
 
     assert file.classes[0].methods[0].modifierList.hasExplicitModifier(PsiModifier.STATIC)
     assert !((PsiFileImpl)file).getTreeElement()
@@ -204,11 +207,12 @@ class B {
     GCUtil.tryGcSoftlyReachableObjects()
 
     assert !file.treeElement
-    assert !file.greenStub
-
-    assert PsiAnchor.create(psiClass) instanceof PsiAnchor.StubIndexReference
+    assertNoStubLoaded(file)
     StubElement hardRefToStub = file.greenStub
     assert hardRefToStub
+    assert hardRefToStub == file.stub
+
+    assert file.node
 
     GCUtil.tryGcSoftlyReachableObjects()
     assert !file.treeElement
@@ -216,6 +220,10 @@ class B {
 
     assert psiClass.typeParameters.length == 1
     assert !file.treeElement
+  }
+
+  private static assertNoStubLoaded(PsiFile file) {
+    LeakHunter.checkLeak(file, StubTree) { candidate -> candidate.root.psi == file }
   }
 
   void "test node is not deeply parsed when loaded in green stub presence"() {
@@ -227,6 +235,17 @@ class B {
 
     assert stubTree.is(file.greenStubTree)
     assert !file.node.parsed
+  }
+
+  void "test load stub from non-file PSI after AST is unloaded"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    def cls = file.classes[0]
+    assert cls.nameIdentifier
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert ((PsiClassImpl) cls).stub
   }
 
 }

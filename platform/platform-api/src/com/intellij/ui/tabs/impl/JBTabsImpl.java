@@ -990,7 +990,7 @@ public class JBTabsImpl extends JComponent
       });
       myDeferredFocusRequest = () -> {
         queued.set(true);
-        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true).notify(result);
+        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, toFocus, myProject, new Exception()), true).notify(result);
       };
       return result;
     }
@@ -2304,13 +2304,7 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    //final GraphicsConfig config = new GraphicsConfig(g);
-    //try {
-    //  config.setAntialiasing(true);
-      paintSelectionAndBorder((Graphics2D)g);
-    //} finally {
-    //  config.restore();
-    //}
+    paintSelectionAndBorder((Graphics2D)g);
 
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {

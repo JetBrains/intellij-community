@@ -162,8 +162,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                                                                 @Nullable DefaultActionGroup actions);
 
   public static class MyMoreIndex {
-    public static final int MAX_REPO_NUM = 8;
-    public static final int DEFAULT_REPO_NUM = 5;
-    public static final int MAX_BRANCH_NUM = 8;
+    public static final int MAX_NUM = 8;
+    public static final int DEFAULT_NUM = 5;
   }
 }

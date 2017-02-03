@@ -25,6 +25,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -818,7 +819,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         try {
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
-          builders[i] = ApplicationManager.getApplication().runReadAction((Computable<AsyncFileEditorProvider.Builder>)() -> {
+          builders[i] = ReadAction.compute(() -> {
             if (myProject.isDisposed() || !file.isValid()) {
               return null;
             }

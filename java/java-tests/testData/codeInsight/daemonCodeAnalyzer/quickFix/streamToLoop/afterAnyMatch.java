@@ -1,6 +1,6 @@
-// "Replace Stream API chain with loop" "true"
+// "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
-import java.util.List;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 
@@ -16,6 +16,17 @@ public class Main {
           }
       }
       return false;
+  }
+
+  String testTernary(String[] strings) {
+      for (String s : strings) {
+          if (s != null) {
+              if (!s.startsWith("xyz")) {
+                  return "s";
+              }
+          }
+      }
+      return null;
   }
 
   public static void main(String[] args) {

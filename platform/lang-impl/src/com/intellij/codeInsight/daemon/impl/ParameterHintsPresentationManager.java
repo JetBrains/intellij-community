@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -90,9 +91,11 @@ public class ParameterHintsPresentationManager implements Disposable {
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+  }
 
-  private void scheduleRendererUpdate(Editor editor, Inlay inlay) {
+  private void scheduleRendererUpdate(@NotNull Editor editor, @NotNull Inlay inlay) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // to avoid race conditions in "new AnimationStep"
     AnimationStep step = editor.getUserData(ANIMATION_STEP);
     if (step == null) {
       editor.putUserData(ANIMATION_STEP, step = new AnimationStep(editor));
@@ -101,7 +104,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     scheduleAnimationStep(step);
   }
 
-  private void scheduleAnimationStep(AnimationStep step) {
+  private void scheduleAnimationStep(@NotNull AnimationStep step) {
     myAlarm.cancelRequest(step);
     myAlarm.addRequest(step, ANIMATION_STEP_MS, ModalityState.any());
   }
@@ -229,8 +232,9 @@ public class ParameterHintsPresentationManager implements Disposable {
     private final Editor myEditor;
     private final Set<Inlay> inlays = new HashSet<>();
 
-    AnimationStep(Editor editor) {
+    AnimationStep(@NotNull Editor editor) {
       myEditor = editor;
+      Disposer.register(((EditorImpl)editor).getDisposable(), () -> myAlarm.cancelRequest(this));
     }
 
     @Override

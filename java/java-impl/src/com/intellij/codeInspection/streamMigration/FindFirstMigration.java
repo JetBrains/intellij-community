@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,11 +73,11 @@ class FindFirstMigration extends BaseStreamApiMigration {
       PsiExpression value = assignment.getRExpression();
       if (value == null) return null;
       restoreComments(loopStatement, body);
-      InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
+      InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
       PsiExpression initializer = var.getInitializer();
       PsiExpression falseExpression = lValue;
-      if (status != InitializerUsageStatus.UNKNOWN &&
-          (status != InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSimpleExpression(initializer))) {
+      if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN &&
+          (status != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSimpleExpression(initializer))) {
         falseExpression = initializer;
       } else {
         PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);

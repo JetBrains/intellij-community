@@ -16,7 +16,6 @@
 package git4idea.branch;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -119,7 +118,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   }
 
   private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
-    final GitRepositoryManager manager = ServiceManager.getService(project, GitRepositoryManager.class);
+    final GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
     return ContainerUtil.exists(roots, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile root) {

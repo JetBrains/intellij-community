@@ -1247,6 +1247,20 @@ class Foo {{
 """
   }
 
+  void "test delete at the last template position with selection"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'iter\t'
+    def startOffset = myFixture.editor.caretModel.offset
+    myFixture.type "foo"
+    myFixture.editor.getSelectionModel().setSelection(startOffset, myFixture.editor.caretModel.offset)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    assertNotNull(state)
+  }
+
 
 
   void "test multicaret expanding with space"() {

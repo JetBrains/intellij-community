@@ -669,7 +669,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void enableTools(@NotNull List<String> inspectionTools, NamedScope namedScope, Project project) {
+  public void enableTools(@NotNull List<String> inspectionTools, @NotNull NamedScope namedScope, Project project) {
     for (String inspectionTool : inspectionTools) {
       enableTool(inspectionTool, namedScope, project);
     }

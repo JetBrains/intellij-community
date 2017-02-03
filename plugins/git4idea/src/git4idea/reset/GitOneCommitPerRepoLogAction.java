@@ -2,7 +2,6 @@ package git4idea.reset;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.VcsLogOneCommitPerRepoAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.repo.GitRepository;
@@ -15,7 +14,7 @@ public abstract class GitOneCommitPerRepoLogAction extends VcsLogOneCommitPerRep
   @NotNull
   @Override
   protected AbstractRepositoryManager<GitRepository> getRepositoryManager(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
+    return GitRepositoryManager.getInstance(project);
   }
 
   @Nullable

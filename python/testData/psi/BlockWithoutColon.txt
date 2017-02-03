@@ -13,8 +13,8 @@ PyFile:BlockWithoutColon.py
         PyWhilePart
           PsiElement(Py:WHILE_KEYWORD)('while')
           PsiWhiteSpace(' ')
-          PyReferenceExpression: True
-            PsiElement(Py:IDENTIFIER)('True')
+          PyBoolLiteralExpression
+            PsiElement(Py:TRUE_KEYWORD)('True')
           PsiErrorElement:Colon expected
             <empty list>
           PsiWhiteSpace('\n        ')

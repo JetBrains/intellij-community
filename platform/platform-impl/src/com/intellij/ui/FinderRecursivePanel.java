@@ -21,12 +21,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -466,7 +466,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     // load list items synchronously
     myList.setPaintBusy(true);
     try {
-      final List<T> listItems = ApplicationManager.getApplication().runReadAction((Computable<List<T>>)() -> getListItems());
+      final List<T> listItems = ReadAction.compute(() -> getListItems());
       mergeListItems(myListModel, myList, listItems);
     }
     finally {

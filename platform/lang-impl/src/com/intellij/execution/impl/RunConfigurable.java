@@ -414,9 +414,9 @@ class RunConfigurable extends BaseConfigurable {
 
   private void sortTopLevelBranches() {
     List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    TreeUtil.sort(myRoot, (o1, o2) -> {
-      final Object userObject1 = ((DefaultMutableTreeNode)o1).getUserObject();
-      final Object userObject2 = ((DefaultMutableTreeNode)o2).getUserObject();
+    TreeUtil.sortRecursively(myRoot, (o1, o2) -> {
+      final Object userObject1 = o1.getUserObject();
+      final Object userObject2 = o2.getUserObject();
       if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType) {
         return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
       }

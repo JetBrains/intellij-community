@@ -382,7 +382,7 @@ class CommunityLibraryLicenses {
                        url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/"),
     new LibraryLicense(name: "Xerces", version: "2.11", license: "Apache 2.0", url: "http://xerces.apache.org/xerces2-j/",
                        licenseUrl: "http://xerces.apache.org/xerces2-j/"),
-    new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.6.20.1", license: "Apache 2.0",
+    new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", version: "3.8.11.2", license: "Apache 2.0",
                        url: "https://github.com/xerial/sqlite-jdbc"),
     new LibraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0",
                        url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html"),

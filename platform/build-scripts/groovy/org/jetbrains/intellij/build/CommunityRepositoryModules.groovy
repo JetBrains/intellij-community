@@ -154,7 +154,7 @@ class CommunityRepositoryModules {
     },
     plugin("student-python") {
       withResource("resources/courses", "lib/courses")
-      excludeFromModule("student-python", "courses")
+      excludeFromModule("student-python", "courses/**")
     },
     plugin("maven") {
       withModule("maven-jps-plugin")
@@ -333,7 +333,7 @@ class CommunityRepositoryModules {
       mainJarName = "Groovy.jar"
       withModule("groovy-psi", mainJarName)
       withModule("structuralsearch-groovy", mainJarName)
-      excludeFromModule("groovy-psi", "standardDsls")
+      excludeFromModule("groovy-psi", "standardDsls/**")
       withModule("groovy-jps-plugin")
       withModule("groovy_rt")
       withModule("groovy-rt-constants")

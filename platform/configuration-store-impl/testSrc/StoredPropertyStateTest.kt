@@ -9,15 +9,15 @@ import org.junit.Test
 
 private class AState : BaseState() {
   @get:Attribute("customName")
-  var languageLevel: String? by storedProperty()
+  var languageLevel by storedProperty<String?>()
 
   var property2 by storedProperty(0)
 
-  var nestedComplex: NestedState? by storedProperty()
+  var nestedComplex by storedProperty<NestedState?>()
 }
 
 private class NestedState : BaseState() {
-  var childProperty: String? by storedProperty()
+  var childProperty by storedProperty<String?>()
 }
 
 class StoredPropertyStateTest {
@@ -50,5 +50,11 @@ class StoredPropertyStateTest {
 
     nestedState.childProperty = "test"
     assertThat(state.modificationCount).isEqualTo(2)
+
+    state.languageLevel = "11"
+    assertThat(state.modificationCount).isEqualTo(3)
+
+    state.languageLevel = null
+    assertThat(state.modificationCount).isEqualTo(4)
   }
 }

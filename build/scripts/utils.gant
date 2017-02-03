@@ -271,10 +271,7 @@ if (debugSuspend == 'y') {
 }
 
 binding.setVariable("commonJvmArgsForTests", {
-  def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
-  if (debugPort != null) jdwp += ",address=$debugPort"
-
-  return [
+  def vmOptions = [
     "-ea",
     "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
@@ -285,14 +282,22 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.home.path=$home",
     "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
-    "-Xdebug",
     "-XX:ReservedCodeCacheSize=300m",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
-    jdwp
   ]
+  if (shouldAddDebugOptions()) {
+    def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
+    if (debugPort != null) jdwp += ",address=$debugPort"
+    vmOptions.addAll(["-Xdebug", jdwp])
+  }
+  return vmOptions
 })
+
+private static boolean shouldAddDebugOptions() {
+  return "true" != System.getProperty("idea.performance.tests")
+}
 
 binding.setVariable("forceDelete", { String dirPath ->
   // if wasn't deleted - retry several times

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +172,7 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
+    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = UntrustedCertificateStrategy.ASK_USER;
 
     private RequestBuilderImpl(@NotNull String url) {
       myUrl = url;
@@ -245,6 +247,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder tuner(@Nullable ConnectionTuner tuner) {
       myTuner = tuner;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
+      myUntrustedCertificateStrategy = strategy;
       return this;
     }
 
@@ -355,7 +363,12 @@ public final class HttpRequests {
           throw new IOException(createErrorMessage(e, this, false), e);
         }
         finally {
-          out.close();
+          try {
+            out.close();
+          }
+          catch (IOException e) {
+            LOG.warn(e);
+          }
         }
       }
       finally {
@@ -411,7 +424,10 @@ public final class HttpRequests {
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     try (RequestImpl request = new RequestImpl(builder)) {
-      return processor.process(request);
+      CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
+      return manager != null
+             ? manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy)
+             : processor.process(request);
     }
   }
 

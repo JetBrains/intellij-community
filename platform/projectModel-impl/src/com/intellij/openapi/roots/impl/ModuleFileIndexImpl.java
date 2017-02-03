@@ -16,11 +16,10 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +43,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor) {
-    final Set<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)() -> {
+    final Set<VirtualFile> contentRoots = ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
 
       Set<VirtualFile> result = new LinkedHashSet<>();

@@ -134,8 +134,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-          boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          boolean isUpToDate;
+          if (CompilerReferenceReader.exists(myProject)) {
+            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+            isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          } else {
+            isUpToDate = false;
+          }
           executeOnBuildThread(() -> {
             myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {
@@ -482,7 +487,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return fileSet;
   }
 
-  @TestOnly
+  // should not be used in production code
   @NotNull
   public DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;

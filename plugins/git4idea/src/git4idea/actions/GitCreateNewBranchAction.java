@@ -15,7 +15,6 @@
  */
 package git4idea.actions;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBrancher;
@@ -33,7 +32,7 @@ public class GitCreateNewBranchAction extends GitLogSingleCommitAction {
     Project project = repository.getProject();
     String name = getNewBranchNameFromUser(project, singleton(repository), "Checkout New Branch From " + commit.toShortString());
     if (name != null) {
-      GitBrancher brancher = ServiceManager.getService(project, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(project);
       brancher.checkoutNewBranchStartingFrom(name, commit.asString(), singletonList(repository), null);
     }
   }

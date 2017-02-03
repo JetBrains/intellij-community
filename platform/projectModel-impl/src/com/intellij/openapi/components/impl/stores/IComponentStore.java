@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -32,6 +33,10 @@ public interface IComponentStore {
    * @param path System-independent path.
    */
   void setPath(@NotNull String path);
+
+  default void setPath(@NotNull String path, @Nullable VirtualFile file) {
+    setPath(path);
+  }
 
   void initComponent(@NotNull Object component, boolean service);
 

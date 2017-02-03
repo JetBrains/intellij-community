@@ -144,12 +144,12 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testMethodItemPresentationGenerics() {
     configure()
-    LookupElementPresentation presentation = renderElement(myItems[0])
+    LookupElementPresentation presentation = renderElement(myItems[1])
     assert "add" == presentation.itemText
     assert "(int index, String element)" == presentation.tailText
     assert "void" == presentation.typeText
 
-    presentation = renderElement(myItems[1])
+    presentation = renderElement(myItems[0])
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
@@ -1707,7 +1707,8 @@ class Bar {
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
     assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' ( = 42)'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailFragments[0].italic
   }
 
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
@@ -1741,5 +1742,7 @@ class Bar {
     myFixture.completeBasic()
     assert myFixture.lookupElements[0].object == uClass
   }
+
+  void testSuggestClassNamesForLambdaParameterTypes() { doTest('\n') }
 
 }

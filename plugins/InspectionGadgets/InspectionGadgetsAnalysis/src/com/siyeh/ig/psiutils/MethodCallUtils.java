@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -262,46 +260,6 @@ public class MethodCallUtils {
     return variable.equals(element);
   }
 
-  /**
-   * Returns true if the supplied expression is the functional expression (method reference or lambda)
-   * which refers to the given method call
-   *
-   * @param expression     expression to test
-   * @param className      class name where the wanted method should be located
-   * @param returnType     the return type of the wanted method (null if should not be checked)
-   * @param methodName     method name of the wanted method
-   * @param parameterTypes wanted method parameter types (nulls for parameters which should not be checked)
-   * @return true if the supplied expression references the wanted call
-   */
-  public static boolean isFunctionalReferenceTo(PsiExpression expression, String className, PsiType returnType,
-                                                String methodName, PsiType... parameterTypes) {
-    expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
-      PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      PsiReferenceExpression ref = ObjectUtils.tryCast(methodRef.getQualifier(), PsiReferenceExpression.class);
-      return ref != null &&
-             method != null &&
-             MethodUtils.methodMatches(method, className, returnType, methodName, parameterTypes) &&
-             ref.isReferenceTo(method.getContainingClass());
-    }
-    if (expression instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
-      PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
-      PsiMethodCallExpression call = ObjectUtils.tryCast(body, PsiMethodCallExpression.class);
-      if (call == null || !isCallToMethod(call, className, returnType, methodName, parameterTypes)) return false;
-      PsiParameter[] parameters = lambda.getParameterList().getParameters();
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      PsiMethod method = call.resolveMethod();
-      if (method != null && !method.hasModifierProperty(PsiModifier.STATIC)) {
-        args = ArrayUtil.prepend(call.getMethodExpression().getQualifierExpression(), args);
-      }
-      if (parameters.length != args.length || StreamEx.zip(args, parameters, ExpressionUtils::isReferenceTo).has(false)) return false;
-      return isCallToMethod(call, className, returnType, methodName, parameterTypes);
-    }
-    return false;
-  }
-
   @Nullable
   public static PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
                                                          @NotNull PsiExpression replacement) {
@@ -325,7 +283,39 @@ public class MethodCallUtils {
     assert copyArgumentList != null;
     final PsiExpression[] arguments = copyArgumentList.getExpressions();
     arguments[index].replace(replacement);
+    if (call instanceof PsiEnumConstant) {
+      final PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
+      assert containingClass != null;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(call.getProject());
+      final PsiClassType type = facade.getElementFactory().createType(containingClass);
+      final JavaResolveResult resolveResult = facade.getResolveHelper().resolveConstructor(type, copy.getArgumentList(), call);
+      return (PsiMethod)resolveResult.getElement();
+    }
     return copy.resolveMethod();
+  }
+
+  /**
+   * Checks if the specified expression is an argument for any method call (skipping parentheses in between).
+   * If the method call is found, checks if same method is called when argument is replaced with replacement.
+   * @param expression  the expression to check
+   * @param replacement  the replacement to replace expression with
+   * @return true, if method was found and a different method was called with replacement. false, otherwise.
+   */
+  public static boolean isNecessaryForSurroundingMethodCall(PsiExpression expression, PsiExpression replacement) {
+    PsiElement parent = expression.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      expression = (PsiExpression)parent;
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCall)) {
+      return false;
+    }
+    final PsiCall call = (PsiCall)grandParent;
+    return call.resolveMethod() != findMethodWithReplacedArgument(call, expression, replacement);
   }
 
   public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {

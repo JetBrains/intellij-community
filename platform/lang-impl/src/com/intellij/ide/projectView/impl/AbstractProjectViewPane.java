@@ -468,8 +468,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public void installComparator() {
+    installComparator(getTreeBuilder());
+  }
+
+  public void installComparator(AbstractTreeBuilder treeBuilder) {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
+    treeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
   }
 
   public JTree getTree() {
@@ -631,6 +635,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 //      treeBuilder.setCanYieldUpdate(true);
     }
     myTreeBuilder = treeBuilder;
+  }
+
+  public boolean supportsFoldersAlwaysOnTop() {
+    return true;
+  }
+
+  public boolean supportsSortByType() {
+    return true;
   }
 
   private class MyDragSource implements DnDSource {

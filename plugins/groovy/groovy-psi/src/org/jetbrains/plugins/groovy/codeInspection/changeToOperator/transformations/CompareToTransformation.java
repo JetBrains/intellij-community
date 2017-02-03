@@ -28,16 +28,17 @@ import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.RELATIONAL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 class CompareToTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), RELATIONAL_PRECEDENCE);
+    GrExpression rhs = getRhs(methodCall);
+    GrExpression rhsParenthesized = checkPrecedenceForNonBinaryOps(rhs, RELATIONAL_PRECEDENCE) ? parenthesize(rhs) : rhs;
     GrExpression replacedElement = methodCall;
     IElementType changeToOperator = shouldChangeToOperator(methodCall, options);
     if (changeToOperator != mCOMPARE_TO) {
-        replacedElement = (GrExpression)methodCall.getParent();
+        replacedElement = (GrExpression) methodCall.getParent();
     }
 
     replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), changeToOperator, rhsParenthesized.getText()));
@@ -62,7 +63,13 @@ class CompareToTransformation extends BinaryTransformation {
   }
 
   @Override
-  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return super.couldApply(methodCall, options) && shouldChangeToOperator(methodCall, options) != null;
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return super.couldApplyInternal(methodCall, options) && shouldChangeToOperator(methodCall, options) != null;
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    return checkPrecedenceForNonBinaryOps(rhs, RELATIONAL_PRECEDENCE) || checkPrecedence(RELATIONAL_PRECEDENCE, methodCall);
   }
 }

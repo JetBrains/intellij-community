@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -617,6 +618,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Override
   public String toString() {
-    return "UndoManager for "+myProject;
+    return "UndoManager for " + ObjectUtils.notNull(myProject, "application");
   }
 }

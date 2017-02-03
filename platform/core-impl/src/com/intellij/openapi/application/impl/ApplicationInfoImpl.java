@@ -917,7 +917,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myEvalLicenseUrl = url.trim();
       }
     }
- 
+
     Element licensingElement = getChild(parentNode, ELEMENT_LICENSING);
     if (licensingElement != null) {
       final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
@@ -1041,12 +1041,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  private static volatile boolean myInPerformanceTest;
-  public static boolean isInPerformanceTest() {
-    return myInPerformanceTest;
+  private static volatile boolean myInStressTest;
+  public static boolean isInStressTest() {
+    return myInStressTest;
   }
   @TestOnly
-  public static void setInPerformanceTest(boolean inPerformanceTest) {
-    myInPerformanceTest = inPerformanceTest;
+  public static void setInStressTest(boolean inStressTest) {
+    myInStressTest = inStressTest;
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -79,7 +80,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         // Remove "dummy" identifier from the set of attributes
         names.remove(refExpr.getReferencedName());
         final Set<PyClass> suitableClasses = suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext);
-        LOG.debug("Classes that contain attributes " + names + ": ", suitableClasses);
+        LOG.debug("Result classes that contain attributes " + names + ": ", suitableClasses);
         for (PyClass pyClass : suitableClasses) {
           final PsiElement origPosition = parameters.getOriginalPosition();
           final String prefix;
@@ -106,12 +107,15 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
-        // and we probably don't want to confuse user with PyNames.FAKE_OLD_BASE anyway
         if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
           candidates.add(PyBuiltinCache.getInstance(anchor).getClass(PyNames.OBJECT));
         }
         else {
           final Collection<PyClass> declaringClasses = PyClassAttributesIndex.find(attribute, anchor.getProject());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Classes containing " + attribute + ": " +
+                      ContainerUtil.map(declaringClasses, AttributesCompletionProvider::debugClassCoordinates));
+          }
           candidates.addAll(declaringClasses);
         }
       }
@@ -121,7 +125,11 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
           continue;
         }
-        if (getAllInheritedAttributeNames(candidate, context, ancestorsCache).containsAll(seenAttrs)) {
+        final Set<String> inherited = getAllInheritedAttributeNames(candidate, context, ancestorsCache);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("All attributes of " + debugClassCoordinates(candidate) + ": " + inherited);
+        }
+        if (inherited.containsAll(seenAttrs)) {
           suitableClasses.add(candidate);
         }
       }
@@ -171,6 +179,11 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         ancestorsCache.put(pyClass, Collections.unmodifiableSet(result));
       }
       return result;
+    }
+    
+    @NotNull
+    private static String debugClassCoordinates(PyClass cls) {
+      return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";
     }
   }
 }

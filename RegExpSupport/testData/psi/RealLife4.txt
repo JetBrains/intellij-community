@@ -6,15 +6,14 @@ REGEXP_FILE
       RegExpClosureImpl: <[\w\+\.\-]{2,}>
         RegExpClassImpl: <[\w\+\.\-]>
           PsiElement(CLASS_BEGIN)('[')
-          RegExpUnionImpl: <\w\+\.\->
-            RegExpSimpleClassImpl: <\w>
-              PsiElement(CHAR_CLASS)('\w')
-            RegExpCharImpl: <\+>
-              PsiElement(REDUNDANT_ESCAPE)('\+')
-            RegExpCharImpl: <\.>
-              PsiElement(REDUNDANT_ESCAPE)('\.')
-            RegExpCharImpl: <\->
-              PsiElement(ESC_CHARACTER)('\-')
+          RegExpSimpleClassImpl: <\w>
+            PsiElement(CHAR_CLASS)('\w')
+          RegExpCharImpl: <\+>
+            PsiElement(REDUNDANT_ESCAPE)('\+')
+          RegExpCharImpl: <\.>
+            PsiElement(REDUNDANT_ESCAPE)('\.')
+          RegExpCharImpl: <\->
+            PsiElement(ESC_CHARACTER)('\-')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <{2,}>
           PsiElement(LBRACE)('{')

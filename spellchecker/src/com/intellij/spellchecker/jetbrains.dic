@@ -344,6 +344,7 @@ mediumint
 mediumtext
 metadata
 metas
+metaspace
 middleint
 middleware
 millis
@@ -360,6 +361,7 @@ monad
 monoidal
 mongodb
 monospaced
+msvc
 multi
 multilinestring
 multipart
@@ -379,6 +381,7 @@ nchar
 nclob
 ndbcluster
 netflix
+nmake
 nmtoken
 noarchivelog
 noaudit

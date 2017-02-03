@@ -16,7 +16,6 @@
 package git4idea.update;
 
 import com.intellij.dvcs.MultiRootMessage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -178,7 +177,7 @@ public class GitFetcher {
 
   @NotNull
   private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
-    Git git = ServiceManager.getService(Git.class);
+    Git git = Git.getInstance();
     String[] additionalParams = branch != null ?
                                 new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
                                 ArrayUtil.EMPTY_STRING_ARRAY;

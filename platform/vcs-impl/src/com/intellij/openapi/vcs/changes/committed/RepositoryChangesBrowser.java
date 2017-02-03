@@ -21,9 +21,11 @@ import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
@@ -31,11 +33,14 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
@@ -75,7 +80,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     final RevertSelectedChangesAction revertSelectedChangesAction = new RevertSelectedChangesAction();
     toolBarGroup.add(revertSelectedChangesAction);
 
-    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("RepositoryChangesBrowserToolbar");
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("RepositoryChangesBrowserToolbar");
     final AnAction[] actions = group.getChildren(null);
     for (AnAction anAction : actions) {
       toolBarGroup.add(anAction);
@@ -93,11 +98,18 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     else if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
-      return list.toArray(new Change [list.size()]);
-    } else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
+      return list.toArray(new Change[list.size()]);
+    }
+    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       final Change highestSelection = myViewer.getHighestLeadSelection();
-      return (highestSelection == null) ? new Change[]{} : new Change[] {highestSelection};
-    } else {
+      return (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection};
+    }
+    else if (VcsDataKeys.VCS.is(dataId)) {
+      Set<AbstractVcs> abstractVcs = ChangesUtil.getAffectedVcses(myViewer.getSelectedChanges(), myProject);
+      if (abstractVcs.size() == 1) return ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
+      return null;
+    }
+    else {
       final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
       return adapter.getData(dataId);
     }

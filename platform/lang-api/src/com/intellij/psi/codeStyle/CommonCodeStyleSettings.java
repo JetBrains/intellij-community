@@ -1041,4 +1041,17 @@ public class CommonCodeStyleSettings {
       myOverrideLanguageOptions = overrideLanguageOptions;
     }
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof CommonCodeStyleSettings) {
+      if (
+        ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
+        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions())
+        ) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

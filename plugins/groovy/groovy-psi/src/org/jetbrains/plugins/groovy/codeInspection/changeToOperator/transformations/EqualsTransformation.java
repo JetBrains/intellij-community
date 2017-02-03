@@ -17,18 +17,20 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 public class EqualsTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), ParenthesesUtils.EQUALITY_PRECEDENCE);
+    GrExpression rhs = getRhs(methodCall);
+    GrExpression rhsParenthesized = checkPrecedenceForBinaryOps(getPrecedence(rhs), GroovyTokenTypes.mEQUAL, true) ? parenthesize(rhs) : rhs;
     GrExpression replacedElement = methodCall;
     String operator = "==";
     if (isNegation(methodCall.getParent())) {
@@ -37,5 +39,11 @@ public class EqualsTransformation extends BinaryTransformation {
     }
 
     replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), operator, rhsParenthesized.getText()));
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    return checkPrecedenceForBinaryOps(getPrecedence(rhs), GroovyTokenTypes.mEQUAL, true) || checkPrecedence(EQUALITY_PRECEDENCE, methodCall);
   }
 }

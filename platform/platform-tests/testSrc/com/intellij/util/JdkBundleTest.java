@@ -74,7 +74,7 @@ public class JdkBundleTest {
     for (File file : jdk6Files) {
       testPassed = false;
       for (JdkBundle bundle : bundles) {
-        if (FileUtil.filesEqual(bundle.getAbsoluteLocation(), file)) {
+        if (FileUtil.filesEqual(bundle.getLocation(), file)) {
           testPassed = true;
           break;
         }
@@ -85,7 +85,7 @@ public class JdkBundleTest {
 
   @Test
   public void testJre7OnMac() throws Exception {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfo.isMac || !"true".equals(System.getProperty("idea.jre.check"))) return;
 
     File standardJdkLocationDirectory = new File(STANDARD_JDK_LOCATION_ON_MAC_OS_X);
     File [] jre7Files = findJdkInDirectory(standardJdkLocationDirectory, "1.7.0");
@@ -108,8 +108,8 @@ public class JdkBundleTest {
     ArrayList<JdkBundle> bundles = jdkBundleList.toArrayList();
 
     for (JdkBundle bundle : bundles) {
-      assertTrue("jre \"" + bundle.getAbsoluteLocation().getAbsolutePath() + "\" found among jdk bundles",
-                  new File(bundle.getAbsoluteLocation(), "Contents/Home/lib/tools.jar").exists());
+      assertTrue("jre \"" + bundle.getLocation().getAbsolutePath() + "\" found among jdk bundles",
+                  new File(bundle.getLocation(), "Contents/Home/lib/tools.jar").exists());
     }
   }
 
@@ -132,7 +132,7 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
@@ -158,7 +158,7 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);

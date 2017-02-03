@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -129,10 +131,15 @@ public class LightProjectDescriptor {
       }
 
       ContentEntry contentEntry = model.addContentEntry(srcRoot);
-      contentEntry.addSourceFolder(srcRoot, false);
+      contentEntry.addSourceFolder(srcRoot, getSourceRootType());
 
       configureModule(module, model, contentEntry);
     });
+  }
+
+  @NotNull
+  protected JpsModuleSourceRootType<?> getSourceRootType() {
+    return JavaSourceRootType.SOURCE;
   }
 
   @Nullable

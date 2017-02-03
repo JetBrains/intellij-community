@@ -18,27 +18,30 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
   private final PsiExpression myContext;
 
   public JavaLangClassMemberReference(PsiLiteralExpression literal, PsiExpression context) {
@@ -59,34 +62,24 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     if (type != null) {
       final PsiClass psiClass = getPsiClass();
       if (psiClass != null) {
-        PsiMember member;
-        if (type == Type.FIELD || type == Type.DECLARED_FIELD) {
-          member = psiClass.findFieldByName(name, false);
-        } else {
-          final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-          member = methods.length == 0 ? null : methods[0];
-        }
+        switch (type) {
 
-        return member;
-      }
-    }
+          case FIELD: {
+            PsiField field = psiClass.findFieldByName(name, true);
+            return isPublic(field) ? field : null;
+          }
 
-    return null;
-  }
+          case DECLARED_FIELD:
+            return psiClass.findFieldByName(name, false);
 
-  @Nullable
-  private PsiClass getPsiClass() {
-    if (myContext instanceof PsiClassObjectAccessExpression) {
-      return PsiTypesUtil.getPsiClass(((PsiClassObjectAccessExpression)myContext).getOperand().getType());
-    } else if (myContext instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)myContext).resolveMethod();
-      if (method != null && "forName".equals(method.getName()) && isClass(method.getContainingClass())) {
-        final PsiExpression[] expressions = ((PsiMethodCallExpression)myContext).getArgumentList().getExpressions();
-        if (expressions.length == 1 && expressions[0] instanceof PsiLiteralExpression) {
-          final Object value = ((PsiLiteralExpression)expressions[0]).getValue();
-          if (value instanceof String) {
-            final Project project = myContext.getProject();
-            return JavaPsiFacade.getInstance(project).findClass(String.valueOf(value), GlobalSearchScope.allScope(project));
+          case METHOD: {
+            final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+            return ContainerUtil.find(methods, JavaLangClassMemberReference::isPublic);
+          }
+
+          case DECLARED_METHOD: {
+            final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
+            return methods.length == 0 ? null : methods[0];
           }
         }
       }
@@ -94,24 +87,117 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return null;
   }
 
-  private static boolean isClass(PsiClass aClass) {
+  @Nullable
+  private PsiClass getPsiClass() {
+    return getPsiClass(myContext);
+  }
+
+  @Nullable
+  private static PsiClass getPsiClass(PsiExpression context) {
+    context = ParenthesesUtils.stripParentheses(context);
+    if (context instanceof PsiClassObjectAccessExpression) { // special case for JDK 1.4
+      PsiTypeElement operand = ((PsiClassObjectAccessExpression)context).getOperand();
+      return PsiTypesUtil.getPsiClass(operand.getType());
+    }
+
+    PsiType type = context.getType();
+    if (type instanceof PsiClassType) {
+      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      if (!isJavaLangClass(resolveResult.getElement())) return null;
+      PsiTypeParameter[] parameters = resolveResult.getElement().getTypeParameters();
+      if (parameters.length == 1) {
+        PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
+        PsiClass argumentClass = PsiTypesUtil.getPsiClass(typeArgument);
+        if (argumentClass != null) return argumentClass;
+      }
+    }
+    if (context instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)context;
+      if ("forName".equals(methodCall.getMethodExpression().getReferenceName())) {
+        final PsiMethod method = methodCall.resolveMethod();
+        if (method != null && isJavaLangClass(method.getContainingClass())) {
+          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+          if (expressions.length == 1 && expressions[0] instanceof PsiLiteralExpression) {
+            final Object value = ((PsiLiteralExpression)expressions[0]).getValue();
+            if (value instanceof String) {
+              final Project project = context.getProject();
+              return JavaPsiFacade.getInstance(project).findClass(String.valueOf(value), GlobalSearchScope.allScope(project));
+            }
+          }
+        }
+      }
+    }
+    if (context instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)context).resolve();
+      if (resolved instanceof PsiVariable) {
+        PsiExpression initializer = getInitializer((PsiVariable)resolved, context);
+        if (initializer != null) {
+          return ourGuard.doPreventingRecursion(resolved, false, () -> getPsiClass(initializer));
+        }
+      }
+    }
+    return null;
+  }
+
+  private static PsiExpression getInitializer(@NotNull PsiVariable variable, @NotNull PsiExpression usage) {
+    PsiExpression initializer = variable.getInitializer();
+    if (initializer != null) {
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        return initializer;
+      }
+      if (variable instanceof PsiLocalVariable) {
+        PsiDeclarationStatement declarationStatement = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
+        if (declarationStatement != null) {
+          PsiStatement usageStatement = PsiTreeUtil.getParentOfType(usage, PsiStatement.class);
+          if (PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class) == usageStatement) {
+            return initializer;
+          }
+          PsiElement scope = PsiUtil.getVariableCodeBlock(variable, usage);
+          if (scope != null && HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
+            return initializer;
+          }
+        }
+      }
+    }
+    PsiStatement usageStatement = PsiTreeUtil.getParentOfType(usage, PsiStatement.class);
+    if (usageStatement != null) {
+      return getAssignedVisibleInUsage(variable, usageStatement);
+    }
+    // TODO: handle other initializations and assignments where the class can be resolved unambiguously
+    return null;
+  }
+
+  @Nullable
+  private static PsiExpression getAssignedVisibleInUsage(@NotNull PsiVariable variable, PsiStatement usageStatement) {
+    PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(usageStatement, PsiStatement.class);
+    if (previousStatement instanceof PsiExpressionStatement) {
+      PsiExpression expression = ((PsiExpressionStatement)previousStatement).getExpression();
+      if (expression instanceof PsiAssignmentExpression &&
+          JavaTokenType.EQ.equals(((PsiAssignmentExpression)expression).getOperationTokenType())) {
+        PsiExpression lExpression = ((PsiAssignmentExpression)expression).getLExpression();
+        lExpression = ParenthesesUtils.stripParentheses(lExpression);
+        if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == variable) {
+          return ((PsiAssignmentExpression)expression).getRExpression();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isJavaLangClass(PsiClass aClass) {
     return aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName());
+  }
+
+  private static boolean isJavaLangObject(PsiClass aClass) {
+    return aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
   }
 
   @Nullable
   private Type getType() {
-    boolean selfFound = false;
-    for (PsiElement child : myContext.getParent().getChildren()) {
-      if (!selfFound) {
-        if (child == myContext) {
-          selfFound = true;
-        }
-        continue;
-      }
-
-      if (child instanceof PsiIdentifier) {
-        return Type.fromString(child.getText());
-      }
+    PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
+    if (methodCall != null) {
+      String name = methodCall.getMethodExpression().getReferenceName();
+      return Type.fromString(name);
     }
     return null;
   }
@@ -120,29 +206,37 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Override
   public Object[] getVariants() {
     final Type type = getType();
-    final PsiClass psiClass = getPsiClass();
-    if (psiClass != null && type != null) {
-      if (type == Type.DECLARED_FIELD) {
-        return psiClass.getFields();
-      } else if (type == Type.FIELD) {
-        final List<PsiField> fields = new ArrayList<>();
-        for (PsiField field : psiClass.getFields()) {
-          if (isPublic(field)) {
-            fields.add(field);
-          }
+    if (type != null) {
+      final PsiClass psiClass = getPsiClass();
+      if (psiClass != null) {
+        switch (type) {
+
+          case DECLARED_FIELD:
+            return psiClass.getFields();
+
+          case FIELD:
+            return ContainerUtil.filter(psiClass.getAllFields(), JavaLangClassMemberReference::isPublic).toArray();
+
+          case DECLARED_METHOD:
+            return Arrays.stream(psiClass.getMethods())
+              .filter(method -> !method.isConstructor())
+              .map(this::lookupMethod)
+              .toArray();
+
+          case METHOD:
+            return Arrays.stream(psiClass.getAllMethods())
+              .filter(method -> isPublic(method) && !method.isConstructor() && !isJavaLangObject(method.getContainingClass()))
+              .map(this::lookupMethod)
+              .toArray();
         }
-        return fields.toArray();
-      } else if (type == Type.DECLARED_METHOD || type == Type.METHOD) {
-        final List<LookupElementBuilder> elements = new ArrayList<>();
-        for (PsiMethod method : psiClass.getMethods()) {
-          if (type == Type.DECLARED_METHOD || isPublic(method)) {
-            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this));
-          }
-        }
-        return elements.toArray();
       }
     }
     return EMPTY_ARRAY;
+  }
+
+  @NotNull
+  private LookupElementBuilder lookupMethod(PsiMethod method) {
+    return JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this);
   }
 
   @Override

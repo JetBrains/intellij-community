@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     model.clear();
     int selectedIndex = 0;
     int index = 0;
-    List<ThreadState> threadStates = UISettings.getInstance().MERGE_EQUAL_STACKTRACES ? myMergedThreadDump : myThreadDump;
+    List<ThreadState> threadStates = UISettings.getInstance().isMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
         //noinspection unchecked
@@ -389,12 +389,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return UISettings.getInstance().MERGE_EQUAL_STACKTRACES;
+      return UISettings.getInstance().isMergeEqualStackTraces();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      UISettings.getInstance().MERGE_EQUAL_STACKTRACES = state;
+      UISettings.getInstance().setMergeEqualStackTraces(state);
       updateThreadList();
     }
   }

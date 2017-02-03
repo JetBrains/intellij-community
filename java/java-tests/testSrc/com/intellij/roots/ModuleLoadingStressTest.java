@@ -17,6 +17,7 @@ package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,17 +37,13 @@ public class ModuleLoadingStressTest extends PlatformTestCase {
 
   public void testContentEntryExchange() throws Exception {
     String path = myProject.getBasePath();
-    int count = 1000;
+    int count = 100;
     for (int i = 0; i < count; i++) {
       String name = "module" + i;
-      Module module = createModule(name);
       File folder = new File(path, name);
-      assertTrue(folder.mkdir());
-      VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(folder);
-
-      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      model.addContentEntry(root);
-      ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+      createModule(name, folder, path);
+      String inner = "inner" + i;
+      createModule(inner, new File(folder, inner), path);
     }
 
     ApplicationManagerEx.getApplicationEx().doNotSave(false);
@@ -59,12 +56,21 @@ public class ModuleLoadingStressTest extends PlatformTestCase {
 
     myProject = manager.loadAndOpenProject(projectFilePath);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    assertEquals(count + 1, modules.length);
+    assertEquals(count * 2 + 1, modules.length);
 
     for (Module module: modules) {
       if (moduleName.equals(module.getName())) continue;
       VirtualFile root = ModuleRootManager.getInstance(module).getContentRoots()[0];
       assertEquals(module.getName(), root.getName());
     }
+  }
+
+  private void createModule(String name, File contentRoot, String path) {
+    Module module = createModuleAt(name, myProject, JavaModuleType.getModuleType(), path);
+    assertTrue(contentRoot.mkdir());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRoot);
+    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    model.addContentEntry(root);
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 }

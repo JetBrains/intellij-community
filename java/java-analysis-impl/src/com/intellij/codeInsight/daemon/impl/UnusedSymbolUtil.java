@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -46,10 +47,10 @@ public class UnusedSymbolUtil {
 
   public static boolean isImplicitUsage(@NotNull Project project,
                                         @NotNull PsiModifierListOwner element,
-                                        @NotNull ProgressIndicator progress) {
+                                        @Nullable ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
     for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      progress.checkCanceled();
+      checkCanceled(progress);
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -58,9 +59,9 @@ public class UnusedSymbolUtil {
     return false;
   }
 
-  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
+  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      progress.checkCanceled();
+      checkCanceled(progress);
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -70,9 +71,9 @@ public class UnusedSymbolUtil {
 
   public static boolean isImplicitWrite(@NotNull Project project,
                                         @NotNull PsiVariable element,
-                                        @NotNull ProgressIndicator progress) {
+                                        @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      progress.checkCanceled();
+      checkCanceled(progress);
       if (provider.isImplicitWrite(element)) {
         return true;
       }
@@ -152,6 +153,14 @@ public class UnusedSymbolUtil {
       }
     }
     return false;
+  }
+
+  private static void checkCanceled(@Nullable ProgressIndicator progress) {
+    if (progress != null) {
+      progress.checkCanceled();
+    } else {
+      ProgressManager.checkCanceled();
+    }
   }
 
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,

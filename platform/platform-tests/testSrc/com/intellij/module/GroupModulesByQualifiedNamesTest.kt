@@ -17,7 +17,6 @@ package com.intellij.module
 
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.openapi.module.ModuleGrouper
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestCase
 import org.junit.Assert
 import org.junit.Test
@@ -59,14 +58,5 @@ class GroupModulesByQualifiedNamesTest : PlatformTestCase() {
   }
 
   private val grouper: ModuleGrouper
-    get() {
-      val property = Registry.get("project.qualified.module.names")
-      return try {
-        property.setValue(true)
-        ModuleGrouper.instanceFor(myProject)
-      }
-      finally {
-        property.setValue(false)
-      }
-    }
+    get() = getQualifiedNameModuleGrouper(myProject)
 }

@@ -103,6 +103,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("jgoodies-looks")
         withProjectLibrary("commons-net")
+        withProjectLibrary("snakeyaml")
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
         withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")

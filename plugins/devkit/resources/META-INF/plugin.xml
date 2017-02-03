@@ -180,6 +180,11 @@
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
 
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
+    
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 

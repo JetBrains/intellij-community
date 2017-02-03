@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(expandWithLabel, gbConstraints);
 
     gbConstraints.gridx = 1;
-    gbConstraints.insets = new Insets(0, 4, 0, 0);
+    gbConstraints.insets = JBUI.insetsLeft(4);
     myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
@@ -349,6 +349,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
         contexts = "No applicable contexts" + (allowNoContexts ? "" : " yet");
         ctxLabel.setIcon(AllIcons.General.BalloonWarning);
         change.setText("Define");
+      }
+      else {
+        ctxLabel.setForeground(UIUtil.getLabelForeground());
+        ctxLabel.setIcon(null);
       }
       ctxLabel.setText(StringUtil.first(contexts + ". ", 100, true));
 

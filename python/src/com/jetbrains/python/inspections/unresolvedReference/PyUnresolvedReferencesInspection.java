@@ -1007,8 +1007,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     public void highlightUnusedImports() {
+      final PyInspectionExtension[] extensions = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
       final List<PsiElement> unused = collectUnusedImportElements();
       for (PsiElement element : unused) {
+        if (Arrays.stream(extensions).anyMatch(extension -> extension.ignoreUnused(element))) {
+          continue;
+        }
         if (element.getTextLength() > 0) {
           registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new OptimizeImportsQuickFix());
         }

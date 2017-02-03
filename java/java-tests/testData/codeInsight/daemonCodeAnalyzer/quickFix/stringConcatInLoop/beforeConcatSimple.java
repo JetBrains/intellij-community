@@ -4,7 +4,8 @@ public class Main {
     String test(String[] strings) {
         String res = "";
         for (String s : strings) {
-            res <caret>+= s;
+            res <caret>+= s + "\n";
+            res += s;
         }
         return res;
     }

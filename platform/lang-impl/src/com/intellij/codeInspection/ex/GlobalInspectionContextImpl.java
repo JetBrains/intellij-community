@@ -547,7 +547,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             indicator.checkCanceled();
             if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
 
-            PsiFile psiFile = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)() -> {
+            PsiFile psiFile = ReadAction.compute(() -> {
               if (getProject().isDisposed()) throw new ProcessCanceledException();
               PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
               Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
@@ -879,7 +879,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final TextRange range;
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-      range = elements.length == 1 ? ApplicationManager.getApplication().runReadAction((Computable<TextRange>)elements[0]::getTextRange) : null;
+      range = elements.length == 1 ? ReadAction.compute(elements[0]::getTextRange) : null;
     }
     else {
       range = null;
@@ -919,14 +919,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
               ApplicationManager.getApplication().runReadAction(runnable);
 
-              final List<ProblemDescriptor> localDescriptors = new ArrayList<>();
+              final Set<ProblemDescriptor> localDescriptors = new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
               for (LocalInspectionToolWrapper tool : lTools) {
                 InspectionToolPresentation toolPresentation = getPresentation(tool);
                 for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
                   if (descriptor instanceof ProblemDescriptor) {
-                    if (localDescriptors.contains(descriptor)) continue;
-                    int idx = Collections.binarySearch(localDescriptors, descriptor, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-                    localDescriptors.add(Math.abs(idx + 1), (ProblemDescriptor)descriptor);
+                    localDescriptors.add((ProblemDescriptor)descriptor);
                   }
                 }
               }

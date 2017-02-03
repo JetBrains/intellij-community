@@ -18,6 +18,8 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
@@ -100,17 +101,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        fireModulesAdded();
+        if (project == myProject) {
+          fireModulesAdded();
 
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectOpened();
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectOpened();
+          }
         }
       }
 
       @Override
       public void projectClosed(Project project) {
-        for (Module module : myModuleModel.getModules()) {
-          ((ModuleEx)module).projectClosed();
+        if (project == myProject) {
+          for (Module module : myModuleModel.getModules()) {
+            ((ModuleEx)module).projectClosed();
+          }
         }
       }
     });
@@ -312,6 +317,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     service.shutdown();
 
     progressIndicator.checkCanceled();
+
+    Application app = ApplicationManager.getApplication();
+    if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
+      Map<String, Module> track = new THashMap<>();
+      for (Module module : moduleModel.getModules()) {
+        for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
+          Module oldModule = track.put(url, module);
+          if (oldModule != null) {
+            //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
+            //VirtualFilePointer pointer = track1.get(url);
+            LOG.error("duplicated content url: " + url);
+          }
+        }
+      }
+    }
 
     onModuleLoadErrors(moduleModel, errors);
 
@@ -566,7 +586,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
   @NotNull
-  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
+  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) throws IOException;
 
   static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -670,7 +690,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (module == null) {
         module = myManager.createModule(filePath);
         final ModuleEx newModule = module;
-        initModule(module, filePath, () -> {
+        initModule(module, filePath, null, () -> {
           newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
           if (options != null) {
             for (Map.Entry<String, String> option : options.entrySet()) {
@@ -733,14 +753,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
       return () -> ReadAction.compute(() -> {
         if (myManager.myProject.isDisposed()) return null;
-        ModuleEx result = myManager.createAndLoadModule(path);
-        initModule(result, path, null);
+        ModuleEx result = myManager.createAndLoadModule(path, moduleFile);
+        initModule(result, path, moduleFile, null);
         return result;
       });
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
-      module.init(path, beforeComponentCreation);
+    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
+      module.init(path, file, beforeComponentCreation);
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }
@@ -788,8 +808,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     public void commit() {
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[0];
-      ModifiableModelCommitter.multiCommit(rootModels, this);
+      ModifiableModelCommitter.multiCommit(Collections.emptyList(), this);
     }
 
     private void commitWithRunnable(Runnable runnable) {

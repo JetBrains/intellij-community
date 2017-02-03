@@ -16,6 +16,7 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.KillableProcess;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,7 +32,6 @@ import javax.swing.*;
  * @author Sergey Simonchik
  */
 public class StopProcessAction extends DumbAwareAction implements AnAction.TransparentUpdate {
-
   private ProcessHandler myProcessHandler;
 
   public StopProcessAction(@NotNull String text, @Nullable String description, @Nullable ProcessHandler processHandler) {
@@ -70,28 +70,12 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
     presentation.setDescription(description);
   }
 
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     stopProcess(myProcessHandler);
   }
 
   public static void stopProcess(@Nullable ProcessHandler processHandler) {
-    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-      // process termination was requested, but it's still alive
-      // in this case 'force quit' will be performed
-      ((KillableProcess)processHandler).killProcess();
-      return;
-    }
-
-    if (processHandler != null) {
-      if (processHandler.detachIsDefault()) {
-        processHandler.detachProcess();
-      }
-      else {
-        processHandler.destroyProcess();
-      }
-    }
+    ExecutionManagerImpl.stopProcess(processHandler);
   }
-
 }

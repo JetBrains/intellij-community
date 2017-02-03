@@ -26,9 +26,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,27 +112,26 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       if (sdk == null) {
         return null;
       }
-      String tool = findToolInPackage(toolName, module, sdk, "PyQt4");
+      String tool = findToolInPackage(toolName, module, "PyQt4");
       if (tool != null) {
         return tool;
       }
-      return findToolInPackage(toolName, module, sdk, "PySide");
+      return findToolInPackage(toolName, module, "PySide");
    }
     // TODO
     return null;
   }
 
   @Nullable
-  private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
-    QualifiedNameResolver visitor = new QualifiedNameResolverImpl(name).fromModule(module).withSdk(sdk);
-    List<PsiDirectory> elements = visitor.resultsOfType(PsiDirectory.class);
-    for (PsiDirectory directory : elements) {
-      VirtualFile tool = directory.getVirtualFile().findChild(toolName + ".exe");
-      if (tool != null) {
-        return tool.getPath();
-      }
-    }
-    return null;
+  private static String findToolInPackage(String toolName, Module module, String name) {
+    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(name),
+                                                                              PyResolveImportUtil.fromModule(module));
+    return StreamEx.of(results).select(PsiDirectory.class)
+      .map(directory -> directory.getVirtualFile().findChild(toolName + ".exe"))
+      .nonNull()
+      .map(VirtualFile::getPath)
+      .findFirst()
+      .orElse(null);
   }
 
   protected abstract String getToolName();

@@ -165,6 +165,22 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyBoolLiteralExpression(PyBoolLiteralExpression node) {
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
+                                                                                          ReadWriteInstruction.ACCESS.READ);
+    myBuilder.addNode(readWriteInstruction);
+    myBuilder.checkPending(readWriteInstruction);
+  }
+
+  @Override
+  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
+                                                                                          ReadWriteInstruction.ACCESS.READ);
+    myBuilder.addNode(readWriteInstruction);
+    myBuilder.checkPending(readWriteInstruction);
+  }
+
+  @Override
   public void visitPyTypeDeclarationStatement(PyTypeDeclarationStatement node) {
     myBuilder.startNode(node);
     final PyAnnotation annotation = node.getAnnotation();

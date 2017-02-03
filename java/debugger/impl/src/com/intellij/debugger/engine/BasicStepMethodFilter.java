@@ -18,9 +18,8 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
@@ -71,7 +70,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     if (!myTargetMethodName.equals(name)) {
       if (DebuggerUtilsEx.isLambdaName(name)) {
         SourcePosition position = process.getPositionManager().getSourcePosition(location);
-        return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        return ReadAction.compute(() -> {
           PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
           if (psiMethod instanceof PsiLambdaExpression) {
             PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();

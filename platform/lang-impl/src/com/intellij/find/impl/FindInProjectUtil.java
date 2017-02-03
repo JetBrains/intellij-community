@@ -23,7 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -43,7 +43,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
@@ -251,14 +250,13 @@ public class FindInProjectUtil {
                                  @NotNull final FindModel findModel,
                                  @NotNull final Processor<UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
-      if (!ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> consumer.process(new UsageInfo(psiFile)))) {
+      if (!ReadAction.compute(() -> consumer.process(new UsageInfo(psiFile)))) {
         throw new ProcessCanceledException();
       }
       return 1;
     }
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
-    final Document document = ApplicationManager.getApplication().runReadAction(
-      (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+    final Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
     if (document == null) return 0;
     final int[] offset = {0};
     int count = 0;
@@ -267,7 +265,7 @@ public class FindInProjectUtil {
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
-      found = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+      found = ReadAction.compute(() -> {
         if (!psiFile.isValid()) return 0;
         return addToUsages(document, consumer, findModel, psiFile, offset, USAGES_PER_READ_ACTION);
       });
@@ -400,33 +398,30 @@ public class FindInProjectUtil {
         result.add(grandGrandChild);
       }
     }
-    return result != null ? result : Collections.<PsiElement>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   @NotNull
-  public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+  static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
-        if (topLevelRegExpChars.size() != 1) return "";
+    return ReadAction.compute(() -> {
+      final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+      if (topLevelRegExpChars.size() != 1) return "";
 
-        // leave only top level regExpChars
-        return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
-          final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      // leave only top level regExpChars
+      return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
+        final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
 
-          @Override
-          public String fun(PsiElement element) {
-            if (regExpCharPsiClass.isInstance(element)) {
-              String text = element.getText();
-              if (!text.startsWith("\\")) return text;
-            }
-            return " ";
+        @Override
+        public String fun(PsiElement element) {
+          if (regExpCharPsiClass.isInstance(element)) {
+            String text = element.getText();
+            if (!text.startsWith("\\")) return text;
           }
-        }, "");
-      }
+          return " ";
+        }
+      }, "");
     });
   }
 

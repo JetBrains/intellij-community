@@ -158,6 +158,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
+    final PsiElement parent = modifierList.getParent();
     final boolean level8OrHigher = PsiUtil.isLanguageLevel8OrHigher(modifierList);
     final boolean level9OrHigher = PsiUtil.isLanguageLevel9OrHigher(modifierList);
     for (@PsiModifier.ModifierConstant String incompatible : incompatibles) {
@@ -166,12 +167,12 @@ public class HighlightUtil extends HighlightUtilBase {
           continue;
         }
       }
-      if (level9OrHigher && modifier.equals(PsiModifier.PRIVATE) && incompatible.equals(PsiModifier.PUBLIC)) {
-        continue;
-      }
-      if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.FINAL)) {
-        final PsiElement parent = modifierList.getParent();
-        if (parent instanceof PsiMethod) {
+      if (parent instanceof PsiMethod) {
+        if (level9OrHigher && modifier.equals(PsiModifier.PRIVATE) && incompatible.equals(PsiModifier.PUBLIC)) {
+          continue;
+        }
+
+        if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.FINAL)) {
           final PsiClass containingClass = ((PsiMethod)parent).getContainingClass();
           if (containingClass == null || !containingClass.isInterface()) {
             continue;

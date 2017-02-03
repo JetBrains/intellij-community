@@ -25,8 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -83,12 +81,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return filePointerManager.duplicate(pointer, this, null);
   }
 
-
   @Override
-  public void readExternal(@NotNull Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
     assert !myDisposed;
-    final String value = element.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE);
-    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
+    myInheritedCompilerOutput = Boolean.parseBoolean(element.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "false"));
     myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
 
     myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
@@ -101,7 +97,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     assert !myDisposed;
     if (!myInheritedCompilerOutput) {
       if (myCompilerOutput != null) {

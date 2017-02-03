@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private final JButton myCancelButton;
   private final JFrame myFrame;
 
-  private final Queue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<Runnable> myQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -143,30 +143,33 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private void startRequestDispatching() {
-    new Thread(() -> {
-      while (true) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          Runner.printStackTrace(e);
-          return;
-        }
-
-        final List<UpdateRequest> pendingRequests = new ArrayList<>();
-        UpdateRequest request;
-        while ((request = myQueue.poll()) != null) {
-          pendingRequests.add(request);
-        }
-
-        SwingUtilities.invokeLater(() -> {
-          for (UpdateRequest each : pendingRequests) {
-            each.perform();
+    new Thread("Updater UI Dispatcher") {
+      @Override
+      public void run() {
+        while (true) {
+          try {
+            //noinspection BusyWait
+            Thread.sleep(100);
           }
-        });
+          catch (InterruptedException e) {
+            Runner.printStackTrace(e);
+            return;
+          }
+
+          List<Runnable> pendingRequests = new ArrayList<>();
+          Runnable request;
+          while ((request = myQueue.poll()) != null) {
+            pendingRequests.add(request);
+          }
+
+          SwingUtilities.invokeLater(() -> {
+            for (Runnable each : pendingRequests) {
+              each.run();
+            }
+          });
+        }
       }
-    }, "swing updater dispatch").start();
+    }.start();
   }
 
   private void doCancel() {
@@ -217,10 +220,9 @@ public class SwingUpdaterUI implements UpdaterUI {
     System.exit(myApplied ? RESULT_REQUIRES_RESTART : 0);
   }
 
-  public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (validationResults.isEmpty()) return Collections.emptyMap();
-
-    final Map<String, ValidationResult.Option> result = new HashMap<>();
+  @Override
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+    Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
         boolean proceed = true;
@@ -259,7 +261,8 @@ public class SwingUpdaterUI implements UpdaterUI {
           });
           buttonsPanel.add(proceedButton);
           dialog.getRootPane().setDefaultButton(proceedButton);
-        } else {
+        }
+        else {
           dialog.getRootPane().setDefaultButton(cancelButton);
         }
 
@@ -277,12 +280,12 @@ public class SwingUpdaterUI implements UpdaterUI {
         }
 
         String message = "<html>Some conflicts were found in the installation area.<br><br>";
-
         if (proceed) {
           message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
                      " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
                      "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-        } else {
+        }
+        else {
           message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
                      "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
         }
@@ -367,14 +370,10 @@ public class SwingUpdaterUI implements UpdaterUI {
     boolean execute(UpdaterUI ui) throws OperationCancelledException;
   }
 
-  @FunctionalInterface
-  private interface UpdateRequest {
-    void perform();
-  }
-
   private static class MyTableModel extends AbstractTableModel {
-    public static final String[] COLUMNS = new String[]{"File", "Action", "Problem", "Solution"};
+    public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
     public static final int OPTIONS_COLUMN_INDEX = 3;
+
     private final List<Item> myItems = new ArrayList<>();
 
     public MyTableModel(List<ValidationResult> validationResults) {
@@ -383,6 +382,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       }
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMNS.length;
     }
@@ -403,12 +403,10 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == OPTIONS_COLUMN_INDEX) {
-        return ValidationResult.Option.class;
-      }
-      return super.getColumnClass(columnIndex);
+      return columnIndex == OPTIONS_COLUMN_INDEX ? ValidationResult.Option.class : super.getColumnClass(columnIndex);
     }
 
+    @Override
     public int getRowCount() {
       return myItems.size();
     }
@@ -425,6 +423,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       }
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       Item item = myItems.get(rowIndex);
       switch (columnIndex) {
@@ -458,8 +457,8 @@ public class SwingUpdaterUI implements UpdaterUI {
     }
 
     private static class Item {
-      ValidationResult validationResult;
-      ValidationResult.Option option;
+      private ValidationResult validationResult;
+      private ValidationResult.Option option;
 
       private Item(ValidationResult validationResult, ValidationResult.Option option) {
         this.validationResult = validationResult;

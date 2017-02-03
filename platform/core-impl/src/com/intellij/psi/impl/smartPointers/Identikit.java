@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.WeakInterner;
@@ -40,6 +41,8 @@ public abstract class Identikit {
 
   @NotNull
   public abstract Language getFileLanguage();
+
+  public abstract boolean isForPsiFile();
 
   public static ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     return fromTypes(element.getClass(), PsiUtilCore.getElementType(element), fileLanguage);
@@ -156,6 +159,11 @@ public abstract class Identikit {
       return myFileLanguage;
     }
 
+    @Override
+    public boolean isForPsiFile() {
+      return myElementType instanceof IFileElementType;
+    }
+
     private boolean isAcceptable(@NotNull PsiElement element) {
       return myElementClass == element.getClass() && myElementType == PsiUtilCore.getElementType(element);
     }
@@ -203,6 +211,11 @@ public abstract class Identikit {
     @Override
     public Language getFileLanguage() {
       return myAnchorInfo.getFileLanguage();
+    }
+
+    @Override
+    public boolean isForPsiFile() {
+      return myAnchorInfo.isForPsiFile();
     }
   }
 

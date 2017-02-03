@@ -161,7 +161,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("__coroutine[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("Coroutine[Any, Any, int]",
            "async def foo(x):\n" +
            "    await x\n" +
            "    return 0\n" +
@@ -263,7 +263,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("__asyncgenerator[int, Any]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen()"));
@@ -271,7 +271,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncIterator[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen().__aiter__()"));
@@ -482,7 +482,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testDecimalDividedByInt() {
-    doTest("Union[int, Decimal]",
+    doTest("Union[Decimal, int]",
            "class Decimal(object):\n" +
            "    def __div__(self, other):\n" +
            "        \"\"\"\n" +

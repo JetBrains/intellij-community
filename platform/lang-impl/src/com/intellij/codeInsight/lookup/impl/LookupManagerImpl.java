@@ -133,7 +133,7 @@ public class LookupManagerImpl extends LookupManager {
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
+    final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
     final Alarm alarm = new Alarm();
     final Runnable request = () -> {
@@ -206,6 +206,11 @@ public class LookupManagerImpl extends LookupManager {
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return lookup;
+  }
+
+  @NotNull
+  protected LookupImpl createLookup(@NotNull Editor editor, @NotNull LookupArranger arranger, Project project) {
+    return new LookupImpl(project, editor, arranger);
   }
 
   @Override

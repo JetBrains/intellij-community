@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ class InstancesWithStackFrameView {
   private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
   private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
   private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
-  private static final List<StackFrameItem> EMPTY_FRAME = Collections.emptyList();
 
   private float myHidedProportion;
 
@@ -108,7 +107,7 @@ class InstancesWithStackFrameView {
       if (ref != null && data != null) {
         List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
-          list.setFrame(stack);
+          list.setFrameItems(stack);
           if (mySplitter.getProportion() == 1.f) {
             mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
           }
@@ -120,7 +119,7 @@ class InstancesWithStackFrameView {
         list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
       }
 
-      list.setFrame(EMPTY_FRAME);
+      list.setFrameItems(Collections.emptyList());
     });
   }
 

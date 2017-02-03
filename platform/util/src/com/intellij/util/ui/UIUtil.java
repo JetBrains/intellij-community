@@ -1712,13 +1712,15 @@ public class UIUtil {
   public static void drawSearchMatch(Graphics2D g, int startX, int endX, int height, Color c1, Color c2) {
     final boolean drawRound = endX - startX > 4;
 
-    final Composite oldComposite = g.getComposite();
+    GraphicsConfig config = new GraphicsConfig(g);
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
 
     if (isJDKManagedHiDPIScreen()) {
+      GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
       g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
-      g.setComposite(oldComposite);
+      c.restore();
+      config.restore();
       return;
     }
 
@@ -1736,7 +1738,7 @@ public class UIUtil {
       g.drawLine(startX, height - 3, endX - 1, height - 3);
     }
 
-    g.setComposite(oldComposite);
+    config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
@@ -2261,6 +2263,22 @@ public class UIUtil {
   @Deprecated
   public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
     return getParentOfType(cls, c);
+  }
+
+  //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
+  @Nullable
+  public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
+    Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
+    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+      JRootPane rootPane = (JRootPane)component.getParent();
+      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
+      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      if (component == null) {
+        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
+        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+      }
+    }
+    return component;
   }
 
   @Language("HTML")

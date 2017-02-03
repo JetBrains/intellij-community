@@ -37,11 +37,9 @@ public class JsonContextType extends FileTypeBasedContextType {
                                                                                  @Override
                                                                                  public boolean accepts(@NotNull PsiElement element,
                                                                                                         ProcessingContext context) {
-                                                                                   return JsonPsiUtil.isPropertyKey(element) &&
-                                                                                          element.getNextSibling() != null &&
-                                                                                          element.getNextSibling().getNode().getElementType() == JsonElementTypes.COLON;
+                                                                                   return JsonPsiUtil.isPropertyKey(element);
                                                                                  }
-                                                                               })));
+                                                                               })).beforeLeaf(psiElement(JsonElementTypes.COLON)));
     return !illegalPattern.accepts(file.findElementAt(offset));
   }
 }

@@ -126,8 +126,13 @@ public class GenericsHighlightUtil {
         if (errorMessage != null) {
           final PsiType expectedType = detectExpectedType(referenceParameterList);
           if (!(inferenceResult.failedToInfer() && expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
-            return HighlightInfo
+            HighlightInfo highlightInfo = HighlightInfo
               .newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(errorMessage).create();
+            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT && 
+                !PsiUtil.isLanguageLevel9OrHigher(referenceParameterList)) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
+            }
+            return highlightInfo;
           }
         }
       }

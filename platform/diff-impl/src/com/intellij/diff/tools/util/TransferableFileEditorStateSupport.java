@@ -16,7 +16,7 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.impl.DiffSettingsHolder;
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.icons.AllIcons;
@@ -50,11 +50,11 @@ public class TransferableFileEditorStateSupport {
     return getEditorState(holder.getEditor()) != null;
   };
 
-  @NotNull private final DiffSettingsHolder.DiffSettings mySettings;
+  @NotNull private final DiffSettings mySettings;
   @NotNull private final List<BinaryEditorHolder> myHolders;
   private final boolean mySupported;
 
-  public TransferableFileEditorStateSupport(@NotNull DiffSettingsHolder.DiffSettings settings,
+  public TransferableFileEditorStateSupport(@NotNull DiffSettings settings,
                                             @NotNull List<BinaryEditorHolder> holders,
                                             @NotNull Disposable disposable) {
     mySettings = settings;

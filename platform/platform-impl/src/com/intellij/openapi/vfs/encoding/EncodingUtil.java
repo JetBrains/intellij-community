@@ -45,9 +45,10 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class EncodingUtil {
-  private static final String REASON_FILE_IS_A_DIRECTORY = "this file is a directory";
-  private static final String REASON_BINARY_FILE = "this file is binary";
-  private static final String REASON_HARDCODED_IN_TEXT = "encoding is hard-coded in the text";
+  private static final String REASON_FILE_IS_A_DIRECTORY = "directory";
+  private static final String REASON_BINARY_FILE = "binary";
+  private static final String REASON_HARDCODED_IN_TEXT = "hard-coded";
+  private static final String REASON_HARDCODED_FOR_FILE = "%s";
 
   enum Magic8 {
     ABSOLUTELY,
@@ -222,7 +223,7 @@ public class EncodingUtil {
     if (virtualFile.getFileType().isBinary()) return REASON_BINARY_FILE;
 
     String fileTypeDescription = checkHardcodedCharsetFileType(virtualFile);
-    return fileTypeDescription == null ? null : "it's hard-coded for " + fileTypeDescription;
+    return fileTypeDescription == null ? null : String.format(REASON_HARDCODED_FOR_FILE, fileTypeDescription);
   }
 
   @Nullable("null means enabled, notnull means disabled and contains error message")

@@ -96,6 +96,12 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+  @Nullable
+  @Override
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return null;
+  }
+
   protected void registerSelfReturnType(@NotNull String classQualifiedName, @NotNull Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }

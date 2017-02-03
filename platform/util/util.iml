@@ -22,10 +22,10 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" exported="" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="imgscalr" level="project" />
-    <orderEntry type="library" name="batik" level="project" />
     <orderEntry type="library" name="xmlgraphics-commons" level="project" />
-    <orderEntry type="library" name="xml-apis-ext" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="library" name="xml-apis-ext" level="project" />
+    <orderEntry type="library" name="batik" level="project" />
   </component>
   <component name="copyright">
     <Base>

@@ -86,7 +86,6 @@ public abstract class ActionManager implements NamedComponent {
    *
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
-  @Nullable
   public abstract AnAction getAction(@NonNls @NotNull String actionId);
 
   /**

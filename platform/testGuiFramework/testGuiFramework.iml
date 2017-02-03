@@ -15,13 +15,10 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="dvcs-impl" scope="TEST" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="vcs-tests" />
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="library" name="jsr305" level="project" />
   </component>

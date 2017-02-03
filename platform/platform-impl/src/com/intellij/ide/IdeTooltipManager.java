@@ -128,7 +128,12 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (c == myCurrentComponent || c == myQueuedComponent) {
+      //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+      if (c == myCurrentComponent && myCurrentTooltip != null && !myCurrentTooltip.isHint() && myCurrentTipUi != null) {
+        myCurrentTipUi.setAnimationEnabled(false);
+        hideCurrent(null, null, null, null, false);
+      }
+      else if (c == myCurrentComponent || c == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
     }
@@ -545,6 +550,9 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
+        if (!isShowing() && layeredPane != null) {
+          AppUIUtil.targetToDevice(this, layeredPane);
+        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {

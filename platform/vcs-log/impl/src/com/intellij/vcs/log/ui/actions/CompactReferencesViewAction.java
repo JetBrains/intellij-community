@@ -31,8 +31,8 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 

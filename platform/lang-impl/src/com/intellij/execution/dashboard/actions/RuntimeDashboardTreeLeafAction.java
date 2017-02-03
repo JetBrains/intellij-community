@@ -46,12 +46,7 @@ public abstract class RuntimeDashboardTreeLeafAction<T extends DashboardNode> ex
       if (!(o instanceof AbstractTreeNode)) {
         return Collections.emptySet();
       }
-      AbstractTreeNode node = (AbstractTreeNode)o;
-      if (node instanceof GroupingNode && node.getChildren().isEmpty()) {
-        // Action could not be performed if current selection contains empty grouping nodes
-        return Collections.emptySet();
-      }
-      nodes.add(node);
+      nodes.add((AbstractTreeNode)o);
     }
     return getLeaves(nodes);
   }

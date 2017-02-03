@@ -68,6 +68,7 @@ public abstract class IndexedContainer {
   }
 
   public boolean isQualifierEquivalent(@Nullable PsiExpression candidate) {
+    candidate = PsiUtil.skipParenthesizedExprDown(candidate);
     return candidate != null && PsiEquivalenceUtil.areElementsEquivalent(myQualifier, candidate);
   }
 

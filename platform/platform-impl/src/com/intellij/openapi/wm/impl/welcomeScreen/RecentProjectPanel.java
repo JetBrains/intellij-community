@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RecentProjectPanel extends JPanel {
   public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
@@ -64,6 +66,7 @@ public class RecentProjectPanel extends JPanel {
   private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.Project.Remove;
   private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
+  Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
@@ -122,8 +125,16 @@ public class RecentProjectPanel extends JPanel {
             if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
               removeRecentProjectAction.actionPerformed(null);
             } else if (selection != null) {
-              ((AnAction)selection).actionPerformed(
-                AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+              AnAction selectedAction = (AnAction) selection;
+              AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
+              selectedAction.actionPerformed(actionEvent);
+
+              // remove action from list if needed
+              if (selectedAction instanceof ReopenProjectAction) {
+                if (((ReopenProjectAction)selectedAction).isRemoved()) {
+                  ListUtil.removeSelectedItems(myList);
+                }
+              }
             }
           }
         }
@@ -307,7 +318,7 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private static class MyList extends JBList {
+  private class MyList extends JBList {
     private final Dimension mySize;
     private Point myMousePoint;
 
@@ -339,6 +350,18 @@ public class RecentProjectPanel extends JPanel {
           icon.paintIcon(this, g, iconRect.x, iconRect.y);
         }
       }
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      final int i = locationToIndex(event.getPoint());
+      if (i != -1) {
+        final Object elem = getModel().getElementAt(i);
+        if (elem instanceof ReopenProjectAction && RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
+          return ((ReopenProjectAction)elem).getProjectPath();
+        }
+      }
+      return super.getToolTipText(event);
     }
 
     @Override

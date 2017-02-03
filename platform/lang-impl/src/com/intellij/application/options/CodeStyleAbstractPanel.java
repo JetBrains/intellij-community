@@ -133,7 +133,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void somethingChanged() {
     if (myModel != null) {
-      myModel.fireCurrentSettingsChanged();
+      myModel.fireBeforeCurrentSettingsChanged();
     }
   }
 
@@ -210,11 +210,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
-        try {
-          apply(mySettings);
-        }
-        catch (ConfigurationException ignore) {
-        }
+        applySettingsToModel();
         CodeStyleSettings clone = mySettings.clone();
         clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
         CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
@@ -237,6 +233,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         LOG.error(e);
       }
     });
+  }
+
+  private void applySettingsToModel() {
+    try {
+      apply(mySettings);
+      if (myModel != null) {
+        myModel.fireAfterCurrentSettingsChanged();
+      }
+    }
+    catch (ConfigurationException ignore) {
+    }
   }
 
   /**
@@ -440,6 +447,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       else {
         UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), () -> addUpdatePreviewRequest());
       }
+    }
+    else {
+      applySettingsToModel();
     }
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.*;
-import com.intellij.execution.dashboard.tree.Grouper;
+import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.execution.dashboard.tree.RuntimeDashboardTreeStructure;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -74,14 +74,14 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   private AbstractTreeBuilder myBuilder;
   private AbstractTreeNode<?> myLastSelection;
   private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private List<Grouper> myGroupers;
+  private List<DashboardGrouper> myGroupers;
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
 
   @NotNull private final Project myProject;
 
-  public RuntimeDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<Grouper> groupers) {
+  public RuntimeDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -259,7 +259,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
 
   private void updateTreeIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null && RuntimeDashboardContributor.isShowInDashboard(settings.getType())) {
-      updateTree();
+      updateTree(true);
     }
   }
 
@@ -295,7 +295,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     rightGroup.add(collapseAllAction);
 
     rightGroup.add(new Separator());
-    myGroupers.forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
+    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
 
     ActionToolbar rightActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, rightGroup, false);
     toolBarPanel.add(rightActionToolBar.getComponent());
@@ -307,8 +307,8 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   public void dispose() {
   }
 
-  public void updateTree() {
-    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate().doWhenDone(() -> {
+  public void updateTree(boolean withStructure) {
+    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
       // Remove nodes not presented in the tree from collapsed node values set.
       // Children retrieving is quick since grouping and run configuration nodes are already constructed.
       Set<Object> nodes = new HashSet<>();
@@ -323,15 +323,16 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     }), myProject.getDisposed());
   }
 
+  @Override
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;
   }
 
   private class GroupAction extends ToggleAction implements DumbAware {
-    private Grouper myGrouper;
+    private DashboardGrouper myGrouper;
 
-    public GroupAction(Grouper grouper) {
+    public GroupAction(DashboardGrouper grouper) {
       super();
       myGrouper = grouper;
     }
@@ -354,7 +355,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
-      updateTree();
+      updateTree(true);
     }
   }
 }

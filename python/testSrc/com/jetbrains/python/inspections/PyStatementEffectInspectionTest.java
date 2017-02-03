@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,12 @@ public class PyStatementEffectInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  public void testComparison() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, () -> doTest());
+    runWithLanguageLevel(level, this::doTest);
   }
 
   @NotNull

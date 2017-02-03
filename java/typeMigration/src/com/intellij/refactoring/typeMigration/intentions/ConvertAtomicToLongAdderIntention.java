@@ -58,7 +58,9 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
       return null;
     }
     final PsiVariable var = (PsiVariable)element.getParent();
-    final PsiClass aClass = PsiTypesUtil.getPsiClass(var.getType());
+    final PsiType type = var.getType();
+    if (!type.isValid()) return null;
+    final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
     if (aClass == null ||
         !(AtomicLong.class.getName().equals(aClass.getQualifiedName()) ||
           AtomicInteger.class.getName().equals(aClass.getQualifiedName()))) {

@@ -57,7 +57,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
     //noinspection HardCodedStringLiteral
-    super(TRACE_CREATION && !ApplicationInfoImpl.isInPerformanceTest());
+    super(TRACE_CREATION && !ApplicationInfoImpl.isInStressTest());
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
     myListener = listener;

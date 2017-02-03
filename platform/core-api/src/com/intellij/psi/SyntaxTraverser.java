@@ -141,6 +141,16 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     return null;
   }
 
+  @NotNull
+  public final SyntaxTraverser<T> onRange(@NotNull final TextRange range) {
+    return onRange(new Condition<T>() {
+      @Override
+      public boolean value(T e){
+        return api.rangeOf(e).intersects(range);
+      }
+    });
+  }
+
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
     @NotNull
     public abstract IElementType typeOf(@NotNull T node);

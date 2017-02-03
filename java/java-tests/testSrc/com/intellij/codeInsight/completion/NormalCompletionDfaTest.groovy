@@ -74,4 +74,10 @@ public class FooImpl extends Foo {
 
   void testCastInstanceofedQualifierInExpressionLambda() { doTest() }
 
+  void testPreferCastExpressionSuperTypes() {
+    myFixture.addClass('package nonImported; public interface SzNameInTheEnd {}')
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'SString', 'SzNameInTheEnd', 'Serializable'
+  }
+
 }

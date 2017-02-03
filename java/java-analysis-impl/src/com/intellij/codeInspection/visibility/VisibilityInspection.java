@@ -192,14 +192,23 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
       if (refClass.isAnonymous() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
-      if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
 
     //ignore unreferenced code. They could be a potential entry points.
-    if (refElement.getInReferences().isEmpty() && minLevel <= 0) {
-      minLevel = getMinVisibilityLevel(refElement);
-      if (minLevel <= 0) return null;
+    if (refElement.getInReferences().isEmpty()) {
+      if (minLevel <= 0) {
+        minLevel = getMinVisibilityLevel(refElement);
+        if (minLevel <= 0) return null;
+      }
+      String weakestAccess = PsiUtil.getAccessModifier(minLevel);
+      if (weakestAccess != refElement.getAccessModifier()) {
+        return createDescriptions(refElement, weakestAccess, manager, globalContext);
+      }
+    }
+
+    if (refElement instanceof RefClass) {
+      if (isTopLevelClass(refElement) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
     //ignore interface members. They always have public access modifier.
@@ -209,30 +218,37 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
     String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (access != refElement.getAccessModifier() && access != null) {
-      final PsiElement element = refElement.getElement();
-      final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
-      if (nameIdentifier != null) {
-        final String message;
-        String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
-        if (access.equals(PsiModifier.PRIVATE)) {
-          message = CAN_BE_PRIVATE;
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      return createDescriptions(refElement, access, manager, globalContext);
+    }
+    return null;
+  }
+
+  private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access, 
+                                                              @NotNull InspectionManager manager,
+                                                              @NotNull GlobalInspectionContext globalContext) {
+    final PsiElement element = refElement.getElement();
+    final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
+    if (nameIdentifier != null) {
+      final String message;
+      String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+      if (access.equals(PsiModifier.PRIVATE)) {
+        message = CAN_BE_PRIVATE;
+        quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      }
+      else {
+        if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+          message = CAN_BE_PACKAGE_LOCAL;
+          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
         }
         else {
-          if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-            message = CAN_BE_PACKAGE_LOCAL;
-            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-          }
-          else {
-            message = CAN_BE_PROTECTED;
-            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-          }
+          message = CAN_BE_PROTECTED;
+          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
         }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
-                                                                       message,
-                                                                       new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
       }
+      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
+                                                                     message,
+                                                                     new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
+                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
     }
     return null;
   }

@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -506,6 +505,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     putUserData(LANGUAGE_LEVEL_KEY, null);
   }
 
+  @Override
+  public void setOriginalFile(@NotNull PsiFile originalFile) {
+    super.setOriginalFile(originalFile);
+    clearCaches();
+  }
+
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
@@ -523,7 +528,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if (originalFile instanceof PsiJavaFile && originalFile != this) {
         return ((PsiJavaFile)originalFile).getLanguageLevel();
       }
-      return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+      return LanguageLevel.HIGHEST;
     }
 
     return JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(virtualFile);

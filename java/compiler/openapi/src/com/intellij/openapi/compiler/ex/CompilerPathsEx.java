@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiAnonymousClass;
@@ -84,10 +85,10 @@ public class CompilerPathsEx extends CompilerPaths {
     String getPath();
   }
 
-  private static class VirtualFileClassFileDescriptor implements ClassFileDescriptor {
+  private static class VirtualClassFileDescriptor implements ClassFileDescriptor {
     private final VirtualFile myClassFile;
 
-    public VirtualFileClassFileDescriptor(VirtualFile file) {
+    private VirtualClassFileDescriptor(VirtualFile file) {
       myClassFile = file;
     }
 
@@ -102,27 +103,47 @@ public class CompilerPathsEx extends CompilerPaths {
     }
   }
 
+  private static class IOClassFileDescriptor implements ClassFileDescriptor {
+    private final File myClassFile;
+
+    private IOClassFileDescriptor(File classFile) {
+      myClassFile = classFile;
+    }
+
+    @Override
+    public byte[] loadFileBytes() throws IOException {
+      return FileUtil.loadFileBytes(myClassFile);
+    }
+
+    @Override
+    public String getPath() {
+      return myClassFile.getPath();
+    }
+  }
+
   @Nullable
   public static ClassFileDescriptor findClassFileInOutput(@NotNull PsiClass aClass) {
     String jvmClassName = getJVMClassName(aClass);
     if (jvmClassName != null) {
-      String relativePath = jvmClassName.replace('.', '/') + ".class";
       ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
 
       PsiElement originalClass = aClass.getOriginalElement();
       if (originalClass instanceof PsiCompiledElement) {
-        // compiled class; looking for a .class file inside a library
+        // compiled class; looking for a right .class file
         VirtualFile file = originalClass.getContainingFile().getVirtualFile();
         if (file != null) {
-          VirtualFile classRoot = index.getClassRootForFile(file);
-          if (classRoot != null) {
-            VirtualFile classFile = classRoot.findFileByRelativePath(relativePath);
+          String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
+          if (index.isInLibraryClasses(file)) {
+            VirtualFile classFile = file.getParent().findChild(classFileName);
             if (classFile != null) {
-              return new VirtualFileClassFileDescriptor(classFile);
+              return new VirtualClassFileDescriptor(classFile);
             }
           }
           else {
-            return new VirtualFileClassFileDescriptor(file);
+            File classFile = new File(file.getParent().getPath(), classFileName);
+            if (classFile.isFile()) {
+              return new IOClassFileDescriptor(classFile);
+            }
           }
         }
       }
@@ -137,19 +158,10 @@ public class CompilerPathsEx extends CompilerPaths {
               boolean inTests = index.isInTestSourceContent(file);
               VirtualFile classRoot = inTests ? extension.getCompilerOutputPathForTests() : extension.getCompilerOutputPath();
               if (classRoot != null) {
+                String relativePath = jvmClassName.replace('.', '/') + ".class";
                 File classFile = new File(classRoot.getPath(), relativePath);
                 if (classFile.exists()) {
-                  return new ClassFileDescriptor() {
-                    @Override
-                    public byte[] loadFileBytes() throws IOException {
-                      return FileUtil.loadFileBytes(classFile);
-                    }
-
-                    @Override
-                    public String getPath() {
-                      return FileUtil.toSystemIndependentName(classFile.getPath());
-                    }
-                  };
+                  return new IOClassFileDescriptor(classFile);
                 }
               }
             }

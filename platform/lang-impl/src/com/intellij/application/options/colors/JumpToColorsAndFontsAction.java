@@ -157,7 +157,8 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
             saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
             if (last) append(" ", saCur);
             append(split.get(i), saCur);
-            if (!last) append(" > ", GRAYED_ATTRIBUTES);
+            if (last) append(" ", saCur);
+            else append(" > ", GRAYED_ATTRIBUTES);
           }
           Color stripeColor = ta.getErrorStripeColor();
           boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();

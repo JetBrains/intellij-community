@@ -18,12 +18,15 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +41,7 @@ import java.util.Set;
  * @see LanguageFolding
  * @since 9.0
  */
-public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 
@@ -56,7 +59,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     final Set<TextRange> rangesCoveredByDescriptors = ContainerUtil.newHashSet();
 
-    for (FoldingBuilder builder : myBuilders) {
+    for (FoldingBuilder builder : DumbService.getInstance(root.getProject()).filterByDumbAwareness(myBuilders)) {
       for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(builder, root, document, quick)) {
         if (rangesCoveredByDescriptors.add(descriptor.getRange())) {
           descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
@@ -71,24 +74,52 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
   @Override
   public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return builder == null ? node.getText() : builder instanceof FoldingBuilderEx
-                                              ? ((FoldingBuilderEx)builder).getPlaceholderText(node, range)
-                                              : builder.getPlaceholderText(node);
+    return !mayUseBuilder(node, builder) ? node.getText() :
+           builder instanceof FoldingBuilderEx ? ((FoldingBuilderEx)builder).getPlaceholderText(node, range)
+                                               : builder.getPlaceholderText(node);
   }
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return builder == null ? node.getText() : builder.getPlaceholderText(node);
+    return !mayUseBuilder(node, builder) ? node.getText() : builder.getPlaceholderText(node);
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return builder != null && builder.isCollapsedByDefault(node);
+    return mayUseBuilder(node, builder) && builder.isCollapsedByDefault(node);
+  }
+
+  private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
+    if (builder == null) return false;
+    if (DumbService.isDumbAware(builder)) return true;
+
+    Project project = getProjectByNode(node);
+    return project == null || !DumbService.isDumb(project);
+  }
+
+  @Nullable
+  private static Project getProjectByNode(@NotNull ASTNode node) {
+    PsiElement psi = node.getPsi();
+    if (psi == null) {
+      ASTNode parent = node.getTreeParent();
+      psi = parent == null ? null : parent.getPsi();
+    }
+    return psi == null ? null : psi.getProject();
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + myBuilders;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    for (FoldingBuilder builder : myBuilders) {
+      if (DumbService.isDumbAware(builder)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

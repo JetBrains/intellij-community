@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -59,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.io.File;
 import java.util.*;
@@ -87,6 +91,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
@@ -760,6 +765,24 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  private final class MyTransferHandler extends TransferHandler {
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
+
+    @Override
+    public boolean importData(JComponent comp, Transferable t) {
+      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+      return myFileDropHandler.canHandleDrop(transferFlavors);
+    }
+  }
+
   private abstract static class ConfigTreeReader<T> {
     @Nullable
     public T process(@Nullable Element element, @Nullable T context) {
@@ -833,8 +856,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-          Document document = ApplicationManager.getApplication().runReadAction(
-            (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
           fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i);

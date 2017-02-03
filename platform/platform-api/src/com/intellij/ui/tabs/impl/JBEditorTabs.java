@@ -113,7 +113,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean hasUnderline() {
-    return isSingleRow();
+    return isSingleRow() && !Registry.is("ide.new.editor.tabs.selection");
   }
 
 
@@ -160,7 +160,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public int getActiveTabUnderlineHeight() {
-    return hasUnderline() ? super.getActiveTabUnderlineHeight() : 1;
+    return hasUnderline() ? super.getActiveTabUnderlineHeight() : Registry.is("ide.new.editor.tabs.selection") ? 0 : 1;
   }
 
   protected JBEditorTabsPainter getPainter() {
@@ -245,7 +245,7 @@ public class JBEditorTabs extends JBTabsImpl {
     Color tabColor = label.getInfo().getTabColor();
     final boolean isHorizontalTabs = isHorizontalTabs();
 
-    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, isHorizontalTabs);
+    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, isHorizontalTabs, getTabsPosition());
   }
 
   @Override
@@ -283,8 +283,8 @@ public class JBEditorTabs extends JBTabsImpl {
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
 
     shape.path.closePath();
     shape.fillPath = shape.path.copy();

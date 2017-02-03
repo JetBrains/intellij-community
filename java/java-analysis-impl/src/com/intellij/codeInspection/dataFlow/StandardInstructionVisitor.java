@@ -113,10 +113,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
         DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        myPossibleVariableValues.putValue(instruction, constValue != null && (constValue.getValue() == null || constValue.getValue() instanceof Boolean) ? constValue : ANY_VALUE);
+        myPossibleVariableValues.putValue(instruction, constValue != null && shouldReportConstValue(constValue.getValue()) ? constValue : ANY_VALUE);
       }
     }
     return super.visitPush(instruction, runner, memState);
+  }
+
+  private static boolean shouldReportConstValue(Object value) {
+    return value == null || value instanceof Boolean || value.equals(new Long(0));
   }
 
   public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {

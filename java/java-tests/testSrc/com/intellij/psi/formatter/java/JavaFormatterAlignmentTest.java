@@ -20,6 +20,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
+import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CONTEXT;
+
 /**
  * Is intended to hold specific java formatting tests for alignment settings (
  * <code>Project Settings - Code Style - Alignment and Braces</code>).
@@ -634,7 +636,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     myLineRange = new TextRange(2, 2);
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTextTest(
-      Action.REFORMAT_WITH_CONTEXT,
+      REFORMAT_WITH_CONTEXT,
       "public class Test {\n" +
       "  \n" +
       "    public void fooooo(String foo,\n" +
@@ -661,7 +663,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     myLineRange = new TextRange(2, 2);
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doTextTest(
-      Action.REFORMAT_WITH_CONTEXT,
+      REFORMAT_WITH_CONTEXT,
       "public class Test {\n" +
       "    public int    i = 1;\n" +
       "    public String iiiiiiiiii = 2;\n" +
@@ -677,7 +679,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     myLineRange = new TextRange(3, 3);
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doTextTest(
-      Action.REFORMAT_WITH_CONTEXT,
+      REFORMAT_WITH_CONTEXT,
       "public class Test {\n" +
       "    public void test() {\n" +
       "        int s = 2;\n" +
