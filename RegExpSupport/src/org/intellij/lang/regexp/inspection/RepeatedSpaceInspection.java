@@ -21,10 +21,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.intellij.lang.regexp.RegExpFileType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -139,19 +138,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
           inserted = true;
         }
       }
-      final RegExpPattern pattern = createPatternFromText(text, element);
-      final RegExpBranch branch = PsiTreeUtil.getChildOfType(pattern, RegExpBranch.class);
-      assert branch != null;
-      element.replace(branch);
-    }
-
-    @NotNull
-    public static RegExpPattern createPatternFromText(@NotNull final CharSequence text, @NotNull final PsiElement context) {
-      final PsiFileFactory factory = PsiFileFactory.getInstance(context.getProject());
-      final PsiFile file = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, text);
-      final RegExpPattern pattern = PsiTreeUtil.getChildOfType(file, RegExpPattern.class);
-      assert pattern != null;
-      return pattern;
+      element.replace(RegExpFactory.createBranchFromText(text, element));
     }
   }
 }
