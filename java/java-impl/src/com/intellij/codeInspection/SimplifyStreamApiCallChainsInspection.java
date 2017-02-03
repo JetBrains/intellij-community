@@ -855,6 +855,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(TO_ARRAY, methodCall -> {
+        if (!COLLECTION_STREAM.test(getQualifierMethodCall(methodCall))) return null;
         PsiArrayType type = getArrayType(methodCall);
         if (type == null) return null;
         String replacement = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT + "[]") ? "" :
