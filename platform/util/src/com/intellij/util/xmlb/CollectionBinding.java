@@ -46,7 +46,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
   @NotNull
   @Override
   Collection<Object> getIterable(@NotNull Object o) {
-    if (!annotation.sortOrderedSet() && o instanceof LinkedHashSet) {
+    if (annotation != null && !annotation.sortOrderedSet() && o instanceof LinkedHashSet) {
       return (Collection<Object>)o;
     }
     return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
