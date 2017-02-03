@@ -862,6 +862,33 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   @TargetVersions("2.12+")
+  public void testCompileOnlyAndRuntimeScope() throws Exception {
+    importProject(
+      "apply plugin: 'java'\n" +
+      "dependencies {\n" +
+      "  runtime 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "  compileOnly 'org.hamcrest:hamcrest-core:1.3'\n" +
+      "}"
+    );
+
+    assertModules("project", "project_main", "project_test");
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+
+    assertModuleLibDepScope("project_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project");
+
+    if (isGradleOlderThen_3_4()) {
+      assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED, DependencyScope.RUNTIME);
+    } else {
+      assertModuleLibDepScope("project", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.TEST, DependencyScope.PROVIDED, DependencyScope.RUNTIME);
+    }
+  }
+
+  @Test
+  @TargetVersions("2.12+")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
       "apply plugin: 'java'\n" +
