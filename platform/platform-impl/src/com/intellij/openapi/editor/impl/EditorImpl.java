@@ -811,7 +811,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.throwDisposalError(msg);
   }
 
-  public void release() {
+  // EditorFactory.releaseEditor should be used to release editor
+  void release() {
     assertIsDispatchThread();
     if (isReleased) {
       throwDisposalError("Double release of editor:");
