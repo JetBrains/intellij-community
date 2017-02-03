@@ -78,7 +78,7 @@
             </constraints>
             <properties>
               <labelFor value="39ad9"/>
-              <text value="&amp;Password"/>
+              <text value="&amp;Password:"/>
             </properties>
           </component>
           <component id="5fd16" class="com.intellij.ui.components.JBLabel">
@@ -86,7 +86,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Username"/>
+              <text value="&amp;Username:"/>
             </properties>
           </component>
           <component id="39ad9" class="javax.swing.JPasswordField" binding="myPasswordField">
