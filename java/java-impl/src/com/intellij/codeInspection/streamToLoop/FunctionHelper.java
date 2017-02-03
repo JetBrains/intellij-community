@@ -434,15 +434,13 @@ abstract class FunctionHelper {
 
     @Override
     void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
-      // myMethodRef is physical at this point
-      Project project = myMethodRef.getProject();
       PsiTypeCastExpression castExpr = (PsiTypeCastExpression)context.createExpression("(" + myType + ")" + myMethodRef.getText());
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
       PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
       if(lambda != null) {
         PsiElement body = lambda.getBody();
         if(body instanceof PsiExpression) {
-          suggestFromExpression(var, project, (PsiExpression)body);
+          suggestFromExpression(var, context.getProject(), (PsiExpression)body);
         }
       }
     }
