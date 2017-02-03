@@ -46,6 +46,9 @@ public class CompositeFilter implements Filter, FilterMixin {
   public CompositeFilter(@NotNull Project project, @NotNull List<Filter> filters) {
     myDumbService = DumbService.getInstance(project);
     myFilters = filters;
+    myFilters.forEach(filter -> {
+      myIsAnyHeavy |= filter instanceof FilterMixin;
+    });
   }
 
   protected CompositeFilter(DumbService dumbService) {
