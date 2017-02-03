@@ -416,7 +416,12 @@ public class IpnbConnection {
   }
 
   protected void shutdownKernel() throws IOException {
-    httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTPMethod.DELETE.name());
+    if (myIsHubServer) {
+      httpRequest(myURI + USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() + KERNELS_URL + "/" + myKernelId,  HTTPMethod.DELETE.name());
+    }
+    else {
+      httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTPMethod.DELETE.name());
+    }
   }
 
   public void interrupt() throws IOException {
