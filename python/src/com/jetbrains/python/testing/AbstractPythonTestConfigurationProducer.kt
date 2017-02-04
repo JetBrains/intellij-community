@@ -32,6 +32,8 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
@@ -57,4 +59,16 @@ abstract class AbstractPythonTestConfigurationProducer<T : AbstractPythonTestRun
   // to prevent ClassCastException we only allow our configurations
   override fun getConfigurationSettingsList(runManager: RunManager): List<RunnerAndConfigurationSettings> =
     super.getConfigurationSettingsList(runManager).filter { configurationClass.isAssignableFrom(it.configuration.javaClass) }
+
+  override fun createConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
+    if (context == null) {
+      return null
+    }
+    val configuration = cloneTemplateConfiguration(context).configuration ?: return null
+
+    if (!configurationClass.isAssignableFrom(configuration.javaClass)) {
+      return null
+    }
+    return super.createConfigurationFromContext(context)
+  }
 }
