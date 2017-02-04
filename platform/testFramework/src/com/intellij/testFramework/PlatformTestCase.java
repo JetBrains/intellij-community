@@ -28,7 +28,9 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -378,6 +380,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         globalInstance.dropHistoryInTests();
       }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
