@@ -109,8 +109,7 @@ class UnifiedFragmentBuilder {
     int blockStartLine2 = linesBetween;
     int blockEndLine2 = linesAfter;
 
-    myBlocks.add(new ChangedBlock(linesBefore, linesAfter,
-                                  new LineRange(blockStartLine1, blockEndLine1),
+    myBlocks.add(new ChangedBlock(new LineRange(blockStartLine1, blockEndLine1),
                                   new LineRange(blockStartLine2, blockEndLine2),
                                   fragment));
 
