@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.regexp;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -24,7 +23,6 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -32,7 +30,6 @@ import org.jetbrains.annotations.TestOnly;
 public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
   private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
   private final DefaultRegExpPropertiesProvider myDefaultProvider;
-  private static RegExpLanguageHost myHost;
 
   public static RegExpLanguageHosts getInstance() {
     return INSTANCE;
@@ -43,19 +40,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     myDefaultProvider = DefaultRegExpPropertiesProvider.getInstance();
   }
 
-  @TestOnly
-  public static void setRegExpHost(@Nullable RegExpLanguageHost host) {
-    myHost = host;
-  }
-
   @Contract("null -> null")
   @Nullable
   private static RegExpLanguageHost findRegExpHost(@Nullable final PsiElement element) {
     if (element == null) {
       return null;
-    }
-    if (ApplicationManager.getApplication().isUnitTestMode() && myHost != null) {
-      return myHost;
     }
     final PsiFile file = element.getContainingFile();
     final PsiElement context = file.getContext();
