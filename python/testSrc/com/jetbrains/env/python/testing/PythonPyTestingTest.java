@@ -141,14 +141,15 @@ public class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals(runner.getFormattedTestTree(), 9, runner.getAllTestsCount());
         assertEquals(runner.getFormattedTestTree(), 5, runner.getPassedTestsCount());
         assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
+        // Py.test may report F before failed test, so we check string contains, not starts with
         Assert
           .assertThat("No test stdout", MockPrinter.fillPrinter(runner.findTestByName("testOne")).getStdOut(),
-                      Matchers.startsWith("I am test1"));
+                      Matchers.containsString("I am test1"));
 
         // Ensure test has stdout even it fails
         final AbstractTestProxy testFail = runner.findTestByName("testFail");
         Assert.assertThat("No stdout for fail", MockPrinter.fillPrinter(testFail).getStdOut(),
-                          Matchers.startsWith("I will fail"));
+                          Matchers.containsString("I will fail"));
 
         // This test has "sleep(1)", so duration should be >=1000
         Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(1000L));

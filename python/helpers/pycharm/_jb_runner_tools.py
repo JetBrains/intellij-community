@@ -193,14 +193,17 @@ class NewTeamcityServiceMessages(_old_service_messages):
     def blockClosed(self, name, flowId=None):
         self.testFinished(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
         test_name_as_list = self._test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
             args = {"name": testName, "captureStandardOutput": captureStandardOutput}
-            self.message("testStarted", **args)
+            if is_suite:
+                self.message("testSuiteStarted", **args)
+            else:
+                self.message("testStarted", **args)
 
         commands = TREE_MANAGER.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
@@ -213,7 +216,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
                      "details": details}
         self.message("testFailed", **args)
 
-    def testFinished(self, testName, testDuration=None, flowId=None):
+    def testFinished(self, testName, testDuration=None, flowId=None,  is_suite=False):
         testName = ".".join(self._test_to_list(testName))
 
         def _write_finished_message():
@@ -228,7 +231,10 @@ class NewTeamcityServiceMessages(_old_service_messages):
                               int(testDuration.microseconds / 1000)
                 args["duration"] = str(duration_ms)
 
-            self.message("testFinished", **args)
+            if is_suite:
+                self.message("testSuiteFinished", **args)
+            else:
+                self.message("testFinished", **args)
 
         commands = TREE_MANAGER.level_closed(self._test_to_list(testName), _write_finished_message)
         if commands:
@@ -241,10 +247,11 @@ class NewTeamcityServiceMessages(_old_service_messages):
         Executes commands, returned by level_closed and level_opened
         """
         test_name = ".".join(test)
+        # By executing commands we open or close suites(branches) since tests(leaves) are always reported by runner
         if command == "open":
-            self.testStarted(test_name)
+            self.testStarted(test_name, is_suite=True)
         else:
-            self.testFinished(test_name)
+            self.testFinished(test_name, is_suite=True)
 
     def close_all(self):
         """
