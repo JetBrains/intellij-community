@@ -940,6 +940,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @TestOnly
   public void cleanupForNextTest() {
+    myChangedFilesCollector.ensureUpToDate();
+
     myTransactionMap = SmartFMap.emptyMap();
     IndexConfiguration state = getState();
     for (ID<?, ?> indexId : state.getIndexIDs()) {
