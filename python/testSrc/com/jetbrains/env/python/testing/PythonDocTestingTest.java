@@ -4,6 +4,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyDocTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -13,6 +14,14 @@ import static org.junit.Assert.assertEquals;
  * User : catherine
  */
 public class PythonDocTestingTest extends PyEnvTestCase {
+
+
+  @Test
+  public void testConfigurationProducer() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(null, PythonDocTestRunConfiguration.class, "doctest_test.py"));
+  }
+
   @Test
   public void testUTRunner() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {

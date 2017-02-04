@@ -6,7 +6,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
+import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonNoseTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME));
+      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
   }
 
   @Test

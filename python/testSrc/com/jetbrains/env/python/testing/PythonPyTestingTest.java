@@ -10,7 +10,6 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
 import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
@@ -32,7 +31,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
+      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
   }
 
   // Import error should lead to test failure
