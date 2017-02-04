@@ -846,20 +846,19 @@ public class PyUtil {
     });
   }
 
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @NotNull P param, @NotNull NotNullFunction<P, T> f) {
-    final Map<P, T> cache = CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<P, T>>() {
+  private static final Object NULL_VALUE = new Object();
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NullableFunction<P, T> f) {
+    final Map<P, Object> cache = CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<P, Object>>() {
       @Nullable
       @Override
-      public Result<Map<P, T>> compute() {
+      public Result<Map<P, Object>> compute() {
+        // TODO should be concurrent map instead
         return Result.create(Maps.newHashMap(), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
-    T result = cache.get(param);
-    if (result == null) {
-      result = f.fun(param);
-      cache.put(param, result);
-    }
-    return result;
+    final Object wrapped = cache.computeIfAbsent(param, p -> ObjectUtils.notNull(f.fun(param), NULL_VALUE));
+    //noinspection unchecked
+    return (T)ObjectUtils.nullizeByCondition(wrapped, NULL_VALUE::equals);
   }
 
   /**
