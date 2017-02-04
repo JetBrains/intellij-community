@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.messages.MessageBus
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
@@ -24,6 +23,7 @@ import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
 import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer
+import com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
 import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration
 import com.jetbrains.python.testing.pytest.PyTestRunConfiguration
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration
@@ -82,7 +82,7 @@ private fun disableUnneededConfigurationProducer() {
   val extensionPoint = Extensions.getArea(null).getExtensionPoint(RunConfigurationProducer.EP_NAME)
 
   val newMode = isNewTestsModeEnabled()
-  extensionPoint.extensions.forEach {
+  extensionPoint.extensions.filter { it !is PythonDocTestConfigurationProducer }.forEach {
     if ((it is PyUniversalTestsConfigurationProducer && !newMode) ||
         (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
       extensionPoint.unregisterExtension(it)

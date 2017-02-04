@@ -322,8 +322,10 @@ abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration>
 /**
  * Only one producer is registered with EP, but it uses factory configured by user to prdouce different configs
  */
-object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniversalTestConfiguration>(
+object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyUniversalTestConfiguration>(
   PythonTestConfigurationType.getInstance()) {
+
+  override val configurationClass = PyUniversalTestConfiguration::class.java
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
@@ -362,12 +364,6 @@ object PyUniversalTestsConfigurationProducer : RunConfigurationProducer<PyUniver
     configuration.name = nameAndTarget.first
     nameAndTarget.second.copyTo(configuration.target)
     return true
-  }
-
-  override fun getConfigurationSettingsList(runManager: RunManager): List<RunnerAndConfigurationSettings> {
-    // Some configurations have same type but produces different class (doctest, for example)
-    // to prevent ClassCastException we only allow our configurations
-    return super.getConfigurationSettingsList(runManager).filter { it.configuration is PyUniversalTestConfiguration }
   }
 
   /**

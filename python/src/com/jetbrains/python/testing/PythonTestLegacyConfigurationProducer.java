@@ -19,7 +19,6 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.facet.Facet;
@@ -54,13 +53,21 @@ import java.util.List;
 /**
  * User: ktisha
  */
-abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>> extends RunConfigurationProducer<AbstractPythonLegacyTestRunConfiguration<T>> {
+abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>>
+  extends AbstractPythonTestConfigurationProducer<AbstractPythonLegacyTestRunConfiguration<T>> {
 
-  public PythonTestLegacyConfigurationProducer(final ConfigurationFactory configurationFactory) {
+  protected PythonTestLegacyConfigurationProducer(final ConfigurationFactory configurationFactory) {
     super(configurationFactory);
   }
 
-    @Override
+
+  @NotNull
+  @Override
+  public Class<? super AbstractPythonLegacyTestRunConfiguration<T>> getConfigurationClass() {
+    return AbstractPythonLegacyTestRunConfiguration.class;
+  }
+
+  @Override
   public boolean isConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration configuration, ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
@@ -264,9 +271,6 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    if (PyUniversalTestLegacyInteropKt.isNewTestsModeEnabled()) {
-      return false;
-    }
     final RunConfiguration configuration = self.getConfiguration();
     if (configuration instanceof PythonUnitTestRunConfiguration &&
         ((AbstractPythonTestRunConfigurationParams)configuration).getTestType() == AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FOLDER) {
