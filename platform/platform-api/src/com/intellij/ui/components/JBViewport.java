@@ -121,20 +121,12 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   /**
    * Updates a view position directly without using a corresponding scroll bar.
    *
-   * @param event a wheel event with a precise scrolling delta used to calculate an offset in pixels
+   * @param event a wheel event with a precise wheel rotation used to calculate an absolute delta
    */
   void updateViewPosition(MouseWheelEvent event) {
-    Component view = getView();
-    if (view == null) return; // nothing to scroll
+    double delta = getAbsoluteDelta(event);
+    if (delta == 0.0D || !Double.isFinite(delta)) return; // nothing to scroll
 
-    // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
-    // so we use 10 to restore amount of pixels to scroll.
-    int unitSizeInPixels = 10;
-    if (!SystemInfo.isMac) {
-      Font font = view.getFont();
-      unitSizeInPixels = event.getScrollAmount() * (font != null ? font.getSize() : JBUI.scale(10));
-    }
-    double delta = unitSizeInPixels * event.getPreciseWheelRotation();
     int x = (int)myViewX;
     int y = (int)myViewY;
     if (event.isShiftDown()) {
@@ -156,6 +148,27 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     finally {
       myUpdateViewPosition = false;
     }
+  }
+
+  /**
+   * Calculates an offset in pixels to scroll a view precisely.
+   *
+   * @param event a wheel event with a precise wheel rotation used to calculate an absolute delta
+   * @return a non-zero finite floating-point value, if a scrolling should be performed
+   */
+  private double getAbsoluteDelta(MouseWheelEvent event) {
+    Component view = getView();
+    if (view == null) return Double.NaN; // nothing to scroll
+
+    // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
+    // so we use 10 to restore amount of pixels to scroll.
+    int unitSizeInPixels = 10;
+    if (!SystemInfo.isMac) {
+      Font font = view.getFont();
+      unitSizeInPixels = font != null ? font.getSize() : JBUI.scale(10); // assume an unit size
+      unitSizeInPixels *= event.getScrollAmount(); // an operating system may increase a scrolling speed
+    }
+    return unitSizeInPixels * event.getPreciseWheelRotation();
   }
 
   // A heuristic to detect whether this viewport belongs to the "Event Log" tool window (which we use for output)
