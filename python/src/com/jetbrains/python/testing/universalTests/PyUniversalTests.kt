@@ -402,14 +402,6 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     val nameAndTarget = getNameAndTargetForConfig(configuration!!, psiElement) ?: return false
     return configuration.target == nameAndTarget.second
   }
-
-  override fun isPreferredConfiguration(self: ConfigurationFromContext?, other: ConfigurationFromContext?): Boolean {
-    if (self == null || other == null) {
-      return false
-    }
-    val module = ModuleUtil.findModuleForPsiElement(self.sourceElement) ?: return false
-    return self.configuration.factory == findConfigurationFactoryFromSettings(module)
-  }
 }
 
 

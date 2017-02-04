@@ -15,8 +15,10 @@
  */
 package com.jetbrains.env.python.testing;
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -82,14 +85,19 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
 
       for (final String fileName : myFileNames) {
         myFixture.configureByFile(fileName);
-        final RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-          new ConfigurationContext(myFixture.getElementAtCaret()).getConfiguration();
-        Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, runnerAndConfigurationSettings);
-        final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
-        Assert.assertNotNull("No real configuration created", configuration);
+
+        final List<ConfigurationFromContext> configurationsFromContext =
+          new ConfigurationContext(myFixture.getElementAtCaret()).getConfigurationsFromContext();
+        Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, configurationsFromContext);
+
+        final Optional<? extends RunConfiguration> maybeConfig = FluentIterable.from(configurationsFromContext)
+          .transform((o) -> o.getConfiguration())
+          .filter(myExpectedConfigurationType)
+          .first();
+        Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
+        final RunConfiguration configuration = maybeConfig.get();
+
         Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
-        Assert.assertThat("Bad configuration type in " + fileName, configuration,
-                          Matchers.is(Matchers.instanceOf(myExpectedConfigurationType)));
       }
     }), ModalityState.NON_MODAL);
   }
