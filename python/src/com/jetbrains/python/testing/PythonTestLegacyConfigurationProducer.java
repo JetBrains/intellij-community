@@ -269,13 +269,4 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile, TypeEvalContext.userInitiated(pyFile.getProject(), pyFile));
   }
 
-  @Override
-  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    final RunConfiguration configuration = self.getConfiguration();
-    if (configuration instanceof PythonUnitTestRunConfiguration &&
-        ((AbstractPythonTestRunConfigurationParams)configuration).getTestType() == AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FOLDER) {
-      return true;
-    }
-    return other.isProducedBy(PythonTestLegacyConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
-  }
 }

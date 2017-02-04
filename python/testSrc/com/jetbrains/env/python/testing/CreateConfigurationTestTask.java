@@ -18,6 +18,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -102,8 +105,17 @@ class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutio
           elementToRightClickOn = myFixture.getElementAtCaret();
         }
 
-        final RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-          new ConfigurationContext(elementToRightClickOn).getConfiguration();
+
+        final List<ConfigurationFromContext> configurationsFromContext =
+          new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
+        Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, configurationsFromContext);
+
+
+        final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
+          .filter(o -> myExpectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
+          .findFirst();
+        Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
+        RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
 
 
         Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, runnerAndConfigurationSettings);
