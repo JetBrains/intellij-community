@@ -29,9 +29,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
+import com.intellij.util.ThrowableRunnable
 import java.io.File
 import java.util.*
 import java.util.concurrent.Future
@@ -69,24 +71,12 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    try {
-      waitForPendingTasks()
-    }
-    finally {
-      try {
-        clearFields(this)
-      }
-      finally {
-        try {
-          runInEdtAndWait { super@VcsPlatformTest.tearDown() }
-        }
-        finally {
-          if (myAssertionsInTestDetected) {
-            TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
-          }
-        }
-      }
-    }
+    RunAll().append(ThrowableRunnable
+      { waitForPendingTasks() }).append(ThrowableRunnable
+      { clearFields(this) }).append(ThrowableRunnable
+      { runInEdtAndWait { super@VcsPlatformTest.tearDown() }}).append(ThrowableRunnable
+      { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) })
+      .run()
   }
 
   /**
