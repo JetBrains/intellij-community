@@ -40,7 +40,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extenstions.toElement
@@ -320,6 +320,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
     // contains tests etc
     when (element) {
       is PyFile -> PythonUnitTestUtil.isUnitTestFile(element)
+      is PsiDirectory -> element.children.any { it is PyFile && PythonUnitTestUtil.isUnitTestFile(it) }
       is PyFunction -> PythonUnitTestUtil.isTestCaseFunction(element, runBareFunctions)
       is PyClass -> PythonUnitTestUtil.isTestCaseClass(element, TypeEvalContext.userInitiated(element.project, element.containingFile))
       else -> false
@@ -399,7 +400,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
             }
             return Pair(qualifiedName, ConfigurationTarget(qualifiedName, TestTargetType.PYTHON))
           }
-          is PsiFile -> return Pair(element.virtualFile.name, ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH))
+          is PsiFileSystemItem -> return Pair(element.virtualFile.name, ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH))
         }
       }
       element = element.parent

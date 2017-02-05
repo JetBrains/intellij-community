@@ -28,6 +28,7 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -47,6 +48,12 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+  }
+
+  @Test
+  public void testConfigurationProducerOnDirectory() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class, "folderWithTests"));
   }
 
   @Test

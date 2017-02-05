@@ -20,6 +20,9 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -59,7 +62,7 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
   /**
    * @param testRunnerName            test runner name (to set as default to make sure producer launched) or null if set nothing
    * @param expectedConfigurationType type configuration tha should be produced
-   * @param fileNames                 python files to check right click on
+   * @param fileNames                 python files with caret or folders to check right click on
    */
   CreateConfigurationTestTask(@Nullable final String testRunnerName,
                               @NotNull final Class<? extends RunConfiguration> expectedConfigurationType,
@@ -81,9 +84,24 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
 
       for (final String fileName : myFileNames) {
-        myFixture.configureByFile(fileName);
+
+        final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(fileName);
+        assert virtualFile != null : "Can't find " + fileName;
+
+        final PsiElement elementToRightClickOn;
+        // Configure context by folder in case of folder, or by element if file
+        if (virtualFile.isDirectory()) {
+          elementToRightClickOn = PsiDirectoryFactory.getInstance(getProject()).createDirectory(virtualFile);
+        }
+        else {
+          myFixture.configureByFile(fileName);
+          elementToRightClickOn = myFixture.getElementAtCaret();
+        }
+
         final RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-          new ConfigurationContext(myFixture.getElementAtCaret()).getConfiguration();
+          new ConfigurationContext(elementToRightClickOn).getConfiguration();
+
+
         Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, runnerAndConfigurationSettings);
         final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
         Assert.assertNotNull("No real configuration created", configuration);

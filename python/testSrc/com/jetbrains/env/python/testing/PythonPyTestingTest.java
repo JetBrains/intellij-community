@@ -34,6 +34,12 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
   }
 
+  @Test
+  public void testConfigurationProducerOnDirectory() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "folderWithTests"));
+  }
+
   // Import error should lead to test failure
   @Test
   public void testFailInCaseOfError() {
