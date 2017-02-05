@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
+import com.jetbrains.python.testing.VFSTestFrameworkListener
 
 /**
  * Nose runner
@@ -45,7 +46,7 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalNoseTestSettingsEditor(this)
 
-
+  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)
 }
 
 object PyUniversalNoseTestFactory : PyUniversalTestFactory<PyUniversalNoseTestConfiguration>() {

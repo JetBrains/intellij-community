@@ -64,6 +64,8 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
     }
 
   }
+
+  override fun isFrameworkInstalled() = true //Unittest is always available
 }
 
 object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {

@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
+import com.jetbrains.python.testing.VFSTestFrameworkListener
 
 /**
  * Py.test runner
@@ -53,6 +54,8 @@ class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTes
       keywords.isEmpty() -> ""
       else -> "-k $keywords"
     }
+
+  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)
 }
 
 object PyUniversalPyTestFactory : PyUniversalTestFactory<PyUniversalPyTestConfiguration>() {

@@ -20,13 +20,12 @@ package com.jetbrains.python.testing.universalTests
 import com.google.gson.Gson
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
-import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
@@ -45,6 +44,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extenstions.toElement
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -185,6 +185,18 @@ abstract class PyUniversalTestConfiguration(project: Project,
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
   val legacyConfigurationAdapter = PyUniversalTestLegacyConfigurationAdapter(this)
+
+  override fun checkConfiguration() {
+    super.checkConfiguration()
+    if (!isFrameworkInstalled()) {
+      throw RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", testFrameworkName))
+    }
+  }
+
+  /**
+   * Check if framework is available on SDK
+   */
+  abstract fun isFrameworkInstalled(): Boolean
 
 
   override fun isTestBased() = true
