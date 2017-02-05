@@ -415,7 +415,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
     int commitCount = 100;
     for (int i = 0; i < commitCount; i++) {
-      touch("file.txt", "content number " + i);
+      echo("file.txt", "content number " + i);
       add();
       git("commit --allow-empty-message -F " + messageFile);
       expected.add(last());

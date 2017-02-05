@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.vcs.Executor.echo;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static java.util.Collections.singleton;
@@ -166,11 +167,11 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     touch(fileName, "content" + Math.random());
     String smallBrackets = addCommit("[git] " + fileName);
-    touch(fileName, "content" + Math.random());
+    echo(fileName, "content" + Math.random());
     String bigBrackets = addCommit("[GIT] " + fileName);
-    touch(fileName, "content" + Math.random());
+    echo(fileName, "content" + Math.random());
     String smallNoBrackets = addCommit("git " + fileName);
-    touch(fileName, "content" + Math.random());
+    echo(fileName, "content" + Math.random());
     String bigNoBrackets = addCommit("GIT " + fileName);
 
     String text = "[git]";
