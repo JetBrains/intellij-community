@@ -31,7 +31,9 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener
  */
 
 class PyUniversalNoseTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(PyUniversalTestForm.create(configuration))
+  PyUniversalTestSettingsEditor(
+    PyUniversalTestForm.create(configuration, PyUniversalTestForm.CustomOption(
+      PyUniversalNoseTestConfiguration::regexPattern.name, TestTargetType.PATH)))
 
 class PyUniversalNoseTestExecutionEnvironment(configuration: PyUniversalNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyUniversalTestExecutionEnvironment<PyUniversalNoseTestConfiguration>(configuration, environment) {
@@ -40,11 +42,20 @@ class PyUniversalNoseTestExecutionEnvironment(configuration: PyUniversalNoseTest
 
 
 class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNoseTestFactory) : PyUniversalTestConfiguration(project, factory) {
+  @ConfigField
+  var regexPattern = ""
+
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
     PyUniversalNoseTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalNoseTestSettingsEditor(this)
+
+  override fun getCustomRawArgumentsString(): String =
+    when {
+      regexPattern.isEmpty() -> ""
+      else -> "-m $regexPattern"
+    }
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)
 }
