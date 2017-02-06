@@ -185,13 +185,12 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   override fun commandExecuted(more: Boolean) = updateConsoleState()
 
-  override fun inputRequested() = updateConsoleState()
-
+  override fun inputRequested() {
+    isEnabled = true
+  }
 
   val pythonIndent: Int
     get() = CodeStyleSettingsManager.getSettings(project).getIndentSize(PythonFileType.INSTANCE)
-
-
 
   val cantExecuteMessage: String
     get() {
