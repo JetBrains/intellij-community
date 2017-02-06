@@ -229,7 +229,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   protected boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {
     if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-      CHUNK_REBUILD_ORDERED.set(context, null);
+      if (!myForStubs) {
+        CHUNK_REBUILD_ORDERED.set(context, null);
+      }
       return false;
     }
 
