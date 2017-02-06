@@ -15,18 +15,35 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.containers.ContainerUtil.ar;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
 /**
  * @author Vladislav.Soroka
@@ -34,6 +51,70 @@ import static com.intellij.util.containers.ContainerUtil.ar;
  */
 @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
+
+  @Override
+  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    config += "\nallprojects {\n" +
+              "  if(convention.findPlugin(JavaPluginConvention)) {\n" +
+              "    sourceSets.each { SourceSet sourceSet ->\n" +
+              "      tasks.create(name: 'print'+ sourceSet.name.capitalize() +'CompileDependencies') {\n" +
+              "        doLast { println sourceSet.compileClasspath.files.collect {it.name}.join(' ') }\n" +
+              "      }\n" +
+              "    }\n" +
+              "  }\n" +
+              "}\n";
+    super.importProject(config);
+  }
+
+  protected void assertCompileClasspathOrdering(String moduleName) {
+    Module module = getModule(moduleName);
+    String sourceSetName = getSourceSetName(module);
+    assertNotNull("Can not find the sourceSet for the module", sourceSetName);
+
+    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    settings.setExternalProjectPath(getExternalProjectPath(module));
+    String id = getExternalProjectId(module);
+    String gradlePath = id.startsWith(":") ? trimEnd(id, sourceSetName) : "";
+    settings.setTaskNames(Collections.singletonList(gradlePath + ":print" + capitalize(sourceSetName) + "CompileDependencies"));
+    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
+    settings.setScriptParameters("--quiet");
+    ExternalSystemProgressNotificationManager notificationManager =
+      ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    StringBuilder gradleClasspath = new StringBuilder();
+    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        gradleClasspath.append(text);
+      }
+    };
+    notificationManager.addNotificationListener(listener);
+    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+                               ProgressExecutionMode.NO_PROGRESS_SYNC);
+    notificationManager.removeNotificationListener(listener);
+
+
+    List<String> ideClasspath = ContainerUtil.newArrayList();
+    ModuleRootManager.getInstance(module).orderEntries().withoutSdk().withoutModuleSourceEntries().compileOnly().productionOnly().forEach(
+      entry -> {
+        if (entry instanceof ModuleOrderEntry) {
+          Module moduleDep = ((ModuleOrderEntry)entry).getModule();
+          String sourceSetDepName = getSourceSetName(moduleDep);
+          // for simplicity, only project dependency on 'default' configuration allowed here
+          assert sourceSetDepName != "main";
+
+          String gradleProjectDepName = trimStart(trimEnd(getExternalProjectId(moduleDep), ":main"), ":");
+          String version = getExternalProjectVersion(moduleDep);
+          version = "unspecified".equals(version) ? "" : "-" + version;
+          ideClasspath.add(gradleProjectDepName + version + ".jar");
+        }
+        else {
+          ideClasspath.add(entry.getFiles(OrderRootType.CLASSES)[0].getName());
+        }
+        return true;
+      });
+
+    assertEquals(join(ideClasspath, " "), gradleClasspath.toString().trim());
+  }
 
   @Test
   public void testDependencyScopeMerge() throws Exception {
@@ -67,6 +148,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
+    assertCompileClasspathOrdering("project_main");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "api", "impl");
@@ -168,6 +250,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("user_main", "web_main", DependencyScope.COMPILE);
     assertModuleLibDepScope("user_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
     assertModuleLibDepScope("user_main", "Gradle: junit:junit:4.11", DependencyScope.PROVIDED);
+
+    createProjectSubDirs("web", "user");
+    assertCompileClasspathOrdering("user_main");
   }
 
   @Test
@@ -464,6 +549,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project-tests_main", "project2_main", DependencyScope.RUNTIME);
     assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
     assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
+
+    createProjectSubDirs("project1", "project2", "project-tests");
+    assertCompileClasspathOrdering("project-tests_main");
 
     importProjectUsingSingeModulePerGradleProject();
 
@@ -951,6 +1039,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("projectB_main", "projectA_main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("projectC_main", "projectA_main", DependencyScope.PROVIDED);
     assertModuleModuleDepScope("projectC_main", "projectB_main", DependencyScope.PROVIDED);
+
+    createProjectSubDirs("projectA", "projectB", "projectC");
+    assertCompileClasspathOrdering("projectC_main");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "projectA", "projectB", "projectC");
