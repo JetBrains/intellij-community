@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
@@ -109,13 +108,13 @@ public class DFAEngine<E> {
     return info;
   }
 
+  @NotNull
   private int[] getFlowOrder() {
-    int[] order = ControlFlowBuilderUtil.postorder(myFlow);
     if (myDfa.isForward()) {
-      return order;
+      return ControlFlowBuilderUtil.reversePostorder(myFlow);
     }
     else {
-      return ArrayUtil.reverseArray(order);
+      return ControlFlowBuilderUtil.postorder(myFlow);
     }
   }
 

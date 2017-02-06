@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ReachingDefinitionsCollector {
     final DefinitionMap dfaResult = inferDfaResult(flow);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
-    final int[] postorder = ControlFlowBuilderUtil.postorder(flow);
+    final int[] postorder = ControlFlowBuilderUtil.reversePostorder(flow);
     LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
     LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
 
