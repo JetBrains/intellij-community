@@ -412,11 +412,14 @@ public final class HttpRequests {
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
+    CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
     try (RequestImpl request = new RequestImpl(builder)) {
-      CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
-      return manager != null
-             ? manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy)
-             : processor.process(request);
+      if (manager != null) {
+        return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
+      }
+      else {
+        return processor.process(request);
+      }
     }
   }
 
