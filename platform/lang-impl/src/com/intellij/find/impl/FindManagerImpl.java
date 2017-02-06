@@ -784,25 +784,29 @@ public class FindManagerImpl extends FindManager {
     if (matcher == null) {
       return NOT_FOUND_RESULT;
     }
-    if (model.isForward()){
-      if (matcher.find(startOffset)) {
-        if (matcher.end() <= text.length()) {
-          return new FindResultImpl(matcher.start(), matcher.end());
+    try {
+      if (model.isForward()) {
+        if (matcher.find(startOffset)) {
+          if (matcher.end() <= text.length()) {
+            return new FindResultImpl(matcher.start(), matcher.end());
+          }
         }
-      }
-      return NOT_FOUND_RESULT;
-    }
-    else {
-      int start = -1;
-      int end = -1;
-      while(matcher.find() && matcher.end() < startOffset){
-        start = matcher.start();
-        end = matcher.end();
-      }
-      if (start < 0){
         return NOT_FOUND_RESULT;
       }
-      return new FindResultImpl(start, end);
+      else {
+        int start = -1;
+        int end = -1;
+        while (matcher.find() && matcher.end() < startOffset) {
+          start = matcher.start();
+          end = matcher.end();
+        }
+        if (start < 0) {
+          return NOT_FOUND_RESULT;
+        }
+        return new FindResultImpl(start, end);
+      }
+    } catch (StackOverflowError soe) {
+      return NOT_FOUND_RESULT;
     }
   }
 
