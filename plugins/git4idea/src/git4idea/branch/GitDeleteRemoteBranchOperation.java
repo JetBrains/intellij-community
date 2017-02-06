@@ -51,12 +51,12 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   @Override
   protected void execute() {
     final Collection<GitRepository> repositories = getRepositories();
-    final Collection<String> trackingBranches = findTrackingBranches(myBranchName, repositories);
+    final Collection<String> commonTrackingBranches = getCommonTrackingBranches(myBranchName, repositories);
     String currentBranch = GitBranchUtil.getCurrentBranchOrRev(repositories);
     boolean currentBranchTracksBranchToDelete = false;
-    if (trackingBranches.contains(currentBranch)) {
+    if (commonTrackingBranches.contains(currentBranch)) {
       currentBranchTracksBranchToDelete = true;
-      trackingBranches.remove(currentBranch);
+      commonTrackingBranches.remove(currentBranch);
     }
 
     final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
@@ -64,7 +64,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        decision.set(confirmBranchDeletion(myBranchName, trackingBranches, finalCurrentBranchTracksBranchToDelete, repositories));
+        decision.set(confirmBranchDeletion(myBranchName, commonTrackingBranches, finalCurrentBranchTracksBranchToDelete, repositories));
       }
     });
 
@@ -74,7 +74,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       if (deletedSuccessfully) {
         final Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
         if (decision.get().deleteTracking()) {
-          for (final String branch : trackingBranches) {
+          for (final String branch : commonTrackingBranches) {
             getIndicator().setText("Deleting " + branch);
             new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
               @Override
@@ -115,8 +115,9 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private static Collection<String> findTrackingBranches(@NotNull String remoteBranch, @NotNull Collection<GitRepository> repositories) {
-    return new GitMultiRootBranchConfig(repositories).getTrackingBranches(remoteBranch);
+  private static Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
+                                                              @NotNull Collection<GitRepository> repositories) {
+    return new GitMultiRootBranchConfig(repositories).getCommonTrackingBranches(remoteBranch);
   }
 
   private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<GitRepository> repositories) {
