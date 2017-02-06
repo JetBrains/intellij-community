@@ -98,6 +98,10 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
+      buildContext.ant.fixcrlf(file: "$communityHome/build/conf/install_nsis3.sh", eol: "unix")
+      ant.exec(executable: "chmod") {
+        arg(line: " u+x \"${communityHome}/build/conf/install_nsis3.sh\"")
+      }
       ant.exec(command: "\"$communityHome/build/conf/install_nsis3.sh\"" +
                         " \"${buildContext.paths.communityHome}\"")
 
