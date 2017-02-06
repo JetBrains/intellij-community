@@ -72,8 +72,9 @@ public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsCo
   }
 
   private void recalculateSchemaFiles() {
-    ApplicationManager
-      .getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged());
+    }, o -> !myProject.isDisposed());
     mySchemaFiles.clear();
     if (myProject == null || myProject.getBaseDir() == null) return;
 
