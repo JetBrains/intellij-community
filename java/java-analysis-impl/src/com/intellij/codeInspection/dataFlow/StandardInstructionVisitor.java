@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -109,18 +110,34 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    if (!instruction.isReferenceWrite() && instruction.getPlace() instanceof PsiReferenceExpression) {
+    PsiExpression place = instruction.getPlace();
+    if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
         DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        myPossibleVariableValues.putValue(instruction, constValue != null && shouldReportConstValue(constValue.getValue()) ? constValue : ANY_VALUE);
+        boolean report = constValue != null && shouldReportConstValue(constValue.getValue(), place);
+        myPossibleVariableValues.putValue(instruction, report ? constValue : ANY_VALUE);
       }
     }
     return super.visitPush(instruction, runner, memState);
   }
 
-  private static boolean shouldReportConstValue(Object value) {
-    return value == null || value instanceof Boolean || value.equals(new Long(0));
+  private static boolean shouldReportConstValue(Object value, PsiElement place) {
+    return value == null || value instanceof Boolean ||
+           value.equals(new Long(0)) && isDivider(PsiUtil.skipParenthesizedExprUp(place));
+  }
+
+  private static boolean isDivider(PsiElement expr) {
+    PsiElement parent = expr.getParent();
+    if (parent instanceof PsiBinaryExpression) {
+      return ControlFlowAnalyzer.isBinaryDivision(((PsiBinaryExpression)parent).getOperationTokenType()) &&
+             ((PsiBinaryExpression)parent).getROperand() == expr;
+    }
+    if (parent instanceof PsiAssignmentExpression) {
+      return ControlFlowAnalyzer.isAssignmentDivision(((PsiAssignmentExpression)parent).getOperationTokenType()) &&
+             ((PsiAssignmentExpression)parent).getRExpression() == expr;
+    }
+    return false;
   }
 
   public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {

@@ -24,4 +24,12 @@ class Test {
     }
   }
 
+  void println(int i) {}
+
+  void testZero(int b) {
+    if (b == 0) {
+      println(b);
+    }
+  }
+
 }

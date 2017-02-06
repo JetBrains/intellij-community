@@ -163,7 +163,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, myProject));
     }
-    else if ((op == JavaTokenType.PERCEQ || op == JavaTokenType.DIVEQ) && type != null && PsiType.LONG.isAssignableFrom(type)) {
+    else if (isAssignmentDivision(op) && type != null && PsiType.LONG.isAssignableFrom(type)) {
       lExpr.accept(this);
       generateBoxingUnboxingInstructionFor(lExpr, type);
       rExpr.accept(this);
@@ -958,7 +958,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
       generateOrExpression(operands, type, false);
     }
-    else if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && operands.length == 2 &&
+    else if (isBinaryDivision(op) && operands.length == 2 &&
              type != null && PsiType.LONG.isAssignableFrom(type)) {
       generateDivMod(expression, type, operands[0], operands[1]);
     }
@@ -966,6 +966,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateOther(expression, op, operands, type);
     }
     finishElement(expression);
+  }
+
+  static boolean isBinaryDivision(IElementType binaryOp) {
+    return binaryOp == JavaTokenType.DIV || binaryOp == JavaTokenType.PERC;
+  }
+
+  static boolean isAssignmentDivision(IElementType op) {
+    return op == JavaTokenType.PERCEQ || op == JavaTokenType.DIVEQ;
   }
 
   private void generateDivMod(PsiPolyadicExpression expression, PsiType type, PsiExpression left, PsiExpression right) {
