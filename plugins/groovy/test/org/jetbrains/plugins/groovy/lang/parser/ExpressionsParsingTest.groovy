@@ -514,6 +514,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$indexAccess3() { doTest() }
 
+  void testcommandExpr$indexAccess4() { doTest() }
+
   void testcommandExpr$closureArg2() { doTest() }
 
   void testcommandExpr$closureArg3() { doTest() }
@@ -852,4 +854,6 @@ Groovy script
   }
 
   void testspecial$mapHang() { doTest() }
+
+  void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
 }
