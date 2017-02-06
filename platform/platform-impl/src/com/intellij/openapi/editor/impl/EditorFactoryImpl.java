@@ -22,14 +22,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -58,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorFactoryImpl extends EditorFactory implements ApplicationComponent {
+public class EditorFactoryImpl extends EditorFactory implements ApplicationComponentAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
@@ -89,12 +87,6 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     TypedAction typedAction = editorActionManager.getTypedAction();
     TypedActionHandler originalHandler = typedAction.getRawHandler();
     typedAction.setupRawHandler(new MyTypedHandler(originalHandler));
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "EditorFactory";
   }
 
   @Override
@@ -129,11 +121,6 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       throw new RuntimeException("Editor of " + editor.getClass() +
                                  " and the following text hasn't been released:\n" + editor.getDocument().getText());
     }
-  }
-
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override
@@ -286,7 +273,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     return myEditorEventMulticaster;
   }
 
-  private static class MyTypedHandler implements TypedActionHandler {
+  private static class MyTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
     private MyTypedHandler(TypedActionHandler delegate) {
@@ -302,6 +289,11 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       finally {
         editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
       }
+    }
+
+    @Override
+    public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+      if (myDelegate instanceof TypedActionHandlerEx) ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
     }
   }
 }

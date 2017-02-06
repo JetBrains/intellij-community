@@ -100,7 +100,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testSingleQuotes() {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -113,7 +113,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testNoneQuotes() {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;

@@ -26,6 +26,10 @@ public class MethodInvocator {
   private Method myMethod;
 
   public MethodInvocator(Class<?> aClass, String method, Class<?>... parameterTypes) {
+    this(true, aClass, method, parameterTypes);
+  }
+
+  public MethodInvocator(boolean warnIfAbsent, Class<?> aClass, String method, Class<?>... parameterTypes) {
     try {
       myMethod = aClass.getDeclaredMethod(method, parameterTypes);
 
@@ -34,7 +38,9 @@ public class MethodInvocator {
       }
     }
     catch (NoSuchMethodException e) {
-      LOG.warn("Method not found: " + aClass.getName() + "." + method);
+      if (warnIfAbsent) {
+        LOG.warn("Method not found: " + aClass.getName() + "." + method);
+      }
     }
   }
 

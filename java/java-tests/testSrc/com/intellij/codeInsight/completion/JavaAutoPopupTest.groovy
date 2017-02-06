@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -520,28 +520,28 @@ class Foo {
     String toType = "ArrayIndexOutOfBoundsException ind"
     testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 1
 
-    UISettings.instance.CYCLE_SCROLLING = false
+    UISettings.instance.cycleScrolling = false
     try {
       testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
     }
     finally {
-      UISettings.instance.CYCLE_SCROLLING = true
+      UISettings.instance.cycleScrolling = true
     }
   }
 
   void "test vertical arrows in semi-focused lookup"() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
     testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
 
-    UISettings.instance.CYCLE_SCROLLING = false
+    UISettings.instance.cycleScrolling = false
     try {
       testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
-      UISettings.instance.CYCLE_SCROLLING = true
+      UISettings.instance.cycleScrolling = true
     }
   }
 
@@ -1448,7 +1448,7 @@ class Foo {{
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
     LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
-    assert p.tailText == ' = 2 (foo)'
+    assert p.tailText == ' ( = 2) (foo)'
     assert p.typeText == 'int'
 
     type 'fo\n'
@@ -1509,7 +1509,7 @@ class Foo {
   protected void tearDown() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false
+    UISettings.getInstance()setSortLookupElementsLexicographically(false)
 
     super.tearDown()
   }
@@ -1609,7 +1609,7 @@ class ListConfigKey {
   }
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
 
     myFixture.configureByText 'a.java', '''

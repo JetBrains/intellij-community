@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,7 +284,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * then removes the oldest ones to fit the history to new size.
    */
   private synchronized void trimToSize(){
-    final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
+    final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
     while(myEntriesList.size()>limit){
       HistoryEntry removed = myEntriesList.remove(0);
       removed.destroy();
@@ -372,6 +372,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
       // so defer updating history entry until documents committed to improve responsiveness
       PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+        FileEditor newEditor = event.getNewEditor();
+        if(newEditor != null && !newEditor.isValid())
+          return;
+
         updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
         updateHistoryEntry(event.getNewFile(), true);
       });

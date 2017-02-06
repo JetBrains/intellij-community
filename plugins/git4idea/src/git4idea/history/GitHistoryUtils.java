@@ -16,7 +16,7 @@
 package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -618,7 +618,7 @@ public class GitHistoryUtils {
 
   @Nullable
   private static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction((Computable<VcsLogObjectsFactory>)() -> {
+    return ReadAction.compute(() -> {
       if (!project.isDisposed()) {
         return ServiceManager.getService(project, VcsLogObjectsFactory.class);
       }

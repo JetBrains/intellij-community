@@ -51,3 +51,17 @@ class Class2 {
         System.out.println(getSomeText());
     }
 }
+class PrivateConstructor {
+
+    private PrivateConstructor() {}
+
+    public static PrivateConstructor build123() {
+        return new PrivateConstructor();
+    }
+}
+class User {
+
+    void m() {
+        PrivateConstructor.build123();
+    }
+}

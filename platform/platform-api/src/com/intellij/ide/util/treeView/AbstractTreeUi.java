@@ -1671,7 +1671,7 @@ public class AbstractTreeUi {
                                              final boolean forceUpdate,
                                              final boolean wasExpaned,
                                              @Nullable final LoadedChildren preloaded) {
-    final List<TreeNode> childNodes = TreeUtil.childrenToArray(node);
+    final List<TreeNode> childNodes = TreeUtil.listChildren(node);
     return maybeYeild(new AsyncRunnable() {
       @NotNull
       @Override
@@ -3509,7 +3509,7 @@ public class AbstractTreeUi {
     sortChildren(parentNode, toInsert, false, true);
     final List<TreeNode> all = new ArrayList<>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
-    all.addAll(TreeUtil.childrenToArray(parentNode));
+    all.addAll(TreeUtil.listChildren(parentNode));
 
     if (!toInsert.isEmpty()) {
       sortChildren(parentNode, all, true, true);

@@ -16,8 +16,8 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class VcsLogInternalDataKeys {
   public static final DataKey<VcsLogManager> LOG_MANAGER = DataKey.create("Vcs.Log.Manager");

@@ -290,7 +290,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
-      SmartCastProvider.addCastVariants(parameters, element -> {
+      SmartCastProvider.addCastVariants(parameters, result.getPrefixMatcher(), element -> {
         registerClassFromTypeElement(element, session);
         result.addElement(PrioritizedLookupElement.withPriority(element, 1));
       });
@@ -772,6 +772,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       if (ref.getParent() instanceof PsiTypeElement) {
         return true;
       }
+    }
+    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(file.findElementAt(startOffset))) {
+      return true;
     }
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);

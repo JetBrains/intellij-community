@@ -28,7 +28,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +42,12 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
     super.setUp();
     myBreakpointManager = (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
     myTempFiles = new TempFiles(myFilesToDelete);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myBreakpointManager = null;
+    super.tearDown();
   }
 
   protected void load(final Element element) {

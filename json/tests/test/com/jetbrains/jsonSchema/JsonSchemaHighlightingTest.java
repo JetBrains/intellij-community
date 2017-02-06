@@ -360,6 +360,24 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                      "}");
   }
 
+  public void testPatternForPropertyValue() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"withPattern\": {\n" +
+                          "      \"pattern\": \"p[0-9]\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    final String correctText = "{\n" +
+                               "  \"withPattern\": \"p1\"\n" +
+                               "}";
+    final String wrongText = "{\n" +
+                             "  \"withPattern\": <warning descr=\"String is violating the pattern: 'p[0-9]'\">\"wrong\"</warning>\n" +
+                             "}";
+    testImpl(schema, correctText);
+    testImpl(schema, wrongText);
+  }
+
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
     testImpl(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
                                           "\"r1\": \"allowed!\"}");

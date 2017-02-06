@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,21 @@ import java.io.IOException;
 /**
  * @author max
  */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class DataInputOutputUtil extends DataInputOutputUtilRt {
   public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
 
-  private DataInputOutputUtil() {}
+  private DataInputOutputUtil() { }
 
-  @Nullable 
+  public static int readINT(@NotNull DataInput record) throws IOException {
+    return DataInputOutputUtilRt.readINT(record);
+  }
+
+  public static void writeINT(@NotNull DataOutput record, int val) throws IOException {
+    DataInputOutputUtilRt.writeINT(record, val);
+  }
+
+  @Nullable
   public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     return StringRef.fromStream(record, nameStore);
   }
@@ -130,5 +139,4 @@ public class DataInputOutputUtil extends DataInputOutputUtilRt {
   public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readValue) throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
   }
-
 }

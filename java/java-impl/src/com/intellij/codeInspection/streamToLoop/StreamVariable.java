@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import java.util.List;
 /**
  * This class represents a variable which holds stream element. Its lifecycle is the following:
  * 1. Construction: fast, in case you don't need to perform a fix actually
- * 2. Gather name candidates (addBestNameCandidate/addOtherNameCandidate can be called).
+ * 2. Preprocessing (addBestNameCandidate/addOtherNameCandidate/markFinal can be called).
  * 3. Register variable in {@code StreamToLoopReplacementContext}: actual variable name is assigned here
- * 4. Usage in code generation: getName()/getType() could be called.
+ * 4. Usage in code generation: getName()/getType()/isFinal() could be called.
  *
  * @author Tagir Valeev
  */
@@ -55,6 +55,7 @@ class StreamVariable {
 
   String myName;
   @NotNull String myType;
+  boolean myFinal;
 
   private Collection<String> myBestCandidates = new LinkedHashSet<>();
   private Collection<String> myOtherCandidates = new LinkedHashSet<>();
@@ -66,6 +67,13 @@ class StreamVariable {
   StreamVariable(@NotNull String type, @NotNull String name) {
     myType = type;
     myName = name;
+  }
+
+  /**
+   * Call if the resulting variable must be declared final (e.g. used in lambdas)
+   */
+  public void markFinal() {
+    myFinal = true;
   }
 
   /**
@@ -114,6 +122,14 @@ class StreamVariable {
 
   String getDeclaration() {
     return getType() + " " + getName();
+  }
+
+  String getDeclaration(String initializer) {
+    return getType() + " " + getName() + "=" + initializer + ";\n";
+  }
+
+  public boolean isFinal() {
+    return myFinal;
   }
 
   @Override

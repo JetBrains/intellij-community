@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.size() > 0;
   }
 
-  public boolean dispatch(final AWTEvent e) {
+  public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {

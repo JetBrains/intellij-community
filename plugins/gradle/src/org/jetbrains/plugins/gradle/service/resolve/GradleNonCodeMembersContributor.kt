@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -112,7 +112,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
     else {
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull() ?: return
-      if (!GroovyPsiManager.isInheritorCached(qualifierType, GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER)) return
+      if (!InheritanceUtil.isInheritor(qualifierType, GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER)) return
 
       val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
       val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
@@ -120,8 +120,8 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       if (GradleResolverUtil.canBeMethodOf(propCandidate, aClass)) return
 
       val domainObjectFqn = TypesUtil.getQualifiedName(domainObjectType) ?: return
-      val psiManager = GroovyPsiManager.getInstance(place.project)
-      val domainObjectPsiClass = psiManager.findClassWithCache(domainObjectFqn, place.resolveScope) ?: return
+      val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
+      val domainObjectPsiClass = javaPsiFacade.findClass(domainObjectFqn, place.resolveScope) ?: return
       if (GradleResolverUtil.canBeMethodOf(propCandidate, domainObjectPsiClass)) return
       if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), domainObjectPsiClass)) return
       if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), domainObjectPsiClass)) return
@@ -130,7 +130,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
       if (typeToDelegate != null) {
         val fqNameToDelegate = TypesUtil.getQualifiedName(typeToDelegate) ?: return
-        val classToDelegate = psiManager.findClassWithCache(fqNameToDelegate, place.resolveScope) ?: return
+        val classToDelegate = javaPsiFacade.findClass(fqNameToDelegate, place.resolveScope) ?: return
         if (classToDelegate !== aClass) {
           val parent = place.parent
           if (parent is GrMethodCall) {

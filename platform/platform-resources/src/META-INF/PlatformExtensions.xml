@@ -460,6 +460,8 @@
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory"/>
+
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>

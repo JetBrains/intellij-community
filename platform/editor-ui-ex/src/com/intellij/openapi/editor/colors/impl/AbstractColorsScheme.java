@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -45,6 +46,7 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.EditorColors.*;
@@ -217,7 +219,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public Font getFont(EditorFontType key) {
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getPresentationMode()) {
       final Font font = myFonts.get(key);
       return new Font(font.getName(), font.getStyle(), UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
@@ -304,7 +306,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public void readExternal(@NotNull Element parentNode) {
-    UISettings settings = UISettings.getInstance();
+    UISettings settings = UISettings.getInstanceOrNull();
     ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
     myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
@@ -392,7 +394,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     DefaultColorSchemesManager manager = DefaultColorSchemesManager.getInstance();
     EditorColorsScheme defaultScheme = manager.getScheme(name);
     if (defaultScheme == null) {
-      defaultScheme = EmptyColorScheme.INSTANCE;
+      defaultScheme = new TemporaryParent(name);
     }
     return defaultScheme;
   }
@@ -525,7 +527,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     if (!isDefault) {
       size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
     }
-    return JBUI.scaleFontSize(size);
+    return (int)JBUI.scale(size);
   }
 
   private void readFontSettings(@NotNull Element element,
@@ -785,8 +787,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @Override
   public int getConsoleFontSize() {
     String font = getConsoleFontName();
-    UISettings uiSettings = UISettings.getInstance();
-    if ((uiSettings == null || !uiSettings.PRESENTATION_MODE) && myConsoleFontPreferences.hasSize(font)) {
+    UISettings uiSettings = UISettings.getInstanceOrNull();
+    if ((uiSettings == null || !uiSettings.getPresentationMode()) && myConsoleFontPreferences.hasSize(font)) {
       return myConsoleFontPreferences.getSize(font);
     }
     return getEditorFontSize();
@@ -889,9 +891,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return root;
   }
 
-  public boolean isEqualToBundled(AbstractColorsScheme bundledScheme) {
+  public boolean settingsEqual(Object other) {
+    if (!(other instanceof AbstractColorsScheme)) return false;
+    AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
+    
     // parent is used only for default schemes (e.g. Darcula — bundled in all ide (opposite to IDE-specific, like Cobalt))
-    if (myParentScheme != bundledScheme.myParentScheme && myParentScheme != bundledScheme) {
+    if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
     }
 
@@ -903,23 +908,91 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
           propertyName.equals(META_INFO_ORIGINAL)
         ) {
         continue;
-      }
+      }                                                                                                               
 
-      if (!Comparing.equal(myMetaInfo.getProperty(propertyName), bundledScheme.myMetaInfo.getProperty(propertyName))) {
+      if (!Comparing.equal(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
         return false;
       }
     }
 
-    return getLineSpacing() == bundledScheme.getLineSpacing() &&
-           getConsoleLineSpacing() == bundledScheme.getConsoleLineSpacing() &&
-           getQuickDocFontSize() == bundledScheme.getQuickDocFontSize() &&
-           myFontPreferences.getRealFontFamilies().equals(bundledScheme.myFontPreferences.getRealFontFamilies()) &&
-           myFontPreferences.useLigatures() == bundledScheme.myFontPreferences.useLigatures() &&
-           myConsoleFontPreferences.useLigatures() == bundledScheme.myConsoleFontPreferences.useLigatures() &&
-           myConsoleFontPreferences.getRealFontFamilies().equals(bundledScheme.myConsoleFontPreferences.getRealFontFamilies()) &&
-           myColorsMap.equals(bundledScheme.myColorsMap) &&
-           myAttributesMap.equals(bundledScheme.myAttributesMap) &&
-           myFontPreferences.equals(bundledScheme.myFontPreferences) &&
-           myConsoleFontPreferences.equals(bundledScheme.myConsoleFontPreferences);
+    return getLineSpacing() == otherScheme.getLineSpacing() &&
+           getConsoleLineSpacing() == otherScheme.getConsoleLineSpacing() &&
+           myFontPreferences.equals(otherScheme.getFontPreferences()) &&
+           myConsoleFontPreferences.equals(otherScheme.getConsoleFontPreferences()) &&
+           attributesEqual(otherScheme) &&
+           colorsEqual(otherScheme) &&
+           myFontPreferences.equals(otherScheme.myFontPreferences);
+  }
+
+  protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
+    return myAttributesMap.equals(otherScheme.myAttributesMap);
+  }
+
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
+    return myColorsMap.equals(otherScheme.myColorsMap);
+  }
+
+  @Nullable
+  private static EditorColorsScheme getBaseDefaultScheme(@NotNull EditorColorsScheme scheme) {
+    if (!(scheme instanceof AbstractColorsScheme)) {
+      return null;
+    }
+    if (scheme instanceof DefaultColorsScheme) {
+      return scheme;
+    }
+    EditorColorsScheme parent = ((AbstractColorsScheme)scheme).myParentScheme;
+    return parent != null ? getBaseDefaultScheme(parent) : null;
+  }
+  
+  private static class TemporaryParent extends EditorColorsSchemeImpl {
+
+    private static Logger LOG = Logger.getInstance("#" + TemporaryParent.class.getName());
+    
+    private String myParentName;
+    private boolean isErrorReported;
+
+    public TemporaryParent(@NotNull String parentName) {
+      super(EmptyColorScheme.INSTANCE);
+      myParentName = parentName;
+    }
+
+    public String getParentName() {
+      return myParentName;
+    }
+
+    @Override
+    public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
+      reportError();
+      return super.getAttributes(key);
+    }
+
+    @Nullable
+    @Override
+    public Color getColor(ColorKey key) {
+      reportError();
+      return super.getColor(key);
+    }
+
+    private void reportError() {
+      if (!isErrorReported) {
+        LOG.error("Unresolved link to " + myParentName);
+        isErrorReported = true;
+      }
+    }
+  }
+
+  public void setParent(@NotNull EditorColorsScheme newParent) {
+    assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
+    myParentScheme = newParent;
+  }
+  
+  void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
+    if (myParentScheme instanceof TemporaryParent) {
+      String parentName = ((TemporaryParent)myParentScheme).getParentName();
+      EditorColorsScheme newParent = nameResolver.apply(parentName);
+      assert newParent != null : "Can not resolve '" + parentName + "' color scheme.";
+      assert newParent instanceof ReadOnlyColorsScheme : "Resolved parent color scheme must be read-only.";
+      myParentScheme = newParent;
+    }
   }
 }

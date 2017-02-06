@@ -377,11 +377,13 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
   static class ObservableList extends ObservableType {
     final PsiType myOriginalType;
     final PsiType myItemType;
+    final Project myProject;
 
-    ObservableList(@NotNull PsiType originalType, @NotNull PsiType itemType) {
+    ObservableList(@NotNull PsiType originalType, @NotNull PsiType itemType, @NotNull Project project) {
       super(JavaFxCommonNames.JAVAFX_BEANS_PROPERTY_SIMPLE_LIST_PROPERTY + "<" + itemType.getCanonicalText() + ">");
       myOriginalType = originalType;
       myItemType = itemType;
+      myProject = project;
     }
 
     @Nullable
@@ -397,7 +399,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
           if (substitutor != null) {
             final PsiType itemType = substitutor.substitute(listClass.getTypeParameters()[0]);
             if (itemType != null) {
-              return new ObservableList(type, itemType);
+              return new ObservableList(type, itemType, project);
             }
           }
         }
@@ -416,7 +418,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     TypeConversionDescriptor getReadConversion(PsiExpression expression) {
       return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()", expression) {
         @Override
-        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiExpression replaced = super.replace(expression, evaluator);
           // Replace the getter's return type: List -> ObservableList
           final PsiElement parent = replaced.getParent();
@@ -430,11 +432,10 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
                 final PsiMethod method = (PsiMethod)blockParent;
                 final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
                 if (returnTypeElement != null && myOriginalType.equals(method.getReturnType())) {
-                  final Project project = expression.getProject();
                   final String text = JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST + "<" + myItemType.getCanonicalText() + ">";
-                  final PsiTypeElement newReturnTypeElement = JavaPsiFacade.getInstance(project)
+                  final PsiTypeElement newReturnTypeElement = JavaPsiFacade.getInstance(myProject)
                     .getElementFactory().createTypeElementFromText(text, method);
-                  final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+                  final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
                   javaCodeStyleManager.shortenClassReferences(returnTypeElement.replace(newReturnTypeElement));
                 }
               }

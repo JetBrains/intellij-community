@@ -187,7 +187,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
             for (Module dependency : getModuleDependencies(module)) {
               child.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
             }
-            TreeUtil.sort(child, NODE_COMPARATOR);
+            TreeUtil.sortRecursively(child, NODE_COMPARATOR);
           }
         }
       }
@@ -342,7 +342,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
     }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);
 
-    TreeUtil.sort(root, NODE_COMPARATOR);
+    TreeUtil.sortRecursively(root, NODE_COMPARATOR);
     ((DefaultTreeModel)myLeftTree.getModel()).reload();
     TreeUtil.selectFirstNode(myLeftTree);
   }

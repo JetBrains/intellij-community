@@ -161,7 +161,7 @@ public class GradleExecutionHelper {
     }
 
     if (!commandLineArgs.isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
+      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(commandLineArgs, " "));
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 

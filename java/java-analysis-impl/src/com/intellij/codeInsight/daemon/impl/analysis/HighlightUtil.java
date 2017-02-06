@@ -158,6 +158,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
+    final PsiElement parent = modifierList.getParent();
     final boolean level8OrHigher = PsiUtil.isLanguageLevel8OrHigher(modifierList);
     final boolean level9OrHigher = PsiUtil.isLanguageLevel9OrHigher(modifierList);
     for (@PsiModifier.ModifierConstant String incompatible : incompatibles) {
@@ -166,12 +167,12 @@ public class HighlightUtil extends HighlightUtilBase {
           continue;
         }
       }
-      if (level9OrHigher && modifier.equals(PsiModifier.PRIVATE) && incompatible.equals(PsiModifier.PUBLIC)) {
-        continue;
-      }
-      if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.FINAL)) {
-        final PsiElement parent = modifierList.getParent();
-        if (parent instanceof PsiMethod) {
+      if (parent instanceof PsiMethod) {
+        if (level9OrHigher && modifier.equals(PsiModifier.PRIVATE) && incompatible.equals(PsiModifier.PUBLIC)) {
+          continue;
+        }
+
+        if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.FINAL)) {
           final PsiClass containingClass = ((PsiMethod)parent).getContainingClass();
           if (containingClass == null || !containingClass.isInterface()) {
             continue;
@@ -564,6 +565,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
+      registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
@@ -622,9 +624,13 @@ public class HighlightUtil extends HighlightUtilBase {
               QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
             }
             registerChangeParameterClassFix(returnType, valueType, errorResult);
-            if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
-              QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
+            if (returnType instanceof PsiArrayType) {
+              final PsiType erasedValueType = TypeConversionUtil.erasure(valueType);
+              if (erasedValueType != null && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), erasedValueType)) {
+                QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
+              }
             }
+            registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
           }
         }
       }
@@ -637,6 +643,23 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     return errorResult;
+  }
+
+  private static void registerCollectionToArrayFixAction(@Nullable HighlightInfo info,
+                                                         @Nullable PsiType fromType,
+                                                         @Nullable PsiType toType,
+                                                         @NotNull PsiExpression expression) {
+    if (toType instanceof PsiArrayType) {
+      PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
+      if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
+          InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
+        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCollectionToArrayFix(expression, (PsiArrayType)toType));
+        }
+      }
+    }
   }
 
   @NotNull

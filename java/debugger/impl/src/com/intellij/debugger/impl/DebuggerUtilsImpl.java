@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -259,18 +260,13 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
+    if (ApplicationManagerEx.getApplicationEx().holdsReadLock()) {
+      return action.compute();
+    }
     Ref<T> res = Ref.create();
     while (true) {
-      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
+      if (ProgressManager.getInstance().runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
         return res.get();
-      }
-      try {
-        //noinspection BusyWait
-        Thread.sleep(50);
-      }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
       }
     }
   }

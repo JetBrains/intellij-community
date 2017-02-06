@@ -181,8 +181,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    boolean updatePlugins =
-      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet();
+    boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
+    if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+      return;  // update cancelled
+    }
 
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override
@@ -208,8 +210,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         if (updatePlugins) {
-          indicator.setText(IdeBundle.message("update.downloading.plugins.progress"));
-          UpdateChecker.saveDisabledToUpdatePlugins();
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 

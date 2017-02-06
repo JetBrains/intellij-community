@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,11 @@ abstract class Operation {
 
   public void registerReusedElements(Consumer<PsiElement> consumer) {}
 
-  public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
+  public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
 
   @Nullable
   static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
-                                      @NotNull StreamVariable outVar, @NotNull PsiType inType) {
+                                      @NotNull StreamVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
@@ -71,6 +71,17 @@ abstract class Operation {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new FilterOperation(fn);
     }
+    if(name.equals("takeWhile") && args.length == 1) {
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
+      return fn == null ? null : new TakeWhileOperation(fn);
+    }
+    if(name.equals("dropWhile") && args.length == 1) {
+      FunctionHelper fn = FunctionHelper.create(args[0], 1);
+      return fn == null ? null : new DropWhileOperation(fn);
+    }
+    if (name.equals("nonNull") && args.length == 0) { // StreamEx
+      return new FilterOperation(new FunctionHelper.InlinedFunctionHelper(PsiType.BOOLEAN, 1, "{0} != null"));
+    }
     if(name.equals("sorted") && !(inType instanceof PsiPrimitiveType)) {
       return new SortedOperation(args.length == 1 ? args[0] : null);
     }
@@ -83,7 +94,7 @@ abstract class Operation {
     }
     if ((name.equals("flatMap") || name.equals("flatMapToInt") || name.equals("flatMapToLong") || name.equals("flatMapToDouble")) &&
         args.length == 1) {
-      return FlatMapOperation.from(outVar, args[0], inType);
+      return FlatMapOperation.from(outVar, args[0], inType, supportUnknownSources);
     }
     if ((name.equals("map") ||
          name.equals("mapToInt") ||
@@ -122,8 +133,8 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
   }
 
@@ -138,6 +149,33 @@ abstract class Operation {
     }
   }
 
+  static class TakeWhileOperation extends LambdaIntermediateOperation {
+    public TakeWhileOperation(FunctionHelper fn) {
+      super(fn);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      return "if(" + BoolUtils.getNegatedExpressionText(myFn.getExpression()) + ") {\n" +
+             context.getBreakStatement() + "}\n" + code;
+    }
+  }
+
+  static class DropWhileOperation extends LambdaIntermediateOperation {
+    public DropWhileOperation(FunctionHelper fn) {
+      super(fn);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String dropping = context.declare("dropping", "boolean", "true");
+      return "if(" + dropping + ") {\n" +
+             "if(" + myFn.getText() + ") {\ncontinue;\n}\n" +
+             dropping + "=false;\n" +
+             "}\n" + code;
+    }
+  }
+
   static class PeekOperation extends LambdaIntermediateOperation {
     public PeekOperation(FunctionHelper fn) {
       super(fn);
@@ -145,7 +183,7 @@ abstract class Operation {
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return myFn.getText() + ";\n" + code;
+      return myFn.getStatementText() + code;
     }
   }
 
@@ -155,14 +193,14 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      super.suggestNames(inVar, outVar);
-      myFn.suggestOutputNames(outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      super.preprocessVariables(context, inVar, outVar);
+      myFn.suggestOutputNames(context, outVar);
     }
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return outVar.getDeclaration() + " = " + myFn.getText() + ";\n" + code;
+      return outVar.getDeclaration(myFn.getText()) + code;
     }
 
     @Override
@@ -177,7 +215,7 @@ abstract class Operation {
                 StreamVariable outVar,
                 String code,
                 StreamToLoopReplacementContext context) {
-      return outVar.getDeclaration() + " = " + inVar + ";\n" + code;
+      return outVar.getDeclaration(inVar.getName()) + code;
     }
 
     @Override
@@ -215,8 +253,11 @@ abstract class Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      String name = myFn.getParameterName(0);
+      if (name != null) {
+        inVar.addBestNameCandidate(name);
+      }
     }
 
     @Override
@@ -256,7 +297,7 @@ abstract class Operation {
     }
 
     @Nullable
-    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType) {
+    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, PsiType inType, boolean supportUnknownSources) {
       FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
       String varName = fn.tryLightTransform(inType);
@@ -280,7 +321,8 @@ abstract class Operation {
       }
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
-      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall);
+      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall,
+                                                                                                      supportUnknownSources);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
       return new FlatMapOperation(varName, fn, records, condition, inverted);
     }

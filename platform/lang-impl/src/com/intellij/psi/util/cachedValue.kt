@@ -18,6 +18,10 @@ package com.intellij.psi.util
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 
+/**
+ * Create a cached value with the given provider and non-tracked return value, store it in the PsiElement user data. If it's already stored, reuse it.
+ * @return The cached value
+ */
 inline fun <T> PsiElement.getCachedValue(key: Key<CachedValue<T>>, provider: () -> CachedValueProvider<T>): T {
   val value = getUserData(key)
   return if (value == null) CachedValuesManager.computeAndGet(this, key, provider()) else value.value

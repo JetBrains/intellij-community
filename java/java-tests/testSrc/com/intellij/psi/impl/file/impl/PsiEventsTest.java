@@ -34,7 +34,6 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -182,8 +181,8 @@ public class PsiEventsTest extends PsiTestCase {
 
 
     if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
-      Processor<PsiDirectory> isReallyLeak = directory -> directory.getVirtualFile().equals(myPrjDir1);
-      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class, isReallyLeak);
+      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class,
+                           directory -> directory.getVirtualFile().equals(myPrjDir1));
 
       String dumpPath = FileUtil.createTempFile(
         new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof.zip",

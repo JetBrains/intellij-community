@@ -1,4 +1,4 @@
-interface Foo implements Runnable {
+class Foo implements Runnable {
   @Override
   public void run() {
 

@@ -26,6 +26,7 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
     <colorSettingsPage implementation="com.intellij.json.highlighting.JsonColorsPage"/>
     <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
+    <preFormatProcessor implementation="com.intellij.json.formatter.JsonTrailingCommaRemover"/>
     <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.intellij.json.formatter.JsonEnterBetweenBracesHandler"/>
@@ -76,7 +77,6 @@
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
 
-    <fileBasedIndex implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaFileIndex"/>
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor"/>
     <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor"/>

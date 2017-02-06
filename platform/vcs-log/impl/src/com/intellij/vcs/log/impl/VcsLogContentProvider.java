@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.wm.ToolWindow;
@@ -23,15 +24,15 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,27 +94,45 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     closeLogTabs();
   }
 
-  public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    openLogTab(logManager, project, generateShortName(toolWindow), null);
+  @Nullable
+  public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
+                                                                          @NotNull Class<U> clazz,
+                                                                          @NotNull Condition<U> condition) {
+    ContentManager manager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
+      if (c instanceof VcsLogPanel) {
+        AbstractVcsLogUi ui = ((VcsLogPanel)c).getUi();
+        //noinspection unchecked
+        return clazz.isInstance(ui) && condition.value((U)ui);
+      }
+      return false;
+    });
+    if (component == null) return false;
+    //noinspection unchecked
+
+    return ContentUtilEx.selectContent(manager, component, true);
   }
 
-  public static VcsLogUiImpl openLogTab(@NotNull VcsLogManager logManager,
-                                        @NotNull Project project,
-                                        @NotNull String shortName,
-                                        @Nullable VcsLogFilter filter) {
+  public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    String name = generateShortName(toolWindow);
+    openLogTab(project, logManager, TAB_NAME, name, logManager.getMainLogUiFactory(name));
+  }
+
+  public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
+                                                             @NotNull String tabGroupName, @NotNull String shortName,
+                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
-    String name = ContentUtilEx.getFullName(TAB_NAME, shortName);
+    String name = ContentUtilEx.getFullName(tabGroupName, shortName);
 
-    VcsLogUiImpl logUi = logManager.createLogUi(name, name, filter);
+    U logUi = logManager.createLogUi(name, factory);
 
     ContentUtilEx
-      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
+      .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), tabGroupName, shortName, true, logUi);
     toolWindow.activate(null);
 
     logManager.scheduleInitialization();
-    return logUi;
   }
 
   @NotNull

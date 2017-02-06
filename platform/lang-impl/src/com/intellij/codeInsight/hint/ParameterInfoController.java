@@ -43,6 +43,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,6 +201,13 @@ public class ParameterInfoController implements Disposable {
         addAlarmRequest();
       }
     }, this);
+
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
+      if (e != myEditor || myLbraceMarker.getStartOffset() != offset) return;
+      myAlarm.cancelAllRequests();
+      addAlarmRequest();
+    });
 
     PropertyChangeListener lookupListener = new PropertyChangeListener() {
       @Override

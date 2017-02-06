@@ -18,9 +18,6 @@ package org.jetbrains.plugins.gradle.execution;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,7 +26,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,10 +57,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
         }
 
         private boolean isGradleProject() {
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
-          }
-          return false;
+          return !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty();
         }
       },
     };

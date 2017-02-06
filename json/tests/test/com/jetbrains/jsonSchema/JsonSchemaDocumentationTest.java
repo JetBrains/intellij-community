@@ -19,28 +19,17 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.jetbrains.jsonSchema.ide.JsonSchemaDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.FileReader;
+import java.util.ArrayList;
 
 
-public class JsonSchemaDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
-  @Override
-  protected boolean isCommunity() {
-    return true;
-  }
-
+public class JsonSchemaDocumentationTest extends JsonSchemaHeavyAbstractTest {
   @Override
   protected String getBasePath() {
-    return "/json/tests/testData/jsonSchema/documentation";
+    return "/tests/testData/jsonSchema/documentation";
   }
 
   public void testSimple() throws Exception {
@@ -53,23 +42,36 @@ public class JsonSchemaDocumentationTest extends LightPlatformCodeInsightFixture
 
 
   private void doTest(boolean hasDoc) throws Exception {
-    String pathToSchema = getTestDataPath() + "/" + getTestName(true) + "_schema.json";
-    String schemaText = FileUtil.loadTextAndClose(new FileReader(pathToSchema));
-    JsonSchemaHighlightingTest.registerProvider(getProject(), schemaText);
     final JsonSchemaDocumentationProvider provider = new JsonSchemaDocumentationProvider();
     LanguageDocumentation.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, provider);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        LanguageDocumentation.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, provider);
-        JsonSchemaTestServiceImpl.setProvider(null);
-      }
-    });
-    myFixture.configureByFile(getTestName(true) + ".json");
-    Editor editor = myFixture.getEditor();
-    PsiFile file = myFixture.getFile();
-    PsiElement psiElement = DocumentationManager.getInstance(getProject()).findTargetElement(editor, file);
-    assertDocumentation(psiElement, psiElement, hasDoc);
+
+    try {
+      skeleton(new Callback() {
+        @Override
+        public void registerSchemes() {
+          final String moduleDir = getModuleDir(getProject());
+          final ArrayList<JsonSchemaMappingsConfigurationBase.Item> patterns = new ArrayList<>();
+          patterns.add(new JsonSchemaMappingsConfigurationBase.Item(getTestName(true) + ".json", true, false));
+          addSchema(
+            new JsonSchemaMappingsConfigurationBase.SchemaInfo("testDoc", moduleDir + "/" + getTestName(true) + "Schema.json", false,
+                                                               patterns));
+        }
+
+        @Override
+        public void configureFiles() throws Exception {
+          configureByFiles(null, "/" + getTestName(true) + ".json", "/" + getTestName(true) + "Schema.json");
+        }
+
+        @Override
+        public void doCheck() {
+          PsiElement psiElement = DocumentationManager.getInstance(getProject()).findTargetElement(myEditor, myFile);
+          assertDocumentation(psiElement, psiElement, hasDoc);
+        }
+      });
+    } finally {
+      LanguageDocumentation.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, provider);
+      JsonSchemaTestServiceImpl.setProvider(null);
+    }
   }
 
   private void assertDocumentation(@NotNull PsiElement docElement, @NotNull PsiElement context, boolean shouldHaveDoc) {

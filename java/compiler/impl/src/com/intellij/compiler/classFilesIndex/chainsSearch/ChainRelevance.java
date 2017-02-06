@@ -85,7 +85,7 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
     if (myParametersInContext > that.myParametersInContext) {
       return 1;
     }
-    if (myParametersInContext <= that.myParametersInContext) {
+    if (myParametersInContext < that.myParametersInContext) {
       return -1;
     }
     int sub = myLastMethodOccurrences - that.myLastMethodOccurrences;

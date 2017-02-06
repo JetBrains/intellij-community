@@ -414,7 +414,7 @@ public final class ActionMenu extends JBMenu {
     }
 
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null && myCallbackAlarm != null) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
           return false;

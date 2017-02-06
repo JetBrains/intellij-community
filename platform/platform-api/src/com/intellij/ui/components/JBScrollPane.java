@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -182,7 +183,16 @@ public class JBScrollPane extends SmoothScrollPane {
                 JScrollPane pane = (JScrollPane)source;
                 if (pane.isWheelScrollingEnabled()) {
                   JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
-                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                  if (bar != null && bar.isVisible()) {
+                    boolean isUnitScroll = MouseWheelEvent.WHEEL_UNIT_SCROLL == event.getScrollType();
+                    JViewport viewport = pane.getViewport();
+                    if (isUnitScroll && viewport instanceof JBViewport && isPreciseRotationSupported()) {
+                      ((JBViewport)viewport).updateViewPosition(event);
+                    }
+                    else {
+                      oldListener.mouseWheelMoved(event);
+                    }
+                  }
                 }
               }
             }
@@ -735,17 +745,37 @@ public class JBScrollPane extends SmoothScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && isPreciseRotationSupported()) {
+    if (ignore && (isPreciseRotationSupported() ||
+                   (isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().isHighPrecisionScrollingEnabled()))) {
       double rotation = event.getPreciseWheelRotation();
-      double delta = MouseWheelEventEx.getScrollingDelta(event);
+      double delta = MouseWheelEventEx.getAbsoluteDelta(event);
       ignore = (rotation == 0.0D || !Double.isFinite(rotation)) && (delta == 0.0D || !Double.isFinite(delta));
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
 
-  private static boolean isPreciseRotationSupported() {
-    return isTrueSmoothScrollingEnabled();
+  /**
+   * Indicates whether we can use MouseWheelEvent#getPreciseWheelRotation to scroll.
+   *
+   * @deprecated will be removed after fixing a blit-scrolling
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static boolean isPreciseRotationSupported() {
+    if (PRECISE_ROTATION_SUPPORTED) {
+      if (SystemInfo.isMac) return Registry.is("ide.scroll.precise.rotation.mac");
+      if (SystemInfo.isWindows) return Registry.is("ide.scroll.precise.rotation.windows");
+    }
+    return false;
   }
+
+  /**
+   * Indicates whether the system property "idea.true.smooth.scrolling" is not set to "true"
+   * (it is needed to avoid possible conflicts with another scrolling implementation)
+   * and the current JVM contains our fixes for MouseWheelEvent#getPreciseWheelRotation.
+   */
+  private static final boolean PRECISE_ROTATION_SUPPORTED = !isTrueSmoothScrollingEnabled() &&
+                                                            (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9"));
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling

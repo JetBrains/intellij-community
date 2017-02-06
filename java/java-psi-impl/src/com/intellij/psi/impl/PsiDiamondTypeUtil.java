@@ -23,6 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -243,7 +244,8 @@ public class PsiDiamondTypeUtil {
         return false;
       }
     }
-    return true;
+
+    return checkParentApplicability(exprCopy);
   }
 
   private static boolean isInferenceEquivalent(PsiType[] typeArguments, 
@@ -282,6 +284,18 @@ public class PsiDiamondTypeUtil {
       if (!typeArgument.equals(inferredArgs[i])) {
         return false;
       }
+    }
+    
+    return checkParentApplicability(exprCopy);
+  }
+
+  private static boolean checkParentApplicability(PsiCallExpression exprCopy) {
+    while (exprCopy != null){
+      final JavaResolveResult resolveResult = exprCopy.resolveMethodGenerics();
+      if (resolveResult instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolveResult).isApplicable()) {
+        return false;
+      }
+      exprCopy = PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class, true);
     }
     return true;
   }

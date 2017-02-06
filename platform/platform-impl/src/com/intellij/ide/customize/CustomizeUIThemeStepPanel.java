@@ -74,7 +74,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected static final ThemeInfo AQUA = new ThemeInfo("Default", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
-  protected static final ThemeInfo INTELLIJ = new ThemeInfo("IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
+  protected static final ThemeInfo INTELLIJ = new ThemeInfo(
+    LafManagerImpl.useIntelliJInsteadOfAqua() ? "Default" : "IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
   protected static final ThemeInfo ALLOY = new ThemeInfo("Alloy. IDEA Theme", "Alloy", "com.incors.plaf.alloy.AlloyIdea");
   protected static final ThemeInfo GTK = new ThemeInfo("GTK+", "GTK", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 
@@ -151,6 +152,12 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @NotNull
   private ThemeInfo getDefaultTheme() {
+    if (ApplicationManager.getApplication() != null) {
+      if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
+      if (UIUtil.isUnderDarcula()) return DARCULA;
+      if (UIUtil.isUnderGTKLookAndFeel()) return GTK;
+      return INTELLIJ;
+    }
     CloudConfigProvider provider = CloudConfigProvider.getProvider();
     if (provider != null) {
       String lafClassName = provider.getLafClassName();
@@ -192,6 +199,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private void applyLaf(ThemeInfo theme, Component component) {
     UIManager.LookAndFeelInfo info = new UIManager.LookAndFeelInfo(theme.name, theme.laf);
     try {
+      boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
       String className = info.getClassName();
       if (!myInitial) {
@@ -205,7 +213,13 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         SwingUtilities.updateComponentTreeUI(window);
       }
       if (ApplicationManager.getApplication() != null) {
-        LafManager.getInstance().setCurrentLookAndFeel(info);
+        LafManager lafManager = LafManager.getInstance();
+        lafManager.setCurrentLookAndFeel(info);
+        if (lafManager instanceof LafManagerImpl) {
+          ((LafManagerImpl)lafManager).updateWizardLAF(wasUnderDarcula);//Actually updateUI would be called inside EditorColorsManager
+        } else {
+          lafManager.updateUI();
+        }
       }
       if (myColumnMode) {
         myPreviewLabel.setIcon(theme.getIcon());

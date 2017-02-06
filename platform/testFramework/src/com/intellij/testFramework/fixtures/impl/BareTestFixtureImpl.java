@@ -15,7 +15,10 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.BareTestFixture;
 
 public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture {
@@ -23,5 +26,12 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
   public void setUp() throws Exception {
     super.setUp();
     LightPlatformTestCase.initApplication();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    new RunAll(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.cleanupApplicationCaches(null)),
+               () -> super.tearDown())
+      .run();
   }
 }

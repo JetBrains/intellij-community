@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.DependencyScope;
@@ -120,14 +121,14 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
     @Override
     public String getPresentableName() {
-      return myModule.getName();
+      return ModuleGrouper.instanceFor(myContext.getProject(), myContext.getModifiableModuleModel()).getShortenedName(myModule);
     }
 
     @Override
     public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                        SimpleTextAttributes commentAttributes) {
       presentationData.setIcon(ModuleType.get(myModule).getIcon());
-      presentationData.addText(myModule.getName(), mainAttributes);
+      presentationData.addText(getPresentableName(), mainAttributes);
     }
 
     @Override

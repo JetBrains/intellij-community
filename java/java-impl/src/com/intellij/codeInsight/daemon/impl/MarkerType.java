@@ -462,7 +462,7 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      PsiClass psiClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)myMethod::getContainingClass);
+      PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
       FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
         @Override
         public boolean process(final PsiFunctionalExpression expr) {

@@ -23,6 +23,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -30,7 +31,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -202,8 +202,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = ApplicationManager.getApplication().runReadAction(
-        (Computable<RefManagerImpl>)() -> new RefManagerImpl(myProject, myCurrentScope, this));
+      myRefManager = ReadAction.compute(() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
     return myRefManager;
   }
@@ -384,7 +383,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable Runnable postRunnable,
                           final boolean modal) {}
 
-  public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
+  public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     globalContext.codeCleanup(scope, profile, null, runnable, true);

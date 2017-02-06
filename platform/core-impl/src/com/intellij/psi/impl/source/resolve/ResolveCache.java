@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
-  @SuppressWarnings("unchecked")
-  private final ConcurrentMap[] myMaps = new ConcurrentWeakKeySoftValueHashMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
+
+  private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
@@ -84,7 +84,7 @@ public class ResolveCache {
       }
     });
   }
-
+      
   @NotNull
   private static <K,V> ConcurrentMap<K, V> createWeakMap() {
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy()){
@@ -224,9 +224,9 @@ public class ResolveCache {
   }
 
   private static final Object NULL_RESULT = new Object();
-  private <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
-                                                          @NotNull ConcurrentMap<TRef, TResult> map,
-                                                          TResult result) {
+  private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
+                                                                 @NotNull ConcurrentMap<TRef, TResult> map,
+                                                                 TResult result) {
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null && cached == result) {

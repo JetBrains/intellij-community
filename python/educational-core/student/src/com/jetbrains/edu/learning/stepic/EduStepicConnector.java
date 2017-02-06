@@ -213,18 +213,15 @@ public class EduStepicConnector {
     }
     else {
       final Lesson lesson = new Lesson();
-      course.setName(info.getName());
-      //TODO: more specific name?
       lesson.setName("Adaptive");
       course.addLesson(lesson);
+      course.setName(info.getName());
+      //TODO: more specific name?
       final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
       if (recommendation != null) {
         lesson.addTask(recommendation);
-        return course;
       }
-      else {
-        return null;
-      }
+      return course;
     }
     return null;
   }
@@ -344,7 +341,7 @@ public class EduStepicConnector {
 
   public static String postAttempt(int id) throws IOException {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    if (StepicUpdateSettings.getInstance().getUser().getAccessToken() == null) return "";
+    if (client == null || StepicUpdateSettings.getInstance().getUser().getAccessToken() == null) return "";
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(id));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
@@ -356,6 +353,7 @@ public class EduStepicConnector {
     EntityUtils.consume(responseEntity);
     if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
       LOG.warn("Failed to make attempt " + attemptResponseString);
+      return "";
     }
     return attemptResponseString;
   }
@@ -367,6 +365,7 @@ public class EduStepicConnector {
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    if (client == null) return;
     final CloseableHttpResponse response = client.execute(request);
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";

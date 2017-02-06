@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
@@ -57,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author max
  */
-public class MacOSApplicationProvider implements ApplicationComponent {
+public class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
   private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
   private static final Callback IMPL = new Callback() {
@@ -104,18 +103,6 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       return null;
     }
   }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "MACOSApplicationProvider";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() { }
 
   @Nullable
   public ColorSpace getGenericRgbColorSpace() {

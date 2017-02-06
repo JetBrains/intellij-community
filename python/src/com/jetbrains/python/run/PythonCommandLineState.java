@@ -73,6 +73,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -91,6 +92,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private Boolean myMultiprocessDebug = null;
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
+
+  public boolean isRunWithPty() {
+    return myRunWithPty;
+  }
 
   public boolean isDebug() {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
@@ -304,16 +309,17 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
-          env.putAll(reader.readShellEnv());
+          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
           for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
             if ("PATH".equals(e.getKey())) {
               env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
-            } else {
+            }
+            else {
               env.put(e.getKey(), e.getValue());
             }
           }
-
         }
         catch (Exception e) {
           LOG.error("Couldn't read virtualenv variables", e);

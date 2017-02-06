@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CodeStyleSchemesModel {
+public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
   private CodeStyleScheme myGlobalSelected;
   private final CodeStyleSchemeImpl myProjectScheme;
@@ -165,20 +167,16 @@ public class CodeStyleSchemesModel {
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
     CodeStyleSchemesImpl.getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
-
-    // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
-    // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
-    // button processing
-    mySettingsToClone.clear();
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
     return false;
   }
 
-  public void fireCurrentSettingsChanged() {
-    myDispatcher.getMulticaster().currentSettingsChanged();
+  public void fireBeforeCurrentSettingsChanged() {
+    myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
   public void fireSchemeChanged(CodeStyleScheme scheme) {
@@ -187,6 +185,10 @@ public class CodeStyleSchemesModel {
 
   public void fireSchemeListChanged() {
     myDispatcher.getMulticaster().schemeListChanged();
+  }
+  
+  public void fireAfterCurrentSettingsChanged() {
+    myDispatcher.getMulticaster().afterCurrentSettingsChanged();
   }
 
   public CodeStyleScheme getSelectedGlobalScheme() {
@@ -207,29 +209,9 @@ public class CodeStyleSchemesModel {
   }
 
   public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
-    String name;
-    if (preferredName == null) {
-      if (parentScheme == null) throw new IllegalArgumentException("parentScheme must not be null");
-      // Generate using parent name
-      name = null;
-      for (int i = 1; name == null; i++) {
-        String currName = parentScheme.getName() + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-    else {
-      name = null;
-      for (int i = 0; name == null; i++) {
-        String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-
-    return new CodeStyleSchemeImpl(name, false, parentScheme);
+    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> containsScheme(name)),
+                                   false,
+                                   parentScheme);
   }
 
   @Nullable
@@ -244,8 +226,41 @@ public class CodeStyleSchemesModel {
     return myProjectScheme;
   }
 
-  public boolean isProjectScheme(CodeStyleScheme scheme) {
+  @Override
+  public boolean canDuplicateScheme(@NotNull CodeStyleScheme scheme) {
+    return !isProjectScheme(scheme);
+  }
+
+  @Override
+  public boolean canResetScheme(@NotNull CodeStyleScheme scheme) {
+    return scheme.isDefault();
+  }
+
+  @Override
+  public boolean canDeleteScheme(@NotNull CodeStyleScheme scheme) {
+    return !isProjectScheme(scheme) && !scheme.isDefault();
+  }
+
+  @Override
+  public boolean isProjectScheme(@NotNull CodeStyleScheme scheme) {
     return myProjectScheme == scheme;
+  }
+
+  @Override
+  public boolean canRenameScheme(@NotNull CodeStyleScheme scheme) {
+    return canDeleteScheme(scheme);
+  }
+
+  @Override
+  public boolean containsScheme(@NotNull String name) {
+    return findSchemeByName(name) != null;
+  }
+
+  @Override
+  public boolean differsFromDefault(@NotNull CodeStyleScheme scheme) {
+    CodeStyleSettings defaults = CodeStyleSettings.getDefaults();
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    return !defaults.equals(clonedSettings);
   }
 
   public List<CodeStyleScheme> getAllSortedSchemes() {

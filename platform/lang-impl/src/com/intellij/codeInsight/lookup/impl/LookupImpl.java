@@ -218,6 +218,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySelectionTouched = selectionTouched;
   }
 
+  @TestOnly
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
+
+  protected void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
+    myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
+  }
+
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
@@ -404,7 +413,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
-  private boolean isSelectionVisible() {
+  protected boolean isSelectionVisible() {
     return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
@@ -461,6 +470,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "finishLookup should be called without a write action");
+    final PsiFile file = getPsiFile();
+    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+      return;
+    }
+
+    if (!writableOk) {
+      doHide(false, true);
+      fireItemSelected(null, completionChar);
+      return;
+    }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
+  }
+
+  void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     //noinspection deprecation,unchecked
     if (item == null ||
         !item.isValid() ||
@@ -474,18 +499,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     if (myDisposed) { // DeferredUserLookupValue could close us in any way
-      return;
-    }
-
-    final PsiFile file = getPsiFile();
-    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
-      return;
-    }
-
-    if (!writableOk) {
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
       return;
     }
 
@@ -519,7 +532,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myOffsets.getPrefixLength(item, this);
   }
 
-  private void insertLookupString(LookupElement item, final int prefix) {
+  protected void insertLookupString(LookupElement item, final int prefix) {
     final String lookupString = getCaseCorrectedLookupString(item);
 
     final Editor hostEditor = getTopLevelEditor();

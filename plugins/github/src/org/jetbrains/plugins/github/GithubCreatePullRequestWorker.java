@@ -420,7 +420,7 @@ public class GithubCreatePullRequestWorker {
         VcsCommitMetadata targetCommit = commits.get(1);
 
         if (localCommit.getParents().contains(targetCommit.getId())) {
-          return Couple.of(localCommit.getSubject(), localCommit.getFullMessage());
+          return GithubUtil.getGithubLikeFormattedDescriptionMessage(localCommit.getFullMessage());
         }
         return getSimpleDefaultDescriptionMessage(branch);
       }

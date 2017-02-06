@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +62,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     final PsiClass baseClass = parameters.getClassToProcess();
     assert parameters.isCheckInheritance();
 
-    SearchScope useScope = ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)baseClass::getUseScope);
+    SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
 
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
@@ -113,7 +112,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         continue;
       }
 
-      String fqn = i == cache.length ? null : ApplicationManager.getApplication().runReadAction((Computable<String>)subClass::getQualifiedName);
+      String fqn = i == cache.length ? null : ReadAction.compute(subClass::getQualifiedName);
 
       if (currentFQN != null && Comparing.equal(fqn, currentFQN)) {
         VirtualFile currentJarFile = getJarFile(subClass);
@@ -146,7 +145,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   private static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiClass subClass) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subClass));
+    return ReadAction.compute(() -> PsiSearchScopeUtil.isInScope(scope, subClass));
   }
 
   // The list starts with non-anonymous classes, ends with anonymous sub classes
@@ -159,13 +158,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return cache;
     }
 
-    final String baseClassName = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+    final String baseClassName = ReadAction.compute(baseClass::getName);
     if (StringUtil.isEmpty(baseClassName)) {
       return PsiClass.EMPTY_ARRAY;
     }
     cache = calculateDirectSubClasses(project, baseClass, baseClassName, useScope);
     // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-    if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+    if (ReadAction.compute(baseClass::isPhysical)) {
       cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
     }
     return cache;
@@ -253,15 +252,15 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
          return true;
        });
 
-    boolean isEnum = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isEnum);
+    boolean isEnum = ReadAction.compute(baseClass::isEnum);
     if (isEnum) {
       // abstract enum can be subclassed in the body
-      PsiField[] fields = ApplicationManager.getApplication().runReadAction((Computable<PsiField[]>)baseClass::getFields);
+      PsiField[] fields = ReadAction.compute(baseClass::getFields);
       for (final PsiField field : fields) {
         ProgressManager.checkCanceled();
         if (field instanceof PsiEnumConstant) {
           PsiEnumConstantInitializer initializingClass =
-            ApplicationManager.getApplication().runReadAction((Computable<PsiEnumConstantInitializer>)((PsiEnumConstant)field)::getInitializingClass);
+            ReadAction.compute(((PsiEnumConstant)field)::getInitializingClass);
           if (initializingClass != null) {
             result.add(initializingClass); // it surely is an inheritor
           }
@@ -273,7 +272,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {
-    return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
+    return ReadAction.compute(() -> PsiUtil.getJarFile(aClass));
   }
 
   private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,

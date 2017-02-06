@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -188,8 +189,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
                        (JFrame)WindowManager.getInstance().getIdeFrame(project);
         if (frame != null) {
-          frame.toFront();
-          if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
+          if (frame instanceof IdeFrame) {
+            AppIcon.getInstance().requestFocus((IdeFrame)frame);
+          } else {
+            frame.toFront();
             DialogEarthquakeShaker.shake(frame);
           }
         }
@@ -1418,7 +1421,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager instanceof ProjectManagerEx) {
+      ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
+    }
+
+    Project[] openProjects = projectManager.getOpenProjects();
     for (Project openProject : openProjects) {
       openProject.save();
     }

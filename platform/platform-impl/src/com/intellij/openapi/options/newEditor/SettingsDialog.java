@@ -34,9 +34,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-/**
- * @author Sergey.Malenkov
- */
 public class SettingsDialog extends DialogWrapper implements DataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
 
@@ -66,9 +63,13 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
     super(project, true);
     myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter);
+    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
     myApplyButtonNeeded = true;
     init(null, project);
+  }
+
+  protected SettingsTreeView treeViewFactory(SettingsFilter filter, ConfigurableGroup[] groups) {
+    return new SettingsTreeView(filter, groups);
   }
 
   @Override
@@ -120,6 +121,12 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return myEditor;
   }
 
+  protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
+    if (myEditor instanceof SettingsEditor) {
+      ((SettingsEditor) myEditor).addOptionsListener(colleague);
+    }
+  }
+
   @NotNull
   @Override
   protected Action[] createActions() {
@@ -134,16 +141,20 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
-    String topic = myEditor.getHelpTopic();
+    String topic = getHelpTopic();
     if (topic != null) {
       actions.add(getHelpAction());
     }
     return actions.toArray(new Action[actions.size()]);
   }
 
+  protected String getHelpTopic() {
+    return myEditor.getHelpTopic();
+  }
+
   @Override
   protected void doHelpAction() {
-    String topic = myEditor.getHelpTopic();
+    String topic = getHelpTopic();
     if (topic != null) {
       HelpManager.getInstance().invokeHelp(topic);
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
@@ -44,6 +45,7 @@ import java.util.*;
  * @author Mike
  */
 public class ComplexTypeDescriptor extends TypeDescriptor {
+  private final static Logger LOG = Logger.getInstance(ComplexTypeDescriptor.class);
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
   private final XmlTag myTag;
 
@@ -153,15 +155,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   protected XmlSchemaTagsProcessor createProcessor(final Map<String, XmlElementDescriptor> map) {
     return new XmlSchemaTagsProcessor(myDocumentDescriptor) {
       @Override
-      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
-        addElementDescriptor(tag, tagName, map);
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref) {
+        String refName = ref == null ? null : ref.getAttributeValue(REF_ATTR_NAME);
+        addElementDescriptor(tag, tagName, map, refName);
       }
     };
   }
 
-  protected void addElementDescriptor(XmlTag tag, String tagName, Map<String, XmlElementDescriptor> map) {
+  protected void addElementDescriptor(XmlTag tag, String tagName, Map<String, XmlElementDescriptor> map, @Nullable String refName) {
     if ("element".equals(tagName) && tag.getAttribute("name") != null) {
-      addElementDescriptor(map, myDocumentDescriptor.createElementDescriptor(tag));
+      XmlElementDescriptor element = myDocumentDescriptor.createElementDescriptor(tag);
+      String name = refName == null ? element.getName() : refName;
+      addElementDescriptor(map, element, name);
     }
   }
 
@@ -263,9 +268,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return myDocumentDescriptor;
   }
 
-  protected static void addElementDescriptor(Map<String,XmlElementDescriptor> result, XmlElementDescriptor element) {
-    result.remove(element.getName());
-    result.put(element.getName(),element);
+  protected static void addElementDescriptor(Map<String, XmlElementDescriptor> result, XmlElementDescriptor element, String name) {
+    XmlElementDescriptor removed = result.remove(name);
+    if (removed != null) {
+      LOG.info(removed + " is replaced by " + element);
+    }
+    result.put(name, element);
   }
 
   private static void removeAttributeDescriptor(List<XmlAttributeDescriptorImpl> result, String name, String referenceName) {
@@ -497,5 +505,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
     return XmlElementDescriptor.CONTENT_TYPE_EMPTY;
 
+  }
+
+  @Override
+  public String toString() {
+    return myTag.getAttributeValue(NAME_ATTR_NAME);
   }
 }

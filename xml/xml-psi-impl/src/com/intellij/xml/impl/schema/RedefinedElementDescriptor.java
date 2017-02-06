@@ -34,7 +34,7 @@ public class RedefinedElementDescriptor extends XmlElementDescriptorImpl {
       return new XmlSchemaTagsProcessor(myDocumentDescriptor) {
         @Override
         protected void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref) {
-          addElementDescriptor(tag, tagName, map);
+          addElementDescriptor(tag, tagName, map, null);
           if ("extension".equals(tagName)) {
             String base = tag.getAttributeValue("base");
             if (base != null) {
@@ -42,7 +42,7 @@ public class RedefinedElementDescriptor extends XmlElementDescriptorImpl {
               if (descriptor instanceof ComplexTypeDescriptor) {
                 XmlElementDescriptor[] elements = ((ComplexTypeDescriptor)descriptor).getElements(null);
                 for (XmlElementDescriptor element : elements) {
-                  addElementDescriptor(map, element);
+                  addElementDescriptor(map, element, null);
                 }
               }
             }

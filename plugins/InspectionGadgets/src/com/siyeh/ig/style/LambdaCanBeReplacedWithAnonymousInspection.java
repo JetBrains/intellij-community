@@ -36,7 +36,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance("#" + LambdaCanBeReplacedWithAnonymousInspection.class.getName());
@@ -116,10 +118,9 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
                                              final PsiCodeBlock blockFromText) {
     ChangeContextUtil.encodeContextInfo(blockFromText, true);
     final PsiClass thisClass = RefactoringChangeUtil.getThisClass(lambdaExpression);
-    final String thisClassName = thisClass != null ? thisClass.getName() : null;
+    final String thisClassName = thisClass != null && !(thisClass instanceof PsiSyntheticClass) ? thisClass.getName() : null;
     if (thisClassName != null) {
-      final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringChangeUtil
-        .createThisExpression(lambdaExpression.getManager(), thisClass);
+      final PsiThisExpression thisAccessExpr = RefactoringChangeUtil.createThisExpression(lambdaExpression.getManager(), thisClass);
       ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, thisAccessExpr);
       final Set<PsiExpression> replacements = new HashSet<>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {

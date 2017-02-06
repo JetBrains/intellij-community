@@ -23,7 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +45,10 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
 
   @Override
   protected PythonHelper getRunner() {
-    if (myConfig.getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT &&
-      myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
+    if (myConfig.getTestType() == AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT &&
+        myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
       return PythonHelper.SETUPPY;
-    return PythonHelper.UT;
+    return PythonHelper.UT_OLD;
   }
 
   @NotNull
@@ -98,7 +98,7 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
     if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
       script_params.addParameter(myConfig.getParams());
 
-    if (myConfig.getTestType() != AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT ||
+    if (myConfig.getTestType() != AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT ||
         !myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
       script_params.addParameter(String.valueOf(myConfig.isPureUnittest()));
   }

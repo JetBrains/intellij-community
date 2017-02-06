@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
 public class CompilerReferencesTest extends CompilerReferencesTestBase {
+  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/bytecodeReferences/";
   }

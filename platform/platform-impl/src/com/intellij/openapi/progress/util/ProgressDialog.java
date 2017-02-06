@@ -302,7 +302,7 @@ class ProgressDialog implements Disposable {
           }
         }
 
-        myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
+        myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });
 

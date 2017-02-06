@@ -401,24 +401,45 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
+      PsiType returnType = null;
       final PsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
       if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
-        final PsiType returnType = method.getReturnType();
-        if (returnType != null && !PsiType.VOID.equals(returnType)) {
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue != null) {
-            final PsiType valueType = returnValue.getType();
-            if (valueType != null) {
-              checkRawToGenericsAssignment(returnValue, returnValue, returnType, valueType,
-                                           false,
-                                           new LocalQuickFix[]{QuickFixFactory.getInstance().createMethodReturnFix(method, valueType, true)});
-            }
+        returnType = ((PsiMethod)psiElement).getReturnType();
+      }
+      else if (psiElement instanceof PsiLambdaExpression) {
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)psiElement);
+      }
+
+      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+        final PsiExpression returnValue = statement.getReturnValue();
+        if (returnValue != null) {
+          final PsiType valueType = returnValue.getType();
+          if (valueType != null) {
+            LocalQuickFix[] fixes = psiElement instanceof PsiMethod
+                                    ? new LocalQuickFix[]{QuickFixFactory.getInstance().createMethodReturnFix((PsiMethod)psiElement, valueType, true)}
+                                    : LocalQuickFix.EMPTY_ARRAY;
+            checkRawToGenericsAssignment(returnValue, returnValue, returnType, valueType, false, fixes);
           }
         }
       }
     }
 
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      super.visitLambdaExpression(expression);
+
+      if (IGNORE_UNCHECKED_ASSIGNMENT) return;
+      PsiElement body = expression.getBody();
+      if (body instanceof PsiExpression) {
+        PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
+        if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
+          PsiType type = ((PsiExpression)body).getType();
+          if (type != null) {
+            checkRawToGenericsAssignment(body, (PsiExpression)body, interfaceReturnType, type, false, LocalQuickFix.EMPTY_ARRAY);
+          }
+        }
+      }
+    }
 
     @Nullable
     private String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {

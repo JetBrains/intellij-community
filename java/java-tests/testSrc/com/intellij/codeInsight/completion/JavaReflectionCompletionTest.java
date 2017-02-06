@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,7 +30,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testField() throws Exception {
-    doTest(1, "num", "num2");
+    doTest(1, "num", "num2", "num3");
   }
 
   public void testDeclaredField() throws Exception {
@@ -44,7 +46,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testMethod() throws Exception {
-    doTest(1, "method", "method2");
+    doTest(1, "method", "method2", "method3");
   }
 
   public void testForNameDeclaredMethod() throws Exception {
@@ -52,11 +54,11 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testForNameMethod() throws Exception {
-    doTest(1, "method", "method2");
+    doTest(1, "method", "method2", "method3");
   }
 
   public void testForNameField() throws Exception {
-    doTest(1, "num", "num2");
+    doTest(1, "num", "num2", "num3");
   }
 
   public void testForNameDeclaredField() throws Exception {
@@ -72,10 +74,78 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(0, "foo");
   }
 
+  public void testInheritedMethod() throws Exception {
+    doTest(1, "method", "method2", "method3");
+  }
+
+  public void testInheritedDeclaredMethod() throws Exception {
+    doTest(1, "method", "method3");
+  }
+
+  public void testInheritedField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
+  public void testInheritedDeclaredField() throws Exception {
+    doTest(1, "num", "num3");
+  }
+
+  public void testInitRaw() throws Exception {
+    doTest(1, "method", "method2");
+  }
+
+  public void testInitWithType() throws Exception {
+    doTest(1, "method", "method2");
+  }
+
+  public void testInitChain() throws Exception {
+    doTest(1, "num", "num2");
+  }
+
+  public void testAssignChain() throws Exception {
+    doTest(1, "num", "num2");
+  }
+
+  public void testAssignCycle() throws Exception {
+    doTest(-1); // check that the recursion guard breaks the cycle
+  }
+
+  public void testCallChain() throws Exception {
+    doTest(0, "num");
+  }
+
+  public void testJdk14() throws Exception {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTest(0, "method"));
+  }
+
+  public void testWildcard() throws Exception {
+    doTest(0, "method");
+  }
+
+  public void testConstantMethod() throws Exception {
+    doTest(0, "method", "method2");
+  }
+
+  public void testDistantDefinition() throws Exception {
+    doTest(1, "method", "method2");
+  }
+
+  public void testVariableGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
+  public void testConstantGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
+  public void testExpressionGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
   private void doTest(int index, String... expected) {
     configureByFile(getTestName(false) + ".java");
     assertStringItems(expected);
-    selectItem(getLookup().getItems().get(index));
+    if (index >= 0) selectItem(getLookup().getItems().get(index));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 }

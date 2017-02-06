@@ -921,6 +921,8 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
+    <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.EditColors"/>
+
     <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
             use-shortcut-of="NewElement"
@@ -1016,5 +1018,16 @@
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
       <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     </group>
+
+    <group id="RuntimeDashboardToolbar">
+      <action id="RuntimeDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"/>
+      <action id="RuntimeDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"/>
+      <action id="RuntimeDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
+      <separator/>
+      <action id="RuntimeDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"/>
+      <action id="RuntimeDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"/>
+      <action id="RuntimeDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"/>
+    </group>
+    <group id="RuntimeDashboardPopup"/>
   </actions>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,4 +280,10 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair);
+
+  @NotNull
+  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType);
+
+  @NotNull
+  public abstract IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method);
 }

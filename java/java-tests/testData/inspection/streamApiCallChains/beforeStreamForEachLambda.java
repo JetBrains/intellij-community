@@ -4,6 +4,6 @@ import java.util.Arrays;
 
 class Test {
   void print() {
-    Arrays.asList('d', 'e', 'f').st<caret>ream().forEach(c -> System.out.print(" " + c));
+    Arrays.asList('d', 'e', 'f').stream().fo<caret>rEach(c -> System.out.print(" " + c));
   }
 }

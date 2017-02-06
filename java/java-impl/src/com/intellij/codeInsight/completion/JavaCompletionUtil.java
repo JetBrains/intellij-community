@@ -886,7 +886,9 @@ public class JavaCompletionUtil {
     context.getDocument().insertString(offset, open);
     context.getEditor().getCaretModel().moveToOffset(offset + open.length());
     context.getDocument().insertString(offset + open.length(), escapeXmlIfNeeded(context, ">"));
-    context.setAddCompletionChar(false);
+    if (context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      context.setAddCompletionChar(false);
+    }
     return true;
   }
 

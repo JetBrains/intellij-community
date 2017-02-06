@@ -234,6 +234,10 @@ public class PluginGroups {
     )));
     tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Arrays.asList("DevKit")));
 
+    initFeaturedPlugins(featuredPlugins);
+  }
+
+  protected void initFeaturedPlugins(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
     featuredPlugins.put("Live Edit Tool",
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");

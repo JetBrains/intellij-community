@@ -83,6 +83,11 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   @Nullable
   protected abstract String validateName(String name);
+  
+  @Nullable
+  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+    return null;
+  }
 
   protected abstract String getTopLabelText();
 
@@ -235,13 +240,16 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     final String packageName = getTargetPackageName();
     RecentsManager.getInstance(myProject).registerRecentEntry(getDestinationPackageRecentKey(), packageName);
 
-    if ("".equals(extractedSuperName)) {
+    if (extractedSuperName != null && extractedSuperName.isEmpty()) {
       // TODO just disable OK button
       errorString[0] = getExtractedSuperNameNotSpecifiedMessage();
       myExtractedSuperNameField.requestFocusInWindow();
     }
     else {
       String nameError = validateName(extractedSuperName);
+      if (nameError == null) {
+        nameError = validateQualifiedName(packageName, extractedSuperName);
+      }
       if (nameError != null) {
         errorString[0] = nameError;
         myExtractedSuperNameField.requestFocusInWindow();

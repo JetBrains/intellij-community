@@ -618,4 +618,12 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedConversionInReturnType() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
+
+  public void testNotErasedReturnValueUnderJdk7() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
+  }
+
+  public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
+  }
 }

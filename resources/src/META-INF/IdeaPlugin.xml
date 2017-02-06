@@ -840,6 +840,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
                      displayName="Collections.sort() can be replaced with List.sort()"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java8ArraySetAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ArraySetAllInspection"
+                     displayName="Loop can be replaced with Arrays.setAll()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
@@ -855,11 +860,21 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExcessiveLambdaUsageInspection"
                      displayName="Excessive lambda usage"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantStreamOptionalCall"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
+                     displayName="Redundant step in Stream or Optional call chain"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      displayName="Simplify stream API call chains"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
+                     displayName="Collector can be simplified"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseBulkOperation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -891,7 +906,8 @@
                      implementationClass="com.intellij.codeInspection.java19modules.Java9NonAccessibleTypeExposedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
-                     enabledByDefault="true" level="WARNING" displayName="Package exported to its own module"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.module.exports.package.to.itself.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
 
     <intentionAction>
@@ -970,6 +986,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.UnwrapElseBranchAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
 
@@ -1859,6 +1879,8 @@
     <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
 
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
+
+    <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
   </extensions>
 
   <actions>

@@ -501,7 +501,8 @@ public class InferenceSession {
         }
         else if (arg instanceof PsiLambdaExpression &&
                  isPertinentToApplicability(arg, parentMethod)) {
-          collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)arg, parameterType,
+          collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)arg,
+                                        FunctionalInterfaceParameterizationUtil.getGroundTargetType(parameterType, (PsiLambdaExpression)arg),
                                         !isProperType(initialSubstitutor.substitute(parameterType)),
                                         initialSubstitutor);
         }

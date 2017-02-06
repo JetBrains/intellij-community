@@ -21,6 +21,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class JdkBundle {
 
   @NotNull
   private static final Pattern[] VERSION_UPDATE_PATTERNS = {
-    Pattern.compile("^java version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+)\".*", Pattern.MULTILINE),
+    Pattern.compile("^java version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
     Pattern.compile("^openjdk version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
     Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+\\.[\\d]+\\.?[\\d]*).*", Pattern.MULTILINE)
   };
@@ -62,10 +63,12 @@ public class JdkBundle {
     myBundled = bundled;
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
     return createBundle(jvm, boot, bundled, true);
   }
 
+  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled, boolean matchArch) {
     String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
     return createBundle(jvm, homeSubPath, boot, bundled, matchArch);
@@ -99,7 +102,7 @@ public class JdkBundle {
       return null; // Skip jre
     }
 
-    JdkBundle bundle = new JdkBundle(jvm, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
+    JdkBundle bundle = new JdkBundle(absJvmLocation, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
     // init already computed bitness
     bundle.bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
     return bundle;
@@ -113,16 +116,27 @@ public class JdkBundle {
   @Nullable
   static JdkBundle createBoot(boolean adjustToMacBundle) {
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+    JdkBundle bundle;
     if (SystemInfo.isMac && adjustToMacBundle) {
       bootJDK = bootJDK.getParentFile().getParentFile();
-      return createBundle(bootJDK, true, false);
+      bundle = createBundle(bootJDK, true, false);
     }
-    return createBundle(bootJDK, "", true, false, true);
+    else {
+      bundle = createBundle(bootJDK, "", true, false, true);
+    }
+    if (bundle != null) {
+      if (isBundledJDK(bundle)) bundle.setBundled(true);
+    }
+    return bundle;
   }
 
   @NotNull
-  File getAbsoluteLocation() {
-    return myBundled ? new File(PathManager.getHomePath(), myBundleAsFile.getPath()) : myBundleAsFile;
+  public static File getBundledJDKAbsoluteLocation() {
+    return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
+  }
+
+  static public boolean isBundledJDK(@NotNull JdkBundle bundle) {
+    return FileUtil.filesEqual(bundle.getLocation(), getBundledJDKAbsoluteLocation());
   }
 
   @NotNull
@@ -156,7 +170,7 @@ public class JdkBundle {
   public Bitness getBitness() {
     if (bitness == null) {
       String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
-      Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(getAbsoluteLocation(), homeSubPath);
+      Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(getLocation(), homeSubPath);
       assert nameArchVersionAndUpdate.first.second != null;
       bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
     }

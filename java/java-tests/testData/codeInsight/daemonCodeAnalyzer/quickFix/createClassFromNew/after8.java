@@ -10,5 +10,5 @@ class JTable {
 }
 interface TableModel {}
 
-<caret>public class MyTableModel implements TableModel {
+public class <caret>MyTableModel implements TableModel {
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -37,13 +36,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static ProgressManager getInstance() {
     ProgressManager result = ourInstance;
     if (result == null) {
-      result = ServiceManager.getService(ProgressManager.class);
-      if (result == null) {
-        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
-      }
-      else {
-        ourInstance = result;
-      }
+      ourInstance = result = ServiceManager.getService(ProgressManager.class);
     }
     return result;
   }

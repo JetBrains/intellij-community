@@ -464,7 +464,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
         ct.deleteAndRestoreComments(conditional);
       }
       PsiVariable variable = condition.extractDeclaration();
-      if(variable != null && ReferencesSearch.search(variable).findFirst() == null) {
+      if (variable != null && !PsiTreeUtil.isAncestor(result, variable, true) && ReferencesSearch.search(variable).findFirst() == null) {
         new CommentTracker().deleteAndRestoreComments(variable);
       }
       CodeStyleManager.getInstance(project).reformat(result);

@@ -130,6 +130,9 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(VERSION)) {
       currentPlugin.setVersion(currentValueString);
+      if (PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+        plugins.remove(currentPlugin);
+      }
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendor(currentValueString);

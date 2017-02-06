@@ -249,6 +249,9 @@ public class Task implements StudyItem {
       }
     }
     if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+      if (myStatus == StudyStatus.Failed) {
+        myStatus = StudyStatus.Unchecked;
+      }
       return;
     }
     myStatus = status;
@@ -353,8 +356,13 @@ public class Task implements StudyItem {
     setText(task.getText());
     getTestsText().clear();
     setStatus(StudyStatus.Unchecked);
-    setChoiceVariants(task.getChoiceVariants());
-    setMultipleChoice(task.isMultipleChoice());
+    if (task.isChoiceTask()) {
+      setChoiceVariants(task.getChoiceVariants());
+      setMultipleChoice(task.isMultipleChoice());
+    }
+    else {
+      setChoiceParameters(null);
+    }
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {
       addTestsTexts(testName, testsText.get(testName));

@@ -190,7 +190,7 @@ private fun checkForError(message: String, code: Int) {
     builder.append(buf).append(" (").append(code).append(')')
   }
 
-  if (code == errUserNameNotCorrect) {
+  if (code == errUserNameNotCorrect || code == -25299 /* The specified item already exists in the keychain */) {
     LOG.warn(builder.toString())
   }
   else {

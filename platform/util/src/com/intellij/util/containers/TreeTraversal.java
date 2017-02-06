@@ -26,6 +26,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.intellij.openapi.util.Conditions.not;
+
 /**
  * A redesigned version of com.google.common.collect.TreeTraversal.
  * <p/>
@@ -98,11 +100,6 @@ public abstract class TreeTraversal {
   public TreeTraversal unique(@NotNull final Function<?, ?> identity) {
     final TreeTraversal original = this;
     return new TreeTraversal(debugName + " (UNIQUE)") {
-      @NotNull
-      @Override
-      public TreeTraversal unique(@NotNull Function<?, ?> identity) {
-        return original.unique(identity);
-      }
 
       @NotNull
       @Override
@@ -123,8 +120,34 @@ public abstract class TreeTraversal {
             return JBIterable.from(tree.fun(t)).filter(this);
           }
         }
+        if (tree instanceof WrappedTree) return original.createIterator(roots, tree);
         WrappedTree wrappedTree = new WrappedTree();
         return original.createIterator(JBIterable.from(roots).filter(wrappedTree), wrappedTree);
+      }
+    };
+  }
+
+  @NotNull
+  public TreeTraversal onRange(@NotNull final Condition<?> rangeCondition) {
+    final TreeTraversal original = this;
+    return new TreeTraversal(original.toString() + " (ON_RANGE)") {
+      @NotNull
+      @Override
+      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                      @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
+        final Condition<? super T> inRangeCondition = (Condition < ? super T >)rangeCondition;
+        final Condition<? super T> notInRangeCondition = (Condition<? super T>)not(rangeCondition);
+        class WrappedTree implements Function<T, Iterable<? extends T>> {
+          @Override
+          public Iterable<? extends T> fun(T t) {
+            return JBIterable.from(tree.fun(t))
+              .skipWhile(notInRangeCondition)
+              .takeWhile(inRangeCondition);
+          }
+        }
+        if (tree instanceof WrappedTree) return original.createIterator(roots, tree);
+        WrappedTree wrappedTree = new WrappedTree();
+        return original.createIterator(JBIterable.from(roots).filter(inRangeCondition), wrappedTree);
       }
     };
   }

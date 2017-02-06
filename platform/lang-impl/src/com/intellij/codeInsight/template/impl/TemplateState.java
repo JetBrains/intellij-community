@@ -203,12 +203,15 @@ public class TemplateState implements Disposable {
   private boolean isCaretOutsideCurrentSegment(String commandName) {
     if (myEditor != null && myCurrentSegmentNumber >= 0) {
       final int offset = myEditor.getCaretModel().getOffset();
+      boolean hasSelection = myEditor.getSelectionModel().hasSelection();
 
       final int segmentStart = mySegments.getSegmentStart(myCurrentSegmentNumber);
-      if (offset < segmentStart || offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
+      if (offset < segmentStart ||
+          !hasSelection && offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
 
       final int segmentEnd = mySegments.getSegmentEnd(myCurrentSegmentNumber);
-      if (offset > segmentEnd || offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
+      if (offset > segmentEnd ||
+          !hasSelection && offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
     }
     return false;
   }
@@ -1086,7 +1089,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  boolean isDisposed() {
+  public boolean isDisposed() {
     return myDocument == null;
   }
 

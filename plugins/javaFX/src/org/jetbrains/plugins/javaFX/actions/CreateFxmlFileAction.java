@@ -20,11 +20,10 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -56,7 +55,7 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   @Nullable
   @Override
   protected Map<String, String> getLiveTemplateDefaults(DataContext dataContext, @NotNull PsiFile file) {
-    String packageName = ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+    String packageName = ReadAction.compute(() -> {
       PsiDirectory psiDirectory = file.getContainingDirectory();
       if (psiDirectory != null) {
         VirtualFile vDirectory = psiDirectory.getVirtualFile();

@@ -59,9 +59,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
         List<PsiJavaModuleReferenceElement> referenceElements = ContainerUtil.newArrayList(statement.getModuleReferences());
         for (PsiJavaModuleReferenceElement referenceElement : referenceElements) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
-            String message = InspectionsBundle.message(referenceElements.size() == 1
-                                                       ? "inspection.module.exports.package.to.itself.only.message"
-                                                       : "inspection.module.exports.package.to.itself.message");
+            String message = InspectionsBundle.message("inspection.module.exports.package.to.itself.message");
             myHolder.registerProblem(referenceElement, message,
                                      new DeleteExportsToModuleFix(referenceElement));
           }

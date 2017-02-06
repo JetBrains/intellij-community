@@ -38,12 +38,13 @@ import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
@@ -93,6 +95,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   private CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
+  private AtomicReference<Boolean> myIsGenerator = new AtomicReference<>();
 
   @Nullable
   @Override
@@ -186,12 +189,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PyType type = getReturnType(context);
-    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
-  }
-
-  @Nullable
-  private PyType getReturnType(@NotNull TypeEvalContext context) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
@@ -199,15 +196,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
+    PyType inferredType = null;
     if (context.allowReturnTypes(this)) {
       final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
       if (yieldTypeRef != null) {
-        return yieldTypeRef.get();
+        inferredType = yieldTypeRef.get();
       }
-      return getReturnStatementType(context);
+      else {
+        inferredType = getReturnStatementType(context);
+      } 
     }
 
-    return null;
+    if (isAsync() && isAsyncAllowed()) {
+      return createAsyncType(inferredType);
+    }
+    return inferredType;
   }
 
   @Nullable
@@ -354,7 +357,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       elementType = Ref.create(PyUnionType.union(types));
     }
     if (elementType != null) {
-      final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
+      final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.GENERATOR),
+                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
       if (generator != null) {
         final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
         return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
@@ -381,21 +385,27 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private PyType createCoroutineType(@Nullable PyType returnType) {
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
-
-    if (returnType instanceof PyCollectionType && PyNames.FAKE_GENERATOR.equals(returnType.getName())) {
-      final PyClass asyncGenerator = cache.getClass(PyNames.FAKE_ASYNC_GENERATOR);
-
-      if (asyncGenerator == null) {
-        return null;
+  private PyType createAsyncType(@Nullable PyType returnType) {
+    if (returnType instanceof PyCollectionType) {
+      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
+      if (classType != null) {
+        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
+          final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
+          final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
+                                                                                         PyResolveImportUtil.fromFoothold(this));
+          final PyClass asyncGenerator = as(resolvedGenerator, PyClass.class);
+          if (asyncGenerator != null) {
+            return new PyCollectionTypeImpl(asyncGenerator, false,
+                                            Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
+          }
+          else {
+            return null;
+          }
+        }
       }
-
-      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
     }
 
-    final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);
-    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Collections.singletonList(returnType)) : null;
+    return PyTypingTypeProvider.wrapInCoroutineType(returnType, this);
   }
 
   public PyFunction asMethod() {
@@ -580,6 +590,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
+    myIsGenerator.set(null);
   }
 
   public Property getProperty() {
@@ -695,26 +706,31 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
-    final Ref<Boolean> result = new Ref<>(false);
-    getStatementList().accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyYieldExpression(PyYieldExpression node) {
-        result.set(true);
-      }
-
-      @Override
-      public void visitPyFunction(PyFunction node) {
-        // Ignore nested functions
-      }
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (!result.get()) {
-          super.visitElement(element);
+    Boolean result = myIsGenerator.get();
+    if (result == null) {
+      Ref<Boolean> containsYield = Ref.create(false);
+      getStatementList().accept(new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyYieldExpression(PyYieldExpression node) {
+          containsYield.set(true);
         }
-      }
-    });
-    return result.get();
+
+        @Override
+        public void visitPyFunction(PyFunction node) {
+          // Ignore nested functions
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+          if (!containsYield.get()) {
+            super.visitElement(element);
+          }
+        }
+      });
+      result = containsYield.get();
+      myIsGenerator.set(result);
+    }
+    return result;
   }
 
   @Override
@@ -837,8 +853,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @NotNull
   private static List<PyAssignmentStatement> findAttributesStatic(@NotNull final PsiElement self) {
     final List<PyAssignmentStatement> result = new ArrayList<>();
-    for (final PyAssignmentStatement statement : new PsiQuery(self).siblings(PyAssignmentStatement.class).getElements()) {
-      for (final PyQualifiedExpression targetExpression : new PsiQuery(statement.getTargets()).filter(PyQualifiedExpression.class)
+    for (final PyAssignmentStatement statement : new PsiQuery<>(self).siblings(PyAssignmentStatement.class)
+      .getElements()) {
+      for (final PyQualifiedExpression targetExpression : new PsiQuery<PsiElement>(statement.getTargets())
+        .filter(new PsiQuery.PsiFilter<>(PyQualifiedExpression.class))
         .getElements()) {
         final PyExpression qualifier = targetExpression.getQualifier();
         if (qualifier == null) {

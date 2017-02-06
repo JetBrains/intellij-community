@@ -27,13 +27,13 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -90,10 +90,13 @@ public class ExternalJavaDocAction extends AnAction {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<String> urls = StringUtil.isEmptyOrSpaces(docUrl)
-                                ? ApplicationManager.getApplication().runReadAction((Computable<List<String>>)() -> 
-                                                                                      provider.getUrlFor(element, originalElement))
-                                : Collections.singletonList(docUrl);
+      List<String> urls;
+      if (StringUtil.isEmptyOrSpaces(docUrl)) {
+        urls = ReadAction.compute(() -> provider.getUrlFor(element, originalElement));
+      }
+      else {
+        urls = Collections.singletonList(docUrl);
+      }
       if (provider instanceof ExternalDocumentationProvider && urls != null && urls.size() > 1) {
         for (String url : urls) {
           List<String> thisUrlList = Collections.singletonList(url);

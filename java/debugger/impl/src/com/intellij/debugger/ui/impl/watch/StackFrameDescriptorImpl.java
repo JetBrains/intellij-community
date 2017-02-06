@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,7 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -43,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -57,7 +51,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
   private ObjectReference myThisObject;
-  private Color myBackgroundColor;
   private SourcePosition mySourcePosition;
 
   private Icon myIcon = AllIcons.Debugger.StackFrame;
@@ -80,18 +73,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       mySourcePosition = ContextUtil.getSourcePosition(this);
-      ApplicationManager.getApplication().runReadAction(() -> {
-        PsiFile file = mySourcePosition != null ? mySourcePosition.getFile() : null;
-        if (file == null) {
-          myIsInLibraryContent = true;
-        }
-        else {
-          myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
-          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
-          VirtualFile vFile = file.getVirtualFile();
-          myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
-        }
-      });
+      PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
+      myIsInLibraryContent = DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
     }
     catch (InternalException | EvaluateException e) {
       LOG.info(e);
@@ -127,11 +110,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   @Override
   public DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();
-  }
-
-  @Override
-  public Color getBackgroundColor() {
-    return myBackgroundColor;
   }
 
   @Nullable

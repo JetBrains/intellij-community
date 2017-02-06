@@ -22,7 +22,7 @@ REGEXP_FILE
           PsiElement(COMMA)(',')
           PsiElement(RBRACE)('}')
       RegExpGroupImpl: <(?>\s)>
-        PsiElement(NON_CAPT_GROUP)('(?>')
+        PsiElement(ATOMIC_GROUP)('(?>')
         RegExpPatternImpl: <\s>
           RegExpBranchImpl: <\s>
             RegExpSimpleClassImpl: <\s>

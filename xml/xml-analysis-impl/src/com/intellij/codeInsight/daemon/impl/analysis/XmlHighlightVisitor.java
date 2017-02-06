@@ -189,15 +189,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
                                 IntentionAction... quickFixActions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
-    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
     childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, messageLength, localizedMessage, quickFixActions);
   }
 
 
   @Override
   public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
-    super .visitXmlProcessingInstruction(processingInstruction);
+    super.visitXmlProcessingInstruction(processingInstruction);
     PsiElement parent = processingInstruction.getParent();
 
     if (parent instanceof XmlProlog && processingInstruction.getText().startsWith("<?xml")) {
@@ -219,14 +219,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
-                                    final int offset,
                                     int length,
                                     @NotNull String localizedMessage,
                                     IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
       if (length == -1) length = textRange.getLength();
-      final int startOffset = textRange.getStartOffset() + offset;
+      final int startOffset = textRange.getStartOffset();
 
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(warning).range(childByRole, startOffset, startOffset + length).descriptionAndTooltip(localizedMessage).create();
 
@@ -425,17 +424,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (tag == null) return;
 
     final String name = attribute.getName();
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(attribute);
 
-    if (XmlExtension.getExtension(attribute.getContainingFile()).needWhitespaceBeforeAttribute()) {
-      PsiElement prevLeaf = PsiTreeUtil.prevLeaf(attribute);
-
-      if (!(prevLeaf instanceof PsiWhiteSpace)) {
-        TextRange textRange = attribute.getTextRange();
-        HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-        String description = XmlErrorMessages.message("attribute.should.be.preceded.with.space");
-        HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
-        addToResults(info);
-      }
+    if (!(prevLeaf instanceof PsiWhiteSpace)) {
+      TextRange textRange = attribute.getTextRange();
+      HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+      String description = XmlErrorMessages.message("attribute.should.be.preceded.with.space");
+      HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
+      addToResults(info);
     }
 
     if (attribute.isNamespaceDeclaration() || XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {

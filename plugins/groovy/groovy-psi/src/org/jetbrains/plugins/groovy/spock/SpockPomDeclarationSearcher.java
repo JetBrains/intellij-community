@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.Map;
 
@@ -42,7 +42,7 @@ public class SpockPomDeclarationSearcher extends PomDeclarationSearcher {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
 
-    if (!GroovyPsiManager.isInheritorCached(containingClass, SpockUtils.SPEC_CLASS_NAME)) return;
+    if (!InheritanceUtil.isInheritor(containingClass, SpockUtils.SPEC_CLASS_NAME)) return;
 
     Map<String, SpockVariableDescriptor> cachedValue = SpockUtils.getVariableMap(method);
 

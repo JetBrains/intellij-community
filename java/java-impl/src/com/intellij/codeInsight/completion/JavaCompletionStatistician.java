@@ -23,10 +23,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -52,38 +48,35 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item == null) return null;
 
-    PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
-
     if (o instanceof PsiMember) {
       final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       final ExpectedTypeInfo firstInfo = infos != null && infos.length > 0 ? infos[0] : null;
       String key2 = JavaStatisticsManager.getMemberUseKey2((PsiMember)o);
       if (o instanceof PsiClass) {
+        if (PreferByKindWeigher.isInMethodTypeArg(position)) {
+          return StatisticsInfo.EMPTY;
+        }
+
         PsiType expectedType = firstInfo != null ? firstInfo.getDefaultType() : null;
-        return new StatisticsInfo(JavaStatisticsManager.getAfterNewKey(expectedType), key2);
+        String context = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) ? JavaStatisticsManager.getAfterNewKey(expectedType) : "";
+        return new StatisticsInfo(context, key2);
       }
 
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
         String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).getExpectedName() : null;
-        String contextPrefix = expectedName == null ? "" : "expectedName=" + expectedName + "###";
-        String context = contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass);
+        PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
+        String contextPrefix = (qualifierType == null ? "" : JavaStatisticsManager.getMemberUseKey1(qualifierType) + "###") +
+                               (expectedName == null ? "" : "expectedName=" + expectedName + "###");
 
         if (o instanceof PsiMethod) {
           String memberValue = JavaStatisticsManager.getMemberUseKey2(RecursionWeigher.findDeepestSuper((PsiMethod)o));
-
-          List<StatisticsInfo> superMethodInfos = ContainerUtil.newArrayList(new StatisticsInfo(contextPrefix + context, memberValue));
-          for (PsiClass superClass : InheritanceUtil.getSuperClasses(containingClass)) {
-            superMethodInfos.add(new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(superClass), memberValue));
-          }
-          return StatisticsInfo.createComposite(superMethodInfos);
+          return new StatisticsInfo(contextPrefix, memberValue);
         }
 
-        return new StatisticsInfo(context, key2);
+        return new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass), key2);
       }
     }
-
-    if (qualifierType != null) return StatisticsInfo.EMPTY;
 
     return null;
   }

@@ -207,7 +207,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
     });
     Disposer.register(myProject, myLogData);
-    return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
+    return new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
                                    new VcsLogProgress(),
                                    myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
     ) {

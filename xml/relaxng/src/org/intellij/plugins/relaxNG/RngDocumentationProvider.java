@@ -98,6 +98,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
             sb.append(getDocumentationFromTag((XmlTag)psiElement, d.getName(), "Attribute"));
           }
         }
+        return makeDocumentation(sb);
       }
     } else if (element instanceof XmlTag) {
       return makeDocumentation(getDocumentationFromTag((XmlTag)element, ((XmlTag)element).getLocalName(), "Element"));

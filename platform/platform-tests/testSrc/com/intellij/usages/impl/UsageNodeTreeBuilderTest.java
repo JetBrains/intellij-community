@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.usages.*;
@@ -84,7 +85,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     return new MockUsage(index);
   }
 
-  private static GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
+  private GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
     Usage[] usages = new Usage[indices.length];
     for (int i = 0; i < usages.length; i++) {
       usages[i] = createUsage(indices[i]);
@@ -111,6 +112,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     point.registerExtension(provider);
     try {
       UsageViewImpl usageView = new UsageViewImpl(getProject(), presentation, UsageTarget.EMPTY_ARRAY, null);
+      Disposer.register(getTestRootDisposable(), usageView);
       for (Usage usage : usages) {
         usageView.appendUsage(usage);
       }

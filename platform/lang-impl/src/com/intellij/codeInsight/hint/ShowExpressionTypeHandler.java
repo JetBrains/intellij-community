@@ -51,7 +51,6 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());

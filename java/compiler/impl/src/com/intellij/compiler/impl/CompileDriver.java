@@ -106,7 +106,7 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, new ProjectCompileScope(myProject));
+    doRebuild(callback, new ProjectCompileScope(myProject));
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -170,9 +170,9 @@ public class CompileDriver {
     }
   }
 
-  private void doRebuild(CompileStatusNotification callback, CompilerMessage message, final CompileScope compileScope) {
+  private void doRebuild(CompileStatusNotification callback, final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope)) {
-      startup(compileScope, true, false, callback, message);
+      startup(compileScope, true, false, callback, null);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -222,7 +222,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
@@ -253,11 +253,6 @@ public class CompileDriver {
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
-
-      @Override
-      public void buildStarted(UUID sessionId) {
-      }
-
       @Override
       public void sessionTerminated(final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
@@ -402,6 +397,7 @@ public class CompileDriver {
         }
         return;
       }
+      CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       try {
         LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
@@ -409,7 +405,8 @@ public class CompileDriver {
         }
         if (isRebuild) {
           CompilerUtil.runInContext(compileContext, "Clearing build system data...",
-                                    (ThrowableRunnable<Throwable>)() -> CompilerCacheManager.getInstance(myProject).clearCaches(compileContext));
+                                    (ThrowableRunnable<Throwable>)() -> compilerCacheManager
+                                      .clearCaches(compileContext));
         }
         final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
@@ -441,7 +438,7 @@ public class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
-        CompilerCacheManager.getInstance(myProject).flushCaches();
+        compilerCacheManager.flushCaches();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         CompilerUtil.logDuration(
@@ -784,7 +781,7 @@ public class CompileDriver {
     private final WeakReference<Project> myProjectRef;
     private final Object myContentId;
 
-    public MessagesActivationListener(CompileContextImpl compileContext) {
+    MessagesActivationListener(CompileContextImpl compileContext) {
       myProjectRef = new WeakReference<>(compileContext.getProject());
       myContentId = compileContext.getBuildSession().getContentId();
     }

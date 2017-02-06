@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -49,6 +50,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.resolveTopLevelMember;
 
 /**
  * @author yole
@@ -245,7 +250,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (inherited) {
+    if (inherited && !PyNames.INIT.equals(name) && !PyNames.NEW.equals(name)) {
       final List<? extends RatedResolveResult> typeMembers = resolveMetaClassMember(name, location, direction, resolveContext);
       if (typeMembers != null) {
         return typeMembers;
@@ -385,7 +390,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
     if (!inherited) {
-      return PyUtil.as(myClass.getMetaClassType(context), PyClassLikeType.class);
+      return as(myClass.getMetaClassType(context), PyClassLikeType.class);
     }
     final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
     final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
@@ -599,10 +604,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (!myClass.isNewStyleClass(typeEvalContext)) {
-      final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
-      final PyClassType classobjType = cache.getOldstyleClassobjType();
-      if (classobjType != null) {
-        ret.addAll(Arrays.asList(classobjType.getCompletionVariants(prefix, location, context)));
+      final PyClass instanceClass = as(resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE),
+                                                             fromFoothold(myClass)), PyClass.class);
+      if (instanceClass != null) {
+        final PyClassTypeImpl instanceType = new PyClassTypeImpl(instanceClass, false);
+        ret.addAll(Arrays.asList(instanceType.getCompletionVariants(prefix, location, context)));
+
       }
     }
 

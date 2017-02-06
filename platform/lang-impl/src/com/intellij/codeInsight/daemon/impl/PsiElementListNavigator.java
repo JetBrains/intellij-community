@@ -30,8 +30,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
@@ -110,12 +110,8 @@ public class PsiElementListNavigator {
       return null;
     }
     final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<>(targets);
-    final JBListWithHintProvider list = new JBListWithHintProvider(model) {
-      @Override
-      protected PsiElement getPsiElementForHint(final Object selectedValue) {
-        return (PsiElement) selectedValue;
-      }
-    };
+    final JBList list = new JBList(model);
+    HintUpdateSupply.installSimpleHintUpdateSupply(list);
 
     list.setTransferHandler(new TransferHandler(){
       @Nullable

@@ -117,7 +117,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myContext = new MyDiffContext(context);
     myActiveRequest = new LoadingDiffRequest();
 
-    mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
+    mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
     myToolOrder = new ArrayList<>(getToolOrderFromSettings(myAvailableTools));

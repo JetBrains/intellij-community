@@ -25,6 +25,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.ArrayChunkBuilder;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.containerview.DataViewStrategy;
+import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
@@ -41,20 +44,22 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private int myRows;
   private int myColumns;
-  private final TableChunkDatasource myProvider;
+  private final PyDataViewerPanel myDataProvider;
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
 
-
+  private final PyDebugValue myDebugValue;
+  private final DataViewStrategy myStrategy;
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
       public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
 
         ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> {
-          ArrayChunk chunk = myProvider.getChunk(key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                                                 Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second));
+          ArrayChunk chunk = myDebugValue.getFrameAccessor()
+            .getArrayItems(myDebugValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                           Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getFormat());
           handleChunkAdded(key.first, key.second, chunk);
           return chunk;
         });
@@ -65,10 +70,16 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       }
     });
 
-  public AsyncArrayTableModel(int rows, int columns, TableChunkDatasource provider) {
+  public AsyncArrayTableModel(int rows,
+                              int columns,
+                              PyDataViewerPanel provider,
+                              PyDebugValue debugValue,
+                              DataViewStrategy strategy) {
     myRows = rows;
     myColumns = columns;
-    myProvider = provider;
+    myDataProvider = provider;
+    myDebugValue = debugValue;
+    myStrategy = strategy;
   }
 
   @Override
@@ -89,7 +100,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
         if (r < data.length) {
           if (c < data[r].length) {
-            return myProvider.correctStringValue(data[r][c]);
+            return correctStringValue(data[r][c]);
           }
         }
       }
@@ -99,9 +110,24 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       return EMPTY_CELL_VALUE;
     }
     catch (Exception e) {
-      myProvider.showError(e.getMessage());
       return EMPTY_CELL_VALUE; //TODO: handle it
     }
+  }
+
+  public String correctStringValue(@NotNull Object value) {
+    if (value instanceof String) {
+      String corrected = (String)value;
+      if (myStrategy.isNumeric(myDebugValue.getType())) {
+        if (corrected.startsWith("\'") || corrected.startsWith("\"")) {
+          corrected = corrected.substring(1, corrected.length() - 1);
+        }
+      }
+      return corrected;
+    }
+    else if (value instanceof Integer) {
+      return Integer.toString((Integer)value);
+    }
+    return value.toString();
   }
 
   private static Pair<Integer, Integer> itemToChunkKey(int row, int col) {
@@ -225,5 +251,9 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
       return Integer.toString(rowIndex);
     }
+  }
+
+  public void invalidateCache() {
+    myChunkCache.invalidateAll();
   }
 }

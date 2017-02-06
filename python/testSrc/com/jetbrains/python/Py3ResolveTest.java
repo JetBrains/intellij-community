@@ -22,7 +22,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
@@ -69,7 +68,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testImplicitDunderDoc() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testImplicitDunderSizeOf() {
@@ -87,7 +86,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testImplicitDunderDocWithClassAttr() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testImplicitDunderSizeOfWithClassAttr() {
@@ -105,7 +104,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testImplicitDunderDocWithInheritedClassAttr() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testImplicitDunderSizeOfWithInheritedClassAttr() {
@@ -123,12 +122,12 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testInstanceDunderDoc() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testInstanceDunderSizeOf() {
     final PyFunction expression = assertResolvesTo(PyFunction.class, PyNames.SIZEOF);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testInstanceUndeclaredClassAttr() {
@@ -179,7 +178,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testInstanceDunderDocWithInheritedClassAttr() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testInstanceDunderSizeOfWithInheritedClassAttr() {
@@ -214,12 +213,12 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testTypeDunderDoc() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testTypeDunderSizeOf() {
     final PyFunction expression = assertResolvesTo(PyFunction.class, PyNames.SIZEOF);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testTypeUndeclaredClassAttr() {
@@ -262,7 +261,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testTypeDunderDocWithInheritedClassAttr() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testTypeDunderSizeOfWithInheritedClassAttr() {
@@ -288,7 +287,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testDunderDocInDeclaration() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testDunderSizeOfInDeclaration() {
@@ -339,7 +338,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testDunderDocInDeclarationWithInheritedClassAttr() {
     final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.DOC);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertIsBuiltin(expression);
   }
 
   public void testDunderSizeOfInDeclarationWithInheritedClassAttr() {
@@ -358,7 +357,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-20864
   public void testTopLevelVariableAnnotationFromTyping() {
     myFixture.copyDirectoryToProject("typing", "");
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "List"));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyElement.class, "List"));
   }
 
   // PY-20864

@@ -78,6 +78,9 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl"/>
 
+    <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
+                    serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
+
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
@@ -543,12 +546,12 @@
              order="after inResolveScope"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
-             order="after priority"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
-             order="after stats"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.ExplicitProximityWeigher" id="explicitProximity"
+             order="after priority"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
              order="after prefix"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.ExplicitProximityWeigher" id="explicitProximity"
+             order="after stats"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity"
              order="after explicitProximity"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
@@ -845,6 +848,8 @@
     <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
 
+    <applicationService serviceInterface="com.intellij.ConfigurableFactory" serviceImplementation="com.intellij.ConfigurableFactory"/>
+
     <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
     <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 
@@ -946,7 +951,13 @@
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+
     <projectService serviceInterface="com.intellij.execution.dashboard.RuntimeDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RuntimeDashboardManagerImpl"/>
+    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"/>
+    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"/>
+    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"/>
+    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
+
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.find.UsagesPreviewPanelProvider"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -31,9 +30,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -44,6 +43,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,7 +71,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -79,6 +82,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 
 /**
@@ -127,16 +131,11 @@ public class PlatformTestUtil {
   public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(t);
-      }
-    });
+    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
 
   @Nullable
-  protected static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
+  private static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
@@ -165,7 +164,7 @@ public class PlatformTestUtil {
     return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
   }
   
-  public static String print(JTree tree, Object root, 
+  private static String print(JTree tree, Object root,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
                              @Nullable Condition<String> nodePrintCondition) {
@@ -177,13 +176,7 @@ public class PlatformTestUtil {
     return buffer.toString();
   }
 
-  public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    return printAsList(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
-  }
-
-  private static Collection<String> printAsList(JTree tree, Object root, 
-                                                boolean withSelection,
-                                                @Nullable Queryable.PrintInfo printInfo,
+  private static Collection<String> printAsList(JTree tree, Object root, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
@@ -244,18 +237,14 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    assertTreeEqualIgnoringNodesOrder(tree, expected, false);
+    final Collection<String> actualNodesPresentation = printAsList(tree, tree.getModel().getRoot(), false, null, null);
+    final List<String> expectedNodes = StringUtil.split(expected, "\n");
+    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
-  }
-
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, checkSelected, null);
-    final List<String> expectedNodes = StringUtil.split(expected, "\n");
-    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
 
   @TestOnly
@@ -264,10 +253,14 @@ public class PlatformTestUtil {
     assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert app.isDispatchThread();
 
+    Disposable tempDisposable = Disposer.newDisposable();
+
     final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
     final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    final Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
     ModalityState initialModality = ModalityState.current();
 
     alarm.addRequest(() -> {
@@ -277,28 +270,36 @@ public class PlatformTestUtil {
         alarm.addRequest(() -> alarmInvoked2.set(true), delay);
       });
     }, delay);
+    pooledAlarm.addRequest(() -> pooledRunnableInvoked.set(true), delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
     long start = System.currentTimeMillis();
     boolean sleptAlready = false;
-    while (!alarmInvoked2.get()) {
-      UIUtil.dispatchAllInvocationEvents();
-      //noinspection BusyWait
-      Thread.sleep(sleptAlready ? 10 : delay);
-      sleptAlready = true;
-      if (System.currentTimeMillis() - start > 100 * 1000) {
-        throw new AssertionError("Couldn't await alarm" +
-                                 "; alarm1 passed=" + alarmInvoked1.get() +
-                                 "; modality1=" + initialModality +
-                                 "; modality2=" + ModalityState.current() +
-                                 "; invokeLater passed=" + runnableInvoked.get() +
-                                 "; app.disposed=" + app.isDisposed() +
-                                 "; alarm.disposed=" + alarm.isDisposed() +
-                                 "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                 "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
-        );
+    try {
+      while (!alarmInvoked2.get()) {
+        UIUtil.dispatchAllInvocationEvents();
+        //noinspection BusyWait
+        Thread.sleep(sleptAlready ? 10 : delay);
+        sleptAlready = true;
+        if (System.currentTimeMillis() - start > 100 * 1000) {
+          throw new AssertionError("Couldn't await alarm" +
+                                   "; alarm passed=" + alarmInvoked1.get() +
+                                   "; modality1=" + initialModality +
+                                   "; modality2=" + ModalityState.current() +
+                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; invokeLater passed=" + runnableInvoked.get() +
+                                   "; pooled alarm passed=" + pooledRunnableInvoked.get() +
+                                   "; app.disposed=" + app.isDisposed() +
+                                   "; alarm.disposed=" + alarm.isDisposed() +
+                                   "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                   "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
+          );
+        }
       }
+    }
+    finally {
+      Disposer.dispose(tempDisposable);
     }
     UIUtil.dispatchAllInvocationEvents();
   }
@@ -327,6 +328,7 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return null;
     AWTEvent event1 = eventQueue.getNextEvent();
@@ -350,15 +352,19 @@ public class PlatformTestUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static StringBuilder print(AbstractTreeStructure structure,
-                                    Object node,
-                                    int currentLevel,
-                                    @Nullable Comparator comparator,
-                                    int maxRowCount,
-                                    char paddingChar,
-                                    @Nullable Queryable.PrintInfo printInfo) {
+  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                    int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
+    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
+  }
+
+  public static String print(AbstractTreeStructure structure, Object node, Function<Object, String> nodePresenter) {
+    return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
+  }
+
+  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+                                     int maxRowCount, char paddingChar, Function<Object, String> nodePresenter) {
     StringBuilder buffer = new StringBuilder();
-    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
     return buffer;
   }
 
@@ -370,11 +376,11 @@ public class PlatformTestUtil {
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
-                             @Nullable Queryable.PrintInfo printInfo) {
+                             Function<Object, String> nodePresenter) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
-    buffer.append(toString(node, printInfo)).append("\n");
+    buffer.append(nodePresenter.apply(node)).append("\n");
     currentLine++;
     Object[] children = structure.getChildElements(node);
 
@@ -385,7 +391,7 @@ public class PlatformTestUtil {
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
-      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, printInfo);
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, nodePresenter);
     }
 
     return currentLine;
@@ -429,7 +435,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
@@ -520,16 +526,9 @@ public class PlatformTestUtil {
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
-  public static void saveProject(Project project) {
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    boolean oldValue = application.isDoNotSave();
-    try {
-      application.doNotSave(false);
-      project.save();
-    }
-    finally {
-      application.doNotSave(oldValue);
-    }
+  public static void saveProject(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
+    StoreUtil.save(ServiceKt.getStateStore(project), project);
   }
 
   public static class TestInfo {
@@ -575,23 +574,21 @@ public class PlatformTestUtil {
 
       while (true) {
         attempts--;
-        long start;
+        CpuUsageData data;
         try {
           if (setup != null) setup.run();
-          start = System.currentTimeMillis();
-          test.run();
+          data = CpuUsageData.measureCpuUsage(test);
         }
         catch (Throwable throwable) {
           throw new RuntimeException(throwable);
         }
-        long finish = System.currentTimeMillis();
-        long duration = finish - start;
+        long duration = data.durationMs;
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
 
-          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
+          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 : expectedOnMyMachine;
         }
         if (adjustForIO) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);
@@ -604,7 +601,9 @@ public class PlatformTestUtil {
           logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
         }
         logMessage +=
-          "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
+          "\n  Expected: " + formatTime(expectedOnMyMachine) +
+          "\n  Actual: " + formatTime(duration) +
+          "\n " + Timings.getStatistics() + "\n  GC stats: " + data.getGcStats() + "\n  Most active threads: " + data.getThreadStats();
         final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
@@ -820,21 +819,13 @@ public class PlatformTestUtil {
     final File tempDirectory1;
     final File tempDirectory2;
 
-    final JarFile jarFile1 = new JarFile(file1);
-    try {
-      final JarFile jarFile2 = new JarFile(file2);
-      try {
+    try (JarFile jarFile1 = new JarFile(file1)) {
+      try (JarFile jarFile2 = new JarFile(file2)) {
         tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
         tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
         ZipUtil.extract(jarFile1, tempDirectory1, null);
         ZipUtil.extract(jarFile2, tempDirectory2, null);
       }
-      finally {
-        jarFile2.close();
-      }
-    }
-    finally {
-      jarFile1.close();
     }
 
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
@@ -848,7 +839,7 @@ public class PlatformTestUtil {
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
-  public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
+  public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
       Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
@@ -933,7 +924,7 @@ public class PlatformTestUtil {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static final OutputStream NULL = new OutputStream() {
     @Override
-    public void write(int b) throws IOException { }
+    public void write(int b) { }
   };
 
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {

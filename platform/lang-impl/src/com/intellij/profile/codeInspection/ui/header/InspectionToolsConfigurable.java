@@ -285,12 +285,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
 
       @Override
-      public boolean canRename() {
-        final InspectionProfileImpl profile = getSelectedObject();
-        return !profile.isProfileLocked();
-      }
-
-      @Override
       public void rename() {
         rename(getSelectedObject());
       }

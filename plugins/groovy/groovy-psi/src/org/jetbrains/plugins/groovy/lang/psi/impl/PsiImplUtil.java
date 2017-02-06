@@ -92,6 +92,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
+
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
   private static final String MAIN_METHOD = "main";
@@ -134,7 +137,7 @@ public class PsiImplUtil {
     if (removeUnnecessaryParentheses &&
         oldParent instanceof GrParenthesizedExpression &&
         !(oldParent.getParent() instanceof GrArgumentLabel)) {
-      return ((GrExpression)oldParent).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
+      return ((GrExpression)oldParent).replaceWithExpression(newExpr, true);
     }
 
     //regexes cannot be after identifier , try to replace it with simple string
@@ -176,7 +179,7 @@ public class PsiImplUtil {
 
     //check priorities    
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
-      GrExpression addedParenth = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
+      GrExpression addedParenth = checkPrecedence(newExpr, oldExpr) ? parenthesize(newExpr) : newExpr;
       if (newExpr != addedParenth) {
         return oldExpr.replaceWithExpression(addedParenth, removeUnnecessaryParentheses);
       }
@@ -239,36 +242,6 @@ public class PsiImplUtil {
 
   private static boolean isFirstChild(PsiElement element) {
     return PsiUtil.skipWhitespacesAndComments(element.getParent().getFirstChild(), true) == element;
-  }
-
-  /**
-   * @return replaced expression or null if expression is not replaced
-   */
-  @Nullable
-  private static GrExpression addParenthesesIfNeeded(GrExpression newExpr, GrExpression oldExpr, GrExpression oldParent) {
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
-
-    int parentPriorityLevel = getExprPriorityLevel(oldParent);
-    int newPriorityLevel = getExprPriorityLevel(newExpr);
-
-    if (parentPriorityLevel > newPriorityLevel) {
-      newExpr = factory.createParenthesizedExpr(newExpr);
-    }
-    else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
-      if (oldParent instanceof GrBinaryExpression) {
-        GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
-        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand()) ||
-          TokenSets.PARENTHESIZED_BINARY_OP_SET.contains(binaryExpression.getOperationTokenType())) {
-          newExpr = factory.createParenthesizedExpr(newExpr);
-        }
-      }
-    }
-    return newExpr;
-  }
-
-  private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
-    final IElementType opToken = binaryExpression.getOperationTokenType();
-    return !TokenSets.ASSOCIATIVE_BINARY_OP_SET.contains(opToken);
   }
 
   @Nullable
@@ -345,43 +318,6 @@ public class PsiImplUtil {
       previousLeaf = previousLeaf.getPrevSibling();
     }
     return previousLeaf;
-  }
-
-  private static int getExprPriorityLevel(GrExpression expr) {
-    int priority;
-    //if (expr instanceof GrNewExpression) priority = 1;
-    if (expr instanceof GrUnaryExpression) priority = ((GrUnaryExpression)expr).isPostfix() ? 5 : 6;
-    else if (expr instanceof GrTypeCastExpression) priority = 6;
-
-
-    else if (expr instanceof GrBinaryExpression) {
-      final IElementType opToken = ((GrBinaryExpression)expr).getOperationTokenType();
-
-      if (opToken == GroovyTokenTypes.mSTAR_STAR) priority = 7;
-      else if (opToken == GroovyTokenTypes.mSTAR || opToken == GroovyTokenTypes.mDIV) priority = 8;
-      else if (opToken == GroovyTokenTypes.mPLUS || opToken == GroovyTokenTypes.mMINUS) priority = 9;
-      else if (TokenSets.SHIFT_SIGNS.contains(opToken)) priority = 10;
-      else if (opToken == GroovyTokenTypes.mRANGE_EXCLUSIVE || opToken == GroovyTokenTypes.mRANGE_INCLUSIVE) priority = 11;
-      else if (TokenSets.RELATIONS.contains(opToken)) priority = 12;
-      else if (opToken == GroovyTokenTypes.mEQUAL || opToken == GroovyTokenTypes.mNOT_EQUAL || opToken == GroovyTokenTypes.mCOMPARE_TO) priority = 13;
-      else if (opToken == GroovyTokenTypes.mREGEX_FIND || opToken == GroovyTokenTypes.mREGEX_MATCH) priority = 14;
-      else if (opToken == GroovyTokenTypes.mBAND) priority = 15;
-      else if (opToken == GroovyTokenTypes.mBXOR) priority = 16;
-      else if (opToken == GroovyTokenTypes.mBOR) priority = 17;
-      else if (opToken == GroovyTokenTypes.mLAND) priority = 18;
-      else if (opToken == GroovyTokenTypes.mLOR) priority = 19;
-      else {
-        assert false :"unknown operation:"+opToken;
-        priority = 0;
-      }
-    }
-    else if (expr instanceof GrConditionalExpression) priority = 20;
-    else if (expr instanceof GrSafeCastExpression) priority = 21;
-    else if (expr instanceof GrAssignmentExpression) priority = 22;
-    else if (expr instanceof GrApplicationStatement) priority = 23;
-    else priority = 0;
-
-    return -priority;
   }
 
   public static void setName(String name, PsiElement nameElement) {

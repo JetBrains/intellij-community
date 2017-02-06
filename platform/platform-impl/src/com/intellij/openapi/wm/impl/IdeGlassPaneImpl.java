@@ -111,7 +111,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     super.addNotify();
   }
 
-  public boolean dispatch(final AWTEvent e) {
+  public boolean dispatch(@NotNull final AWTEvent e) {
     JRootPane eventRootPane = myRootPane;
 
     if (e instanceof MouseEvent) {

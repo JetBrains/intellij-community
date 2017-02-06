@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -263,6 +264,7 @@ public class JavaSdkImpl extends JavaSdk {
         scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
       }
     }
+    result.sort((o1, o2) -> Comparing.compare(JdkVersionUtil.getVersion(o2), JdkVersionUtil.getVersion(o1)));
     return result;
   }
 
@@ -299,8 +301,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return checkForJdk(new File(path)) &&
-           (!JrtFileSystem.isModularJdk(path) || JrtFileSystem.isSupported());
+    return checkForJdk(new File(path));
   }
 
   @Override
@@ -605,14 +606,17 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
-    if (jrt != null) {
-      ContainerUtil.addAll(result, jrt.getChildren());
+    if (JrtFileSystem.isModularJdk(file.getPath())) {
+      VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
+      if (jrt != null) {
+        ContainerUtil.addAll(result, jrt.getChildren());
+      }
     }
-
-    for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
-      String url = VfsUtil.getUrlForLibraryRoot(root);
-      ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+    else {
+      for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
+        String url = VfsUtil.getUrlForLibraryRoot(root);
+        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+      }
     }
 
     Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
@@ -712,7 +716,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static String getPath(File jarFile) {
-    return jarFile.getAbsolutePath().replace(File.separatorChar, '/');
+    return FileUtil.toSystemIndependentName(jarFile.getAbsolutePath());
   }
 
   @Override

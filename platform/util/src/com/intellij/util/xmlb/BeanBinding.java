@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.List;
 
-class BeanBinding extends Binding implements MainBinding {
+class BeanBinding extends Binding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
@@ -88,6 +88,10 @@ class BeanBinding extends Binding implements MainBinding {
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
+
+      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor,  o)) {
+        continue;
+      }
 
       if (filter instanceof SkipDefaultsSerializationFilter) {
         if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
@@ -379,7 +383,17 @@ class BeanBinding extends Binding implements MainBinding {
       part = methodName.substring(3, methodName.length());
       isSetter = true;
     }
-    return part.isEmpty() ? null : Pair.create(Introspector.decapitalize(part), isSetter);
+
+    if (part.isEmpty()) {
+      return null;
+    }
+
+    int suffixIndex = part.indexOf('$');
+    if (suffixIndex > 0) {
+      // see XmlSerializerTest.internalVar
+      part = part.substring(0, suffixIndex);
+    }
+    return Pair.create(Introspector.decapitalize(part), isSetter);
   }
 
   public String toString() {

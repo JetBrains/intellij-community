@@ -108,6 +108,11 @@ public class HintUtil {
   }
 
   public static JComponent createQuestionLabel(String text) {
+    final Icon icon = AllIcons.General.Help_small;
+    return createQuestionLabel(text, icon);
+  }
+
+  public static JComponent createQuestionLabel(String text, Icon icon) {
     HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR)
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
@@ -115,7 +120,7 @@ public class HintUtil {
 
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(AllIcons.General.Help_small);
+    label.setIcon(icon);
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());

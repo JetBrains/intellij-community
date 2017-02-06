@@ -21,7 +21,6 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -84,6 +83,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   public void setPsi(@NotNull final T psi) {
     myPsi = psi;
+  }
+
+  @Nullable
+  final T getCachedPsi() {
+    return myPsi;
   }
 
   @Override

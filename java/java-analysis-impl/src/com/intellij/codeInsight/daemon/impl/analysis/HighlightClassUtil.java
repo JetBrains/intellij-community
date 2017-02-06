@@ -305,13 +305,15 @@ public class HighlightClassUtil {
     HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
 
     QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.STATIC, false, false));
-
-    PsiClass aClass = field.getContainingClass();
-    if (aClass != null) {
-      QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, true, false));
-    }
+    registerMakeInnerClassStatic(result, field.getContainingClass());
 
     return result;
+  }
+
+  private static void registerMakeInnerClassStatic(HighlightInfo result, PsiClass aClass) {
+    if (aClass != null && aClass.getContainingClass() != null) {
+      QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, true, false));
+    }
   }
 
   @Nullable
@@ -324,7 +326,7 @@ public class HighlightClassUtil {
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
     QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, false, false));
-    QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix((PsiClass)keyword.getParent().getParent().getParent(), PsiModifier.STATIC, true, false));
+    registerMakeInnerClassStatic(result, (PsiClass)keyword.getParent().getParent().getParent());
     return result;
   }
 
@@ -338,8 +340,7 @@ public class HighlightClassUtil {
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
     QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(initializer, PsiModifier.STATIC, false, false));
-    PsiClass owner = (PsiClass)keyword.getParent().getParent().getParent();
-    QuickFixAction.registerQuickFixAction(result, QUICK_FIX_FACTORY.createModifierListFix(owner, PsiModifier.STATIC, true, false));
+    registerMakeInnerClassStatic(result, (PsiClass)keyword.getParent().getParent().getParent());
     return result;
   }
 
@@ -390,9 +391,7 @@ public class HighlightClassUtil {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, false, false));
     }
     PsiClass containingClass = aClass.getContainingClass();
-    if (containingClass != null) {
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(containingClass, PsiModifier.STATIC, true, false));
-    }
+    registerMakeInnerClassStatic(info, containingClass);
     return info;
   }
 
@@ -899,9 +898,7 @@ public class HighlightClassUtil {
       String description = JavaErrorMessages.message("is.not.an.enclosing.class", HighlightUtil.formatClass(outerClass));
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description).create();
-      if (aClass != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, true, false));
-      }
+      registerMakeInnerClassStatic(highlightInfo, aClass);
       return highlightInfo;
     }
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, outerClass);

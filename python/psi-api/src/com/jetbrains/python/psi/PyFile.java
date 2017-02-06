@@ -73,6 +73,14 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<RatedResolveResult> multiResolveName(@NotNull String name);
 
   /**
+   * Return the resolved elements.
+   *
+   * @param exported found element must be exported, i.e. visible from other modules.
+   */
+  @NotNull
+  List<RatedResolveResult> multiResolveName(@NotNull String name, boolean exported);
+
+  /**
    * @deprecated Use {@link #multiResolveName(String)} instead.
    */
   @Deprecated

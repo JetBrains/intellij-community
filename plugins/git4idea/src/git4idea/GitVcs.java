@@ -542,6 +542,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public CheckoutProvider getCheckoutProvider() {
-    return new GitCheckoutProvider(ServiceManager.getService(Git.class));
+    return new GitCheckoutProvider(Git.getInstance());
   }
 }

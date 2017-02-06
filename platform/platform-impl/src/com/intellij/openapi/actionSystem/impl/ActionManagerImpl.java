@@ -143,6 +143,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     registerPluginActions();
   }
 
+  @Nullable
   static AnAction convertStub(ActionStub stub) {
     Object obj;
     String className = stub.getClassName();
@@ -164,7 +165,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     if (!(obj instanceof AnAction)) {
-      throw new IllegalStateException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
+      LOG.error("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
+      return null;
     }
 
     AnAction anAction = (AnAction)obj;
@@ -466,10 +468,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
+  @Nullable
   public AnAction getAction(@NotNull String id) {
     return getActionImpl(id, false);
   }
 
+  @Nullable
   private AnAction getActionImpl(String id, boolean canReturnStub) {
     AnAction action;
     synchronized (myLock) {
@@ -479,6 +483,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     AnAction converted = convertStub((ActionStub)action);
+    if (converted == null) return null;
+
     synchronized (myLock) {
       action = myId2Action.get(id);
       if (action instanceof ActionStub) {

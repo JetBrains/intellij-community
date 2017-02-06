@@ -652,4 +652,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int x = (1 + 2 + 3) * (1 + 2 + 2) * (1 + 2);"
     );
   }
+  
+  public void testKeepFinalOnLine() {
+    doClassTest(
+      "public    static void bar(@NonNls final String[] args) {\n" +
+      "}",
+      "public static void bar(@NonNls final String[] args) {\n" +
+      "}");
+  }
+  
 }

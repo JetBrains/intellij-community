@@ -171,7 +171,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       int minLevel = PsiUtil.ACCESS_LEVEL_PRIVATE;
       boolean entryPoint = myDeadCodeInspection.isEntryPoint(member);
       if (entryPoint) {
-        int level = VisibilityInspection.getMinVisibilityLevel(member, myDeadCodeInspection.getExtensions().stream());
+        int level = myVisibilityInspection.getMinVisibilityLevel(member);
         if (level <= 0) {
           log(member.getName() +" is entry point");
           return currentLevel;

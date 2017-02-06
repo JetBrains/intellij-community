@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -37,7 +38,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +84,15 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       .cleanupOldStorageFile(ROOT_STORAGE_KIND, project.getName() + "." + project.getBaseDir().getPath().hashCode());
 
     Disposer.register(parent, this);
+  }
+
+  @NotNull
+  public static Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
+    return commitIndex -> {
+      CommitId commitId = storage.getCommitId(commitIndex);
+      if (commitId == null) return null;
+      return commitId.getHash();
+    };
   }
 
   @Nullable

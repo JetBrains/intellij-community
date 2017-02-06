@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -66,7 +65,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   // first pass - adjacent carets are grouped into blocks
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     myProject = project;
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     file = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);

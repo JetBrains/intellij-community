@@ -27,8 +27,6 @@ public interface ManageButtonBuilder {
 
   void copy();
 
-  boolean canRename();
-
   void rename();
 
   boolean canDelete();

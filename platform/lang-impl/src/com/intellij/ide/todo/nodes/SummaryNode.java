@@ -56,13 +56,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
           continue;
         }
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        Module module = projectFileIndex.getModuleForFile(virtualFile);
-        if (module != null) {
-          ModuleToDoNode moduleToDoNode = new ModuleToDoNode(getProject(), module, myBuilder);
-          if (!children.contains(moduleToDoNode)) {
-            children.add(moduleToDoNode);
-          }
-        }
+        createModuleTodoNodeForFile(children, projectFileIndex, virtualFile);
       }
     }
     else {
@@ -92,6 +86,16 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     Collections.sort(children, TodoFileDirAndModuleComparator.INSTANCE);
     return children;
 
+  }
+
+  protected void createModuleTodoNodeForFile(ArrayList<AbstractTreeNode> children, ProjectFileIndex projectFileIndex, VirtualFile virtualFile) {
+    Module module = projectFileIndex.getModuleForFile(virtualFile);
+    if (module != null) {
+      ModuleToDoNode moduleToDoNode = new ModuleToDoNode(getProject(), module, myBuilder);
+      if (!children.contains(moduleToDoNode)) {
+        children.add(moduleToDoNode);
+      }
+    }
   }
 
   @Override

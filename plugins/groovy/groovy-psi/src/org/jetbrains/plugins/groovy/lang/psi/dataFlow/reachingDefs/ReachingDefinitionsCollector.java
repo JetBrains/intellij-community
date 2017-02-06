@@ -440,7 +440,7 @@ public class ReachingDefinitionsCollector {
   }
 
   @NotNull
-  private static DefinitionMap postprocess(@NotNull final ArrayList<DefinitionMap> dfaResult,
+  private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                            @NotNull Instruction[] flow,
                                            @NotNull ReachingDefinitionsDfaInstance dfaInstance) {
     DefinitionMap result = new DefinitionMap();

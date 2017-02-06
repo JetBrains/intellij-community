@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,22 +71,27 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
       final PyExpression value = node.getAssignedValue();
       if (value instanceof PyCallExpression) {
         final PyType type = myTypeEvalContext.getType(value);
-        final PyCallExpression callExpr = (PyCallExpression)value;
-        final PyExpression callee = callExpr.getCallee();
+        final PyCallExpression call = (PyCallExpression)value;
+        final PyExpression callee = call.getCallee();
 
         if (type instanceof PyNoneType && callee != null) {
-          final PyCallable callable = callExpr.resolveCalleeFunction(getResolveContext());
-          if (callable != null) {
+          final Condition<PyCallable> ignoredCallable = callable -> {
             if (PySdkUtil.isElementInSkeletons(callable)) {
-              return;
+              return true;
             }
             if (callable instanceof PyFunction) {
               final PyFunction function = (PyFunction)callable;
               // Currently we don't infer types returned by decorators
               if (hasInheritors(function) || PyUtil.hasCustomDecorators(function)) {
-                return;
+                return true;
               }
             }
+
+            return false;
+          };
+
+          final List<PyCallable> callables = call.multiResolveCalleeFunction(getResolveContext());
+          if (!callables.isEmpty() && !ContainerUtil.exists(callables, ignoredCallable)) {
             registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()), new PyRemoveAssignmentQuickFix());
           }
         }

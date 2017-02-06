@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -493,7 +493,7 @@ public abstract class DialogWrapper {
       actions.remove(getHelpAction());
     }
 
-    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
+    if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
       actions = flattenOptionsActions(actions);
       leftSideActions = flattenOptionsActions(leftSideActions);
     }
@@ -699,7 +699,7 @@ public abstract class DialogWrapper {
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button;
-    if (action instanceof OptionAction && UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
+    if (action instanceof OptionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
       button = createJOptionsButton((OptionAction)action);
     }
     else {

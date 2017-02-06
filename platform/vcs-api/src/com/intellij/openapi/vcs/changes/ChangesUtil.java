@@ -17,12 +17,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -38,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,9 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-import static java.util.stream.Collectors.*;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author max
@@ -201,7 +203,7 @@ public class ChangesUtil {
 
   public static FilePath getLocalPath(@NotNull Project project, FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ApplicationManager.getApplication().runReadAction((Computable<Change>)() -> {
+    Change change = ReadAction.compute(() -> {
       if (project.isDisposed()) throw new ProcessCanceledException();
       return ChangeListManager.getInstance(project).getChange(filePath);
     });
@@ -238,7 +240,7 @@ public class ChangesUtil {
 
   @Nullable
   private static VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
-    return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> {
+    return ReadAction.compute(() -> {
       VirtualFile result = null;
       FilePath parent = filePath;
       LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -289,17 +291,14 @@ public class ChangesUtil {
   public static <T> void processItemsByVcs(@NotNull Collection<T> items,
                                            @NotNull VcsSeparator<T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = ApplicationManager.getApplication().runReadAction(
-      (NotNullComputable<Map<AbstractVcs, List<T>>>)() -> 
-        items.stream()
-          .filter(it -> separator.getVcsFor(it) != null)
-          .collect(groupingBy(separator::getVcsFor)));
+    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
+      () -> StreamEx.of(items)
+        .mapToEntry(separator::getVcsFor, identity())
+        .nonNullKeys()
+        .grouping()
+    );
 
-    changesByVcs.forEach((vcs, vcsItems) -> {
-      if (vcs != null) {
-        processor.process(vcs, vcsItems);
-      }
-    });
+    changesByVcs.forEach(processor::process);
   }
 
   public static void processChangesByVcs(@NotNull Project project,

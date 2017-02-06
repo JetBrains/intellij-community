@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,6 +30,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     new MyDialogWrapper(e.getProject()).show();
   }
@@ -54,13 +54,13 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
     public MyDialogWrapper(Project project) {
       super(project);
-      ORIGINAL_ALLOW_MERGE_BUTTONS = UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS;
+      ORIGINAL_ALLOW_MERGE_BUTTONS = UISettings.getShadowInstance().getAllowMergeButtons();
       init();
     }
 
     @Override
     protected void dispose() {
-      UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS = ORIGINAL_ALLOW_MERGE_BUTTONS;
+      UISettings.getShadowInstance().setAllowMergeButtons(ORIGINAL_ALLOW_MERGE_BUTTONS);
       super.dispose();
     }
 
@@ -70,18 +70,12 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-      myRefresh.addActionListener(e -> {
-        refreshSouthPanel();
-      });
+      myRefresh.addActionListener(e -> refreshSouthPanel());
 
       myAllowMergeButtons.setSelected(ORIGINAL_ALLOW_MERGE_BUTTONS);
-      myAllowMergeButtons.addActionListener(e -> {
-        UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS = myAllowMergeButtons.isSelected();
-      });
+      myAllowMergeButtons.addActionListener(e -> UISettings.getShadowInstance().setAllowMergeButtons(myAllowMergeButtons.isSelected()));
 
-      myErrorText.addActionListener(e -> {
-        setErrorText(myErrorText.isSelected() ? "Error text" : null);
-      });
+      myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null));
 
       panel.add(myRefresh);
       panel.add(myHasOKAction);

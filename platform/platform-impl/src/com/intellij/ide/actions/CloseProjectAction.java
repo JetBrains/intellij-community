@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -42,10 +43,10 @@ public class CloseProjectAction extends AnAction implements DumbAware {
     Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ProjectAttachProcessor.canAttachToProject() && project != null && ModuleManager.getInstance(project).getModules().length > 1) {
-      presentation.setText("Close Pro_jects in Current Window");
+      presentation.setText(IdeBundle.message("action.close.projects.in.current.window"));
     }
     else {
-      presentation.setText("Close Pro_ject");
+      presentation.setText(IdeBundle.message("action.close.project"));
     }
   }
 }

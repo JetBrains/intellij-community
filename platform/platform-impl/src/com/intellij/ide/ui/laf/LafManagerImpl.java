@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -90,7 +92,7 @@ import java.util.List;
     @Storage(value = "options.xml", deprecated = true)
   }
 )
-public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
+public final class LafManagerImpl extends LafManager implements ApplicationComponentAdapter, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
@@ -116,7 +118,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
   private String myLastWarning = null;
-  private PropertyChangeListener myThemeChangeListener = null;
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
 
   static {
@@ -206,33 +207,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "LafManager";
-  }
-
-  @Override
   public void initComponent() {
     if (myCurrentLaf != null) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
-        if (WelcomeWizardUtil.getWizardLAF() != null) {
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          }
-          else if (needUninstall) {
-            DarculaInstaller.uninstall();
-          }
-        }
+        updateWizardLAF(needUninstall);
       }
     }
 
     updateUI();
 
     if (SystemInfo.isXWindow) {
-      myThemeChangeListener = new PropertyChangeListener() {
+      PropertyChangeListener themeChangeListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
           //noinspection SSBasedInspection
@@ -242,16 +230,30 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           });
         }
       };
-      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
+      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
+      Disposer.register(this, new Disposable() {
+        @Override
+        public void dispose() {
+          Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
+        }
+      });
+    }
+  }
+
+  public void updateWizardLAF(boolean wasUnderDarcula) {
+    if (WelcomeWizardUtil.getWizardLAF() != null) {
+      if (UIUtil.isUnderDarcula()) {
+        DarculaInstaller.install();
+      }
+      else if (wasUnderDarcula) {
+        DarculaInstaller.uninstall();
+      }
+      WelcomeWizardUtil.setWizardLAF(null);
     }
   }
 
   @Override
-  public void disposeComponent() {
-    if (myThemeChangeListener != null) {
-      Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
-      myThemeChangeListener = null;
-    }
+  public void dispose() {
   }
 
   @Override

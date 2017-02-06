@@ -46,7 +46,11 @@ public abstract class StubTreeLoader {
 
   @Nullable
   public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
-  
+
+  public boolean isStubReloadingProhibited() {
+    return false;
+  }
+
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
   public abstract boolean canHaveStub(VirtualFile file);

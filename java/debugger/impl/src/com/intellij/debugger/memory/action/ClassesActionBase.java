@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.debugger.memory.ui.ClassesTable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.memory.ui.ClassesTable;
 
 public abstract class ClassesActionBase extends AnAction {
   @Override
@@ -35,7 +34,7 @@ public abstract class ClassesActionBase extends AnAction {
   }
 
   protected boolean isEnabled(AnActionEvent e) {
-    Project project = e.getProject();
+    final Project project = e.getProject();
     return project != null && !project.isDisposed();
   }
 
@@ -44,10 +43,5 @@ public abstract class ClassesActionBase extends AnAction {
   @Nullable
   protected ReferenceType getSelectedClass(AnActionEvent e) {
     return e.getData(ClassesTable.SELECTED_CLASS_KEY);
-  }
-
-  @Nullable
-  XDebugSession getDebugSession(AnActionEvent e) {
-    return e.getData(ClassesTable.DEBUG_SESSION_KEY);
   }
 }

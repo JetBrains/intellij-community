@@ -42,10 +42,12 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
   public AlternativeJreClassFinder(Project project, DebuggerManagerEx manager) {
     super(project);
     manager.addDebuggerManagerListener(new DebuggerManagerAdapter() {
+      @Override
       public void sessionCreated(DebuggerSession session) {
         clearCache();
       }
 
+      @Override
       public void sessionRemoved(DebuggerSession session) {
         clearCache();
       }
@@ -79,7 +81,7 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
     return null;
   }
 
-  @Nullable
+  @NotNull
   private static Collection<VirtualFile> getClassRoots(@NotNull Sdk jre) {
     return Arrays.asList(jre.getRootProvider().getFiles(OrderRootType.CLASSES));
   }
@@ -89,7 +91,7 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
     return Arrays.asList(jre.getRootProvider().getFiles(OrderRootType.SOURCES));
   }
 
-  @Nullable
+  @NotNull
   public static GlobalSearchScope getSearchScope(@NotNull Sdk jre) {
     return new NonClasspathDirectoriesScope(getClassRoots(jre));
   }

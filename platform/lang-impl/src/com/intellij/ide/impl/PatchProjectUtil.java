@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,35 +102,32 @@ public class PatchProjectUtil {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
         final Set<VirtualFile> included = new HashSet<>();
-        iterate(contentRoot, new ContentIterator() {
-          @Override
-          public boolean processFile(final VirtualFile fileOrDir) {
-            String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
-            for (Pattern module : excludePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = excludePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    contentEntry.addExcludeFolder(fileOrDir);
-                    return false;
-                  }
+        iterate(contentRoot, fileOrDir -> {
+          String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
+          for (Pattern module : excludePatterns.keySet()) {
+            if (module == null || module.matcher(modules[idx].getName()).matches()) {
+              final Set<Pattern> dirPatterns = excludePatterns.get(module);
+              for (Pattern pattern : dirPatterns) {
+                if (pattern.matcher(relativeName).matches()) {
+                  contentEntry.addExcludeFolder(fileOrDir);
+                  return false;
                 }
               }
             }
-            if (includePatterns.isEmpty()) return true;
-            for (Pattern module : includePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = includePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    included.add(fileOrDir);
-                    return true;
-                  }
-                }
-              }
-            }
-            return true;
           }
+          if (includePatterns.isEmpty()) return true;
+          for (Pattern module : includePatterns.keySet()) {
+            if (module == null || module.matcher(modules[idx].getName()).matches()) {
+              final Set<Pattern> dirPatterns = includePatterns.get(module);
+              for (Pattern pattern : dirPatterns) {
+                if (pattern.matcher(relativeName).matches()) {
+                  included.add(fileOrDir);
+                  return true;
+                }
+              }
+            }
+          }
+          return true;
         }, index);
         processIncluded(contentEntry, included);
       }

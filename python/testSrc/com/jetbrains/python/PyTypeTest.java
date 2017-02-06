@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ public class PyTypeTest extends PyTestCase {
   public void testBinaryExprType() {
     doTest("int",
            "expr = 1 + 2");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '1' + '2'");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '%s' % ('a')");
     doTest("List[int]",
            "expr = [1] + [2]");
@@ -461,7 +461,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyOfUnionType() {
-    doTest("int", "def f():\n" +
+    doTest("Optional[int]", "def f():\n" +
                   "    '''\n" +
                   "    :rtype: int or slice\n" +
                   "    '''\n" +
@@ -535,7 +535,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorFunctionType() {
-    doTest("__generator[str, Any, int]",
+    doTest("Generator[str, Any, int]",
            "def f():\n" +
            "    yield 'foo'\n" +
            "    return 0\n" +
@@ -550,7 +550,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7021
   public void testGeneratorComprehensionType() {
-    doTest("__generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
+    doTest("Generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
   }
 
   // PY-7021
@@ -1227,21 +1227,6 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
-  // PY-18427
-  public void testConditionalTypeInDocstring() {
-    doTest("Union[str, int]",
-           "if something:\n" +
-           "    Type = int\n" +
-           "else:\n" +
-           "    Type = str\n" +
-           "\n" +
-           "def f(expr):\n" +
-           "    '''\n" +
-           "    :type expr: Type\n" +
-           "    '''\n" +
-           "    pass\n");
-  }
-
   // PY-18254
   public void testFunctionTypeCommentInStubs() {
     doMultiFileTest("MyClass",
@@ -1310,6 +1295,84 @@ public class PyTypeTest extends PyTestCase {
            "    x = 1 if c else None\n" +
            "    if None is x:\n" +
            "        expr = x\n");
+  }
+
+  public void testAnyIsNone() {
+    doTest("None",
+           "def test_1(c):\n" +
+           "  if c is None:\n" +
+           "    expr = c\n");
+  }
+
+  public void testElseAfterIsNotNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
+  public void testElseAfterIsNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
+  public void testElseAfterAnyIsNone() {
+    doTest("Any",
+           "def test_1(c):\n" +
+           "  if c is None:\n" +
+           "    print(c)\n" +
+           "  else:\n" +
+           "    expr = c\n");
+  }
+
+  // PY-21897
+  public void testElseAfterIfReferenceStatement() {
+    doTest("Any",
+           "def test(a):\n" +
+           "  if a:\n" +
+           "    print(a)\n" +
+           "  else:\n" +
+           "    expr = a\n");
   }
 
   public void testHeterogeneousListLiteral() {
@@ -1528,6 +1591,32 @@ public class PyTypeTest extends PyTestCase {
   public void testSumResult() {
     doTest("int",
            "expr = sum([1, 2, 3])");
+  }
+
+  // PY-21994
+  public void testOptionalAfterIfNot() {
+    doTest("List[int]",
+           "def bug(foo):\n" +
+           "    \"\"\"\n" +
+           "    Args:\n" +
+           "        foo (list[int]|None): an optional list of ints \n" +
+           "    \"\"\"\n" +
+           "    if not foo:\n" +
+           "        return None\n" +
+           "    expr = foo");
+  }
+
+  // PY-22037
+  public void testAncestorPropertyReturnsSelf() {
+    doTest("Child",
+           "class Master(object):\n" +
+           "    @property\n" +
+           "    def me(self):\n" +
+           "        return self\n" +
+           "class Child(Master):\n" +
+           "    pass\n" +
+           "child = Child()\n" +
+           "expr = child.me");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

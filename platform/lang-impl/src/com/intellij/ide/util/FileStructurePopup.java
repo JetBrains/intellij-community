@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -62,6 +63,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
@@ -1101,7 +1103,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree, PlaceProvider<String> {
+  class FileStructureTree extends DnDAwareTree implements AlwaysExpandedTree, PlaceProvider<String> {
     private final boolean fast;
 
     public FileStructureTree(Object rootElement, boolean fastExpand) {
@@ -1124,6 +1126,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       setRootVisible(false);
       setShowsRootHandles(true);
       setHorizontalAutoScrollingEnabled(false);
+
+      HintUpdateSupply.installHintUpdateSupply(this, o -> getPsi(
+        (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)o).getUserObject()));
     }
 
     @Override
@@ -1139,12 +1144,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public boolean isExpanded(int row) {
       return fast || super.isExpanded(row);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      //noinspection ConstantConditions
-      return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
     }
 
     @Override

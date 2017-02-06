@@ -228,7 +228,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return this;
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
+      final NavigatableErrorTreeElement selectedMessageElement = getSelectedNavigatableElement();
       return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -241,7 +241,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return myExporterToTextFile;
     }
     else if (CURRENT_EXCEPTION_DATA_KEY.is(dataId)) {
-      NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
+      ErrorTreeElement selectedMessageElement = getSelectedErrorTreeElement();
       return selectedMessageElement != null ? selectedMessageElement.getData() : null;
     }
     return null;
@@ -346,9 +346,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Nullable
-  private NavigatableMessageElement getSelectedMessageElement() {
+  private NavigatableErrorTreeElement getSelectedNavigatableElement() {
     final ErrorTreeElement selectedElement = getSelectedErrorTreeElement();
-    return selectedElement instanceof NavigatableMessageElement ? (NavigatableMessageElement)selectedElement : null;
+    return selectedElement instanceof NavigatableErrorTreeElement ? (NavigatableErrorTreeElement)selectedElement : null;
   }
 
   @Nullable
@@ -380,7 +380,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private void navigateToSource(final boolean focusEditor) {
-    NavigatableMessageElement element = getSelectedMessageElement();
+    NavigatableErrorTreeElement element = getSelectedNavigatableElement();
     if (element == null) {
       return;
     }
@@ -700,8 +700,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       }
       final ErrorTreeNodeDescriptor descriptor = (ErrorTreeNodeDescriptor)userObject;
       final ErrorTreeElement element = descriptor.getElement();
-      if (element instanceof NavigatableMessageElement) {
-        return ((NavigatableMessageElement)element).getNavigatable();
+      if (element instanceof NavigatableErrorTreeElement) {
+        return ((NavigatableErrorTreeElement)element).getNavigatable();
       }
       return null;
     }

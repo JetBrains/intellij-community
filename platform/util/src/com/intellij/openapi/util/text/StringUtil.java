@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2198,6 +2198,9 @@ public class StringUtil extends StringUtilRt {
       else if (c == '\n') {
         builder.append("\\n");
       }
+      else if (c == '\r') {
+        builder.append("\\r");
+      }
       else {
         builder.append('\\').append(c);
       }
@@ -3134,7 +3137,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+  public static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     return StringUtilRt.parseEnum(string, defaultValue, clazz);
   }
 

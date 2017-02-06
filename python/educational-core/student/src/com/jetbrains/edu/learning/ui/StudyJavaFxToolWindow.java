@@ -40,6 +40,14 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
   }
 
   @Override
+  public void updateFonts(@NotNull Project project) {
+    final String text = StudyUtils.getTaskText(project);
+    if (text != null) {
+      setText(text);
+    }
+  }
+
+  @Override
   public void setText(@NotNull String text) {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
     myBrowserWindow.loadContent(text, configurator);

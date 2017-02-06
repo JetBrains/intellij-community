@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
   private Set<String> myDuplicatesCache = null;
   private boolean isDuplicatesCacheUpdating = false;
+  private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
@@ -610,12 +611,23 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           forceNewFrame = false;
         }
       }
-      for (String openPath : openPaths) {
-        if (ProjectKt.isValidProjectPath(openPath)) {
-          doOpenProject(openPath, null, forceNewFrame);
+      try {
+        myBatchOpening = true;
+        for (String openPath : openPaths) {
+          // https://youtrack.jetbrains.com/issue/IDEA-166321
+          if (ProjectKt.isValidProjectPath(openPath, true)) {
+            doOpenProject(openPath, null, forceNewFrame);
+          }
         }
       }
+      finally {
+        myBatchOpening = false;
+      }
     }
+  }
+
+  public boolean isBatchOpening() {
+    return myBatchOpening;
   }
 
   @Override

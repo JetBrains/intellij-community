@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -88,6 +90,17 @@ class AstPathPsiMap {
     myMap.put(key, new MyReference(psi, key, myQueue));
     psi.setSubstrateRef(key);
     return psi;
+  }
+
+  List<StubBasedPsiElementBase<?>> getAllCachedPsi() {
+    myQueue.cleanupStaleReferences();
+    if (myMap.isEmpty()) return Collections.emptyList();
+
+    List<StubBasedPsiElementBase<?>> result = ContainerUtil.newArrayList();
+    for (MyReference reference : myMap.values()) {
+      ContainerUtil.addIfNotNull(result, reference.get());
+    }
+    return result;
   }
 
   private static class MyReference extends WeakReference<StubBasedPsiElementBase<?>> {

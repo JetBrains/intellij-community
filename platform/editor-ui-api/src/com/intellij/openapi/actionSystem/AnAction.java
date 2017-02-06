@@ -191,9 +191,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final void copyFrom(@NotNull AnAction sourceAction){
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.setIcon(sourcePresentation.getIcon());
-    presentation.setText(sourcePresentation.getTextWithMnemonic(), sourcePresentation.getDisplayedMnemonicIndex() >= 0);
-    presentation.setDescription(sourcePresentation.getDescription());
+    presentation.copyFrom(sourcePresentation);
     copyShortcutFrom(sourceAction);
   }
 

@@ -53,7 +53,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +62,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -387,35 +387,43 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       UIUtil.setEnabled(myVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<>();
-      visible.add(PsiModifier.PRIVATE);
-      visible.add(PsiModifier.PROTECTED);
-      visible.add(PsiModifier.PACKAGE_LOCAL);
-      visible.add(PsiModifier.PUBLIC);
-      for (PsiExpression occurrence : myOccurrences) {
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
-        for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
-          String modifier = iterator.next();
-
-          try {
-            final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier + " ";
-            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + "int xxx;", myTargetClass);
-            if (!JavaResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
-              iterator.remove();
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      }
-      if (!visible.contains(getFieldVisibility())) {
-        if (visible.contains(PsiModifier.PUBLIC)) myVPanel.setVisibility(PsiModifier.PUBLIC);
-        if (visible.contains(PsiModifier.PACKAGE_LOCAL)) myVPanel.setVisibility(PsiModifier.PACKAGE_LOCAL);
-        if (visible.contains(PsiModifier.PROTECTED)) myVPanel.setVisibility(PsiModifier.PROTECTED);
-        if (visible.contains(PsiModifier.PRIVATE)) myVPanel.setVisibility(PsiModifier.PRIVATE);
+      String effectiveVisibility = getEffectiveVisibility(getFieldVisibility(), myOccurrences, myTargetClass);
+      if (effectiveVisibility != null) {
+        myVPanel.setVisibility(effectiveVisibility);
       }
     }
+  }
+
+  public static String getEffectiveVisibility(String initialVisibility,
+                                              PsiExpression[] occurrences,
+                                              PsiClass targetClass) {
+    final ArrayList<String> visible = new ArrayList<>();
+    visible.add(PsiModifier.PRIVATE);
+    visible.add(PsiModifier.PROTECTED);
+    visible.add(PsiModifier.PACKAGE_LOCAL);
+    visible.add(PsiModifier.PUBLIC);
+    for (PsiExpression occurrence : occurrences) {
+      final PsiManager psiManager = targetClass.getManager();
+      for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
+        String modifier = iterator.next();
+
+        try {
+          final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier + " ";
+          final PsiField field = JavaPsiFacade
+            .getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + "int xxx;", targetClass);
+          if (!JavaResolveUtil.isAccessible(field, targetClass, field.getModifierList(), occurrence, targetClass, null)) {
+            iterator.remove();
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
+    if (!visible.contains(initialVisibility) && !visible.isEmpty()) {
+      return visible.get(0);
+    }
+    return null;
   }
 
   protected void doOKAction() {

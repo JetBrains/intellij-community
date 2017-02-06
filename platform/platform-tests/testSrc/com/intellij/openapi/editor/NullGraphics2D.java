@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import java.util.Objects;
  * which should be retrieved on painting finish using {@link #getResult()} method.
  */
 public class NullGraphics2D extends Graphics2D {
+  private final FontRenderContext myFontRenderContext = new FontRenderContext(null, false, false);
   private Rectangle myClip;
   private Composite myComposite = AlphaComposite.SrcOver;
   private RenderingHints myRenderingHints = new RenderingHints(null);
@@ -427,6 +428,6 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public FontRenderContext getFontRenderContext() {
-    throw new UnsupportedOperationException();
+    return myFontRenderContext;
   }
 }

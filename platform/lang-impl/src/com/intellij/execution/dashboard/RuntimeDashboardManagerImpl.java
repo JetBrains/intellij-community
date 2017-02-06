@@ -15,8 +15,13 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,15 +34,24 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
  */
-public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager {
-
+@State(
+  name = "RuntimeDashboard",
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
+)
+public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, PersistentStateComponent<RuntimeDashboardManagerImpl.State> {
   @NotNull private final ContentManager myContentManager;
+  private List<DashboardGrouper> myGroupers = new ArrayList<>();
 
   public RuntimeDashboardManagerImpl(@NotNull final Project project) {
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -49,7 +63,12 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager {
                                                                  project, true);
     toolWindow.setIcon(getToolWindowIcon());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      RuntimeDashboardContent dashboardContent = new RuntimeDashboardContent(project, myContentManager);
+      myGroupers = Arrays.stream(DashboardGroupingRule.EP_NAME.getExtensions())
+        .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
+        .map(DashboardGrouper::new)
+        .collect(Collectors.toList());
+
+      RuntimeDashboardContent dashboardContent = new RuntimeDashboardContent(project, myContentManager, myGroupers);
       Content content = contentFactory.createContent(dashboardContent, null, false);
       Disposer.register(content, dashboardContent);
       toolWindow.getContentManager().addContent(content);
@@ -75,5 +94,46 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager {
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun; // TODO [konstantin.aleev] provide new icon
+  }
+
+  @Nullable
+  @Override
+  public State getState() {
+    State state = new State();
+    state.ruleStates = myGroupers.stream()
+      .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
+      .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
+      .collect(Collectors.toList());
+    return state;
+  }
+
+  @Override
+  public void loadState(State state) {
+    state.ruleStates.forEach(ruleState -> {
+      for (DashboardGrouper grouper : myGroupers) {
+        if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
+          grouper.setEnabled(ruleState.enabled);
+          return;
+        }
+      }
+    });
+  }
+
+  static class State {
+    public List<RuleState> ruleStates = new ArrayList<>();
+  }
+
+  private static class RuleState {
+    public String name;
+    public boolean enabled = true;
+
+    @SuppressWarnings("UnusedDeclaration")
+    public RuleState() {
+    }
+
+    public RuleState(String name, boolean enabled) {
+      this.name = name;
+      this.enabled = enabled;
+    }
   }
 }

@@ -581,9 +581,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Nullable
-  protected TypeDescriptor findTypeDescriptor(final String qname, XmlTag context) {
+  private TypeDescriptor findTypeDescriptor(final String qname, XmlTag context) {
     String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(qname));
-    return findTypeDescriptor(XmlUtil.findLocalNameByQualifiedName(qname), namespace);
+    return findTypeDescriptorImpl(myTag, XmlUtil.findLocalNameByQualifiedName(qname), namespace);
   }
 
   @Nullable
@@ -592,7 +592,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Nullable
-  protected TypeDescriptor findTypeDescriptorImpl(XmlTag rootTag, final String name, String namespace) {
+  private TypeDescriptor findTypeDescriptorImpl(XmlTag rootTag, final String name, String namespace) {
     return RecursionManager.createGuard("findDescriptor").doPreventingRecursion(rootTag, true, () -> {
       XmlNSDescriptorImpl responsibleDescriptor = this;
       if (namespace != null && namespace.length() != 0 && !namespace.equals(getDefaultNamespace())) {
@@ -604,7 +604,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       }
 
       if (responsibleDescriptor != this) {
-        return responsibleDescriptor.findTypeDescriptor(XmlUtil.findLocalNameByQualifiedName(name));
+        return responsibleDescriptor.findTypeDescriptor(name, namespace);
       }
 
       if (rootTag == null) return null;

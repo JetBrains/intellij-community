@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -60,6 +61,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+
+  private static CodeStyleSettings myDefaults;
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
@@ -537,19 +540,17 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
     List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
-    if (list != null) {
-      for (Element additionalIndentElement : list) {
-        String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
-        if (!StringUtil.isEmpty(fileTypeId)) {
-          FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-          if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
-            target = new TempFileType(fileTypeId);
-          }
-
-          IndentOptions options = getDefaultIndentOptions(target);
-          options.readExternal(additionalIndentElement);
-          registerAdditionalIndentOptions(target, options);
+    for (Element additionalIndentElement : list) {
+      String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+      if (!StringUtil.isEmpty(fileTypeId)) {
+        FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+        if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+          target = new TempFileType(fileTypeId);
         }
+
+        IndentOptions options = getDefaultIndentOptions(target);
+        options.readExternal(additionalIndentElement);
+        registerAdditionalIndentOptions(target, options);
       }
     }
 
@@ -578,7 +579,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     if (!myAdditionalIndentOptions.isEmpty()) {
       FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-      Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
+      Arrays.sort(fileTypes, Comparator.comparing(FileType::getDefaultExtension));
       for (FileType fileType : fileTypes) {
         Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
         myAdditionalIndentOptions.get(fileType).serialize(additionalIndentOptions, getDefaultIndentOptions(fileType));
@@ -768,14 +769,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).CONTINUATION_INDENT_SIZE;
   }
 
-  public int getLabelIndentSize(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_SIZE;
-  }
-
-  public boolean getLabelIndentAbsolute(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_ABSOLUTE;
-  }
-
   public int getTabSize(FileType fileType) {
     return getIndentOptions(fileType).TAB_SIZE;
   }
@@ -894,13 +887,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (!exist) {
       myAdditionalIndentOptions.put(fileType, options);
     }
-  }
-
-  public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    if (!myLoadedAdditionalIndentOptions) {
-      loadAdditionalIndentOptions();
-    }
-    return myAdditionalIndentOptions.get(fileType);
   }
 
   private void loadAdditionalIndentOptions() {
@@ -1065,5 +1051,23 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     QuoteStyle(String quote) {
       this.quote = quote;
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof CodeStyleSettings)) return false;
+    if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
+    for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
+      if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;
+    }
+    return true;
+  }
+
+  public static CodeStyleSettings getDefaults() {
+    if (myDefaults == null) {
+      myDefaults = new CodeStyleSettings();
+    }
+    return myDefaults;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,23 @@ internal class BeanWithProperty {
 }
 
 internal class XmlSerializerTest {
+  @Test fun annotatedInternalVar() {
+    @Tag("bean")
+    class Foo {
+      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+      internal var PLACES_MAP = TreeMap<String, String>()
+    }
+
+    val data = Foo()
+    data.PLACES_MAP.put("foo", "bar")
+    doSerializerTest("""
+    <bean>
+      <option name="PLACES_MAP">
+        <entry key="foo" value="bar" />
+      </option>
+    </bean>""", data)
+  }
+
   @Test fun EmptyBeanSerialization() {
     @Tag("bean")
     class EmptyBean

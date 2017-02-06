@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class DFAEngine<E> {
   private final DfaInstance<E> myDfa;
   private final Semilattice<E> mySemilattice;
 
-  public DFAEngine(Instruction[] flow, DfaInstance<E> dfa, Semilattice<E> semilattice) {
+  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -53,31 +53,32 @@ public class DFAEngine<E> {
       }
     }
 
+    @NotNull
     @Override
-    public Deque<CallInstruction> callStack(Instruction instruction) {
+    public Deque<CallInstruction> callStack(@NotNull Instruction instruction) {
       return myEnv.get(instruction.num());
     }
 
     @Override
-    public void update(Deque<CallInstruction> callStack, Instruction instruction) {
+    public void update(@NotNull Deque<CallInstruction> callStack, @NotNull Instruction instruction) {
       myEnv.set(instruction.num(), callStack);
     }
   }
 
   @NotNull
-  public ArrayList<E> performForceDFA() {
-    ArrayList<E> result = performDFA(false);
+  public List<E> performForceDFA() {
+    List<E> result = performDFA(false);
     assert result != null;
     return result;
   }
 
   @Nullable
-  public ArrayList<E> performDFAWithTimeout() {
+  public List<E> performDFAWithTimeout() {
     return performDFA(true);
   }
 
   @Nullable
-  private ArrayList<E> performDFA(boolean timeout) {
+  private List<E> performDFA(boolean timeout) {
     WorkingTimeMeasurer measurer = null;
 
     ArrayList<E> info = new ArrayList<>(Collections.nCopies(myFlow.length, myDfa.initial()));
@@ -134,8 +135,9 @@ public class DFAEngine<E> {
     return info;
   }
 
-  private E join(Instruction instruction, ArrayList<E> info, CallEnvironment env) {
-    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
+  @NotNull
+  private E join(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
+    final Iterable<Instruction> prev = myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
     ArrayList<E> prevInfos = new ArrayList<>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num()));
@@ -143,7 +145,8 @@ public class DFAEngine<E> {
     return mySemilattice.join(prevInfos);
   }
 
-  private Iterable<? extends Instruction> getNext(Instruction curr, CallEnvironment env) {
+  @NotNull
+  private Iterable<Instruction> getNext(@NotNull Instruction curr, @NotNull CallEnvironment env) {
     return myDfa.isForward() ? curr.successors(env) : curr.predecessors(env);
   }
 }

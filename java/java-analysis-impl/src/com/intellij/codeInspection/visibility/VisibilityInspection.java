@@ -33,6 +33,7 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,8 +41,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.VisibilityUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,13 +53,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
+  private Map<String, Boolean> myExtensions = new TreeMap<>();
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
   private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
@@ -99,8 +104,22 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       myPrivateForInnersCheckbox.getModel().addChangeListener(e -> SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected());
 
       gc.gridy = 2;
-      gc.weighty = 1;
       add(myPrivateForInnersCheckbox, gc);
+
+      final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+      for (EntryPoint entryPoint : point.getExtensions()) {
+        if (entryPoint instanceof EntryPointWithVisibilityLevel) {
+          gc.gridy++;
+          final JCheckBox checkBox = new JCheckBox(((EntryPointWithVisibilityLevel)entryPoint).getTitle());
+          checkBox.setSelected(myExtensions.getOrDefault(((EntryPointWithVisibilityLevel)entryPoint).getId(), true));
+          checkBox.addActionListener(e -> myExtensions.put(((EntryPointWithVisibilityLevel)entryPoint).getId(), checkBox.isSelected()));
+          add(checkBox, gc);
+        }
+      }
+      
+      gc.gridy++;
+      gc.weighty = 1;
+      add(new VerticalBox(), gc);
     }
   }
 
@@ -173,14 +192,23 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
       if (refClass.isAnonymous() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
-      if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
 
     //ignore unreferenced code. They could be a potential entry points.
-    if (refElement.getInReferences().isEmpty() && minLevel <= 0) {
-      minLevel = getMinVisibilityLevel(refElement);
-      if (minLevel <= 0) return null;
+    if (refElement.getInReferences().isEmpty()) {
+      if (minLevel <= 0) {
+        minLevel = getMinVisibilityLevel(refElement);
+        if (minLevel <= 0) return null;
+      }
+      String weakestAccess = PsiUtil.getAccessModifier(minLevel);
+      if (weakestAccess != refElement.getAccessModifier()) {
+        return createDescriptions(refElement, weakestAccess, manager, globalContext);
+      }
+    }
+
+    if (refElement instanceof RefClass) {
+      if (isTopLevelClass(refElement) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
     //ignore interface members. They always have public access modifier.
@@ -190,48 +218,53 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
     String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (access != refElement.getAccessModifier() && access != null) {
-      final PsiElement element = refElement.getElement();
-      final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
-      if (nameIdentifier != null) {
-        final String message;
-        String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
-        if (access.equals(PsiModifier.PRIVATE)) {
-          message = CAN_BE_PRIVATE;
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
-        }
-        else {
-          if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-            message = CAN_BE_PACKAGE_LOCAL;
-            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-          }
-          else {
-            message = CAN_BE_PROTECTED;
-            quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-          }
-        }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
-                                                                       message,
-                                                                       new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
-      }
+      return createDescriptions(refElement, access, manager, globalContext);
     }
     return null;
   }
 
-  static int getMinVisibilityLevel(PsiMember member,
-                                   Stream<EntryPoint> stream) {
-    return stream
-      .filter(point -> point instanceof EntryPointWithModifiableVisibilityLevel)
-      .mapToInt(extension -> ((EntryPointWithModifiableVisibilityLevel)extension).getMinVisibilityLevel(member))
+  private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access, 
+                                                              @NotNull InspectionManager manager,
+                                                              @NotNull GlobalInspectionContext globalContext) {
+    final PsiElement element = refElement.getElement();
+    final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
+    if (nameIdentifier != null) {
+      final String message;
+      String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+      if (access.equals(PsiModifier.PRIVATE)) {
+        message = CAN_BE_PRIVATE;
+        quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      }
+      else {
+        if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+          message = CAN_BE_PACKAGE_LOCAL;
+          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
+        }
+        else {
+          message = CAN_BE_PROTECTED;
+          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
+        }
+      }
+      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
+                                                                     message,
+                                                                     new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
+                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
+    }
+    return null;
+  }
+
+  int getMinVisibilityLevel(PsiMember member) {
+    return Arrays.stream(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
+      .filter(point -> point instanceof EntryPointWithVisibilityLevel && 
+                       myExtensions.getOrDefault(((EntryPointWithVisibilityLevel)point).getId(), true))
+      .mapToInt(point -> ((EntryPointWithVisibilityLevel)point).getMinVisibilityLevel(member))
       .max().orElse(-1);
   }
 
-  private static int getMinVisibilityLevel(RefJavaElement refElement) {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+  private int getMinVisibilityLevel(RefJavaElement refElement) {
     PsiElement element = refElement.getElement();
     if (element instanceof PsiMember) {
-      Stream<EntryPoint> stream = Arrays.stream(point.getExtensions());
-      return getMinVisibilityLevel((PsiMember)element, stream);
+      return getMinVisibilityLevel((PsiMember)element);
     }
     return -1;
   }
@@ -361,6 +394,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     RefClass toOwner = refUtil.getOwnerClass(to);
 
     if (accessModifier == PsiModifier.PROTECTED) {
+      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isUsedQualifiedOutsidePackage()) {
+        return false;
+      }
       if (SUGGEST_PRIVATE_FOR_INNERS) {
         return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)
                || fromOwner != null && refUtil.isInheritor(fromOwner, toTopLevel)
@@ -545,6 +581,27 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
     return ((AcceptSuggestedAccess)fix).myHint;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    super.writeSettings(node);
+    for (Map.Entry<String, Boolean> entry : myExtensions.entrySet()) {
+      if (!entry.getValue()) {
+        node.addContent(new Element("disabledExtension").setAttribute("id", entry.getKey()));
+      }
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) {
+    super.readSettings(node);
+    for (Element extension : node.getChildren("disabledExtension")) {
+      final String id = extension.getAttributeValue("id");
+      if (id != null) {
+        myExtensions.put(id, false);
+      }
+    }
   }
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{

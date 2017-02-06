@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -560,6 +560,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
+      LOG.debug("Typeahead dispatch for event ", e);
       return;
     }
 
@@ -607,6 +608,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
+
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
@@ -615,20 +617,18 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return;
-      }
-    }
+    if (dispatchByCustomDispatchers(e)) return;
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;
       }
     }
+
     if (e instanceof ComponentEvent && myWindowManager != null) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
+
     if (e instanceof KeyEvent) {
       if (mySuspendMode || !myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         defaultDispatchEvent(e);
@@ -654,6 +654,15 @@ public class IdeEventQueue extends EventQueue {
     else {
       defaultDispatchEvent(e);
     }
+  }
+
+  private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
+    for (EventDispatcher eachDispatcher : myDispatchers) {
+      if (eachDispatcher.dispatch(e)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
@@ -1055,11 +1064,11 @@ public class IdeEventQueue extends EventQueue {
           myWaitingForAltRelease = false;
         }
         else {
-          if (ApplicationManager.getApplication() == null ||
-              UISettings.getInstance() == null ||
+          UISettings uiSettings = UISettings.getInstanceOrNull();
+          if (uiSettings == null ||
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
-              !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
+              !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
             return false;
           }
 
@@ -1132,8 +1141,13 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent event) {
+    doPostEvent(event);
+  }
+
+  // return true if posted, false if consumed immediately
+  boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
-      if (listener.consumePostedEvent(event)) return;
+      if (listener.consumePostedEvent(event)) return false;
     }
 
     myFrequentEventDetector.eventHappened(event);
@@ -1141,6 +1155,7 @@ public class IdeEventQueue extends EventQueue {
       myKeyboardEventsPosted.incrementAndGet();
     }
     super.postEvent(event);
+    return true;
   }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
@@ -1182,6 +1197,7 @@ public class IdeEventQueue extends EventQueue {
   /**
    * An absolutely guru API, please avoid using it at all cost.
    */
+  @FunctionalInterface
   public interface PostEventHook extends EventListener {
     /**
      * @return true if event is handled by the listener and should't be added to event queue at all

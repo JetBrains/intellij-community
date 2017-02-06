@@ -24,13 +24,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 
 class UnifiedFragmentBuilderTest : DiffTestCase() {
   fun testEquals() {
-    val document1 = DocumentImpl("A\nB\nC")
-    val document2 = DocumentImpl("A\nB\nC")
-
-    val fragments = MANAGER.compareLinesInner(document1.charsSequence, document2.charsSequence, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
-
-    val builder = UnifiedFragmentBuilder(fragments, document1, document2, Side.LEFT)
-    builder.exec()
+    val builder = createBuilder("A\nB\nC", "A\nB\nC", Side.LEFT)
 
     assertTrue(builder.isEqual)
     assertEquals(builder.text.toString(), "A\nB\nC\n")
@@ -39,13 +33,7 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
   }
 
   fun testWrongEndLineTypoBug() {
-    val document1 = DocumentImpl("A\nB\nC\nD")
-    val document2 = DocumentImpl("A\nD")
-
-    val fragments = MANAGER.compareLinesInner(document1.charsSequence, document2.charsSequence, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
-
-    val builder = UnifiedFragmentBuilder(fragments, document1, document2, Side.RIGHT)
-    builder.exec()
+    val builder = createBuilder("A\nB\nC\nD", "A\nD", Side.RIGHT)
 
     assertFalse(builder.isEqual)
     assertEquals(builder.text.toString(), "A\nB\nC\nD\n")
@@ -59,5 +47,53 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
     assertEquals(block.range1.end, 3)
     assertEquals(block.range2.start, 3)
     assertEquals(block.range2.end, 3)
+  }
+
+  fun testFirstLineChange() {
+    val builder = createBuilder("X\nB\nC", "A\nB\nC", Side.RIGHT)
+
+    assertFalse(builder.isEqual)
+    assertEquals(builder.text.toString(), "X\nA\nB\nC\n")
+    assertEquals(builder.changedLines, listOf(LineRange(0, 1), LineRange(1, 2)))
+
+    assertEquals(builder.blocks.size, 1)
+    val block = builder.blocks[0]
+    assertEquals(block.line1, 0)
+    assertEquals(block.line2, 2)
+    assertEquals(block.range1.start, 0)
+    assertEquals(block.range1.end, 1)
+    assertEquals(block.range2.start, 1)
+    assertEquals(block.range2.end, 2)
+  }
+
+  fun testDeletion() {
+    val builder = createBuilder("A\n", "", Side.LEFT)
+
+    assertFalse(builder.isEqual)
+    assertEquals(builder.text.toString(), "A\n\n")
+    assertEquals(builder.changedLines, listOf(LineRange(0, 1)))
+
+    assertEquals(builder.blocks.size, 1)
+    val block = builder.blocks[0]
+    assertEquals(block.line1, 0)
+    assertEquals(block.line2, 1)
+    assertEquals(block.range1.start, 0)
+    assertEquals(block.range1.end, 1)
+    assertEquals(block.range2.start, 1)
+    assertEquals(block.range2.end, 1)
+  }
+
+
+  private fun createBuilder(text1: String, text2: String, side: Side): UnifiedFragmentBuilder {
+    val document1 = DocumentImpl(text1)
+    val document2 = DocumentImpl(text2)
+
+    val fragments = MANAGER.compareLinesInner(document1.charsSequence, document2.charsSequence,
+                                              ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+
+    val builder = UnifiedFragmentBuilder(fragments, document1, document2, side)
+    builder.exec()
+
+    return builder
   }
 }

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.MultiValuesMap
  * @author nik
  */
 abstract class BaseLayout {
-  /** JAR name (or path relative to 'lib' directory) to module name */
+  /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,16 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MouseGestureManager implements ApplicationComponent {
+public class MouseGestureManager {
 
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 
@@ -81,22 +79,6 @@ public class MouseGestureManager implements ApplicationComponent {
       }
     }
 
-  }
-
-  @Override
-  public void initComponent() {
-
-  }
-
-  @Override
-  public void disposeComponent() {
-
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "MouseGestureListener";
   }
 
   public static MouseGestureManager getInstance() {

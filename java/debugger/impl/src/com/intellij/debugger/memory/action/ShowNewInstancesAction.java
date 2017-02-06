@@ -15,22 +15,23 @@
  */
 package com.intellij.debugger.memory.action;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.XDebugSession;
-import com.sun.jdi.ReferenceType;
-import com.intellij.debugger.memory.utils.InstancesProvider;
 import com.intellij.debugger.memory.ui.ClassesTable;
 import com.intellij.debugger.memory.ui.InstancesWindow;
+import com.intellij.debugger.memory.utils.InstancesProvider;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.sun.jdi.ReferenceType;
 
 public class ShowNewInstancesAction extends ShowInstancesAction {
   private static final String POPUP_ELEMENT_LABEL = "Show New Instances";
 
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    XDebugSession session = getDebugSession(e);
-    ReferenceType selectedClass = getSelectedClass(e);
-    InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
-    return super.isEnabled(e) && session != null && selectedClass != null && provider != null;
+    final ReferenceType selectedClass = getSelectedClass(e);
+    final InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
+    return super.isEnabled(e) && selectedClass != null && provider != null;
   }
 
   @Override
@@ -51,9 +52,13 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
 
   @Override
   protected void perform(AnActionEvent e) {
-    XDebugSession session = getDebugSession(e);
-    ReferenceType selectedClass = getSelectedClass(e);
-    InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
+    final Project project = e.getProject();
+
+    final ReferenceType selectedClass = getSelectedClass(e);
+    final InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
+    final XDebugSession session = project != null
+                                  ? XDebuggerManager.getInstance(project).getCurrentSession()
+                                  : null;
     if (selectedClass != null && provider != null && session != null) {
       new InstancesWindow(session, provider, selectedClass.name()).show();
     }

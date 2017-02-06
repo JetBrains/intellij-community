@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.*;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -46,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +55,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
+public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
 
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
@@ -114,31 +113,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myMerger = new CommandMerger(this);
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "UndoManager";
-  }
-
   @Nullable
   public Project getProject() {
     return myProject;
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override
@@ -637,5 +614,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   public void clearUndoRedoQueueInTests(@NotNull Document document) {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
+  }
+
+  @Override
+  public String toString() {
+    return "UndoManager for " + ObjectUtils.notNull(myProject, "application");
   }
 }

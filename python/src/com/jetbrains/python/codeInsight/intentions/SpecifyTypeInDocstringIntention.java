@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,15 +63,17 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     final PsiElement resolved = reference != null ? reference.resolve() : null;
     final PyNamedParameter parameter = getParameter(problemElement, resolved);
 
-    final PyCallable callable;
     if (parameter != null) {
-      callable = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+      final PyFunction parentFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+      if (parentFunction != null) {
+        generateDocstring(parameter, parentFunction);
+      }
     }
     else {
-      callable = getCallable(elementAt);
-    }
-    if (callable instanceof PyFunction) {
-      generateDocstring(parameter, (PyFunction)callable);
+      StreamEx
+        .of(getMultiCallable(elementAt))
+        .select(PyFunction.class)
+        .forEach(function -> generateDocstring(null, function));
     }
   }
 

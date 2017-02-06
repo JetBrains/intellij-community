@@ -153,7 +153,7 @@ public class PyCharmEduInitialConfigurator {
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
-      uiSettings.SHOW_NAVIGATION_BAR = false;
+      uiSettings.setShowNavigationBar(false);
       propertiesComponent.setValue(CONFIGURED_V1, true);
       propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
@@ -162,10 +162,10 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
-      uiSettings.HIDE_TOOL_STRIPES = false;
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
+      uiSettings.setHideToolStripes(false);
+      uiSettings.setShowMemoryIndicator(false);
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      uiSettings.SHOW_MAIN_TOOLBAR = false;
+      uiSettings.setShowMainToolbar(false);
 
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
@@ -177,7 +177,7 @@ public class PyCharmEduInitialConfigurator {
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
+      uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
@@ -225,6 +225,7 @@ public class PyCharmEduInitialConfigurator {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               int count = 0;
 
+              @Override
               public void run() {
                 if (project.isDisposed()) return;
                 if (count++ < 3) { // we need to call this after ToolWindowManagerImpl.registerToolWindowsFromBeans
@@ -244,7 +245,7 @@ public class PyCharmEduInitialConfigurator {
             final VirtualFile baseDir = project.getBaseDir();
             final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(baseDir);
             if (directory != null) {
-              InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyToolSettings(
+              InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyToolSettings(
                 Key.<PyPep8Inspection>create(PyPep8Inspection.INSPECTION_SHORT_NAME), directory,
                 inspection -> Collections.addAll(inspection.ignoredErrors, codes)
               );
@@ -308,6 +309,7 @@ public class PyCharmEduInitialConfigurator {
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
+    rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {

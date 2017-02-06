@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider;
@@ -43,7 +44,7 @@ public class NamedDomainObjectCollectionTypeEnhancer extends GrReferenceTypeEnha
 
     PsiType namedDomainCollectionType = GradleResolverUtil.getTypeOf(qualifierExpression);
 
-    if (!GroovyPsiManager.isInheritorCached(namedDomainCollectionType, GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION)) {
+    if (!InheritanceUtil.isInheritor(namedDomainCollectionType, GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION)) {
       return null;
     }
 

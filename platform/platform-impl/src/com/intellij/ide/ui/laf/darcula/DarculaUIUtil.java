@@ -25,6 +25,8 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
@@ -98,6 +100,41 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
+  /**
+   *
+   * @param g Graphics to paint on
+   * @param b Component's bounding rectangle. Can be taken from component with <code>JComponent.getBounds(null)</code>
+   * @param fg foreground painter.
+   * @param bg background painter, usually the component's background color: <code>JComponent.getBackground()</code>
+   * @param maxArcSize maximum arc size. If set to 0.0f then not rounded rectangle is painted. If set to a negative value then the
+   *                   component's height is used and a rounded rectangle with oval endings is painted.
+   * @param lw line width for the outlining decoration.
+   */
+  public static void drawSelection(Graphics2D g, Rectangle2D b, Paint fg, Paint bg, float maxArcSize, float lw) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      double arcSize = Float.compare(maxArcSize, 0.0f) == 0 ? 0 : b.getHeight() - 1;
+      if (maxArcSize > 0) arcSize = Math.min(maxArcSize, arcSize);
+
+      Shape s = (arcSize > 0) ?
+                new RoundRectangle2D.Double(b.getX() + lw, b.getY() + lw, b.getWidth() - lw * 2, b.getHeight() - lw * 2,
+                                            arcSize - lw, arcSize - lw) :
+                new Rectangle2D.Double(b.getX() + lw, b.getY() + lw, b.getWidth() - lw * 2, b.getHeight() - lw * 2);
+
+      g2.setPaint(bg);
+      g2.fill(s);
+
+      g2.setPaint(fg);
+      g2.setStroke(new OuterStroke(lw));
+      g2.draw(s);
+    } finally {
+      g2.dispose();
+    }
+  }
+
   public static boolean isCurrentEventShiftDownEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
@@ -117,5 +154,38 @@ public class DarculaUIUtil {
       }
     }
     return -1;
+  }
+
+  private static class OuterStroke implements Stroke {
+    private final BasicStroke stroke;
+
+    private OuterStroke(float width) {
+      stroke = new BasicStroke(width);
+    }
+
+    public Shape createStrokedShape(Shape s) {
+      float lw = stroke.getLineWidth();
+      float delta = lw / 2f;
+
+      if (s instanceof Rectangle2D) {
+        Rectangle2D rs = (Rectangle2D) s;
+        return stroke.createStrokedShape(
+          new Rectangle2D.Double(rs.getX() - delta,
+                                 rs.getY() - delta,
+                                 rs.getWidth() + lw,
+                                 rs.getHeight() + lw));
+      } else if (s instanceof RoundRectangle2D) {
+        RoundRectangle2D rrs = (RoundRectangle2D) s;
+        return stroke.createStrokedShape(
+          new RoundRectangle2D.Double(rrs.getX() - delta,
+                                      rrs.getY() - delta,
+                                      rrs.getWidth() + lw,
+                                      rrs.getHeight() + lw,
+                                      rrs.getArcWidth() + lw,
+                                      rrs.getArcHeight() + lw));
+      } else {
+        throw new UnsupportedOperationException("Shape is not supported");
+      }
+    }
   }
 }

@@ -50,7 +50,6 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SOURCE_FILE = "SourceFile";
 
   private String name;
-  private byte[] info;
 
   public static StructGeneralAttribute createAttribute(String name) {
     StructGeneralAttribute attr;
@@ -109,15 +108,7 @@ public class StructGeneralAttribute {
     return attr;
   }
 
-  protected DataInputFullStream stream() {
-    return new DataInputFullStream(info);
-  }
-
-  public void initContent(ConstantPool pool) throws IOException { }
-
-  public void setInfo(byte[] info) {
-    this.info = info;
-  }
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException { }
 
   public String getName() {
     return name;

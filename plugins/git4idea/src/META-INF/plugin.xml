@@ -37,6 +37,8 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
+    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
@@ -96,6 +98,11 @@
       <separator/>
     </group>
 
+    <group id="Git.FileHistory.ContextMenu">
+      <reference id="Git.SelectInGitLog"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+    </group>
+
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
@@ -147,6 +154,7 @@
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
+    <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>

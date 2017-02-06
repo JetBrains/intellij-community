@@ -18,7 +18,6 @@ package git4idea.rebase;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -74,7 +73,7 @@ class GitAbortRebaseProcess {
     myIndicator = progressIndicator;
     mySaver = changesSaver;
 
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(myProject);
   }
 

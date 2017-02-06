@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -859,7 +859,7 @@ public final class EditorUtil {
 
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int size = UISettings.getInstance().PRESENTATION_MODE
+    int size = UISettings.getInstance().getPresentationMode()
                ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
     return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }

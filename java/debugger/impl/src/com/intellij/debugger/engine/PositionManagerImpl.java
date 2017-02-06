@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -411,7 +412,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  private static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
+  public static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
     PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
     if (psiClass == null) {
       int dollar = originalQName.indexOf('$');
@@ -465,11 +466,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
     if (className == null) {
       isLocalOrAnonymous = true;
-      final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+      Pair<PsiClass, Integer> enclosing = getTopOrStaticEnclosingClass(psiClass);
+      PsiClass topLevelClass = enclosing.first;
       if (topLevelClass != null) {
         final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
         if (parentClassName != null) {
-          requiredDepth = getNestingDepth(psiClass);
+          requiredDepth = enclosing.second;
           className = parentClassName;
         }
       }
@@ -503,14 +505,21 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return result;
   }
 
-  private static int getNestingDepth(PsiClass aClass) {
+  private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
     int depth = 0;
     PsiClass enclosing = getEnclosingClass(aClass);
     while (enclosing != null) {
       depth++;
-      enclosing = getEnclosingClass(enclosing);
+      if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
+        break;
+      }
+      PsiClass next = getEnclosingClass(enclosing);
+      if (next == null) {
+        break;
+      }
+      enclosing = next;
     }
-    return depth;
+    return Pair.create(enclosing, depth);
   }
 
   /**
@@ -684,7 +693,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  private static class ClsSourcePosition extends RemappedSourcePosition {
+  public static class ClsSourcePosition extends RemappedSourcePosition {
     private final int myOriginalLine;
 
     public ClsSourcePosition(SourcePosition delegate, int originalLine) {
@@ -706,7 +715,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
     int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
     if (line > -1) {
-      return SourcePosition.createFromLine(psiFile, line - 1);
+      return SourcePosition.createFromLine(psiFile, line);
     }
     return null;
   }

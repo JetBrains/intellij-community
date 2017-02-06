@@ -163,10 +163,6 @@ class TerminalBlock {
       StreamSource source = StreamSource.tryCreate(loopStatement);
       final PsiStatement body = loopStatement.getBody();
       if(source == null || body == null) return null;
-      // flatMap from primitive to primitive is supported only if primitive types match
-      // otherwise it would be necessary to create bogus step like
-      // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
-      if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
       FlatMapOp op = new FlatMapOp(source, myVariable);
       TerminalBlock withFlatMap = new TerminalBlock(this, op, source.getVariable(), body);
       if(!VariableAccessUtils.variableIsUsed(myVariable, body)) {
@@ -190,13 +186,25 @@ class TerminalBlock {
     }
     if(myStatements.length >= 1) {
       PsiStatement first = myStatements[0];
+      if(PsiUtil.isLanguageLevel9OrHigher(first.getContainingFile()) && first instanceof PsiIfStatement) {
+        PsiIfStatement ifStatement = (PsiIfStatement)first;
+        PsiExpression condition = ifStatement.getCondition();
+        if(ifStatement.getElseBranch() == null && condition != null) {
+          PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+          if(ControlFlowUtils.statementBreaksLoop(thenStatement, getMainLoop())) {
+            TakeWhileOp op = new TakeWhileOp(condition, myVariable, true);
+            PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+            return new TerminalBlock(this, op, myVariable, leftOver);
+          }
+        }
+      }
       // extract map
       if(first instanceof PsiDeclarationStatement) {
         PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
         PsiElement[] elements = decl.getDeclaredElements();
         if(elements.length == 1) {
           PsiLocalVariable declaredVar = tryCast(elements[0], PsiLocalVariable.class);
-          if (declaredVar != null && isSupported(declaredVar.getType())) {
+          if (declaredVar != null && StreamApiUtil.isSupportedStreamElement(declaredVar.getType())) {
             PsiExpression initializer = declaredVar.getInitializer();
             PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
             if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {
@@ -310,7 +318,7 @@ class TerminalBlock {
     PsiExpressionList argumentList = initializer.getArgumentList();
     if (argumentList == null ||
         argumentList.getExpressions().length != 0 ||
-        getInitializerUsageStatus(var, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
+        ControlFlowUtils.getInitializerUsageStatus(var, getMainLoop()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }
     return var;

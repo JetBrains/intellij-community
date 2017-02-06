@@ -387,23 +387,23 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     return constants.toArray(new PsiAnnotationMemberValue[constants.size()]);
   }
 
+  @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<PsiClass> visited) {
-    PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
-    for (PsiAnnotation annotation : annotations) {
+    for (PsiAnnotation annotation : getAllAnnotations(element)) {
+      if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
+        AllowedValues values = getAllowedValuesFromMagic(type, annotation, manager);
+        if (values != null) return values;
+      }
+
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
       PsiClass aClass = (PsiClass)resolved;
-      AllowedValues values;
-      if (type != null && MagicConstant.class.getName().equals(aClass.getQualifiedName())) {
-        values = getAllowedValuesFromMagic(type, annotation, manager);
-        if (values != null) return values;
-      }
 
       if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;
-      values = getAllowedValues(aClass, type, visited);
+      AllowedValues values = getAllowedValues(aClass, type, visited);
       if (values != null) return values;
     }
 

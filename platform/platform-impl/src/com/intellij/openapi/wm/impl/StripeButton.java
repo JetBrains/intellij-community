@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,6 +310,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     updateState();
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -341,7 +342,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   private void updateText() {
     String text = myDecorator.getToolWindow().getStripeTitle();
-    if (UISettings.getInstance().SHOW_TOOL_WINDOW_NUMBERS) {
+    if (UISettings.getInstance().getShowToolWindowsNumbers()) {
       String toolWindowId = myDecorator.getToolWindow().getId();
       int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
       if (mnemonic != -1) {
@@ -358,7 +359,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private void updateState() {
     ToolWindowImpl window = myDecorator.getToolWindow();
     boolean toShow = window.isAvailable() || window.isPlaceholderMode();
-    if (UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
+    if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
       setVisible(window.isShowStripeButton() || isSelected());
     }
     else {

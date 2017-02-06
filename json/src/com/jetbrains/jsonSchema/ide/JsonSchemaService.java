@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,17 +34,11 @@ public interface JsonSchemaService {
 
   boolean isSchemaFile(@NotNull VirtualFile file, @NotNull Consumer<String> errorConsumer);
 
-  boolean isRegisteredSchemaFile(Project project, @NotNull VirtualFile file);
-
   @Nullable
   DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);
 
-  void iterateSchemaObjects(VirtualFile file, @NotNull final Processor<JsonSchemaObject> consumer);
-
   @Nullable
   List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file);
-
-  boolean hasSchema(@Nullable VirtualFile file);
 
   void reset();
 }

@@ -34,10 +34,7 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -297,7 +294,7 @@ public class GenerateMembersUtil {
       if (target instanceof PsiClass) {
         final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
         for (PsiMethod psiMethod : methods) {
-          if (psiMethod != null && psiMethod != sourceMethod) {
+          if (psiMethod != null && psiMethod != sourceMethod && !MethodSignatureUtil.isSuperMethod(psiMethod, sourceMethod)) {
             PsiClass aSuper = psiMethod.getContainingClass();
             if (aSuper != null && aSuper != target) {
               PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);

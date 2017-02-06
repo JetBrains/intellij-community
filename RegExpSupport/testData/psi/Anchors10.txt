@@ -22,11 +22,10 @@ REGEXP_FILE
               PsiElement(CHARACTER)('b')
             RegExpClassImpl: <[eh]>
               PsiElement(CLASS_BEGIN)('[')
-              RegExpUnionImpl: <eh>
-                RegExpCharImpl: <e>
-                  PsiElement(CHARACTER)('e')
-                RegExpCharImpl: <h>
-                  PsiElement(CHARACTER)('h')
+              RegExpCharImpl: <e>
+                PsiElement(CHARACTER)('e')
+              RegExpCharImpl: <h>
+                PsiElement(CHARACTER)('h')
               PsiElement(CLASS_END)(']')
         PsiElement(GROUP_END)(')')
       RegExpCharImpl: <g>

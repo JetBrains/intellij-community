@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -928,6 +928,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     public void showHint(@NotNull LightweightHint hint) {
+      if (myEditor.isDisposed()) return;
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       short constraint = HintManager.ABOVE;
       Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);

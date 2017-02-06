@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
@@ -474,7 +475,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                              @NotNull Collection<HighlightInfo> insideResult,
                              @NotNull Collection<HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
-    if (helper == null) return;
+    if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return;
 
@@ -489,6 +490,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
       HighlightInfo info = builder.createUnconditionally();
       (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
+    }
+  }
+
+  private static boolean shouldHighlightTodos(PsiTodoSearchHelper helper, PsiFile file) {
+    if (helper instanceof PsiTodoSearchHelperImpl) {
+      PsiTodoSearchHelperImpl helperImpl = (PsiTodoSearchHelperImpl) helper;
+      return helperImpl.shouldHighlightInEditor(file);
+    } else {
+      return false;
     }
   }
 

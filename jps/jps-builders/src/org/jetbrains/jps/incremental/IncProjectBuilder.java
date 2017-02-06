@@ -413,13 +413,13 @@ public class IncProjectBuilder {
   }
 
   private void startTempDirectoryCleanupTask() {
-    final File systemRoot = Utils.getSystemRoot();
     final String tempPath = System.getProperty("java.io.tmpdir", null);
     if (StringUtil.isEmptyOrSpaces(tempPath)) {
       return;
     }
     final File tempDir = new File(tempPath);
-    if (!FileUtil.isAncestor(systemRoot, tempDir, true)) {
+    final File dataRoot = myProjectDescriptor.dataManager.getDataPaths().getDataStorageRoot();
+    if (!FileUtil.isAncestor(dataRoot, tempDir, true)) {
       // cleanup only 'local' temp
       return;
     }

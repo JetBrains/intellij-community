@@ -15,19 +15,10 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -35,11 +26,9 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,13 +37,33 @@ import java.util.List;
 public class PyiUtil {
   private PyiUtil() {}
 
+  public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
+    return isInsideStub(element) && PsiTreeUtil.getParentOfType(element, PyAnnotation.class, true, ScopeOwner.class) != null;
+  }
+
+  public static boolean isInsideStub(@NotNull PsiElement element) {
+    return element.getContainingFile() instanceof PyiFile;
+  }
+
   @Nullable
   public static PsiElement getPythonStub(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFile && !(file instanceof PyiFile)) {
       final PyiFile pythonStubFile = getPythonStubFile((PyFile)file);
       if (pythonStubFile != null) {
-        return findStubInFile(element, pythonStubFile);
+        return findSimilarElement(element, pythonStubFile);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement getOriginalElement(@NotNull PyElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file instanceof PyiFile) {
+      final PyFile originalFile = getOriginalFile((PyiFile)file);
+      if (originalFile != null) {
+        return findSimilarElement(element, originalFile);
       }
     }
     return null;
@@ -62,107 +71,32 @@ public class PyiUtil {
 
   @Nullable
   private static PyiFile getPythonStubFile(@NotNull PyFile file) {
-    final PyiFile result = findPythonStubNextToFile(file);
-    if (result != null) {
-      return result;
-    }
-    return findPythonStubInRoots(file);
-  }
-
-  @Nullable
-  private static PyiFile findPythonStubInRoots(@NotNull PyFile file) {
-    final QualifiedName qName = findImportableName(file);
-    final Sdk sdk = PythonSdkType.getSdk(file);
-    if (qName != null && sdk != null) {
-      final List<String> stubQNameComponents = ContainerUtil.newArrayList("python-stubs");
-      stubQNameComponents.addAll(qName.getComponents());
-      final QualifiedName stubQName = QualifiedName.fromComponents(stubQNameComponents);
-      final Project project = file.getProject();
-      final PythonSdkPathCache cache = PythonSdkPathCache.getInstance(project, sdk);
-      final List<PsiElement> cachedResults = cache.get(stubQName);
-      if (cachedResults != null) {
-        return getFirstPyiFile(cachedResults);
-      }
-      final ArrayList<PsiElement> results = new ArrayList<>();
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      final String nameAsPath = StringUtil.join(qName.getComponents(), "/");
-      final List<String> paths = ImmutableList.of(
-        nameAsPath + "/__init__.pyi",
-        nameAsPath + ".pyi");
-      final RootVisitor rootVisitor = new RootVisitor() {
-        @Override
-        public boolean visitRoot(VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
-          if (root.isValid()) {
-            for (String path : paths) {
-              final VirtualFile pyiVirtualFile = root.findFileByRelativePath(path);
-              if (pyiVirtualFile != null) {
-                final PsiFile pyiFile = psiManager.findFile(pyiVirtualFile);
-                if (pyiFile instanceof PyiFile) {
-                  results.add(pyiFile);
-                  return false;
-                }
-              }
-            }
-          }
-          return true;
-        }
-      };
-      RootVisitorHost.visitRoots(file, rootVisitor);
-      RootVisitorHost.visitSdkRoots(sdk, rootVisitor);
-      cache.put(stubQName, results);
-      return getFirstPyiFile(results);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyiFile getFirstPyiFile(List<PsiElement> elements) {
-    if (elements.isEmpty()) {
+    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
+    if (name == null) {
       return null;
     }
-    final PsiElement result = elements.get(0);
-    if (result instanceof PyiFile) {
-      return (PyiFile)result;
-    }
-    return null;
+    final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file);
+    return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
+      .stream()
+      .findFirst()
+      .orElse(null), PyiFile.class);
   }
 
   @Nullable
-  private static PyiFile findPythonStubNextToFile(@NotNull PyFile file) {
-    final PsiDirectory dir = file.getContainingDirectory();
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (dir != null && virtualFile != null) {
-      final String fileName = virtualFile.getNameWithoutExtension();
-      final String pythonStubFileName = fileName + "." + PyiFileType.INSTANCE.getDefaultExtension();
-      final PsiFile pythonStubFile = dir.findFile(pythonStubFileName);
-      if (pythonStubFile instanceof PyiFile) {
-        return (PyiFile)pythonStubFile;
-      }
+  private static PyFile getOriginalFile(@NotNull PyiFile file) {
+    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
+    if (name == null) {
+      return null;
     }
-    return null;
+    final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file).copyWithoutStubs();
+    return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
+                       .stream()
+                       .findFirst()
+                       .orElse(null), PyFile.class);
   }
 
   @Nullable
-  private static QualifiedName findImportableName(@NotNull PyFile file) {
-    final VirtualFile moduleVirtualFile = file.getVirtualFile();
-    if (moduleVirtualFile != null) {
-      String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
-      if (moduleName != null) {
-        final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
-        for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-          final QualifiedName restored = provider.getCanonicalPath(qName, null);
-          if (restored != null) {
-            return restored;
-          }
-        }
-        return qName;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiElement findStubInFile(@NotNull PyElement element, @NotNull PyiFile file) {
+  private static PsiElement findSimilarElement(@NotNull PyElement element, @NotNull PyFile file) {
     if (element instanceof PyFile) {
       return file;
     }
@@ -170,7 +104,7 @@ public class PyiUtil {
     final String name = element.getName();
     if (owner != null && name != null) {
       assert owner != element;
-      final PsiElement originalOwner = findStubInFile(owner, file);
+      final PsiElement originalOwner = findSimilarElement(owner, file);
       if (originalOwner instanceof PyClass) {
         final PyClass classOwner = (PyClass)originalOwner;
         final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);

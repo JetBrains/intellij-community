@@ -38,7 +38,7 @@ def test():
 
     result = f1([1, 2, 3])
     print(result)
-    print(result + <warning descr="Expected type 'Number', got 'str' instead">'foo'</warning>)
+    print(result + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
 
     f2(1, <weak_warning descr="Expected type 'List[int]' (matched generic type 'List[TypeVar('T')]'), got 'List[str]' instead">['foo']</weak_warning>, 'bar')
 

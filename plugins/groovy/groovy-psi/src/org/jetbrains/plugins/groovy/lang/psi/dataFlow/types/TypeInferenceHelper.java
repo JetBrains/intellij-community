@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -120,7 +119,7 @@ public class TypeInferenceHelper {
         final Instruction[] flow = scope.getControlFlow();
         final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow) {
           @Override
-          public void fun(DefinitionMap m, Instruction instruction) {
+          public void fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
             if (instruction instanceof InstanceOfInstruction) {
               final InstanceOfInstruction instanceOfInstruction = (InstanceOfInstruction)instruction;
               ReadWriteVariableInstruction i = instanceOfInstruction.getInstructionToMixin(flow);
@@ -232,7 +231,7 @@ public class TypeInferenceHelper {
     }
 
     @Override
-    public void fun(final TypeDfaState state, final Instruction instruction) {
+    public void fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction) {
         handleVariableWrite(state, (ReadWriteVariableInstruction)instruction);
       }

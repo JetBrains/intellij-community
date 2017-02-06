@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
@@ -61,6 +62,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
+  private static final String LATEST_JDK_RELEASE = "1.8.0u112";
 
   private final PropertiesComponent myProperties;
 
@@ -82,11 +84,28 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
     }
     JdkBundle bundle = JdkBundle.createBoot();
-    if (bundle != null) {
+    if (bundle != null && !bundle.isBundled()) {
       Version version = bundle.getVersion();
       Integer updateNumber = bundle.getUpdateNumber();
-      if (version != null && (version.lessThan(1, 8, 0) || (updateNumber != null && updateNumber < 112))) {
-        showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message") {
+      if (version != null && updateNumber != null && updateNumber < 112) {
+        final String bundleVersion = version.toCompactString() + "u" + updateNumber;
+        boolean showSwitchOption = false;
+
+        final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
+        if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
+          if (SystemInfo.isMacIntel64) {
+            showSwitchOption = true;
+          }
+          else if (SystemInfo.isWindows || SystemInfo.isLinux) {
+            JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
+            if (bundledJdk != null && bundledJdk.getVersion() != null) {
+              showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
+            }
+          }
+        }
+
+        if (showSwitchOption) {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
                            @Override
                            protected void hyperlinkActivated(HyperlinkEvent e) {
                              String url = e.getDescription();
@@ -100,8 +119,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                                BrowserUtil.browse(url);
                              }
                            }
-                         },
-                         version.toCompactString() + (updateNumber != null ? "u" + updateNumber : ""), "1.8.0u112");
+                         }, bundleVersion, LATEST_JDK_RELEASE);
+        }
+        else {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message2"),
+                           bundleVersion, LATEST_JDK_RELEASE);
+        }
       }
     }
   }

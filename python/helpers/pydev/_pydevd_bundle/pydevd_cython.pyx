@@ -584,6 +584,16 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     if info.pydev_step_cmd == CMD_STEP_OVER and hasattr(frame, "f_back") and frame.f_back == info.pydev_step_stop:
                         can_skip = False
 
+                if main_debugger.frame_eval_func and event == 'return' and info.pydev_step_cmd == -1:
+                    frames_set = main_debugger.disable_tracing_after_exit_frames.get(get_thread_id(thread), None)
+                    if frames_set is not None:
+                        if frame in frames_set:
+                            frames_set.remove(frame)
+                        if len(frames_set) == 0:
+                            # there were some frames, but we exited all of them, stop tracing
+                            main_debugger.disable_tracing_after_exit_frames.pop(get_thread_id(thread))
+                            main_debugger.SetTrace(None)
+
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
                 #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,

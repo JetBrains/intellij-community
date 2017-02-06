@@ -15,13 +15,16 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentSettings;
+import com.intellij.ui.InputSource;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
  * A {@link DefaultBoundedRangeModel} that doesn't notify its scrollbar UI listener on value changes
- * while the scrollbar value is adjusted (required for interpolation of the thumb input).
+ * while the scrollbar value is adjusted if scrollbar interpolation is enabled.
  */
 public class SmoothBoundedRangeModel extends DefaultBoundedRangeModel {
   private static final String SCROLLBAR_UI_LISTENER_PATTERN = "ScrollBarUI";
@@ -33,10 +36,15 @@ public class SmoothBoundedRangeModel extends DefaultBoundedRangeModel {
   }
 
   /**
-   * Implementation of {@link DefaultBoundedRangeModel#fireStateChanged()} with filtering.
+   * Implementation of {@link DefaultBoundedRangeModel#fireStateChanged()} with optional filtering.
    */
   @Override
   protected void fireStateChanged() {
+    if (!ComponentSettings.getInstance().isInterpolationEnabledFor(InputSource.SCROLLBAR)) {
+      super.fireStateChanged();
+      return;
+    }
+
     Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ChangeListener.class) {

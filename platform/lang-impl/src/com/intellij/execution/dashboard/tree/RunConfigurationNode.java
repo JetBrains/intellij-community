@@ -15,71 +15,82 @@
  */
 package com.intellij.execution.dashboard.tree;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RuntimeDashboardContributor;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.RowIcon;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
  */
-class RunConfigurationNode extends AbstractRunConfigurationNode<RunnerAndConfigurationSettings> {
-  private final List<RunDescriptorNode> myChildren;
+class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>>
+  implements DashboardRunConfigurationNode {
+  public RunConfigurationNode(Project project, @NotNull RunnerAndConfigurationSettings configurationSettings,
+                                 @Nullable RunContentDescriptor descriptor) {
+    super(project, Pair.create(configurationSettings, descriptor));
+  }
 
-  public RunConfigurationNode(Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    super(project, configurationSettings, configurationSettings);
+  @Override
+  @NotNull
+  public RunnerAndConfigurationSettings getConfigurationSettings() {
+    //noinspection ConstantConditions ???
+    return getValue().getFirst();
+  }
 
-    ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
-    List<RunContentDescriptor> descriptors = executionManager.getDescriptors(settings -> {
-      RunConfiguration configuration = settings.getConfiguration();
-      return configuration != null ? configuration.equals(configurationSettings.getConfiguration()) :
-             settings.equals(configurationSettings);
-    });
-    myChildren = descriptors.stream().map(descriptor -> new RunDescriptorNode(myProject, configurationSettings, descriptor))
-      .collect(Collectors.toList());
+  @Nullable
+  @Override
+  public RunContentDescriptor getDescriptor() {
+    //noinspection ConstantConditions ???
+    return getValue().getSecond();
+  }
+
+  @Override
+  protected void update(PresentationData presentation) {
+    RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
+    presentation.setPresentableText(configurationSettings.getName());
+    Icon icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(configurationSettings);
+    Icon decorator = getIconDecorator();
+    if (decorator != null) {
+      icon = new RowIcon(icon, decorator);
+    }
+    presentation.setIcon(icon);
+    RuntimeDashboardContributor contributor = RuntimeDashboardContributor.getContributor(configurationSettings.getType());
+    if (contributor != null) {
+      contributor.updatePresentation(presentation, this);
+    }
   }
 
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
-    if (myChildren.size() == 1) {
-      return Collections.emptyList();
-    }
-    return myChildren;
-  }
-
-  @Override
-  public boolean isAlwaysExpand() {
-    return true;
+    return Collections.emptyList();
   }
 
   @Nullable
-  @Override
-  protected Icon getIconDecorator() {
-    for (RunDescriptorNode node : myChildren) {
-      Icon decorator = node.getIconDecorator();
-      if (decorator != null) {
-        return decorator;
+  private Icon getIconDecorator() {
+    Content content = getContent();
+    if (content != null) {
+      if (!RunContentManagerImpl.isTerminated(content)) {
+        Executor executor = RunContentManagerImpl.getExecutorByContent(content);
+        if (executor != null) {
+          return executor.getIcon();
+        }
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  protected RunContentDescriptor getDescriptor() {
-    if (myChildren.size() == 1) {
-      return myChildren.get(0).getDescriptor();
     }
     return null;
   }

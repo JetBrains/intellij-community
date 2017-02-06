@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
 
-    if (requestor.isCountFilterEnabled() && requestor.getCountFilter() > 0) {
+    // count filter has to be applied manually if condition is specified
+    if (requestor.isCountFilterEnabled() && !requestor.isConditionEnabled()) {
       request.addCountFilter(requestor.getCountFilter());
     }
 

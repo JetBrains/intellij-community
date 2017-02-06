@@ -130,13 +130,8 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
       String oldText = document.getText(new TextRange(start, end));
       final String newText = escape((XmlFile)file, oldText, start);
       if (!oldText.equals(newText)) {
-        ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(start, end, newText));
+        document.replaceString(start, end, newText);
       }
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

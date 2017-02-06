@@ -39,6 +39,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
@@ -470,7 +471,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getUserFilter() != null) {
-      Collection<String> names = filterCollection.getUserFilter().getUserNames(root);
+      Collection<String> names = ContainerUtil.map(filterCollection.getUserFilter().getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
         if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
@@ -540,9 +541,13 @@ public class GitLogProvider implements VcsLogProvider {
       return (T)Boolean.TRUE;
     }
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
-      return (T)Boolean.valueOf(Registry.is("vcs.log.index.git"));
+      return (T)Boolean.valueOf(isIndexingOn());
     }
     return null;
+  }
+
+  public static boolean isIndexingOn() {
+    return Registry.is("vcs.log.index.git");
   }
 
   private static String prepareParameter(String paramName, String value) {

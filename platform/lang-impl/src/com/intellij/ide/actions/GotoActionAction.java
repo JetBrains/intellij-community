@@ -45,8 +45,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,6 +101,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     final Disposable disposable = Disposer.newDisposable();
     final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+      private boolean myPaintInternalInfo;
+
       @Override
       protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
@@ -118,6 +123,15 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           private String getText(@Nullable Object o) {
             if (o instanceof GotoActionModel.MatchedValue) {
               GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
+
+              if (myPaintInternalInfo) {
+                if (mv.value instanceof GotoActionModel.ActionWrapper) {
+                  AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
+                  String actionId = ActionManager.getInstance().getId(action);
+                  return StringUtil.notNullize(actionId, "class: " + actionId.getClass().getName());
+                }
+              }
+
               if (mv.value instanceof BooleanOptionDescription ||
                   mv.value instanceof GotoActionModel.ActionWrapper && ((GotoActionModel.ActionWrapper)mv.value).getAction() instanceof ToggleAction) {
                 return "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) + " to toggle option";
@@ -136,6 +150,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             ActionMenu.showDescriptionInStatusBar(true, myList, description);
           }
         });
+
+        if (Registry.is("show.configurables.ids.in.settings")) {
+          new HeldDownKeyListener() {
+            @Override
+            protected void heldKeyTriggered(JComponent component, boolean pressed) {
+              myPaintInternalInfo = pressed;
+              // an easy way to repaint the AdText
+              ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
+              for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+                listener.valueChanged(event);
+              }
+            }
+          }.installOn(myTextField);
+        }
       }
 
       @Nullable

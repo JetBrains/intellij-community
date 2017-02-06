@@ -6,13 +6,12 @@ REGEXP_FILE
       RegExpClosureImpl: <[bcd]+>
         RegExpClassImpl: <[bcd]>
           PsiElement(CLASS_BEGIN)('[')
-          RegExpUnionImpl: <bcd>
-            RegExpCharImpl: <b>
-              PsiElement(CHARACTER)('b')
-            RegExpCharImpl: <c>
-              PsiElement(CHARACTER)('c')
-            RegExpCharImpl: <d>
-              PsiElement(CHARACTER)('d')
+          RegExpCharImpl: <b>
+            PsiElement(CHARACTER)('b')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
+          RegExpCharImpl: <d>
+            PsiElement(CHARACTER)('d')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <+>
           PsiElement(PLUS)('+')

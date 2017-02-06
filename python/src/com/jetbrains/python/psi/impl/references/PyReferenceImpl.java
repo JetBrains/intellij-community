@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,6 +275,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
             resolveInParentScope = true;
           }
+          else if (PyiUtil.isInsideStubAnnotation(myElement)) {
+            for (PsiElement element : resolvedElements) {
+              resultList.poke(element, getRate(element, typeEvalContext));
+            }
+            return resultList;
+          }
           else {
             unreachableLocalDeclaration = true;
           }
@@ -305,7 +312,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
             continue;
           }
-          if (resolved == referenceOwner && referenceOwner instanceof PyClass) {
+          if (skipClassForwardReferences(referenceOwner, resolved)) {
             continue;
           }
           if (definer == null) {
@@ -327,6 +334,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return resolveByReferenceResolveProviders();
+  }
+
+  private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
+    return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
   private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
@@ -703,7 +714,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private boolean isBuiltInConstant() {
     // TODO: generalize
     String name = myElement.getReferencedName();
-    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
+    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name) || PyNames.DEBUG.equals(name);
   }
 
   @Override

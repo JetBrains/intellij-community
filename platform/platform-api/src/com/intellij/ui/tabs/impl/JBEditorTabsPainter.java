@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -41,11 +43,11 @@ public abstract class JBEditorTabsPainter {
   public abstract void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height);
 
   public void paintSelectionAndBorder(Graphics2D g2d,
-                               Rectangle rect,
-                               JBTabsImpl.ShapeInfo selectedShape,
-                               Insets insets,
-                               Color tabColor,
-                               boolean horizontalTabs) {
+                                      Rectangle rect,
+                                      JBTabsImpl.ShapeInfo selectedShape,
+                                      Insets insets,
+                                      Color tabColor,
+                                      boolean horizontalTabs, JBTabsPosition position) {
     Insets i = selectedShape.path.transformInsets(insets);
     int _x = rect.x;
     int _y = rect.y;
@@ -85,10 +87,27 @@ public abstract class JBEditorTabsPainter {
                                 selectedShape.labelPath.deltaY(4)));
     }
 
-    g2d.setColor(Gray._0.withAlpha(15));
-    g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
-                                                   selectedShape.path.getMaxX(),
-                                                   selectedShape.labelPath.getMaxY()));
+    if (!Registry.is("ide.new.editor.tabs.selection")) {
+      g2d.setColor(Gray._0.withAlpha(15));
+      g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
+                                                     selectedShape.path.getMaxX(),
+                                                     selectedShape.labelPath.getMaxY()));
+    }
+
+    if (Registry.is("ide.new.editor.tabs.selection")) {
+      //todo[kb] move to editor scheme
+      g2d.setColor(Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0));
+      int thickness = 3;
+      if (position == JBTabsPosition.bottom) {
+        g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
+      } else if (position == JBTabsPosition.top){
+        g2d.fillRect(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness);
+      } else if (position == JBTabsPosition.left) {
+        g2d.fillRect(rect.x + rect.width - thickness + 1, rect.y, thickness, rect.height);
+      } else if (position == JBTabsPosition.right) {
+        g2d.fillRect(rect.x, rect.y, thickness, rect.height);
+      }
+    }
   }
 
   public abstract Color getBackgroundColor();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,8 +368,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     return null;
   }
 
-  @NotNull
-  public WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
+  @Nullable
+  public WebBrowser getFirstBrowserOrNull(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (browser.isActive() && family.equals(browser.getFamily())) {
         return browser;
@@ -382,7 +382,16 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       }
     }
 
-    throw new IllegalStateException("Must be at least one browser per family");
+    return null;
+  }
+
+  @NotNull
+  public WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
+    WebBrowser result = getFirstBrowserOrNull(family);
+    if (result == null) {
+      throw new IllegalStateException("Must be at least one browser per family");
+    }
+    return result;
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {

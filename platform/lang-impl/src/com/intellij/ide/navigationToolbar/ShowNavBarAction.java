@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project != null) {
       UISettings uiSettings = UISettings.getInstance();
-      if (uiSettings.SHOW_NAVIGATION_BAR && !uiSettings.PRESENTATION_MODE){
+      if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()){
         new SelectInNavBarTarget(project).select(null, false);
       } else {
         final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);

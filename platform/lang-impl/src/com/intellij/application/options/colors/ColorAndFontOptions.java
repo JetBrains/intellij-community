@@ -18,6 +18,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -28,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -54,7 +56,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -70,7 +71,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
+public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
+  implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
   
   private Map<String, MyColorScheme> mySchemes;
@@ -143,23 +145,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySchemes.get(name);
   }
 
-  @NotNull
-  public String getUniqueName(@NotNull String preferredName) {
-    String name;
-    if (mySchemes.containsKey(preferredName)) {
-      for (int i = 1; ; i++) {
-        name = preferredName + " (" + i + ")";
-        if (!mySchemes.containsKey(name)) {
-          break;
-        }
-      }
-    }
-    else {
-      name = preferredName;
-    }
-    return name;
-  }
-
   public EditorColorsScheme getSelectedScheme() {
     return mySelectedScheme;
   }
@@ -168,22 +153,62 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme.getDescriptors();
   }
 
+  @Override
+  public boolean canDuplicateScheme(@NotNull EditorColorsScheme scheme) {
+    return true;
+  }
+
+  @Override
+  public boolean canResetScheme(@NotNull EditorColorsScheme scheme) {
+    AbstractColorsScheme originalScheme =
+      scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
+    return
+      !isReadOnly(scheme) &&
+      scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
+      originalScheme instanceof ReadOnlyColorsScheme;
+  }
+
+  @Override
+  public boolean canDeleteScheme(@NotNull EditorColorsScheme scheme) {
+    return !isReadOnly(scheme) && canBeDeleted(scheme);
+  }
+
+  @Override
+  public boolean isProjectScheme(@NotNull EditorColorsScheme scheme) {
+    return false;
+  }
+
+  @Override
+  public boolean canRenameScheme(@NotNull EditorColorsScheme scheme) {
+    return canDeleteScheme(scheme);
+  }
+
+  @Override
+  public boolean containsScheme(@NotNull String name) {
+    return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
+  }
+
+  @Override
+  public boolean differsFromDefault(@NotNull EditorColorsScheme scheme) {
+    if (scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      String displayName = SchemeManager.getDisplayName(scheme);
+      EditorColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getScheme(displayName);
+      if (defaultScheme == null) {
+        defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
+      }
+      if (defaultScheme != null && scheme instanceof AbstractColorsScheme) {
+        return !((AbstractColorsScheme)scheme).settingsEqual(defaultScheme);
+      }
+    }
+    return false;
+  }
+
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isReadOnly();
   }
   
   public static boolean canBeDeleted(@NotNull final EditorColorsScheme scheme) {
     return scheme instanceof  MyColorScheme && ((MyColorScheme)scheme).canBeDeleted();
-  }
-
-  @NotNull
-  public String[] getSchemeNames() {
-    List<String> names = new ArrayList<>();
-    for (EditorColorsScheme scheme : getOrderedSchemes()) {
-      names.add(scheme.getName());
-    }
-
-    return ArrayUtil.toStringArray(names);
   }
   
   @NotNull
@@ -198,25 +223,27 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return new ArrayList<>(mySchemes.values());
   }
 
-  public void saveSchemeAs(String name) {
-    MyColorScheme scheme = mySelectedScheme;
-    if (scheme == null) return;
+  public boolean saveSchemeAs(@NotNull EditorColorsScheme editorScheme, @NotNull String name) {
+    if (editorScheme instanceof MyColorScheme) {
+      MyColorScheme scheme = (MyColorScheme)editorScheme;
+      EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
+      scheme.apply(clone);
+      if (clone instanceof AbstractColorsScheme) {
+        ((AbstractColorsScheme)clone).setSaveNeeded(true);
+      }
 
-    EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
-    scheme.apply(clone);
-    if (clone instanceof AbstractColorsScheme) {
-      ((AbstractColorsScheme)clone).setSaveNeeded(true);
+      clone.setName(name);
+      MyColorScheme newScheme = new MyColorScheme(clone);
+      initScheme(newScheme);
+
+      newScheme.setIsNew();
+
+      mySchemes.put(name, newScheme);
+      selectScheme(newScheme.getName());
+      resetSchemesCombo(null);
+      return true;
     }
-
-    clone.setName(name);
-    MyColorScheme newScheme = new MyColorScheme(clone);
-    initScheme(newScheme);
-
-    newScheme.setIsNew();
-
-    mySchemes.put(name, newScheme);
-    selectScheme(newScheme.getName());
-    resetSchemesCombo(null);
+    return false;
   }
 
   public void addImportedScheme(@NotNull EditorColorsScheme imported) {
@@ -1285,6 +1312,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           public void fontChanged() {
             for (NewColorAndFontPanel panel : getPanels()) {
               panel.updatePreview();
+              panel.updateSchemesPanel();
             }
           }
         });

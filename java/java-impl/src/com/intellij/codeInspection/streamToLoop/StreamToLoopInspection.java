@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,7 +34,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperation;
@@ -54,9 +57,17 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
-  private static final Set<String> SUPPORTED_TERMINALS = StreamEx.of("count", "sum", "summaryStatistics", "reduce", "collect",
-                                                                     "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch",
-                                                                     "toArray", "average", "forEach", "forEachOrdered", "min", "max").toSet();
+  private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
+    "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
+
+  public boolean SUPPORT_UNKNOWN_SOURCES = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Iterate unknown Stream sources via Stream.iterator()", this, "SUPPORT_UNKNOWN_SOURCES");
+  }
 
   @NotNull
   @Override
@@ -74,25 +85,25 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         PsiMethod method = call.resolveMethod();
         if(method == null) return;
         PsiClass aClass = method.getContainingClass();
-        if(!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) return;
-        PsiMethodCallExpression currentCall = call;
-        while(true) {
-          Operation op = createOperationFromCall(StreamVariable.STUB, currentCall);
-          if(op == null) return;
-          if(op instanceof SourceOperation) {
-            TextRange range;
-            if(isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), call)) {
-              range = new TextRange(0, call.getTextLength());
-            } else {
-              range = nameElement.getTextRange().shiftRight(-call.getTextOffset());
-            }
-            holder.registerProblem(call, range, "Replace stream API chain with loop", new ReplaceStreamWithLoopFix());
-            return;
+        if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+          if (extractOperations(StreamVariable.STUB, call, SUPPORT_UNKNOWN_SOURCES) != null) {
+            register(call, nameElement, "Replace Stream API chain with loop");
           }
-          PsiExpression qualifier = currentCall.getMethodExpression().getQualifierExpression();
-          if(!(qualifier instanceof PsiMethodCallExpression)) return;
-          currentCall = (PsiMethodCallExpression)qualifier;
         }
+        else if (extractIterableForEach(call) != null) {
+          register(call, nameElement, "Replace 'forEach' call with loop");
+        }
+      }
+
+      private void register(PsiMethodCallExpression call, PsiElement nameElement, String message) {
+        TextRange range;
+        if (isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), call)) {
+          range = new TextRange(0, call.getTextLength());
+        }
+        else {
+          range = nameElement.getTextRange().shiftRight(-call.getTextOffset());
+        }
+        holder.registerProblem(call, range, message, new ReplaceStreamWithLoopFix(message));
       }
     };
   }
@@ -137,7 +148,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  static Operation createOperationFromCall(StreamVariable outVar, PsiMethodCallExpression call) {
+  static Operation createOperationFromCall(StreamVariable outVar, PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     PsiClass aClass = method.getContainingClass();
@@ -157,28 +168,61 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           // Raw type in any stream step is not supported
           return null;
         }
-        Operation op = Operation.createIntermediate(name, args, outVar, elementType);
+        Operation op = Operation.createIntermediate(name, args, outVar, elementType, supportUnknownSources);
         if (op != null) return op;
-        PsiElement parent = call.getParent();
-        boolean isVoid = parent instanceof PsiExpressionStatement ||
-                         (parent instanceof PsiLambdaExpression &&
-                          PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent)));
-        op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoid);
+        op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoidContext(call.getParent()));
         if (op != null) return op;
       }
+      return null;
     }
-    return SourceOperation.createSource(call);
+    return SourceOperation.createSource(call, supportUnknownSources);
   }
 
+  private static boolean isVoidContext(PsiElement element) {
+    return element instanceof PsiExpressionStatement ||
+           (element instanceof PsiLambdaExpression &&
+            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
+  }
 
   @Nullable
-  static List<OperationRecord> extractOperations(StreamVariable outVar, PsiMethodCallExpression terminalCall) {
+  static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
+    if (MethodCallUtils.isCallToMethod(terminalCall, CommonClassNames.JAVA_LANG_ITERABLE, PsiType.VOID, "forEach", new PsiType[1])
+        && isVoidContext(terminalCall.getParent())) {
+      PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return null;
+      // Do not visit this path if some class implements both Iterable and Stream
+      PsiType type = qualifier.getType();
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) return null;
+      PsiExpression[] args = terminalCall.getArgumentList().getExpressions();
+      if (args.length != 1) return null;
+      FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
+      if (fn == null) return null;
+      PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+      if(elementType == null) return null;
+      elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
+      TerminalOperation terminal = new TerminalOperation.ForEachTerminalOperation(fn);
+      SourceOperation source = new SourceOperation.ForEachSource(qualifier);
+      OperationRecord terminalRecord = new OperationRecord();
+      OperationRecord sourceRecord = new OperationRecord();
+      terminalRecord.myOperation = terminal;
+      sourceRecord.myOperation = source;
+      sourceRecord.myOutVar = terminalRecord.myInVar = new StreamVariable(elementType.getCanonicalText());
+      sourceRecord.myInVar = terminalRecord.myOutVar = StreamVariable.STUB;
+      return Arrays.asList(sourceRecord, terminalRecord);
+    }
+    return null;
+  }
+
+  @Nullable
+  static List<OperationRecord> extractOperations(StreamVariable outVar,
+                                                 PsiMethodCallExpression terminalCall,
+                                                 boolean supportUnknownSources) {
     List<OperationRecord> operations = new ArrayList<>();
     PsiMethodCallExpression currentCall = terminalCall;
     StreamVariable lastVar = outVar;
     Operation next = null;
     while(true) {
-      Operation op = createOperationFromCall(lastVar, currentCall);
+      Operation op = createOperationFromCall(lastVar, currentCall, supportUnknownSources);
       if(op == null) return null;
       if(next != null) {
         Operation combined = op.combineWithNext(next);
@@ -196,9 +240,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         Collections.reverse(operations);
         return operations;
       }
-      PsiExpression qualifier = currentCall.getMethodExpression().getQualifierExpression();
-      if(!(qualifier instanceof PsiMethodCallExpression)) return null;
-      currentCall = (PsiMethodCallExpression)qualifier;
+      currentCall = MethodCallUtils.getQualifierMethodCall(currentCall);
+      if(currentCall == null) return null;
       if(op.changesVariable()) {
         PsiType type = StreamApiUtil.getStreamElementType(currentCall.getType());
         if(type == null) return null;
@@ -221,6 +264,19 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
+    private String myMessage;
+
+    public ReplaceStreamWithLoopFix(String message) {
+      myMessage = message;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return myMessage;
+    }
+
     @Nls
     @NotNull
     @Override
@@ -235,14 +291,16 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
       if(!isSupportedCodeLocation(terminalCall)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      terminalCall = ensureCodeBlock(terminalCall, factory);
+      terminalCall = RefactoringUtil.ensureCodeBlock(terminalCall);
       if (terminalCall == null) return;
       PsiType resultType = terminalCall.getType();
       if (resultType == null) return;
-      List<OperationRecord> operations = extractOperations(StreamVariable.STUB, terminalCall);
+      List<OperationRecord> operations = extractOperations(StreamVariable.STUB, terminalCall, true);
+      if (operations == null) {
+        operations = extractIterableForEach(terminalCall);
+      }
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      allOperations(operations).forEach(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar));
       PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
       LOG.assertTrue(statement != null);
       CommentTracker ct = new CommentTracker();
@@ -284,43 +342,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private static void normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
-      CodeStyleManager.getInstance(project).reformat(element);
-    }
-
-    /**
-     * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
-     * which is located inside the code block). If not, tries to create a code block.
-     *
-     * <p>
-     * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
-     * {@link PsiIfStatement}, etc.
-     * </p>
-     *
-     * @param expression an expression which should be located inside the code block
-     * @param factory a factory to use to generate code if necessary
-     * @return a passed expression if it's already surrounded by code block and no changes are necessary;
-     *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
-     *         {@code null} if the expression cannot be surrounded with code block.
-     */
-    @Nullable
-    private static PsiMethodCallExpression ensureCodeBlock(PsiMethodCallExpression expression, PsiElementFactory factory) {
-      PsiElement parent = RefactoringUtil.getParentStatement(expression, false);
-      if (parent == null) return null;
-      if (parent instanceof PsiStatement && parent.getParent() instanceof PsiCodeBlock) return expression;
-      Object marker = new Object();
-      PsiTreeUtil.mark(expression, marker);
-      PsiElement copy = parent.copy();
-      PsiElement newParent;
-      if (parent instanceof PsiExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)parent.getParent();
-        String replacement = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda)) ? "{a;}" : "{return a;}";
-        PsiElement block = parent.replace(factory.createCodeBlockFromText(replacement, lambda));
-        newParent = LambdaUtil.extractSingleExpressionFromBody(block).replace(copy);
-      } else {
-        PsiBlockStatement blockStatement = (PsiBlockStatement)parent.replace(factory.createStatementFromText("{}", parent));
-        newParent = blockStatement.getCodeBlock().add(copy);
-      }
-      return (PsiMethodCallExpression)PsiTreeUtil.releaseMark(newParent, marker);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {
@@ -329,6 +351,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private static void registerVariables(List<OperationRecord> operations, StreamToLoopReplacementContext context) {
+      allOperations(operations).forEach(or -> or.myOperation.preprocessVariables(context, or.myInVar, or.myOutVar));
       allOperations(operations).map(or -> or.myOperation).forEach(op -> op.registerReusedElements(context::registerReusedElement));
       allOperations(operations).map(or -> or.myInVar).distinct().forEach(var -> var.register(context));
     }
@@ -391,7 +414,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       mySuffix = "Inner";
     }
 
-    public void registerReusedElement(PsiElement element) {
+    public void registerReusedElement(@Nullable PsiElement element) {
+      if(element == null) return;
       element.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitVariable(PsiVariable variable) {
@@ -583,7 +607,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
             if(fn != null) {
               fn.transform(this, ((ConditionalExpression.Optional)conditionalExpression).unwrap("").getTrueBranch());
               myPlaceholder = call.getParent();
-              return fn.getText() + ";\n" + getBreakStatement();
+              return fn.getStatementText() + getBreakStatement();
             }
           }
         }
@@ -676,6 +700,10 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     public PsiExpression createExpression(String text) {
       return myFactory.createExpressionFromText(text, myStatement);
+    }
+
+    public PsiStatement createStatement(String text) {
+      return myFactory.createStatementFromText(text, myStatement);
     }
 
     public PsiType createType(String text) {

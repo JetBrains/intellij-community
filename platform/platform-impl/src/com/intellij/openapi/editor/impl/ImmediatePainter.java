@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -41,6 +42,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -134,40 +137,46 @@ class ImmediatePainter {
       return;
     }
 
-    final int width1 = editor.getFontMetrics(attributes1.getFontType()).charWidth(c1);
-    final int width2 = editor.getFontMetrics(attributes2.getFontType()).charWidth(c2);
+    FontLayoutService fontLayoutService = FontLayoutService.getInstance();
+    final float width1 = fontLayoutService.charWidth2D(editor.getFontMetrics(attributes1.getFontType()), c1);
+    final float width2 = fontLayoutService.charWidth2D(editor.getFontMetrics(attributes2.getFontType()), c2);
 
     final Font font1 = EditorUtil.fontForChar(c1, attributes1.getFontType(), editor).getFont();
     final Font font2 = EditorUtil.fontForChar(c1, attributes2.getFontType(), editor).getFont();
 
-    final Point p2 = editor.offsetToXY(offset, false);
+    final Point2D p2 = editor.offsetToXY(offset, false);
+    float p2x = (float)p2.getX();
+    int p2y = (int)p2.getY();
+    int width1i = (int)(p2x) - (int)(p2x - width1);
+    int width2i = (int)(p2x + width2) - (int)p2x;
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
     final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
                                          : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final int caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1;
-    final Rectangle caretRectangle = new Rectangle(p2.x + width2 - caretShift, p2.y - topOverhang,
+    final Rectangle caretRectangle = new Rectangle((int)(p2x + width2 - caretShift), p2y - topOverhang,
                                                    caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
 
-    final Rectangle rectangle1 = new Rectangle(p2.x - width1, p2.y, width1, lineHeight);
-    final Rectangle rectangle2 = new Rectangle(p2.x, p2.y, width2 + caretWidth - caretShift, lineHeight);
+    final Rectangle rectangle1 = new Rectangle((int)(p2x - width1), p2y, width1i, lineHeight);
+    final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, width2i + caretWidth - caretShift, lineHeight);
 
     final Consumer<Graphics> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
 
       fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
-      drawChar(graphics, c2, p2.x, p2.y + ascent, font2, attributes2.getForegroundColor());
+      drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      fillRect(graphics, caretRectangle, getCaretColor(editor));
+      graphics.setColor(getCaretColor(editor));
+      graphics.fillRect(caretRectangle.x, caretRectangle.y, caretRectangle.width, caretRectangle.height);
 
       fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
-      drawChar(graphics, c1, p2.x - width1, p2.y + ascent, font1, attributes1.getForegroundColor());
+      drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
     };
 
     final Shape originalClip = g.getClip();
 
-    g.setClip(p2.x - caretShift, p2.y, width2 - caretShift + caretWidth + 1, lineHeight);
+    g.setClip((int)p2x - caretShift, p2y, width2i + caretWidth, lineHeight);
 
     if (DOUBLE_BUFFERING.asBoolean()) {
       paintWithDoubleBuffering(g, painter);
@@ -231,18 +240,18 @@ class ImmediatePainter {
     return width >= size.width && height >= size.height;
   }
 
-  private static void fillRect(final Graphics g, final Rectangle r, final Color color) {
+  private static void fillRect(final Graphics g, final Rectangle2D r, final Color color) {
     g.setColor(color);
-    g.fillRect(r.x, r.y, r.width, r.height);
+    ((Graphics2D)g).fill(r);
   }
 
   private static void drawChar(final Graphics g,
                                final char c,
-                               final int x, final int y,
+                               final float x, final float y,
                                final Font font, final Color color) {
     g.setFont(font);
     g.setColor(color);
-    g.drawString(String.valueOf(c), x, y);
+    ((Graphics2D)g).drawString(String.valueOf(c), x, y);
   }
 
   private static Color getCaretColor(final Editor editor) {

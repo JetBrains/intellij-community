@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
+    <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
   </component>
 </module>

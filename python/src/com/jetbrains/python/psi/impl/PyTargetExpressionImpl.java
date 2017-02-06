@@ -36,7 +36,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -563,7 +563,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(final PyResolveContext resolveContext) {
+  public PsiPolyVariantReference getReference(@NotNull final PyResolveContext resolveContext) {
     if (isQualified()) {
       return new PyQualifiedReference(this, resolveContext);
     }

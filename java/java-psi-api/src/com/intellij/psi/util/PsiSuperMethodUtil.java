@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,5 +174,16 @@ public class PsiSuperMethodUtil {
     }
 
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+  }
+
+  @Contract("null, _ -> null")
+  public static PsiMethod correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
+    if (method == null) return null;
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return method;
+    final PsiClass correctedClass = correctClassByScope(aClass, resolveScope);
+    if (correctedClass == null || correctedClass == aClass) return method;
+    final PsiMethod correctedClassMethodBySignature = correctedClass.findMethodBySignature(method, false);
+    return correctedClassMethodBySignature == null ? method : correctedClassMethodBySignature;
   }
 }

@@ -108,22 +108,19 @@ public class FindInProjectManager {
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);
 
     manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
-                                () -> new UsageSearcher() {
-                                  @Override
-                                  public void generate(@NotNull final Processor<Usage> processor) {
-                                    myIsFindInProgress = true;
+                                () -> processor -> {
+                                  myIsFindInProgress = true;
 
-                                    try {
-                                      Processor<UsageInfo> consumer = info -> {
-                                        Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-                                        usage.getPresentation().getIcon(); // cache icon
-                                        return processor.process(usage);
-                                      };
-                                      FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
-                                    }
-                                    finally {
-                                      myIsFindInProgress = false;
-                                    }
+                                  try {
+                                    Processor<UsageInfo> consumer = info -> {
+                                      Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+                                      usage.getPresentation().getIcon(); // cache icon
+                                      return processor.process(usage);
+                                    };
+                                    FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
+                                  }
+                                  finally {
+                                    myIsFindInProgress = false;
                                   }
                                 },
       processPresentation,

@@ -15,6 +15,8 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,9 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public interface GitBrancher {
+  static GitBrancher getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GitBrancher.class);
+  }
 
   /**
    * <p>Checks out a new branch in background.

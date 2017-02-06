@@ -64,6 +64,7 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
     myScaledIcons = null;
   }
 
+  @NotNull
   @Override
   protected RowIcon copy() {
     return new RowIcon(this);

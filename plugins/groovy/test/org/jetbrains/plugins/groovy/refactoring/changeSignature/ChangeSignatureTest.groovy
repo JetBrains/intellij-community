@@ -33,6 +33,14 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   void testOneNewParameter() throws Exception {
     doTest(new SimpleInfo("p", -1, '"5"', null, CommonClassNames.JAVA_LANG_STRING))
   }
+  
+  void testRemoveParameterMultiline() throws Exception {
+    doTest(new SimpleInfo(0), new SimpleInfo(2))
+  }
+  \
+  void testMoveParametersMultiline() throws Exception {
+    doTest(new SimpleInfo(1), new SimpleInfo(0), new SimpleInfo(2))
+  }
 
   void testRemoveParameter() throws Exception {
     doTest()

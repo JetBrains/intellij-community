@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +105,7 @@ public class ParenthesesUtils {
     return parent;
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,10 +153,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
             final String value = getValueString();
-            XValuePresentation presentation;
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
-            presentation = new JavaValuePresentation(value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
+            XValuePresentation presentation = new JavaValuePresentation(
+              value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
               XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer())

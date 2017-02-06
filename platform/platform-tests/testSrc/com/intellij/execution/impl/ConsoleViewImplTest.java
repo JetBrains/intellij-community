@@ -27,10 +27,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -42,13 +41,11 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -227,6 +224,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
           UIUtil.dispatchAllInvocationEvents();
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
+        console.waitAllRequests();
       }).cpuBound().assertTiming());
   }
 
@@ -271,42 +269,9 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testUserInputIsSentToProcessAfterNewLinePressed() {
-    byte[] buffer = new byte[10000];
-    BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(buffer);
-    BufferExposingByteArrayInputStream inputStream = new BufferExposingByteArrayInputStream(buffer);
-    AtomicBoolean finished = new AtomicBoolean();
-    Process testProcess = new Process() {
-      @Override
-      public OutputStream getOutputStream() {
-        return outputStream;
-      }
+    Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
 
-      @Override
-      public InputStream getInputStream() {
-        return inputStream;
-      }
-
-      @Override
-      public InputStream getErrorStream() {
-        return inputStream;
-      }
-
-      @Override
-      public int waitFor() {
-        while (!finished.get());
-        return 0;
-      }
-
-      @Override
-      public int exitValue() {
-        return 0;
-      }
-
-      @Override
-      public void destroy() {
-        finished.set(true);
-      }
-    };
     AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
       withCycleConsole(100, console -> {
         console.attachToProcess(handler);
@@ -319,8 +284,38 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         assertEquals(0, outputStream.size());
         console.print("\n", ConsoleViewContentType.USER_INPUT);
         console.waitAllRequests();
-        assertEquals(3, outputStream.size());
         assertEquals("IK\n", outputStream.toString());
     }));
+  }
+
+  public void testUserTypingIsSentToProcessAfterNewLinePressed() {
+    Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
+
+    AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
+      withCycleConsole(100, console -> {
+        console.attachToProcess(handler);
+        outputStream.reset();
+        Editor editor = console.getEditor();
+        typeIn(editor, 'X');
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+
+        typeIn(editor, 'Y');
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+
+        typeIn(editor, '\n');
+        console.waitAllRequests();
+        assertEquals(3, outputStream.size());
+        assertEquals("XY\n", outputStream.toString());
+    }));
+  }
+
+  private static void typeIn(Editor editor, char c) {
+    TypedAction action = EditorActionManager.getInstance().getTypedAction();
+    DataContext dataContext = ((EditorEx)editor).getDataContext();
+
+    action.actionPerformed(editor, c, dataContext);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@
 
 
 #define PROVIDER_NAME L"JB-Restarter"
-#define ERR_OPEN_PROCESS (0xE0000000 + 1)
-#define ERR_COMMAND_TOO_LONG (0xE0000000 + 2)
-#define ERR_CREATE_PROCESS (0xE0000000 + 3)
-#define ERR_GET_EXIT_CODE (0xE0000000 + 4)
-#define WARN_COMMAND_FAILED (0x80000000 + 11)
+#define ERR_OPEN_PROCESS (0xE0000000 + 100)
+#define ERR_MAIN_WAIT_FAILED (0xE0000000 + 101)
+#define ERR_COMMAND_TOO_LONG (0xE0000000 + 110)
+#define ERR_CREATE_PROCESS (0xE0000000 + 111)
+#define ERR_COMMAND_WAIT_FAILED (0xE0000000 + 112)
+#define ERR_GET_EXIT_CODE (0xE0000000 + 113)
+#define WARN_COMMAND_FAILED (0x80000000 + 200)
 
 #define COMMAND_SIZE 32768
 #define MESSAGE_SIZE (COMMAND_SIZE + 1024)
@@ -67,12 +69,18 @@ int wmain(int argc, wchar_t *argv[]) {
 
 static void wait_for_parent(const wchar_t *pid_arg) {
   int pid = (int)wcstol(pid_arg, NULL, 10);
+
   HANDLE parent = OpenProcess(SYNCHRONIZE, FALSE, pid);
   if (parent == NULL) {
     log_event(ERR_OPEN_PROCESS, "OpenProcess(%d): %d", pid, (int)GetLastError());
     return;
   }
-  WaitForSingleObject(parent, INFINITE);
+
+  DWORD res = WaitForSingleObject(parent, INFINITE);
+  if (res != WAIT_OBJECT_0) {
+    log_event(ERR_MAIN_WAIT_FAILED, "WaitForSingleObject: %08X/%d", (unsigned int)res, (int)GetLastError());
+  }
+
   CloseHandle(parent);
 }
 
@@ -103,7 +111,10 @@ static void run_command(int cmd_argc, wchar_t *cmd_argv[], BOOL last) {
   }
 
   if (!last) {
-    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD res = WaitForSingleObject(pi.hProcess, INFINITE);
+    if (res != WAIT_OBJECT_0) {
+      log_event(ERR_COMMAND_WAIT_FAILED, "WaitForSingleObject: %08X/%d", (unsigned int)res, (int)GetLastError());
+    }
 
     DWORD ec;
     if (!GetExitCodeProcess(pi.hProcess, &ec)) {
@@ -122,11 +133,13 @@ static void log_event(unsigned int event_id, const char *format, ...) {
   va_list ap;
   va_start(ap, format);
   if (event_log != NULL) {
-    int severity = event_id >> 30;
-    WORD type = severity == 3 ? EVENTLOG_ERROR_TYPE : severity == 2 ? EVENTLOG_WARNING_TYPE : EVENTLOG_INFORMATION_TYPE;
     char message[MESSAGE_SIZE];
-    int n = vsnprintf(message, MESSAGE_SIZE, format, ap);
-    ReportEventW(event_log, type, 0, event_id, NULL, 0, n, NULL, message);
+    int n = vsnprintf_s(message, MESSAGE_SIZE, _TRUNCATE, format, ap);
+    if (n > 0) {
+      int severity = event_id >> 30;
+      WORD type = severity == 3 ? EVENTLOG_ERROR_TYPE : severity == 2 ? EVENTLOG_WARNING_TYPE : EVENTLOG_INFORMATION_TYPE;
+      ReportEventW(event_log, type, 0, event_id, NULL, 0, n, NULL, message);
+    }
   }
   va_end(ap);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.ui.JBColor
 
 class NormalCompletionOrderingTest extends CompletionSortingTestCase {
@@ -54,7 +54,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreferAnnotationMethods() throws Throwable {
-    checkPreferredItems(0, "name", "value", "Foo", "Anno")
+    checkPreferredItems(0, "name", "value", "String", "Foo", "Anno")
   }
 
   void testPreferSuperMethods() throws Throwable {
@@ -81,14 +81,8 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testUppercaseMatters2() throws Throwable {
-    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL
-      checkPreferredItems(0, "classLoader", "classLoader2")
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old
-    }
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL
+    checkPreferredItems(0, "classLoader", "classLoader2")
   }
 
   void testShorterShouldBePreselected() throws Throwable {
@@ -108,7 +102,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testJComponentInstanceMembers() throws Throwable {
-    checkPreferredItems(0, "getAccessibleContext", "getUI")
+    checkPreferredItems(0, "getAccessibleContext", "getUI", "getUIClassID")
   }
 
   void testClassStaticMembersInBooleanContext() throws Throwable {
@@ -173,53 +167,6 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "FooBee", "FooBar")
   }
 
-  void testSameStatsForDifferentQualifiers() throws Throwable {
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponent")
-    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'))
-    FileDocumentManager.instance.saveAllDocuments()
-
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-  }
-
-  void testSameStatsForDifferentQualifiers2() throws Throwable {
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponent")
-    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'))
-    FileDocumentManager.instance.saveAllDocuments()
-
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-  }
-
-  void testAbandonSameStatsForDifferentQualifiers() throws Throwable {
-    invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems 0, "method1", "equals"
-    myFixture.type('eq\n2);\nf2.')
-
-    myFixture.completeBasic()
-    assertPreferredItems 0, "equals", "method2"
-    myFixture.type('me\n);\n')
-
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      myFixture.type('f2.')
-      myFixture.completeBasic()
-      assertPreferredItems 0, "method2", "equals"
-      myFixture.type('me\n);\n')
-    }
-
-    myFixture.type('f3.')
-    myFixture.completeBasic()
-    assertPreferredItems 0, "method3", "equals"
-  }
-
   void testDispreferFinalize() throws Throwable {
     checkPreferredItems(0, "final", "finalize")
   }
@@ -248,17 +195,20 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   void testFqnStats() {
     myFixture.addClass("public interface Baaaaaaar {}")
+    myFixture.addClass("package boo; public interface Baaaaaaar {}")
     myFixture.addClass("package zoo; public interface Baaaaaaar {}")
 
     configureSecondCompletion()
 
     final LookupImpl lookup = getLookup()
-    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName())
-    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(1)).getQualifiedName())
-    incUseCount(lookup, 1)
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName)
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[2]).qualifiedName)
+    incUseCount(lookup, 2)
 
-    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.getItems().get(0)).getQualifiedName())
-    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName())
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[0]).qualifiedName) // same package
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[1]).qualifiedName)
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement) lookup.items[2]).qualifiedName)
   }
 
   void testSkipLifted() {
@@ -317,6 +267,15 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "MyEnum.bar", "MyEnum", "MyEnum.foo")
   }
 
+  void testPreferExpectedEnumConstantsDespiteStats() {
+    checkPreferredItems 0, "const1", "const2", "constx1", "constx2"
+    myFixture.lookup.currentItem = myFixture.lookupElements[2]
+
+    myFixture.type('\n);\nmethodX(cons')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'constx1', 'constx2', 'const1', 'const2'
+  }
+
   void testPreferElse() {
     checkPreferredItems(0, "else", "element")
   }
@@ -337,7 +296,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     myFixture.addClass("package foo; public class ELXaaaaaaaaaaaaaaaaaaaa {}")
     invokeCompletion(getTestName(false) + ".java")
@@ -349,14 +308,14 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testReallyAlphaSorting() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     invokeCompletion(getTestName(false) + ".java")
     assert myFixture.lookupElementStrings.sort() == myFixture.lookupElementStrings
   }
 
   void testAlphaSortPackages() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
 
     def pkgs = ['bar', 'foo', 'goo', 'roo', 'zoo']
     for (s in pkgs) {
@@ -369,7 +328,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testAlphaSortingStartMatchesFirst() {
-    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     checkPreferredItems 0, 'xxbar', 'xxfoo', 'xxgoo', 'barxx', 'fooxx', 'gooxx'
   }
 
@@ -391,13 +350,6 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   void testCaseInsensitivePrefixMatch() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     checkPreferredItems(1, "Foo", "foo1", "foo2")
-  }
-
-  void testExpectedTypeIsMoreImportantThanCase() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    checkPreferredItems 0, "enable", "ENABLED"
-    incUseCount(lookup, 1)
-    assertPreferredItems 0, "ENABLED", "enable"
   }
 
   void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
@@ -516,41 +468,6 @@ interface TxANotAnno {}
     assert lookup.currentItem.lookupString == 'JComponent'
   }
 
-  void testStatisticsByPrefix() {
-    Closure repeatCompletion = { String letter ->
-      String var1 = "_${letter}oo1"
-      String var2 = "_${letter}oo2"
-
-      myFixture.type("_$letter")
-      myFixture.completeBasic()
-      assertPreferredItems(0, var1, var2)
-      myFixture.type('2\n;\n')
-
-      for (i in 0..<StatisticsManager.OBLIVION_THRESHOLD - 2) {
-        myFixture.type('_')
-        myFixture.completeBasic()
-        assert myFixture.lookupElementStrings.indexOf(var2) < myFixture.lookupElementStrings.indexOf(var1)
-        myFixture.type(letter)
-        assertPreferredItems(0, var2, var1)
-        myFixture.type('\n;\n')
-      }
-    }
-
-    configureByFile(getTestName(false) + ".java")
-    repeatCompletion 'g'
-    repeatCompletion 'f'
-    repeatCompletion 'b'
-
-    myFixture.completeBasic()
-    assertPreferredItems(0, 'return', '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
-    myFixture.type('_')
-    assertPreferredItems(0, '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
-    myFixture.type('g')
-    assertPreferredItems(0, '_goo2', '_goo1')
-    myFixture.type('o')
-    assertPreferredItems(0, '_goo2', '_goo1')
-  }
-
   void testPreferFieldToMethod() {
     checkPreferredItems(0, 'size', 'size')
     assert lookup.items[0].object instanceof PsiField
@@ -646,7 +563,7 @@ interface TxANotAnno {}
   }
 
   void testPreferString() {
-    checkPreferredItems 0, 'String', 'System', 'Set'
+    checkPreferredItems 0, 'String', 'System', 'Short'
   }
 
   void testAnnotationEnum() {
@@ -788,12 +705,75 @@ class ContainerUtil extends ContainerUtilRt {
   }
 
   void testPreselectClosestExactPrefixItem() {
-    UISettings.instance.SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    UISettings.instance.setSortLookupElementsLexicographically(true)
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('pack1')
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
+  }
+
+  void testPreferExpectedMethodTypeArg() {
+    checkPreferredItems 0, 'String', 'Usage'
+
+    def typeArgOffset = myFixture.editor.caretModel.offset
+
+    // increase usage stats of ArrayList
+    LookupManager.getInstance(project).hideActiveLookup()
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    myFixture.type('\nArrayLi')
+    myFixture.completeBasic()
+    myFixture.type(' l')
+    myFixture.completeBasic()
+    myFixture.type('\n;')
+    assert myFixture.editor.document.text.contains('ArrayList list;')
+
+    // check String is still preferred
+    myFixture.editor.caretModel.moveToOffset(typeArgOffset)
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'String', "Usage"
+  }
+
+  void testMethodStatisticsPerQualifierType() {
+    checkPreferredItems 0, 'charAt'
+    myFixture.type('eq\n);\n')
+    assert myFixture.editor.document.text.contains('equals();\n')
+
+    myFixture.type('this.')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'someMethod'
+  }
+
+  void testPreferImportedClassesAmongstSameNamed() {
+    myFixture.addClass('package foo; public class String {}')
+
+    // use foo.String
+    myFixture.configureByText 'a.java', 'class Foo { Stri<caret> }'
+    myFixture.completeBasic()
+    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == 'String' && LookupElementPresentation.renderElement(it).tailText.contains('foo') }
+    myFixture.type('\n')
+    myFixture.checkResult 'import foo.String;\n\nclass Foo { String<caret>\n}'
+
+    // assert non-imported String is not preselected when completing in another file
+    myFixture.configureByText 'b.java', 'class Bar { Stri<caret> }'
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'String', 'String'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('java.lang')
+  }
+
+  void testClassNameStatisticsDoesntDependOnExpectedType() {
+    checkPreferredItems 0, 'ConflictsUtil', 'ContainerUtil'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\n.foo();\nlong l = ConUt')
+    myFixture.completeBasic()
+
+    assertPreferredItems 0, 'ContainerUtil', 'ConflictsUtil'
+  }
+
+  void testPreferListAddWithoutIndex() {
+    checkPreferredItems 0, 'add', 'add', 'addAll', 'addAll'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('int index')
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[3]).tailText.contains('int index')
   }
 
 }

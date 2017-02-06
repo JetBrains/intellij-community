@@ -107,20 +107,22 @@ public final class LoadTextUtil {
     Charset charset = null;
 
     String charsetName = fileType.getCharset(virtualFile, content);
-    Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
-
-    Charset hardCodedCharset = guessed == null ? null : guessed.first;
     if (charsetName != null) {
       charset = CharsetToolkit.forName(charsetName);
     }
-    else if (hardCodedCharset == null) {
-      Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-      if (specifiedExplicitly != null) {
-        charset = specifiedExplicitly;
-      }
-    }
     else {
-      charset = hardCodedCharset;
+      Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
+      Charset hardCodedCharset = guessed == null ? null : guessed.first;
+
+      if (hardCodedCharset == null) {
+        Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
+        if (specifiedExplicitly != null) {
+          charset = specifiedExplicitly;
+        }
+      }
+      else {
+        charset = hardCodedCharset;
+      }
     }
 
     if (charset == null) {

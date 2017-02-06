@@ -17,8 +17,10 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,9 +31,9 @@ public abstract class AbstractUrl {
   protected final String moduleName;
   private final String myType;
 
-  protected AbstractUrl(String url, String moduleName, @NonNls String type) {
+  protected AbstractUrl(String url, @Nullable String moduleName, @NotNull @NonNls String type) {
     myType = type;
-    this.url = url == null ? "" : url;
+    this.url = StringUtil.notNullize(url);
     this.moduleName = moduleName;
   }
 
@@ -47,7 +49,7 @@ public abstract class AbstractUrl {
   @Nullable
   public abstract Object[] createPath(Project project);
 
-  // return null if cannot recognize the element
+  @Nullable("return null if cannot recognize the element")
   public AbstractUrl createUrl(String type, String moduleName, String url){
     if (type.equals(myType)) {
       return createUrl(moduleName, url);
@@ -65,17 +67,13 @@ public abstract class AbstractUrl {
     final AbstractUrl that = (AbstractUrl)o;
 
     if (moduleName != null ? !moduleName.equals(that.moduleName) : that.moduleName != null) return false;
-    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
-    if (url != null ? !url.equals(that.url) : that.url != null) return false;
-
-    return true;
+    return myType.equals(that.myType) && url.equals(that.url);
   }
 
   public int hashCode() {
-    int result;
-    result = (url != null ? url.hashCode() : 0);
+    int result = url.hashCode();
     result = 29 * result + (moduleName != null ? moduleName.hashCode() : 0);
-    result = 29 * result + (myType != null ? myType.hashCode() : 0);
+    result = 29 * result + myType.hashCode();
     return result;
   }
 }

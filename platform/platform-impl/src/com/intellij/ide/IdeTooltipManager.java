@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -42,7 +42,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +54,7 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
-public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
+public class IdeTooltipManager implements ApplicationComponentAdapter, Disposable, AWTEventListener {
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
@@ -129,7 +128,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (c == myCurrentComponent || c == myQueuedComponent) {
+      //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+      if (c == myCurrentComponent && myCurrentTooltip != null && !myCurrentTooltip.isHint() && myCurrentTipUi != null) {
+        myCurrentTipUi.setAnimationEnabled(false);
+        hideCurrent(null, null, null, null, false);
+      }
+      else if (c == myCurrentComponent || c == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
     }
@@ -512,7 +516,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     hideCurrentNow(false);
     if (myLastDisposable != null) {
       Disposer.dispose(myLastDisposable);
@@ -546,6 +550,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
+        if (!isShowing() && layeredPane != null) {
+          AppUIUtil.targetToDevice(this, layeredPane);
+        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
@@ -652,12 +659,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public static void setBorder(JComponent pane) {
     pane.setBorder(
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), JBUI.Borders.empty(0, 5)));
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "IDE Tooltip Manager";
   }
 
   public boolean isQueuedToShow(IdeTooltip tooltip) {

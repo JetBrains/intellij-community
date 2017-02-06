@@ -418,8 +418,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       final String durationStr = testFinished.getAttributes().get(ATTR_KEY_TEST_DURATION);
 
-      // Test duration in milliseconds
-      long duration = 0;
+      // Test duration in milliseconds or null if not reported
+      Long duration = null;
 
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
         duration = convertToLong(durationStr, testFinished);

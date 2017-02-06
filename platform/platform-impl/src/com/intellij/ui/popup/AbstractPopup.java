@@ -1234,7 +1234,7 @@ public class AbstractPopup implements JBPopup {
   private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
-      boolean cannotBeDialog = noFocus && SystemInfo.isXWindow;
+      boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
         return new PopupComponent.Factory.Dialog();
@@ -1737,7 +1737,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @NotNull
-  CaptionPanel getTitle() {
+  public CaptionPanel getTitle() {
     return myCaption;
   }
 
@@ -1889,7 +1889,7 @@ public class AbstractPopup implements JBPopup {
     return location;
   }
 
-  private boolean isBusy() {
+  protected boolean isBusy() {
     return myResizeListener != null && myResizeListener.isBusy() || myMoveListener != null && myMoveListener.isBusy();
   }
 

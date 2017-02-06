@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
-    if (isUnderIf(node)) {
+    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
+      // we could not suggest `None` because it could be a reference to an empty collection
+      // so we could push only non-`None` assertions
       pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
@@ -195,10 +197,21 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     myStack.push(new Assertion(target, typeCallback));
   }
 
-  private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
+  private static boolean isIfReferenceStatement(@NotNull PyReferenceExpression node) {
+    return node.getParent() instanceof PyIfPart;
+  }
+
+  private static boolean isIfReferenceConditionalStatement(@NotNull PyReferenceExpression node) {
     final PsiElement parent = node.getParent();
-    return parent instanceof PyIfPart ||
-           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition();
+    return parent instanceof PyConditionalExpression &&
+           node == ((PyConditionalExpression)parent).getCondition();
+  }
+
+  private static boolean isIfNotReferenceStatement(@NotNull PyReferenceExpression node) {
+    final PsiElement parent = node.getParent();
+    return parent instanceof PyPrefixExpression &&
+           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
+           parent.getParent() instanceof PyIfPart;
   }
 
   static class Assertion {

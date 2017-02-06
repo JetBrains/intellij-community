@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
  */
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
+import com.intellij.debugger.memory.event.InstancesTrackerListener;
+import com.intellij.debugger.memory.tracking.TrackingType;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,11 +31,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.component.CreationPositionTracker;
-import com.intellij.debugger.memory.component.InstancesTracker;
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
-import com.intellij.debugger.memory.tracking.TrackingType;
-import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -41,7 +42,6 @@ class InstancesWithStackFrameView {
   private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
   private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
   private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
-  private static final List<StackFrameItem> EMPTY_FRAME = Collections.emptyList();
 
   private float myHidedProportion;
 
@@ -77,7 +77,6 @@ class InstancesWithStackFrameView {
 
     JComponent stackComponent = new JBScrollPane(list);
 
-    CreationPositionTracker tracker = CreationPositionTracker.getInstance(debugSession.getProject());
     InstancesTracker instancesTracker = InstancesTracker.getInstance(debugSession.getProject());
     instancesTracker.addTrackerListener(new InstancesTrackerListener() {
       @Override
@@ -100,12 +99,15 @@ class InstancesWithStackFrameView {
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
 
+    final MemoryViewDebugProcessData data =
+      DebuggerManager.getInstance(debugSession.getProject()).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
+        .getUserData(MemoryViewDebugProcessData.KEY);
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = tree.getSelectedReference();
-      if (ref != null && tracker != null) {
-        List<StackFrameItem> stack = tracker.getStack(debugSession, ref);
+      if (ref != null && data != null) {
+        List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
-          list.setFrame(stack);
+          list.setFrameItems(stack);
           if (mySplitter.getProportion() == 1.f) {
             mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
           }
@@ -117,7 +119,7 @@ class InstancesWithStackFrameView {
         list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
       }
 
-      list.setFrame(EMPTY_FRAME);
+      list.setFrameItems(Collections.emptyList());
     });
   }
 

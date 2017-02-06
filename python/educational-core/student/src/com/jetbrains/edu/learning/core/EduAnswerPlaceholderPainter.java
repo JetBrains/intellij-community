@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.DocumentUtil;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,36 +36,21 @@ public class EduAnswerPlaceholderPainter {
     final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                              EffectType.BOXED, Font.PLAIN);
     textAttributes.setEffectColor(color);
-    if (placeholder.isActive()) {
-      drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
-    }
-    else if (!placeholder.getUseLength()) {
-      int offset = placeholder.getOffset();
-      drawAnswerPlaceholderFromPrevStep(editor, offset, offset + placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex()));
-    }
-  }
-
-  public static void drawAnswerPlaceholder(@NotNull Editor editor,
-                                           @NotNull AnswerPlaceholder placeholder,
-                                           @Nullable TextAttributes textAttributes,
-                                           int placeholdersLayer) {
     int startOffset = placeholder.getOffset();
     if (startOffset == -1) {
       return;
     }
-    final int length = placeholder.getRealLength();
-    int delta = 0;
-    AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
-    if (info != null && info.isNeedInsertText()) {
-      Document document = editor.getDocument();
-      int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
-      if (nonSpaceCharOffset != startOffset) {
-        delta = startOffset - nonSpaceCharOffset;
-        startOffset = nonSpaceCharOffset;
-      }
+    final int length =
+      placeholder.isActive() ? placeholder.getRealLength() : placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex());
+    Pair<Integer, Integer> offsets = StudyUtils.getPlaceholderOffsets(placeholder, editor.getDocument());
+    startOffset = offsets.first;
+    int endOffset = offsets.second;
+    if (placeholder.isActive()) {
+      drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, PLACEHOLDERS_LAYER);
     }
-    final int endOffset = startOffset + length + delta;
-    drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, placeholdersLayer);
+    else if (!placeholder.getUseLength() && length != 0) {
+      drawAnswerPlaceholderFromPrevStep(editor, startOffset, endOffset);
+    }
   }
 
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
@@ -103,7 +88,7 @@ public class EduAnswerPlaceholderPainter {
 
 
   public static void createGuardedBlocks(@NotNull final Editor editor, TaskFile taskFile) {
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
       createGuardedBlocks(editor, answerPlaceholder);
     }
   }
@@ -113,9 +98,9 @@ public class EduAnswerPlaceholderPainter {
     if (document instanceof DocumentImpl) {
       DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
-      int start = placeholder.getOffset();
-      final int length = placeholder.getRealLength();
-      int end = start + length;
+      Pair<Integer, Integer> offsets = StudyUtils.getPlaceholderOffsets(placeholder, editor.getDocument());
+      Integer start = offsets.first;
+      Integer end = offsets.second;
       if (start != 0) {
         createGuardedBlock(editor, blocks, start - 1, start);
       }

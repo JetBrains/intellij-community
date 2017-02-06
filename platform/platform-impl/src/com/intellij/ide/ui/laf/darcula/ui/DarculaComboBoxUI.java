@@ -85,9 +85,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
           g.fillRect(0, 0, w, h);
         }
         g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getBorderColor()));
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-        g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        config.setupRoundedBorderAntialiasing();
         final int tW = JBUI.scale(8);
         final int tH = JBUI.scale(6);
         final int xU = (w - tW) / 2;

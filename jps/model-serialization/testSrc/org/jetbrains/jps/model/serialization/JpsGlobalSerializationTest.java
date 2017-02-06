@@ -80,15 +80,10 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   }
 
   private void assertOptionsFilesEqual(File originalOptionsDir, File targetOptionsDir, final String fileName) {
-    try {
-      JpsMacroExpander expander = new JpsMacroExpander(getPathVariables());
-      Element expected = JpsLoaderBase.loadRootElement(new File(originalOptionsDir, fileName), expander);
-      Element actual = JpsLoaderBase.loadRootElement(new File(targetOptionsDir, fileName), expander);
-      PlatformTestUtil.assertElementsEqual(expected, actual);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    JpsMacroExpander expander = new JpsMacroExpander(getPathVariables());
+    Element expected = JpsLoaderBase.loadRootElement(new File(originalOptionsDir, fileName), expander);
+    Element actual = JpsLoaderBase.loadRootElement(new File(targetOptionsDir, fileName), expander);
+    PlatformTestUtil.assertElementsEqual(expected, actual);
   }
 
   public void testLoadEncoding() {

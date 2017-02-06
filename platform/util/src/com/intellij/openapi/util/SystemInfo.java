@@ -52,7 +52,7 @@ public class SystemInfo extends SystemInfoRt {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  // version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx
+  /* version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx */
   public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
   public static final boolean isWinXpOrNewer = isWindows && isOsVersionAtLeast("5.1");
   public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
@@ -60,55 +60,37 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
-  /**
-   * https://msdn.microsoft.com/en-us/commandline/wsl/about
-   */
+  /* https://msdn.microsoft.com/en-us/commandline/wsl/about */
   private static final AtomicNullableLazyValue<File> ourWSLBashFile = new AtomicNullableLazyValue<File>() {
     @Nullable
     @Override
     protected File compute() {
-      if (!isWin10OrNewer) {
-        return null;
+      if (isWin10OrNewer) {
+        String windir = System.getenv().get("windir");
+        if (!StringUtil.isEmpty(windir)) {
+          File bashFile = new File(windir + "\\System32\\bash.exe");
+          if (bashFile.exists()) {
+            return bashFile;
+          }
+        }
       }
 
-      String windir = System.getenv().get("windir");
-      if (StringUtil.isEmpty(windir)) {
-        return null;
-      }
-
-      File bashFile = new File(windir + "\\System32\\bash.exe");
-      return bashFile.exists() ? bashFile : null;
+      return null;
     }
   };
 
-  /**
-   * @return WSL bash file or null if unavailable
-   */
   @Nullable
   public static File getWSLBashFile() {
     return ourWSLBashFile.getValue();
   }
 
-  /**
-   * @return true if we are on Windows 10+ and have WSL installed
-   */
   public static boolean hasWSL() {
     return getWSLBashFile() != null;
   }
 
   public static final boolean isXWindow = isUnix && !isMac;
-  // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
+  /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
-
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseName() {
-    return null;
-  }
-
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseVersion() {
-    return null;
-  }
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -190,6 +172,10 @@ public class SystemInfo extends SystemInfoRt {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsNameAndVersion() {
+    return System.getProperty("os.name") + " " + System.getProperty("os.version");
+  }
+
   private static int normalize(int number) {
     return number > 9 ? 9 : number;
   }
@@ -238,5 +224,15 @@ public class SystemInfo extends SystemInfoRt {
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
+  public static String getUnixReleaseName() {
+    return null;
+  }
+
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
+  public static String getUnixReleaseVersion() {
+    return null;
+  }
   //</editor-fold>
 }

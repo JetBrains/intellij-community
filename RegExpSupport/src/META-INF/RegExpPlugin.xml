@@ -26,5 +26,13 @@
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
       <category>RegExp</category>
     </intentionAction>
+
+    <localInspection groupName="RegExp" language="RegExp" shortName="RepeatedSpace" displayName="Consecutive spaces" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="SingleCharAlternation" displayName="Single character alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
+    <localInspection groupName="RegExp" language="RegExp"  shortName="OctalEscape" displayName="Octal escape" enabledByDefault="false"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
   </extensions>
 </idea-plugin>

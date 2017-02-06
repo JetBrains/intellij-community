@@ -41,8 +41,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
-  private static final String MASTER = "master";
-  private static final String ORIGIN_MASTER = "origin/master";
+  public static final String MASTER = "master";
+  public static final String ORIGIN_MASTER = "origin/master";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
   private static final String REMOTE_TABLE_SEPARATOR = " & ";
   private static final String SEPARATOR = "/";

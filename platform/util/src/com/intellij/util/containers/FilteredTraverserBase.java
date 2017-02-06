@@ -172,6 +172,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     return withTraversal(meta.traversal.unique(identity));
   }
 
+  @NotNull
+  public Self onRange(@NotNull Condition<? super T> rangeCondition) {
+    return withTraversal(meta.traversal.onRange(rangeCondition));
+  }
+
   /**
    * Excludes the nodes by the specified condition from any traversal completely.
    * @see FilteredTraverserBase#expand(Condition)
@@ -240,8 +245,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @SuppressWarnings("unchecked")
   protected static class Meta<T> {
-    final Iterable<? extends T> roots;
     final TreeTraversal traversal;
+
+    final Iterable<? extends T> roots;
     final Cond<T> expand;
     final Cond<T> regard;
     final Cond<T> filter;

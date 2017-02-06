@@ -20,11 +20,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -129,11 +128,8 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     }
 
     @Override
-    public boolean shouldBeShowing(Object value) {
-      if (!super.shouldBeShowing(value)) return false;
-      if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
-
-      AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+    public boolean shouldBeShowing(@NotNull AnAction action) {
+      if (!super.shouldBeShowing(action)) return false;
       if (getSpeedSearch().isHoldingFilter()) {
         if (action instanceof MultipleValueFilterPopupComponent.PredefinedValueAction) {
           return action instanceof SpeedsearchAction ||

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.StackFramePopup;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.memory.component.CreationPositionTracker;
-import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.memory.ui.InstancesTree;
 
 import java.util.List;
 
@@ -41,29 +40,35 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    Project project = e.getProject();
-    List<StackFrameItem> stack = getStack(e);
-    if(project != null && stack != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if(session != null) {
-        GlobalSearchScope searchScope = DebuggerManager.getInstance(project)
-            .getDebugProcess(session.getDebugProcess().getProcessHandler()).getSearchScope();
-        new StackFramePopup(project, stack, searchScope).show();
+    final Project project = e.getProject();
+    final List<StackFrameItem> stack = getStack(e);
+    if (project != null && stack != null) {
+      final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (session != null) {
+        DebugProcessImpl process = (DebugProcessImpl)DebuggerManager.getInstance(project)
+          .getDebugProcess(session.getDebugProcess().getProcessHandler());
+        StackFramePopup.show(stack, process);
       }
     }
   }
 
   @Nullable
   private List<StackFrameItem> getStack(AnActionEvent e) {
-    Project project = e.getProject();
-    XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;
-    if(project == null || ref == null) {
+    final Project project = e.getProject();
+    final XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
+    final ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;
+    if (project == null || ref == null) {
       return null;
     }
 
-    XDebugSession session = e.getData(InstancesTree.DEBUG_SESSION_DATA_KEY);
-    CreationPositionTracker tracker = CreationPositionTracker.getInstance(project);
-    return session == null || tracker == null ? null : tracker.getStack(session, ref);
+    final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    if (session != null) {
+      final MemoryViewDebugProcessData data =
+        DebuggerManager.getInstance(project).getDebugProcess(session.getDebugProcess().getProcessHandler()).getUserData(
+          MemoryViewDebugProcessData.KEY);
+      return data != null ? data.getTrackedStacks().getStack(ref) : null;
+    }
+
+    return null;
   }
 }

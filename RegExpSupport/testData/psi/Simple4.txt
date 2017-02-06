@@ -18,7 +18,7 @@ REGEXP_FILE
       RegExpCharImpl: <e>
         PsiElement(CHARACTER)('e')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpCharImpl: <w>
         PsiElement(CHARACTER)('w')
       RegExpCharImpl: <o>
@@ -30,13 +30,13 @@ REGEXP_FILE
       RegExpCharImpl: <s>
         PsiElement(CHARACTER)('s')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpCharImpl: <o>
         PsiElement(CHARACTER)('o')
       RegExpCharImpl: <f>
         PsiElement(CHARACTER)('f')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpCharImpl: <t>
         PsiElement(CHARACTER)('t')
       RegExpCharImpl: <e>

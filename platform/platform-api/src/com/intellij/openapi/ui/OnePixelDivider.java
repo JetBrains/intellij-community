@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.Gray;
@@ -121,7 +122,7 @@ public class OnePixelDivider extends Divider {
       OnePixelDivider d = OnePixelDivider.this;
       if ((vertical ? p.x : p.y) < 0 || vertical && p.x > d.getWidth() || !vertical && p.y > d.getHeight()) return false;
       int r = Math.abs(vertical ? p.y : p.x);
-      return r < JBUI.scale(6);
+      return r < JBUI.scale(Registry.intValue("ide.splitter.mouseZone"));
     }
 
     @Override

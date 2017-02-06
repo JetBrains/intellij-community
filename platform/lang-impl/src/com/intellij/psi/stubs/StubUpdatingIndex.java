@@ -39,6 +39,7 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.io.DataOutputStream;
@@ -406,29 +407,29 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     @NotNull
     @Override
     protected UpdateData<Integer, SerializedStubTree> createUpdateData(Map<Integer, SerializedStubTree> data,
-                                                                       ThrowableComputable<ForwardIndex.InputKeyIterator<Integer, SerializedStubTree>, IOException> oldKeys,
+                                                                       ThrowableComputable<InputDataDiffBuilder<Integer, SerializedStubTree>, IOException> oldKeys,
                                                                        ThrowableRunnable<IOException> forwardIndexUpdate) {
       return new StubUpdatingData(data, oldKeys, forwardIndexUpdate);
     }
 
-    static class StubUpdatingData extends SimpleUpdateData<Integer, SerializedStubTree> {
+    static class StubUpdatingData extends UpdateData<Integer, SerializedStubTree> {
       private Collection<Integer> oldStubIndexKeys;
 
       public StubUpdatingData(@NotNull Map<Integer, SerializedStubTree> newData,
-                              @NotNull ThrowableComputable<ForwardIndex.InputKeyIterator<Integer, SerializedStubTree>, IOException> iterator,
-                              ThrowableRunnable<IOException> forwardIndexUpdate) {
+                              @NotNull ThrowableComputable<InputDataDiffBuilder<Integer, SerializedStubTree>, IOException> iterator,
+                              @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
         super(newData, iterator, INDEX_ID, forwardIndexUpdate);
       }
 
       @Override
-      protected void iterateKeys(int inputId,
-                                 KeyValueUpdateProcessor<Integer, SerializedStubTree> addProcessor,
-                                 RemovedKeyProcessor<Integer> removeProcessor,
-                                 ForwardIndex.InputKeyIterator<Integer, SerializedStubTree> currentData) throws StorageException {
-        if (currentData instanceof CollectionInputKeyIterator) {
-          oldStubIndexKeys = ((CollectionInputKeyIterator<Integer, SerializedStubTree>)currentData).getCollection();
-        }
-        super.iterateKeys(inputId, addProcessor, removeProcessor, currentData);
+      protected ThrowableComputable<InputDataDiffBuilder<Integer, SerializedStubTree>, IOException> getCurrentDataEvaluator() {
+        return () -> {
+          final InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder = super.getCurrentDataEvaluator().compute();
+          if (diffBuilder instanceof CollectionInputDataDiffBuilder) {
+            oldStubIndexKeys = ((CollectionInputDataDiffBuilder<Integer, SerializedStubTree>) diffBuilder).getSeq();
+          }
+          return diffBuilder;
+        };
       }
 
       public Map<StubIndexKey, Map<Object, StubIdList>> getOldStubIndicesValueMap() {
@@ -457,7 +458,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         super.flush();
       }
     }
-
 
     @Override
     protected void updateWithMap(int inputId,

@@ -40,8 +40,9 @@ public class VarProcessor {
   }
 
   public void setVarVersions(RootStatement root) {
+    VarVersionsProcessor oldProcessor = varVersions;
     varVersions = new VarVersionsProcessor(method, methodDescriptor);
-    varVersions.setVarVersions(root);
+    varVersions.setVarVersions(root, oldProcessor);
   }
 
   public void setVarDefinitions(Statement root) {
@@ -83,12 +84,12 @@ public class VarProcessor {
     }
   }
 
-  public Integer getVarOriginalIndex(VarVersionPair pair) {
+  public Integer getVarOriginalIndex(int index) {
     if (varVersions == null) {
       return null;
     }
 
-    return varVersions.getMapOriginalVarIndices().get(pair.var);
+    return varVersions.getMapOriginalVarIndices().get(index);
   }
 
   public void refreshVarNames(VarNamesCollector vc) {

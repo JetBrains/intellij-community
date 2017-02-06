@@ -104,13 +104,18 @@ class CompilerReferenceReader {
     myIndex.close();
   }
 
-  static CompilerReferenceReader create(Project project) {
+  static boolean exists(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
     if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-      return null;
+      return false;
     }
+    return CompilerBackwardReferenceIndex.exist(buildDir);
+  }
+
+  static CompilerReferenceReader create(Project project) {
+    if (!exists(project)) return null;
     try {
-      return new CompilerReferenceReader(buildDir);
+      return new CompilerReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

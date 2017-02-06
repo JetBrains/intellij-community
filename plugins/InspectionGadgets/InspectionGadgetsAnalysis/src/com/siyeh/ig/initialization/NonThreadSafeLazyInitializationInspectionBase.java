@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,11 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonThreadSafeLazyInitializationInspectionBase extends BaseInspection {
@@ -80,23 +78,10 @@ public class NonThreadSafeLazyInitializationInspectionBase extends BaseInspectio
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       final PsiExpression condition = ifStatement.getCondition();
-      if (condition == null|| !isNullComparison(condition, field)) {
+      if (condition == null|| !ComparisonUtils.isNullComparison(condition, field, true)) {
         return;
       }
       registerError(lhs, ifStatement, field);
-    }
-
-    private static boolean isNullComparison(PsiExpression condition, PsiVariable variable) {
-      if (!(condition instanceof PsiBinaryExpression)) {
-        return false;
-      }
-      final PsiBinaryExpression comparison = (PsiBinaryExpression)condition;
-      final IElementType tokenType = comparison.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.EQEQ)) {
-        return false;
-      }
-      final PsiExpression operand = ExpressionUtils.getValueComparedWithNull(comparison);
-      return operand != null && VariableAccessUtils.evaluatesToVariable(operand, variable);
     }
 
     private static boolean isInSynchronizedContext(PsiElement element) {

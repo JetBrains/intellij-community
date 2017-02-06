@@ -100,12 +100,14 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (virtualFile == null || project == null || editor == null) {
+    if (virtualFile == null || project == null) {
       return;
     }
-    if (CCUtils.isCourseCreator(project) && StudyUtils.getTaskForFile(project, virtualFile) != null) {
+    if (!CCUtils.isCourseCreator(project)) {
+      return;
+    }
+    if (StudyUtils.getTaskForFile(project, virtualFile) != null || StudyUtils.getTask(project, virtualFile) != null) {
       presentation.setEnabledAndVisible(true);
     }
   }

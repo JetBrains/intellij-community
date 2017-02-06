@@ -411,7 +411,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
-    IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
+    IdeFocusManager.getInstance(myProject).requestFocusInProject(newPane.getComponentToFocus(), myProject);
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
@@ -849,7 +849,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public ActionCallback changeViewCB(@NotNull String viewId, String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
-    LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId);
+    LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId + "; project: " + myProject);
     if (!viewId.equals(getCurrentViewId())
         || subId != null && !subId.equals(pane.getSubId())) {
       for (Content content : getContentManager().getContents()) {
@@ -1878,7 +1878,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(getCurrentProjectViewPane() != null);
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setVisible(pane != null && pane.supportsSortByType());
     }
   }
 
@@ -1901,7 +1902,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(getCurrentProjectViewPane() != null);
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setEnabledAndVisible(pane != null && pane.supportsFoldersAlwaysOnTop());
     }
   }
 

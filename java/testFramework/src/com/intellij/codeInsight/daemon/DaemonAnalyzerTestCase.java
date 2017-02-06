@@ -99,7 +99,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     startupManager.runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
-    if (isPerformanceTest()) {
+    if (isStressTest()) {
       IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes

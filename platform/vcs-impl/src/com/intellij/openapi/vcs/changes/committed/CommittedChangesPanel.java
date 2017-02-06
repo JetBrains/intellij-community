@@ -43,7 +43,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +58,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.util.WaitForProgressToShow.*;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -169,11 +170,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
             }
 
             public void consume(final List<CommittedChangeList> list) {
-              new AbstractCalledLater(myProject, ModalityState.stateForComponent(myBrowser)) {
-                public void run() {
-                  myBrowser.append(list);
-                }
-              }.callMe();
+              runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
             }
           };
           final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
@@ -193,7 +190,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
             }

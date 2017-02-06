@@ -1,4 +1,4 @@
 class Foo:
-  __BOO = 1
+    __BOO = 1
 
-z = Foo.__B<caret>
+z = Foo.__BO<caret>

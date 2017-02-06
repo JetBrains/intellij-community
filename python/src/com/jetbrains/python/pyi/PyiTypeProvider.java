@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author vlan
  */
@@ -123,6 +125,9 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
         final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
+        if (mapping == null) {
+          continue;
+        }
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
 
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
@@ -192,7 +197,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return overloads;
   }
 
-  private static boolean isOverload(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public static boolean isOverload(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyDecoratable) {
       final PyDecoratable decorated = (PyDecoratable)callable;
       final ImmutableSet<PyKnownDecoratorUtil.KnownDecorator> decorators =
@@ -204,11 +209,16 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return false;
   }
 
-  @NotNull
+  @Nullable
   private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                   @NotNull PyFunction function,
                                                                   @NotNull TypeEvalContext context) {
     final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
-    return PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
+    final Map<PyExpression, PyNamedParameter> map = PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
+    final PyCallExpression callExpr = as(callSite, PyCallExpression.class);
+    if (callExpr != null && callExpr.getArguments().length != map.size()) {
+      return null;
+    }
+    return map;
   }
 }
