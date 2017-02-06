@@ -30,7 +30,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testField() throws Exception {
-    doTest(1, "num", "num2");
+    doTest(1, "num", "num2", "num3");
   }
 
   public void testDeclaredField() throws Exception {
@@ -46,7 +46,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testMethod() throws Exception {
-    doTest(1, "method", "method2");
+    doTest(1, "method", "method2", "method3");
   }
 
   public void testForNameDeclaredMethod() throws Exception {
@@ -54,11 +54,11 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testForNameMethod() throws Exception {
-    doTest(1, "method", "method2");
+    doTest(1, "method", "method2", "method3");
   }
 
   public void testForNameField() throws Exception {
-    doTest(1, "num", "num2");
+    doTest(1, "num", "num2", "num3");
   }
 
   public void testForNameDeclaredField() throws Exception {
@@ -75,7 +75,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testInheritedMethod() throws Exception {
-    doTest(1, "method", "method2");
+    doTest(1, "method", "method2", "method3");
   }
 
   public void testInheritedDeclaredMethod() throws Exception {
@@ -83,7 +83,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testInheritedField() throws Exception {
-    doTest(1, "num", "num2");
+    doTest(1, "num", "num2", "num3");
   }
 
   public void testInheritedDeclaredField() throws Exception {
@@ -116,6 +116,30 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
 
   public void testJdk14() throws Exception {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTest(0, "method"));
+  }
+
+  public void testWildcard() throws Exception {
+    doTest(0, "method");
+  }
+
+  public void testConstantMethod() throws Exception {
+    doTest(0, "method", "method2");
+  }
+
+  public void testDistantDefinition() throws Exception {
+    doTest(1, "method", "method2");
+  }
+
+  public void testVariableGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
+  public void testConstantGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
+  }
+
+  public void testExpressionGetClassField() throws Exception {
+    doTest(1, "num", "num2", "num3");
   }
 
   private void doTest(int index, String... expected) {

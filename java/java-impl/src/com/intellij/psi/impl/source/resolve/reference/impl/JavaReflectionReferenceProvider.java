@@ -35,9 +35,7 @@ public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
           if (grandParent instanceof PsiMethodCallExpression) {
             PsiReferenceExpression methodReference = ((PsiMethodCallExpression)grandParent).getMethodExpression();
             PsiExpression qualifier = methodReference.getQualifierExpression();
-            if (qualifier instanceof PsiClassObjectAccessExpression ||
-                qualifier instanceof PsiMethodCallExpression ||
-                qualifier instanceof PsiReferenceExpression) {
+            if (qualifier != null) {
               return new PsiReference[]{new JavaLangClassMemberReference(literal, qualifier)};
             }
           }

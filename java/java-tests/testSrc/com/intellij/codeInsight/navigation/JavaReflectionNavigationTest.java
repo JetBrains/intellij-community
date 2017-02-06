@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,33 +36,76 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
 
   public void testField() {doTest("field", FIELD);}
 
-  public void testField2() {doNegativeTest("field2", FIELD);}
+  public void testField2() {doTest("field2", FIELD);}
 
   public void testDeclaredField() {doTest("field2", DF);}
 
+  public void testNonexistentField() {doNegativeTest("nonexistent", FIELD);}
+
   public void testMethod() {doTest("method", METHOD);}
 
-  public void testMethod2() {doNegativeTest("method2", METHOD);}
+  public void testMethod2() {doTest("method2", METHOD);}
 
   public void testDeclaredMethod() {doTest("method2", DM);}
+
+  public void testNonexistentMethod() {doNegativeTest("nonexistent", METHOD);}
 
 
   public void testInheritedField() {doTest("field3", FIELD);}
 
-  public void testInheritedField2() {doNegativeTest("field4", FIELD);}
+  public void testInheritedField2() {doTest("field4", FIELD);}
 
   public void testInheritedDeclaredField() {doNegativeTest("field3", DF);}
 
   public void testInheritedMethod() {doTest("method3", METHOD);}
 
-  public void testInheritedMethod2() {doNegativeTest("method4", METHOD);}
+  public void testInheritedMethod2() {doTest("method4", METHOD);}
 
   public void testInheritedDeclaredMethod() {doNegativeTest("method3", DM);}
+
+  public void testConstantClassName() {
+    doCustomTest("method2",
+                 "class Main {" +
+                 "  static final String NAME = \"Test\";" +
+                 "  void foo() throws ReflectiveOperationException {" +
+                 "    Class.forName(NAME).getMethod(\"<caret>method2\", int.class);" +
+                 "  }" +
+                 "}");
+  }
+
+  public void testVariableClassName() {
+    doCustomTest("method",
+                 "class Main {" +
+                 "  void foo() throws ReflectiveOperationException {" +
+                 "    String name;" +
+                 "    name = \"Te\" + \"st\";" +
+                 "    Class.forName(name).getMethod(\"<caret>method\");" +
+                 "  }" +
+                 "}");
+  }
+
+  public void testExpressionClassName() {
+    doCustomTest("method3",
+                 "class Main {" +
+                 "  void foo() throws ReflectiveOperationException {" +
+                 "    Class.forName(\"Pa\" + \"rent\").getMethod(\"<caret>method3\");" +
+                 "  }" +
+                 "}");
+  }
 
 
   private void doTest(String name,
                       @MagicConstant(stringValues = {FIELD, METHOD, DF, DM}) String type) {
-    PsiReference reference = getReference(name, type);
+    doTestImpl(name, getMainClassText(name, type));
+  }
+
+  private void doCustomTest(String name,
+                            @NotNull @NonNls @Language("JAVA") String mainClassText) {
+    doTestImpl(name, mainClassText);
+  }
+
+  private void doTestImpl(String name, String mainClassText) {
+    PsiReference reference = getReference(mainClassText);
     assertEquals("Reference text", name, reference.getCanonicalText());
     PsiElement resolved = reference.resolve();
     assertNotNull("Reference is not resolved: " + reference.getCanonicalText(), resolved);
@@ -72,15 +116,14 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
 
   private void doNegativeTest(String name,
                               @MagicConstant(stringValues = {FIELD, METHOD, DF, DM}) String type) {
-    PsiReference reference = getReference(name, type);
+    PsiReference reference = getReference(getMainClassText(name, type));
     assertEquals("Reference text", name, reference.getCanonicalText());
     PsiElement resolved = reference.resolve();
     assertNull("Reference shouldn't resolve: " + reference.getCanonicalText(), resolved);
   }
 
   @NotNull
-  private PsiReference getReference(String name,
-                                    @MagicConstant(stringValues = {FIELD, METHOD, DF, DM}) String type) {
+  private PsiReference getReference(String mainClassText) {
     myFixture.addClass("class Parent {\n" +
                        "  public int field3;\n" +
                        "  int field4;\n" +
@@ -93,12 +136,7 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
                        "  public void method() {}\n" +
                        "  void method2(int n) {}\n" +
                        "}");
-    myFixture.configureByText("Main.java",
-                              "class Main {\n" +
-                              "  void foo() throws ReflectiveOperationException {\n" +
-                              "    Test.class.get" + type + "(\"<caret>" + name + "\");\n" +
-                              "  }\n" +
-                              "}");
+    myFixture.configureByText("Main.java", mainClassText);
 
     int offset = myFixture.getCaretOffset();
     PsiReference reference = myFixture.getFile().findReferenceAt(offset);
@@ -107,6 +145,12 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
   }
 
   @NotNull
-  @Override
-  protected String getTestDataPath() {return PathManagerEx.getTestDataPath() + "/codeInsight/navigation/reflection";}
+  private static String getMainClassText(String name,
+                                         @MagicConstant(stringValues = {FIELD, METHOD, DF, DM}) String type) {
+    return "class Main {\n" +
+           "  void foo() throws ReflectiveOperationException {\n" +
+           "    Test.class.get" + type + "(\"<caret>" + name + "\");\n" +
+           "  }\n" +
+           "}";
+  }
 }
