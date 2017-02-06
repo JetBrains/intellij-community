@@ -753,8 +753,8 @@ def next(i: Iterator[_T], default: _VT) -> Union[_T, _VT]: ...
 def oct(i: int) -> str: ...  # TODO __index__
 
 if sys.version_info >= (3, 6):
-    from pathlib import Path
-    def open(file: Union[str, bytes, int, Path], mode: str = 'r', buffering: int = -1, encoding: str = None,
+    import os
+    def open(file: Union[str, bytes, int, os.PathLike], mode: str = 'r', buffering: int = -1, encoding: str = None,
              errors: str = None, newline: str = None, closefd: bool = ...) -> IO[Any]: ...
 else:
     def open(file: Union[str, bytes, int], mode: str = 'r', buffering: int = -1, encoding: str = None,
