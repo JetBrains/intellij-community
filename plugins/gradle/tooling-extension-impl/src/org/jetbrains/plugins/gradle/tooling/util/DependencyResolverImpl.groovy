@@ -231,6 +231,7 @@ class DependencyResolverImpl implements DependencyResolver {
       }
     }
 
+    Multimap<Object, ExternalDependency> resolvedRuntimeMap = ArrayListMultimap.create()
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it))
       if (dependencies && !dependencies.isEmpty() && it.dependencies.isEmpty()) {
@@ -239,9 +240,10 @@ class DependencyResolverImpl implements DependencyResolver {
         dependencies.each {((AbstractExternalDependency)it).scope = compileScope}
       }
       else {
-        resolvedMap.put(resolve(it), it)
+        resolvedRuntimeMap.put(resolve(it), it)
       }
     }
+    resolvedMap.putAll(resolvedRuntimeMap)
 
     result.addAll(compileDependencies)
     result.addAll(runtimeDependencies)
