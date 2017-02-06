@@ -500,6 +500,7 @@ public class StudyUtils {
     String text = task.getText() != null ? task.getText() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
+    text = convertToHtml(text);
     if (course.isAdaptive() && !task.isChoiceTask()) text = wrapAdaptiveCourseText(text);
 
     return wrapTextToDisplayLatex(text);
