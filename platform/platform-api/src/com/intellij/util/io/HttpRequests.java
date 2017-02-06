@@ -353,23 +353,12 @@ public final class HttpRequests {
       FileUtilRt.createParentDirs(file);
 
       boolean deleteFile = true;
-      try {
-        OutputStream out = new FileOutputStream(file);
-        try {
-          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-          deleteFile = false;
-        }
-        catch (IOException e) {
-          throw new IOException(createErrorMessage(e, this, false), e);
-        }
-        finally {
-          try {
-            out.close();
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
-        }
+      try (OutputStream out = new FileOutputStream(file)) {
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        deleteFile = false;
+      }
+      catch (IOException e) {
+        throw new IOException(createErrorMessage(e, this, false), e);
       }
       finally {
         if (deleteFile) {
