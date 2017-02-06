@@ -81,11 +81,6 @@ public class VariableInitializationChecker {
       return new Data(false);
     }
 
-    @Override
-    public boolean isForward() {
-      return true;
-    }
-
     private final String myVar;
   }
 

@@ -22,10 +22,13 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
  * @author ven
  */
 public interface DfaInstance<E> {
+
   void fun(@NotNull E e, @NotNull Instruction instruction);
 
   @NotNull
   E initial();
 
-  boolean isForward();
+  default boolean isForward() {
+    return true;
+  }
 }

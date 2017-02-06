@@ -823,11 +823,6 @@ public class ControlFlowUtils {
       public BitSet initial() {
         return new BitSet(flow.length);
       }
-
-      @Override
-      public boolean isForward() {
-        return true;
-      }
     };
 
     return new DFAEngine<>(flow, dfa, sem).performForceDFA();

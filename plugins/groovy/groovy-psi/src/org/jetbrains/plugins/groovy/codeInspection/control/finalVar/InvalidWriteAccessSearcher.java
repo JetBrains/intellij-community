@@ -78,11 +78,6 @@ public class InvalidWriteAccessSearcher {
     public MyData initial() {
       return new MyData();
     }
-
-    @Override
-    public boolean isForward() {
-      return true;
-    }
   }
 
   private static class MySemilattice implements Semilattice<MyData> {
