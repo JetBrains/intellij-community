@@ -82,25 +82,20 @@ public class DFAEngine<E> {
     final List<E> info = new ArrayList<>(Collections.nCopies(n, myDfa.initial()));
     final CallEnvironment env = new MyCallEnvironment(n);
 
-    final WorkList workList = new WorkList(n);
+    final WorkList workList = new WorkList(getFlowOrder());
 
-    final int[] flowOrder = getFlowOrder();
-    for (int i : flowOrder) {
-      if (!workList.offer(myFlow[i])) continue;
-
-      while (!workList.isEmpty()) {
-        ProgressManager.checkCanceled();
-        if (timeout && checkCounter()) return null;
-        final Instruction curr = workList.remove();
-        final int num = curr.num();
-        final E oldE = info.get(num);                     // saved outbound state
-        final E newE = getInboundState(curr, info, env);  // inbound state
-        myDfa.fun(newE, curr);                            // newly modified outbound state
-        if (!mySemilattice.eq(newE, oldE)) {              // if outbound state changed
-          info.set(num, newE);                            // save new state
-          for (Instruction next : getNext(curr, env)) {
-            workList.offerUnconditionally(next);
-          }
+    while (!workList.isEmpty()) {
+      ProgressManager.checkCanceled();
+      if (timeout && checkCounter()) return null;
+      final int num = workList.next();
+      final Instruction curr = myFlow[num];
+      final E oldE = info.get(num);                     // saved outbound state
+      final E newE = getInboundState(curr, info, env);  // inbound state
+      myDfa.fun(newE, curr);                            // newly modified outbound state
+      if (!mySemilattice.eq(newE, oldE)) {              // if outbound state changed
+        info.set(num, newE);                            // save new state
+        for (Instruction next : getNext(curr, env)) {
+          workList.offer(next.num());
         }
       }
     }
