@@ -172,10 +172,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void loadBundledSchemes() {
-    if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
-      }
+    for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+      mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
     }
   }
   
