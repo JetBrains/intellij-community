@@ -140,7 +140,7 @@ public class LookupManagerImpl extends LookupManager {
       if (myActiveLookup != lookup) return;
 
       LookupElement currentItem = lookup.getCurrentItem();
-      if (currentItem != null && currentItem.isValid()) {
+      if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem)) {
         final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
         if (completion != null && !completion.isAutopopupCompletion()) {
           try {
@@ -206,6 +206,10 @@ public class LookupManagerImpl extends LookupManager {
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return lookup;
+  }
+
+  protected boolean isAutoPopupJavadocSupportedBy(LookupElement lookupItem) {
+    return true;
   }
 
   @NotNull
