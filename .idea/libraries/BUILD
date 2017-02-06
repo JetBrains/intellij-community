@@ -58,13 +58,19 @@ java_library(
     name = "mockito",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
-    ],
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
-        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
     ],
 )
 
