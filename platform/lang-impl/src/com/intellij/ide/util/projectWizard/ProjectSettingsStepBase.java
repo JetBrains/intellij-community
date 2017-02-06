@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
@@ -184,6 +185,9 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     };
     myLocationField.getTextField().addActionListener(listener);
     Disposer.register(this, () -> myLocationField.getTextField().removeActionListener(listener));
+    if (myProjectGenerator instanceof WebProjectTemplate && !((WebProjectTemplate)myProjectGenerator).postponeValidation()) {
+      checkValid();
+    }
   }
 
   public boolean checkValid() {
@@ -209,7 +213,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
       if (myProjectGenerator instanceof WebProjectTemplate) {
         final WebProjectGenerator.GeneratorPeer peer = ((WebProjectTemplate)myProjectGenerator).getPeer();
         final ValidationInfo validationInfo = peer.validate();
-        if (validationInfo != null && !peer.isBackgroundJobRunning()) {
+        if (validationInfo != null) {
           setErrorText(validationInfo.message);
           return false;
         }
@@ -259,7 +263,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(MessageType.ERROR.getTitleForeground());
-    myErrorLabel.setIcon(text == null ? null : AllIcons.Actions.Lightning);
+    myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
