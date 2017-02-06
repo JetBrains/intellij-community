@@ -248,4 +248,15 @@ class B {
     assert ((PsiClassImpl) cls).stub
   }
 
+  void "test load PSI via stub when AST is gc-ed but PSI exists that has never known stub"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
+    def cls = file.lastChild
+    assert cls instanceof PsiClass
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert cls == myFixture.findClass('A')
+  }
+
 }

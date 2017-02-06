@@ -721,7 +721,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     synchronized (PsiLock.LOCK) {
-      if (getTreeElement() != null) return null;
+      if (getTreeElement() != null || hasUnbindableCachedPsi()) return null;
 
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
@@ -777,7 +777,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (loader != null && loader.isStubReloadingProhibited()) {
       return false;
     }
-    return getTreeElement() == null && !useStrongRefs();
+    return getTreeElement() == null && !useStrongRefs() && !hasUnbindableCachedPsi();
+  }
+
+  private boolean hasUnbindableCachedPsi() {
+    for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
+      if (psi.getStubIndex() < 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
