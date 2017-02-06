@@ -15,7 +15,7 @@
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/python/"/>
 
-  <help file="pycharmhelp.jar" root="pycharm"/>
+  <help webhelp-url="https://www.jetbrains.com/help/pycharm-edu"/>
   <documentation url="https://www.jetbrains.com/pycharm-edu/quickstart/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=EDU&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
