@@ -77,7 +77,6 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
@@ -840,6 +839,7 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
+    model = normalizeIfMultilined(model);
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -864,38 +864,6 @@ public class FindManagerImpl extends FindManager {
 
   private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
     return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
-  }
-
-  private static String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
-    String toFind = model.getStringToFind();
-    String toReplace = model.getStringToReplace();
-    Pattern pattern;
-    try{
-      int flags = Pattern.MULTILINE;
-      if (!model.isCaseSensitive()) {
-        flags |= Pattern.CASE_INSENSITIVE;
-      }
-      pattern = Pattern.compile(toFind, flags);
-    }
-    catch(PatternSyntaxException e){
-      return toReplace;
-    }
-
-    Matcher matcher = pattern.matcher(foundString);
-    if (matcher.matches()) {
-      try {
-        return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
-      }
-      catch (Exception e) {
-        throw createMalformedReplacementException(model, e);
-      }
-    }
-    else {
-      // There are valid situations (for example, IDEADEV-2543 or positive lookbehind assertions)
-      // where an expression which matches a string in context will not match the same string
-      // separately).
-      return toReplace;
-    }
   }
 
   private static String replaceWithCaseRespect(String toReplace, String foundString) {
