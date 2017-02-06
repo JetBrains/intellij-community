@@ -89,7 +89,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 
 
-  override fun getDefaultFolder(): String? {
+  override fun getDefaultFolder(project: Project): String? {
     return null
   }
 
