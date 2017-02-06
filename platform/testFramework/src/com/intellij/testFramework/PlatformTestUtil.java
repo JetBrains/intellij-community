@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -575,23 +574,21 @@ public class PlatformTestUtil {
 
       while (true) {
         attempts--;
-        long start;
+        CpuUsageData data;
         try {
           if (setup != null) setup.run();
-          start = System.currentTimeMillis();
-          test.run();
+          data = CpuUsageData.measureCpuUsage(test);
         }
         catch (Throwable throwable) {
           throw new RuntimeException(throwable);
         }
-        long finish = System.currentTimeMillis();
-        long duration = finish - start;
+        long duration = data.durationMs;
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
 
-          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
+          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 : expectedOnMyMachine;
         }
         if (adjustForIO) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);
@@ -604,7 +601,9 @@ public class PlatformTestUtil {
           logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
         }
         logMessage +=
-          "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
+          "\n  Expected: " + formatTime(expectedOnMyMachine) +
+          "\n  Actual: " + formatTime(duration) +
+          "\n " + Timings.getStatistics() + "\n  GC stats: " + data.getGcStats() + "\n  Most active threads: " + data.getThreadStats();
         final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
