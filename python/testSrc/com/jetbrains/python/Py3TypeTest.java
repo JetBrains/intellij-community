@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -481,15 +481,14 @@ public class Py3TypeTest extends PyTestCase {
            "expr = sum([1, 2, 3])");
   }
 
-  public void testDecimalDividedByInt() {
-    doTest("Union[Decimal, int]",
-           "class Decimal(object):\n" +
-           "    def __div__(self, other):\n" +
-           "        \"\"\"\n" +
-           "        :rtype: Decimal" +
-           "        \"\"\"\n" +
-           "        pass\n" +
-           "expr = Decimal() / 5");
+  public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    doTest("Union[D2, D1]",
+           "class D1(object):\n" +
+           "    pass\n" +
+           "class D2(object):\n" +
+           "    pass\n" +
+           "expr = D1() / D2()");
   }
 
   private void doTest(final String expectedType, final String text) {
