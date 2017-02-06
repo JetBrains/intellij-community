@@ -203,17 +203,6 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     return stroke;
   }
 
-  private static class MenuWrapper extends ButtonWrapper {
-    private MenuWrapper(AbstractButton component) {
-      super(component);
-    }
-
-    @Override
-    boolean isDisabled() {
-      return UISettings.getShadowInstance().DISABLE_MNEMONICS;
-    }
-  }
-
   private static class ButtonWrapper extends MnemonicWrapper<AbstractButton> {
     private KeyStroke myStrokePressed;
     private KeyStroke myStrokeReleased;
