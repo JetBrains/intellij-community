@@ -69,17 +69,10 @@ public class CompressedAppendableFile {
     myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
-        synchronized (CompressedAppendableFile.this) {
-          force();
-          myChunkLengthTable = null;
-          myChunkTableLength = 0;
-          myChunkOffsetTable = null;
-          myNextChunkBuffer = null;
-          myBufferPosition = 0;
-          if (doDebug) myCompressedChunksFileOffsets.clear();
-        }
+        dropCaches();
       }
     });
+    file.getParentFile().mkdirs();
   }
 
   public synchronized <Data> Data read(final long addr, KeyDescriptor<Data> descriptor) throws IOException {
@@ -285,6 +278,7 @@ public class CompressedAppendableFile {
       saveNextChunkIfNeeded();
     }
 
+    if (myUncompressedFileLength == -1) length();
     myUncompressedFileLength += size;
     myDirty = true;
   }
@@ -427,6 +421,17 @@ public class CompressedAppendableFile {
   @NotNull
   private File getIncompleteChunkFile() {
     return new File(myBaseFile.getPath() + ".at");
+  }
+
+  public synchronized void dropCaches() {
+    // TODO:
+    //force();
+    //myChunkLengthTable = null;
+    //myChunkTableLength = 0;
+    //myChunkOffsetTable = null;
+    //myNextChunkBuffer = null;
+    //myBufferPosition = 0;
+    //if (doDebug) myCompressedChunksFileOffsets.clear();
   }
 
   public synchronized void force() {
