@@ -34,9 +34,11 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +173,15 @@ public class PyDataView implements DumbAware {
     }
     PyDataViewerPanel panel = new PyDataViewerPanel(myProject, frameAccessor);
     TabInfo info = new TabInfo(panel);
+    if (frameAccessor instanceof PydevConsoleCommunication) {
+      info.setIcon(PythonIcons.Python.PythonConsole);
+      info.setTooltipText("Connected to Python Console");
+    }
+    if (frameAccessor instanceof PyDebugProcess) {
+      info.setIcon(AllIcons.Toolwindows.ToolWindowDebugger);
+      String name = ((PyDebugProcess)frameAccessor).getSession().getSessionName();
+      info.setTooltipText("Connected to debug session '"+  name + "'");
+    }
     info.setText(EMPTY_TAB_NAME);
     info.setPreferredFocusableComponent(panel.getSliceTextField());
     info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.UNKNOWN);
