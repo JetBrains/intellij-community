@@ -61,7 +61,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
       }
     }
 
-    if (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression)) {
+    if (!targetClass.isInterface() && (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     created = (PsiClass)targetClass.add(created);
