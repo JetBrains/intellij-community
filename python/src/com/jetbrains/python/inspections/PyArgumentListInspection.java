@@ -274,13 +274,15 @@ public class PyArgumentListInspection extends PyInspection {
 
   @Nullable
   private static String calculatePossibleCalleeRepresentation(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final String callableNameAndParameters = callable.getName() + callable.getParameterList().getPresentableText(true, context);
+    final String name = callable.getName();
+    final String parameters = callable.getParameterList().getPresentableText(true, context);
+    final String callableNameAndParameters = name + parameters;
 
     return Optional
       .ofNullable(PyUtil.as(callable, PyFunction.class))
       .map(PyFunction::getContainingClass)
       .map(PyClass::getName)
-      .map(className -> className + "." + callableNameAndParameters)
+      .map(className -> PyNames.INIT.equals(name) ? className + parameters : className + "." + callableNameAndParameters)
       .orElse(callableNameAndParameters);
   }
 }
