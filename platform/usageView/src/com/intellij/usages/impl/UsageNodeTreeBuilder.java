@@ -83,7 +83,7 @@ class UsageNodeTreeBuilder {
                          ((UsageGroupingRuleEx)rule).groupUsage(usage, myTargets) :
                          rule.groupUsage(usage);
       if (group != null) {
-        groupNode = groupNode.addGroup(group, i, edtInsertedUnderQueue);
+        groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
       }
     }
 
