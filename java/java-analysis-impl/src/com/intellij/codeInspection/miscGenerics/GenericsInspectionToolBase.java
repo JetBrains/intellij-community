@@ -38,8 +38,7 @@ public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspe
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
-    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return new PsiElementVisitor() {
-    };
+    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return PsiElementVisitor.EMPTY_VISITOR;
 
     return super.buildVisitor(holder, isOnTheFly);
   }
