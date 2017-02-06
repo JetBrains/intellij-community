@@ -210,7 +210,9 @@ class DependencyResolverImpl implements DependencyResolver {
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
     // resolve runtime dependencies
     def runtimeConfigurationName = sourceSet.runtimeConfigurationName
-    def runtimeConfiguration = myProject.configurations.findByName(runtimeConfigurationName)
+    def runtimeClasspathConfiguration = myProject.configurations.findByName(runtimeConfigurationName + 'Classpath')
+    def originRuntimeConfiguration = myProject.configurations.findByName(runtimeConfigurationName)
+    def runtimeConfiguration = runtimeClasspathConfiguration ?: originRuntimeConfiguration
 
     def runtimeScope = 'RUNTIME'
     def (runtimeDependencies, resolvedRuntimeFileDependencies) = resolveDependencies(runtimeConfiguration, runtimeScope)
