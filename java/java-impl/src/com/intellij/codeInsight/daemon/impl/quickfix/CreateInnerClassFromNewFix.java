@@ -54,7 +54,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (PsiTreeUtil.isAncestor(targetClass, newExpression, true)) {
-      if (targetClass.isInterface()) {
+      if (targetClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(targetClass)) {
         modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
       } else {
         modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
