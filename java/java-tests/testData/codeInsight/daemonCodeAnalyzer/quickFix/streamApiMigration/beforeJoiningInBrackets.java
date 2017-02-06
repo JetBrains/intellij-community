@@ -4,12 +4,13 @@ import java.util.List;
 
 public class Test {
   static String test(List<String> list) {
-    StringBuilder sb = new StringBuilder("initial");
+    StringBuilder sb = new StringBuilder("[");
     for (String s : li<caret>st) {
       if (!s.isEmpty()) {
+        if(sb.length() > 0) sb.append(',');
         sb.append(s);
       }
     }
-    return sb.toString().trim();
+    return sb.append("]").toString().trim();
   }
 }

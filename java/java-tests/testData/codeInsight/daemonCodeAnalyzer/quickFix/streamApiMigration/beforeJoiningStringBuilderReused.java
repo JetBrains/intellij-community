@@ -1,4 +1,4 @@
-// "Replace with collect" "false"
+// "Replace with collect" "true"
 
 import java.util.List;
 

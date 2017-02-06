@@ -31,26 +31,40 @@ public class ConstructionUtils {
    */
   @Contract("null -> false")
   public static boolean isEmptyStringBuilderInitializer(PsiExpression initializer) {
-    initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-    if (!(initializer instanceof PsiNewExpression)) return false;
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+    return "\"\"".equals(getStringBuilderInitializerText(initializer));
+  }
+
+  /**
+   * Returns a textual representation of an expression which is equivalent to the initial value of newly created StringBuilder or StringBuffer
+   *
+   * @param construction StringBuilder/StringBuffer construction expression
+   * @return a textual representation of an initial value CharSequence or null if supplied expression is not StringBuilder/StringBuffer
+   * construction expression
+   */
+  @Contract("null -> null")
+  public static String getStringBuilderInitializerText(PsiExpression construction) {
+    construction = PsiUtil.skipParenthesizedExprDown(construction);
+    if (!(construction instanceof PsiNewExpression)) return null;
+    final PsiNewExpression newExpression = (PsiNewExpression)construction;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference == null) return false;
+    if (classReference == null) return null;
     final PsiElement target = classReference.resolve();
-    if (!(target instanceof PsiClass)) return false;
+    if (!(target instanceof PsiClass)) return null;
     final PsiClass aClass = (PsiClass)target;
     final String qualifiedName = aClass.getQualifiedName();
     if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
         !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(qualifiedName)) {
-      return false;
+      return null;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) return false;
+    if (argumentList == null) return null;
     final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length == 0) return true;
+    if (arguments.length == 0) return "\"\"";
+    if (arguments.length != 1) return null;
     final PsiExpression argument = arguments[0];
     final PsiType argumentType = argument.getType();
-    return PsiType.INT.equals(argumentType);
+    if (PsiType.INT.equals(argumentType)) return "\"\"";
+    return argument.getText();
   }
 
   /**
