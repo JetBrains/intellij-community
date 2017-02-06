@@ -39,6 +39,7 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import icons.PythonIcons;
+import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
@@ -76,14 +78,11 @@ public class PyDataView implements DumbAware {
     window.show(null);
   }
 
-  public void closeRelatedTabs(@NotNull PyDebugProcess process) {
+  public void closeTabs(Predicate<PyFrameAccessor> ifClose) {
     List<TabInfo> tabsToRemove = new ArrayList<>();
     for (TabInfo info : myTabs.getTabs()) {
-      PyFrameAccessor frameAccessor = getPanel(info).getFrameAccessor();
-      if (frameAccessor instanceof PyDebugProcess) {
-        if (frameAccessor == process) {
-          tabsToRemove.add(info);
-        }
+      if (ifClose.test(getPanel(info).getFrameAccessor())) {
+        tabsToRemove.add(info);
       }
     }
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -139,6 +138,19 @@ public class PyDataView implements DumbAware {
       }
     }
     return null;
+  }
+
+  public void closeDisconnectedFromConsoleTabs() {
+    closeTabs(frameAccessor -> frameAccessor instanceof PydevConsoleCommunication && !isConnected(((PydevConsoleCommunication)frameAccessor)));
+  }
+
+  private static boolean isConnected(PydevConsoleCommunication accessor){
+    try {
+      return accessor.handshake();
+    }
+    catch (XmlRpcException ignored) {
+      return false;
+    }
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {

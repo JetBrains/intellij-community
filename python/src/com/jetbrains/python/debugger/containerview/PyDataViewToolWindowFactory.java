@@ -25,22 +25,24 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.jetbrains.python.console.PythonConsoleToolWindowFactory;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyDataViewToolWindowFactory implements ToolWindowFactory {
   public static final String EMPTY_TEXT = "Run debugger to view available data ";
+  private static final Logger LOG = Logger.getInstance(PyDataViewToolWindowFactory.class);
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -70,7 +72,22 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
       }
     });
 
+    addPythonConsoleListener(project);
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(new ColoredByDefaultAction()));
+  }
+
+  private static void addPythonConsoleListener(@NotNull Project project) {
+    final ToolWindow pythonConsole = ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.Companion.getID());
+    if (pythonConsole == null) {
+      LOG.error("No Python Console tool window");
+      return;
+    }
+    pythonConsole.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        PyDataView.getInstance(project).closeDisconnectedFromConsoleTabs();
+      }
+    });
   }
 
   @Override
@@ -109,7 +126,7 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     @Override
     public void processStopped(@NotNull XDebugProcess debugProcess) {
       if (debugProcess instanceof PyDebugProcess) {
-        PyDataView.getInstance(myProject).closeRelatedTabs(((PyDebugProcess)debugProcess));
+        PyDataView.getInstance(myProject).closeTabs(frameAccessor -> frameAccessor instanceof PyDebugProcess && frameAccessor == debugProcess);
       }
     }
   }
