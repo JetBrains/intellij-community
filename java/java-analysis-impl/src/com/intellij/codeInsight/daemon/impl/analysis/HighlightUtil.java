@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2929,14 +2929,16 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkForStatement(@NotNull PsiForStatement statement) {
     PsiStatement init = statement.getInitialization();
-    if (!(init == null || init instanceof PsiEmptyStatement ||
-          init instanceof PsiDeclarationStatement ||
-          init instanceof PsiExpressionStatement || init instanceof PsiExpressionListStatement)) {
-      String message = JavaErrorMessages.message("invalid.statement");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message).create();
+    if (init == null ||
+        init instanceof PsiEmptyStatement ||
+        init instanceof PsiDeclarationStatement && ArrayUtil.getFirstElement(((PsiDeclarationStatement)init).getDeclaredElements()) instanceof PsiLocalVariable ||
+        init instanceof PsiExpressionStatement ||
+        init instanceof PsiExpressionListStatement) {
+      return null;
     }
 
-    return null;
+    String message = JavaErrorMessages.message("invalid.statement");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message).create();
   }
 
   private static void registerChangeParameterClassFix(PsiType lType, PsiType rType, HighlightInfo info) {
