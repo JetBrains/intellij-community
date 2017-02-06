@@ -13,5 +13,6 @@ public class InteractiveLearningPythonIcons {
     return IconLoader.getIcon(path, InteractiveLearningPythonIcons.class);
   }
 
+  public static final Icon CourseCreationProjectType = load("/icons/com/jetbrains/edu/learning/CourseCreationProjectType.png"); // 16x16
   public static final Icon EducationalProjectType = load("/icons/com/jetbrains/edu/learning/EducationalProjectType.png"); // 16x16
 }
