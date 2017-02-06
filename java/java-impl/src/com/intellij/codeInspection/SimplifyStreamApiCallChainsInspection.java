@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
 /**
  * @author Pavel.Dolgov
@@ -209,12 +210,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return body instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)body);
   }
 
-  @Nullable
-  static PsiMethodCallExpression getQualifierMethodCall(PsiMethodCallExpression methodCall) {
-    return
-      tryCast(PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
-  }
-
   @NotNull
   protected static TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
                                                @NotNull PsiMethodCallExpression qualifierExpression) {
@@ -223,21 +218,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     final int startOffset = (qualifierNameElement != null ? qualifierNameElement : qualifierMethodExpression).getTextOffset();
     final int endOffset = expression.getMethodExpression().getTextRange().getEndOffset();
     return new TextRange(startOffset, endOffset).shiftRight(-expression.getTextOffset());
-  }
-
-  @Contract("null, _, _, _ -> false")
-  protected static boolean isCallOf(@Nullable PsiMethod method,
-                                    @NotNull String className,
-                                    @NotNull String methodName,
-                                    int parametersCount) {
-    if (method == null) return false;
-    if (methodName.equals(method.getName()) && method.getParameterList().getParametersCount() == parametersCount) {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && className.equals(containingClass.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   interface CallChainFix {

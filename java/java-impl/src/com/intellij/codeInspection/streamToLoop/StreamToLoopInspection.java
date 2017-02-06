@@ -240,9 +240,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         Collections.reverse(operations);
         return operations;
       }
-      PsiExpression qualifier = currentCall.getMethodExpression().getQualifierExpression();
-      if(!(qualifier instanceof PsiMethodCallExpression)) return null;
-      currentCall = (PsiMethodCallExpression)qualifier;
+      currentCall = MethodCallUtils.getQualifierMethodCall(currentCall);
+      if(currentCall == null) return null;
       if(op.changesVariable()) {
         PsiType type = StreamApiUtil.getStreamElementType(currentCall.getType());
         if(type == null) return null;

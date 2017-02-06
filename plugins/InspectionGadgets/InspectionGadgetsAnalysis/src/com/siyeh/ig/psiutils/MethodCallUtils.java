@@ -21,7 +21,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +30,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class MethodCallUtils {
 
@@ -336,7 +337,7 @@ public class MethodCallUtils {
    */
   public static boolean isVarArgCall(PsiMethodCallExpression call) {
     JavaResolveResult result = call.resolveMethodGenerics();
-    PsiMethod method = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
+    PsiMethod method = tryCast(result.getElement(), PsiMethod.class);
     if(method == null || !method.isVarArgs()) return false;
     PsiSubstitutor substitutor = result.getSubstitutor();
     return MethodCallInstruction
@@ -394,6 +395,18 @@ public class MethodCallUtils {
       }
     }
     return !PsiUtil.isConstantExpression(argument);
+  }
+
+  /**
+   * For given method call, returns a qualifier if it's also a method call, or null otherwise
+   *
+   * @param methodCall call to check
+   * @return a qualifier call
+   */
+  @Nullable
+  public static PsiMethodCallExpression getQualifierMethodCall(@NotNull PsiMethodCallExpression methodCall) {
+    return
+      tryCast(PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
   }
 
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
