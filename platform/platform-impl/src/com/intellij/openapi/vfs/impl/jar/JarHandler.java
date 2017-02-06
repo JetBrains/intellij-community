@@ -17,10 +17,12 @@ package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -309,6 +311,13 @@ public class JarHandler extends ZipHandler {
           break;
         }
         catch (IOException ex) {
+          if (info != null) {
+            try {
+              info.close();
+            }
+            catch (IOException ignored) {
+            }
+          }
           PersistentHashMap.deleteFilesStartingWith(snapshotInfoFile);
           saveVersion(versionFile);
         }
@@ -316,9 +325,16 @@ public class JarHandler extends ZipHandler {
 
       assert info != null;
       ourCachedLibraryInfo = info;
-      FlushingDaemon.everyFiveSeconds(() -> flushCachedLibraryInfos());
+      FlushingDaemon.everyFiveSeconds(CacheLibraryInfo::flushCachedLibraryInfos);
 
-      ShutDownTracker.getInstance().registerShutdownTask(() -> flushCachedLibraryInfos());
+      ShutDownTracker.getInstance().registerShutdownTask(CacheLibraryInfo::flushCachedLibraryInfos);
+      Disposer.register(ApplicationManager.getApplication(), () -> {
+        try {
+          ourCachedLibraryInfo.close();
+        }
+        catch (IOException ignored) {
+        }
+      });
     }
 
     @NotNull
@@ -329,7 +345,7 @@ public class JarHandler extends ZipHandler {
     private static void removeStaleJarFilesIfNeeded(File snapshotInfoFile, PersistentHashMap<String, CacheLibraryInfo> info) throws IOException {
       File versionFile = getVersionFile(snapshotInfoFile);
       long lastModified = versionFile.lastModified();
-      if ((System.currentTimeMillis() - lastModified) < 30 * 24 * 60 * 60 * 1000L) {
+      if (System.currentTimeMillis() - lastModified < 30 * 24 * 60 * 60 * 1000L) {
         return;
       }
 
