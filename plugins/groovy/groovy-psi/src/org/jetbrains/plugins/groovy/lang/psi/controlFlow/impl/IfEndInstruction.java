@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 
 /**
@@ -25,11 +27,13 @@ public class IfEndInstruction extends InstructionImpl{
     super(ifStatement);
   }
 
+  @Nullable
   @Override
   public GrIfStatement getElement() {
     return (GrIfStatement)super.getElement();
   }
 
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "End element: " + myPsiElement;
