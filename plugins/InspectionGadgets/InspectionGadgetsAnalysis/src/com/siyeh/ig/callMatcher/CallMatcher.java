@@ -152,6 +152,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
     @Override
     public boolean test(PsiMethodCallExpression call) {
+      if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();
       if (!myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
