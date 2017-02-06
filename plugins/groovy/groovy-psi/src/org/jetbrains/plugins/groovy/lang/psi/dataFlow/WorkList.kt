@@ -21,15 +21,17 @@ internal class WorkList(order: IntArray) {
 
   private val mySize: Int = order.size
   /**
-   * Index -> instruction number
+   * Mapping: index -> instruction number
    */
   private val myOrder: IntArray = order
   /**
-   * Instruction number -> index in [myOrder] array
+   * Mapping: instruction number -> index in [myOrder] array
    */
   private val myInstructionToOrder: IntArray = IntArray(mySize)
   /**
-   * Index -> instruction number needs to be processed or not
+   * Mapping: index -> whether instruction number needs to be processed
+   *
+   * Indexes match [myOrder] indexes
    */
   private val mySet: BitSet = BitSet()
 
