@@ -648,9 +648,8 @@ abstract class FunctionHelper {
 
     @Override
     void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
-      Project project = myBody.getProject();
       PsiExpression expr = context.createExpression("(" + var.getType() + ")" + getText());
-      suggestFromExpression(var, project, expr);
+      suggestFromExpression(var, context.getProject(), expr);
     }
   }
 
