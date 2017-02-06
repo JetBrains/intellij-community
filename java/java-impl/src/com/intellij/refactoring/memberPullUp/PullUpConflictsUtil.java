@@ -154,8 +154,7 @@ public class PullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
-    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                                    UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
+    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetDirectory, conflicts);
 
     final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
     final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),
