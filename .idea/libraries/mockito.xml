@@ -1,12 +1,14 @@
 <component name="libraryTable">
   <library name="mockito">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1/mockito-core-2.7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5/objenesis-2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5/byte-buddy-1.6.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5/byte-buddy-agent-1.6.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1/mockito-core-2.7.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
