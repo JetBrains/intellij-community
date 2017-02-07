@@ -65,6 +65,7 @@ public class SchemesCombo<T extends Scheme> {
     nameEditorField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        revertSchemeName();
         cancelEdit();
       }
     }, ESC_KEY_STROKE, JComponent.WHEN_FOCUSED);
@@ -82,7 +83,14 @@ public class SchemesCombo<T extends Scheme> {
     });
     return nameEditorField;
   }
-  
+
+  private void revertSchemeName() {
+    MySchemeListItem<T> selectedItem = getSelectedItem();
+    if (selectedItem != null) {
+      myNameEditorField.setText(selectedItem.getSchemeName());
+    }
+  }
+
   public void updateSelected() {
     myComboBox.repaint();
   }
