@@ -422,6 +422,7 @@ public class InferenceSession {
     if (args == null) return Collections.emptyList();
     final PsiMethod method = properties.getMethod();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 0) return Collections.emptyList();
     final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
     for (int i = 0; i < args.length; i++) {
       PsiExpression arg = args[i];
