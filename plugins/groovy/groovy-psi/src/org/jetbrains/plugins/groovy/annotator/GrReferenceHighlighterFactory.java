@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -40,10 +41,20 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!isSpecificScriptFile(file) && !GrFileIndexUtil.isGroovySourceFile(file)) return null;
-    PsiFile groovyFile = file.getViewProvider().getPsi(GroovyLanguage.INSTANCE);
-    if (!(groovyFile instanceof GroovyFileBase)) return null;
-    return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)groovyFile);
+    GroovyFileBase groovyFile = getAndCheckFile(file);
+    if (groovyFile == null) return null;
+    return new GrReferenceHighlighter(editor.getDocument(), groovyFile);
+  }
+
+  @Nullable
+  private static GroovyFileBase getAndCheckFile(@NotNull PsiFile file) {
+    if (isSpecificScriptFile(file)) return ((GroovyFileBase)file);
+
+    PsiFile psiGroovyFile = file.getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+    if (!(psiGroovyFile instanceof GroovyFileBase)) return null;
+
+    GroovyFileBase groovyFile = (GroovyFileBase)psiGroovyFile;
+    return GrFileIndexUtil.isGroovySourceFile(groovyFile) ? groovyFile : null;
   }
 
   private static boolean isSpecificScriptFile(@NotNull PsiFile file) {
