@@ -35,7 +35,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,11 +93,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     closeLogTabs();
   }
 
-  @Nullable
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
                                                                           @NotNull Condition<U> condition) {
-    ContentManager manager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+
+    ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
       if (c instanceof VcsLogPanel) {
         AbstractVcsLogUi ui = ((VcsLogPanel)c).getUi();
@@ -110,6 +110,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (component == null) return false;
     //noinspection unchecked
 
+    if (!toolWindow.isVisible()) toolWindow.activate(null);
     return ContentUtilEx.selectContent(manager, component, true);
   }
 
