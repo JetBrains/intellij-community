@@ -2748,28 +2748,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, Interpolable, FinelyAdjustable {
+  class MyScrollBar extends JBScrollBar {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
-    private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-    private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
       setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
-      if (SystemProperties.isTrueSmoothScrollingEnabled()) {
-        setModel(new SmoothBoundedRangeModel(this));
-      }
     }
 
     void setPersistentUI(ScrollBarUI ui) {
       myPersistentUI = ui;
       setUI(ui);
-    }
-
-    @Override
-    public boolean canBePreprocessed(MouseEvent e) {
-      return JBScrollPane.canBePreprocessed(e, this);
     }
 
     @Override
@@ -2784,55 +2774,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
       setOpaque(shouldScrollBarBeOpaque(myProject));
-    }
-
-    /**
-     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
-     * we need to add the interpolation support separately.
-     *
-     * @see SmoothScrollPane.SmoothScrollBar#setValue(int)
-     */
-    @Override
-    public void setValue(int value) {
-      ComponentSettings settings = ComponentSettings.getInstance();
-
-      MyScrollPane scrollPane = (MyScrollPane)myScrollPane;
-
-      InputSource source = scrollPane.getInputSource(getValueIsAdjusting());
-
-      if (settings.isTrueSmoothScrollingEligibleFor(myEditorComponent) &&
-          settings.isInterpolationEligibleFor(this) &&
-          settings.isInterpolationEnabledFor(source) &&
-          myScrollingModel.isAnimationEnabled()) {
-
-          myInterpolator.setTarget(value, scrollPane.getInitialDelay(source));
-      }
-      else {
-        super.setValue(value);
-      }
-    }
-
-    @Override
-    public void setCurrentValue(int value) {
-      super.setValue(value);
-
-      myAdjuster.reset();
-    }
-
-    @Override
-    public int getTargetValue() {
-      return myInterpolator.getTarget();
-    }
-
-    /**
-     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
-     * we need to add fractional delta support separately.
-     *
-     * @see SmoothScrollPane.SmoothScrollBar#adjustValue(double)
-     */
-    @Override
-    public void adjustValue(double delta) {
-      myAdjuster.adjustValue(delta);
     }
 
     /**
