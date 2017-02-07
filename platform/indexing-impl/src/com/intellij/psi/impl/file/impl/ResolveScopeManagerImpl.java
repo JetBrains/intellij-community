@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.TestSourcesFilter;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -36,8 +35,12 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final Project myProject;
@@ -184,7 +187,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     if (module == null) {
       VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
       final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && myAdditionalIndexableFileSet.isInSet(notNullVFile)) {
+      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
         return allScope;
       }
 
@@ -201,5 +204,21 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return resolveService.restrictByBackwardIds(virtualFile, scope);
     }
     return scope;
+  }
+
+  private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
+    for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots()))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> asSet(final Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : newTroveSet(collection);
   }
 }
