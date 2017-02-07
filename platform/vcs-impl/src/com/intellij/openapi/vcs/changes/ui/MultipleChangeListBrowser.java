@@ -437,7 +437,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private class ShowHideUnversionedFilesAction extends ToggleAction {
 
     private ShowHideUnversionedFilesAction() {
-      super("Show Unversioned Files", null, AllIcons.Debugger.Disable_value_calculation);
+      super("Show Unversioned Files", null, AllIcons.Vcs.ShowUnversionedFiles);
     }
 
     @Override
