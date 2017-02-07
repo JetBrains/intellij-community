@@ -52,7 +52,6 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import org.jetbrains.plugins.groovy.*;
 import org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl;
-import org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFactory;
 import org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.annotator.checkers.*;
@@ -80,6 +79,8 @@ import org.jetbrains.plugins.groovy.geb.*;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
+import org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory;
+import org.jetbrains.plugins.groovy.highlighter.GroovyKeywordHighlightingPassFactory;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
@@ -362,7 +363,8 @@ public class GroovyCoreEnvironment {
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
       TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
       projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project, registrar));
-      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GroovyKeywordHighlightingPassFactory.class, new GroovyKeywordHighlightingPassFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GroovyDeclarationHighlightingPassFactory.class, new GroovyDeclarationHighlightingPassFactory(project, registrar));
       projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project, registrar));
     }
   }

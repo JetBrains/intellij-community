@@ -1777,7 +1777,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFactory</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyKeywordHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory</implementation-class>
