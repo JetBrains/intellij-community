@@ -65,6 +65,18 @@ public class RepositoryHelperTest {
       "      <rating>3.5</rating>\n" +
       "      <download-url>plugin.zip</download-url>\n" +
       "    </idea-plugin>\n" +
+      "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
+      "      <name>AWS Manager</name>\n" +
+      "      <id>com.jetbrains.ec2manager</id>\n" +
+      "      <description>...</description>\n" +
+      "      <version>1.0.6</version>\n" +
+      "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
+      "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
+      "      <change-notes>...</change-notes>\n" +
+      "      <depends>com.intellij.javaee</depends>\n" +
+      "      <rating>3.5</rating>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
+      "    </idea-plugin>\n" +
       "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
       "      <name>tc Server Support</name>\n" +
       "      <id>com.intellij.tc.server</id>\n" +
