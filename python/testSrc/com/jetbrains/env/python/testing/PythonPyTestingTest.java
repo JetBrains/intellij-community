@@ -31,13 +31,22 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "folderWithTests"));
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                                 PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PY_TEST_NAME,
+        PyUniversalPyTestConfiguration.class));
   }
 
   // Import error should lead to test failure

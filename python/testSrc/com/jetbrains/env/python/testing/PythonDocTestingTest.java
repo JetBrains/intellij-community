@@ -19,7 +19,7 @@ public class PythonDocTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(null, PythonDocTestRunConfiguration.class, "doctest_test.py"));
+      new CreateConfigurationTestTask<>(null, PythonDocTestRunConfiguration.class, "doctest_test.py"));
   }
 
   @Test

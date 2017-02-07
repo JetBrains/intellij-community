@@ -15,18 +15,22 @@
  */
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +45,7 @@ import java.io.IOException;
  *
  * @author Ilya.Kazakevich
  */
-class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
+class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
@@ -55,7 +59,7 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
    * @param expectedConfigurationType type configuration tha should be produced
    */
   CreateConfigurationTestTask(@NotNull final String testRunnerName,
-                              @NotNull final Class<? extends RunConfiguration> expectedConfigurationType) {
+                              @NotNull final Class<T> expectedConfigurationType) {
     this(testRunnerName, expectedConfigurationType, "test_file.py", "test_class.py");
   }
 
@@ -108,7 +112,57 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
         Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
         Assert.assertThat("Bad configuration type in " + fileName, configuration,
                           Matchers.is(Matchers.instanceOf(myExpectedConfigurationType)));
+
+        RunManager.getInstance(getProject()).addConfiguration(runnerAndConfigurationSettings, false);
+
+        @SuppressWarnings("unchecked") // Checked one line above
+        final T typedConfiguration = (T)configuration;
+        checkConfiguration(typedConfiguration);
       }
     }), ModalityState.NON_MODAL);
   }
+
+  protected void checkConfiguration(@NotNull final T configuration) {
+
+  }
+
+  static class CreateConfigurationTestAndRenameClassTask extends CreateConfigurationTestTask<PyUniversalTestConfiguration> {
+    CreateConfigurationTestAndRenameClassTask(@NotNull final String testRunnerName,
+                                              @NotNull final Class<? extends PyUniversalTestConfiguration> expectedConfigurationType) {
+      super(testRunnerName, expectedConfigurationType, "test_class.py");
+    }
+
+    @Override
+    protected void checkConfiguration(@NotNull PyUniversalTestConfiguration configuration) {
+      super.checkConfiguration(configuration);
+      Assert.assertThat("Wrong name generated", configuration.getName(), Matchers.containsString("TheTest"));
+      Assert.assertThat("Bad target generated", configuration.getTarget().getTarget(), Matchers.endsWith("TheTest"));
+      myFixture.renameElementAtCaret("FooTest");
+      Assert.assertThat("Name not renamed", configuration.getName(), Matchers.containsString("FooTest"));
+    }
+  }
+
+  static class CreateConfigurationTestAndRenameFolderTask
+    extends CreateConfigurationTestTask<PyUniversalTestConfiguration> {
+    CreateConfigurationTestAndRenameFolderTask(@Nullable final String testRunnerName,
+                                               @NotNull final Class<? extends PyUniversalTestConfiguration> expectedConfigurationType) {
+      super(testRunnerName, expectedConfigurationType, "folderWithTests");
+    }
+
+    @Override
+    protected void checkConfiguration(@NotNull final PyUniversalTestConfiguration configuration) {
+      super.checkConfiguration(configuration);
+      Assert.assertThat("Wrong name generated", configuration.getName(), Matchers.containsString("folderWithTests"));
+      Assert.assertThat("Bad target generated", configuration.getTarget().getTarget(), Matchers.containsString("folderWithTests"));
+
+      final VirtualFile virtualFolder = myFixture.getTempDirFixture().getFile("folderWithTests");
+      assert virtualFolder != null : "Can't find folder";
+      final PsiDirectory psiFolder = PsiManager.getInstance(getProject()).findDirectory(virtualFolder);
+      assert psiFolder != null : "No psi for folder found";
+      myFixture.renameElement(psiFolder, "newFolder");
+      Assert.assertThat("Name not renamed", configuration.getName(), Matchers.containsString("newFolder"));
+      Assert.assertThat("Target not renamed", configuration.getTarget().getTarget(), Matchers.containsString("newFolder"));
+    }
+  }
 }
+

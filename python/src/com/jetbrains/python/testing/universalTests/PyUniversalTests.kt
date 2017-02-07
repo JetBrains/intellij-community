@@ -25,6 +25,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
@@ -38,11 +39,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.PyClass
@@ -155,6 +164,26 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
     dst.target = target
     dst.targetType = targetType
   }
+
+  /**
+   * Converts target to PSI element if possible
+   */
+  fun asPsiElement(module: Module, context: TypeEvalContext): PsiElement? {
+    if (targetType == TestTargetType.PYTHON) {
+      return QualifiedName.fromDottedString(target).toElement(module, context)
+    }
+    return null
+  }
+
+  /**
+   * Converts target to file if possible
+   */
+  fun asVirtualFile(fileSystem: VirtualFileSystem): VirtualFile? {
+    if (targetType == TestTargetType.PATH) {
+      return fileSystem.findFileByPath(target)
+    }
+    return null
+  }
 }
 
 
@@ -174,7 +203,8 @@ private val Property.prefixedName: String
 abstract class PyUniversalTestConfiguration(project: Project,
                                             configurationFactory: ConfigurationFactory,
                                             private val runBareFunctions: Boolean = true)
-  : AbstractPythonTestRunConfiguration<PyUniversalTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration {
+  : AbstractPythonTestRunConfiguration<PyUniversalTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
+    RefactoringListenerProvider {
   @DelegationProperty
   val target = ConfigurationTarget(".", TestTargetType.PATH)
   @ConfigField
@@ -185,6 +215,71 @@ abstract class PyUniversalTestConfiguration(project: Project,
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
   val legacyConfigurationAdapter = PyUniversalTestLegacyConfigurationAdapter(this)
+
+  /**
+   * Renames working directory if folder physically renamed
+   */
+  private open inner class PyConfigurationRenamer(private val workingDirectoryFile: VirtualFile?) : UndoRefactoringElementAdapter() {
+    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
+      if (workingDirectoryFile != null) {
+        workingDirectory = workingDirectoryFile.path
+      }
+    }
+  }
+
+  /**
+   * Renames python target if python symbol, module or folder renamed
+   */
+  private inner class PyElementTargetRenamer(private val originalElement: PsiElement, workingDirectoryFile: VirtualFile?) :
+    PyConfigurationRenamer(workingDirectoryFile) {
+    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
+      super.refactored(element, oldQualifiedName)
+      if (originalElement is PyQualifiedNameOwner) {
+        target.target = originalElement.qualifiedName ?: return
+      }
+      else if (originalElement is PsiNamedElement) {
+        target.target = originalElement.name ?: return
+      }
+    }
+  }
+
+  /**
+   * Renames folder target if file or folder really renamed
+   */
+  private inner class PyVirtualFileRenamer(private val virtualFile: VirtualFile, workingDirectoryFile: VirtualFile?) :
+    PyConfigurationRenamer(workingDirectoryFile) {
+    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
+      super.refactored(element, oldQualifiedName)
+      target.target = virtualFile.path
+    }
+  }
+
+  override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
+    val myModule = module
+    val targetElement: PsiElement?
+    if (myModule != null) {
+      targetElement = target.asPsiElement(myModule, TypeEvalContext.userInitiated(project, null))
+    }
+    else {
+      targetElement = null
+    }
+    val targetFile = target.asVirtualFile(LocalFileSystem.getInstance())
+
+    val workingDirectoryFile = if (workingDirectory.isNotEmpty()) {
+      LocalFileSystem.getInstance().findFileByPath(workingDirectory)
+    }
+    else {
+      null
+    }
+
+    if (targetElement != null && PsiTreeUtil.isAncestor(element, targetElement, false)) {
+      return PyElementTargetRenamer(targetElement, workingDirectoryFile)
+    }
+    if (targetFile != null && element is PsiFileSystemItem && VfsUtil.isAncestor(element.virtualFile, targetFile, false)) {
+      return PyVirtualFileRenamer(targetFile, workingDirectoryFile)
+    }
+    return null
+  }
 
   override fun checkConfiguration() {
     super.checkConfiguration()
@@ -253,6 +348,21 @@ abstract class PyUniversalTestConfiguration(project: Project,
     }
     return emptyList()
   }
+
+  override fun suggestedName() =
+    when (target.targetType) {
+      TestTargetType.PATH -> {
+        val name = target.asVirtualFile(LocalFileSystem.getInstance())?.name
+        "$testFrameworkName in " + (name ?: target.target)
+      }
+      TestTargetType.PYTHON -> {
+        "$testFrameworkName for " + target.target
+      }
+      else -> {
+        testFrameworkName
+      }
+    }
+
 
   /**
    * @return configuration-specific arguments
@@ -365,26 +475,25 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
       return false
     }
 
-    val nameAndTarget = getNameAndTargetForConfig(configuration, sourceElement.get()) ?: return false
-
     val location = context?.location
     if (location is PyTargetBasedPsiLocation) {
-      configuration.name = location.target.target
       location.target.copyTo(configuration.target)
-      return true
     }
-
-    configuration.name = nameAndTarget.first
-    nameAndTarget.second.copyTo(configuration.target)
+    else {
+      val targetForConfig = getTargetForConfig(configuration, sourceElement.get()) ?: return false
+      targetForConfig.copyTo(configuration.target)
+    }
+    configuration.setGeneratedName()
     return true
   }
+
 
   /**
    * Find concrete element to be used as test target.
    * @return configuration name and its target
    */
-  private fun getNameAndTargetForConfig(configuration: PyUniversalTestConfiguration,
-                                        baseElement: PsiElement): Pair<String, ConfigurationTarget>? {
+  private fun getTargetForConfig(configuration: PyUniversalTestConfiguration,
+                                 baseElement: PsiElement): ConfigurationTarget? {
     var element = baseElement
     // Go up until we reach top of the file
     // asking configuration about each element if it is supported or not
@@ -398,9 +507,9 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
               Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("$element has no qualified name")
               return null
             }
-            return Pair(qualifiedName, ConfigurationTarget(qualifiedName, TestTargetType.PYTHON))
+            return ConfigurationTarget(qualifiedName, TestTargetType.PYTHON)
           }
-          is PsiFileSystemItem -> return Pair(element.virtualFile.name, ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH))
+          is PsiFileSystemItem -> return ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH)
         }
       }
       element = element.parent
@@ -412,8 +521,8 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
 
   override fun isConfigurationFromContext(configuration: PyUniversalTestConfiguration?, context: ConfigurationContext?): Boolean {
     val psiElement = context?.psiLocation ?: return false
-    val nameAndTarget = getNameAndTargetForConfig(configuration!!, psiElement) ?: return false
-    return configuration.target == nameAndTarget.second
+    val targetForConfig = getTargetForConfig(configuration!!, psiElement) ?: return false
+    return configuration.target == targetForConfig
   }
 
   override fun isPreferredConfiguration(self: ConfigurationFromContext?, other: ConfigurationFromContext?): Boolean {
