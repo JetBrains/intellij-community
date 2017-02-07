@@ -2129,6 +2129,27 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testRedefine() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),
+        getVirtualFile(BASE_PATH + "Redefine/base.xsd"),
+      },
+      true, false
+    );
+  }
+
+  public void testRedefine2() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "Redefine/sample.xml"),
+        getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),
+        getVirtualFile(BASE_PATH + "Redefine/base.xsd"),
+      },
+      true, false
+    );
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
