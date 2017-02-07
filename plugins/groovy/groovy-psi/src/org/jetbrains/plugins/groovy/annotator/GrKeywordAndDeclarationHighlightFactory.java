@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 /**
  * @author Max Medvedev
@@ -38,7 +39,8 @@ public class GrKeywordAndDeclarationHighlightFactory extends AbstractProjectComp
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFile)) return null;
-    return new GrKeywordAndDeclarationHighlighter((GroovyFile)file, editor.getDocument());
+    PsiFile groovyFile = file.getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+    if (!(groovyFile instanceof GroovyFileBase)) return null;
+    return new GrKeywordAndDeclarationHighlighter((GroovyFileBase)groovyFile, editor.getDocument());
   }
 }
