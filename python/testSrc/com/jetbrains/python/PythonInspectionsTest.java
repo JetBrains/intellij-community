@@ -132,18 +132,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }
 
-  public void testPyTupleAssignmentBalanceInspection() {
-    doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection2() {
-    doHighlightingTest(PyTupleAssignmentBalanceInspection.class, LanguageLevel.PYTHON27);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection3() {
-    doHighlightingTest(PyTupleAssignmentBalanceInspection.class, LanguageLevel.PYTHON30);
-  }
-
   public void testPyClassicStyleClassInspection() {
     doHighlightingTest(PyClassicStyleClassInspection.class);
   }
