@@ -18,6 +18,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -35,7 +36,7 @@ public abstract class LocalTerminalCustomizer {
   }
 
   @Nullable
-  protected String getDefaultFolder(Project project) {
+  protected String getDefaultFolder() {
     return null;
   }
 
