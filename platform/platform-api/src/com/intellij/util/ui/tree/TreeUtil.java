@@ -601,19 +601,14 @@ public final class TreeUtil {
     int offset = rowBounds.y - bounds.y;
 
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-    if (builder != null) {
-      builder.getReady(TreeUtil.class).doWhenDone(scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone));
-    }
-    else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone));
-    }
+    scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone, builder);
 
     return callback;
   }
 
-  private static Runnable scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done) {
-    return () -> {
+  private static void scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done,
+                                      AbstractTreeBuilder builder) {
+    Runnable scroll = () -> {
       Rectangle pathBounds = tree.getPathBounds(path);
       if (pathBounds != null) {
         Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
@@ -621,11 +616,17 @@ public final class TreeUtil {
         LOG.debug("tree scroll: ", stamp == expected ? "try again: " : "ignore: ", path);
         if (stamp == expected) {
           bounds.y = pathBounds.y - offset; // restore bounds according to the current row
-          if (!tree.getVisibleRect().contains(bounds)) tree.scrollRectToVisible(bounds);
+          if (!tree.getVisibleRect().contains(bounds)) {
+            tree.scrollRectToVisible(bounds);
+            scrollToVisible(tree, path, bounds, offset, expected, done, builder);
+            return; // try to scroll again
+          }
         }
       }
       done.run();
     };
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(builder == null ? scroll : () -> builder.getReady(TreeUtil.class).doWhenDone(scroll));
   }
 
   // this method returns FIRST selected row but not LEAD
