@@ -1214,6 +1214,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             }
           }
         }
+
+        @Override
+        public void visitPyWithStatement(PyWithStatement node) {
+          StreamEx
+            .of(node.getWithItems())
+            .map(PyWithItem::getTarget)
+            .select(PyTargetExpression.class)
+            .forEach(result::add);
+        }
       });
       return result;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -742,6 +745,22 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-21707
   public void testMultilineFormatString() {
     doTest();
+  }
+
+  // PY-21651
+  public void testInstanceAttributeCreatedThroughWithStatement() {
+    doTest();
+  }
+
+  // PY-21651
+  public void testInstanceAttributeCreatedThroughWithStatementInAnotherFile() {
+    doMultiFileTest();
+
+    final VirtualFile fooVFile = myFixture.getFile().getVirtualFile().getParent().getChildren()[1];
+    assertEquals("foo.py", fooVFile.getName());
+
+    final PsiFile fooPsiFile = PsiManager.getInstance(myFixture.getProject()).findFile(fooVFile);
+    assertNotParsed((PyFile)fooPsiFile);
   }
 
   @NotNull
