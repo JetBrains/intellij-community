@@ -95,7 +95,6 @@
                                        implementation="org.jetbrains.plugins.groovy.config.DefaultGroovyFrameworkConfigNotification"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
@@ -280,7 +279,6 @@
                               implementationClass="org.jetbrains.plugins.groovy.findUsages.GrFileItemPresentationProvider"/>
 
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework" order="first"/>
-    <testFramework implementation="org.jetbrains.plugins.groovy.spock.SpockTestFramework" order="first"/>
 
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
@@ -521,8 +519,6 @@
 
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
-
-    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher"/>
 
     <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyTypeDeclarationProvider" order="first"/>
 
@@ -1796,4 +1792,5 @@
   <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="geb-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="spock-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
