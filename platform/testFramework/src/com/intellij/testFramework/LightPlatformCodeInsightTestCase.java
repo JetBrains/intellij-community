@@ -113,12 +113,21 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
     try {
-      final File ioFile = new File(getTestDataPath() + filePath);
+      String fullPath = getTestDataPath() + filePath;
+      final File ioFile = new File(fullPath);
+      checkCaseSensitiveFS(fullPath, ioFile);
       String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);
       configureFromFileText(ioFile.getName(), fileText);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static void checkCaseSensitiveFS(String fullPath, File ioFile) throws IOException {
+    fullPath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullPath));
+    if (!ioFile.getCanonicalPath().equals(fullPath)) {
+      throw new RuntimeException("Search for: " + fullPath + "; but found: " + ioFile.getCanonicalPath());
     }
   }
 
@@ -341,6 +350,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
     String fileText;
     try {
+     checkCaseSensitiveFS(fullPath, ioFile);
       fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
     }
     catch (IOException e) {
