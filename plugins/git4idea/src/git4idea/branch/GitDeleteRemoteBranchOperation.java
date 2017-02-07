@@ -16,9 +16,6 @@
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -35,8 +32,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision;
+import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
+import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE_WITH_TRACKING;
 
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
@@ -61,19 +61,15 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
     final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
     final boolean finalCurrentBranchTracksBranchToDelete = currentBranchTracksBranchToDelete;
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        decision.set(confirmBranchDeletion(myBranchName, commonTrackingBranches, finalCurrentBranchTracksBranchToDelete, repositories));
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> decision.set(
+      myUiHandler.confirmRemoteBranchDeletion(myBranchName, commonTrackingBranches, finalCurrentBranchTracksBranchToDelete, repositories)));
 
 
-    if (decision.get().delete()) {
+    if (decision.get() != CANCEL) {
       boolean deletedSuccessfully = doDeleteRemote(myBranchName, repositories);
       if (deletedSuccessfully) {
         final Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
-        if (decision.get().deleteTracking()) {
+        if (decision.get() == DELETE_WITH_TRACKING) {
           for (final String branch : commonTrackingBranches) {
             getIndicator().setText("Deleting " + branch);
             new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
@@ -88,7 +84,6 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         notifySuccessfulDeletion(myBranchName, successfullyDeletedLocalBranches);
       }
     }
-
   }
 
   @Override
@@ -188,66 +183,4 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     VcsNotifier.getInstance(myProject).notifySuccess("Deleted remote branch " + remoteBranchName,
                                                      message);
   }
-
-  private DeleteRemoteBranchDecision confirmBranchDeletion(@NotNull String branchName, @NotNull Collection<String> trackingBranches,
-                                                           boolean currentBranchTracksBranchToDelete,
-                                                           @NotNull Collection<GitRepository> repositories) {
-    String title = "Delete Remote Branch";
-    String message = "Delete remote branch " + branchName;
-
-    boolean delete;
-    final boolean deleteTracking;
-    if (trackingBranches.isEmpty()) {
-      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.YES;
-      deleteTracking = false;
-    }
-    else {
-      if (currentBranchTracksBranchToDelete) {
-        message += "\n\nCurrent branch " + GitBranchUtil.getCurrentBranchOrRev(repositories) + " tracks " + branchName + " but won't be deleted.";
-      }
-      final String checkboxMessage;
-      if (trackingBranches.size() == 1) {
-        checkboxMessage = "Delete tracking local branch " + trackingBranches.iterator().next() + " as well";
-      }
-      else {
-        checkboxMessage = "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
-      }
-
-      final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
-        new DialogWrapper.DoNotAskOption.Adapter() {
-          @Override
-          public void rememberChoice(boolean isSelected, int exitCode) {
-            deleteChoice.set(isSelected);
-          }
-
-          @NotNull
-          @Override
-          public String getDoNotShowMessage() {
-            return checkboxMessage;
-          }
-        }).show() == Messages.YES;
-      deleteTracking = deleteChoice.get();
-    }
-    return new DeleteRemoteBranchDecision(delete, deleteTracking);
-  }
-
-  private static class DeleteRemoteBranchDecision {
-    private final boolean delete;
-    private final boolean deleteTracking;
-
-    private DeleteRemoteBranchDecision(boolean delete, boolean deleteTracking) {
-      this.delete = delete;
-      this.deleteTracking = deleteTracking;
-    }
-
-    public boolean delete() {
-      return delete;
-    }
-
-    public boolean deleteTracking() {
-      return deleteTracking;
-    }
-  }
-
 }
