@@ -34,5 +34,7 @@
                      implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
     <localInspection groupName="RegExp" language="RegExp"  shortName="OctalEscape" displayName="Octal escape" enabledByDefault="false"
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>
   </extensions>
 </idea-plugin>
