@@ -202,6 +202,10 @@ public class JavaGenericsUtil {
       return false;
     }
 
+    if (rType instanceof PsiCapturedWildcardType) {
+      return isRawToGeneric(lType, ((PsiCapturedWildcardType)rType).getUpperBound());
+    }
+
     if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
 
     PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)lType).resolveGenerics();

@@ -626,4 +626,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
   }
+
+  public void testUncheckedWarningWhenCastingFromCapturedWildcard() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
+  }
 }
