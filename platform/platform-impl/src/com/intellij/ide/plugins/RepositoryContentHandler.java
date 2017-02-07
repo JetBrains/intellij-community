@@ -90,7 +90,6 @@ class RepositoryContentHandler extends DefaultHandler {
         currentPlugin.setDate(dateString);
       }
       currentPlugin.setIncomplete(false);
-      plugins.add(currentPlugin);
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
@@ -109,7 +108,6 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(attributes.getValue(URL));
       currentPlugin.setVersion(attributes.getValue(VERSION));
       currentPlugin.setIncomplete(true);
-      plugins.add(currentPlugin);
     }
     currentValue.setLength(0);
   }
@@ -130,9 +128,6 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(VERSION)) {
       currentPlugin.setVersion(currentValueString);
-      if (PluginManagerCore.isBrokenPlugin(currentPlugin)) {
-        plugins.remove(currentPlugin);
-      }
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendor(currentValueString);
@@ -154,6 +149,9 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(currentValueString);
     }
     else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
+      if (currentPlugin != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+        plugins.add(currentPlugin);
+      }
       currentPlugin = null;
     }
   }
