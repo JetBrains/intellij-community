@@ -163,7 +163,9 @@ public class PluginManagerCore {
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
-    return getBrokenPluginVersions().get(descriptor.getPluginId().getIdString()).contains(descriptor.getVersion());
+    PluginId pluginId = descriptor.getPluginId();
+    if (pluginId == null) return true;
+    return getBrokenPluginVersions().get(pluginId.getIdString()).contains(descriptor.getVersion());
   }
 
   @NotNull
