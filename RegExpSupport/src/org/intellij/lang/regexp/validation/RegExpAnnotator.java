@@ -280,6 +280,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
     }
+    if (group.getType() == RegExpGroup.Type.ATOMIC && !myLanguageHosts.supportsPossessiveQuantifiers(group)) {
+      myHolder.createErrorAnnotation(group, "Atomic groups are not supported in this regex dialect");
+    }
     final String name = group.getName();
     if (name != null && !myLanguageHosts.isValidGroupName(name, group)) {
       final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
