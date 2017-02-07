@@ -159,11 +159,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
       Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
-      if (change.getAfterRevision() == null) {
-        LOG.error("After revision for commit " + details.getId() + " change " + change + " is null.");
-        return null;
+      ContentRevision revision = change.getAfterRevision();
+      if (revision == null) {
+        revision = change.getBeforeRevision();
+        if (revision == null) {
+          LOG.error("Before and after revisions for commit " + details.getId().toShortString() + ", change " + change + " are null.");
+          return null;
+        }
       }
-      return new VcsLogFileRevision(details, change, change.getAfterRevision().getFile());
+      return new VcsLogFileRevision(details, change, revision.getFile());
     }
     return null;
   }
