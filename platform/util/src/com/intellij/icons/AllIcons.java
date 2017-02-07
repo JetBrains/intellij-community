@@ -524,7 +524,6 @@ public class AllIcons {
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
-    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/general/siblingInheritedMethod.png"); // 12x12
     public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
     public static final Icon SplitCenterH = IconLoader.getIcon("/general/splitCenterH.png"); // 7x7
     public static final Icon SplitCenterV = IconLoader.getIcon("/general/splitCenterV.png"); // 6x7
@@ -583,6 +582,7 @@ public class AllIcons {
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12
     public static final Icon RecursiveMethod = IconLoader.getIcon("/gutter/recursiveMethod.png"); // 12x12
+    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/gutter/siblingInheritedMethod.png"); // 12x12
     public static final Icon Unique = IconLoader.getIcon("/gutter/unique.png"); // 8x8
 
   }
