@@ -172,10 +172,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void loadBundledSchemes() {
-    if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
-      }
+    for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+      mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
     }
   }
   
@@ -240,10 +238,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     public String colorScheme;
   }
 
-  private static boolean isUnitTestOrHeadlessMode() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
-  }
-
   public TextAttributes getDefaultAttributes(TextAttributesKey key) {
     final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
@@ -256,9 +250,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     for (AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()) {
       EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(attributesEP.scheme);
       if (editorColorsScheme == null) {
-        if (!isUnitTestOrHeadlessMode()) {
-          LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
-        }
+        LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
         continue;
       }
       try {
