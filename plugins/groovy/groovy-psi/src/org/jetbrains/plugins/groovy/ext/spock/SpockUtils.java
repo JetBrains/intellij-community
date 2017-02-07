@@ -15,10 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.ext.spock;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
@@ -261,5 +265,39 @@ public class SpockUtils {
     else {
       res.add(element);
     }
+  }
+
+  public static boolean isTestMethod(PsiElement element) {
+    if (!(element instanceof GrMethod)) return false;
+    GrMethod method = ((GrMethod)element);
+    PsiClass clazz = method.getContainingClass();
+    if (!isSpecification(clazz)) return false;
+    if (isFixtureMethod(method)) return false;
+    return isFeatureMethod(method);
+  }
+
+  public static boolean isSpecification(@Nullable PsiClass clazz) {
+    return clazz instanceof GrTypeDefinition && InheritanceUtil.isInheritor(clazz, SPEC_CLASS_NAME);
+  }
+
+  public static boolean isFixtureMethod(@NotNull GrMethod method) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    return SpockConstants.FIXTURE_METHOD_NAMES.contains(method.getName());
+  }
+
+  public static boolean isFeatureMethod(@NotNull GrMethod method) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
+
+    GrOpenBlock block = method.getBlock();
+    if (block == null) return false;
+
+    for (GrStatement statement : block.getStatements()) {
+      if (!(statement instanceof GrLabeledStatement)) {
+        continue;
+      }
+      String label = ((GrLabeledStatement)statement).getName();
+      if (SpockConstants.FEATURE_METHOD_LABELS.contains(label)) return true;
+    }
+    return false;
   }
 }

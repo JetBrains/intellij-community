@@ -15,22 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.ext.spock;
 
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
+
+import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
 /**
  * @author Sergey Evdokimov
  */
 public class SpockTestFramework extends GroovyTestFramework {
+
   @NotNull
   @Override
   public String getName() {
@@ -66,10 +66,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   public boolean isTestMethod(PsiElement element) {
-    if (!(element instanceof GrMethod)) return false;
-
-    return InheritanceUtil.isInheritor(((GrMethod)element).getContainingClass(), SpockUtils.SPEC_CLASS_NAME)
-           && JUnitUtil.getTestMethod(element) != null;
+    return SpockUtils.isTestMethod(element);
   }
 
   @Override
@@ -79,8 +76,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return clazz.getLanguage() == GroovyLanguage.INSTANCE
-           && InheritanceUtil.isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME);
+    return clazz.getLanguage() == GroovyLanguage.INSTANCE && isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME);
   }
 
   private PsiMethod findSpecificMethod(@NotNull PsiClass clazz, String methodName) {
@@ -96,13 +92,13 @@ public class SpockTestFramework extends GroovyTestFramework {
   @Nullable
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    return findSpecificMethod(clazz, "setup");
+    return findSpecificMethod(clazz, SpockConstants.SETUP_METHOD_NAME);
   }
 
   @Nullable
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    return findSpecificMethod(clazz, "cleanup");
+    return findSpecificMethod(clazz, SpockConstants.CLEANUP_METHOD_NAME);
   }
 
   @Override
