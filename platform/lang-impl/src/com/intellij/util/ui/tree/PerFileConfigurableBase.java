@@ -603,7 +603,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       protected ComboBoxButton createComboBoxButton(Presentation presentation) {
         return new ComboBoxButton(presentation) {
           protected JBPopup createPopup(Runnable onDispose) {
-            JBPopup popup = createValueEditorPopup(target, onDispose, getDataContext(), o -> {
+            JBPopup popup = createValueEditorPopup(target, value.produce(), onDispose, getDataContext(), o -> {
               consumer.consume(o);
               updateText();
             });
@@ -617,6 +617,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @NotNull
   protected JBPopup createValueEditorPopup(@Nullable Object target,
+                                           @Nullable T value,
                                            @Nullable Runnable onDispose,
                                            @NotNull DataContext dataContext,
                                            @NotNull Consumer<T> onChosen) {
