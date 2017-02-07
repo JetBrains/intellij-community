@@ -16,9 +16,11 @@
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -32,15 +34,8 @@ class PyDataViewTabs extends JBRunnerTabs {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     if (isEmptyVisible()) {
-      drawCenteredString(g, PyDataViewToolWindowFactory.EMPTY_TEXT);
+      UISettings.setupAntialiasing(g);
+      UIUtil.drawCenteredString((Graphics2D)g, g.getClipBounds(), PyDataViewToolWindowFactory.EMPTY_TEXT);
     }
-  }
-
-  private static void drawCenteredString(Graphics g, String text) {
-    Rectangle rect = g.getClipBounds();
-    FontMetrics metrics = g.getFontMetrics();
-    int x = (rect.width - metrics.stringWidth(text)) / 2;
-    int y = ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
-    g.drawString(text, x, y);
   }
 }
