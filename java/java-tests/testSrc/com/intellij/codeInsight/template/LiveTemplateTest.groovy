@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,16 @@ class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   void testTemplateWithSegmentsAtTheSamePosition_3() {
     doTestTemplateWithThreeVariables("", "DefaultValue", "", "class A { void test() { for(TestValue1DefaultValueTestValue3) {} } }")
+  }
+
+  void testTemplateWithSegmentsAtTheSamePosition_4() {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("test_template", "user_group", '$A$$B$ then "$A$$B$"')
+    template.addVariable("A", "", "\"Def1\"", true)
+    template.addVariable("B", "", "\"Def2\"", true)
+    startTemplate(template)
+    checkResultByText("class A { void test() { Def1Def2 then \"Def1Def2\" } }")
   }
 
   private void doTestTemplateWithThreeVariables(String firstDefaultValue, String secondDefaultValue, String thirdDefaultValue, String expectedText) {
