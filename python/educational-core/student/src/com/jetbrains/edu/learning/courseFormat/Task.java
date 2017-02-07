@@ -74,10 +74,12 @@ public class Task implements StudyItem {
     }
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void setName(String name) {
     this.name = name;
   }
@@ -90,10 +92,12 @@ public class Task implements StudyItem {
     this.text = text;
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
 
+  @Override
   public void setIndex(int index) {
     myIndex = index;
   }
@@ -260,9 +264,6 @@ public class Task implements StudyItem {
   public Task copy() {
     Element element = XmlSerializer.serialize(this);
     Task copy = XmlSerializer.deserialize(element, Task.class);
-    if (copy == null) {
-      return null;
-    }
     copy.initTask(null, true);
     return copy;
   }

@@ -32,7 +32,6 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.serialize
 import gnu.trove.THashMap
@@ -419,7 +418,7 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 
   baseDir.directoryStreamIfExists {
     for (file in it) {
-      val scheme = XmlSerializer.deserialize(loadElement(file), TestScheme::class.java)!!
+      val scheme = deserialize(loadElement(file), TestScheme::class.java)
       assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file.fileName.toString()))).isEqualTo(scheme.name)
     }
   }
@@ -441,7 +440,7 @@ open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() 
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean): TestScheme {
-    val scheme = XmlSerializer.deserialize(dataHolder.read(), TestScheme::class.java)!!
+    val scheme = deserialize(dataHolder.read(), TestScheme::class.java)
     dataHolder.updateDigest(scheme)
     return scheme
   }

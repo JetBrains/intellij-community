@@ -42,14 +42,14 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.List;
 
-class BeanBinding extends Binding {
+public class BeanBinding extends NotNullDeserializeBinding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Binding[] myBindings;
 
-  final Class<?> myBeanClass;
+  protected final Class<?> myBeanClass;
 
   ThreeState compareByFields = ThreeState.UNSURE;
 
@@ -128,7 +128,7 @@ class BeanBinding extends Binding {
 
   @Override
   @NotNull
-  public Object deserialize(Object context, @NotNull Element element) {
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
     deserializeInto(instance, element, null);
     return instance;
@@ -222,7 +222,7 @@ class BeanBinding extends Binding {
             if (accessorNameTracker != null) {
               accessorNameTracker.add(binding.getAccessor().getName());
             }
-            binding.deserialize(result, child);
+            binding.deserializeUnsafe(result, child);
           }
           continue nextNode;
         }

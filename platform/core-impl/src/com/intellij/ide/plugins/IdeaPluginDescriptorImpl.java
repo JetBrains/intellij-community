@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // used in upsource
   protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-    if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
     String idString = pluginBean.id;

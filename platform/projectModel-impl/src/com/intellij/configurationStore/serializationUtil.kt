@@ -18,11 +18,10 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ComponentSerializationUtil
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
 fun deserializeAndLoadState(component: PersistentStateComponent<*>, element: Element) {
-  val state = XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass<Any>(component.javaClass))
+  val state = deserialize(element, ComponentSerializationUtil.getStateClass<Any>(component.javaClass))
   (state as? BaseState)?.resetModificationCount()
   @Suppress("UNCHECKED_CAST")
   (component as PersistentStateComponent<Any>).loadState(state)

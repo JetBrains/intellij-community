@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
+
+import static com.intellij.util.xmlb.XmlSerializer.deserialize;
 
 /**
  * @author nik
@@ -51,7 +53,7 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     settings.myOption = "42";
     assertSame(settings, MyDebuggerSettings.getInstance());
 
-    settingsManager.loadState(XmlSerializer.deserialize(element, XDebuggerSettingManagerImpl.SettingsState.class));
+    settingsManager.loadState(deserialize(element, XDebuggerSettingManagerImpl.SettingsState.class));
     assertSame(settings, MyDebuggerSettings.getInstance());
     assertEquals("239", settings.myOption);
   }

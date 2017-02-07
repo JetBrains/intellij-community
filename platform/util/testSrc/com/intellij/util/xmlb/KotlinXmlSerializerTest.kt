@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb
 
+import com.intellij.configurationStore.deserialize
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Tag
@@ -57,7 +58,7 @@ class KotlinXmlSerializerTest {
       </option>
     </bean>""", data)
 
-    assertThat(XmlSerializer.deserialize(loadElement("""<bean>
+    assertThat(deserialize(loadElement("""<bean>
       <option name="PLACES_MAP">
         <entry key="">
           <PlaceSettings>
@@ -65,9 +66,9 @@ class KotlinXmlSerializerTest {
           </PlaceSettings>
         </entry>
       </option>
-    </bean>"""), Foo::class.java)!!.PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
+    </bean>"""), Foo::class.java).PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
 
-    assertThat(XmlSerializer.deserialize(loadElement("""<bean>
+    val value = deserialize(loadElement("""<bean>
       <option name="PLACES_MAP">
         <entry key="">
           <PlaceSettings>
@@ -75,7 +76,11 @@ class KotlinXmlSerializerTest {
           </PlaceSettings>
         </entry>
       </option>
-    </bean>"""), Foo::class.java)!!.PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
+    </bean>"""), Foo::class.java)
+    assertThat(value).isNotNull()
+    val placeSettings = value.PLACES_MAP.get("")
+    assertThat(placeSettings).isNotNull()
+    assertThat(placeSettings!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,7 @@ public class JpsFacetSerializer {
   public static void loadFacets(JpsModule module, @Nullable Element facetManagerElement) {
     if (facetManagerElement == null) return;
     final FacetManagerState state = XmlSerializer.deserialize(facetManagerElement, FacetManagerState.class);
-    if (state != null) {
-      addFacets(module, state.getFacets(), null);
-    }
+    addFacets(module, state.getFacets(), null);
   }
 
   public static void saveFacets(JpsModule module, @NotNull Element facetManagerElement) {

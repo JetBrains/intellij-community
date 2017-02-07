@@ -300,9 +300,8 @@ internal class XmlSerializerTest {
     element.addContent(node)
 
     bean = XmlSerializer.deserialize<BeanWithPublicFields>(element, bean.javaClass)
-    assert(bean != null)
-    TestCase.assertEquals(987, bean!!.INT_V)
-    TestCase.assertEquals("1234", bean.STRING_V)
+    assertThat(bean.INT_V).isEqualTo(987)
+    assertThat(bean.STRING_V).isEqualTo("1234")
   }
 
   @Test fun FilterSerializer() {
@@ -609,7 +608,7 @@ internal class XmlSerializerTest {
   }
 
   @Test fun DeserializeJDOMElementField() {
-    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").rootElement, BeanWithJDOMElement::class.java)!!
+    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").rootElement, BeanWithJDOMElement::class.java)
 
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)

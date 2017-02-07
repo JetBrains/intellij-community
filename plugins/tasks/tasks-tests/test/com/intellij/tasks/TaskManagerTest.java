@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     Element element = XmlSerializer.serialize(state);
 
     configuration.servers.clear();
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.<TaskRepository>emptyList());
+    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.emptyList());
 
     configuration.loadState(XmlSerializer.deserialize(element, TaskProjectConfiguration.class));
     assertEquals(1, state.servers.size());

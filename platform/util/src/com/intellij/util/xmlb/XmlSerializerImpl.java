@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-class XmlSerializerImpl {
+public class XmlSerializerImpl {
   private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
   @NotNull
@@ -64,13 +64,11 @@ class XmlSerializerImpl {
   @Nullable
   static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
     Class<?> aClass = object.getClass();
-    Binding binding = getClassBinding(aClass, aClass, null);
-    assert binding != null;
-    return (Element)binding.serialize(object, null, filter);
+    return (Element)getMainBinding(aClass, aClass, null).serialize(object, null, filter);
   }
 
   @Nullable
-  static Binding getBinding(@NotNull Type type) {
+  public static Binding getBinding(@NotNull Type type) {
     return getClassBinding(typeToClass(type), type, null);
   }
 
@@ -111,11 +109,20 @@ class XmlSerializerImpl {
       return null;
     }
 
+    return getMainBinding(aClass, originalType, accessor);
+  }
+
+  @NotNull
+  static Binding getMainBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
     Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
     if (binding == null) {
       binding = getNonCachedClassBinding(aClass, accessor, originalType);
+      if (binding == null) {
+        binding = new BeanBinding(aClass, accessor);
+      }
+
       map.put(key, binding);
       try {
         binding.init(originalType);
@@ -138,8 +145,8 @@ class XmlSerializerImpl {
     return map;
   }
 
-  @NotNull
-  private static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+  @Nullable
+  public static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
     if (aClass.isArray()) {
       if (Element.class.isAssignableFrom(aClass.getComponentType())) {
         assert accessor != null;
@@ -170,7 +177,7 @@ class XmlSerializerImpl {
         return new CompactCollectionBinding(accessor);
       }
     }
-    return new BeanBinding(aClass, accessor);
+    return null;
   }
 
   @Nullable

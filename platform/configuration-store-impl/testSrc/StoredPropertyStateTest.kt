@@ -37,7 +37,7 @@ class StoredPropertyStateTest {
     assertThat(state).isNotEqualTo(AState())
 
     assertThat(XmlSerializer.serialize(state)).isEqualTo("""<AState customName="foo" />""")
-    assertThat(XmlSerializer.deserialize(loadElement("""<AState customName="foo" />"""), AState::class.java)!!.languageLevel).isEqualTo("foo")
+    assertThat(XmlSerializer.deserialize(loadElement("""<AState customName="foo" />"""), AState::class.java).languageLevel).isEqualTo("foo")
   }
 
   @Test
