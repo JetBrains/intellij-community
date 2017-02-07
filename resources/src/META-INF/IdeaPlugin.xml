@@ -76,10 +76,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>
-      <skipForDefaultProject/>
-    </component>
 
     <component>
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
