@@ -15,11 +15,15 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
 import org.jdom.Element
+import org.jdom.JDOMException
+import java.io.IOException
 import java.lang.reflect.Type
+import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.primaryConstructor
 
@@ -35,6 +39,20 @@ fun <T> deserialize(element: Element, aClass: Class<T>): T {
   }
   catch (e: Exception) {
     throw XmlSerializationException("Cannot deserialize class ${aClass.name}", e)
+  }
+}
+
+fun <T> deserialize(url: URL, aClass: Class<T>): T {
+  try {
+    var document = JDOMUtil.loadDocument(url)
+    document = JDOMXIncluder.resolve(document, url.toExternalForm())
+    return deserialize(document.rootElement, aClass)
+  }
+  catch (e: IOException) {
+    throw XmlSerializationException(e)
+  }
+  catch (e: JDOMException) {
+    throw XmlSerializationException(e)
   }
 }
 
