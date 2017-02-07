@@ -121,6 +121,10 @@ class TeamcityServiceMessages(object):
         import teamcity.context_managers as cm
         return cm.test(self, testName=testName, captureStandardOutput=captureStandardOutput, testDuration=testDuration, flowId=flowId)
 
+    # Unsupported in TeamCity, used in IntellIJ-based IDEs to predict number of tests to be run in the test session
+    def testCount(self, count, flowId=None):
+        self.message('testCount', count=str(count), flowId=flowId)
+
     def testIgnored(self, testName, message='', flowId=None):
         self.message('testIgnored', name=testName, message=message, flowId=flowId)
 

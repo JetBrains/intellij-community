@@ -86,7 +86,18 @@ internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
  * We just save its name and provide it again to rerun
  */
-private class PyTargetBasedPsiLocation(val target: ConfigurationTarget, element: PsiElement) : PsiLocation<PsiElement>(element)
+private class PyTargetBasedPsiLocation(val target: ConfigurationTarget, element: PsiElement) : PsiLocation<PsiElement>(element) {
+  override fun equals(other: Any?): Boolean {
+    if (other is PyTargetBasedPsiLocation) {
+      return target == other.target
+    }
+    return false
+  }
+
+  override fun hashCode(): Int {
+    return target.hashCode()
+  }
+}
 
 
 /**
@@ -105,11 +116,16 @@ private object PyUniversalTestsLocator : SMTestLocator {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
     }
-    val element = QualifiedName.fromDottedString(path).toElement(scope.module,
-                                                                 TypeEvalContext.userInitiated(project, null))
+    val qualifiedName = QualifiedName.fromDottedString(path)
+    val element = qualifiedName.toElement(scope.module,
+                                          TypeEvalContext.userInitiated(project, null))
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
-      return listOf(PyTargetBasedPsiLocation(ConfigurationTarget(path, TestTargetType.PYTHON), element))
+      // Parentheses are part of generators / parametrized tests
+      // Until https://github.com/JetBrains/teamcity-messages/issues/121 they are disabled,
+      // so we cut them out of path not to provide unsupported targets to runners
+      val pathNoParentheses = QualifiedName.fromComponents(qualifiedName.components.filter { !it.contains('(') }).toString()
+      return listOf(PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, TestTargetType.PYTHON), element))
     }
     else {
       return listOf()
@@ -325,7 +341,8 @@ abstract class PyUniversalTestConfiguration(project: Project,
   override fun getTestSpecsForRerun(scope: GlobalSearchScope,
                                     locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
     val result = ArrayList<String>()
-    locations.map { getTestSpecForPythonTarget(it.first) }.filterNotNull().forEach { result.addAll(it) }
+    // Set used to remove duplicate targets
+    locations.map { it.first }.toSet().map { getTestSpecForPythonTarget(it) }.filterNotNull().forEach { result.addAll(it) }
     return result + generateRawArguments()
   }
 

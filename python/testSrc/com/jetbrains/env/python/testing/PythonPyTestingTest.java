@@ -49,6 +49,30 @@ public class PythonPyTestingTest extends PyEnvTestCase {
         PyUniversalPyTestConfiguration.class));
   }
 
+  /**
+   * Ensure dots in test names do not break anything (PY-13833)
+   */
+  @Test
+  public void testEscape() throws Exception {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("test_escape_me.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        final String resultTree = runner.getFormattedTestTree().trim();
+        final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
+        Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
+      }
+    });
+  }
+
   // Import error should lead to test failure
   @Test
   public void testFailInCaseOfError() {
@@ -147,9 +171,10 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          // Pytest supports [1] notation, so we only rerun failed
-          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
-          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
+          // We rerun all tests, since running parametrized tests is broken until
+          // https://github.com/JetBrains/teamcity-messages/issues/121
+          assertEquals(runner.getFormattedTestTree(), 7, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 3, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }
