@@ -127,8 +127,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private boolean oldDisposerDebug;
-
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -158,6 +156,7 @@ public abstract class UsefulTestCase extends TestCase {
       cleanupDeleteOnExitHookList();
     }
     finally {
+      Disposer.setDebugMode(true);
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {

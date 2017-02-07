@@ -56,7 +56,7 @@ public class Disposer {
     }
   };
 
-  private static String debugDisposer = System.getProperty("idea.disposer.debug");
+  private final static String debugDisposer = System.getProperty("idea.disposer.debug");
   public static boolean isDebugDisposerOn() {
     return "on".equals(debugDisposer);
   }
