@@ -95,7 +95,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
+    myLogProvider.blockFullLog();
     DataPack result = myLoader.readFirstBlock();
+    myLogProvider.unblockFullLog();
     assertNotNull(result);
     assertDataPack(log(myCommits.subList(0, 2)), result.getPermanentGraph().getAllCommits());
     waitForBackgroundTasksToComplete();
