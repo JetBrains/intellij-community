@@ -112,20 +112,19 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
         final CodeStyleScheme scheme = importExternalCodeStyle(importer, currentScheme);
         if (scheme != null) {
           final String additionalImportInfo = StringUtil.notNullize(importer.getAdditionalImportInfo(scheme));
-          SchemeImportUtil
-            .showStatus(getSchemesPanel(),
-                        ApplicationBundle.message("message.code.style.scheme.import.success", importerName, scheme.getName(),
-                                                  additionalImportInfo),
-                        MessageType.INFO);
+          getSchemesPanel().showStatus(
+            ApplicationBundle.message("message.code.style.scheme.import.success", importerName, scheme.getName(),
+                                      additionalImportInfo),
+            MessageType.INFO);
         }
       }
       catch (SchemeImportException e) {
         if (e.isWarning()) {
-          SchemeImportUtil.showStatus(getSchemesPanel(), e.getMessage(), MessageType.WARNING);
+          getSchemesPanel().showStatus(e.getMessage(), MessageType.WARNING);
           return;
         }
         final String message = ApplicationBundle.message("message.code.style.scheme.import.failure", importerName, e.getMessage());
-        SchemeImportUtil.showStatus(getSchemesPanel(), message, MessageType.ERROR);
+        getSchemesPanel().showStatus(message, MessageType.ERROR);
       }
     }
   }
@@ -228,7 +227,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
           message = ApplicationBundle.message("scheme.exporter.ui.cannot.write.message");
           messageType = MessageType.ERROR;
         }
-        SchemeImportUtil.showStatus(getSchemesPanel(), message, messageType);
+        getSchemesPanel().showStatus(message, messageType);
       }
     }
   }

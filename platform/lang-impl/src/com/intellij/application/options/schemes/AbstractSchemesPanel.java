@@ -20,7 +20,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,4 +169,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
    *         separators.
    */
   public abstract boolean supportsProjectSchemes();
+  
+  public void showStatus(final String message, MessageType messageType) {
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
+                                    messageType.getPopupBackground(), null);
+    balloonBuilder.setFadeoutTime(5000);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    balloon.showInCenterOf(myToolbar);
+    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+  }
 }
