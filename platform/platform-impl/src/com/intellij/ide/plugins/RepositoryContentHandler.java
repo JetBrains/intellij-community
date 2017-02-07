@@ -149,7 +149,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(currentValueString);
     }
     else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
-      if (currentPlugin != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+      if (currentPlugin != null && currentPlugin.getPluginId() != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
         plugins.add(currentPlugin);
       }
       currentPlugin = null;
