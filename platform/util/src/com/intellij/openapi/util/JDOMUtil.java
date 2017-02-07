@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -42,10 +43,7 @@ import org.xml.sax.XMLReader;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author mike
@@ -53,6 +51,12 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
   private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
+  public static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
+    @Override
+    public boolean value(Attribute attribute) {
+      return !StringUtil.isEmpty(attribute.getValue());
+    }
+  };
 
   private JDOMUtil() { }
 
@@ -84,12 +88,21 @@ public class JDOMUtil {
   }
 
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
+    return areElementsEqual(e1, e2, false);
+  }
+
+  /**
+   *
+   * @param ignoreEmptyAttrValues defines if elements like <element foo="bar" skip_it=""/> and <element foo="bar"/> are 'equal'
+   * @return <code>true</code> if two elements are deep-equals by their content and attributes
+   */
+  public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2, boolean ignoreEmptyAttrValues) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
     return Comparing.equal(e1.getName(), e2.getName())
-           && attListsEqual(e1.getAttributes(), e2.getAttributes())
-           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
+           && attListsEqual(e1.getAttributes(), e2.getAttributes(), ignoreEmptyAttrValues)
+           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
@@ -201,14 +214,14 @@ public class JDOMUtil {
     }
   }
 
-  private static boolean contentListsEqual(final List c1, final List c2) {
+  private static boolean contentListsEqual(final List c1, final List c2, boolean ignoreEmptyAttrValues) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null || c2 == null) return false;
 
     Iterator l1 = c1.listIterator();
     Iterator l2 = c2.listIterator();
     while (l1.hasNext() && l2.hasNext()) {
-      if (!contentsEqual((Content)l1.next(), (Content)l2.next())) {
+      if (!contentsEqual((Content)l1.next(), (Content)l2.next(), ignoreEmptyAttrValues)) {
         return false;
       }
     }
@@ -216,18 +229,22 @@ public class JDOMUtil {
     return l1.hasNext() == l2.hasNext();
   }
 
-  private static boolean contentsEqual(Content c1, Content c2) {
+  private static boolean contentsEqual(Content c1, Content c2, boolean ignoreEmptyAttrValues) {
     if (!(c1 instanceof Element) && !(c2 instanceof Element)) {
       return c1.getValue().equals(c2.getValue());
     }
 
-    return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
+    return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  private static boolean attListsEqual(@NotNull List a1, @NotNull List a2) {
-    if (a1.size() != a2.size()) return false;
-    for (int i = 0; i < a1.size(); i++) {
-      if (!attEqual((Attribute)a1.get(i), (Attribute)a2.get(i))) return false;
+  private static boolean attListsEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
+    if (ignoreEmptyAttrValues) {
+      l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
+      l2 = ContainerUtil.filter(l2, NOT_EMPTY_VALUE_CONDITION);
+    }
+    if (l1.size() != l2.size()) return false;
+    for (int i = 0; i < l1.size(); i++) {
+      if (!attEqual(l1.get(i), l2.get(i))) return false;
     }
     return true;
   }

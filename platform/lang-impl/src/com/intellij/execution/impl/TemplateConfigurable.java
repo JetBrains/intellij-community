@@ -16,18 +16,23 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.openapi.options.SettingsEditorConfigurable;
+import org.jdom.Element;
 
 /**
 * @author Dmitry Avdeev
 *         Date: 10/6/11
 */
-class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
+class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;
 
   public TemplateConfigurable(RunnerAndConfigurationSettings template) {
     super(new ConfigurationSettingsEditorWrapper(template), template);
     myTemplate = template;
+  }
+
+  @Override
+  void patchElementsIfNeed(Element originalElement, Element snapshotElement) {
+    snapshotElement.setAttribute(RunnerAndConfigurationSettingsImpl.TEMPLATE_FLAG_ATTRIBUTE, "true");
   }
 
   @Override
