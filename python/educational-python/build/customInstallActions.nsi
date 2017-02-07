@@ -81,7 +81,7 @@ get_python:
   inetc::get "$R3" "$INSTDIR\python\python_$R8"
   Pop $0
   ${If} $0 == "OK"
-    ExecCmd::exec '"$INSTDIR\python\python_$R8" $R9'
+    ExecDos::exec '"$INSTDIR\python\python_$R8" $R9'
   ${Else}
     MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed"
   ${EndIf}
