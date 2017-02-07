@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author yole
@@ -100,6 +97,12 @@ public class PyTypeProviderBase implements PyTypeProvider {
   @Override
   public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return Collections.emptyMap();
   }
 
   protected void registerSelfReturnType(@NotNull String classQualifiedName, @NotNull Collection<String> methods) {

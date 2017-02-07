@@ -765,6 +765,24 @@ public class PyTypingTest extends PyTestCase {
     });
   }
 
+  public void testGenericRenamedParameter() {
+    doTest("int",
+           "from typing import TypeVar, Generic\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "V = TypeVar('V')\n" +
+           "\n" +
+           "class B(Generic[V]):\n" +
+           "    def get() -> V:\n" +
+           "        pass\n" +
+           "\n" +
+           "class C(B[T]):\n" +
+           "    def __init__(self, x: T) -> None:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C(0).get()\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

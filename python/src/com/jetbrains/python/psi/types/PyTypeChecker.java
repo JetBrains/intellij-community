@@ -191,16 +191,19 @@ public class PyTypeChecker {
 
         return true;
       }
-      else if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
+      else if (expected instanceof PyCollectionType) {
         if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
         // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
         final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
-        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
-        for (int i = 0; i < subElementTypes.size(); i++) {
-          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
-          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+        final PyCollectionType actualCollectionType = as(actual, PyCollectionType.class);
+        final List<PyType> subElementTypes = actualCollectionType != null ?
+                                             actualCollectionType.getElementTypes(context) :
+                                             Collections.emptyList();
+        for (int i = 0; i < superElementTypes.size(); i++) {
+          final PyType subElementType = i < subElementTypes.size() ? subElementTypes.get(i) : null;
+          if (!match(superElementTypes.get(i), subElementType, context, substitutions, recursive)) {
             return false;
           }
         }
@@ -413,7 +416,14 @@ public class PyTypeChecker {
                                   @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        return substitutions.get((PyGenericType)type);
+        final PyType substitution = substitutions.get((PyGenericType)type);
+        if (substitution instanceof PyGenericType && substitution != type) {
+          final PyType recursive = substitute(substitution, substitutions, context);
+          if (recursive != null) {
+            return recursive;
+          }
+        }
+        return substitution;
       }
       else if (type instanceof PyUnionType) {
         final PyUnionType union = (PyUnionType)type;
@@ -525,7 +535,12 @@ public class PyTypeChecker {
           final PyType genericType = provider.getGenericType(type.getPyClass(), context);
           if (genericType != null) {
             match(genericType, qualifierType, context, substitutions);
-            break;
+          }
+          for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
+            final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
+            if (genericKey != null && !substitutions.containsKey(genericKey)) {
+              substitutions.put(genericKey, entry.getValue());
+            }
           }
         }
       }

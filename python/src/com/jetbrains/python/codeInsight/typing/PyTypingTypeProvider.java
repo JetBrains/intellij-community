@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
@@ -47,12 +48,15 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
+  private static final Object RECURSION_KEY = new Object();
+
   public static final String GENERATOR = "typing.Generator";
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
@@ -350,6 +354,50 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return null;
     }
     return new PyCollectionTypeImpl(cls, false, genericTypes);
+  }
+
+  @NotNull
+  @Override
+  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final Context ctx = new Context(context);
+    if (!isGeneric(cls, ctx)) {
+      return Collections.emptyMap();
+    }
+    final Map<PyType, PyType> results = new HashMap<>();
+    // XXX: Requires switching from stub to AST
+    for (PyExpression e : cls.getSuperClassExpressions()) {
+      final PySubscriptionExpression subscriptionExpr = as(e, PySubscriptionExpression.class);
+      final PyExpression superExpr = subscriptionExpr != null ? subscriptionExpr.getOperand() : e;
+      final PyType superType = context.getType(superExpr);
+      final PyClassType superClassType = as(superType, PyClassType.class);
+      final PyClass superClass = superClassType != null ? superClassType.getPyClass() : null;
+      final Map<PyType, PyType> superSubstitutions = superClass != null
+                                                     ? doPreventingRecursion(RECURSION_KEY, false,
+                                                                             () -> getGenericSubstitutions(superClass, context))
+                                                     : null;
+      if (superSubstitutions != null) {
+        results.putAll(superSubstitutions);
+      }
+      final List<PyType> superGenerics = superClass != null ? collectGenericTypes(superClass, ctx) : Collections.emptyList();
+      final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
+      for (int i = 0; i < superGenerics.size(); i++) {
+        final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
+        final PyType superGeneric = superGenerics.get(i);
+        final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
+        final PyType actualType = typeRef != null ? typeRef.get() : null;
+        if (!superGeneric.equals(actualType)) {
+          results.put(superGeneric, actualType);
+        }
+      }
+    }
+    return results;
+  }
+
+  @NotNull
+  private static List<PyExpression> getSubscriptionIndices(@NotNull PySubscriptionExpression expr) {
+    final PyExpression indexExpr = expr.getIndexExpression();
+    final PyTupleExpression tupleExpr = as(indexExpr, PyTupleExpression.class);
+    return tupleExpr != null ? Arrays.asList(tupleExpr.getElements()) : Collections.singletonList(indexExpr);
   }
 
   @NotNull

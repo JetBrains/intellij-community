@@ -32,7 +32,6 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
@@ -146,15 +145,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite != null && isListGetItem(function)) {
-      final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
-      final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
-      if (substitutions != null) {
-        return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
-      }
-    }
-
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
@@ -169,50 +159,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
-    }
-
-    return null;
-  }
-
-  private static boolean isListGetItem(@NotNull PyFunction function) {
-    return PyNames.GETITEM.equals(function.getName()) &&
-           Optional
-             .ofNullable(PyBuiltinCache.getInstance(function).getListType())
-             .map(PyClassType::getPyClass)
-             .map(cls -> cls.equals(function.getContainingClass()))
-             .orElse(false);
-  }
-
-  @Nullable
-  private static Ref<PyType> analyzeListGetItemCallType(@Nullable PyExpression receiver,
-                                                        @NotNull Map<PyExpression, PyNamedParameter> parameters,
-                                                        @NotNull Map<PyGenericType, PyType> substitutions,
-                                                        @NotNull TypeEvalContext context) {
-    if (parameters.size() != 1 || substitutions.size() > 1) {
-      return null;
-    }
-
-    final PyType firstArgumentType = Optional
-      .ofNullable(parameters.keySet().iterator().next())
-      .map(context::getType)
-      .orElse(null);
-
-    if (firstArgumentType == null) {
-      return null;
-    }
-
-    if (PyABCUtil.isSubtype(firstArgumentType, PyNames.ABC_INTEGRAL, context)) {
-      final PyType result = substitutions.isEmpty() ? null : substitutions.values().iterator().next();
-      return Ref.create(result);
-    }
-
-    if (PyNames.SLICE.equals(firstArgumentType.getName()) && firstArgumentType.isBuiltin()) {
-      return Ref.create(
-        Optional
-          .ofNullable(receiver)
-          .map(context::getType)
-          .orElseGet(() -> PyTypeChecker.substitute(PyBuiltinCache.getInstance(receiver).getListType(), substitutions, context))
-      );
     }
 
     return null;
