@@ -35,7 +35,7 @@ public class SchemesCombo<T extends Scheme> {
   public static final String PROJECT_LEVEL = "Project";
   public static final String IDE_LEVEL = "IDE";
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
-  public static final String NAME_ALREADY_EXISTS_MESSAGE = "The name already exists";
+  public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
   // endregion
   
   private ComboBox<MySchemeListItem<T>> myComboBox;
