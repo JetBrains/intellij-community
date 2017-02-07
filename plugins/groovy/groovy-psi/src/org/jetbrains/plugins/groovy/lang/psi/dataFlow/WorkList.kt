@@ -15,33 +15,56 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import java.util.*
 
-internal class WorkList(size: Int) {
+internal class WorkList(order: IntArray) {
 
-  private val myQueue: Queue<Instruction> = LinkedList<Instruction>()
-  private val myVisited: BooleanArray = BooleanArray(size)
+  private val mySize: Int = order.size
+  /**
+   * Mapping: index -> instruction number
+   */
+  private val myOrder: IntArray = order
+  /**
+   * Mapping: instruction number -> index in [myOrder] array
+   */
+  private val myInstructionToOrder: IntArray = IntArray(mySize)
+  /**
+   * Mapping: index -> whether instruction number needs to be processed
+   *
+   * Indexes match [myOrder] indexes
+   */
+  private val mySet: BitSet = BitSet()
 
-  fun remove(): Instruction = myQueue.remove()
+  init {
+    order.forEachIndexed { index, instruction ->
+      myInstructionToOrder[instruction] = index
+    }
+    mySet.set(0, mySize)
+  }
 
-  val isEmpty: Boolean get() = myQueue.isEmpty()
+  val isEmpty: Boolean get() = mySet.isEmpty
 
   /**
-   * Adds element to the queue and marks it as visited
+   * Instruction number to be processed next
    */
-  fun offerUnconditionally(instruction: Instruction) {
-    myQueue.add(instruction)
-    myVisited[instruction.num()] = true
+  fun next(): Int {
+    /**
+     * Index of instruction in [myOrder]
+     */
+    val next = mySet.nextSetBit(0)
+    assert(next >= 0 && next < mySize)
+    mySet.clear(next)
+    return myOrder[next]
   }
 
   /**
-   * Adds element to the queue and marks it as visited if it wasn't visited before
-   * @return `true` if element was added to the queue
+   * Marks instruction to be processed
    */
-  fun offer(instruction: Instruction): Boolean {
-    if (myVisited[instruction.num()]) return false
-    offerUnconditionally(instruction)
-    return true
+  fun offer(instructionIndex: Int) {
+    /**
+     * Index of instruction in [myOrder]
+     */
+    val orderIndex = myInstructionToOrder[instructionIndex]
+    mySet.set(orderIndex, true)
   }
 }

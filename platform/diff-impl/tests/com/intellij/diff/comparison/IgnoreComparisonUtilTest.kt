@@ -306,13 +306,75 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
          " +     +", "+     +",
          "----    ", " --    ")
       .run()
+
+    Test("X Y", "XY",
+         " + ", "  ",
+         "   ", "  ")
+      .changedLinesNumber(0, 0)
+      .run()
   }
 
-  private inner class Test(val input1: String, val input2: String,
-                           val ignored1: String, val ignored2: String,
-                           val result1: String, val result2: String) {
+  fun `test Java samples`() {
+    Test("System . out.println(\"Hello world\");", "System.out.println(\"Hello world\");",
+         "      + +            .            .   ", "                   .            .   ",
+         "                     .            .   ", "                   .            .   ")
+      .changedLinesNumber(0, 0)
+      .run()
+
+    Test(" System . out . println(\"Hello  world\") ; ", "System.out.println(\"Hello world\");",
+         "+      + +   + +   .                  .  + +", "                   .            .   ",
+         "                        .      -      .     ", "                   .            .   ")
+      .run()
+
+    Test("import java.util.Random;_import java.util.List;__class Test {_}", "import java.util.List;_import java.util.Timer;__class Foo {_}",
+         "+++++++++++++++++++++++++++++++++++++++++++++++++              ", "++++++++++++++++++++++++++++++++++++++++++++++++             ",
+         "                                                       ----    ", "                                                      ---    ")
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("final_int x = 0;", "final int Y = 0;",
+         "     +   + + +  ", "     +   + + +  ",
+         "          -     ", "          -     ")
+      .changedLinesNumber(2, 1)
+      .run()
+  }
+
+  fun `test Java bad samples`() {
+    //TODO
+
+    Test("int X = 0;", "intX = 0;",
+         "   + + +  ", "    + +  ",
+         "          ", "         ")
+      .changedLinesNumber(0, 0)
+      .run()
+
+    Test("System.out.println (\"Hello  world\");", "System.out.println(\"Hello world\");",
+         "              .   +               .   ", "                   .            .   ",
+         "                  - .      -      .   ", "                   .            .   ")
+      .run()
+  }
+
+  private inner class Test(input1: String, input2: String,
+                           ignored1: String, ignored2: String,
+                           result1: String, result2: String) {
+    private val input1: String
+    private val input2: String
+    private val ignored1: String
+    private val ignored2: String
+    private val result1: String
+    private val result2: String
+
     private var inner = true
     private var changedLines: IntPair? = null
+
+    init {
+      this.input1 = input1
+      this.input2 = input2
+      this.ignored1 = ignored1.filterNot { it == '.' }
+      this.ignored2 = ignored2.filterNot { it == '.' }
+      this.result1 = result1.filterNot { it == '.' }
+      this.result2 = result2.filterNot { it == '.' }
+    }
 
     fun noInnerChanges(): Test {
       inner = false

@@ -284,12 +284,6 @@ public class TypeInferenceHelper {
     public TypeDfaState initial() {
       return new TypeDfaState();
     }
-
-    @Override
-    public boolean isForward() {
-      return true;
-    }
-
   }
 
   private static class InferenceCache {

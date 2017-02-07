@@ -29,7 +29,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -303,7 +302,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @Nullable
   private static PsiClassType createDefaultConsumerType(Project project, PsiVariable variable) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
+    final PsiClass consumerClass = psiFacade.findClass(CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER, variable.getResolveScope());
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
   }
 

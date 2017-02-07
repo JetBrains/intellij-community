@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,6 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testLocalVar0() { doParserTest("List<Integer> list;"); }
   public void testLocalVar1() { doParserTest("p.@A T<P> x;"); }
 
-  public void testFor() { doParserTest("for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); }"); }
-
   public void testDoNormal() { doParserTest("do{}while(true);"); }
   public void testDoIncomplete0() { doParserTest("do"); }
   public void testDoIncomplete1() { doParserTest("do foo();"); }
@@ -57,9 +55,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testDoIncomplete5() { doParserTest("do foo(); while(\n g();"); }
   public void testDoIncomplete6() { doParserTest("do foo(); while(cond)"); }
 
+  public void testFor() { doParserTest("for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); }"); }
   public void testForNormal0() { doParserTest("for(int i = 0; i < 10; i++)\n ;"); }
   public void testForNormal1() { doParserTest("for( ; ; ) foo();"); }
-  public void testForEach() { doParserTest("for(Object o : map.entrySet()) ;"); }
   public void testForIncomplete0() { doParserTest("for"); }
   public void testForIncomplete1() { doParserTest("for("); }
   public void testForIncomplete2() { doParserTest("for(int i = 0;"); }
@@ -70,6 +68,10 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForIncomplete7() { doParserTest("for() foo();"); }
   public void testForIncomplete8() { doParserTest("for(int i = 0;) foo();"); }
   public void testForIncomplete9() { doParserTest("for(int i = 0; i < 0) foo();"); }
+  public void testForInvalid0() { doParserTest("for(if (i<0) i++; ;) ;"); }
+  public void testForInvalid1() { doParserTest("for(class C { }; ;) ;"); }
+
+  public void testForEach() { doParserTest("for(Object o : map.entrySet()) ;"); }
   public void testForEachIncomplete0() { doParserTest("for(Object  : list) ;"); }
 
   public void testIfNormalWithElse() { doParserTest("if (a){ f1(); } else{ f2(); }"); }

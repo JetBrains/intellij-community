@@ -343,6 +343,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       rows[i] = myTable.convertRowIndexToView(rows[i]);
     }
     TableUtil.selectRows(myTable, rows);
+    TableUtil.scrollSelectionToVisible(myTable);
     myFileToSelect = file;
   }
 

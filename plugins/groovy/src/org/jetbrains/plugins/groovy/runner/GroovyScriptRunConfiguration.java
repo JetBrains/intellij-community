@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,10 +175,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
-    assert scriptFile != null;
+    if (scriptFile == null) return null;
 
     final GroovyScriptRunner scriptRunner = getScriptRunner();
-    assert scriptRunner != null;
+    if (scriptRunner == null) return null;
 
     return new JavaCommandLineState(environment) {
       @NotNull

@@ -163,8 +163,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
-    String debugDisposer = System.getProperty("idea.disposer.debug");
-    Disposer.setDebugMode((isInternal || isUnitTestMode || "on".equals(debugDisposer)) && !"off".equals(debugDisposer));
+    Disposer.setDebugMode((isInternal || isUnitTestMode || Disposer.isDebugDisposerOn()));
 
     myStartTime = System.currentTimeMillis();
     mySplash = splash;

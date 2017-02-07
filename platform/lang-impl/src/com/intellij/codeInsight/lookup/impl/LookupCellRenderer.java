@@ -67,11 +67,11 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final FontMetrics myBoldMetrics;
 
   public static final Color BACKGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? new Color(235, 244, 254) : JBColor.background()));
-  private static final Color FOREGROUND_COLOR = JBColor.foreground();
+  public static final Color FOREGROUND_COLOR = JBColor.foreground();
   private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._160, Gray._110);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
-  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
-  private static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
+  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
+  public static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE: JBColor.foreground()));
 
   static final Color PREFIX_FOREGROUND_COLOR = new JBColor(0xb000b0, 0xd17ad6);

@@ -162,4 +162,8 @@ public class CanBeFinalTest extends InspectionTestCase {
 
     doTest();
   }
+
+  public void testfieldInitializedInClassInitializer() throws Exception {
+    doTest();
+  }
 }

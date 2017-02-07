@@ -251,7 +251,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       }
     }, getTestRootDisposable());
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-
       final CompileStatusNotification callback = new CompileStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {

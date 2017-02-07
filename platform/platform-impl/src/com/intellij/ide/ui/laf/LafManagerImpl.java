@@ -51,6 +51,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -600,6 +601,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       uiDefaults.put("Menu.opaque", true);
       uiDefaults.put("MenuItem.opaque", true);
     }
+
+    if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      uiDefaults.put("Menu.arrowIcon", new MenuArrowIcon(AllIcons.Actions.Right));
+    }
+
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }
 
@@ -959,6 +965,41 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         catch (Exception ignored) {
         }
       }
+    }
+  }
+
+  private static class MenuArrowIcon implements Icon, UIResource {
+    private final Icon icon;
+    private final Icon selectedIcon;
+    private final Icon grayIcon;
+
+    private MenuArrowIcon(Icon icon) {
+      boolean invert = UIUtil.isUnderDarcula();
+      this.icon = invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2);
+      this.grayIcon = invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2);
+      this.selectedIcon = IconUtil.brighter(icon, 8);
+    }
+
+    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+      JMenuItem b = (JMenuItem) c;
+      ButtonModel model = b.getModel();
+
+      if (!model.isEnabled()) {
+        grayIcon.paintIcon(c, g, x, y);
+      } else if (model.isArmed() || ( c instanceof JMenu && model.isSelected())) {
+        selectedIcon.paintIcon(c, g, x, y);
+      }
+      else {
+        icon.paintIcon(c, g, x, y);
+      }
+    }
+
+    @Override public int getIconWidth() {
+      return icon.getIconWidth();
+    }
+
+    @Override public int getIconHeight() {
+      return icon.getIconHeight();
     }
   }
 }

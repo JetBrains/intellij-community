@@ -147,7 +147,7 @@ public abstract class UsefulTestCase extends TestCase {
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
     // turn off Disposer debugging for performance tests
-    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isStressTest);
+    Disposer.setDebugMode(!isStressTest);
   }
 
   @Override
@@ -158,7 +158,6 @@ public abstract class UsefulTestCase extends TestCase {
       cleanupDeleteOnExitHookList();
     }
     finally {
-      Disposer.setDebugMode(oldDisposerDebug);
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {

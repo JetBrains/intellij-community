@@ -58,4 +58,12 @@ method([X.C, X.D])
 method2([a: X.C, b: X.D])
 '''
   }
+
+  void 'test map without string keys and values'() {
+    testHighlighting '''\
+def foo(int a) {}
+def m = [(aa): (<error descr="Expression expected">)</error>]
+foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'">(m)</warning>
+'''
+  }
 }
