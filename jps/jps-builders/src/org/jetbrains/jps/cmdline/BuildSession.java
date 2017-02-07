@@ -398,7 +398,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
-          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
+          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, timestamps);
         }
       }
       else {

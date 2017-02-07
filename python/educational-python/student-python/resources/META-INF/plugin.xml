@@ -24,6 +24,10 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
                         serviceImplementation="com.jetbrains.edu.learning.PyStudyInstructionPainter" overrides="true"/>
     <localInspection shortName="PyStudyInterpreterInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyInterpreterInspection"/>
+
+    <localInspection shortName="PyStudyLanguageLevelInspection" suppressId="PyStudyLanguageLevelInspection" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyLanguageLevelInspection"
+                     displayName="Unsupported language level for a course" groupName="Inspection.Study.Python"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>

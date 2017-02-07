@@ -116,7 +116,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private ConsoleState myState;
 
   private final Alarm mySpareTimeAlarm = new Alarm(this);
-  @Nullable
+  @NotNull
   private final Alarm myHeavyAlarm;
   private volatile int myHeavyUpdateTicket;
 
@@ -303,7 +303,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myFilters.setForceUseAllFilters(true);
     myHeavyUpdateTicket = 0;
-    myHeavyAlarm = myFilters.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this) : null;
+    myHeavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
@@ -794,7 +794,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelHeavyAlarm() {
-    if (myHeavyAlarm != null && !myHeavyAlarm.isDisposed()) {
+    if (!myHeavyAlarm.isDisposed()) {
       myHeavyAlarm.cancelAllRequests();
       ++myHeavyUpdateTicket;
     }
@@ -1021,7 +1021,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myJLayeredPane.startUpdating();
     final int currentValue = myHeavyUpdateTicket;
-    assert myHeavyAlarm != null;
     myHeavyAlarm.addRequest(new Runnable() {
       @Override
       public void run() {

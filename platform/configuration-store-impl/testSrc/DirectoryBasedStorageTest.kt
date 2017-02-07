@@ -51,7 +51,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(user = "vladimir.krivosheev", year = 2016, month = Calendar.DECEMBER, day = 10)
+@Bombed(user = "vladimir.krivosheev", year = 2020, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
     @JvmField

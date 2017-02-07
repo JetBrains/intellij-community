@@ -32,12 +32,9 @@ import java.util.jar.Manifest;
  * @since 12-Aug-2008
  */
 public class CommandLineWrapper {
-
-  private static final String PREFIX = "-D";
-
   public static void main(String[] args) throws Exception {
     final File jarFile = new File(args[0]);
-    final MainPair mainPair = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(jarFile, args) 
+    final MainPair mainPair = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(jarFile, args)
                                                        : loadMainClassWithOldCustomLoader(jarFile, args);
     String[] mainArgs = mainPair.getArgs();
     Class mainClass = mainPair.getMainClass();
@@ -55,11 +52,9 @@ public class CommandLineWrapper {
       final Manifest manifest = inputStream.getManifest();
       final String vmParams = manifest.getMainAttributes().getValue("VM-Options");
       if (vmParams != null) {
-        final HashMap vmOptions = new HashMap();
-        parseVmOptions(vmParams, vmOptions);
-        for (Iterator iterator = vmOptions.keySet().iterator(); iterator.hasNext(); ) {
-          String optionName = (String)iterator.next();
-          System.setProperty(optionName, (String)vmOptions.get(optionName));
+        String[] properties = splitBySpaces(vmParams);
+        for (int i = 0; i < properties.length; i++) {
+          setProperty(properties[i]);
         }
       }
       String programParameters = manifest.getMainAttributes().getValue("Program-Parameters");
@@ -72,9 +67,8 @@ public class CommandLineWrapper {
       }
     }
     finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
+      inputStream.close();
+      //noinspection SSBasedInspection
       jarFile.deleteOnExit();
     }
 
@@ -83,6 +77,7 @@ public class CommandLineWrapper {
 
   /**
    * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   * @noinspection Duplicates
    */
   private static String[] splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
@@ -149,26 +144,6 @@ public class CommandLineWrapper {
       return args;
     }
   }
-  
-  public static void parseVmOptions(String vmParams, Map vmOptions) {
-    int idx = vmParams.indexOf(PREFIX);
-    while (idx >= 0) {
-      final int indexOf = vmParams.indexOf(PREFIX, idx + PREFIX.length());
-      final String vmParam = indexOf < 0 ? vmParams.substring(idx) : vmParams.substring(idx, indexOf - 1);
-      final int eqIdx = vmParam.indexOf('=');
-      String vmParamName;
-      String vmParamValue;
-      if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
-        vmParamName = vmParam.substring(0, eqIdx);
-        vmParamValue = vmParam.substring(eqIdx + 1);
-      } else {
-        vmParamName = vmParam;
-        vmParamValue = "";
-      }
-      vmOptions.put(vmParamName.trim().substring(PREFIX.length()), vmParamValue);
-      idx = indexOf;
-    }
-  }
 
   private static void ensureAccess(Object reflectionObject) {
     // need to call setAccessible here in order to be able to launch package-private classes
@@ -178,12 +153,13 @@ public class CommandLineWrapper {
       final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[]{boolean.class});
       setAccessibleMethod.invoke(reflectionObject, new Object[]{Boolean.TRUE});
     }
-    catch (Exception e) {
-      // the method not found
-    }
+    catch (Exception ignored) { }
   }
 
-  //todo delete; but new idea won't run correctly tests which start process with CommandLineWrapper
+  /**
+   * args: "classpath file" [ @vm_params "VM options file" ] "main class" [ args ... ]
+   * @noinspection Duplicates
+   */
   private static MainPair loadMainClassWithOldCustomLoader(File file, String[] args) throws Exception {
     final List urls = new ArrayList();
     final StringBuffer buf = new StringBuffer();
@@ -209,10 +185,28 @@ public class CommandLineWrapper {
     finally {
       reader.close();
     }
-    if (!file.delete()) file.deleteOnExit();
+    if (!file.delete()) {
+      //noinspection SSBasedInspection
+      file.deleteOnExit();
+    }
     System.setProperty("java.class.path", buf.toString());
 
     int startArgsIdx = 2;
+
+    if (args.length >= 3 && "@vm_params".equals(args[1])) {
+      startArgsIdx = 4;
+
+      BufferedReader vmParamsReader = new BufferedReader(new FileReader(args[2]));
+      try {
+        String property;
+        while ((property = vmParamsReader.readLine()) != null) {
+          setProperty(property);
+        }
+      }
+      finally {
+        vmParamsReader.close();
+      }
+    }
 
     String mainClassName = args[startArgsIdx - 1];
     String[] mainArgs = new String[args.length - startArgsIdx];
@@ -239,14 +233,25 @@ public class CommandLineWrapper {
     return new MainPair(mainClass, mainArgs);
   }
 
+  private static void setProperty(String property) {
+    if (property.startsWith("-D")) {
+      int p = property.indexOf('=');
+      if (p > 0) {
+        System.setProperty(property.substring(2, p), property.substring(p + 1));
+      }
+      else {
+        System.setProperty(property.substring(2), "");
+      }
+    }
+  }
+
   private static URL internFileProtocol(URL url) {
     try {
       if ("file".equals(url.getProtocol())) {
         return new URL("file", url.getHost(), url.getPort(), url.getFile());
       }
     }
-    catch (MalformedURLException ignored) {
-    }
+    catch (MalformedURLException ignored) { }
     return url;
   }
 }

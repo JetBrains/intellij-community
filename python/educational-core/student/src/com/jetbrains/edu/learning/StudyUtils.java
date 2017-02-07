@@ -215,7 +215,10 @@ public class StudyUtils {
     return null;
   }
 
-  public static void deleteFile(@NotNull final VirtualFile file) {
+  public static void deleteFile(@Nullable final VirtualFile file) {
+    if (file == null) {
+      return;
+    }
     try {
       file.delete(StudyUtils.class);
     }
@@ -497,6 +500,7 @@ public class StudyUtils {
     String text = task.getText() != null ? task.getText() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
+    text = convertToHtml(text);
     if (course.isAdaptive() && !task.isChoiceTask()) text = wrapAdaptiveCourseText(text);
 
     return wrapTextToDisplayLatex(text);
@@ -789,9 +793,9 @@ public class StudyUtils {
     final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getActivePlaceholders();
     if (placeholders.isEmpty()) return;
     final AnswerPlaceholder placeholder = placeholders.get(0);
-    int startOffset = placeholder.getOffset();
-    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
-    editor.getCaretModel().moveToOffset(startOffset);
+    Pair<Integer, Integer> offsets = getPlaceholderOffsets(placeholder, editor.getDocument());
+    editor.getSelectionModel().setSelection(offsets.first, offsets.second);
+    editor.getCaretModel().moveToOffset(offsets.first);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
@@ -847,5 +851,16 @@ public class StudyUtils {
     }
     final int endOffset = startOffset + length + delta;
     return Pair.create(startOffset, endOffset);
+  }
+  
+  public static boolean isCourseValid(@Nullable Course course) {
+    if (course == null) return false;
+    if (course.isAdaptive()) {
+      final List<Lesson> lessons = course.getLessons();
+      if (lessons.size() == 1) {
+        return !lessons.get(0).getTaskList().isEmpty();
+      }
+    }
+    return true;
   }
 }

@@ -33,7 +33,7 @@ public class WebSocketConnectionTest extends TestCase {
         assertTrue(connection.getKernelId().length() > 0);
         connection.shutdown();
       }
-    });
+    }, null);
     connection.close();
   }
 
@@ -60,7 +60,7 @@ public class WebSocketConnectionTest extends TestCase {
           connection.shutdown();
         }
       }
-    });
+    }, null);
     connection.close();
     assertTrue(evaluated.get());
   }
@@ -94,7 +94,7 @@ public class WebSocketConnectionTest extends TestCase {
           connection.shutdown();
         }
       }
-    });
+    }, null);
     connection.close();
     assertTrue(evaluated.get());
   }

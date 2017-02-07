@@ -62,12 +62,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         "PyCharm Edu"
       }
 
-      @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
-                         failonerror: false, quiet: true)
-      }
     }
   }
 
@@ -83,11 +77,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         "pycharm-edu-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
 
-      @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
-                         failonerror: false, quiet: true)
-      }
     }
   }
 
@@ -97,7 +86,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        helpId = "PE"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
       }
     }

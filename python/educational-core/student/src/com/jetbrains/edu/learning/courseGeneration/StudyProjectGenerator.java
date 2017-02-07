@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -94,6 +93,10 @@ public class StudyProjectGenerator {
       Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
+    else if (course.isAdaptive() && !StudyUtils.isCourseValid(course)) {
+      Messages.showWarningDialog("There is no recommended tasks for this adaptive course", "Error in Course Creation");
+      return;
+    }
     final File courseDirectory = StudyUtils.getCourseDirectory(course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -136,7 +139,7 @@ public class StudyProjectGenerator {
       ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
       return execCancelable(() -> {
         final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-        if (course != null) {
+        if (StudyUtils.isCourseValid(course)) {
           flushCourse(course);
           course.initCourse(false);
         }
@@ -190,20 +193,17 @@ public class StudyProjectGenerator {
       }
     }
     if (activeVirtualFile != null) {
-      VirtualFile finalActiveVirtualFile = activeVirtualFile;
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-        final PsiFile file = PsiManager.getInstance(project).findFile(finalActiveVirtualFile);
-        ProjectView.getInstance(project).select(file, finalActiveVirtualFile, false);
-        final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(finalActiveVirtualFile, true);
-        if (editors.length == 0) {
-          return;
-        }
-        final FileEditor studyEditor = editors[0];
-        if (studyEditor instanceof StudyEditor) {
-          StudyUtils.selectFirstAnswerPlaceholder((StudyEditor)studyEditor, project);
-        }
-      });
-      FileEditorManager.getInstance(project).openFile(finalActiveVirtualFile, true);
+      final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
+      ProjectView.getInstance(project).select(file, activeVirtualFile, false);
+      final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
+      if (editors.length == 0) {
+        return;
+      }
+      final FileEditor studyEditor = editors[0];
+      if (studyEditor instanceof StudyEditor) {
+        StudyUtils.selectFirstAnswerPlaceholder((StudyEditor)studyEditor, project);
+      }
+      FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
     }
     else {
       String first = StudyUtils.getFirst(taskFiles.keySet());

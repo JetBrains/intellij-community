@@ -21,6 +21,7 @@ import com.intellij.util.Url
 
 abstract class WebBrowserUrlProvider {
   companion object {
+    @JvmStatic
     val EP_NAME = ExtensionPointName.create<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
   }
 

@@ -1,5 +1,5 @@
 <component>
-  <version major="3" minor="5" eap="true"/>
+  <version major="3" minor="5" eap="false"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_edu_logo.png" textcolor="313131" progressColor="20d688" progressY="281" progressTailIcon="/community_progress_tail.png"/>
@@ -15,7 +15,7 @@
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/python/"/>
 
-  <help file="pycharmhelp.jar" root="pycharm"/>
+  <help webhelp-url="https://www.jetbrains.com/help/pycharm-edu"/>
   <documentation url="https://www.jetbrains.com/pycharm-edu/quickstart/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=EDU&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"

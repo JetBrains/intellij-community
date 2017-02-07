@@ -1173,8 +1173,8 @@ public class Mappings {
       Ref<ClassRepr> oldItRef = null;
       for (final MethodRepr m : added) {
         debug("Method: ", m.name);
-        if (it.isInterface() || it.isAbstract() || m.isAbstract()) {
-          debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
+        if (!m.isPrivate() && (it.isInterface() || it.isAbstract() || m.isAbstract())) {
+          debug("Class is abstract, or is interface, or added non-private method is abstract => affecting all subclasses");
           myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
         }
 

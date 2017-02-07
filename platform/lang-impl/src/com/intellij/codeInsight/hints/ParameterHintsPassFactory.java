@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,9 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       int offset = inlay.getOffset();
       Caret caret = caretMap.get(offset);
       if (caret == null) return false;
-      char afterCaret = myEditor.getDocument().getImmutableCharSequence().charAt(offset);
+      CharSequence text = myEditor.getDocument().getImmutableCharSequence();
+      if (offset >= text.length()) return false;
+      char afterCaret = text.charAt(offset);
       if (afterCaret != ',' && afterCaret != ')') return false;
       VisualPosition afterInlayPosition = myEditor.offsetToVisualPosition(offset, true, false);
       // check whether caret is to the right of inlay

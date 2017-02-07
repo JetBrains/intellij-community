@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -465,11 +466,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
     if (className == null) {
       isLocalOrAnonymous = true;
-      final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+      Pair<PsiClass, Integer> enclosing = getTopOrStaticEnclosingClass(psiClass);
+      PsiClass topLevelClass = enclosing.first;
       if (topLevelClass != null) {
         final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
         if (parentClassName != null) {
-          requiredDepth = getNestingDepth(psiClass);
+          requiredDepth = enclosing.second;
           className = parentClassName;
         }
       }
@@ -503,14 +505,21 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return result;
   }
 
-  private static int getNestingDepth(PsiClass aClass) {
+  private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
     int depth = 0;
     PsiClass enclosing = getEnclosingClass(aClass);
     while (enclosing != null) {
       depth++;
-      enclosing = getEnclosingClass(enclosing);
+      if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
+        break;
+      }
+      PsiClass next = getEnclosingClass(enclosing);
+      if (next == null) {
+        break;
+      }
+      enclosing = next;
     }
-    return depth;
+    return Pair.create(enclosing, depth);
   }
 
   /**

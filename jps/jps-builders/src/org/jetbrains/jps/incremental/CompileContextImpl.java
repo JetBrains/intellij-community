@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.TObjectLongHashMap;
@@ -161,14 +160,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     myDelegateMessageHandler.processMessage(msg);
     if (msg instanceof FileGeneratedEvent) {
-      final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)msg).getPaths();
-      if (!paths.isEmpty()) {
-        myListeners.getMulticaster().filesGenerated(paths);
-      }
+      myListeners.getMulticaster().filesGenerated((FileGeneratedEvent)msg);
     }
     else if (msg instanceof FileDeletedEvent) {
-      Collection<String> paths = ((FileDeletedEvent)msg).getFilePaths();
-      myListeners.getMulticaster().filesDeleted(paths);
+      myListeners.getMulticaster().filesDeleted((FileDeletedEvent)msg);
     }
   }
 

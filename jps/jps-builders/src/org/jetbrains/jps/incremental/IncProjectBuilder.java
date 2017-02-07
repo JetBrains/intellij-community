@@ -352,9 +352,9 @@ public class IncProjectBuilder {
     //Deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
-      public void filesGenerated(Collection<Pair<String, String>> paths) {
+      public void filesGenerated(FileGeneratedEvent event) {
         final Set<File> outputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        for (Pair<String, String> pair : paths) {
+        for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
         for (File root : outputs) {
@@ -364,7 +364,7 @@ public class IncProjectBuilder {
       }
 
       @Override
-      public void filesDeleted(Collection<String> paths) {
+      public void filesDeleted(FileDeletedEvent event) {
       }
     });
 
@@ -413,13 +413,13 @@ public class IncProjectBuilder {
   }
 
   private void startTempDirectoryCleanupTask() {
-    final File systemRoot = Utils.getSystemRoot();
     final String tempPath = System.getProperty("java.io.tmpdir", null);
     if (StringUtil.isEmptyOrSpaces(tempPath)) {
       return;
     }
     final File tempDir = new File(tempPath);
-    if (!FileUtil.isAncestor(systemRoot, tempDir, true)) {
+    final File dataRoot = myProjectDescriptor.dataManager.getDataPaths().getDataStorageRoot();
+    if (!FileUtil.isAncestor(dataRoot, tempDir, true)) {
       // cleanup only 'local' temp
       return;
     }
@@ -1069,7 +1069,7 @@ public class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                fsState.registerDeleted(target, new File(path), null);
+                fsState.registerDeleted(context, target, new File(path), null);
               }
             }
           }
@@ -1081,8 +1081,8 @@ public class IncProjectBuilder {
       }
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
+        sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
       }
-      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
     }
   }
 

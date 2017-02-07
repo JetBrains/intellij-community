@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -93,9 +94,9 @@ public class StudyNavigator {
     if (editor.isDisposed()) {
       return;
     }
-    int startOffset = answerPlaceholder.getOffset();
-    editor.getCaretModel().moveToOffset(startOffset);
-    editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getRealLength());
+    Pair<Integer, Integer> offsets = StudyUtils.getPlaceholderOffsets(answerPlaceholder, editor.getDocument());
+    editor.getCaretModel().moveToOffset(offsets.first);
+    editor.getSelectionModel().setSelection(offsets.first, offsets.second);
   }
 
 

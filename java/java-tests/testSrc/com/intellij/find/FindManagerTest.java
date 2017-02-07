@@ -804,6 +804,35 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.isStringFound());
   }
 
+  public void testRegExpMatchReplacement() throws InterruptedException, FindManager.MalformedReplacementStringException {
+    String text = "final override val\n" +
+                  "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
+    String pattern = "final override val\n" +
+                     "d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
+    String replacement = "";
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel(pattern);
+
+    findModel.setRegularExpressions(true);
+    findModel.setMultiline(true);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+    assertEquals(replacement, myFindManager.getStringToReplace(findResult.substring(text), findModel, 0, text));
+  }
+
+  public void testRegExpSOEWhenMatch() throws InterruptedException {
+    String text = "package com.intellij.demo;\n" +
+                  "\n";
+    for(int i = 0; i < 10; ++i) text += text;
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel(";((?:\\n|.)*export default )(?:DS.Model)(.extend((?:\\n|.)*assets: DS.attr(?:\\n|.)*});)");
+    findModel.setRegularExpressions(true);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(!findResult.isStringFound());
+  }
+
   public void testFindExceptComments() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 

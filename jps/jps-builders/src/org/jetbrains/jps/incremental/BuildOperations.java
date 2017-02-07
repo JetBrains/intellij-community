@@ -83,7 +83,7 @@ public class BuildOperations {
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        fsState.registerDeleted(target, file, timestamps);
+        fsState.registerDeleted(context, target, file, timestamps);
       }
     }
     pd.fsState.markInitialScanPerformed(target);
