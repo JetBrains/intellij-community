@@ -23,18 +23,11 @@ class ReadBeforeWriteState(
   val reads: BitSet = BitSet()
 ) : Cloneable {
 
-  public override fun clone() = ReadBeforeWriteState(writes.clone() as BitSet, reads.clone() as BitSet)
+  companion object {
+    val bottom = ReadBeforeWriteState()
+  }
+
+  public override fun clone(): ReadBeforeWriteState = ReadBeforeWriteState(writes.clone() as BitSet, reads.clone() as BitSet)
 
   override fun toString() = "(writes=$writes, reads=$reads)"
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other?.javaClass != javaClass) return false
-    other as ReadBeforeWriteState
-    return writes == other.writes && reads == other.reads
-  }
-
-  override fun hashCode(): Int {
-    return 31 * writes.hashCode() + reads.hashCode()
-  }
 }

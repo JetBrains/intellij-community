@@ -20,8 +20,9 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice
 object ReadBeforeWriteSemilattice : Semilattice<ReadBeforeWriteState> {
 
   override fun join(ins: List<ReadBeforeWriteState>): ReadBeforeWriteState {
-    if (ins.isEmpty()) return ReadBeforeWriteState()
-    val iterator = ins.iterator()
+    val states = ins.filter { it !== ReadBeforeWriteState.bottom }
+    if (states.isEmpty()) return ReadBeforeWriteState()
+    val iterator = states.iterator()
     val accumulator = iterator.next().clone() // reduce optimized
     while (iterator.hasNext()) {
       val it = iterator.next()
@@ -31,5 +32,9 @@ object ReadBeforeWriteSemilattice : Semilattice<ReadBeforeWriteState> {
     return accumulator
   }
 
-  override fun eq(e1: ReadBeforeWriteState, e2: ReadBeforeWriteState) = e1 == e2
+  override fun eq(e1: ReadBeforeWriteState, e2: ReadBeforeWriteState): Boolean {
+    if (e1 === e2) return true
+    if (e1 === ReadBeforeWriteState.bottom || e2 === ReadBeforeWriteState.bottom) return e1 === e2
+    return e1.writes == e2.writes && e1.reads == e2.reads
+  }
 }

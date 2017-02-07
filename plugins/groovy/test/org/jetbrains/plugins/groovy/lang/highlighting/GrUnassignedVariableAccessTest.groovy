@@ -98,4 +98,6 @@ if (<warning descr="Variable 'baz' might not be assigned">baz</warning> + 2) pri
   void testMultipleVarNotAssigned() { doTest() }
 
   void testForLoopWithNestedEndlessLoop() { doTest() }
+
+  void testVariableAssignedOutsideForLoop() { doTest() }
 }
