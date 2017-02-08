@@ -195,9 +195,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
     if (cancelIfNoChanges && changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                               VcsBundle.message("commit.dialog.no.changes.detected.title"));
-      return false;
+      boolean hasUnversioned = !ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles().isEmpty();
+      if (!showVcsCommit || !hasUnversioned) {
+        Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
+        return false;
+      }
     }
 
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {

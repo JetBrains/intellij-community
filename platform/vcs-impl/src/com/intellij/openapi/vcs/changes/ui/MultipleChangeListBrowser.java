@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -51,6 +51,8 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
+import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static java.util.stream.Collectors.toList;
 
 public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
@@ -114,6 +116,11 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   private boolean isShowUnversioned() {
     return myUnversionedFilesEnabled && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
+  }
+
+  private void setShowUnversioned(boolean value) {
+    myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = value;
+    rebuildList();
   }
 
   @Override
@@ -198,10 +205,21 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
                                             boolean showFlatten) {
     ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
     TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
+    List<VirtualFile> unversionedFiles = manager.getUnversionedFiles();
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
     if (isShowUnversioned()) {
-      builder.setUnversioned(manager.getUnversionedFiles());
+      builder.setUnversioned(unversionedFiles);
+    }
+    if (myUnversionedFilesEnabled) {
+      if (!isShowUnversioned() && !unversionedFiles.isEmpty()) {
+        myViewer.getEmptyText()
+          .setText("Unversioned files available. ")
+          .appendText("Show", SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
+      }
+      else {
+        myViewer.getEmptyText().setText(capitalize(DiffBundle.message("diff.count.differences.status.text", 0)));
+      }
     }
 
     return builder.build();
@@ -388,7 +406,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
         @Override
         protected void doCustomize(JList list, LocalChangeList value, int index, boolean selected, boolean hasFocus) {
           if (value != null) {
-            String name = StringUtil.shortenTextWithEllipsis(value.getName().trim(), MAX_LEN, 0);
+            String name = shortenTextWithEllipsis(value.getName().trim(), MAX_LEN, 0);
 
             append(name, value.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
@@ -454,8 +472,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = state;
-      rebuildList();
+      setShowUnversioned(state);
     }
   }
 
