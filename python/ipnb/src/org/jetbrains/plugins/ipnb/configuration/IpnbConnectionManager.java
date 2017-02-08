@@ -297,6 +297,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
     catch (UnsupportedOperationException e) {
       showWarning(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter());
     }
+    catch (UnknownHostException e) {
+      showWarning(codePanel.getFileEditor(), "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                  new IpnbSettingsAdapter());
+    }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
         ApplicationManager.getApplication().invokeAndWait(() -> myToken = askForToken(urlString));

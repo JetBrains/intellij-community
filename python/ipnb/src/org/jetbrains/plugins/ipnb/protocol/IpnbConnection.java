@@ -95,11 +95,11 @@ public class IpnbConnection {
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
     if (!isRemote()) {
-      if (!myURI.getScheme().equals("http")) {
+      if (!"http".equals(myURI.getScheme())) {
         throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
       }
     }
-    else if (!myURI.getScheme().equals("https")) {
+    else if (!"https".equals(myURI.getScheme())) {
       throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
     }
     
