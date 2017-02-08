@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,16 @@ public class EnvironmentUtil {
     @NotNull
     protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
       throws Exception {
+      return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
+    }
+    
+    @NotNull                                                                                  
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
+                                                               @Nullable File workingDir, 
+                                                               @NotNull File envFile, 
+                                                               String lineSeparator) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
