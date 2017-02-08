@@ -69,7 +69,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @Override
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }

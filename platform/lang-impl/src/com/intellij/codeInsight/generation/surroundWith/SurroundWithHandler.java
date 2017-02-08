@@ -74,7 +74,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (file instanceof PsiCompiledElement) {
       HintManager.getInstance().showErrorHint(editor, "Can't modify decompiled code");
       return;

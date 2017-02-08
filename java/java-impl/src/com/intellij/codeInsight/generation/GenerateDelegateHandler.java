@@ -56,7 +56,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }

@@ -53,7 +53,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     if (hostEditor == null) {
       return;
     }
-    if (!EditorModificationUtil.showReadOnlyViewWarning(hostEditor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(hostEditor)) return;
     PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
     if (hostFile != null && !FileModificationService.getInstance().prepareFileForWrite(hostFile)) return;
 

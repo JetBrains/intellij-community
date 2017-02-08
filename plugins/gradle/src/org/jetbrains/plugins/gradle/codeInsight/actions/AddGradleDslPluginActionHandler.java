@@ -60,7 +60,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
 
     final JBList list = new JBList(myPlugins);

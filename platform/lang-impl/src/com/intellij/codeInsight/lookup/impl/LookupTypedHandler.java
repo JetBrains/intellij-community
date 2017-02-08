@@ -66,7 +66,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!EditorModificationUtil.showReadOnlyViewWarning(originalEditor)) {
+    if (!EditorModificationUtil.checkModificationAllowed(originalEditor)) {
       return;
     }
 

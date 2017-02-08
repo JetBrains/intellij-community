@@ -157,7 +157,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!EditorModificationUtil.showReadOnlyViewWarning(originalEditor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(originalEditor)) return;
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
