@@ -308,8 +308,8 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
 
     private class ArrayItemsChecker {
-      private final Set<String> myValueTexts = new HashSet<>();
-      private JsonValue myFirstNonUnique;
+      private final Map<String, JsonValue> myValueTexts = new HashMap<>();
+      private List<JsonValue> myNonUnique;
       private boolean myCheckUnique;
 
       public void check(JsonArray array, final List<JsonValue> list, final JsonSchemaObject schema) {
@@ -327,7 +327,6 @@ class JsonBySchemaObjectAnnotator implements Annotator {
             } else {
               if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
                 error("Additional items are not allowed", arrayValue);
-                return;
               }
             }
             checkUnique(arrayValue);
@@ -337,13 +336,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
             checkUnique(arrayValue);
           }
         }
-        if (myFirstNonUnique != null) {
-          error("Item is not unique", myFirstNonUnique);
-          return;
+        if (myNonUnique != null) {
+          for (JsonValue value : myNonUnique) {
+            error("Item is not unique", value);
+          }
         }
         if (schema.getMinItems() != null && list.size() < schema.getMinItems()) {
           error("Array is shorter than " + schema.getMinItems(), array);
-          return;
         }
         if (schema.getMaxItems() != null && list.size() > schema.getMaxItems()) {
           error("Array is longer than " + schema.getMaxItems(), array);
@@ -351,11 +350,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       }
 
       private void checkUnique(JsonValue arrayValue) {
-        if (myCheckUnique && myFirstNonUnique == null && myValueTexts.contains(arrayValue.getText())) {
-          myFirstNonUnique = arrayValue;
-        } else {
-          myValueTexts.add(arrayValue.getText());
+        if (myCheckUnique && myValueTexts.containsKey(arrayValue.getText())) {
+          if (myNonUnique == null) myNonUnique = new ArrayList<>();
+          myNonUnique.add(arrayValue);
+          myNonUnique.add(myValueTexts.get(arrayValue.getText()));
         }
+        myValueTexts.put(arrayValue.getText(), arrayValue);
       }
     }
 

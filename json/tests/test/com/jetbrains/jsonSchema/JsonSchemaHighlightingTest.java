@@ -147,7 +147,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testArrayUnique() throws Exception {
     final String schema = schema("{\"type\": \"array\", \"uniqueItems\": true}");
     testImpl(schema, "{\"prop\": [1,2]}");
-    testImpl(schema, "{\"prop\": [1,2, \"test\", <warning descr=\"Item is not unique\">1</warning>]}");
+    testImpl(schema, "{\"prop\": [<warning descr=\"Item is not unique\">1</warning>,2, \"test\", <warning descr=\"Item is not unique\">1</warning>]}");
   }
 
   public void testMetadataIsOk() throws Exception {
@@ -405,6 +405,25 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                      "\"a\": <warning descr=\"Type is not allowed\">5</warning>\n" +
                      "  }</warning>\n" +
                      "}");
+  }
+
+  public void testManyDuplicatesInArray() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"array\":{\n" +
+                          "      \"type\": \"array\",\n" +
+                          "      \"uniqueItems\": true\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"array\": [<warning descr=\"Item is not unique\">1</warning>," +
+                     "<warning descr=\"Item is not unique\">1</warning>," +
+                     "<warning descr=\"Item is not unique\">1</warning>," +
+                     "<warning descr=\"Item is not unique\">2</warning>," +
+                     "<warning descr=\"Item is not unique\">2</warning>," +
+                     "5," +
+                     "<warning descr=\"Item is not unique\">3</warning>," +
+                     "<warning descr=\"Item is not unique\">3</warning>]}");
   }
 
   public static String rootObjectRedefinedSchema() {
