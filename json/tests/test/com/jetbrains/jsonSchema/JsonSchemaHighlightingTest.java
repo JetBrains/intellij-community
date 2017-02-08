@@ -383,6 +383,30 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                           "\"r1\": \"allowed!\"}");
   }
 
+  public void testNumberOfSameNamedPropertiesCorrectlyChecked() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"size\": {\n" +
+                          "      \"type\": \"object\",\n" +
+                          "      \"minProperties\": 2,\n" +
+                          "      \"maxProperties\": 3,\n" +
+                          "      \"properties\": {\n" +
+                          "        \"a\": {\n" +
+                          "          \"type\": \"boolean\"\n" +
+                          "        }\n" +
+                          "      }\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                     "    \"a\": <warning descr=\"Type is not allowed\">1</warning>," +
+                     " \"b\":3, \"c\": 4, " +
+                     "\"a\": <warning descr=\"Type is not allowed\">5</warning>\n" +
+                     "  }</warning>\n" +
+                     "}");
+  }
+
   public static String rootObjectRedefinedSchema() {
     return "{\n" +
            "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +

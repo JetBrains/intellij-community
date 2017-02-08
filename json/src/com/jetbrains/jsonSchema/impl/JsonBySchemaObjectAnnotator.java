@@ -255,10 +255,10 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           }
         }
       }
-      if (schema.getMinProperties() != null && map.size() < schema.getMinProperties()) {
+      if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
         error("Number of properties is less than " + schema.getMinProperties(), value);
       }
-      if (schema.getMaxProperties() != null && map.size() > schema.getMaxProperties()) {
+      if (schema.getMaxProperties() != null && propertyList.size() > schema.getMaxProperties()) {
         error("Number of properties is greater than " + schema.getMaxProperties(), value);
       }
       final Map<String, List<String>> dependencies = schema.getPropertyDependencies();
