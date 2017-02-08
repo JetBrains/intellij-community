@@ -132,6 +132,40 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
              "\"r1\"", "\"r2\"");
   }
 
+  public void testSimpleNullCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": \"null\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "null");
+  }
+
+  public void testNullCompletionInEnum() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"integer\"],\n" +
+                          "      \"enum\": [null, 1, 2]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "1", "2", "null");
+  }
+
+  public void testNullCompletionInTypeVariants() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"boolean\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "false", "null", "true");
+  }
+
   @NotNull
   private static String parcelShopSchema() {
     return "{\n" +

@@ -152,17 +152,23 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       }
       else {
         final JsonSchemaType type = schema.getType();
-        if (JsonSchemaType._boolean.equals(type)) {
-          addPossibleBooleanValue(type);
-          final List<JsonSchemaType> variants = schema.getTypeVariants();
-          if (variants != null) {
-            for (JsonSchemaType variant : variants) {
-              addPossibleBooleanValue(variant);
-            }
+        if (type != null) {
+          suggestByType(schema, type);
+        } else if (schema.getTypeVariants() != null) {
+          for (JsonSchemaType schemaType : schema.getTypeVariants()) {
+            suggestByType(schema, schemaType);
           }
-        } else if (JsonSchemaType._string.equals(type)) {
-          addPossibleStringValue(schema);
         }
+      }
+    }
+
+    private void suggestByType(JsonSchemaObject schema, JsonSchemaType type) {
+      if (JsonSchemaType._boolean.equals(type)) {
+        addPossibleBooleanValue(type);
+      } else if (JsonSchemaType._string.equals(type)) {
+        addPossibleStringValue(schema);
+      } else if (JsonSchemaType._null.equals(type)) {
+        addValueVariant("null", null);
       }
     }
 
