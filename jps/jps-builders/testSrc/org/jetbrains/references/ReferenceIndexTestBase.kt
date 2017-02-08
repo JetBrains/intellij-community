@@ -146,8 +146,10 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       result.append(classDefs.joinToString(separator = "\n"))
 
       return result.toString()
-    } finally {
+    }
+    finally {
       index.close()
+      pd.release()
     }
   }
 
