@@ -63,10 +63,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -113,7 +110,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
         enable("Listener installed, started");
       }
-    });
+    }); 
   }
 
   @Override
@@ -949,4 +946,21 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     return lock != null ? lock : ((UserDataHolderEx)document).putUserDataIfAbsent(DOCUMENT_LOCK, new ReentrantLock());
   }
   private static final Key<Lock> DOCUMENT_LOCK = Key.create("DOCUMENT_LOCK");
+
+  void cancelTasksOnProjectDispose(@NotNull final Project project) {
+    synchronized (lock) {
+      cancelTasksOnProjectDispose(project, documentsToCommit);
+      cancelTasksOnProjectDispose(project, documentsToApplyInEDT);
+    }
+  }
+
+  private void cancelTasksOnProjectDispose(@NotNull Project project, @NotNull HashSetQueue<CommitTask> queue) {
+    for (HashSetQueue.PositionalIterator<CommitTask> iterator = queue.iterator(); iterator.hasNext(); ) {
+      CommitTask commitTask = iterator.next();
+      if (commitTask.project == project) {
+        iterator.remove();
+        commitTask.cancel("project is disposed", this);
+      }
+    }
+  }
 }
