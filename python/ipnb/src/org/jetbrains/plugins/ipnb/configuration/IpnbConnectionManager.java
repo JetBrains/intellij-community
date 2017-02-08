@@ -168,7 +168,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       socket.connect(new InetSocketAddress(host, Integer.parseInt(port)), 1000);
       return true;
     }
-    catch (IOException e) {
+    catch (IOException | IllegalArgumentException e) {
       return false;
     }
   }
@@ -194,6 +194,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                          catch (URISyntaxException e) {
                                            return false;
                                          }
+                                         // Do not start notebook if host is busy
                                          if (pingHost(inputString)) return false;
                                          return !inputString.isEmpty();
                                        }
