@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,7 +92,7 @@ public class RepositoryHelperTest {
       "    </idea-plugin>" +
       "  </category>\n" +
       "</plugin-repository>");
-    assertEquals(2, list.size());
+    assertEquals("Loaded plugins: " + StringUtil.join(list, IdeaPluginDescriptor::getName, ", "), 2, list.size());
   }
 
   @Test
