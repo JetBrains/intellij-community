@@ -28,16 +28,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
+import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 
-class VariableProcessor(private val myName: String) : PsiScopeProcessor, NameHint, ElementClassHint {
+class VariableProcessor(private val myName: String) : PsiScopeProcessor, NameHint, ElementClassHint, DynamicMembersHint {
 
   private var myStop: Boolean = false
   private var myResult: GroovyResolveResult? = null
   val result: GroovyResolveResult? get() = myResult
 
   override fun <T : Any?> getHint(hintKey: Key<T>): T? {
-    if (hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY) {
+    if (hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY || hintKey == DynamicMembersHint.KEY) {
       @Suppress("UNCHECKED_CAST")
       return this as? T
     }
@@ -50,7 +52,8 @@ class VariableProcessor(private val myName: String) : PsiScopeProcessor, NameHin
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
     if (myStop) return false
-    if (element is GrVariable && element !is GrField && element.isPhysical) {
+    assert(element !is GrBindingVariable)
+    if (element is GrVariable && element !is GrField) {
       myResult = GroovyResolveResultImpl(element, true)
       return false
     }

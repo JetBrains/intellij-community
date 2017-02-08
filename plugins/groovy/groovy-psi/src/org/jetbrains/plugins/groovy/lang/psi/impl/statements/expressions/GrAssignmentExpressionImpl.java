@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
@@ -107,6 +108,8 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
                                      @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (!ResolveUtil.shouldProcessProperties(classHint)) return true;
+    final DynamicMembersHint dynamicMembersHint = processor.getHint(DynamicMembersHint.KEY);
+    if (dynamicMembersHint != null && !dynamicMembersHint.shouldProcessProperties()) return true;
 
     if (!(getParent() instanceof GroovyFileImpl)) return true;
     final GroovyFileImpl file = (GroovyFileImpl)getParent();
