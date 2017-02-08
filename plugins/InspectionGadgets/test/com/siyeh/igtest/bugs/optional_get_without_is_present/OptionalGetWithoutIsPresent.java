@@ -58,6 +58,17 @@ class OptionalWithoutIsPresent {
     }
   }
 
+  public void testMultiVars(Optional<String> opt) {
+    boolean present = opt.isPresent();
+    boolean absent = !present;
+    boolean otherAbsent = !!absent;
+    if(otherAbsent) {
+      System.out.println(opt.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
+    } else {
+      System.out.println(opt.get());
+    }
+  }
+
   private void checkReassign(Optional<String> a, Optional<String> b) {
     if(a.isPresent()) {
       b = a;
