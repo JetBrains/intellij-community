@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class DfaBoxedValue extends DfaValue {
+public class DfaBoxedValue extends DfaValue implements DfaComparableValue {
   private final DfaValue myWrappedValue;
 
   private DfaBoxedValue(DfaValue valueToWrap, DfaValueFactory factory) {

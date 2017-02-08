@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -913,7 +913,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myFactory.getRelationFactory().createRelation(dfaVar, dfaNull, JavaTokenType.EQEQ, negated);
   }
 
-  void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
+  protected void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
     assert !myUnknownVariables.contains(dfaVar);
     if (state.equals(myDefaultVariableStates.get(dfaVar))) {
       myVariableStates.remove(dfaVar);
@@ -923,7 +923,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
   
-  DfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  protected DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {

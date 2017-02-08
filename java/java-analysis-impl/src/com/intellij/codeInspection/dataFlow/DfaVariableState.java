@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,19 +40,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class DfaVariableState {
+public class DfaVariableState {
   @NotNull final Set<DfaPsiType> myInstanceofValues;
   @NotNull final Set<DfaPsiType> myNotInstanceofValues;
   @NotNull final Nullness myNullability;
   private final int myHash;
 
-  DfaVariableState(@NotNull DfaVariableValue dfaVar) {
+  protected DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     this(Collections.<DfaPsiType>emptySet(), Collections.<DfaPsiType>emptySet(), dfaVar.getInherentNullability());
   }
 
-  DfaVariableState(@NotNull Set<DfaPsiType> instanceofValues,
-                   @NotNull Set<DfaPsiType> notInstanceofValues,
-                   @NotNull Nullness nullability) {
+  protected DfaVariableState(@NotNull Set<DfaPsiType> instanceofValues,
+                             @NotNull Set<DfaPsiType> notInstanceofValues,
+                             @NotNull Nullness nullability) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
     myNullability = nullability;
@@ -176,7 +176,7 @@ class DfaVariableState {
   }
 
   @NotNull
-  Nullness getNullability() {
+  protected Nullness getNullability() {
     return myNullability;
   }
 
