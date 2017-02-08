@@ -692,4 +692,19 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void showNumericContainer(PyDebugValue value) {
     PyViewNumericContainerAction.showNumericViewer(myProject, value);
   }
+
+  @Override
+  public void setDataChangedCallback(@NotNull Runnable runnable) {
+    addCommunicationListener(new ConsoleCommunicationListener() {
+      @Override
+      public void commandExecuted(boolean more) {
+        runnable.run();
+      }
+
+      @Override
+      public void inputRequested() {
+
+      }
+    });
+  }
 }

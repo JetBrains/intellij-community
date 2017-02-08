@@ -1149,6 +1149,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyViewNumericContainerAction.showNumericViewer(getProject(), value);
   }
 
+  @Override
+  public void setDataChangedCallback(@NotNull Runnable runnable) {
+    getSession().addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void stackFrameChanged() {
+        runnable.run();
+      }
+    });
+  }
+
   @Nullable
   private static XSourcePosition typeToPosition(PyType pyType) {
     final PyClassType classType = PyUtil.as(pyType, PyClassType.class);

@@ -30,14 +30,13 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.console.PydevConsoleCommunication;
-import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
-import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.ArrayChunk;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
 import org.jetbrains.annotations.NotNull;
@@ -83,28 +82,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    if (myFrameAccessor instanceof PyDebugProcess) {
-      XDebugSession session = ((PyDebugProcess)myFrameAccessor).getSession();
-      session.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void stackFrameChanged() {
-          updateModel();
-        }
-      });
-    }
-    if (myFrameAccessor instanceof PydevConsoleCommunication) {
-      ((PydevConsoleCommunication)myFrameAccessor).addCommunicationListener(new ConsoleCommunicationListener() {
-        @Override
-        public void commandExecuted(boolean more) {
-          ApplicationManager.getApplication().invokeLater(() -> updateModel());
-        }
-
-        @Override
-        public void inputRequested() {
-
-        }
-      });
-    }
+    myFrameAccessor.setDataChangedCallback(() -> ApplicationManager.getApplication().invokeLater(() -> updateModel()));
   }
 
   private void updateModel() {
