@@ -36,6 +36,7 @@ public class SchemesCombo<T extends Scheme> {
   public static final String IDE_LEVEL = "IDE";
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
   public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
+  private static final String EDITING_HINT = "Enter to save, Esc to cancel.";
   // endregion
   
   private ComboBox<MySchemeListItem<T>> myComboBox;
@@ -136,6 +137,7 @@ public class SchemesCombo<T extends Scheme> {
   public void startEdit() {
     T scheme = getSelectedScheme();
     if (scheme != null) {
+      mySchemesPanel.showInfo(EDITING_HINT, MessageType.INFO);
       myNameEditorField.setText(scheme.getName());
       myLayout.last(myRootPanel);
       myNameEditorField.requestFocus();

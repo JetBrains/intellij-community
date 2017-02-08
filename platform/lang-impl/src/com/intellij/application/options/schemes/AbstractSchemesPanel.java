@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
 
   public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
     myInfoLabel.setText(message);
-    myInfoLabel.setForeground(messageType.getTitleForeground());
+    myInfoLabel.setForeground(messageTypeToColor(messageType));
   }
 
   public final void clearInfo() {
@@ -178,5 +179,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     final Balloon balloon = balloonBuilder.createBalloon();
     balloon.showInCenterOf(myToolbar);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+  }
+  
+  @SuppressWarnings("UseJBColor")
+  private static Color messageTypeToColor(@NotNull MessageType messageType) {
+    if (messageType == MessageType.INFO) {
+      return Color.GRAY;
+    }
+    else if (messageType == MessageType.ERROR) {
+      return Color.RED;
+    }
+    return JBColor.BLACK;
   }
 }
