@@ -325,7 +325,7 @@ public class IpnbConnection {
     return location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
   }
 
-  private void initXSRF(String url) {
+  private void initXSRF(String url) throws IOException {
     URLConnection connection = null;
     try {
       connection = new URL(url).openConnection();
@@ -337,7 +337,8 @@ public class IpnbConnection {
         }
       }
     }
-    catch (IOException ignored) {
+    catch (IllegalArgumentException e){
+      throw new IOException(e);
     }
     finally {
       if (connection instanceof HttpURLConnection) {
