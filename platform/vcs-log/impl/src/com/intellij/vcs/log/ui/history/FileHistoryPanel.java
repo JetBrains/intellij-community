@@ -144,7 +144,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map2Array(details, VcsFileRevision.class, this::createRevision);
+      return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, this::createRevision), VcsFileRevision.class);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
