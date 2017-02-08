@@ -32,7 +32,7 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
   }
 
   public void testQuickfix() {
-    quickfixTest("x|y|z", "[xyz]", "Replace with '[xyz]'");
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
   }
 
   @NotNull
