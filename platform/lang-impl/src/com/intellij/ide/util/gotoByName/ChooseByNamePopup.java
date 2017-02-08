@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -51,6 +50,7 @@ import java.util.regex.Pattern;
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<String>("ChooseByNamePattern");
+
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -473,7 +473,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   public void dispose() {
-    myProject.putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, null);
-    myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
+    if (myProject != null) {
+      myProject.putUserData(CURRENT_SEARCH_PATTERN, null);
+      myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
+    }
   }
 }
