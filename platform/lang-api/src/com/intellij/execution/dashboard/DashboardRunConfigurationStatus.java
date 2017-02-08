@@ -30,6 +30,8 @@ public class DashboardRunConfigurationStatus {
     ExecutionBundle.message("runtime.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
   public static final DashboardRunConfigurationStatus FAILED = new DashboardRunConfigurationStatus(
     ExecutionBundle.message("runtime.dashboard.failed.group.name"), AllIcons.General.Error);
+  public static final DashboardRunConfigurationStatus STARTING = new DashboardRunConfigurationStatus(
+    ExecutionBundle.message("runtime.dashboard.starting.group.name"), AllIcons.Process.Step_4);
 
   private final String myName;
   private final Icon myIcon;

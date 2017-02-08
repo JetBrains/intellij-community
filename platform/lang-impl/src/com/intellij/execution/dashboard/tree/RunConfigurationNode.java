@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
   @Override
   protected void update(PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
-    presentation.setPresentableText(configurationSettings.getName());
+    presentation.addText(configurationSettings.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     Icon icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(configurationSettings);
     Icon decorator = getIconDecorator();
     if (decorator != null) {

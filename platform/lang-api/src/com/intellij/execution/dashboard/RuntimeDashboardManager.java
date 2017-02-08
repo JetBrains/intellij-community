@@ -18,6 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.messages.Topic;
 
 import javax.swing.*;
 
@@ -25,6 +26,9 @@ import javax.swing.*;
  * @author konstantin.aleev
  */
 public interface RuntimeDashboardManager {
+  Topic<DashboardListener> DASHBOARD_TOPIC =
+    Topic.create("runtime dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+
   static RuntimeDashboardManager getInstance(Project project) {
     return ServiceManager.getService(project, RuntimeDashboardManager.class);
   }
