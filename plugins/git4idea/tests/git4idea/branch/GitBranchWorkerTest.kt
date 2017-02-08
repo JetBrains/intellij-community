@@ -20,17 +20,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.cat
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.Function
 import com.intellij.util.LineSeparator
-import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.CharArrayUtil
 import git4idea.GitCommit
@@ -62,8 +60,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val contrib = Executor.mkdir("contrib")
 
     myUltimate = createRepository(myProjectPath)
-    myCommunity = createRepository(community.getPath())
-    myContrib = createRepository(contrib.getPath())
+    myCommunity = createRepository(community.path)
+    myContrib = createRepository(contrib.path)
     myRepositories = Arrays.asList<GitRepository>(myUltimate, myCommunity, myContrib)
 
     Executor.cd(myProjectRoot)
@@ -77,34 +75,34 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("feature")
     assertEquals("Notification about successful branch creation is incorrect",
-                 "Branch " + bcode("feature") + " was created", myVcsNotifier.getLastNotification().getContent())
+                 "Branch " + bcode("feature") + " was created", myVcsNotifier.lastNotification.content)
   }
 
   fun test_create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() {
     unmergedFiles(myUltimate)
 
-    val notificationShown = Ref.create<Boolean>(false)
+    var notificationShown = false
     checkoutNewBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesNotification(operationName: String, repositories: Collection<GitRepository>) {
-        notificationShown.set(true)
+        notificationShown = true
       }
     })
 
-    assertTrue("Unmerged files notification was not shown", notificationShown.get())
+    assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
   fun test_create_new_branch_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
     unmergedFiles(myCommunity)
 
-    val rollbackProposed = Ref.create<Boolean>(false)
+    var rollbackProposed = false
     checkoutNewBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        rollbackProposed.set(true)
+        rollbackProposed = true
         return false
       }
     })
 
-    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed.get())
+    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
   fun test_rollback_create_new_branch_should_delete_branch() {
@@ -141,36 +139,36 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("feature")
     assertEquals("Notification about successful branch checkout is incorrect", "Checked out " + bcode("feature"),
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_checkout_with_unmerged_files_in_first_repo_should_show_notification() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(myUltimate)
 
-    val notificationShown = Ref.create<Boolean>(false)
+    var notificationShown = false
     checkoutBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesNotification(operationName: String, repositories: Collection<GitRepository>) {
-        notificationShown.set(true)
+        notificationShown = true
       }
     })
 
-    assertTrue("Unmerged files notification was not shown", notificationShown.get())
+    assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
   fun test_checkout_with_unmerged_file_in_second_repo_should_propose_to_rollback() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(myCommunity)
 
-    val rollbackProposed = Ref.create<Boolean>(false)
+    var rollbackProposed = false
     checkoutBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        rollbackProposed.set(true)
+        rollbackProposed = true
         return false
       }
     })
 
-    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed.get())
+    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
   fun test_rollback_checkout_should_return_to_previous_branch() {
@@ -208,7 +206,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertDetachedState("feature")
     assertEquals("Notification about successful branch checkout is incorrect", "Checked out " + bcode("feature"),
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_checkout_revision_checkout_ref_with_complete_success() {
@@ -218,7 +216,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertDetachedState("master")
     assertEquals("Notification about successful branch checkout is incorrect", "Checked out " + bcode("feature~1"),
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_checkout_revision_checkout_ref_with_complete_failure() {
@@ -230,7 +228,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentRevision("master")
     assertEquals("Notification about successful branch checkout is incorrect",
                  "Revision not found in project, community and contrib",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_checkout_revision_checkout_ref_with_partial_success() {
@@ -245,7 +243,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertEquals("Notification about successful branch checkout is incorrect",
                  "Checked out " + bcode("feature") + " in community and contrib" + "<br>" +
                      "Revision not found in project" + "<br><a href='rollback'>Rollback</a>",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_checkout_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() {
@@ -265,21 +263,19 @@ class GitBranchWorkerTest : GitPlatformTest() {
     branchWithCommit(myRepositories, "feature")
 
     val files = ContainerUtil.newArrayList<String>()
-    for (i in 0..untrackedFiles - 1) {
-      files.add("untracked" + i + ".txt")
-    }
+    (0..untrackedFiles - 1).mapTo(files) { "untracked$it.txt" }
     untrackedFileOverwrittenBy(myUltimate, "feature", files)
 
-    val notificationShown = Ref.create<Boolean>(false)
+    var notificationShown = false
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
       override fun showUntrackedFilesNotification(operationName: String,
                                                   root: VirtualFile,
                                                   relativePaths: Collection<String>) {
-        notificationShown.set(true)
+        notificationShown = true
       }
     })
 
-    assertTrue("Untracked files notification was not shown", notificationShown.get())
+    assertTrue("Untracked files notification was not shown", notificationShown)
   }
 
   fun test_checkout_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() {
@@ -341,11 +337,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertFalse("Local changes were not shown in the dialog", actualChanges.isEmpty())
     if (newGitVersion()) {
-      val actualPaths = ContainerUtil.map<Change, String>(actualChanges, object : Function<Change, String> {
-        override fun `fun`(change: Change): String {
-          return FileUtil.getRelativePath(myUltimate.getRoot().getPath(), change.getAfterRevision()!!.getFile().getPath(), '/')!!
-        }
-      })
+      val actualPaths = actualChanges.map { FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision!!.file.path, '/')!! }
       assertSameElements("Incorrect set of local changes was shown in the dialog", actualPaths, expectedChanges)
     }
   }
@@ -355,7 +347,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("feature")
     cd(myUltimate)
-    val actual = Executor.cat(localChanges.get(0))
+    val actual = cat(localChanges[0])
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
         LOCAL_CHANGES_OVERWRITTEN_BY.initial +
         LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
@@ -367,7 +359,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                                 "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
 
     cd(myUltimate)
-    val actual = Executor.cat(ContainerUtil.getFirstItem<String>(localChanges)!!)
+    val actual = cat(localChanges.first())
     val expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
         LOCAL_CHANGES_OVERWRITTEN_BY.initial +
         LOCAL_CHANGES_OVERWRITTEN_BY.masterLine
@@ -380,25 +372,21 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val handler = TestUiHandler()
     checkoutOrMerge(operation, "feature", handler)
 
-    assertNotNull("No success notification was shown", myVcsNotifier.getLastNotification())
-    assertEquals("Success message is incorrect", expectedSuccessMessage, myVcsNotifier.getLastNotification().getContent())
+    assertNotNull("No success notification was shown", myVcsNotifier.lastNotification)
+    assertEquals("Success message is incorrect", expectedSuccessMessage, myVcsNotifier.lastNotification.content)
 
     return localChanges
   }
 
-  @JvmOverloads internal fun prepareLocalChangesOverwrittenBy(repository: GitRepository, numFiles: Int = 1): List<String> {
+  private fun prepareLocalChangesOverwrittenBy(repository: GitRepository, numFiles: Int = 1): List<String> {
     val localChanges = ContainerUtil.newArrayList<String>()
-    for (i in 0..numFiles - 1) {
-      localChanges.add(String.format("local%d.txt", i))
-    }
+    (0..numFiles - 1).mapTo(localChanges) { String.format("local%d.txt", it) }
     localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     updateChangeListManager()
 
-    for (repo in myRepositories) {
-      if (repo != repository) {
-        branchWithCommit(repo, "feature")
-      }
-    }
+    myRepositories
+      .filter { it != repository }
+      .forEach { branchWithCommit(it, "feature") }
     return localChanges
   }
 
@@ -423,7 +411,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertNull("Notification was unexpectedly shown:" + myVcsNotifier.getLastNotification(), myVcsNotifier.getLastNotification())
+    assertNull("Notification was unexpectedly shown:" + myVcsNotifier.lastNotification, myVcsNotifier.lastNotification)
     assertCurrentBranch("master")
   }
 
@@ -475,11 +463,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
         return GitSmartOperationDialog.FORCE_EXIT_CODE
       }
     })
-    brancher.checkoutNewBranchStartingFrom("new_branch", "feature", myRepositories!!)
+    brancher.checkoutNewBranchStartingFrom("new_branch", "feature", myRepositories)
 
     assertEquals("Notification about successful branch creation is incorrect",
                  "Checked out new branch <b><code>new_branch</code></b> from <b><code>feature</code></b>",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
     assertCurrentBranch("new_branch")
   }
 
@@ -492,27 +480,18 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     unmergedFiles(myCommunity)
 
-    val rollbackProposed = Ref.create<Boolean>(false)
+    var rollbackProposed = false
     val brancher = GitBranchWorker(myProject, myGit, object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        rollbackProposed.set(true)
+        rollbackProposed = true
         return true
       }
     })
-    brancher.checkoutNewBranchStartingFrom("newBranch", "feature", myRepositories!!)
+    brancher.checkoutNewBranchStartingFrom("newBranch", "feature", myRepositories)
 
-    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed.get())
+    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
     assertCurrentBranch("master")
-    for (repository in myRepositories!!) {
-      assertFalse("Branch 'newBranch' should have been deleted on rollback",
-                  ContainerUtil.exists<String>(
-                      git(repository, "branch").split(("\n").toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray(),
-                      object : Condition<String> {
-                        override fun value(s: String): Boolean {
-                          return s.contains("newBranch")
-                        }
-                      }))
-    }
+    myRepositories.forEach { assertBranchDeleted(it, "newBranch") }
   }
 
   fun test_delete_branch_that_is_fully_merged() {
@@ -530,7 +509,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     prepareUnmergedBranch(myCommunity)
 
     myCommunity.deleteBranch("todelete")
-    val notification = `assert successful deleted branch notification`("todelete", true, RESTORE, VIEW_COMMITS);
+    val notification = `assert successful deleted branch notification`("todelete", true, RESTORE, VIEW_COMMITS)
     val restoreAction = findAction(notification, RESTORE)
 
     myVcsNotifier.cleanup()
@@ -549,7 +528,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     myCommunity.deleteBranch(feature)
 
-    val notification = `assert successful deleted branch notification`(feature, false, RESTORE, DELETE_TRACKED_BRANCH);
+    val notification = `assert successful deleted branch notification`(feature, false, RESTORE, DELETE_TRACKED_BRANCH)
     val restoreAction = findAction(notification, RESTORE)
     runInEdtAndWait { Notification.fire(notification, restoreAction) }
     assertBranchExists(myCommunity, feature)
@@ -637,7 +616,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     })
 
     brancher.deleteBranch(feature, listOf(myCommunity))
-    val notification = `assert successful deleted branch notification`(feature, true, RESTORE, VIEW_COMMITS, DELETE_TRACKED_BRANCH);
+    val notification = `assert successful deleted branch notification`(feature, true, RESTORE, VIEW_COMMITS, DELETE_TRACKED_BRANCH)
     val viewAction = findAction(notification, VIEW_COMMITS)
     assertFalse("'Branch is not fully merged' dialog shouldn't be shown yet", dialogShown)
     runInEdtAndWait { Notification.fire(notification, viewAction) }
@@ -659,10 +638,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler())
 
-    assertNotNull("Success message wasn't shown", myVcsNotifier.getLastNotification())
+    assertNotNull("Success message wasn't shown", myVcsNotifier.lastNotification)
     assertEquals("Success message is incorrect",
                  "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
     assertFile(myUltimate, "branch_file.txt", "branch content")
     assertFile(myCommunity, "branch_file.txt", "branch content")
     assertFile(myContrib, "branch_file.txt", "branch content")
@@ -696,15 +675,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_merge_branch_that_is_up_to_date() {
-    for (repository in myRepositories!!) {
+    for (repository in myRepositories) {
       git(repository, "branch master2")
     }
 
     mergeBranch("master2", TestUiHandler())
 
-    assertNotNull("Success message wasn't shown", myVcsNotifier.getLastNotification())
+    assertNotNull("Success message wasn't shown", myVcsNotifier.lastNotification)
     assertEquals("Success message is incorrect", "Already up-to-date<br/><a href='delete'>Delete master2</a>",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
   }
 
   fun test_merge_one_simple_and_other_up_to_date() {
@@ -714,10 +693,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler())
 
-    assertNotNull("Success message wasn't shown", myVcsNotifier.getLastNotification())
+    assertNotNull("Success message wasn't shown", myVcsNotifier.lastNotification)
     assertEquals("Success message is incorrect",
                  "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
-                 myVcsNotifier.getLastNotification().getContent())
+                 myVcsNotifier.lastNotification.content)
     assertFile(myCommunity, "branch_file.txt", "branch content")
   }
 
@@ -725,28 +704,28 @@ class GitBranchWorkerTest : GitPlatformTest() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(myUltimate)
 
-    val notificationShown = Ref.create<Boolean>(false)
+    var notificationShown = false
     mergeBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesNotification(operationName: String,
                                                  repositories: Collection<GitRepository>) {
-        notificationShown.set(true)
+        notificationShown = true
       }
     })
-    assertTrue("Unmerged files notification was not shown", notificationShown.get())
+    assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
   fun test_merge_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(myCommunity)
 
-    val rollbackProposed = Ref.create<Boolean>(false)
+    var rollbackProposed = false
     mergeBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        rollbackProposed.set(true)
+        rollbackProposed = true
         return false
       }
     })
-    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed.get())
+    assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
   fun test_rollback_merge_should_reset_merge() {
@@ -862,31 +841,31 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun assertDetachedState(reference: String) {
-    for (repository in myRepositories!!) {
+    for (repository in myRepositories) {
       assertDetachedState(repository, reference)
     }
   }
 
   private fun assertCurrentBranch(name: String) {
-    for (repository in myRepositories!!) {
+    for (repository in myRepositories) {
       assertCurrentBranch(repository, name)
     }
   }
 
   private fun assertCurrentRevision(reference: String) {
-    for (repository in myRepositories!!) {
+    for (repository in myRepositories) {
       assertCurrentRevision(repository, reference)
     }
   }
 
   private fun checkoutNewBranch(name: String, uiHandler: GitBranchUiHandler) {
     val brancher = GitBranchWorker(myProject, myGit, uiHandler)
-    brancher.checkoutNewBranch(name, myRepositories!!)
+    brancher.checkoutNewBranch(name, myRepositories)
   }
 
   private fun checkoutBranch(name: String, uiHandler: GitBranchUiHandler) {
     val brancher = GitBranchWorker(myProject, myGit, uiHandler)
-    brancher.checkout(name, false, myRepositories!!)
+    brancher.checkout(name, false, myRepositories)
   }
 
   private fun checkoutRevision(reference: String, uiHandler: GitBranchUiHandler) {
@@ -1018,7 +997,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     val curBranch = getCurrentBranch(repository)
     val isDetached = curBranch.contains("detached")
-    assertTrue("Current branch is not detached in \${repository} - " + curBranch, isDetached)
+    assertTrue("Current branch is not detached in \${repository} - $curBranch", isDetached)
   }
 
   private fun assertCurrentBranch(repository: GitRepository, name: String) {
@@ -1027,13 +1006,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun getCurrentBranch(repository: GitRepository): String {
-    return ObjectUtils.assertNotNull<String>(
-        ContainerUtil.find<String>(git(repository, "branch").split(("\n").toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray(),
-                                   object : Condition<String> {
-                                     override fun value(s: String): Boolean {
-                                       return s.contains("*")
-                                     }
-                                   })).replace('*', ' ').trim({ it <= ' ' })
+    return git(repository, "branch").lines().find { it.contains("*") }!!.replace('*', ' ').trim()
   }
 
   private fun assertCurrentRevision(repository: GitRepository, reference: String) {
@@ -1053,15 +1026,14 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun assertFile(repository: GitRepository, path: String, content: String) {
     cd(repository)
-    assertEquals("Content doesn't match", content, Executor.cat(path))
+    assertEquals("Content doesn't match", content, cat(path))
   }
 
   private fun assertContent(expectedContent: String, actual: String) {
     var expectedContent = expectedContent
     var actual = actual
-    expectedContent = StringUtil.convertLineSeparators(expectedContent, detectLineSeparators(actual).getSeparatorString()).trim(
-        { it <= ' ' })
-    actual = actual.trim({ it <= ' ' })
+    expectedContent = StringUtil.convertLineSeparators(expectedContent, detectLineSeparators(actual).separatorString).trim()
+    actual = actual.trim()
     assertEquals(String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
                                substWhitespaces(expectedContent), substWhitespaces(actual)), expectedContent, actual)
   }
