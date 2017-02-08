@@ -20,6 +20,7 @@ import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil.HighlightPolicySettingAction;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +37,12 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   public TextDiffProviderBase(@NotNull TextDiffSettings settings,
                               @NotNull Runnable rediff,
+                              @NotNull Disposable disposable,
                               @NotNull IgnorePolicy[] ignorePolicies,
                               @NotNull HighlightPolicy[] highlightPolicies) {
-    myIgnorePolicySettingAction = new MyIgnorePolicySettingAction(settings, rediff, ignorePolicies);
-    myHighlightPolicySettingAction = new MyHighlightPolicySettingAction(settings, rediff, highlightPolicies);
+    myIgnorePolicySettingAction = new MyIgnorePolicySettingAction(settings, ignorePolicies);
+    myHighlightPolicySettingAction = new MyHighlightPolicySettingAction(settings, highlightPolicies);
+    settings.addListener(new MyListener(rediff), disposable);
   }
 
   @NotNull
@@ -86,9 +89,8 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
     public MyIgnorePolicySettingAction(@NotNull TextDiffSettings settings,
-                                       @NotNull Runnable rediff,
                                        @NotNull IgnorePolicy[] ignorePolicies) {
-      super(settings, rediff, ignorePolicies);
+      super(settings, ignorePolicies);
     }
 
     @NotNull
@@ -100,15 +102,32 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
     public MyHighlightPolicySettingAction(@NotNull TextDiffSettings settings,
-                                          @NotNull Runnable rediff,
                                           @NotNull HighlightPolicy[] highlightPolicies) {
-      super(settings, rediff, highlightPolicies);
+      super(settings, highlightPolicies);
     }
 
     @NotNull
     @Override
     protected String getText(@NotNull HighlightPolicy option) {
       return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+    }
+  }
+
+  private static class MyListener implements TextDiffSettings.Listener {
+    @NotNull private final Runnable myRediff;
+
+    public MyListener(@NotNull Runnable rediff) {
+      myRediff = rediff;
+    }
+
+    @Override
+    public void highlightPolicyChanged() {
+      myRediff.run();
+    }
+
+    @Override
+    public void ignorePolicyChanged() {
+      myRediff.run();
     }
   }
 }

@@ -17,12 +17,15 @@ package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.Transient
 import java.util.*
 
 @State(
@@ -61,11 +64,18 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Fragments settings
     var EXPAND_BY_DEFAULT: Boolean = true
-  )
+  ) {
+    @Transient
+    val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
+  }
 
   class TextDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
                                               private val PLACE_SETTINGS: PlaceSettings) {
     constructor() : this(SharedSettings(), PlaceSettings())
+
+    fun addListener(listener: Listener, disposable: Disposable) {
+      PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
+    }
 
     // Presentation settings
 
@@ -77,11 +87,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var highlightPolicy: HighlightPolicy
       get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value }
+      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY
-      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value }
+      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.ignorePolicyChanged() }
 
     //
     // Merge
@@ -138,6 +150,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
       @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
+    }
+
+    interface Listener : EventListener {
+      fun highlightPolicyChanged() {}
+      fun ignorePolicyChanged() {}
     }
   }
 
