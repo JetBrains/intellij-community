@@ -116,7 +116,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void doFileTest(@NonNls String fileExt) {
-    doTest(loadTestDataFile(fileExt));
+    doTest(loadTestDataFile("." + fileExt));
   }
 
   @NotNull
