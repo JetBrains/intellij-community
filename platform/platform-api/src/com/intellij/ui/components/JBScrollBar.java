@@ -36,6 +36,8 @@ import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
+
 /**
  * Our implementation of a scroll bar with the custom UI.
  * Also it provides a method to create custom UI for our custom L&Fs.
@@ -52,6 +54,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
 
   private static final double THRESHOLD = 1D + 1E-5D;
+  private static final boolean SUPPORTED_JAVA = SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9");
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
   private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
   private boolean isUnitIncrementSet;
@@ -67,7 +70,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation, int value, int extent, int min, int max) {
     super(orientation, value, extent, min, max);
-    setModel(new Model(value, extent, min, max));
+    if (isTrueSmoothScrollingEnabled()) setModel(new Model(value, extent, min, max));
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
   }
 
@@ -205,12 +208,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
     ComponentSettings settings = ComponentSettings.getInstance();
     if (!settings.isTrueSmoothScrollingEligibleFor(this)) return false;
-    if (!settings.isHighPrecisionScrollingEnabled()) return false;
+
+    double delta = getDelta(event);
+    if (delta == 0.0D || !Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
     double minDelta = (double)getMinimum() - value;
     double maxDelta = (double)getMaximum() - getVisibleAmount() - value;
-    adjustValue(Math.max(minDelta, Math.min(maxDelta, getDelta(event))));
+    adjustValue(Math.max(minDelta, Math.min(maxDelta, delta)));
     event.consume();
     return true;
   }
@@ -238,23 +243,47 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     return Math.max(minDelta, Math.min(maxDelta, delta));
   }
 
+  /**
+   * Indicates whether a scrolling delta can be calculated from the specified event.
+   *
+   * @param event the mouse wheel event
+   * @return {@code true} if a scrolling delta can be calculated, {@code false} otherwise
+   * @see #getDelta(MouseWheelEvent)
+   */
+  static boolean hasDelta(MouseWheelEvent event) {
+    double rotation = event.getPreciseWheelRotation();
+    if (rotation == 0.0D || !Double.isFinite(rotation)) return false;
+
+    ComponentSettings settings = ComponentSettings.getInstance();
+    if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
+      if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) return true;
+      if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) return true;
+    }
+    return settings.isHighPrecisionScrollingEnabled();
+  }
+
+  /**
+   * Calculates a scrolling delta from the specified event.
+   *
+   * @param event the mouse wheel event
+   * @return a scrolling delta for this scrollbar
+   * @see #hasDelta(MouseWheelEvent)
+   */
   private double getDelta(MouseWheelEvent event) {
     double rotation = event.getPreciseWheelRotation();
     ComponentSettings settings = ComponentSettings.getInstance();
-    if (settings.isPixelPerfectScrollingEnabled()) {
+    if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
       // calculate an absolute delta if possible
-      if (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9")) {
-        if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) {
-          // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
-          // so we use 10 to restore amount of pixels to scroll.
-          return 10 * rotation;
-        }
-        else if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) {
-          JViewport viewport = getViewport();
-          Font font = viewport == null ? null : getViewFont(viewport);
-          int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
-          return size * rotation * event.getScrollAmount();
-        }
+      if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) {
+        // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
+        // so we use 10 to restore amount of pixels to scroll.
+        return 10 * rotation;
+      }
+      else if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) {
+        JViewport viewport = getViewport();
+        Font font = viewport == null ? null : getViewFont(viewport);
+        int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+        return size * rotation * event.getScrollAmount();
       }
     }
     if (settings.isHighPrecisionScrollingEnabled()) {
@@ -262,11 +291,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
       double delta = unitIncrement * rotation * event.getScrollAmount();
-      if (-THRESHOLD < delta && delta < THRESHOLD) return delta;
+      if (-THRESHOLD > delta && delta > THRESHOLD) return delta;
+      // When the scrolling speed is set to maximum, it's possible to scroll by more units than will fit in the visible area.
+      // To make for more accurate low-speed scrolling, we limit scrolling to the block increment
+      // if the wheel was only rotated one click.
       double blockIncrement = getBlockIncrement(direction);
       return boundDelta(-blockIncrement, blockIncrement, delta);
     }
-    return event.getWheelRotation();
+    return 0.0D;
   }
 
   private static final class Model extends DefaultBoundedRangeModel {

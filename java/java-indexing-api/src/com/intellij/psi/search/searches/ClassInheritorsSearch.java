@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.AbstractQuery;
@@ -165,7 +166,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       if (!aClass.isValid()) {
         throw new ProcessCanceledException();
       }
-      return aClass.getUseScope();
+      PsiFile file = aClass.getContainingFile();
+      return (file != null ? file : aClass).getUseScope();
     }), checkDeep);
   }
 

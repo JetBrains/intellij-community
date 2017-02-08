@@ -195,12 +195,12 @@ public class PersistentFsTest extends PlatformTestCase {
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
     ++globalModCount;
-    ++inSessionModCount;
 
     int finalGlobalModCount = globalModCount;
-    int finalInSessionModCount = inSessionModCount;
+    
     WriteAction.run(() -> {
       final long timestamp = vFile.getTimeStamp();
+      int finalInSessionModCount = managingFS.getModificationCount();
       vFile.setWritable(true);  // 1 change
       vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
 

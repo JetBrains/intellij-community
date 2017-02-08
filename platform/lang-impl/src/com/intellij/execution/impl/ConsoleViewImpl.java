@@ -989,8 +989,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           );
         }
         finally {
-          if (myHeavyAlarm.isEmpty()) {
-            SwingUtilities.invokeLater(() -> myJLayeredPane.finishUpdating());
+          if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
+            UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
           }
         }
     }, 0);
