@@ -424,6 +424,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     myMergingUpdateQueue.cancelAllUpdates();
   }
 
+  /**
+   * @return true if already disposed.
+   * @since 2017.1
+   */
+  protected boolean isDisposed() {
+    return Disposer.isDisposed(this);
+  }
+
   @SuppressWarnings("unchecked")
   @Nullable
   public T getSelectedValue() {
