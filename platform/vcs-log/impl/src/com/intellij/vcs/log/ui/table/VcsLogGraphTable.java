@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -50,6 +51,7 @@ import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
@@ -220,7 +222,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.HASH_COLUMN) {
-        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("aaaaaaaa") +
+        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(StringUtil.repeat("a", HashImpl.SHORT_HASH_LENGTH)) +
                   myStringCellRenderer.getHorizontalTextPadding();
         column.setPreferredWidth(min);
       }
