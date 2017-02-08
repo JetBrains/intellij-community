@@ -19,6 +19,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -382,6 +383,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       process.run();
       return true;
     }
+
+    // process all pending events that can interrupt focus flow
+    IdeEventQueue.getInstance().flushQueue();
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
