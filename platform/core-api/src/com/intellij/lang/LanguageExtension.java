@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ package com.intellij.lang;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -55,31 +55,18 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     T cached = l.getUserData(IN_LANGUAGE_CACHE);
     if (cached != null) return cached;
 
-    T result = findForLanguage(l);
+    List<T> extensions = forKey(l);
+    T result;
+    if (extensions.isEmpty()) {
+      Language base = l.getBaseLanguage();
+      result = base == null ? myDefaultImplementation : forLanguage(base);
+    }
+    else {
+      result = extensions.get(0);
+    }
     if (result == null) return null;
     result = l.putUserDataIfAbsent(IN_LANGUAGE_CACHE, result);
     return result;
-  }
-
-  protected T findForLanguage(@NotNull Language l) {
-    List<T> extensions = forKey(l);
-    if (!extensions.isEmpty()) {
-      return extensions.get(0);
-    }
-
-    Language base = l.getBaseLanguage();
-    if (base != null) {
-      return forLanguage(base);
-    }
-
-    for (MetaLanguage metaLanguage: MetaLanguage.all()) {
-      if (metaLanguage.matchesLanguage(l)) {
-        T result = forLanguage(metaLanguage);
-        if (result != null) break;
-      }
-    }
-
-    return myDefaultImplementation;
   }
 
   /**
@@ -99,17 +86,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @NotNull
   public List<T> allForLanguageOrAny(@NotNull Language l) {
-    List<T> providers = new ArrayList<T>(allForLanguage(l));
-    if (l != Language.ANY) {
-      providers.addAll(allForLanguage(Language.ANY));
-    }
-
-    if (!(l instanceof MetaLanguage)) {
-      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-        providers.addAll(allForLanguage(metaLanguage));
-      }
-    }
-    return providers;
+    List<T> providers = allForLanguage(l);
+    if (l == Language.ANY) return providers;
+    return ContainerUtil.concat(providers, allForLanguage(Language.ANY));
   }
 
   protected T getDefaultImplementation() {
@@ -129,9 +108,6 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       key = key.getBaseLanguage();
     }
     allowed.add("any");
-    for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-      allowed.add(metaLanguage.getID());
-    }
     return allowed;
   }
 
