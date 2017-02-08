@@ -601,24 +601,25 @@ public final class TreeUtil {
     int offset = rowBounds.y - bounds.y;
 
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-    scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone, builder);
+    scrollToVisible(tree, path, bounds, offset, stamp, callback::setDone, builder, 3);
 
     return callback;
   }
 
   private static void scrollToVisible(JTree tree, TreePath path, Rectangle bounds, int offset, long expected, Runnable done,
-                                      AbstractTreeBuilder builder) {
+                                      AbstractTreeBuilder builder, int attempt) {
     Runnable scroll = () -> {
-      Rectangle pathBounds = tree.getPathBounds(path);
+      Rectangle pathBounds = attempt <= 0 ? null : tree.getPathBounds(path);
       if (pathBounds != null) {
         Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
         long stamp = property instanceof Long ? (Long)property : Long.MAX_VALUE;
-        LOG.debug("tree scroll: ", stamp == expected ? "try again: " : "ignore: ", path);
+        LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
         if (stamp == expected) {
           bounds.y = pathBounds.y - offset; // restore bounds according to the current row
-          if (!tree.getVisibleRect().contains(bounds)) {
+          Rectangle visible = tree.getVisibleRect();
+          if (bounds.y < visible.y || bounds.y > visible.y + Math.max(0, visible.height - bounds.height)) {
             tree.scrollRectToVisible(bounds);
-            scrollToVisible(tree, path, bounds, offset, expected, done, builder);
+            scrollToVisible(tree, path, bounds, offset, expected, done, builder, attempt - 1);
             return; // try to scroll again
           }
         }
