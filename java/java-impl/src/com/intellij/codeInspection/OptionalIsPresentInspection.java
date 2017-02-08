@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -378,6 +378,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
+      if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
       if (trueElement instanceof PsiExpressionStatement) {
         PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
         if(isOptionalGetCall(expression, optionalVariable)) return ProblemType.NONE;
