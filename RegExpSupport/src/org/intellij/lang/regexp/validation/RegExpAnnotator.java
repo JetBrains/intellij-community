@@ -61,21 +61,21 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpOptions(RegExpOptions options) {
-    checkValidFlag(options.getOptionsOn(), options);
-    checkValidFlag(options.getOptionsOff(), options);
+  public void visitRegExpSetOptions(RegExpSetOptions options) {
+    checkValidFlag(options.getOnOptions(), false);
+    checkValidFlag(options.getOffOptions(), true);
   }
 
-  private void checkValidFlag(@Nullable ASTNode optionsNode, @NotNull RegExpOptions context) {
-    if (optionsNode == null) {
+  private void checkValidFlag(@Nullable RegExpOptions options, boolean skipMinus) {
+    if (options == null) {
       return;
     }
-    final String text = optionsNode.getText();
-    final int start = (optionsNode.getElementType() == RegExpTT.OPTIONS_OFF) ? 1 : 0; // skip '-' if necessary
+    final String text = options.getText();
+    final int start = skipMinus ? 1 : 0; // skip '-' if necessary
     for (int i = start, length = text.length(); i < length; i++) {
       final int c = text.codePointAt(i);
-      if (!Character.isBmpCodePoint(c) || !myLanguageHosts.supportsInlineOptionFlag((char)c, context)) {
-        final int offset = optionsNode.getStartOffset() + i;
+      if (!Character.isBmpCodePoint(c) || !myLanguageHosts.supportsInlineOptionFlag((char)c, options)) {
+        final int offset = options.getTextOffset() + i;
         myHolder.createErrorAnnotation(new TextRange(offset, offset + 1), "Unknown inline option flag");
       }
     }
