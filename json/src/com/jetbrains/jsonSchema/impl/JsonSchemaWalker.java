@@ -62,11 +62,13 @@ public class JsonSchemaWalker {
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
         position.get(0).getTransition() instanceof PropertyTransition &&
         "definitions".equals(((PropertyTransition)position.get(0).getTransition()).getName())) return;
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position);
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position, true);
   }
 
-  public static void findSchemasForCompletion(@NotNull final PsiElement element, @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema, @NotNull VirtualFile schemaFile) {
+  public static void findSchemasForCompletion(@NotNull final PsiElement element,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
     final PsiElement checkable = goUpToCheckable(element);
     if (checkable == null) return;
     final boolean isName = isName(checkable);
@@ -76,7 +78,7 @@ public class JsonSchemaWalker {
       return;
     }
 
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position);
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position, false);
   }
 
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
@@ -122,9 +124,13 @@ public class JsonSchemaWalker {
     }
   }
 
-  public static void extractSchemaVariants(@NotNull final Project project, @NotNull final CompletionSchemesConsumer consumer,
+  public static void extractSchemaVariants(@NotNull final Project project,
+                                           @NotNull final CompletionSchemesConsumer consumer,
                                            @NotNull VirtualFile rootSchemaFile,
-                                           @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
+                                           @NotNull JsonSchemaObject rootSchema,
+                                           boolean isName,
+                                           List<Step> position,
+                                           boolean acceptAdditionalPropertiesSchemas) {
     final Set<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> control = new HashSet<>();
     final JsonSchemaServiceEx serviceEx = JsonSchemaServiceEx.Impl.getEx(project);
     final ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue = new ArrayDeque<>();
@@ -141,7 +147,7 @@ public class JsonSchemaWalker {
         continue;
       }
       final DefinitionsResolver definitionsResolver = new DefinitionsResolver(path);
-      extractSchemaVariants(definitionsResolver, object, path);
+      extractSchemaVariants(definitionsResolver, object, path, acceptAdditionalPropertiesSchemas);
 
       if (definitionsResolver.isFound()) {
         final List<JsonSchemaObject> list = gatherSchemas(definitionsResolver.getSchemaObject());
@@ -182,7 +188,10 @@ public class JsonSchemaWalker {
                                 });
   }
 
-  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer, @NotNull JsonSchemaObject rootSchema, @NotNull List<Step> position) {
+  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer,
+                                            @NotNull JsonSchemaObject rootSchema,
+                                            @NotNull List<Step> position,
+                                            boolean acceptAdditionalPropertiesSchemas) {
     final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<>();
     queue.add(Pair.create(rootSchema, 0));
     while (!queue.isEmpty()) {
@@ -218,7 +227,7 @@ public class JsonSchemaWalker {
       TransitionResultConsumer transitionResultConsumer = new TransitionResultConsumer();
       for (JsonSchemaObject object : list) {
         if (schema.getAllOf() == null) transitionResultConsumer = new TransitionResultConsumer();
-        step.getTransition().step(object, transitionResultConsumer);
+        step.getTransition().step(object, transitionResultConsumer, acceptAdditionalPropertiesSchemas);
         if (transitionResultConsumer.isNothing()) continue;
         if (transitionResultConsumer.getSchema() != null) {
           reporter.consume(transitionResultConsumer.getSchema());
@@ -357,7 +366,9 @@ public class JsonSchemaWalker {
     }
 
     @Override
-    public void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer) {
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumer resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
       if ("definitions".equals(myName)) {
         if (parent.getDefinitions() != null) {
           final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
@@ -377,7 +388,9 @@ public class JsonSchemaWalker {
           return;
         }
         if (parent.getAdditionalPropertiesSchema() != null) {
-          resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
+          if (acceptAdditionalPropertiesSchemas) {
+            resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
+          }
         } else {
           if (!Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
             resultConsumer.anything();
@@ -407,7 +420,9 @@ public class JsonSchemaWalker {
     }
 
     @Override
-    public void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer) {
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumer resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
         resultConsumer.setSchema(parent.getItemsSchema());
       } else if (parent.getItemsSchemaList() != null) {
@@ -427,7 +442,7 @@ public class JsonSchemaWalker {
 
   private interface Transition {
     boolean possibleFromState(@NotNull StateType stateType);
-    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer);
+    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer, boolean acceptAdditionalPropertiesSchemas);
   }
 
   public enum StateType {
