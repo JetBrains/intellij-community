@@ -33,5 +33,5 @@ public interface PyFrameAccessor {
 
   default void showNumericContainer(PyDebugValue value) {}
 
-  default void setDataChangedCallback(@NotNull Runnable runnable) {}
+  default void addFrameListener(@NotNull PyFrameListener listener) {}
 }

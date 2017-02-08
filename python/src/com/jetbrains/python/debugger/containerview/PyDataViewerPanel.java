@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -82,7 +81,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    myFrameAccessor.setDataChangedCallback(() -> ApplicationManager.getApplication().invokeLater(() -> updateModel()));
+    myFrameAccessor.addFrameListener(() -> UIUtil.invokeLaterIfNeeded(() -> updateModel()));
   }
 
   private void updateModel() {

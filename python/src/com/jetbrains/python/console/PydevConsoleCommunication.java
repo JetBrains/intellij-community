@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.WaitFor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -105,6 +106,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private boolean myNeedsMore = false;
 
   private PythonConsoleView myConsoleView;
+  private List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Initializes the xml-rpc communication.
@@ -630,6 +632,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", exception);
   }
 
+  @Override
+  public void notifyCommandExecuted(boolean more) {
+    super.notifyCommandExecuted(more);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.frameChanged();
+    }
+  }
+
   private static void checkError(Object ret) throws PyDebuggerException {
     if (ret instanceof Object[] && ((Object[])ret).length == 1) {
       throw new PyDebuggerException(((Object[])ret)[0].toString());
@@ -694,17 +704,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public void setDataChangedCallback(@NotNull Runnable runnable) {
-    addCommunicationListener(new ConsoleCommunicationListener() {
-      @Override
-      public void commandExecuted(boolean more) {
-        runnable.run();
-      }
-
-      @Override
-      public void inputRequested() {
-
-      }
-    });
+  public void addFrameListener(@NotNull PyFrameListener listener) {
+    myFrameListeners.add(listener);
   }
 }
