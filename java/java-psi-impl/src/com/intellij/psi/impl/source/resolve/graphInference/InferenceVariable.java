@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.TypeAnnotationModifier;
 import com.intellij.psi.impl.light.LightTypeParameter;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -192,12 +191,7 @@ public class InferenceVariable extends LightTypeParameter {
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    if (this == another) return true;
-
-    if (getDelegate() == another && myContext != null && !PsiTreeUtil.isAncestor(((PsiTypeParameter)another).getOwner(), myContext, false)) {
-      return true;
-    }
-    return false;
+    return this == another;
   }
 
   @Override
