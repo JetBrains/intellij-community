@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspectionTool {
 
-  @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within expoted packages
+  @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
   @SuppressWarnings("PublicField") public boolean checkPublicApi; // All public & protected fields & methods
   @SuppressWarnings("PublicField") public boolean checkPackageLocal;
 
@@ -63,9 +63,9 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Module's API exposes not exported classes (Java 9+)", "checkModuleApi");
-    panel.addCheckbox("Public API exposes non-accessible classes", "checkPublicApi");
-    panel.addCheckbox("Package-local API exposes private classes", "checkPackageLocal");
+    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.module.option"), "checkModuleApi");
+    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.public.option"), "checkPublicApi");
+    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option"), "checkPackageLocal");
     return panel;
   }
 
@@ -87,7 +87,7 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
                 Set<String> exportedPackageNames =
                   new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiExportsStatement::getPackageName));
                 if (exportedPackageNames.contains(javaFile.getPackageName())) {
-                  checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, exportedPackageNames));
+                  checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getModuleName(), exportedPackageNames));
                 }
               }
             }
@@ -207,11 +207,14 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
   private static class Java9NonAccessibleTypeExposedVisitor extends VisibilityChecker {
     private final ModuleFileIndex myModuleFileIndex;
     private final Set<String> myExportedPackageNames;
+    private final String myModuleName;
 
     public Java9NonAccessibleTypeExposedVisitor(@NotNull ProblemsHolder holder,
                                                 @NotNull Module module,
+                                                @NotNull String moduleName,
                                                 @NotNull Set<String> exportedPackageNames) {
       super(holder);
+      myModuleName = moduleName;
       myModuleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
       myExportedPackageNames = exportedPackageNames;
     }
@@ -219,7 +222,8 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
     @Override
     public boolean checkVisibilityIssue(PsiMember member, PsiClass psiClass, PsiJavaCodeReferenceElement reference) {
       if (isModulePublicApi(member) && !isModulePublicApi(psiClass) && isInModuleSource(psiClass)) {
-        myHolder.registerProblem(reference, InspectionGadgetsBundle.message("class.escapes.defined.scope.java9.modules.descriptor"));
+        myHolder.registerProblem(reference,
+                                 InspectionGadgetsBundle.message("class.escapes.defined.scope.java9.modules.descriptor", myModuleName));
         return true;
       }
       return false;
