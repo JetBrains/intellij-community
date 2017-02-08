@@ -139,32 +139,21 @@ public class ChangesUtil {
                                .distinct());
   }
 
+  @NotNull
+  public static Stream<VirtualFile> getAllFiles(@NotNull Stream<Change> changes) {
+    return getAllPaths(changes)
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull);
+  }
+
   /**
-   * @deprecated Use {@link ChangesUtil#getAfterRevisionsFiles(Stream)}.
+   * @deprecated Use {@link ChangesUtil#getAllFiles(Stream)}.
    */
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getAfterRevisionsFiles(changes.stream()).toArray(VirtualFile[]::new);
-  }
-
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
-    return getAfterRevisionsFiles(changes, false);
-  }
-
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes, boolean refresh) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-
-    return changes
-      .map(Change::getAfterRevision)
-      .filter(Objects::nonNull)
-      .map(ContentRevision::getFile)
-      .map(path -> refresh ? fileSystem.refreshAndFindFileByPath(path.getPath()) : path.getVirtualFile())
-      .filter(Objects::nonNull)
-      .filter(VirtualFile::isValid);
+    return getAllFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
   @NotNull

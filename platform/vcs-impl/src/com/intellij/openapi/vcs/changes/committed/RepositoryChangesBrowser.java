@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 
 /**
  * @author yole
@@ -140,7 +140,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     protected Navigatable[] getNavigatables(final DataContext dataContext) {
       Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-      return changes != null ? getNavigatableArray(myProject, getAfterRevisionsFiles(Stream.of(changes))) : null;
+      return changes != null ? getNavigatableArray(myProject, getAllFiles(Stream.of(changes))) : null;
     }
   }
 }
