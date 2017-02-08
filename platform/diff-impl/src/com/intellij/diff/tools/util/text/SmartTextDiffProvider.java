@@ -52,7 +52,6 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                @NotNull ContentDiffRequest request,
                                                @NotNull TextDiffSettings settings,
                                                @NotNull Runnable rediff) {
-    if (!Registry.is("diff.smart.ignore.enabled")) return null;
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
@@ -65,7 +64,6 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                                 @NotNull ContentDiffRequest request,
                                                                 @NotNull TextDiffSettings settings,
                                                                 @NotNull Runnable rediff) {
-    if (!Registry.is("diff.smart.ignore.enabled")) return null;
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
@@ -136,6 +134,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   private static DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
                                                                   @NotNull DiffContent content1,
                                                                   @NotNull DiffContent content2) {
+    if (!Registry.is("diff.smart.ignore.enabled")) return null;
     for (DiffIgnoredRangeProvider provider : DiffIgnoredRangeProvider.EP_NAME.getExtensions()) {
       if (provider.accepts(project, content1) &&
           provider.accepts(project, content2)) {
