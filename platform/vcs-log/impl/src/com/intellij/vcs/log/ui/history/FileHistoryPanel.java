@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -37,6 +38,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
@@ -135,7 +137,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return myUi.getProperties();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      return createRevisionForFirstSelectedCommit();
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.isEmpty()) return null;
+      return createRevision(ContainerUtil.getFirstItem(details));
+    }
+    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil.map2Array(details, VcsFileRevision.class, this::createRevision);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
@@ -148,14 +157,22 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
       }
     }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return myFilePath.getVirtualFile();
+    }
     else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
       return false;
     }
     return null;
   }
 
+  @Nullable
   private VcsLogFileRevision createRevisionForFirstSelectedCommit() {
-    VcsFullCommitDetails details = ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails());
+    return createRevision(ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails()));
+  }
+
+  @Nullable
+  private VcsLogFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
       Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
