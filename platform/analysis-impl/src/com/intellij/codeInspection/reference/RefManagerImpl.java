@@ -525,13 +525,13 @@ public class RefManagerImpl extends RefManager {
           return null;
         }
       }),
-      element -> {
+      element -> ReadAction.run(() -> {
         element.initialize();
         for (RefManagerExtension each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }
         fireNodeInitialized(element);
-      });
+      }));
   }
 
   private RefManagerExtension getExtension(final Language language) {
