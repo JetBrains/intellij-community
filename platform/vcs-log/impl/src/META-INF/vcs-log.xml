@@ -119,12 +119,12 @@
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistory.ShowAllAffected"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
+      <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="VcsHistoryActionsGroup"/>
       <reference ref="Vcs.Log.CloseLogTabAction"/>
     </group>
 
