@@ -16,7 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
@@ -243,17 +243,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       if (lafManager.checkLookAndFeel(lafInfo)) {
-        update = shouldUpdateUI = true;
-        final boolean wasDarcula = UIUtil.isUnderDarcula();
-        lafManager.setCurrentLookAndFeel(lafInfo);
+        update = true;
+        shouldUpdateUI = false;
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          } else if (wasDarcula) {
-            DarculaInstaller.uninstall();
-          }
-        });
+        SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
       }
     }
 
