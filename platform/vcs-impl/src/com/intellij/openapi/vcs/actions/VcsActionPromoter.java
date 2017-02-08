@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.actions.DiffWalkerAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.ex.RollbackLineStatusAction;
 
 import java.util.ArrayList;
@@ -40,6 +41,9 @@ public class VcsActionPromoter implements ActionPromoter {
         list.add(action);
       }
       if (action instanceof DiffWalkerAction) {
+        list.add(action);
+      }
+      if (action instanceof ShowDiffAction) {
         list.add(action);
       }
     }
