@@ -30,7 +30,10 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -59,7 +62,6 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
@@ -67,7 +69,6 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class FindManagerImpl extends FindManager {
   private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
-  private FindDialog myFindDialog;
+  private FindUIHelper myHelper;
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -110,6 +111,14 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setMultipleFiles(true);
 
     NotificationsConfigurationImpl.remove("FindInPath");
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myHelper != null) {
+          Disposer.dispose(myHelper);
+        }
+      }
+    });
   }
 
   @Override
@@ -153,66 +162,6 @@ public class FindManagerImpl extends FindManager {
     return replacePromptDialog.getExitCode();
   }
 
-  @Override
-  public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    final Consumer<FindModel> handler = findModel -> {
-      changeGlobalSettings(findModel);
-      okHandler.run();
-    };
-    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
-      myFindDialog = new FindDialog(myProject, model, handler) {
-        @Override
-        protected void dispose() {
-          super.dispose();
-          myFindDialog = null; // avoid strong ref!
-        }
-      };
-      myFindDialog.setModal(true);
-    }
-    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState() ||
-             !Comparing.equal(myFindDialog.getModel().getStringToFind(), model.getStringToFind())
-            ) {
-      myFindDialog.setModel(model);
-      myFindDialog.setOkHandler(handler);
-      return;
-    }
-    registerAction("ReplaceInPath");
-    registerAction("FindInPath");
-
-    myFindDialog.show();
-  }
-
-  private void registerAction(String aciotnName) {
-    AnAction action = ActionManager.getInstance().getAction(aciotnName);
-    JRootPane findDialogRootComponent = ((JDialog)myFindDialog.getWindow()).getRootPane();
-    new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        DataContextWrapper newDataContext = prepareDataContextForFind(e); // DataContext should be prepared before dialog invalidation
-        myFindDialog.doCancelAction();
-        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, newDataContext));
-      }
-
-      @NotNull
-      private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
-
-        return new DataContextWrapper(dataContext) {
-          @Nullable
-          @Override
-          public Object getData(@NonNls String dataId) {
-            if (CommonDataKeys.PROJECT.is(dataId)) return project;
-            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
-            return super.getData(dataId);
-          }
-        };
-      }
-    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
-  }
-
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
@@ -234,8 +183,23 @@ public class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public void showFindPopup(@NotNull FindModel model, DataContext dataContext) {
-    FindPopupPanel.showBalloon(myProject, model, dataContext);
+  public void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler) {
+    if (myHelper == null || Disposer.isDisposed(myHelper)) {
+      myHelper = new FindUIHelper(myProject, model, okHandler);
+        Disposer.register(myHelper, new Disposable() {
+          @Override
+          public void dispose() {
+            myHelper = null;
+          }
+        });
+    }
+    else if (myHelper.getModel().isReplaceState() != model.isReplaceState() ||
+             !Comparing.equal(myHelper.getModel().getStringToFind(), model.getStringToFind())) {
+      myHelper.setModel(model);
+      myHelper.setOkHandler(okHandler);
+      return;
+    }
+    myHelper.showUI();
   }
 
   @Override
