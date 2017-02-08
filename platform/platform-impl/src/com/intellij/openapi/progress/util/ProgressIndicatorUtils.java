@@ -174,7 +174,7 @@ public class ProgressIndicatorUtils {
     CompletableFuture<?> future = new CompletableFuture<>();
     //noinspection SSBasedInspection
     EdtInvocationManager.getInstance().invokeLater(() -> {
-      if (application.isDisposed()) {
+      if (application.isDisposed() || progressIndicator.isCanceled()) {
         future.complete(null);
         return;
       }
@@ -193,7 +193,14 @@ public class ProgressIndicatorUtils {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            final ReadTask.Continuation continuation = runUnderProgress(progressIndicator, readTask);
+            final ReadTask.Continuation continuation;
+            try {
+              continuation = runUnderProgress(progressIndicator, readTask);
+            }
+            catch (Throwable e) {
+              future.completeExceptionally(e);
+              throw e;
+            }
             if (continuation == null) {
               future.complete(null);
             }
