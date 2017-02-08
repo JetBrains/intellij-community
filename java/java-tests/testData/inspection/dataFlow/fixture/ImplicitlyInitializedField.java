@@ -1,7 +1,7 @@
 class Foo {
   String field;
   String field2;
-  int hash = field.hashCode();
+  int hash = field.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
 
   Foo(String f2) {
     field2 = f2;

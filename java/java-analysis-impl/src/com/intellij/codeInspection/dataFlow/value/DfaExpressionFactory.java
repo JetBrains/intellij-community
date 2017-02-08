@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -132,6 +133,10 @@ public class DfaExpressionFactory {
       }
 
       if (DfaValueFactory.isEffectivelyUnqualified(refExpr)) {
+        if (isFieldDereferenceBeforeInitialization(refExpr)) {
+          return myFactory.getConstFactory().getNull();
+        }
+
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 
@@ -143,6 +148,16 @@ public class DfaExpressionFactory {
 
     PsiType type = refExpr.getType();
     return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
+  }
+
+  private static boolean isFieldDereferenceBeforeInitialization(PsiReferenceExpression ref) {
+    PsiField placeField = PsiTreeUtil.getParentOfType(ref, PsiField.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (placeField == null) return false;
+
+    PsiElement target = ref.resolve();
+    return target instanceof PsiField &&
+           placeField.getContainingClass() == ((PsiField)target).getContainingClass() &&
+           ((PsiField)target).getInitializer() == null;
   }
 
   @Nullable

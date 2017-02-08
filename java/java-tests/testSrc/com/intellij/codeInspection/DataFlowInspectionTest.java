@@ -421,6 +421,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testDivisionByZero() { doTestReportConstantReferences(); }
 
+  public void testFieldUsedBeforeInitialization() { doTest(); }
+
   public void testImplicitlyInitializedField() {
     PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
