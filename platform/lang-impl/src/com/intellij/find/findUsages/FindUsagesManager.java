@@ -51,7 +51,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -287,10 +286,11 @@ public class FindUsagesManager {
     Task.Backgroundable task = new Task.Backgroundable(handler.getProject(), "Finding Usages") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        PsiElement2UsageTargetAdapter[] primaryTargets = PsiElement2UsageTargetAdapter.convert(primaryElements);
-        PsiElement2UsageTargetAdapter[] secondaryTargets = PsiElement2UsageTargetAdapter.convert(primaryElements);
-
-        final UsageSearcher usageSearcher = createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
+        UsageSearcher usageSearcher = ReadAction.compute(()-> {
+          PsiElement2UsageTargetAdapter[] primaryTargets = PsiElement2UsageTargetAdapter.convert(primaryElements);
+          PsiElement2UsageTargetAdapter[] secondaryTargets = PsiElement2UsageTargetAdapter.convert(secondaryElements);
+          return createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
+        });
         usageSearcher.generate(processor);
       }
     };
@@ -332,23 +332,22 @@ public class FindUsagesManager {
                                                    @NotNull final FindUsagesHandler handler,
                                                    @NotNull FindUsagesOptions options,
                                                    final PsiFile scopeFile) throws PsiInvalidElementAccessException {
-    Pair<PsiElement[], PsiElement[]> compute = ReadAction.compute(() -> {
-      //PsiElement element = handler.getPsiElement();
+    ReadAction.run(() -> {
       PsiElement[] primaryElements = PsiElement2UsageTargetAdapter.convertToPsiElements(primaryTargets);
       PsiElement[] secondaryElements = PsiElement2UsageTargetAdapter.convertToPsiElements(secondaryTargets);
 
       ContainerUtil
-        .concat(primaryElements, secondaryElements/*, scopeFile == null ? new PsiElement[]{element} : new PsiElement[]{element, scopeFile}*/)
+        .concat(primaryElements, secondaryElements)
         .forEach(psi -> {
           if (psi == null || !psi.isValid()) throw new PsiInvalidElementAccessException(psi);
         });
-      return Pair.create(primaryElements, secondaryElements);
     });
-    PsiElement[] primaryElements = compute.first;
-    PsiElement[] secondaryElements = compute.second;
 
     FindUsagesOptions optionsClone = options.clone();
     return processor -> {
+      PsiElement[] primaryElements = ReadAction.compute(() -> PsiElement2UsageTargetAdapter.convertToPsiElements(primaryTargets));
+      PsiElement[] secondaryElements = ReadAction.compute(() -> PsiElement2UsageTargetAdapter.convertToPsiElements(secondaryTargets));
+
       Project project = ReadAction.compute(() -> scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject());
       dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
 
