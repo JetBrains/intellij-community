@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -31,8 +32,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -188,13 +192,21 @@ public class DfaVariableValue extends DfaValue implements DfaComparableValue {
       }
     }
 
-    if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
-      PsiExpression initializer = ((PsiField)var).getInitializer();
+    if (var instanceof PsiField && myFactory.isHonorFieldInitializers()) {
+      return getNullabilityFromFieldInitializers((PsiField)var, defaultNullability);
+    }
+
+    return defaultNullability;
+  }
+
+  private static Nullness getNullabilityFromFieldInitializers(PsiField field, Nullness defaultNullability) {
+    if (DfaPsiUtil.isFinalField(field)) {
+      PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
         return getFieldInitializerNullness(initializer);
       }
 
-      List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
+      List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       if (initializers.isEmpty()) {
         return defaultNullability;
       }
@@ -205,13 +217,38 @@ public class DfaVariableValue extends DfaValue implements DfaComparableValue {
         }
       }
 
-      if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
+      if (DfaPsiUtil.isInitializedNotNull(field)) {
         return Nullness.NOT_NULL;
       }
-      return defaultNullability;
     }
-
+    else if (isOnlyImplicitlyInitialized(field)) {
+      return Nullness.NOT_NULL;
+    }
     return defaultNullability;
+  }
+
+  private static boolean isOnlyImplicitlyInitialized(PsiField field) {
+    return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
+      UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null) && weAreSureThereAreNoExplicitWrites(field),
+      PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
+    String name = field.getName();
+    if (name == null || field.getInitializer() != null) return false;
+
+    if (!isCheapEnoughToSearch(field, name)) return false;
+
+    return ReferencesSearch.search(field).forEach(reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
+  }
+
+  private static boolean isCheapEnoughToSearch(PsiField field, String name) {
+    SearchScope scope = field.getUseScope();
+    if (!(scope instanceof GlobalSearchScope)) return true;
+
+    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(field.getProject());
+    PsiSearchHelper.SearchCostResult result = helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
+    return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
   private static Nullness getFieldInitializerNullness(@NotNull PsiExpression expression) {
