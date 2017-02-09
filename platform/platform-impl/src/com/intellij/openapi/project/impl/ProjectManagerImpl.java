@@ -72,6 +72,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
 
   private Project[] myOpenProjects = {}; // guarded by lock
+  private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -405,6 +406,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
+      myOpenProjectByHash.put(project.getLocationHash(), project);
     }
     return true;
   }
@@ -413,7 +415,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
+      myOpenProjectByHash.remove(project.getLocationHash());
     }
+  }
+
+  @Nullable
+  public Project findOpenProjectByHash(@Nullable String locationHash) {
+    return myOpenProjectByHash.get(locationHash);
   }
 
   private static boolean canCancelProjectLoading() {
