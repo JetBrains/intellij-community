@@ -276,9 +276,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public void clean() {
     if (!myItems.isEmpty()) {
-      myItems = Collections.emptyList();
-      myCounts.clear();
-      ApplicationManager.getApplication().invokeLater(() -> getRowSorter().allRowsChanged());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myItems = Collections.emptyList();
+        myCounts.clear();
+        getRowSorter().allRowsChanged();
+      });
     }
   }
 
