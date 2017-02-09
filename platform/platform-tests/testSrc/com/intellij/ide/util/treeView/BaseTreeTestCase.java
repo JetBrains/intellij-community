@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -111,7 +114,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     if (!myReadyRequest) {
       if (!getBuilder().isDisposed()) {
-        Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
+        Assert.assertEquals("{}", getBuilder().getUi().getNodeActions().toString());
       }
     }
 
