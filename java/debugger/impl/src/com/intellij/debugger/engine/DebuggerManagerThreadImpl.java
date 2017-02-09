@@ -34,7 +34,10 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author lex
@@ -44,6 +47,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   public static final int COMMAND_TIMEOUT = 3000;
 
   private volatile boolean myDisposed;
+  private volatile ScheduledFuture<?> myTerminateFuture;
 
   DebuggerManagerThreadImpl(@NotNull Disposable parent, Project project) {
     super(project);
@@ -53,6 +57,18 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   @Override
   public void dispose() {
     myDisposed = true;
+    ScheduledFuture<?> terminateFuture = myTerminateFuture;
+    if (terminateFuture != null) {
+      try {
+        terminateFuture.get(1, TimeUnit.MINUTES);
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      catch (TimeoutException e) {
+        throw new RuntimeException("Termination request is still pending", e);
+      }
+    }
   }
 
   @TestOnly
@@ -106,13 +122,14 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    * if worker thread is still processing the same command
    * calls terminateCommand
    */
-  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
+  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeoutMillis) {
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
     invoke(command);
 
     if (currentCommand != null) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      if (myTerminateFuture != null) throw new IllegalStateException("already terminated");
+      myTerminateFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(
         () -> {
           if (currentCommand == myEvents.getCurrentEvent()) {
             // if current command is still in progress, cancel it
@@ -131,7 +148,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
               }
             }
           }
-        }, terminateTimeout, TimeUnit.MILLISECONDS);
+        }, terminateTimeoutMillis, TimeUnit.MILLISECONDS);
     }
   }
 
