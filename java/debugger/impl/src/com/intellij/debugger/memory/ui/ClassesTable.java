@@ -25,6 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -273,10 +274,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
-  @Override
-  public void dispose() {
+  public void clean() {
     myItems = Collections.emptyList();
     myCounts.clear();
+    ApplicationManager.getApplication().invokeLater(() -> getRowSorter().allRowsChanged());
+  }
+
+  @Override
+  public void dispose() {
+    clean();
   }
 
   @Nullable
@@ -284,6 +290,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     ReferenceType ref = (ReferenceType)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
+
 
   class DiffViewTableModel extends AbstractTableModelWithColumns {
     final static int CLASSNAME_COLUMN_INDEX = 0;
