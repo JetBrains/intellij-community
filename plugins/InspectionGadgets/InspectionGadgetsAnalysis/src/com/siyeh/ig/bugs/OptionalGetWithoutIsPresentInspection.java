@@ -27,13 +27,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -92,10 +92,12 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
 
     private void analyze(PsiElement context) {
       final DataFlowRunner dfaRunner = new StandardDataFlowRunner(false, true, isOnTheFly()) {
+        private final OptionalValueFactory myOptionalFactory = new OptionalValueFactory(getFactory());
+
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {
-          return new OptionalMemoryState(getFactory());
+          return new OptionalMemoryState(getFactory(), myOptionalFactory);
         }
       };
       dfaRunner.analyzeMethod(context, new StandardInstructionVisitor() {
@@ -105,20 +107,21 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           if (call != null) {
             String methodName = call.getMethodExpression().getReferenceName();
             PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+            OptionalMemoryState optionalMemState = (OptionalMemoryState)memState;
             if (qualifier != null && TypeUtils.isOptional(qualifier.getType())) {
               if ("isPresent".equals(methodName)) {
-                DfaValue result = ((OptionalMemoryState)memState).createIsPresentCheckResult(memState.peek());
+                DfaValue result = optionalMemState.createIsPresentCheckResult(memState.peek());
                 return replaceResult(instruction, runner, memState, result);
               }
               else if (isOptionalGetMethodName(methodName)) {
-                ThreeState state = ((OptionalMemoryState)memState).checkOptional(memState.peek());
+                ThreeState state = optionalMemState.checkOptional(memState.peek());
                 seen.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
               }
             }
             if ("of".equals(methodName)) {
               PsiMethod method = call.resolveMethod();
               if (method != null && TypeUtils.isOptional(method.getContainingClass())) {
-                return replaceResult(instruction, runner, memState, new DfaOptionalValue(runner.getFactory(), true));
+                return replaceResult(instruction, runner, memState, optionalMemState.getOptionalFactory().getOptional(true));
               }
             }
             if ("ofNullable".equals(methodName)) {
@@ -127,14 +130,14 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
                   TypeUtils.isOptional(method.getContainingClass()) &&
                   call.getArgumentList().getExpressions().length == 1) {
                 if(memState.isNotNull(memState.peek())) {
-                  return replaceResult(instruction, runner, memState, new DfaOptionalValue(runner.getFactory(), true));
+                  return replaceResult(instruction, runner, memState, optionalMemState.getOptionalFactory().getOptional(true));
                 }
               }
             }
             if ("empty".equals(methodName)) {
               PsiMethod method = call.resolveMethod();
               if (method != null && TypeUtils.isOptional(method.getContainingClass())) {
-                return replaceResult(instruction, runner, memState, new DfaOptionalValue(runner.getFactory(), false));
+                return replaceResult(instruction, runner, memState, optionalMemState.getOptionalFactory().getOptional(false));
               }
             }
           }
@@ -172,13 +175,47 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
     }
 
-    static class OptionalMemoryState extends DfaMemoryStateImpl {
-      protected OptionalMemoryState(DfaValueFactory factory) {
-        super(factory);
+    static class OptionalValueFactory {
+      private final DfaOptionalValue myPresentOptional, myAbsentOptional;
+      private final DfaValueFactory myFactory;
+      private final TIntObjectHashMap<IsPresentCheck> myPresentChecks = new TIntObjectHashMap<>();
+
+      OptionalValueFactory(DfaValueFactory factory) {
+        myPresentOptional = new DfaOptionalValue(factory, true);
+        myAbsentOptional = new DfaOptionalValue(factory, false);
+        myFactory = factory;
       }
 
-      protected OptionalMemoryState(DfaMemoryStateImpl toCopy) {
+      IsPresentCheck getIsPresentCheck(DfaValue optional) {
+        int id = optional.getID();
+        IsPresentCheck check = myPresentChecks.get(id);
+        if(check == null) {
+          myPresentChecks.put(id, check = new IsPresentCheck(myFactory, optional, null));
+        }
+        return check;
+      }
+
+      DfaOptionalValue getOptional(boolean present) {
+        return present ? myPresentOptional : myAbsentOptional;
+      }
+    }
+
+    static class OptionalMemoryState extends DfaMemoryStateImpl {
+      private final OptionalValueFactory myOptionalFactory;
+
+      protected OptionalMemoryState(DfaValueFactory factory,
+                                    OptionalValueFactory optionalFactory) {
+        super(factory);
+        myOptionalFactory = optionalFactory;
+      }
+
+      protected OptionalMemoryState(OptionalMemoryState toCopy) {
         super(toCopy);
+        myOptionalFactory = toCopy.myOptionalFactory;
+      }
+
+      public OptionalValueFactory getOptionalFactory() {
+        return myOptionalFactory;
       }
 
       @Override
@@ -224,7 +261,7 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           case NO:
             return getFactory().getConstFactory().getFalse();
           case UNSURE:
-            return new IsPresentCheck(getFactory(), qualifierValue, false);
+            return myOptionalFactory.getIsPresentCheck(qualifierValue);
         }
         throw new IllegalStateException();
       }
@@ -263,7 +300,8 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         }
         if (check.myOptional instanceof DfaVariableValue) {
           DfaVariableValue optionalVar = (DfaVariableValue)check.myOptional;
-          setVariableState(optionalVar, getVariableState(optionalVar).withValue(new DfaOptionalValue(getFactory(), !check.myNegated)));
+          setVariableState(optionalVar, getVariableState(optionalVar)
+            .withValue(myOptionalFactory.getOptional(!check.myNegated)));
         }
         return true;
       }
@@ -284,29 +322,18 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
   static class IsPresentCheck extends DfaValue implements DfaComparableValue {
     final @NotNull DfaValue myOptional;
     final boolean myNegated;
+    final IsPresentCheck myInverted;
 
-    protected IsPresentCheck(DfaValueFactory factory, @NotNull DfaValue optional, boolean negated) {
+    protected IsPresentCheck(DfaValueFactory factory, @NotNull DfaValue optional, IsPresentCheck positiveCheck) {
       super(factory);
       myOptional = optional;
-      myNegated = negated;
+      myNegated = positiveCheck != null;
+      myInverted = positiveCheck == null ? new IsPresentCheck(factory, optional, this) : positiveCheck;
     }
 
     @Override
     public IsPresentCheck createNegated() {
-      return new IsPresentCheck(myFactory, myOptional, !myNegated);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass() || !super.equals(o)) return false;
-      IsPresentCheck check = (IsPresentCheck)o;
-      return myNegated == check.myNegated && myOptional.equals(check.myOptional);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), myOptional, myNegated);
+      return myInverted;
     }
 
     public String toString() {
@@ -320,18 +347,6 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
     protected DfaOptionalValue(DfaValueFactory factory, boolean isPresent) {
       super(factory);
       myPresent = isPresent;
-    }
-
-    @Override
-    public int hashCode() {
-      return super.hashCode() * 31 + (myPresent ? 1 : 0);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      return o != null && getClass() == o.getClass() && super.equals(o) &&
-             myPresent == ((DfaOptionalValue)o).myPresent;
     }
 
     public String toString() {
