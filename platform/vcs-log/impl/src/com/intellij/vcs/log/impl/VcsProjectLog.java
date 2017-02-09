@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -56,7 +55,7 @@ public class VcsProjectLog {
 
   @NotNull
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  private final AtomicInteger myRecreatedLogCount = new AtomicInteger();
+  private int myRecreatedLogCount = 0;
   private volatile VcsLogUiImpl myUi;
 
   public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
@@ -109,12 +108,11 @@ public class VcsProjectLog {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
-    int recreated = myRecreatedLogCount.incrementAndGet();
-    if (recreated > RECREATE_LOG_TRIES) {
-      myRecreatedLogCount.set(0);
+    if (++myRecreatedLogCount > RECREATE_LOG_TRIES) {
+      myRecreatedLogCount = 0;
 
       String message = "VCS Log was recreated " +
-                       recreated +
+                       myRecreatedLogCount +
                        " times due to data corruption\n" +
                        "Delete " +
                        LOG_CACHE +
