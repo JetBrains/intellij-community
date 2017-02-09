@@ -20,6 +20,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ public class SchemesCombo<T extends Scheme> {
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
   public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
   private static final String EDITING_HINT = "Enter to save, Esc to cancel.";
+  public static final int COMBO_WIDTH = 200;
   // endregion
   
   private ComboBox<MySchemeListItem<T>> myComboBox;
@@ -58,11 +60,12 @@ public class SchemesCombo<T extends Scheme> {
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setMaximumSize(new Dimension(myNameEditorField.getPreferredSize().width, Short.MAX_VALUE));
+    myRootPanel.setPreferredSize(new Dimension(JBUI.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
+    myRootPanel.setMaximumSize(new Dimension(JBUI.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {
-    JTextField nameEditorField = new JTextField(15);
+    JTextField nameEditorField = new JTextField();
     nameEditorField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
