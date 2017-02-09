@@ -244,7 +244,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return element.getName().equals(myTagName);
   }
 
-  private static String getTagName(Class<?> aClass) {
+  @NotNull
+  private static String getTagName(@NotNull Class<?> aClass) {
     for (Class<?> c = aClass; c != null; c = c.getSuperclass()) {
       String name = getTagNameFromAnnotation(c);
       if (name != null) {
@@ -252,7 +253,15 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
     String name = aClass.getSimpleName();
-    return name.isEmpty() ? aClass.getSuperclass().getSimpleName() : name;
+    if (name.isEmpty()) {
+      name = aClass.getSuperclass().getSimpleName();
+    }
+
+    int lastIndexOf = name.lastIndexOf('$');
+    if (lastIndexOf > 0 && name.length() > (lastIndexOf + 1)) {
+      return name.substring(lastIndexOf + 1);
+    }
+    return name;
   }
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {

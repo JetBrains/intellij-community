@@ -20,6 +20,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import gnu.trove.THashMap
+import org.assertj.core.api.Assertions
 import org.junit.Test
 import java.util.*
 
@@ -161,7 +162,6 @@ internal class XmlSerializerMapTest {
     doSerializerTest("<BeanWithMap>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"1\" value=\"a\" />\n      <entry key=\"2\" value=\"b\" />\n      <entry key=\"3\" value=\"c\" />\n    </map>\n  </option>\n</BeanWithMap>", bean)
   }
 
-
   private class BeanWithMapWithAnnotations {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
@@ -197,5 +197,22 @@ internal class XmlSerializerMapTest {
     bean.VALUES.put("c", BeanWithProperty("Bill"))
 
     doSerializerTest("<BeanWithMapWithBeanValue>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"a\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"James\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"b\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bond\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"c\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bill\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n    </map>\n  </option>\n</BeanWithMapWithBeanValue>", bean)
+  }
+
+  @Test fun setKeysInMap() {
+    @Tag("bean")
+    class BeanWithSetKeysInMap {
+      var myMap = LinkedHashMap<Collection<String>, String>()
+    }
+
+    val bean = BeanWithSetKeysInMap()
+    bean.myMap.put(LinkedHashSet(Arrays.asList("a", "b", "c")), "letters")
+    bean.myMap.put(LinkedHashSet(Arrays.asList("1", "2", "3")), "numbers")
+
+    val bb = doSerializerTest("<bean>\n  <option name=\"myMap\">\n    <map>\n      <entry value=\"letters\">\n        <key>\n          <set>\n            <option value=\"a\" />\n            <option value=\"b\" />\n            <option value=\"c\" />\n          </set>\n        </key>\n      </entry>\n      <entry value=\"numbers\">\n        <key>\n          <set>\n            <option value=\"1\" />\n            <option value=\"2\" />\n            <option value=\"3\" />\n          </set>\n        </key>\n      </entry>\n    </map>\n  </option>\n</bean>", bean)
+
+    for (collection in bb.myMap.keys) {
+      Assertions.assertThat(collection).isInstanceOf(Set::class.java)
+    }
   }
 }
