@@ -1768,7 +1768,7 @@ public class AbstractPopup implements JBPopup {
   public void setWarning(@NotNull String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
-    Color color = HintUtil.INFORMATION_COLOR;
+    Color color = HintUtil.getInformationColor();
     label.setBackground(color);
     label.setBorder(BorderFactory.createLineBorder(color, 3));
     myHeaderPanel.add(label, BorderLayout.SOUTH);

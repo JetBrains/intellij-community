@@ -956,7 +956,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<>();
     TextAttributes attributes = info.isNavigatable() 
                                 ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
-                                : new TextAttributes(null, HintUtil.INFORMATION_COLOR, null, null, Font.PLAIN);
+                                : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),

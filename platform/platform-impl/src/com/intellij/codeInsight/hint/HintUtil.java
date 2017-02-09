@@ -39,10 +39,13 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class HintUtil {
   /** @deprecated use getInformationColor() */
+  @Deprecated
   public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x4d4f51));
   /** @deprecated use getQuestionColor() */
+  @Deprecated
   public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
   /** @deprecated use getErrorColor() */
+  @Deprecated
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
