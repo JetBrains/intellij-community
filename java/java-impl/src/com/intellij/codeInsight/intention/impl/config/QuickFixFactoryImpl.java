@@ -837,4 +837,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
     return new InsertMethodCallFix(call, method);
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapStringWithFileFix(type, expression);
+  }
 }
