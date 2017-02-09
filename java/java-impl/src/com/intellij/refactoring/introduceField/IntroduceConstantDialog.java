@@ -387,7 +387,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       UIUtil.setEnabled(myVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      String effectiveVisibility = getEffectiveVisibility(getFieldVisibility(), myOccurrences, myTargetClass);
+      String effectiveVisibility = getEffectiveVisibility(getFieldVisibility(), myOccurrences, myTargetClass, myProject);
       if (effectiveVisibility != null) {
         myVPanel.setVisibility(effectiveVisibility);
       }
@@ -396,14 +396,15 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   public static String getEffectiveVisibility(String initialVisibility,
                                               PsiExpression[] occurrences,
-                                              PsiClass targetClass) {
+                                              PsiClass targetClass,
+                                              Project project) {
     final ArrayList<String> visible = new ArrayList<>();
     visible.add(PsiModifier.PRIVATE);
     visible.add(PsiModifier.PROTECTED);
     visible.add(PsiModifier.PACKAGE_LOCAL);
     visible.add(PsiModifier.PUBLIC);
     for (PsiExpression occurrence : occurrences) {
-      final PsiManager psiManager = targetClass.getManager();
+      final PsiManager psiManager = PsiManager.getInstance(project);
       for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
         String modifier = iterator.next();
 
