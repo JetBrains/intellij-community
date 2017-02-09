@@ -40,7 +40,7 @@ public class JavaLexer extends LexerBase {
 
   private static final Set<CharSequence> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
     CharSequenceHashingStrategy.CASE_SENSITIVE,
-    OPEN, MODULE, REQUIRES, EXPORTS, USES, PROVIDES, TRANSITIVE, TO, WITH);
+    OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||

@@ -78,6 +78,7 @@ public interface PsiKeyword extends PsiJavaToken {
   String MODULE = "module";
   String REQUIRES = "requires";
   String EXPORTS = "exports";
+  String OPENS = "opens";
   String USES = "uses";
   String PROVIDES = "provides";
   String TRANSITIVE = "transitive";

@@ -145,9 +145,10 @@ public interface JavaTokenType extends TokenType {
   IElementType MODULE_KEYWORD = new IJavaElementType("MODULE");
   IElementType REQUIRES_KEYWORD = new IJavaElementType("REQUIRES");
   IElementType EXPORTS_KEYWORD = new IJavaElementType("EXPORTS");
+  IElementType OPENS_KEYWORD = new IJavaElementType("OPENS");
   IElementType USES_KEYWORD = new IJavaElementType("USES");
   IElementType PROVIDES_KEYWORD = new IJavaElementType("PROVIDES");
-  IElementType TRANSITIVE_KEYWORD = new IJavaElementType("TO");
+  IElementType TRANSITIVE_KEYWORD = new IJavaElementType("TRANSITIVE");
   IElementType TO_KEYWORD = new IJavaElementType("TO");
   IElementType WITH_KEYWORD = new IJavaElementType("WITH");
 }
