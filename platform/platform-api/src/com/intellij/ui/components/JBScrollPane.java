@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.InputSource;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -49,7 +49,7 @@ import java.lang.reflect.Field;
 import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
-public class JBScrollPane extends SmoothScrollPane {
+public class JBScrollPane extends JScrollPane {
   /**
    * This key is used to specify which colors should use the scroll bars on the pane.
    * If a client property is set to {@code true} the bar's brightness
@@ -73,6 +73,9 @@ public class JBScrollPane extends SmoothScrollPane {
   public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
+
+  private InputSource myInputSource = InputSource.UNKNOWN;
+  private double myWheelRotation;
 
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
@@ -184,12 +187,7 @@ public class JBScrollPane extends SmoothScrollPane {
                 if (pane.isWheelScrollingEnabled()) {
                   JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
                   if (bar != null && bar.isVisible()) {
-                    boolean isUnitScroll = MouseWheelEvent.WHEEL_UNIT_SCROLL == event.getScrollType();
-                    JViewport viewport = pane.getViewport();
-                    if (isUnitScroll && viewport instanceof JBViewport && isPreciseRotationSupported()) {
-                      ((JBViewport)viewport).updateViewPosition(event);
-                    }
-                    else {
+                    if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
                       oldListener.mouseWheelMoved(event);
                     }
                   }
@@ -235,13 +233,13 @@ public class JBScrollPane extends SmoothScrollPane {
 
   @Override
   public JScrollBar createVerticalScrollBar() {
-    return new MyScrollBar(Adjustable.VERTICAL);
+    return new JBScrollBar(Adjustable.VERTICAL);
   }
 
   @NotNull
   @Override
   public JScrollBar createHorizontalScrollBar() {
-    return new MyScrollBar(Adjustable.HORIZONTAL);
+    return new JBScrollBar(Adjustable.HORIZONTAL);
   }
 
   @Override
@@ -254,52 +252,6 @@ public class JBScrollPane extends SmoothScrollPane {
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
-
-  private class MyScrollBar extends SmoothScrollBar implements IdeGlassPane.TopComponent {
-    public MyScrollBar(int orientation) {
-      super(orientation);
-    }
-
-    @Override
-    public void updateUI() {
-      ScrollBarUI ui = getUI();
-      if (ui instanceof DefaultScrollBarUI) return;
-      setUI(JBScrollBar.createUI(this));
-    }
-
-    @Override
-    public boolean canBePreprocessed(MouseEvent e) {
-      return JBScrollPane.canBePreprocessed(e, this);
-    }
-
-    @Override
-    public int getUnitIncrement() {
-      return fixUnitIncrement(super.getUnitIncrement());
-    }
-
-    @Override
-    public int getUnitIncrement(int direction) {
-      return fixUnitIncrement(super.getUnitIncrement(direction));
-    }
-
-    // increases default unit increment for non-scrollable components to provide fast scrolling
-    private int fixUnitIncrement(int increment) {
-      if (increment != 1 || Registry.is("ide.scroll.default.unit.increment")) return increment;
-
-      JViewport viewport = getViewport();
-      if (viewport == null) return increment;
-
-      Component view = viewport.getView();
-      if (view == null) return increment;
-      if (view instanceof Scrollable) {
-        if (Adjustable.VERTICAL == getOrientation()) return increment;
-        if (view instanceof JTable) return increment;
-      }
-      Font font = view.getFont();
-      return font == null ? increment : font.getSize();
-    }
-  }
-
 
   public static boolean canBePreprocessed(MouseEvent e, JScrollBar bar) {
     if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_PRESSED) {
@@ -323,6 +275,22 @@ public class JBScrollPane extends SmoothScrollPane {
       }
     }
     return true;
+  }
+
+  @Override
+  protected void processMouseWheelEvent(MouseWheelEvent e) {
+    boolean hasAbsoluteDelta = ComponentSettings.getInstance().isPixelPerfectScrollingEnabled() &&
+                               MouseWheelEventEx.getAbsoluteDelta(e) != 0.0D;
+    myInputSource = hasAbsoluteDelta ? InputSource.PRECISION_TOUCHPAD : InputSource.MOUSE_WHEEL;
+    myWheelRotation = e.getPreciseWheelRotation();
+    super.processMouseWheelEvent(e);
+    myInputSource = InputSource.UNKNOWN;
+  }
+
+  int getInitialDelay(boolean valueIsAdjusting) {
+    InputSource source = valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
+    ComponentSettings settings = ComponentSettings.getInstance();
+    return !settings.isInterpolationEnabledFor(source) ? 0 : settings.getInterpolationDelay(source, myWheelRotation);
   }
 
   private static class Corner extends JPanel {
@@ -745,11 +713,9 @@ public class JBScrollPane extends SmoothScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && (isPreciseRotationSupported() ||
-                   (isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().isHighPrecisionScrollingEnabled()))) {
+    if (ignore && (JBScrollBar.isAbsoluteDeltaSupported() || ComponentSettings.getInstance().isHighPrecisionScrollingEnabled())) {
       double rotation = event.getPreciseWheelRotation();
-      double delta = MouseWheelEventEx.getAbsoluteDelta(event);
-      ignore = (rotation == 0.0D || !Double.isFinite(rotation)) && (delta == 0.0D || !Double.isFinite(delta));
+      ignore = rotation == 0.0D || !Double.isFinite(rotation);
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }

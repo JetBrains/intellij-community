@@ -76,6 +76,7 @@ public class SmoothScrollPane extends JScrollPane {
     return new SmoothScrollBar(Adjustable.HORIZONTAL);
   }
 
+  /*
   @Override
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
@@ -100,6 +101,7 @@ public class SmoothScrollPane extends JScrollPane {
       }
     }
   }
+  */
 
   private void handleMouseWheelEvent(MouseWheelEvent e, MouseWheelListener delegate) {
     ComponentSettings settings = ComponentSettings.getInstance();
