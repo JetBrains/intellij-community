@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -29,11 +32,13 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
+import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
 import org.junit.rules.ExternalResource
@@ -282,4 +287,33 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
       after()
     }
   }
+}
+
+fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
+}
+
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, projectCreator, false)
+}
+
+private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
+  runInEdtAndWait {
+    val filePath: String
+    if (projectCreator == null) {
+      filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+    }
+    else {
+      filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+    }
+
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+    project.runInLoadComponentStateMode {
+      project.use(task)
+    }
+  }
+}
+
+fun ComponentManager.saveStore() {
+  stateStore.save(SmartList())
 }

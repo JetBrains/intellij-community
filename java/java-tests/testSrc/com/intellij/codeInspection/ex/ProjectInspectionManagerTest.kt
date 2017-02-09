@@ -18,8 +18,6 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
-import com.intellij.configurationStore.loadAndUseProject
-import com.intellij.configurationStore.saveStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager

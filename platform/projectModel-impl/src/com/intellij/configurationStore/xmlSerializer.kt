@@ -67,6 +67,18 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
   }
 }
 
+fun Element.deserializeInto(bean: Any) {
+  try {
+    (getBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
+  }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException(e)
+  }
+}
+
 private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
 
 private val bindingCache: MutableMap<BindingCacheKey, Binding>

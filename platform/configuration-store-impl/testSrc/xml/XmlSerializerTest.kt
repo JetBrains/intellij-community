@@ -453,8 +453,7 @@ internal class XmlSerializerTest {
 
   @Test fun jdomElementArrayField() {
     val text = "<BeanWithJDOMElementArray>\n" + "  <option name=\"STRING_V\" value=\"bye\" />\n" + "  <actions>\n" + "    <action />\n" + "    <action />\n" + "  </actions>\n" + "  <actions>\n" + "    <action />\n" + "  </actions>\n" + "</BeanWithJDOMElementArray>"
-    val bean = XmlSerializer.deserialize<BeanWithJDOMElementArray>(JDOMUtil.loadDocument(text).rootElement, BeanWithJDOMElementArray::class.java)
-
+    val bean = loadElement(text).deserialize<BeanWithJDOMElementArray>()
 
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)
@@ -618,17 +617,16 @@ internal class XmlSerializerTest {
     @Tag("bean")
     data class Bean(@Tag var description: String? = null)
 
-    var bean = XmlSerializer.deserialize(loadElement("""<bean>
+    var bean = loadElement("""<bean>
   <description>
     <![CDATA[
     <h4>Node.js integration</h4>
     ]]>
   </description>
-</bean>""".reader()), Bean::class.java)
+</bean>""").deserialize<Bean>()
     assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
 
-    bean = XmlSerializer.deserialize(
-      loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader()), Bean::class.java)
+    bean = loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""").deserialize<Bean>()
     assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
   }
 

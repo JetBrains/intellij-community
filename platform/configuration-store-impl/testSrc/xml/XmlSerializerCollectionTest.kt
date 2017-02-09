@@ -2,11 +2,11 @@
 
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializationException
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.AbstractCollection
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.Tag
@@ -41,7 +41,7 @@ internal class XmlSerializerCollectionTest {
 
     val value = Element("value")
     list.writeExternal(value)
-    val o = XmlSerializer.deserialize<Bean4>(Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)), Bean4::class.java)
+    val o = Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)).deserialize<Bean4>()
     assertSerializer(o, "<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", SkipDefaultsSerializationFilter())
   }
 
