@@ -808,6 +808,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
   }
 
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
+
+  public static int getLambdaOrdinal(@NotNull String name) {
+    int pos = name.lastIndexOf('$');
+    if (pos > -1) {
+      try {
+        return Integer.parseInt(name.substring(pos + 1));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return -1;
+  }
+
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
@@ -963,9 +977,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }
-
-  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR =
-    Comparator.comparingInt(m -> LambdaMethodFilter.getLambdaOrdinal(m.name()));
 
   public static void disableCollection(ObjectReference reference) {
     try {
