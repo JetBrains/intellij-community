@@ -69,6 +69,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
+    add(Box.createRigidArea(new Dimension(0, 12)));
+    add(new JSeparator());
     add(Box.createVerticalGlue());
     add(Box.createRigidArea(new Dimension(0, 10)));
   }
