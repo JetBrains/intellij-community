@@ -167,7 +167,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @Override
   public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
                                                                 @NotNull Collection<String> trackingBranches,
-                                                                boolean currentBranchTracksBranchToDelete,
                                                                 @NotNull Collection<GitRepository> repositories) {
     String title = "Delete Remote Branch";
     String message = "Delete remote branch " + branchName;
@@ -176,10 +175,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;
     }
     else {
-      if (currentBranchTracksBranchToDelete) {
-        message +=
-          "\n\nCurrent branch " + GitBranchUtil.getCurrentBranchOrRev(repositories) + " tracks " + branchName + " but won't be deleted.";
-      }
       final String checkboxMessage;
       if (trackingBranches.size() == 1) {
         checkboxMessage = "Delete tracking local branch " + trackingBranches.iterator().next() + " as well";

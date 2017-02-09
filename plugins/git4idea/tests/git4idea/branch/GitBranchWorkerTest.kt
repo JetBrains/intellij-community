@@ -795,14 +795,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun `test delete remote branch`() {
     prepareLocalAndRemoteBranch("feature", track = false)
 
-    deleteRemoteBranch("origin/feature", object: TestUiHandler() {
-      override fun confirmRemoteBranchDeletion(branchName: String,
-                                               trackingBranches: MutableCollection<String>,
-                                               currentBranchTracksBranchToDelete: Boolean,
-                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
-        return DeleteRemoteBranchDecision.DELETE
-      }
-    })
+    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE)
 
     assertSuccessfulNotification("Deleted remote branch origin/feature")
     myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
@@ -812,18 +805,22 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun `test delete remote branch should optionally delete the tracking branch as well`() {
     prepareLocalAndRemoteBranch("feature", track = true)
 
-    deleteRemoteBranch("origin/feature", object: TestUiHandler() {
-      override fun confirmRemoteBranchDeletion(branchName: String,
-                                               trackingBranches: MutableCollection<String>,
-                                               currentBranchTracksBranchToDelete: Boolean,
-                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
-        return DeleteRemoteBranchDecision.DELETE_WITH_TRACKING
-      }
-    })
+    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE_WITH_TRACKING)
 
     assertSuccessfulNotification("Deleted remote branch origin/feature")
     myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
     myRepositories.forEach { assertBranchDeleted(it, "feature") }
+  }
+
+  fun `test delete remote branch when its tracking local branch is partially checked out`() {
+    prepareLocalAndRemoteBranch("feature", track = true)
+    git(myUltimate, "checkout feature")
+
+    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE)
+
+    assertSuccessfulNotification("Deleted remote branch origin/feature")
+    myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
+    myRepositories.forEach { assertBranchExists(it, "feature") }
   }
 
   private fun prepareLocalAndRemoteBranch(name: String, track: Boolean) {
@@ -910,8 +907,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
   }
 
-  private fun deleteRemoteBranch(branchName: String, uiHandler: GitBranchUiHandler) {
-    GitBranchWorker(myProject, myGit, uiHandler).deleteRemoteBranch(branchName, myRepositories)
+  private fun deleteRemoteBranch(branchName: String, decision: GitBranchUiHandler.DeleteRemoteBranchDecision) {
+    GitBranchWorker(myProject, myGit, object : TestUiHandler() {
+      override fun confirmRemoteBranchDeletion(branchName: String,
+                                               trackingBranches: MutableCollection<String>,
+                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
+        return decision
+      }
+    })
+      .deleteRemoteBranch(branchName, myRepositories)
   }
 
   private fun GitRepository.deleteBranch(branchName: String) {
@@ -973,7 +977,6 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     override fun confirmRemoteBranchDeletion(branchName: String,
                                              trackingBranches: MutableCollection<String>,
-                                             currentBranchTracksBranchToDelete: Boolean,
                                              repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
       throw UnsupportedOperationException()
     }

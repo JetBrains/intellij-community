@@ -52,17 +52,18 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   protected void execute() {
     final Collection<GitRepository> repositories = getRepositories();
     final Collection<String> commonTrackingBranches = getCommonTrackingBranches(myBranchName, repositories);
-    String currentBranch = GitBranchUtil.getCurrentBranchOrRev(repositories);
-    boolean currentBranchTracksBranchToDelete = false;
-    if (commonTrackingBranches.contains(currentBranch)) {
-      currentBranchTracksBranchToDelete = true;
-      commonTrackingBranches.remove(currentBranch);
+
+    // don't propose to remove current branch even if it tracks the remote branch
+    for (GitRepository repository : repositories) {
+      String currentBranch = repository.getCurrentBranchName();
+      if (currentBranch != null) {
+        commonTrackingBranches.remove(currentBranch);
+      }
     }
 
     final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
-    final boolean finalCurrentBranchTracksBranchToDelete = currentBranchTracksBranchToDelete;
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> decision.set(
-      myUiHandler.confirmRemoteBranchDeletion(myBranchName, commonTrackingBranches, finalCurrentBranchTracksBranchToDelete, repositories)));
+      myUiHandler.confirmRemoteBranchDeletion(myBranchName, commonTrackingBranches, repositories)));
 
 
     if (decision.get() != CANCEL) {

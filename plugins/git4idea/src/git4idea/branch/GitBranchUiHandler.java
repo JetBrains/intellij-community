@@ -96,7 +96,6 @@ public interface GitBranchUiHandler {
   @NotNull
   DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
                                                          @NotNull Collection<String> trackingBranches,
-                                                         boolean currentBranchTracksBranchToDelete,
                                                          @NotNull Collection<GitRepository> repositories);
 
   enum DeleteRemoteBranchDecision {
