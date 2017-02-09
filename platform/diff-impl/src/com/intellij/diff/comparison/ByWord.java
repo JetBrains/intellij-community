@@ -37,7 +37,7 @@ import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoMerg
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.TrimUtil.trim;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.trim;
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.subiterable;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 public class ByWord {
@@ -137,7 +137,7 @@ public class ByWord {
       List<InlineChunk> subwords1 = words1.subList(words.start1, words.end1);
       List<InlineChunk> subwords2 = words2.subList(words.start2, words.end2);
 
-      FairDiffIterable subiterable = fair(trim(wordChanges, words.start1, words.end1, words.start2, words.end2));
+      FairDiffIterable subiterable = fair(subiterable(wordChanges, words.start1, words.end1, words.start2, words.end2));
 
       FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
                                                                       offsets.start1, offsets.start2, indicator);
