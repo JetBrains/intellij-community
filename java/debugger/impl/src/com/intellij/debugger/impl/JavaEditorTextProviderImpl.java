@@ -100,7 +100,9 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
         parent = pparent;
       }
       else if (pparent instanceof PsiReferenceExpression) {
-        return findExpression(pparent, allowMethodCalls);
+        if (((PsiReferenceExpression)parent).resolve() instanceof PsiClass) {
+          return findExpression(pparent, allowMethodCalls);
+        }
       }
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
