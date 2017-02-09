@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -99,6 +100,9 @@ public class PyPostfixUtils {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(context.getContainingFile(), offset - 1);
+        if (elementAtCaret instanceof PsiComment) {
+          return Collections.emptyList();
+        }
         while (elementAtCaret != null) {
           if (elementAtCaret instanceof PyStatement) {
             return Collections.singletonList(elementAtCaret);
