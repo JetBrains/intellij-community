@@ -22,8 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
@@ -61,48 +58,6 @@ public class ControlFlowBuilderUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil");
 
   private ControlFlowBuilderUtil() {
-  }
-
-  /**
-   * @return array of instruction numbers in topological order
-   */
-  @NotNull
-  public static int[] reversePostorder(@NotNull Instruction[] flow) {
-    return ArrayUtil.reverseArray(postorder(flow));
-  }
-
-  @NotNull
-  public static int[] postorder(@NotNull Instruction[] flow) {
-    final int N = flow.length;
-    final boolean[] visited = new boolean[N];
-    Arrays.fill(visited, false);
-
-    final IntArrayList result = new IntArrayList(N);
-    final IntStack stack = new IntStack();
-    for (int i = 0; i < N; i++) { // graph might have multiple entry points
-      if (visited[i]) continue;
-      stack.push(i);
-      visited[i] = true;
-
-      dfs:
-      while (!stack.empty()) {
-        int current = stack.peek();
-
-        for (Instruction successorInst : flow[current].allSuccessors()) {
-          int successor = successorInst.num();
-          if (visited[successor]) continue;
-          stack.push(successor);
-          visited[successor] = true;  // discover successor
-          continue dfs;               // if new successor is discovered go discover its successors
-        }
-
-        result.add(current); // mark black if all successors are discovered, i.e. previous for-cycle was not interrupted
-        stack.pop();
-      }
-    }
-
-    LOG.assertTrue(result.size() == N);
-    return result.toArray();
   }
 
   public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {

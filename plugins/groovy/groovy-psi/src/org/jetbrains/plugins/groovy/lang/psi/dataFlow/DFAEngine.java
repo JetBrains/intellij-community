@@ -20,10 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.postOrder;
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
 /**
  * @author ven
@@ -106,10 +108,10 @@ public class DFAEngine<E> {
   @NotNull
   private int[] getFlowOrder() {
     if (myDfa.isForward()) {
-      return ControlFlowBuilderUtil.reversePostorder(myFlow);
+      return reversedPostOrder(myFlow);
     }
     else {
-      return ControlFlowBuilderUtil.postorder(myFlow);
+      return postOrder(myFlow);
     }
   }
 

@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -42,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
 /**
  * @author ven
@@ -59,7 +60,7 @@ public class ReachingDefinitionsCollector {
     final DefinitionMap dfaResult = inferDfaResult(flow);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
-    final int[] postorder = ControlFlowBuilderUtil.reversePostorder(flow);
+    final int[] postorder = reversedPostOrder(flow);
     LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
     LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
 
