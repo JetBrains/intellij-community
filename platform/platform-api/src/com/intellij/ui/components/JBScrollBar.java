@@ -211,8 +211,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     ComponentSettings settings = ComponentSettings.getInstance();
     if (!settings.isTrueSmoothScrollingEligibleFor(this)) return false;
 
-    double delta = getDelta(event);
-    if (delta == 0.0D || !Double.isFinite(delta)) return false;
+    double delta = getPreciseDelta(event);
+    if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
     double minDelta = (double)getMinimum() - value;
@@ -246,22 +246,18 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   }
 
   /**
-   * Indicates whether a scrolling delta can be calculated from the specified event.
+   * Indicates whether MouseWheelEvent#getPreciseWheelRotation can be used to calculate an absolute scrolling delta.
    *
-   * @param event the mouse wheel event
-   * @return {@code true} if a scrolling delta can be calculated, {@code false} otherwise
-   * @see #getDelta(MouseWheelEvent)
+   * @return {@code true} if an absolute scrolling delta is supported, {@code false} otherwise
+   * @see #getPreciseDelta(MouseWheelEvent)
    */
-  static boolean hasDelta(MouseWheelEvent event) {
-    double rotation = event.getPreciseWheelRotation();
-    if (rotation == 0.0D || !Double.isFinite(rotation)) return false;
-
+  static boolean isAbsoluteDeltaSupported() {
     ComponentSettings settings = ComponentSettings.getInstance();
     if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
       if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) return true;
       if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) return true;
     }
-    return settings.isHighPrecisionScrollingEnabled();
+    return false;
   }
 
   /**
@@ -269,9 +265,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    *
    * @param event the mouse wheel event
    * @return a scrolling delta for this scrollbar
-   * @see #hasDelta(MouseWheelEvent)
+   * @see #isAbsoluteDeltaSupported
    */
-  private double getDelta(MouseWheelEvent event) {
+  private double getPreciseDelta(MouseWheelEvent event) {
     double rotation = event.getPreciseWheelRotation();
     ComponentSettings settings = ComponentSettings.getInstance();
     if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
@@ -300,7 +296,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       double blockIncrement = getBlockIncrement(direction);
       return boundDelta(-blockIncrement, blockIncrement, delta);
     }
-    return 0.0D;
+    return Double.NaN;
   }
 
   private static final class Model extends DefaultBoundedRangeModel {
