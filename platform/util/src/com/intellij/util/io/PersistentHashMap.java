@@ -302,7 +302,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   @TestOnly // public for tests
-  boolean makesSenseToCompact() {
+  @SuppressWarnings("WeakerAccess") // used in upsource for some reason
+  public boolean makesSenseToCompact() {
     if (myIsReadOnly) return false;
 
     final long fileSize = myValueStorage.getSize();
