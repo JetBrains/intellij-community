@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,28 @@ public abstract class JBEditorTabsPainter {
     int _x = rect.x;
     int _y = rect.y;
     int _height = rect.height;
+
+    if (Registry.is("ide.new.editor.tabs.selection")) {
+      fillSelectionAndBorder(g2d, selectedShape, tabColor, _x, _y, _height);
+
+      //todo[kb] move to editor scheme
+      g2d.setColor(Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0));
+      int thickness = 3;
+      if (position == JBTabsPosition.bottom) {
+        g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
+      } else if (position == JBTabsPosition.top){
+        g2d.fillRect(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness);
+        g2d.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+        g2d.drawLine(Math.max(0, rect.x - 1), rect.y, rect.x + rect.width, rect.y);
+      } else if (position == JBTabsPosition.left) {
+        g2d.fillRect(rect.x + rect.width - thickness + 1, rect.y, thickness, rect.height);
+      } else if (position == JBTabsPosition.right) {
+        g2d.fillRect(rect.x, rect.y, thickness, rect.height);
+      }
+
+      return;
+    }
+
     if (!horizontalTabs) {
       g2d.setColor(Gray._0.withAlpha(45));
       g2d.draw(
@@ -87,27 +109,10 @@ public abstract class JBEditorTabsPainter {
                                 selectedShape.labelPath.deltaY(4)));
     }
 
-    if (!Registry.is("ide.new.editor.tabs.selection")) {
-      g2d.setColor(Gray._0.withAlpha(15));
-      g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
-                                                     selectedShape.path.getMaxX(),
-                                                     selectedShape.labelPath.getMaxY()));
-    }
-
-    if (Registry.is("ide.new.editor.tabs.selection")) {
-      //todo[kb] move to editor scheme
-      g2d.setColor(Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0));
-      int thickness = 3;
-      if (position == JBTabsPosition.bottom) {
-        g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
-      } else if (position == JBTabsPosition.top){
-        g2d.fillRect(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness);
-      } else if (position == JBTabsPosition.left) {
-        g2d.fillRect(rect.x + rect.width - thickness + 1, rect.y, thickness, rect.height);
-      } else if (position == JBTabsPosition.right) {
-        g2d.fillRect(rect.x, rect.y, thickness, rect.height);
-      }
-    }
+    g2d.setColor(Gray._0.withAlpha(15));
+    g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
+                                                   selectedShape.path.getMaxX(),
+                                                   selectedShape.labelPath.getMaxY()));
   }
 
   public abstract Color getBackgroundColor();
