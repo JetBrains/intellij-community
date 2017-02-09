@@ -103,6 +103,9 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
+INTERACTIVE_MODE_AVAILABLE = os.getenv('DISPLAY') is not None
+
+
 def protect_libraries_from_patching():
     """
     In this function we delete some modules from `sys.modules` dictionary and import them again inside
