@@ -597,7 +597,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       StringBuilder textToSend = new StringBuilder();
       // compute text input from the console contents:
       // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
-      for (RangeMarker marker = findTokenMarker(myEditor.getCaretModel().getOffset());
+      for (RangeMarker marker = findTokenMarker(myEditor.getCaretModel().getOffset()-1);
            marker != null;
            marker = ((RangeMarkerImpl)marker).findRangeMarkerBefore()) {
         ConsoleViewContentType tokenType = getTokenType(marker);
@@ -1127,11 +1127,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  // finds range marker the [offset..offset+1) belongs to
   private RangeMarker findTokenMarker(int offset) {
     RangeMarker[] marker = new RangeMarker[1];
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     model.processRangeHighlightersOverlappingWith(offset, offset, m->{
-      if (getTokenType(m) == null) return true;
+      if (getTokenType(m) == null || m.getStartOffset() > offset || offset + 1 > m.getEndOffset()) return true;
       marker[0] = m;
       return false;
     });
@@ -1166,8 +1167,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     flushDeferredText();
     SelectionModel selectionModel = editor.getSelectionModel();
 
-    int start = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
-    RangeMarker marker = findTokenMarker(start);
+    int lastOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset() - 1;
+    RangeMarker marker = findTokenMarker(lastOffset);
     if (getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
       print(text, ConsoleViewContentType.USER_INPUT);
       moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
@@ -1179,7 +1180,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       replaceUserText(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), textToUse);
     }
     else {
-      insertUserText(start, textToUse);
+      int typeOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+      insertUserText(typeOffset, textToUse);
     }
   }
 
