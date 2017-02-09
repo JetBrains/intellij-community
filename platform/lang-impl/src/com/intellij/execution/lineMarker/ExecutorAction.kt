@@ -22,10 +22,7 @@ import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
@@ -38,7 +35,9 @@ private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("Co
 /**
  * @author Dmitry Avdeev
  */
-class ExecutorAction private constructor(private val origin: AnAction, private val executor: Executor, private val order: Int) : AnAction() {
+class ExecutorAction private constructor(private val origin: AnAction,
+                                         private val executor: Executor,
+                                         private val order: Int) : ActionGroup() {
   init {
     copyFrom(origin)
   }
@@ -92,6 +91,18 @@ class ExecutorAction private constructor(private val origin: AnAction, private v
   override fun actionPerformed(e: AnActionEvent) {
     origin.actionPerformed(e)
   }
+
+  override fun canBePerformed(context: DataContext): Boolean = origin !is ActionGroup || origin.canBePerformed(context)
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e) ?: AnAction.EMPTY_ARRAY
+
+  override fun isDumbAware(): Boolean = origin.isDumbAware
+
+  override fun isPopup(): Boolean = origin !is ActionGroup || origin.isPopup
+
+  override fun hideIfNoVisibleChildren(): Boolean = origin !is ActionGroup || origin.hideIfNoVisibleChildren()
+
+  override fun disableIfNoVisibleChildren(): Boolean = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
 
   private fun getActionName(dataContext: DataContext, executor: Executor): String? {
     val list = getConfigurations(dataContext)
