@@ -30,7 +30,7 @@ import java.util.Arrays;
 public class HashImpl implements Hash {
 
   private static final int BASE = 16;
-  public static final int SHORT_HASH_LENGTH = 7;
+  private static final int SHORT_HASH_LENGTH = 7;
 
   @NotNull
   private final byte[] myData;

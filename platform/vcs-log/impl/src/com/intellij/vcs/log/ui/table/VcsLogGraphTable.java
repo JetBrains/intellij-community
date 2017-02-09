@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -51,7 +50,6 @@ import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
@@ -105,11 +103,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
-                          @NotNull VcsLogData logData,
-                          @NotNull VisiblePack initialDataPack,
-                          boolean showHash) {
-    super(new GraphTableModel(initialDataPack, logData, ui, showHash));
+  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+    super(new GraphTableModel(initialDataPack, logData, ui));
     getEmptyText().setText("Changes Log");
 
     myUi = ui;
@@ -218,11 +213,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
         int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
-                  myStringCellRenderer.getHorizontalTextPadding();
-        column.setPreferredWidth(min);
-      }
-      else if (i == GraphTableModel.HASH_COLUMN) {
-        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(StringUtil.repeat("a", HashImpl.SHORT_HASH_LENGTH)) +
                   myStringCellRenderer.getHorizontalTextPadding();
         column.setPreferredWidth(min);
       }
