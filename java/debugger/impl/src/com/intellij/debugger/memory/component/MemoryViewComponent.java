@@ -22,13 +22,12 @@ import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -40,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public class MemoryViewComponent extends AbstractProjectComponent {
+  private static final String MEMORY_VIEW_CONTENT_ID = "MemoryView";
+
   public MemoryViewComponent(@NotNull Project project) {
     super(project);
     final MessageBusConnection connection = project.getMessageBus().connect(project);
@@ -58,24 +59,40 @@ public class MemoryViewComponent extends AbstractProjectComponent {
           final RunnerLayoutUi ui = session.getUI();
           final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session);
           classesFilteredView.setActive(true);
-          final Content content =
-            ui.createContent("MemoryView", classesFilteredView, "Memory View",
+          final Content memoryViewContent =
+            ui.createContent(MEMORY_VIEW_CONTENT_ID, classesFilteredView, "Memory View",
                              AllIcons.Debugger.MemoryView.ToolWindowEnabled, null);
-          content.setCloseable(false);
-          content.setPinned(true);
-          content.setShouldDisposeContent(true);
+
+          memoryViewContent.setCloseable(false);
+          memoryViewContent.setPinned(true);
+          memoryViewContent.setShouldDisposeContent(true);
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          session.getUI().addContent(content, -1, PlaceInGrid.right, true);
+          session.getUI().addContent(memoryViewContent, -1, PlaceInGrid.right, true);
+
+          session.getUI().addListener(new ContentManagerAdapter() {
+            @Override
+            public void selectionChanged(ContentManagerEvent event) {
+              final Content content = event.getContent();
+              if (content == memoryViewContent) {
+                if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
+                  classesFilteredView.setActive(true);
+                }
+                else if (ContentManagerEvent.ContentOperation.remove.equals(event.getOperation())) {
+                  classesFilteredView.setActive(false);
+                }
+              }
+            }
+          }, classesFilteredView);
         });
       }
     }
 
     @Override
     public void processStopped(@NotNull XDebugProcess debugProcess) {
-      ApplicationManager.getApplication().invokeLater(() ->{
-        final Content memoryView = debugProcess.getSession().getUI().findContent("MemoryView");
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final Content memoryView = debugProcess.getSession().getUI().findContent(MEMORY_VIEW_CONTENT_ID);
         if (memoryView != null) {
           memoryView.setIcon(AllIcons.Debugger.MemoryView.ToolWindowDisabled);
         }
