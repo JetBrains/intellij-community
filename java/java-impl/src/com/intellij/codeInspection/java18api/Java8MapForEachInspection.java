@@ -16,8 +16,11 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -32,7 +35,9 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -49,6 +54,15 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
   private static final CallMatcher ENTRY_GETTER =
     CallMatcher.instanceCall(JAVA_UTIL_MAP_ENTRY, "getValue", "getKey").parameterCount(0);
 
+  public boolean DO_NOT_HIGHLIGHT_LOOP = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.map.foreach.option.no.loops"), this,
+                                          "DO_NOT_HIGHLIGHT_LOOP");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -58,23 +72,17 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
-        if (ITERABLE_FOREACH.test(call)) {
-          PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-          if (MAP_ENTRY_SET.test(qualifierCall)) {
-            PsiLambdaExpression lambda = ObjectUtils.tryCast(call.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
-            if (lambda != null) {
-              PsiParameter[] lambdaParameters = lambda.getParameterList().getParameters();
-              if (lambdaParameters.length == 1) {
-                PsiParameter entry = lambdaParameters[0];
-                if (allUsagesAllowed(entry)) {
-                  PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-                  holder.registerProblem(nameElement, InspectionsBundle.message("inspection.map.foreach.message"),
-                                         new ReplaceWithMapForEachFix());
-                }
-              }
-            }
-          }
-        }
+        if (!ITERABLE_FOREACH.test(call)) return;
+        PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+        if (!MAP_ENTRY_SET.test(qualifierCall)) return;
+        PsiLambdaExpression lambda = ObjectUtils.tryCast(call.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
+        if (lambda == null) return;
+        PsiParameter[] lambdaParameters = lambda.getParameterList().getParameters();
+        if (lambdaParameters.length != 1) return;
+        PsiParameter entry = lambdaParameters[0];
+        if (!allUsagesAllowed(entry)) return;
+        PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.map.foreach.message"), new ReplaceWithMapForEachFix());
       }
 
       private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
@@ -87,13 +95,26 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
 
       @Override
       public void visitForeachStatement(PsiForeachStatement loop) {
+        if (DO_NOT_HIGHLIGHT_LOOP && !isOnTheFly) return;
         PsiMethodCallExpression call =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue()), PsiMethodCallExpression.class);
         if (MAP_ENTRY_SET.test(call) &&
             LambdaGenerationUtil.canBeUncheckedLambda(loop.getBody()) &&
             allUsagesAllowed(loop.getIterationParameter())) {
+          ProblemHighlightType type =
+            DO_NOT_HIGHLIGHT_LOOP ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+          boolean wholeStatement =
+            isOnTheFly && (DO_NOT_HIGHLIGHT_LOOP || InspectionProjectProfileManager.isInformationLevel(getShortName(), loop));
+          TextRange range;
+          PsiJavaToken rParenth = loop.getRParenth();
+          if (wholeStatement && rParenth != null) {
+            range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
+          }
+          else {
+            range = new TextRange(0, loop.getFirstChild().getTextLength());
+          }
           holder.registerProblem(loop.getFirstChild(), InspectionsBundle.message("inspection.map.foreach.message"),
-                                 new ReplaceWithMapForEachFix());
+                                 type, range, new ReplaceWithMapForEachFix());
         }
       }
     };

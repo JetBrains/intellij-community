@@ -26,7 +26,9 @@ public class Java8MapForEachInspectionTest extends LightQuickFixParameterizedTes
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new Java8MapForEachInspection()};
+    Java8MapForEachInspection inspection = new Java8MapForEachInspection();
+    inspection.DO_NOT_HIGHLIGHT_LOOP = false;
+    return new LocalInspectionTool[]{inspection};
   }
 
   public void test() throws Exception {
