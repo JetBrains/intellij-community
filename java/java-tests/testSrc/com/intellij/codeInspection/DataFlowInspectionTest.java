@@ -260,6 +260,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
 
+  public void testImmutableClassNonGetterMethod() {
+    myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
+    doTest();
+  }
+
   public void testByteBufferGetter() {
     myFixture.addClass("package java.nio; public class MappedByteBuffer { public int getInt() {} }");
     doTest();

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
@@ -172,6 +173,9 @@ public class DfaExpressionFactory {
         if (qName == null || !FALSE_GETTERS.value(qName)) {
           return method;
         }
+      }
+      if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
+        return method;
       }
     }
     return null;
