@@ -61,7 +61,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
           classesFilteredView.setActive(true);
           final Content memoryViewContent =
             ui.createContent(MEMORY_VIEW_CONTENT_ID, classesFilteredView, "Memory View",
-                             AllIcons.Debugger.MemoryView.ToolWindowEnabled, null);
+                             AllIcons.Debugger.MemoryView.Active, null);
 
           memoryViewContent.setCloseable(false);
           memoryViewContent.setPinned(true);
@@ -94,7 +94,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
       ApplicationManager.getApplication().invokeLater(() -> {
         final Content memoryView = debugProcess.getSession().getUI().findContent(MEMORY_VIEW_CONTENT_ID);
         if (memoryView != null) {
-          memoryView.setIcon(AllIcons.Debugger.MemoryView.ToolWindowDisabled);
+          memoryView.setIcon(AllIcons.Debugger.MemoryView.Inactive);
         }
       });
     }
