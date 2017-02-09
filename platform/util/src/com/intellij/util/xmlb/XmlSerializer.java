@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
-import java.util.Set;
 
 public class XmlSerializer {
   private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
@@ -103,13 +102,9 @@ public class XmlSerializer {
   }
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
-    deserializeInto(bean, element, null);
-  }
-
-  public static void deserializeInto(@NotNull Object bean, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
     try {
       Class<?> clazz = bean.getClass();
-      ((BeanBinding)XmlSerializerImpl.getMainBinding(clazz, clazz, null)).deserializeInto(bean, element, accessorNameTracker);
+      ((BeanBinding)XmlSerializerImpl.getMainBinding(clazz, clazz, null)).deserializeInto(bean, element);
     }
     catch (XmlSerializationException e) {
       throw e;

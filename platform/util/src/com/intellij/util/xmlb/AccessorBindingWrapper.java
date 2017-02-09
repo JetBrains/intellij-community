@@ -49,7 +49,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   public Object deserialize(@NotNull Object context, @NotNull Element element) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(currentValue, element, null);
+      ((BeanBinding)myBinding).deserializeInto(currentValue, element);
     }
     else {
       Object deserializedValue = myBinding.deserializeUnsafe(currentValue, element);
@@ -65,7 +65,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0), null);
+      ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0));
     }
     else {
       Object deserializedValue = Binding.deserializeList(myBinding, currentValue, elements);

@@ -107,7 +107,7 @@ private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor
 private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
   override fun deserialize(context: Any?, element: Element): Any {
     val instance = newInstance()
-    deserializeInto(instance, element, null)
+    deserializeInto(instance, element)
     return instance
   }
 

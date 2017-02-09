@@ -130,7 +130,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   @NotNull
   public Object deserialize(@Nullable Object context, @NotNull Element element) {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
-    deserializeInto(instance, element, null);
+    deserializeInto(instance, element);
     return instance;
   }
 
@@ -177,6 +177,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
         return (int)(w1 - w2);
       }
     });
+  }
+
+  public void deserializeInto(@NotNull Object result, @NotNull Element element) {
+    deserializeInto(result, element, null);
   }
 
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
@@ -451,7 +455,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
   }
 
-  @Nullable
+
   protected Binding getBinding(@NotNull MutableAccessor accessor) {
     return XmlSerializerImpl.getBinding(accessor);
   }
