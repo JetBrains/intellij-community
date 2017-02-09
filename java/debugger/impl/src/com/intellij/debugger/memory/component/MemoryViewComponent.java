@@ -74,6 +74,12 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
     @Override
     public void processStopped(@NotNull XDebugProcess debugProcess) {
+      ApplicationManager.getApplication().invokeLater(() ->{
+        final Content memoryView = debugProcess.getSession().getUI().findContent("MemoryView");
+        if (memoryView != null) {
+          memoryView.setIcon(AllIcons.Debugger.MemoryView.ToolWindowDisabled);
+        }
+      });
     }
   }
 }
