@@ -36,5 +36,8 @@
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
     <localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="DuplicateAlternationBranch"
+                     displayName="Duplicate branch in alternation" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
   </extensions>
 </idea-plugin>
