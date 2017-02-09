@@ -24,3 +24,4 @@ public class Test {
       for (String field : this.fields) {
       }
   }
+}

@@ -21,8 +21,8 @@ public class Test {
   private String[] fields = null;
 
   void test() {
-    fo<caret>r (int i = 0; i < this.fields.length; i++) {
+    fo<caret>r ( int i = 0; i< this.fields.length; i++){
       String field = fields[i];
-
     }
   }
+}
