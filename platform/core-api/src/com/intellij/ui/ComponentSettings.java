@@ -37,6 +37,12 @@ public class ComponentSettings {
   private static final RegistryValue PRECISION_TOUCHPAD_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad");
   private static final RegistryValue OTHER_SOURCES_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.other");
 
+  private static final RegistryValue SCROLLBAR_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar.delay");
+  private static final RegistryValue MOUSE_WHEEL_MIN_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.min");
+  private static final RegistryValue MOUSE_WHEEL_MAX_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.max");
+  private static final RegistryValue PRECISION_TOUCHPAD_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad.delay");
+  private static final RegistryValue OTHER_SOURCES_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.other.delay");
+
   private static final RegistryValue DYNAMIC_SCROLLBARS = Registry.get("idea.true.smooth.scrolling.dynamic.scrollbars");
 
   private boolean mySmoothScrollingEnabled = true;
@@ -72,6 +78,9 @@ public class ComponentSettings {
 
   // Returns whether scrolling interpolation is enabled for particular input source
   public boolean isInterpolationEnabledFor(InputSource source) {
+    if (!SystemProperties.isTrueSmoothScrollingEnabled()) {
+      return false;
+    }
     if (!SCROLLING_INTERPOLATION.asBoolean()) {
       return false;
     }
@@ -85,6 +94,21 @@ public class ComponentSettings {
         return PRECISION_TOUCHPAD_INTERPOLATION.asBoolean();
       default:
         return OTHER_SOURCES_INTERPOLATION.asBoolean();
+    }
+  }
+
+  public int getInterpolationDelay(InputSource source, double rotation) {
+    switch (source) {
+      case SCROLLBAR:
+        return SCROLLBAR_DELAY.asInteger();
+      case MOUSE_WHEEL:
+        int min = MOUSE_WHEEL_MIN_DELAY.asInteger();
+        int max = MOUSE_WHEEL_MAX_DELAY.asInteger();
+        return Math.max(min, Math.min(max, (int)Math.round(max * Math.abs(rotation))));
+      case PRECISION_TOUCHPAD:
+        return PRECISION_TOUCHPAD_DELAY.asInteger();
+      default:
+        return OTHER_SOURCES_DELAY.asInteger();
     }
   }
 

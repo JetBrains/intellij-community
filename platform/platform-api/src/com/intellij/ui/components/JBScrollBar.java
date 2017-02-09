@@ -162,6 +162,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   @Override
   public void setValue(int value) {
+    int delay = 0;
     Component parent = getParent();
     if (parent instanceof JBScrollPane) {
       JBScrollPane pane = (JBScrollPane)parent;
@@ -169,15 +170,16 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       if (viewport != null) {
         ComponentSettings settings = ComponentSettings.getInstance();
         if (settings.isTrueSmoothScrollingEligibleFor(viewport.getView()) && settings.isInterpolationEligibleFor(this)) {
-          InputSource source = pane.getInputSource(getValueIsAdjusting());
-          if (settings.isInterpolationEnabledFor(source)) {
-            myInterpolator.setTarget(value, pane.getInitialDelay(source));
-            return;
-          }
+          delay = pane.getInitialDelay(getValueIsAdjusting());
         }
       }
     }
-    super.setValue(value);
+    if (delay > 0) {
+      myInterpolator.setTarget(value, delay);
+    }
+    else {
+      super.setValue(value);
+    }
   }
 
   @Override
@@ -279,7 +281,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
         // so we use 10 to restore amount of pixels to scroll.
         return 10 * rotation;
       }
-      else if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) {
+      if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) {
         JViewport viewport = getViewport();
         Font font = viewport == null ? null : getViewFont(viewport);
         int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
