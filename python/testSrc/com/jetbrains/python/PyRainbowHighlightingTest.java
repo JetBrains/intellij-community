@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,15 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   public void testVariableInsideLambda() {
     doTest("<rainbow color='ff000004'>l</rainbow> = lambda <rainbow color='ff000004'>x</rainbow>: sum(<rainbow color='ff000002'>y</rainbow> * <rainbow color='ff000002'>y</rainbow> for <rainbow color='ff000002'>y</rainbow> in <rainbow color='ff000004'>x</rainbow>)");
+  }
+
+  // EA-96587
+  public void testEa96587() {
+    doTest("<rainbow color='ff000003'>a</rainbow> = 10\n" +
+           "<rainbow color='ff000003'>a</rainbow> += 10\n" +
+           "for <rainbow color='ff000004'>i</rainbow> in range(10):\n" +
+           "    <rainbow color='ff000003'>a</rainbow> += 10\n" +
+           "    <rainbow color='ff000003'>a</rainbow> += 10");
   }
 
   // negative tests

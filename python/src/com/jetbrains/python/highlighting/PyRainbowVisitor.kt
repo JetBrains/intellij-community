@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.RainbowVisitor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -43,7 +45,7 @@ class PyRainbowVisitor : RainbowVisitor() {
   override fun clone() = PyRainbowVisitor()
 
   private fun processReference(referenceExpression: PyReferenceExpression) {
-    val context = getReferenceContext(referenceExpression) ?: return
+    val context = getReferenceContext(referenceExpression, mutableSetOf()) ?: return
     val name = updateNameIfGlobal(context, referenceExpression.name) ?: return
 
     addInfo(context, referenceExpression, name)
@@ -65,14 +67,18 @@ class PyRainbowVisitor : RainbowVisitor() {
     }
   }
 
-  private fun getReferenceContext(referenceExpression: PyReferenceExpression): PsiElement? {
+  private fun getReferenceContext(referenceExpression: PyReferenceExpression,
+                                  visitedReferenceExpressions: MutableSet<PyReferenceExpression>): PsiElement? {
     if (referenceExpression.isQualified || referenceExpression.name in IGNORED_NAMES) return null
 
     val resolved = referenceExpression.reference.resolve()
     return when (resolved) {
       is PyTargetExpression -> getTargetContext(resolved)
       is PyNamedParameter -> getNamedParameterContext(resolved)
-      is PyReferenceExpression -> if (resolved.parent is PyAugAssignmentStatement) getReferenceContext(resolved) else null
+      is PyReferenceExpression -> {
+        if (!visitedReferenceExpressions.add(resolved)) return getLeastCommonScope(visitedReferenceExpressions)
+        return if (resolved.parent is PyAugAssignmentStatement) getReferenceContext(resolved, visitedReferenceExpressions) else null
+      }
       else -> null
     }
   }
@@ -128,5 +134,21 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, colorKey: TextAttributesKey? = null) {
     addInfo(getInfo(context, rainbowElement, name, colorKey))
+  }
+
+  private fun getLeastCommonScope(elements: Collection<PsiElement>): ScopeOwner? {
+    var result: ScopeOwner? = null
+
+    elements.forEach {
+      val currentScopeOwner = ScopeUtil.getScopeOwner(it)
+      if (result == null) {
+        result = currentScopeOwner
+      }
+      else if (result != currentScopeOwner && currentScopeOwner != null && PsiTreeUtil.isAncestor(result, currentScopeOwner, true)) {
+        result = currentScopeOwner
+      }
+    }
+
+    return result
   }
 }
