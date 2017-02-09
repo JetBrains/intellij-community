@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
@@ -25,7 +26,6 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskProjectConfiguration;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -16,9 +16,9 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerManager;

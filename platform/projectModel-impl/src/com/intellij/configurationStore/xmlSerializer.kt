@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
+import com.intellij.util.xmlb.XmlSerializerImpl.isPrimitive
+import com.intellij.util.xmlb.XmlSerializerImpl.typeToClass
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -31,12 +34,16 @@ import kotlin.reflect.primaryConstructor
 
 fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
 
-inline fun <reified T: Any> Element.deserialize(): T = deserialize(this, T::class.java)
+fun serialize(`object`: Any): Element {
+  return XmlSerializer.serialize(`object`)
+}
 
-fun <T> deserialize(element: Element, aClass: Class<T>): T {
+inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
+
+fun <T> Element.deserialize(aClass: Class<T>): T {
   @Suppress("UNCHECKED_CAST")
   try {
-    return (getBinding(aClass) as NotNullDeserializeBinding).deserialize(null, element) as T
+    return (getBinding(aClass) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
   catch (e: XmlSerializationException) {
     throw e
@@ -50,7 +57,7 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
   try {
     var document = JDOMUtil.loadDocument(url)
     document = JDOMXIncluder.resolve(document, url.toExternalForm())
-    return deserialize(document.rootElement, aClass)
+    return document.rootElement.deserialize(aClass)
   }
   catch (e: IOException) {
     throw XmlSerializationException(e)
@@ -102,6 +109,12 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     val instance = newInstance()
     deserializeInto(instance, element, null)
     return instance
+  }
+
+  override fun getBinding(accessor: MutableAccessor): Binding? {
+    val type = accessor.genericType
+    val aClass = typeToClass(type)
+    return if (isPrimitive(aClass)) null else getBinding(aClass, type, accessor)
   }
 
   private fun newInstance(): Any {

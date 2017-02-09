@@ -417,7 +417,7 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 
   baseDir.directoryStreamIfExists {
     for (file in it) {
-      val scheme = deserialize(loadElement(file), TestScheme::class.java)
+      val scheme = loadElement(file).deserialize(TestScheme::class.java)
       assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file.fileName.toString()))).isEqualTo(scheme.name)
     }
   }
@@ -439,7 +439,7 @@ open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() 
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean): TestScheme {
-    val scheme = deserialize(dataHolder.read(), TestScheme::class.java)
+    val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)
     return scheme
   }

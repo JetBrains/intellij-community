@@ -21,7 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import org.jdom.Element
 
 fun deserializeAndLoadState(component: PersistentStateComponent<*>, element: Element) {
-  val state = deserialize(element, ComponentSerializationUtil.getStateClass<Any>(component.javaClass))
+  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(component.javaClass))
   (state as? BaseState)?.resetModificationCount()
   @Suppress("UNCHECKED_CAST")
   (component as PersistentStateComponent<Any>).loadState(state)

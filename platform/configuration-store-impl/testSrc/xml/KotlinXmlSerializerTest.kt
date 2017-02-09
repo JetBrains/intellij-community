@@ -58,7 +58,7 @@ class KotlinXmlSerializerTest {
       </option>
     </bean>""", data)
 
-    assertThat(deserialize(loadElement("""<bean>
+    assertThat(loadElement("""<bean>
       <option name="PLACES_MAP">
         <entry key="">
           <PlaceSettings>
@@ -66,9 +66,9 @@ class KotlinXmlSerializerTest {
           </PlaceSettings>
         </entry>
       </option>
-    </bean>"""), Foo::class.java).PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
+    </bean>""").deserialize<Foo>().PLACES_MAP.get("")!!.IGNORE_POLICY).isEqualTo(IgnorePolicy.DEFAULT)
 
-    val value = deserialize(loadElement("""<bean>
+    val value = loadElement("""<bean>
       <option name="PLACES_MAP">
         <entry key="">
           <PlaceSettings>
@@ -76,7 +76,7 @@ class KotlinXmlSerializerTest {
           </PlaceSettings>
         </entry>
       </option>
-    </bean>"""), Foo::class.java)
+    </bean>""").deserialize<Foo>()
     assertThat(value).isNotNull()
     val placeSettings = value.PLACES_MAP.get("")
     assertThat(placeSettings).isNotNull()

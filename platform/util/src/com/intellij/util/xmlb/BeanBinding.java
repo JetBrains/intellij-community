@@ -410,8 +410,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor) {
-    Binding binding = XmlSerializerImpl.getBinding(accessor);
+  private Binding createBinding(@NotNull MutableAccessor accessor) {
+    Binding binding = getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
     }
@@ -449,5 +449,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
+  }
+
+  @Nullable
+  protected Binding getBinding(@NotNull MutableAccessor accessor) {
+    return XmlSerializerImpl.getBinding(accessor);
   }
 }

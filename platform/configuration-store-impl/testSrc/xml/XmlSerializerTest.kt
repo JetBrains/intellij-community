@@ -204,17 +204,15 @@ internal class XmlSerializerTest {
     })
   }
 
-  @Test fun `parallel deserialization 2`() {
-    val e = Element("root").addContent(Element("name").setText("x"))
-    assertConcurrent(*Array(5) {
-      {
-        for (i in 0..9) {
-          val bean = e.deserialize<BeanWithFieldWithTagAnnotation>()
-          assertThat(bean).isNotNull()
-          assertThat(bean.STRING_V).isEqualTo("x")
-        }
-      }
-    })
+  class Complex {
+    var foo: Complex? = null
+  }
+
+  @Test fun `self class reference deserialization`() {
+    doSerializerTest("""
+    <Complex>
+      <option name="foo" />
+    </Complex>""", Complex())
   }
 
   @Test fun fieldWithTagAnnotation() {
@@ -661,7 +659,7 @@ internal fun <T: Any> doSerializerTest(@Language("XML") expectedText: String, be
   val element = assertSerializer(bean, expectedTrimmed, filter)
 
   // test deserializer
-  val o = deserialize(element, bean.javaClass)
+  val o = element.deserialize(bean.javaClass)
   assertSerializer(o, expectedTrimmed, filter, "Deserialization failure")
   return o
 }

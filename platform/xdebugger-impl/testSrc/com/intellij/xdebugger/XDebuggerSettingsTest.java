@@ -15,16 +15,14 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.testFramework.PlatformLiteFixture;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
-
-import static com.intellij.util.xmlb.XmlSerializer.deserialize;
 
 /**
  * @author nik
@@ -53,11 +51,10 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     settings.myOption = "42";
     assertSame(settings, MyDebuggerSettings.getInstance());
 
-    settingsManager.loadState(deserialize(element, XDebuggerSettingManagerImpl.SettingsState.class));
+    settingsManager.loadState(com.intellij.configurationStore.XmlSerializer.deserialize(element, XDebuggerSettingManagerImpl.SettingsState.class));
     assertSame(settings, MyDebuggerSettings.getInstance());
     assertEquals("239", settings.myOption);
   }
-
 
   public static class MyDebuggerSettings extends XDebuggerSettings<MyDebuggerSettings> {
     @Attribute("option")

@@ -79,7 +79,7 @@ public class XmlSerializerImpl {
   }
 
   @NotNull
-  static Class<?> typeToClass(@NotNull Type type) {
+  public static Class<?> typeToClass(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class<?>)type;
     }
@@ -97,7 +97,11 @@ public class XmlSerializerImpl {
 
   @Nullable
   static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
-    if (aClass.isPrimitive() ||
+    return isPrimitive(aClass) ? null : getMainBinding(aClass, originalType, accessor);
+  }
+
+  public static boolean isPrimitive(@NotNull Class<?> aClass) {
+    return aClass.isPrimitive() ||
         aClass == String.class ||
         aClass == Integer.class ||
         aClass == Long.class ||
@@ -105,11 +109,7 @@ public class XmlSerializerImpl {
         aClass == Double.class ||
         aClass == Float.class ||
         aClass.isEnum() ||
-        Date.class.isAssignableFrom(aClass)) {
-      return null;
-    }
-
-    return getMainBinding(aClass, originalType, accessor);
+        Date.class.isAssignableFrom(aClass);
   }
 
   @NotNull
