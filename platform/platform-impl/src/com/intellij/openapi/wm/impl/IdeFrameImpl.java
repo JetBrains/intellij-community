@@ -478,6 +478,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // clear both our and swing hard refs
     if (myRootPane != null) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        myRootPane.removeNotify();
+      }
       myRootPane = null;
       setRootPane(new JRootPane());
     }
