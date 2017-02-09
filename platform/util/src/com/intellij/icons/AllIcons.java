@@ -284,9 +284,9 @@ public class AllIcons {
     public static final Icon LambdaBreakpoint = IconLoader.getIcon("/debugger/LambdaBreakpoint.png"); // 12x12
     
     public static class MemoryView {
+      public static final Icon Active = IconLoader.getIcon("/debugger/memoryView/active.png"); // 13x13
       public static final Icon ClassTracked = IconLoader.getIcon("/debugger/memoryView/classTracked.png"); // 16x16
-      public static final Icon ToolWindowDisabled = IconLoader.getIcon("/debugger/memoryView/toolWindowDisabled.png"); // 13x13
-      public static final Icon ToolWindowEnabled = IconLoader.getIcon("/debugger/memoryView/toolWindowEnabled.png"); // 13x13
+      public static final Icon Inactive = IconLoader.getIcon("/debugger/memoryView/inactive.png"); // 13x13
 
     }
     public static final Icon MultipleBreakpoints = IconLoader.getIcon("/debugger/MultipleBreakpoints.png"); // 12x12
