@@ -113,7 +113,7 @@ public class XmlSerializerImpl {
   }
 
   @NotNull
-  static Binding getMainBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
+  synchronized static Binding getMainBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
     Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
