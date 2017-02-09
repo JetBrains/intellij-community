@@ -67,7 +67,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -75,7 +74,9 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -4142,13 +4143,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       long currentTimeMillis = System.currentTimeMillis();
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
-        g.drawImage(sprites[spriteIndex], x, y, null);
+        UIUtil.drawImage(g, sprites[spriteIndex], x, y, null);
         JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, 12, 64), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
 
-      g.drawImage(sprites[spriteIndex++], x, y, null);
+      UIUtil.drawImage(g, sprites[spriteIndex++], x, y, null);
       if (spriteIndex == sprites.length) {
         nrp.set(false);
         ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));
