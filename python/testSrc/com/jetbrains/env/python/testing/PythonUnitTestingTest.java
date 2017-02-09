@@ -16,6 +16,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +30,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,6 +50,25 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalUnitTestFactory createFactory() {
+          return PyUniversalUnitTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    final PyUniversalUnitTestConfiguration configuration = task.getConfiguration();
+    configuration.setPattern("foo");
+    configuration.getTarget().setTargetType(TestTargetType.PATH);
+    configuration.getTarget().setTarget("foo.py");
+    configuration.checkConfiguration();
   }
 
 

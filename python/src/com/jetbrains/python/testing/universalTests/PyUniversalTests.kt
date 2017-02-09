@@ -32,7 +32,6 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -182,6 +181,15 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
   }
 
   /**
+   * Validates configuration and throws exception if target is invalid
+   */
+  fun checkValid() {
+    if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
+      throw RuntimeConfigurationWarning("Target should be set for anything but custom")
+    }
+  }
+
+  /**
    * Converts target to PSI element if possible
    */
   fun asPsiElement(module: Module, context: TypeEvalContext): PsiElement? {
@@ -302,6 +310,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
     if (!isFrameworkInstalled()) {
       throw RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", testFrameworkName))
     }
+    target.checkValid()
   }
 
   /**

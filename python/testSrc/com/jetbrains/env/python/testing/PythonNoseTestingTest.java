@@ -1,12 +1,15 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -18,6 +21,20 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final PyConfigurationCreationTask<PyUniversalNoseTestConfiguration> task =
+      new PyConfigurationCreationTask<PyUniversalNoseTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalNoseTestFactory createFactory() {
+          return PyUniversalNoseTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    task.checkEmptyTarget();
+  }
 
   @Test
   public void testConfigurationProducer() throws Exception {

@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,8 +11,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.universalTests.*;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -32,6 +32,21 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalPyTestFactory createFactory() {
+          return PyUniversalPyTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    task.checkEmptyTarget();
   }
 
   @Test

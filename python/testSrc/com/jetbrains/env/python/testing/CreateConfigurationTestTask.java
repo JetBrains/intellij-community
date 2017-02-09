@@ -32,6 +32,8 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,6 +176,44 @@ class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutio
       myFixture.renameElement(psiFolder, "newFolder");
       Assert.assertThat("Name not renamed", configuration.getName(), Matchers.containsString("newFolder"));
       Assert.assertThat("Target not renamed", configuration.getTarget().getTarget(), Matchers.containsString("newFolder"));
+    }
+  }
+
+  /**
+   * Task to create configuration
+   */
+  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+    private volatile T myConfiguration;
+
+
+    PyConfigurationCreationTask() {
+      super(null);
+    }
+
+    @Override
+    public void runTestOn(final String sdkHome) throws Exception {
+      final T configuration =
+        createFactory().createTemplateConfiguration(getProject());
+      configuration.setModule(myFixture.getModule());
+      configuration.setSdkHome(sdkHome);
+      myConfiguration = configuration;
+    }
+
+    @NotNull
+    protected abstract PyUniversalTestFactory<T> createFactory();
+
+    @NotNull
+    T getConfiguration() {
+      final T configuration = myConfiguration;
+      assert configuration != null : "No config created. Run runTestOn()";
+      return configuration;
+    }
+
+    void checkEmptyTarget() {
+      myConfiguration.getTarget().setTargetType(TestTargetType.PATH);
+      myConfiguration.getTarget().setTarget("");
+
+      myConfiguration.checkConfiguration();
     }
   }
 }
