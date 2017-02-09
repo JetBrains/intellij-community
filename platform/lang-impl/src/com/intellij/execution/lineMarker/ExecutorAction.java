@@ -23,10 +23,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,7 +36,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class ExecutorAction extends AnAction {
+public class ExecutorAction extends ActionGroup {
   private static final Key<List<ConfigurationFromContext>> CONFIGURATION_CACHE = Key.create("ConfigurationFromContext");
 
   @NotNull
@@ -65,12 +62,47 @@ public class ExecutorAction extends AnAction {
   public void update(AnActionEvent e) {
     String name = getActionName(e.getDataContext(), myExecutor);
     e.getPresentation().setVisible(name != null);
+    myOrigin.update(e);
     e.getPresentation().setText(name);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     myOrigin.actionPerformed(e);
+  }
+
+  @Override
+  public boolean canBePerformed(DataContext context) {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(context);
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    if (myOrigin instanceof ActionGroup) {
+      return ((ActionGroup)myOrigin).getChildren(e);
+    }
+    return AnAction.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return myOrigin.isDumbAware();
+  }
+
+  @Override
+  public boolean isPopup() {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).isPopup();
+  }
+
+  @Override
+  public boolean hideIfNoVisibleChildren() {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
+  }
+
+  @Override
+  public boolean disableIfNoVisibleChildren() {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
   }
 
   @NotNull
