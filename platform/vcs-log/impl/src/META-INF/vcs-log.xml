@@ -33,6 +33,8 @@
 
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                         serviceImplementation="com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl"/>
+
+    <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
   </extensions>
 
   <actions>
@@ -77,9 +79,8 @@
             use-shortcut-of="EditSource"/>
     <action class="com.intellij.vcs.log.ui.actions.AnnotateRevisionAction" id="Vcs.Log.AnnotateRevisionAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDiffWithLocalFromFileHistory" id="Vcs.Log.ShowDiffWithLocal"/>
-    <action class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" id="Vcs.Log.ShowDiff"
-            text="Show Diff"
-            icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
+    <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsAction" id="Vcs.Log.ShowDiff"
+            use-shortcut-of="Diff.ShowDiff"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
 
     <group id="Vcs.Log.Settings">
