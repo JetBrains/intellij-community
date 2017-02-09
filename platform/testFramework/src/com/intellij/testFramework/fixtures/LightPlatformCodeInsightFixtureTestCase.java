@@ -97,7 +97,9 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
    @NonNls
    protected String getTestDataPath() {
      String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
-     return path.replace(File.separatorChar, '/') + getBasePath();
+     path = path.replace(File.separatorChar, '/');
+     if (!path.endsWith("/")) path += '/';
+     return path + getBasePath();
    }
 
    protected boolean isCommunity() {
