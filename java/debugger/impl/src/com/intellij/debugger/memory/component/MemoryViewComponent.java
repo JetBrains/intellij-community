@@ -69,9 +69,9 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          session.getUI().addContent(memoryViewContent, -1, PlaceInGrid.right, true);
+          ui.addContent(memoryViewContent, -1, PlaceInGrid.right, true);
 
-          session.getUI().addListener(new ContentManagerAdapter() {
+          ui.addListener(new ContentManagerAdapter() {
             @Override
             public void selectionChanged(ContentManagerEvent event) {
               final Content content = event.getContent();
