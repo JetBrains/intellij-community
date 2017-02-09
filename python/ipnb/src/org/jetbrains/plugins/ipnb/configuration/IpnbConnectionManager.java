@@ -105,9 +105,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                @NotNull final String path) {
     final String url = getURL();
     if (connectToIpythonServer(codePanel, fileEditor, path, url)) return;
-    final String username = IpnbSettings.getInstance(myProject).getUsername();
-    final String password = IpnbSettings.getInstance(myProject).getPassword();
-    final boolean isRemote = !username.isEmpty() && !password.isEmpty();
+    final boolean isRemote = IpnbSettings.getInstance(myProject).isRemote(myProject.getLocationHash());
     if (!isRemote) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final boolean serverStarted = startIpythonServer(url, fileEditor);
@@ -124,7 +122,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                          @NotNull final String path,
                                          @NotNull final String url) {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
-    final boolean isRemote = !ipnbSettings.getUsername().isEmpty() && !ipnbSettings.getPassword().isEmpty();
+    final boolean isRemote = ipnbSettings.isRemote(myProject.getLocationHash());
     if (!isRemote) {
       if (myToken != null) return startConnection(codePanel, path, url, true);
       final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());

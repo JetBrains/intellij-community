@@ -94,7 +94,7 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-    if (!isRemote()) {
+    if (!IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
       if (!"http".equals(myURI.getScheme())) {
         throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
       }
@@ -105,7 +105,7 @@ public class IpnbConnection {
     
     initXSRF(myURI.toString());
     
-    if (isRemote()) {
+    if (IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
       String loginUrl = getLoginUrl();
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
@@ -125,7 +125,7 @@ public class IpnbConnection {
   private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, @NotNull String loginUrl) throws IOException {
     IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
     final String username = ipnbSettings.getUsername();
-    String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
+    String cookies = login(username, ipnbSettings.getPassword(myProject.getLocationHash()), loginUrl);
     myHeaders.put(SM.COOKIE, cookies);
     if (myIsHubServer) {
       if (myXsrf == null) {
@@ -532,10 +532,6 @@ public class IpnbConnection {
     final JsonObject metadata = new JsonObject();
 
     return Message.create(header, parentHeader, metadata, content);
-  }
-
-  private boolean isRemote() {
-    return !IpnbSettings.getInstance(myProject).getUsername().isEmpty() && !IpnbSettings.getInstance(myProject).getPassword().isEmpty();
   }
 
   @SuppressWarnings("UnusedDeclaration")
