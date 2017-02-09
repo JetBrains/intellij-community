@@ -422,7 +422,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if (collectionExpression == null) return null;
       collectionStreamCall.replace(collectionExpression);
       if (!myStreamMethod.equals(myCollectionMethod)) {
-        streamMethodCall.getMethodExpression().handleElementRename(myCollectionMethod);
+        ExpressionUtils.renameCall(streamMethodCall, myCollectionMethod);
       }
       return streamMethodCall;
     }
@@ -609,7 +609,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
       if (removeParentNegation && !isParentNegated(methodCall)) return null;
       if (removeLambdaNegation && !isArgumentLambdaNegated(methodCall)) return null;
-      methodCall.getMethodExpression().handleElementRename(myTo);
+      ExpressionUtils.renameCall(methodCall, myTo);
       if (removeLambdaNegation) {
         // Casts and array bounds already checked in isArgumentLambdaNegated
         PsiExpression body = (PsiExpression)((PsiLambdaExpression)methodCall.getArgumentList().getExpressions()[0]).getBody();
@@ -737,7 +737,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     public PsiElement simplify(PsiMethodCallExpression call) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1) return null;
-      call.getMethodExpression().handleElementRename("boxed");
+      ExpressionUtils.renameCall(call, "boxed");
       args[0].delete();
       call.getTypeArgumentList().delete();
       return call;
@@ -1034,7 +1034,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if (replacement == null) return null;
         ct.replace(arg, replacement);
       }
-      qualifier.getMethodExpression().handleElementRename(name);
+      ExpressionUtils.renameCall(qualifier, name);
       return ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
     }
 
@@ -1136,7 +1136,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if (args.length != 2) return null;
       PsiMethodCallExpression spliteratorCall = tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiMethodCallExpression.class);
       if (spliteratorCall == null) return null;
-      spliteratorCall.getMethodExpression().handleElementRename(getMethodName());
+      ExpressionUtils.renameCall(spliteratorCall, getMethodName());
       CommentTracker ct = new CommentTracker();
       return ct.replace(call, spliteratorCall);
     }

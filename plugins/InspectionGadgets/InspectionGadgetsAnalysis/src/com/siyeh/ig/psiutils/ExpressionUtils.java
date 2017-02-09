@@ -936,4 +936,30 @@ public class ExpressionUtils {
     }
     return factory.createExpressionFromText(PsiKeyword.THIS, ref);
   }
+
+  /**
+   * Rename reference element. The qualifier and type arguments (if present) remain the same
+   *
+   * @param ref reference element to rename
+   * @param newName new name
+   */
+  public static void renameReference(@NotNull PsiReferenceExpression ref, @NotNull String newName) {
+    PsiElement nameElement = ref.getReferenceNameElement();
+    if(nameElement == null) {
+      throw new IllegalStateException("Name element is null: "+ref);
+    }
+    if(newName.equals(nameElement.getText())) return;
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(ref.getProject()).createIdentifier(newName);
+    nameElement.replace(identifier);
+  }
+
+  /**
+   * Rename method call. Everything else like qualifier, type arguments or call arguments remain the same.
+   *
+   * @param call to rename
+   * @param newName new name
+   */
+  public static void renameCall(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
+    renameReference(call.getMethodExpression(), newName);
+  }
 }

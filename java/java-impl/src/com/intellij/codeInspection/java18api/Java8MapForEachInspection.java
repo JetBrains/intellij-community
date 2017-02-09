@@ -190,7 +190,7 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
         (PsiLambdaExpression)factory.createExpressionFromText("(" + key.myName + "," + value.myName + ")->" + lambdaBody, body);
       LambdaRefactoringUtil.simplifyToExpressionLambda(newLambda);
       entrySetCall.getArgumentList().add(newLambda);
-      entrySetCall.getMethodExpression().handleElementRename("forEach");
+      ExpressionUtils.renameCall(entrySetCall, "forEach");
       return entrySetCall.getText();
     }
 

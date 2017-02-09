@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -243,9 +244,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       ct.replace(e, replacement);
     }
     ct.replace(nextParameters[0], ct.markUnchanged(prevParameters[0]));
-    if(!newName.equals(nextRef.getReferenceName())) {
-      nextRef.handleElementRename(newName);
-    }
+    ExpressionUtils.renameReference(nextRef, newName);
     PsiExpression prevQualifier = mapCall.getMethodExpression().getQualifierExpression();
     if(prevQualifier == null) {
       ct.deleteAndRestoreComments(nextQualifier);

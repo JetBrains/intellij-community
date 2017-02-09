@@ -24,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,9 +159,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
       if (!COLLECTION_STREAM.test(qualifierCall)) return;
       PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
-      PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if(qualifierExpression == null) return;
-      methodExpression.handleElementRename(SIZE_METHOD);
+      ExpressionUtils.renameCall(qualifierCall, SIZE_METHOD);
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
