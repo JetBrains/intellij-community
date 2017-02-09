@@ -15,11 +15,12 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.ui.UIUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
@@ -50,8 +50,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    final Collection<GitRepository> repositories = getRepositories();
-    final Collection<String> commonTrackingBranches = getCommonTrackingBranches(myBranchName, repositories);
+    Collection<GitRepository> repositories = getRepositories();
+    Collection<String> commonTrackingBranches = getCommonTrackingBranches(myBranchName, repositories);
 
     // don't propose to remove current branch even if it tracks the remote branch
     for (GitRepository repository : repositories) {
@@ -61,17 +61,16 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
     }
 
-    final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> decision.set(
+    Ref<DeleteRemoteBranchDecision> decision = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> decision.set(
       myUiHandler.confirmRemoteBranchDeletion(myBranchName, commonTrackingBranches, repositories)));
-
 
     if (decision.get() != CANCEL) {
       boolean deletedSuccessfully = doDeleteRemote(myBranchName, repositories);
       if (deletedSuccessfully) {
-        final Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
+        Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
         if (decision.get() == DELETE_WITH_TRACKING) {
-          for (final String branch : commonTrackingBranches) {
+          for (String branch : commonTrackingBranches) {
             getIndicator().setText("Deleting " + branch);
             new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
               @Override

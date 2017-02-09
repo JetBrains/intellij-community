@@ -23,11 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -69,17 +69,14 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public boolean notifyErrorWithRollbackProposal(@NotNull final String title, @NotNull final String message,
                                                  @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        StringBuilder description = new StringBuilder();
-        if (!StringUtil.isEmptyOrSpaces(message)) {
-          description.append(message).append("<br/>");
-        }
-        description.append(rollbackProposal);
-        ok.set(YES == DialogManager.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
-                                                       "Rollback", "Don't rollback", Messages.getErrorIcon()));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      StringBuilder description = new StringBuilder();
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        description.append(message).append("<br/>");
       }
+      description.append(rollbackProposal);
+      ok.set(YES == DialogManager.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
+                                                     "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });
     return ok.get();
   }
@@ -108,16 +105,13 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @Override
   public boolean showUnmergedFilesMessageWithRollback(@NotNull final String operationName, @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
-                                           operationName, rollbackProposal);
-        // suppressing: this message looks ugly if capitalized by words
-        //noinspection DialogTitleCapitalization
-        ok.set(YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
-                                                       "Rollback", "Don't rollback", Messages.getErrorIcon()));
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
+                                         operationName, rollbackProposal);
+      // suppressing: this message looks ugly if capitalized by words
+      //noinspection DialogTitleCapitalization
+      ok.set(YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
+                                                     "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });
     return ok.get();
   }
@@ -174,16 +168,12 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     if (trackingBranches.isEmpty()) {
       return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;
     }
-    else {
-      final String checkboxMessage;
-      if (trackingBranches.size() == 1) {
-        checkboxMessage = "Delete tracking local branch " + trackingBranches.iterator().next() + " as well";
-      }
-      else {
-        checkboxMessage = "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
-      }
 
-      AtomicBoolean deleteChoice = new AtomicBoolean();
+    String checkboxMessage = trackingBranches.size() == 1
+                             ? "Delete tracking local branch " + trackingBranches.iterator().next() + " as well"
+                             : "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
+
+      Ref<Boolean> deleteChoice = Ref.create(false);
       boolean delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
@@ -201,7 +191,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       return delete
              ? deleteTracking ? DeleteRemoteBranchDecision.DELETE_WITH_TRACKING : DELETE
              : CANCEL;
-    }
   }
 
   @NotNull
