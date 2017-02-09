@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xmlb
+package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.util.loadElement

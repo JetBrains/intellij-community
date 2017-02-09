@@ -16,18 +16,22 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Pair
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
+import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.reflect.primaryConstructor
 
-private var bindingCache: SoftReference<MutableMap<Pair<Type, MutableAccessor>, Binding>>? = null
+fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
+
+inline fun <reified T: Any> Element.deserialize(): T = deserialize(this, T::class.java)
 
 fun <T> deserialize(element: Element, aClass: Class<T>): T {
   @Suppress("UNCHECKED_CAST")
@@ -56,12 +60,29 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
   }
 }
 
+private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
+
+private val bindingCache: MutableMap<BindingCacheKey, Binding>
+  get() {
+    var map = _bindingCache?.get()
+    if (map == null) {
+      map = THashMap()
+      _bindingCache = SoftReference(map)
+    }
+    return map
+  }
+
+private val cacheLock = ReentrantReadWriteLock()
+
 private fun <T> getBinding(aClass: Class<T>, originalType: Type = aClass, accessor: MutableAccessor? = null): Binding {
-  val key = Pair.create<Type, MutableAccessor>(originalType, accessor)
-  val map = getBindingCacheMap()
-  var binding: Binding? = map.get(key)
-  if (binding == null) {
-    binding = XmlSerializerImpl.getNonCachedClassBinding(aClass, accessor, originalType) ?: KotlinAwareBeanBinding(aClass, accessor)
+  val key = BindingCacheKey(originalType, accessor)
+  val map = bindingCache
+  return cacheLock.read { map.get(key) } ?: cacheLock.write {
+    map.get(key)?.let {
+      return it
+    }
+
+    val binding = XmlSerializerImpl.createClassBinding(aClass, accessor, originalType) ?: KotlinAwareBeanBinding(aClass, accessor)
     map.put(key, binding)
     try {
       binding.init(originalType)
@@ -70,19 +91,11 @@ private fun <T> getBinding(aClass: Class<T>, originalType: Type = aClass, access
       map.remove(key)
       throw e
     }
-
+    binding
   }
-  return binding
 }
 
-private fun getBindingCacheMap(): MutableMap<Pair<Type, MutableAccessor>, Binding> {
-  var map = SoftReference.dereference<MutableMap<Pair<Type, MutableAccessor>, Binding>>(bindingCache)
-  if (map == null) {
-    map = ConcurrentHashMap<Pair<Type, MutableAccessor>, Binding>()
-    bindingCache = SoftReference<MutableMap<Pair<Type, MutableAccessor>, Binding>>(map)
-  }
-  return map
-}
+private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor?)
 
 private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
   override fun deserialize(context: Any?, element: Element): Any {

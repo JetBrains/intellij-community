@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xmlb
+package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.assertConcurrent
 import com.intellij.util.SmartList
 import com.intellij.util.loadElement
+import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
 import com.intellij.util.xmlb.annotations.AbstractCollection
-import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.junit.Test
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
 internal open class BeanWithPublicFields(var INT_V: Int = 1, var STRING_V: String? = "hello") : Comparable<BeanWithPublicFields> {
   override fun compareTo(other: BeanWithPublicFields) = StringUtil.compare(STRING_V, other.STRING_V, false)
@@ -211,9 +213,9 @@ internal class XmlSerializerTest {
     doSerializerTest("<BeanWithSet>\n" + "  <option name=\"VALUES\">\n" + "    <set>\n" + "      <option value=\"1\" />\n" + "      <option value=\"2\" />\n" + "      <option value=\"3\" />\n" + "    </set>\n" + "  </option>\n" + "</BeanWithSet>", bean)
   }
 
-  private data class BeanWithOption(@OptionTag("path") var PATH: String? = null)
-
   @Test fun OptionTag() {
+    data class BeanWithOption(@OptionTag("path") var PATH: String? = null)
+
     val bean = BeanWithOption()
     bean.PATH = "123"
     doSerializerTest("<BeanWithOption>\n" + "  <option name=\"path\" value=\"123\" />\n" + "</BeanWithOption>", bean)
@@ -238,34 +240,33 @@ internal class XmlSerializerTest {
   }
 
   private class BeanWithFieldWithTagAnnotation {
-    @Tag("name") var STRING_V: String = "hello"
+    @Tag("name") var STRING_V = "hello"
   }
 
-  @Test fun ParallelDeserialization() {
+  @Test fun `parallel deserialization`() {
     val e = Element("root").addContent(Element("name").setText("x"))
-    XmlSerializer.deserialize<BeanWithArray>(e, BeanWithArray::class.java)//to initialize XmlSerializerImpl.ourBindings
-    val exc = AtomicReference<AssertionFailedError>()
-    val threads = Array(5) {
-      Thread(Runnable {
-        try {
-          for (j in 0..9) {
-            val bean = e.deserialize<BeanWithFieldWithTagAnnotation>()
-            assertThat(bean).isNotNull()
-            assertThat(bean.STRING_V).isEqualTo("x")
-          }
+    assertConcurrent(*Array(5) {
+      {
+        for (i in 0..9) {
+          val bean = e.deserialize<BeanWithFieldWithTagAnnotation>()
+          assertThat(bean).isNotNull()
+          assertThat(bean.STRING_V).isEqualTo("x")
         }
-        catch (e: AssertionFailedError) {
-          exc.set(e)
+      }
+    })
+  }
+
+  @Test fun `parallel deserialization 2`() {
+    val e = Element("root").addContent(Element("name").setText("x"))
+    assertConcurrent(*Array(5) {
+      {
+        for (i in 0..9) {
+          val bean = e.deserialize<BeanWithFieldWithTagAnnotation>()
+          assertThat(bean).isNotNull()
+          assertThat(bean.STRING_V).isEqualTo("x")
         }
-      }, "XmlSerializerTest#testParallelDeserialization-$it")
-    }
-    for (thread in threads) {
-      thread.start()
-    }
-    for (thread in threads) {
-      thread.join()
-    }
-    exc.get()?.let { throw it }
+      }
+    })
   }
 
   @Test fun FieldWithTagAnnotation() {
@@ -594,7 +595,7 @@ internal class XmlSerializerTest {
 
   private class BeanWithJDOMElement {
     var STRING_V: String = "hello"
-    @Tag("actions") var actions: org.jdom.Element? = null
+    @Tag("actions") var actions: Element? = null
   }
 
   @Test fun SerializeJDOMElementField() {
@@ -608,7 +609,8 @@ internal class XmlSerializerTest {
   }
 
   @Test fun DeserializeJDOMElementField() {
-    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").rootElement, BeanWithJDOMElement::class.java)
+    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(
+      JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").rootElement, BeanWithJDOMElement::class.java)
 
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)
@@ -617,7 +619,7 @@ internal class XmlSerializerTest {
 
   class BeanWithJDOMElementArray {
     var STRING_V: String = "hello"
-    @Tag("actions") var actions: Array<org.jdom.Element>? = null
+    @Tag("actions") var actions: Array<Element>? = null
   }
 
   @Test fun JDOMElementArrayField() {
@@ -840,7 +842,8 @@ internal class XmlSerializerTest {
 
     val value = Element("value")
     list.writeExternal(value)
-    val o = XmlSerializer.deserialize<Bean4>(Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)), Bean4::class.java)!!
+    val o = XmlSerializer.deserialize<Bean4>(
+      Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)), Bean4::class.java)!!
     assertSerializer(o, "<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", SkipDefaultsSerializationFilter())
   }
 
@@ -854,14 +857,15 @@ internal class XmlSerializerTest {
     <h4>Node.js integration</h4>
     ]]>
   </description>
-</bean>""".reader()), Bean::class.java)!!
+</bean>""".reader()), Bean::class.java)
     assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
 
-    bean = XmlSerializer.deserialize(loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader()), Bean::class.java)!!
+    bean = XmlSerializer.deserialize(
+      loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader()), Bean::class.java)
     assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
   }
 
-  private fun checkSmartSerialization(bean: XmlSerializerTest.Bean2, serialized: String) {
+  private fun checkSmartSerialization(bean: Bean2, serialized: String) {
     val serializer = SmartSerializer()
     serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).rootElement)
     val serializedState = Element("Bean2")
@@ -888,11 +892,7 @@ internal fun <T: Any> doSerializerTest(@Language("XML") expectedText: String, be
   val element = assertSerializer(bean, expectedTrimmed, filter)
 
   //test deserializer
-  val o = XmlSerializer.deserialize(element, bean.javaClass)!!
+  val o = XmlSerializer.deserialize(element, bean.javaClass)
   assertSerializer(o, expectedTrimmed, filter, "Deserialization failure")
   return o
 }
-
-fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
-
-inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, T::class.java)!!

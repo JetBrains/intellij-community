@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore
+package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.StateMap
+import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
 import org.assertj.core.api.Assertions.assertThat
@@ -52,7 +54,7 @@ class XmlElementStorageTest {
 
     override fun loadLocalData() = myElement
 
-    override fun createSaveSession(states: StateMap) = object : XmlElementStorage.XmlElementStorageSaveSession<MyXmlElementStorage>(states, this) {
+    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<MyXmlElementStorage>(states, this) {
       override fun saveLocally(element: Element?) {
         savedElement = element?.clone()
       }

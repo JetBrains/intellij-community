@@ -33,7 +33,6 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
-import com.intellij.util.xmlb.serialize
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

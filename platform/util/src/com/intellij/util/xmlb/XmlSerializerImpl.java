@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -34,7 +35,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class XmlSerializerImpl {
   private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
@@ -118,7 +118,7 @@ public class XmlSerializerImpl {
     Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
     if (binding == null) {
-      binding = getNonCachedClassBinding(aClass, accessor, originalType);
+      binding = createClassBinding(aClass, accessor, originalType);
       if (binding == null) {
         binding = new BeanBinding(aClass, accessor);
       }
@@ -139,14 +139,14 @@ public class XmlSerializerImpl {
   private static Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
     Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
-      map = new ConcurrentHashMap<Pair<Type, MutableAccessor>, Binding>();
+      map = ContainerUtil.newConcurrentMap();
       ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
     }
     return map;
   }
 
   @Nullable
-  public static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+  public static Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
     if (aClass.isArray()) {
       if (Element.class.isAssignableFrom(aClass.getComponentType())) {
         assert accessor != null;
