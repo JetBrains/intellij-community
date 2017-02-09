@@ -426,6 +426,19 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                      "<warning descr=\"Item is not unique\">3</warning>]}");
   }
 
+  public void testPropertyValueAlsoHighlightedIfPatternIsInvalid() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"withPattern\": {\n" +
+                          "      \"pattern\": \"^[]$\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    final String text = "{\"withPattern\":" +
+                        " <warning descr=\"Can not check string by pattern because of error: Unclosed character class near index 3\n^[]$\n   ^\">\"(124)555-4216\"</warning>}";
+    testImpl(schema, text);
+  }
+
   public static String rootObjectRedefinedSchema() {
     return "{\n" +
            "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +

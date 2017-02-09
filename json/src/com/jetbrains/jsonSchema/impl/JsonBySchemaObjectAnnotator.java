@@ -25,8 +25,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -282,18 +285,74 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           }
         }
       }
+
+      validateAsJsonSchema(object);
     }
 
-    private boolean checkForEnum(JsonValue value, JsonSchemaObject schema) {
+    private void validateAsJsonSchema(@NotNull JsonObject object) {
+      if (JsonSchemaFileType.INSTANCE.equals(object.getContainingFile().getFileType())) {
+
+        final VirtualFile schemaFile = object.getContainingFile().getVirtualFile();
+        if (schemaFile == null) return;
+
+        final Processor<JsonSchemaObject> processor = schemaObject -> {
+          final List<JsonSchemaWalker.Step> steps = skipProperties(JsonSchemaWalker.findPosition(object, false, true));
+          JsonSchemaWalker.extractSchemaVariants(object.getProject(), (isName, schema, schemaFile1, steps1) -> {
+                                                   if (schemaFile.equals(schemaFile1)) {
+                                                     final Map<SmartPsiElementPointer<JsonObject>, String> invalidPatternProperties = schema.getInvalidPatternProperties();
+                                                     if (invalidPatternProperties != null) {
+                                                       for (Map.Entry<SmartPsiElementPointer<JsonObject>, String> entry : invalidPatternProperties.entrySet()) {
+                                                         final JsonObject element = entry.getKey().getElement();
+                                                         if (element == null || !element.isValid()) continue;
+                                                         final PsiElement parent = element.getParent();
+                                                         if (parent instanceof JsonProperty) {
+                                                           error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement());
+                                                         }
+                                                       }
+                                                     }
+                                                     final String patternError = schema.getPatternError();
+                                                     if (patternError != null && schema.getPattern() != null) {
+                                                       final SmartPsiElementPointer<JsonObject> pointer = schema.getPeerPointer();
+                                                       final JsonObject element = pointer.getElement();
+                                                       if (element != null && element.isValid()) {
+                                                         final JsonProperty pattern = element.findProperty("pattern");
+                                                         if (pattern != null) {
+                                                           error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
+                                                         }
+                                                       }
+                                                     }
+                                                   }
+                                                 },
+                                                 schemaFile, schemaObject, false, steps, true);
+          return true;
+        };
+        JsonSchemaServiceEx.Impl.getEx(object.getProject()).visitSchemaObject(object.getContainingFile().getVirtualFile(), processor);
+      }
+    }
+
+    private static List<JsonSchemaWalker.Step> skipProperties(List<JsonSchemaWalker.Step> position) {
+      final Iterator<JsonSchemaWalker.Step> iterator = position.iterator();
+      boolean canSkip = true;
+      while (iterator.hasNext()) {
+        final JsonSchemaWalker.Step step = iterator.next();
+        if (canSkip && step.getTransition() instanceof JsonSchemaWalker.PropertyTransition &&
+            "properties".equals(((JsonSchemaWalker.PropertyTransition)step.getTransition()).getName())) {
+          iterator.remove();
+          canSkip = false;
+        } else canSkip = true;
+      }
+      return position;
+    }
+
+    private void checkForEnum(JsonValue value, JsonSchemaObject schema) {
       //enum values + pattern -> don't check enum values
-      if (schema.getEnum() == null || schema.getPattern() != null)  return true;
+      if (schema.getEnum() == null || schema.getPattern() != null) return;
       final String text = value.getText();
       final List<Object> objects = schema.getEnum();
       for (Object object : objects) {
-        if (object.toString().equalsIgnoreCase(text)) return true;
+        if (object.toString().equalsIgnoreCase(text)) return;
       }
       error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value);
-      return false;
     }
 
     private void checkArray(JsonValue value, JsonSchemaObject schema) {
@@ -374,8 +433,11 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         }
       }
       if (schema.getPattern() != null) {
+        if (schema.getPatternError() != null) {
+          error("Can not check string by pattern because of error: " + StringUtil.convertLineSeparators(schema.getPatternError()), propValue);
+        }
         if (!schema.checkByPattern(value)) {
-          error("String is violating the pattern: '" + schema.getPattern() + "'", propValue);
+          error("String is violating the pattern: '" + StringUtil.convertLineSeparators(schema.getPattern()) + "'", propValue);
         }
       }
       // I think we are not gonna to support format, there are a couple of RFCs there to check upon..
