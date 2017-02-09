@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint;
 import com.intellij.openapi.project.Project;
@@ -53,7 +54,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
             Project project = context.getDebugProcess().getProject();
             long lambdaId = ((ObjectReference)lambdaReference).uniqueID();
             StepIntoBreakpoint breakpoint = new LambdaInstanceBreakpoint(project, lambdaId, pos, myMethodFilter);
-            ClassInstanceMethodFilter.setUpStepIntoBreakpoint(context, breakpoint, lambdaId, hint);
+            ClassInstanceMethodFilter.setUpStepIntoBreakpoint(context, breakpoint, hint);
             return RequestHint.RESUME;
           }
         }
@@ -80,19 +81,22 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
       if (!super.evaluateCondition(context, event)) {
         return false;
       }
-      // compare this instance in parent frame if in static context
-      Value thisObject = context.getThisObject();
-      if (thisObject == null) {
-        StackFrameProxyImpl parentFrame = context.getSuspendContext().getThread().frame(1);
-        if (parentFrame != null) {
-          try {
-            thisObject = parentFrame.thisObject();
-          }
-          catch (EvaluateException ignore) {
-          }
+
+      if (!DebuggerUtilsEx.isLambdaName(event.location().method().name())) {
+        return false;
+      }
+
+      // lambda reference is available in the parent frame
+      ObjectReference lambdaReference = null;
+      StackFrameProxyImpl parentFrame = context.getSuspendContext().getThread().frame(1);
+      if (parentFrame != null) {
+        try {
+          lambdaReference = parentFrame.thisObject();
+        }
+        catch (EvaluateException ignore) {
         }
       }
-      return thisObject instanceof ObjectReference && ((ObjectReference)thisObject).uniqueID() == myLambdaId;
+      return lambdaReference != null && lambdaReference.uniqueID() == myLambdaId;
     }
   }
 }

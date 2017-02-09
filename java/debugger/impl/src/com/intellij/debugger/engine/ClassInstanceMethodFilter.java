@@ -48,7 +48,9 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter {
           StepIntoBreakpoint breakpoint =
             DebuggerManagerEx.getInstanceEx(context.getDebugProcess().getProject()).getBreakpointManager().addStepIntoBreakpoint(myMethodFilter);
           if (breakpoint != null) {
-            setUpStepIntoBreakpoint(context, breakpoint, reference.uniqueID(), hint);
+            breakpoint.addInstanceFilter(reference.uniqueID());
+            breakpoint.setInstanceFiltersEnabled(true);
+            setUpStepIntoBreakpoint(context, breakpoint, hint);
             return RequestHint.RESUME;
           }
         }
@@ -59,12 +61,10 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter {
     return RequestHint.STOP;
   }
 
-  static void setUpStepIntoBreakpoint(SuspendContextImpl context, @NotNull StepIntoBreakpoint breakpoint, long id, RequestHint hint) {
+  static void setUpStepIntoBreakpoint(SuspendContextImpl context, @NotNull StepIntoBreakpoint breakpoint, RequestHint hint) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
     breakpointManager.applyThreadFilter(debugProcess, null); // clear the filter on resume
-    breakpoint.addInstanceFilter(id);
-    breakpoint.setInstanceFiltersEnabled(true);
     breakpoint.setSuspendPolicy(
       context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
     breakpoint.createRequest(debugProcess);
