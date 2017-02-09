@@ -439,6 +439,25 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schema, text);
   }
 
+  public void testNotSchema() throws Exception {
+    final String schema = "{\"properties\": {\n" +
+                          "    \"not_type\": { \"not\": { \"type\": \"string\" } }\n" +
+                          "  }}";
+    testImpl(schema, "{\"not_type\": <warning descr=\"Validates against 'not' schema\">\"wrong\"</warning>}");
+  }
+
+  public void testNotSchemaCombinedWithNormal() throws Exception {
+    final String schema = "{\"properties\": {\n" +
+                          "    \"not_type\": {\n" +
+                          "      \"pattern\": \"^[a-z]*[0-5]*$\",\n" +
+                          "      \"not\": { \"pattern\": \"^[a-z]{1}[0-5]$\" }\n" +
+                          "    }\n" +
+                          "  }}";
+    testImpl(schema, "{\"not_type\": \"va4\"}");
+    testImpl(schema, "{\"not_type\": <warning descr=\"Validates against 'not' schema\">\"a4\"</warning>}");
+    testImpl(schema, "{\"not_type\": <warning descr=\"String is violating the pattern: '^[a-z]*[0-5]*$'\">\"4a4\"</warning>}");
+  }
+
   public static String rootObjectRedefinedSchema() {
     return "{\n" +
            "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +

@@ -188,39 +188,36 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       final JsonSchemaType type = getType(value);
       if (type == null) {
         typeError(value);
-        return;
+      } else {
+        JsonSchemaType schemaType = matchSchemaType(schema, type);
+        if (schemaType == null && schema.hasSpecifiedType()) {
+          typeError(value);
+        }
+        else if (JsonSchemaType._boolean.equals(type)) {
+          checkForEnum(value, schema);
+        }
+        else if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
+          checkNumber(value, schema, schemaType);
+          checkForEnum(value, schema);
+        }
+        else if (JsonSchemaType._string.equals(type)) {
+          checkString(value, schema);
+          checkForEnum(value, schema);
+        }
+        else if (JsonSchemaType._array.equals(type)) {
+          checkArray(value, schema);
+          checkForEnum(value, schema);
+        }
+        else if (JsonSchemaType._object.equals(type)) {
+          checkObject(value, schema, validatedProperties);
+          checkForEnum(value, schema);
+        }
       }
-      JsonSchemaType schemaType = matchSchemaType(schema, type);
-      if (schemaType == null && schema.hasSpecifiedType()) {
-        typeError(value);
-        return;
-      }
-      if (JsonSchemaType._boolean.equals(type)) {
-        checkForEnum(value, schema);
-        return;
-      }
-      if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
-        checkNumber(value, schema, schemaType);
-        checkForEnum(value, schema);
-        return;
-      }
-      if (JsonSchemaType._string.equals(type)) {
-        checkString(value, schema);
-        checkForEnum(value, schema);
-        return;
-      }
-      if (JsonSchemaType._array.equals(type)) {
-        checkArray(value, schema);
-        checkForEnum(value, schema);
-        return;
-      }
-      if (JsonSchemaType._object.equals(type)) {
-        checkObject(value, schema, validatedProperties);
-        checkForEnum(value, schema);
-        return;
-      }
-      if (JsonSchemaType._null.equals(type)) {
-        return;
+
+      if (schema.getNot() != null) {
+        final BySchemaChecker checker = new BySchemaChecker();
+        checker.checkByScheme(value, schema.getNot(), new HashSet<>());
+        if (checker.isCorrect()) error("Validates against 'not' schema", value);
       }
     }
 
