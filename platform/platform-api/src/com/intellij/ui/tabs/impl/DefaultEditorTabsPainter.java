@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
-    g.setColor(Registry.is("ide.new.editor.tabs.selection") ? new JBColor(Gray._255, Gray._60) : getBackgroundColor());
+    g.setColor(Registry.is("ide.new.editor.tabs.selection") ? new JBColor(() -> UIUtil.getPanelBackground()) : getBackgroundColor());
     g.fill(clip);
   }
 
