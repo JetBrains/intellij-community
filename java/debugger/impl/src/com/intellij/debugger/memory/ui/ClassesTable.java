@@ -93,7 +93,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
     TableColumn diffColumn = getColumnModel().getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
 
-    setAutoResizeMode(AUTO_RESIZE_NEXT_COLUMN);
+    setAutoResizeMode(AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
 
     countColumn.setMinWidth(JBUI.scale(COUNT_COLUMN_MIN_WIDTH));
