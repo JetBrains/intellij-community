@@ -31,15 +31,15 @@ def fix_win_drive(feature_path):
 def get_what_to_run_by_env(environment):
     """
     :type environment dict
-    :param environment: os.environment (files and folders should be separated with | and passed to PY_STUFF_TO_RUN).
-    Scenarios optionally could be passed as SCENARIOS (names or order numbers, depends on runner)
+    :param environment: os.environment (files and folders should be separated with ``os.pathsep`` and passed to PATHS_TO_RUN).
+    Scenarios optionally could be passed as SCENARIOS (names or order numbers, depends on runner, joined with |)
     :return: tuple (base_dir, scenarios[], what_to_run(list of feature files or folders))) where dir is current or first argument from env, checking it exists
     :rtype tuple of (str, iterable)
     """
-    if "PY_STUFF_TO_RUN" not in environment:
+    if "PATHS_TO_RUN" not in environment:
         what_to_run = ["."]
     else:
-        what_to_run = str(environment["PY_STUFF_TO_RUN"]).split("|")
+        what_to_run = str(environment["PATHS_TO_RUN"]).split(os.pathsep)
 
     scenarios = []
     if "SCENARIOS" in environment:

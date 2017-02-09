@@ -79,6 +79,14 @@ import java.util.stream.Collectors;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
+  /**
+   * When Java-side needs to provide list of file system pathes to python-runner and this list is tool long to be passed as command line,
+   * it may pass it as environment variable.
+   * Use this constant as key in this case and it should be processed correctly for remote interpreter runners including path-mapping
+   * and so on.
+   * Use @{@link java.io.File#separator} to implode path
+   */
+  public static final String PATHS_TO_RUN = "PATHS_TO_RUN";
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
@@ -309,8 +317,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
-          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+          env.putAll(reader.readShellEnv().entrySet().stream()
+                       .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+                       ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
           for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
             if ("PATH".equals(e.getKey())) {
