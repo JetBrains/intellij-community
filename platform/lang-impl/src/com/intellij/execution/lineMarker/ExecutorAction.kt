@@ -17,7 +17,6 @@ package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.RunnerRegistry
 import com.intellij.execution.actions.*
 import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.execution.impl.RunManagerImpl
@@ -101,10 +100,6 @@ class ExecutorAction private constructor(private val origin: AnAction, private v
     }
 
     val configuration = list.getOrNull(if (order < list.size) order else 0)?.configuration as LocatableConfiguration
-    if (RunnerRegistry.getInstance().getRunner(executor.id, configuration) == null) {
-      return null
-    }
-
     return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
   }
 
