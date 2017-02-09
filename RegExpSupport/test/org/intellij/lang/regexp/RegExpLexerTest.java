@@ -577,6 +577,15 @@ public class RegExpLexerTest extends LexerTestCase {
                                  "CLASS_END (']')", lexer);
   }
 
+  public void testCaret() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("[\\^\\^]\\^", "CLASS_BEGIN ('[')\n" +
+                          "ESC_CHARACTER ('\\^')\n" +
+                          "REDUNDANT_ESCAPE ('\\^')\n" +
+                          "CLASS_END (']')\n" +
+                          "ESC_CHARACTER ('\\^')", lexer);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;
