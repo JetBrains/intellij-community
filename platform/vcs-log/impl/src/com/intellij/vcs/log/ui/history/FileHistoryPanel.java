@@ -184,7 +184,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
           return null;
         }
       }
-      return new VcsLogFileRevision(details, change, revision.getFile());
+      return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
     }
     return null;
   }
