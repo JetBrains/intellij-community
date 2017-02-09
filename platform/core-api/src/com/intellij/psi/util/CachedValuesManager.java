@@ -126,10 +126,17 @@ public abstract class CachedValuesManager {
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
     Key<CachedValue<T>> key = getKeyForClass(provider.getClass(), globalKeyForProvider);
     CachedValue<T> value = psi.getUserData(key);
-    return value == null ? computeAndGet(psi, key, provider) : value.getValue();
+    return value == null ? computeCachedValue(psi, key, provider) : value.getValue();
   }
 
-  public static <T> T computeAndGet(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
+  /**
+   * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data.
+   *
+   * Consider to use high-level {@link #getCachedValue} or, in Kotlin code, PsiElement.getCachedValue.
+   *
+   * @return The cached value
+   */
+  public static <T> T computeCachedValue(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
     return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
       @Nullable
       @Override
