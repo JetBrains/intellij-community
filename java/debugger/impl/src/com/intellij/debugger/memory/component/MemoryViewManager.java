@@ -19,7 +19,10 @@ import com.intellij.debugger.memory.event.MemoryViewManagerListener;
 import com.intellij.debugger.memory.toolwindow.MemoryViewToolWindowFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 @State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"))
 public class MemoryViewManager extends ApplicationComponent.Adapter
-    implements PersistentStateComponent<MemoryViewManagerState> {
+  implements PersistentStateComponent<MemoryViewManagerState> {
   private final EventDispatcher<MemoryViewManagerListener> myDispatcher =
-      EventDispatcher.create(MemoryViewManagerListener.class);
+    EventDispatcher.create(MemoryViewManagerListener.class);
   private MemoryViewManagerState myState = new MemoryViewManagerState();
 
   public static MemoryViewManager getInstance() {
