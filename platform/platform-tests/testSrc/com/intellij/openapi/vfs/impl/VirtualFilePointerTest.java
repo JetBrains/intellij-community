@@ -894,7 +894,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
       }
     };
-    int N = Math.max(100, Timings.adjustAccordingToMySpeed(20_000, false));
+    int N = Math.max(100, Timings.adjustAccordingToMySpeed(10_000, false));
     System.out.println("N = " + N);
     for (int i=0; i<N;i++) {
       Disposable disposable = Disposer.newDisposable();
