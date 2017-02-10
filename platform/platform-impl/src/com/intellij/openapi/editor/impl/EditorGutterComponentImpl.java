@@ -63,8 +63,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
@@ -972,6 +974,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
+        if (icon instanceof JBUIScaleTrackable) {
+          ((JBUIScaleTrackable)icon).updateJBUIScale((Graphics2D)GraphicsUtil.safelyGetGraphics(this));
+        }
         return ((ScalableIcon)icon).scale(scale);
       }
     }

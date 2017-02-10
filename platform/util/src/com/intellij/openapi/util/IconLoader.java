@@ -391,7 +391,16 @@ public final class IconLoader {
       return myFilters[0];
     }
 
-      @NotNull
+    @Override
+    public boolean updateJBUIScale(Graphics2D g) {
+      if (needUpdateJBUIScale(g)) {
+        getRealIcon(g); // force update
+        return true;
+      }
+      return false;
+    }
+
+    @NotNull
     private synchronized ImageIcon getRealIcon() {
       return getRealIcon(null);
     }
@@ -402,7 +411,7 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        updateJBUIScale((Graphics2D)g);
+        super.updateJBUIScale((Graphics2D)g);
         setGlobalFilter(IMAGE_FILTER);
         if (!isValid()) myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
