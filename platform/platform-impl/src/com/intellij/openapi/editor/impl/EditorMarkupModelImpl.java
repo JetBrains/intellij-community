@@ -479,16 +479,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   
   private boolean transparent() {
-    /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
-
-       Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
-
-       When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-    boolean opaque = EditorImpl.shouldScrollBarBeOpaque(myEditor.getProject());
-    return !opaque &&
-           Registry.is("editor.transparent.scrollbar", false) &&
-           EditorUtil.isRealFileEditor(myEditor);
+    return !myEditor.shouldScrollBarBeOpaque() && EditorUtil.isRealFileEditor(myEditor);
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {

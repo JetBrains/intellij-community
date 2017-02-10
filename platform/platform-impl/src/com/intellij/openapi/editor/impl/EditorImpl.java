@@ -320,6 +320,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private volatile int myExpectedCaretOffset = -1;
 
+  private boolean myBackgroundImageSet;
+
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     assertIsDispatchThread();
     myProject = project;
@@ -505,15 +507,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myVerticalScrollBar.setOpaque(shouldScrollBarBeOpaque(project));
+    myVerticalScrollBar.setOpaque(false);
     myPanel = new JPanel();
 
-    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    if (myVerticalScrollBar.isOpaque()) {
-      //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
-      myScrollPane.getHorizontalScrollBar().setOpaque(true);
-    }
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
         JComponent component = getPermanentHeaderComponent();
@@ -555,9 +551,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   }
 
-  static boolean shouldScrollBarBeOpaque(Project project) {
-    if (IdeBackgroundUtil.isBackgroundImageSet(project)) return false;
-    return JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
+  /**
+   * This method is intended to control a blit-accelerated scrolling, because transparent scrollbars suppress it.
+   * Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+   * It is possible to disable blit-acceleration using by the registry key {@code editor.transparent.scrollbar=true}.
+   * Also, when there's a background image, blit-acceleration cannot be used (because of the static overlay).
+   * In such cases this method returns {@code false} to use transparent scrollbars as designed.
+   * Enabled blit-acceleration improves scrolling performance and reduces CPU usage
+   * (especially if drawing is compute-intensive).
+   * <p>
+   * To have both the hardware acceleration and the background image
+   * we need to completely redesign JViewport machinery to support independent layers,
+   * which is (probably) possible, but it's a rather cumbersome task.
+   * Smooth scrolling still works event without the blit-acceleration,
+   * but with suboptimal performance and CPU usage.
+   *
+   * @return {@code true} if a scrollbar should be opaque, {@code false} otherwise
+   */
+  boolean shouldScrollBarBeOpaque() {
+    return !myBackgroundImageSet && !Registry.is("editor.transparent.scrollbar");
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -878,10 +890,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(true);
 
-   /*  Default mode till 1.4.0
-    *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
-    */
-
     if (mayShowToolbar()) {
       JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
@@ -907,16 +915,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
-      // When there's a background image, suppress hardware-accelerated scrolling as blitting cannot be used with the static overlay.
-      // For the simplicity, editor re-opening is required for the toggle to take effect.
-      // To have both the hardware acceleration and the background image we need to completely redesign JViewport machinery to support
-      // independent layers, which is (probably) possible, but it's a rather cumbersome task.
-      // Smooth scrolling still works event without the blit-acceleration, but with suboptimal performance and CPU usage.
-      if (SystemProperties.isTrueSmoothScrollingEnabled() && IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
-        JComponent component = new JComponent() {}; // transparent
-        component.setPreferredSize(new Dimension(1, 1));
-        layeredPane.add(component, JLayeredPane.POPUP_LAYER);
-      }
       myPanel.add(layeredPane);
 
       new ContextMenuImpl(layeredPane, myScrollPane, this);
@@ -1665,6 +1663,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myProject != null && myProject.isDisposed()) return;
 
     myView.paint(g);
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   Color getDisposedBackground() {
@@ -2746,10 +2751,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static void updateOpaque(JScrollBar bar) {
+    if (bar instanceof OpaqueAwareScrollBar) {
+      bar.setOpaque(((OpaqueAwareScrollBar)bar).myOpaque);
+    }
+  }
+
+  private class OpaqueAwareScrollBar extends JBScrollBar {
+    private boolean myOpaque;
+
+    private OpaqueAwareScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
+      super(orientation);
+      addPropertyChangeListener("opaque", event -> {
+        revalidate();
+        repaint();
+      });
+    }
+
+    @Override
+    public void setOpaque(boolean opaque) {
+      myOpaque = opaque;
+      super.setOpaque(opaque || shouldScrollBarBeOpaque());
+    }
+
+    @Override
+    public boolean isOptimizedDrawingEnabled() {
+      return !myBackgroundImageSet;
+    }
+  }
+
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar {
+  class MyScrollBar extends OpaqueAwareScrollBar {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
 
@@ -2767,14 +2801,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-
-      /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
-
-        Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
-
-        When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-      setOpaque(shouldScrollBarBeOpaque(myProject));
     }
 
     /**
@@ -4468,6 +4494,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       super.processMouseWheelEvent(e);
+    }
+
+    @NotNull
+    @Override
+    public JScrollBar createHorizontalScrollBar() {
+      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL);
     }
 
     @NotNull

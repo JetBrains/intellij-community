@@ -218,7 +218,7 @@ public class JBScrollPane extends JScrollPane {
    * It is needed to repaint translucent scroll bars on viewport repainting.
    */
   private static boolean isOptimizedDrawingEnabledFor(JScrollBar bar) {
-    return bar == null || bar.isOpaque() || !bar.isVisible();
+    return bar == null || !bar.isVisible() || (bar.isOpaque() && bar.isOptimizedDrawingEnabled());
   }
 
   private void updateViewportBorder() {
