@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -34,15 +35,20 @@ public class SofterReference<T> {
   private volatile Reference<T> myRef;
   private static final WeakList<SofterReference> ourRegistry = new WeakList<SofterReference>();
 
-  @SuppressWarnings("UnusedDeclaration")
-  private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      for (SofterReference reference : ourRegistry.copyAndClear()) {
-        reference.weaken();
-      }
+  private static void onLowMemory() {
+    for (SofterReference reference : ourRegistry.copyAndClear()) {
+      reference.weaken();
     }
-  });
+  }
+
+  static {
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        onLowMemory();
+      }
+    }, ApplicationManager.getApplication());
+  }
 
   public SofterReference(@NotNull T referent) {
     ourRegistry.add(this);
