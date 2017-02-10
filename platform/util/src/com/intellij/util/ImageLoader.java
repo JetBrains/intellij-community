@@ -314,7 +314,7 @@ public class ImageLoader implements Serializable {
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
-    return allowFloatScaling ? scale : scale > 1.5f ? 2f : 1f;
+    return allowFloatScaling ? scale : ImageUtil.needRetinaImage(scale) ? 2f : 1f;
   }
 
   @NotNull
@@ -362,7 +362,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
-    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), JBUI.pixScale() >= 1.5f, true).
+    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), ImageUtil.needRetinaImage(JBUI.pixScale()), true).
       load(ImageConverterChain.create().withRetina());
   }
 

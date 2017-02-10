@@ -524,7 +524,7 @@ public final class IconLoader {
        * Retrieves the orig image based on the pixScale.
        */
       private Image getOrLoadOrigImage(float pixScale, boolean allowFloatScaling) {
-        boolean needRetinaImage = (pixScale > 1.0f);
+        boolean needRetinaImage = ImageUtil.needRetinaImage(pixScale);
         Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
         if (image != null) return image;
 

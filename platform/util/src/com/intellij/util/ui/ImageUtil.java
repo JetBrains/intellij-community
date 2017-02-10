@@ -111,4 +111,8 @@ public class ImageUtil {
   public static Image scaleImage(Image image, float scale) {
     return ImageLoader.scaleImage(image, scale);
   }
+
+  public static boolean needRetinaImage(float scale) {
+    return scale > 1.5f;
+  }
 }
