@@ -144,9 +144,7 @@ public class VcsLogManager implements Disposable {
                                             @NotNull VcsLogRefresher refresher,
                                             @NotNull Disposable disposableParent) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
-      providers2roots.putValue(entry.getValue(), entry.getKey());
-    }
+    logProviders.forEach((key, value) -> providers2roots.putValue(value, key));
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
       Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
@@ -220,9 +218,7 @@ public class VcsLogManager implements Disposable {
 
     protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myRecreateMainLogHandler.consume(e);
-        });
+        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
       }
       else {
         LOG.error(e);
