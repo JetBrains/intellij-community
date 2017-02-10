@@ -795,14 +795,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file) throws IOException {
     long start = System.currentTimeMillis();
-    final InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
-    if (toLog()) {
-      log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
-    }
-    final Ref<FileType> result = new Ref<>(UnknownFileType.INSTANCE);
-    file.putUserData(IO_EXCEPTION_HAPPENED, null);
+    Ref<FileType> result = new Ref<>(UnknownFileType.INSTANCE);
     boolean r = false;
+    InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
     try {
+      if (toLog()) {
+        log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
+      }
+      file.putUserData(IO_EXCEPTION_HAPPENED, null);
       r = processFirstBytes(inputStream, DETECT_BUFFER_SIZE, byteSequence -> {
         boolean isText = guessIfText(file, byteSequence);
         CharSequence text;
@@ -848,19 +848,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       });
     }
     finally {
-      if (toLog()) {
-        try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-          byte[] buffer = new byte[50];
-          int n = newStream.read(buffer, 0, buffer.length);
-          log("F: detectFromContentAndCache(" + file.getName() + "): result: " + result.get().getName() +
-              "; processor ret: " + r +
-              "; stream: " + streamInfo(inputStream) +
-              "; newStream: " + streamInfo(newStream) +
-              "; read: " + n +
-              "; buffer: " + Arrays.toString(buffer));
+      try {
+        if (toLog()) {
+          try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
+            byte[] buffer = new byte[50];
+            int n = newStream.read(buffer, 0, buffer.length);
+            log("F: detectFromContentAndCache(" + file.getName() + "): result: " + result.get().getName() +
+                "; processor ret: " + r +
+                "; stream: " + streamInfo(inputStream) +
+                "; newStream: " + streamInfo(newStream) +
+                "; read: " + n +
+                "; buffer: " + Arrays.toString(buffer));
+          }
         }
       }
-      inputStream.close();
+      finally {
+        inputStream.close();
+      }
     }
 
     FileType fileType = result.get();
