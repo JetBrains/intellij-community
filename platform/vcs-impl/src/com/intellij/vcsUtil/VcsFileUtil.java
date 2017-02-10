@@ -15,15 +15,18 @@
  */
 package com.intellij.vcsUtil;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -378,5 +382,89 @@ public class VcsFileUtil {
     }
 
     return null;
+  }
+
+  public static void addFilesToVcsWithConfirmation(@NotNull Project project, VirtualFile... virtualFiles) {
+    addFilesToVcsWithConfirmation(project, Arrays.asList(virtualFiles));
+  }
+
+  public static void addFilesToVcsWithConfirmation(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
+    addFilesToVcsWithConfirmation(project, virtualFiles, null);
+  }
+
+  /**
+   * Finds all VCSs related to the passed files, suggests user to add files to the respected VCSs honoring addition and silence settings
+   * and adds them if user or settings confirmed addition
+   *
+   * @param project             project we work in
+   * @param virtualFiles        collection of virtual files to add; directories being added recursively
+   * @param exceptionsProcessor optional exceptions processor
+   */
+  public static void addFilesToVcsWithConfirmation(@NotNull Project project,
+                                                   @NotNull Collection<VirtualFile> virtualFiles,
+                                                   @Nullable VcsExceptionsProcessor exceptionsProcessor) {
+    if (virtualFiles.isEmpty()) {
+      return;
+    }
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    Multimap<AbstractVcs, VirtualFile> vcsMap = ArrayListMultimap.create();
+    for (VirtualFile createdFile : virtualFiles) {
+      AbstractVcs vcs = vcsManager.getVcsFor(createdFile);
+      if (vcs == null) {
+        continue;
+      }
+      VfsUtil.processFileRecursivelyWithoutIgnored(createdFile, (virtualFile) -> vcsMap.put(vcs, virtualFile));
+    }
+
+    for (AbstractVcs vcs : vcsMap.keySet()) {
+      VcsShowConfirmationOption addOption =
+        vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
+      if (addOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+      List<VirtualFile> filesList = new ArrayList<>(vcsMap.get(vcs));
+      if (addOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+        performAdding(vcs, filesList, exceptionsProcessor);
+      }
+      else {
+        AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Collection<VirtualFile> filesToAdd =
+            helper
+              .selectFilesToProcess(
+                new ArrayList<>(filesList),
+                VcsBundle.message("confirmation.title.add.files.to", vcs.getDisplayName()),
+                null,
+                VcsBundle.message("confirmation.title.add.file.to", vcs.getDisplayName()),
+                null,
+                addOption);
+
+          if (filesToAdd != null) {
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              performAdding(vcs, new ArrayList<>(filesToAdd), exceptionsProcessor);
+            });
+          }
+        });
+      }
+    }
+  }
+
+  private static void performAdding(@NotNull AbstractVcs vcs,
+                                    @NotNull List<VirtualFile> value,
+                                    @Nullable VcsExceptionsProcessor exceptionsProcessor) {
+    CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+    if (checkinEnvironment == null) {
+      return;
+    }
+    List<VcsException> exceptions = checkinEnvironment.scheduleUnversionedFilesForAddition(value);
+    if (exceptions == null || exceptionsProcessor == null) {
+      return;
+    }
+    for (VcsException exception : exceptions) {
+      exceptionsProcessor.process(vcs, exception);
+    }
+  }
+
+  public interface VcsExceptionsProcessor {
+    void process(@NotNull AbstractVcs vcs, @NotNull VcsException exception);
   }
 }
