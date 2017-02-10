@@ -816,7 +816,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
     prepareLocalAndRemoteBranch("feature", track = true)
     git(myUltimate, "checkout feature")
 
-    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE)
+    GitBranchWorker(myProject, myGit, object : TestUiHandler() {
+      override fun confirmRemoteBranchDeletion(branchName: String,
+                                               trackingBranches: MutableCollection<String>,
+                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
+        assertEmpty("No tracking branches should be proposed for deletion", trackingBranches)
+        return DeleteRemoteBranchDecision.DELETE
+      }
+    }).deleteRemoteBranch("origin/feature", myRepositories)
+
 
     assertSuccessfulNotification("Deleted remote branch origin/feature")
     myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
