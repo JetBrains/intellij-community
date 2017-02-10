@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +63,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +227,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
         Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
-        return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
+        return new DnDImage(ImageUtil.toBufferedImage(image), new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();
