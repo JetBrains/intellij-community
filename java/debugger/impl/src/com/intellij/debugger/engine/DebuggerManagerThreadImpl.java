@@ -34,14 +34,14 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author lex
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
-  public static final int COMMAND_TIMEOUT = 3000;
+  static final int COMMAND_TIMEOUT = 3000;
 
   private volatile boolean myDisposed;
 
@@ -53,6 +53,19 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   @Override
   public void dispose() {
     myDisposed = true;
+  }
+
+  private static void waitForTerminateFutureToComplete(@NotNull Future<?> future) {
+    try {
+      LOG.debug("Waiting for " + future);
+      future.get(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException("Termination request is still pending", e);
+    }
   }
 
   @TestOnly
@@ -106,13 +119,13 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    * if worker thread is still processing the same command
    * calls terminateCommand
    */
-  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
+  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeoutMillis) {
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
     invoke(command);
 
     if (currentCommand != null) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      final ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(
         () -> {
           if (currentCommand == myEvents.getCurrentEvent()) {
             // if current command is still in progress, cancel it
@@ -131,7 +144,10 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
               }
             }
           }
-        }, terminateTimeout, TimeUnit.MILLISECONDS);
+        }, terminateTimeoutMillis, TimeUnit.MILLISECONDS);
+
+      // register on project instead of this because it would cause significant delays on each session termination otherwise
+      Disposer.register(myProject, () -> waitForTerminateFutureToComplete(future));
     }
   }
 
@@ -174,7 +190,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
 
-  public void startLongProcessAndFork(Runnable process) {
+  void startLongProcessAndFork(Runnable process) {
     assertIsManagerThread();
     startNewWorkerThread();
 
@@ -235,7 +251,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   }
 
-  public void restartIfNeeded () {
+  void restartIfNeeded() {
     if (myEvents.isClosed()) {
       myEvents.reopen();
       startNewWorkerThread();
