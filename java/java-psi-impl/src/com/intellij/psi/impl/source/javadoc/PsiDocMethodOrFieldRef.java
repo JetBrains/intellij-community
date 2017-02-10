@@ -311,9 +311,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
       final PsiElement child = getFirstChild();
       if (containingClass != null && child != null && child.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) child.getFirstChild();
-        assert referenceElement != null;
-        referenceElement.bindToElement(containingClass);
+        PsiElement ref = child.getFirstChild();
+        if (ref instanceof PsiJavaCodeReferenceElement) {
+          ((PsiJavaCodeReferenceElement)ref).bindToElement(containingClass);
+        }
       }
       else {
         if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
