@@ -46,7 +46,7 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
-public class DfaVariableValue extends DfaValue implements DfaComparableValue {
+public class DfaVariableValue extends DfaValue {
 
   private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
     or(psiMember(), psiParameter().withSuperParent(2, psiMember()));

@@ -84,15 +84,19 @@ class OptionalWithoutIsPresent {
   }
 
   private void checkAsserts1() {
-    Optional<String> o1 = Optional.empty();
+    Optional<String> o1 = getOptional();
     assert o1.isPresent();
     System.out.println(o1.get());
-    Optional<String> o2 = Optional.empty();
+    Optional<String> o2 = getOptional();
     org.junit.Assert.assertTrue(o2.isPresent());
     System.out.println(o2.get());
-    Optional<String> o3 = Optional.empty();
+    Optional<String> o3 = getOptional();
     org.testng.Assert.assertTrue(o3.isPresent());
     System.out.println(o3.get());
+
+    o2 = getOptional();
+    org.junit.Assert.assertTrue(!o2.isPresent());
+    System.out.println(o2.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
   }
 
   private void checkAsserts2() {
