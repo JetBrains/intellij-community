@@ -246,9 +246,8 @@ public class JBEditorTabs extends JBTabsImpl {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     Color tabColor = label.getInfo().getTabColor();
-    final boolean isHorizontalTabs = isHorizontalTabs();
 
-    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, isHorizontalTabs, getTabsPosition());
+    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, this);
   }
 
   @Override
