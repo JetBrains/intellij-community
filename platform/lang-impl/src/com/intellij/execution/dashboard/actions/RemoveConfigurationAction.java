@@ -16,15 +16,14 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RuntimeDashboardContent;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,14 +34,14 @@ import java.util.List;
 public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   public RemoveConfigurationAction() {
     super(ExecutionBundle.message("runtime.dashboard.remove.configuration.action.name"),
-          ExecutionBundle.message("runtime.dashboard.remove.configuration.action.name"),
+          ExecutionBundle.message("runtime.dashboard.remove.configuration.action.description"),
           AllIcons.General.Remove);
   }
 
   @Override
   protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    Content content = node.getContent();
-    return content == null || RunContentManagerImpl.isTerminated(content);
+    return RunManager.getInstance(node.getProject()).getAllConfigurationsList().contains(
+      node.getConfigurationSettings().getConfiguration());
   }
 
   @Override

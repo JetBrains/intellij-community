@@ -28,6 +28,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,17 +87,28 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
       //noinspection ConstantConditions ???
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
       configurations.forEach(configurationSettings -> {
-        List<RunContentDescriptor> descriptors = executionManager.getDescriptors(settings -> {
-          RunConfiguration configuration = settings.getConfiguration();
-          return configuration != null ? configuration.equals(configurationSettings.getConfiguration()) :
-                 settings.equals(configurationSettings);
-        });
+        List<RunContentDescriptor> descriptors = executionManager.getDescriptors(settings ->
+          Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
         if (descriptors.isEmpty()) {
           nodes.add(new RunConfigurationNode(myProject, configurationSettings, null));
         } else {
           descriptors.forEach(descriptor -> nodes.add(new RunConfigurationNode(myProject, configurationSettings, descriptor)));
         }
       });
+
+      // It is possible that run configuration was deleted, but there is running content descriptor for such run configuration.
+      // It should be shown in he dashboard tree.
+      List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
+        .collect(Collectors.toList());
+      List<RunContentDescriptor> notStoredDescriptors = executionManager.getRunningDescriptors(settings -> {
+        RunConfiguration configuration = settings.getConfiguration();
+        return RuntimeDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
+      });
+      notStoredDescriptors.forEach(descriptor -> {
+        Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
+        settings.forEach(setting -> nodes.add(new RunConfigurationNode(myProject, setting, descriptor)));
+      });
+
       return group(myProject,
                    this,
                    myGroupers.stream().filter(DashboardGrouper::isEnabled).map(DashboardGrouper::getRule).collect(Collectors.toList()),
@@ -132,8 +144,35 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
       }
     });
 
-    Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup().getName()));
-    result.addAll(ungroupedNodes);
+    if (rule instanceof RunConfigurationDashboardGroupingRule) {
+      // Groupings by run configuration should be mixed with ungrouped nodes.
+      // Original order given from run configuration editor should be restored.
+      result.addAll(ungroupedNodes);
+      Collections.sort(result, new Comparator<AbstractTreeNode>() {
+        @Override
+        public int compare(AbstractTreeNode n1, AbstractTreeNode n2) {
+          RunConfigurationNode first = getNode(n1);
+          RunConfigurationNode second = getNode(n2);
+          return nodes.indexOf(first) - nodes.indexOf(second);
+        }
+
+        private RunConfigurationNode getNode(AbstractTreeNode node) {
+          Object runConfigurationNode;
+          if (node instanceof GroupingNode) {
+            Optional child = node.getChildren().stream().findFirst();
+            assert child.isPresent();
+            runConfigurationNode = child.get();
+          } else {
+            runConfigurationNode = node;
+          }
+          assert runConfigurationNode instanceof RunConfigurationNode;
+          return (RunConfigurationNode)runConfigurationNode;
+        }
+      });
+    } else {
+      Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup().getName()));
+      result.addAll(ungroupedNodes);
+    }
     return result;
   }
 }

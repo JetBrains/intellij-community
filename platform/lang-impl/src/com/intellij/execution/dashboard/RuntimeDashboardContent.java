@@ -165,7 +165,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_TOOLBAR));
     popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_POPUP));
-    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.RUNTIME_DASHBOARD_POPUP, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
   }
@@ -195,9 +195,13 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
         showContentPanel();
         return;
       }
+      if (node instanceof DashboardRunConfigurationNode) {
+        showMessagePanel(ExecutionBundle.message("runtime.dashboard.not.started.configuration.message"));
+        return;
+      }
     }
 
-    showMessagePanel("");
+    showMessagePanel(ExecutionBundle.message("runtime.dashboard.empty.selection.message"));
   }
 
   private void showMessagePanel(String text) {

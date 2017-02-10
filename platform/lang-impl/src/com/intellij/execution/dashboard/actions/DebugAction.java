@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 public class DebugAction extends ExecutorAction {
   public DebugAction() {
     super(ExecutionBundle.message("runtime.dashboard.debug.action.name"),
-          ExecutionBundle.message("runtime.dashboard.debug.action.name"),
+          ExecutionBundle.message("runtime.dashboard.debug.action.description"),
           AllIcons.Toolwindows.ToolWindowDebugger);
   }
 

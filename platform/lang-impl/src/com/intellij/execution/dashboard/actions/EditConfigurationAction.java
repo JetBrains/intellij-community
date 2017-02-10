@@ -16,15 +16,33 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class EditConfigurationAction extends RunConfigurationTreeAction {
   public EditConfigurationAction() {
     super(ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name"),
           ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name"),
           AllIcons.Actions.EditSource);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setText(ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name") + "...");
+    }
+  }
+
+  @Override
+  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
+    return RunManager.getInstance(node.getProject()).getAllConfigurationsList().contains(
+      node.getConfigurationSettings().getConfiguration());
   }
 
   @Override
