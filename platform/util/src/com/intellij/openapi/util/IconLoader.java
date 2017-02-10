@@ -544,7 +544,7 @@ public final class IconLoader {
           return icon;
         }
 
-        Image image = getOrLoadOrigImage(pixScale, allowFloatScaling);
+        Image image = getOrLoadOrigImage(effectiveScale, allowFloatScaling);
         if (image == null) return null;
 
         image = ImageUtil.scaleImage(image, instanceScale);
