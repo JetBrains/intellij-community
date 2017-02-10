@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -78,8 +77,8 @@ public class IElementType {
   }
 
   private final short myIndex;
-  @NotNull private final String myDebugName;
-  @NotNull private final Language myLanguage;
+  private final String myDebugName;
+  private final Language myLanguage;
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -87,7 +86,7 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-  public IElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
+  public IElementType(@NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
   }
 
@@ -104,7 +103,8 @@ public class IElementType {
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  protected IElementType(@NotNull @NonNls String debugName, @Nullable Language language, boolean register) {
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
@@ -147,6 +147,7 @@ public class IElementType {
     return myIndex >= 0 ? myIndex : super.hashCode();
   }
 
+  @Override
   public String toString() {
     return myDebugName;
   }
@@ -219,11 +220,5 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[matches.size()]);
-  }
-
-  public short getRegisteredIndex() {
-    short myElementTypeIndex = getIndex();
-    assert myElementTypeIndex > 0 : "Element type must be registered: " + this;
-    return myElementTypeIndex;
   }
 }
