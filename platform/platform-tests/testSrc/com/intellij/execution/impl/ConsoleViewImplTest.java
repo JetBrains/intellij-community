@@ -30,8 +30,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
@@ -231,20 +235,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).cpuBound().assertTiming());
   }
 
-  /*
   public void testPerformanceOfMergeableTokens() throws Exception {
     withCycleConsole(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 1500, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", 5500, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
-          UIUtil.dispatchAllInvocationEvents();
         }
-        LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
+        UIUtil.dispatchAllInvocationEvents();
         console.waitAllRequests();
+        MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
+        RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
+        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
       }).cpuBound().assertTiming());
   }
-  */
 
   private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
     boolean oldUse = UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE;

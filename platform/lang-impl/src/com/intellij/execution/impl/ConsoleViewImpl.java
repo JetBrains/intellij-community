@@ -698,18 +698,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         // add token information as range markers
         // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
         int offset = document.getTextLength();
+        int tokenLength = 0;
         for (int i = deferredTokens.size() - 1; i >= startIndex; i--) {
           TokenBuffer.TokenInfo token = deferredTokens.get(i);
           contentTypes.add(token.contentType);
-          int tokenLength = token.length();
-          final HyperlinkInfo info = token.getHyperlinkInfo();
+          tokenLength += token.length();
+          TokenBuffer.TokenInfo prevToken = i == startIndex ? null : deferredTokens.get(i - 1);
+          if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
+            // do not create highlighter yet because can merge previous token with the current
+            continue;
+          }
           int start = Math.max(0, offset - tokenLength);
           if (start == offset) break;
+          final HyperlinkInfo info = token.getHyperlinkInfo();
           if (info != null) {
             myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
           }
           createTokenRangeHighlighter(token.contentType, start, offset);
           offset = start;
+          tokenLength = 0;
         }
       }
       finally {
