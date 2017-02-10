@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,11 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
@@ -90,10 +92,10 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
 
     VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertEquals(1, jarRoot.getChildren().length);
+    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactly("META-INF");
 
     VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
-    assertContent(entry, "");
+    assertEquals("", VfsUtilCore.loadText(entry));
 
     Ref<Boolean> updated = Ref.create(false);
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
@@ -116,10 +118,10 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     assertTrue(updated.get());
     assertTrue(entry.isValid());
-    assertContent(entry, "update");
-    assertEquals(2, jarRoot.getChildren().length);
+    assertEquals("update", VfsUtilCore.loadText(entry));
+    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactlyInAnyOrder("META-INF", "some.txt");
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
-    assertContent(newEntry, "some text");
+    assertEquals("some text", VfsUtilCore.loadText(newEntry));
   }
 
   @Test
@@ -174,10 +176,5 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(file);
     assertPathsEqual(path, file.getPath());
     return file;
-  }
-
-  private static void assertContent(VirtualFile file, String expected) throws IOException {
-    String content = new String(file.contentsToByteArray(), file.getCharset());
-    assertEquals(expected, content);
   }
 }
