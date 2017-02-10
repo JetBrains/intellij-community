@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -140,7 +141,16 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   public JComponent createComponent() {
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
-    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE)));
+    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+      @Override
+      public String getToolTipText(@NotNull MouseEvent event) {
+        Point point = event.getPoint();
+        int row = rowAtPoint(point);
+        int col = columnAtPoint(point);
+        if (row != -1 && col == 1) return getToolTipFor((T)getValueAt(convertRowIndexToModel(row), col));
+        return super.getToolTipText(event);
+      }
+    };
     setupPerFileTable();
     JPanel tablePanel = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
@@ -164,6 +174,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     myPanel.add(tablePanel, BorderLayout.CENTER);
 
     return myPanel;
+  }
+
+  protected String getToolTipFor(T value) {
+    return null;
   }
 
   @Nullable
