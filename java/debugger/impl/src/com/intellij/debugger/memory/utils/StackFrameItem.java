@@ -66,7 +66,7 @@ public class StackFrameItem {
   }
 
   public int line() {
-    return myLocation.lineNumber();
+    return DebuggerUtilsEx.getLineNumber(myLocation, false);
   }
 
   @NotNull

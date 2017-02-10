@@ -141,13 +141,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     LOG.assertTrue(myDebugProcess != null);
 
-    int lineNumber;
-    try {
-      lineNumber = location.lineNumber() - 1;
-    }
-    catch (InternalError e) {
-      lineNumber = -1;
-    }
+    int lineNumber = DebuggerUtilsEx.getLineNumber(location, true);
 
     String qName = location.declaringType().name();
 

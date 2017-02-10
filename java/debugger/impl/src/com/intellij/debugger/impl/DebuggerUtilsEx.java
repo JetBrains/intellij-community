@@ -600,6 +600,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static int getLineNumber(Location location, boolean zeroBased) {
+    try {
+      return location.lineNumber() - (zeroBased ? 1 : 0);
+    }
+    catch (InternalError e) {
+      return -1;
+    }
+  }
+
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
     if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
       return vm.mirrorOf(value);
