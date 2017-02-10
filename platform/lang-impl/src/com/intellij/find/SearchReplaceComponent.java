@@ -311,8 +311,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     final int oldCaretPosition = mySearchTextComponent != null ? mySearchTextComponent.getCaretPosition() : 0;
     boolean wasNull = mySearchTextComponent == null;
     if (!updateTextComponent(true)) {
-      if (!mySearchTextComponent.getText().equals(textToSet)) {
+      String existingText = mySearchTextComponent.getText();
+      if (!existingText.equals(textToSet)) {
         mySearchTextComponent.setText(textToSet);
+        // textToSet should be selected even if we have no selection before (if we have the selection then setText will remain it)
+        if (existingText.length() == 0) mySearchTextComponent.selectAll();
       }
       return;
     }
@@ -355,8 +358,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
     boolean wasNull = myReplaceTextComponent == null;
     if (!updateTextComponent(false)) {
-      if (!myReplaceTextComponent.getText().equals(textToSet)) {
+      String existingText = myReplaceTextComponent.getText();
+      if (!existingText.equals(textToSet)) {
         myReplaceTextComponent.setText(textToSet);
+        if (existingText.length() == 0) myReplaceTextComponent.selectAll();
       }
       return;
     }
