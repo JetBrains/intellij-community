@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.SystemProperties;
@@ -27,6 +28,9 @@ import java.awt.*;
  * IDE-agnostic component settings.
  */
 public class ComponentSettings {
+  private static final boolean SUPPORTED_JAVA = SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9");
+  private static final RegistryValue SUPPORTED = Registry.get("ide.scroll.precise");
+
   private static final RegistryValue HIGH_PRECISION_SCROLLING = Registry.get("idea.true.smooth.scrolling.high.precision");
 
   private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
@@ -57,12 +61,18 @@ public class ComponentSettings {
 
   // Returns whether "true smooth scrolling" is applicable to the particular component
   public boolean isTrueSmoothScrollingEligibleFor(Component component) {
-    return !ApplicationManager.getApplication().isUnitTestMode() &&
+    return isSmoothScrollingSupported() &&
+           !ApplicationManager.getApplication().isUnitTestMode() &&
            mySmoothScrollingEnabled &&
            !myRemoteDesktopConnected &&
            !myPowerSaveModeEnabled &&
            component != null &&
            component.isShowing();
+  }
+
+  // Returns whether smooth scrolling supported
+  public boolean isSmoothScrollingSupported() {
+    return SUPPORTED.asBoolean() || (SUPPORTED_JAVA && SystemInfo.isMac);
   }
 
   // Returns whether high-precision scrolling events are enabled

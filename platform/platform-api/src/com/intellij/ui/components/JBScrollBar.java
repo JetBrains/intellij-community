@@ -17,7 +17,6 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.InputSource;
@@ -54,7 +53,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
 
   private static final double THRESHOLD = 1D + 1E-5D;
-  private static final boolean SUPPORTED_JAVA = SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9");
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
   private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
   private boolean isUnitIncrementSet;
@@ -246,43 +244,25 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   }
 
   /**
-   * Indicates whether MouseWheelEvent#getPreciseWheelRotation can be used to calculate an absolute scrolling delta.
-   *
-   * @return {@code true} if an absolute scrolling delta is supported, {@code false} otherwise
-   * @see #getPreciseDelta(MouseWheelEvent)
-   */
-  static boolean isAbsoluteDeltaSupported() {
-    ComponentSettings settings = ComponentSettings.getInstance();
-    if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
-      if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) return true;
-      if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) return true;
-    }
-    return false;
-  }
-
-  /**
    * Calculates a scrolling delta from the specified event.
    *
    * @param event the mouse wheel event
    * @return a scrolling delta for this scrollbar
-   * @see #isAbsoluteDeltaSupported
    */
   private double getPreciseDelta(MouseWheelEvent event) {
     double rotation = event.getPreciseWheelRotation();
     ComponentSettings settings = ComponentSettings.getInstance();
-    if (SUPPORTED_JAVA && settings.isPixelPerfectScrollingEnabled()) {
+    if (settings.isPixelPerfectScrollingEnabled()) {
       // calculate an absolute delta if possible
-      if (SystemInfo.isMac && Registry.is("ide.scroll.precise.rotation.mac")) {
+      if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
         // so we use 10 to restore amount of pixels to scroll.
         return 10 * rotation;
       }
-      if (SystemInfo.isWindows && Registry.is("ide.scroll.precise.rotation.windows")) {
-        JViewport viewport = getViewport();
-        Font font = viewport == null ? null : getViewFont(viewport);
-        int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
-        return size * rotation * event.getScrollAmount();
-      }
+      JViewport viewport = getViewport();
+      Font font = viewport == null ? null : getViewFont(viewport);
+      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      return size * rotation * event.getScrollAmount();
     }
     if (settings.isHighPrecisionScrollingEnabled()) {
       // calculate a relative delta if possible

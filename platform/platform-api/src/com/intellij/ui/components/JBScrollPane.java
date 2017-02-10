@@ -713,35 +713,17 @@ public class JBScrollPane extends JScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore && (JBScrollBar.isAbsoluteDeltaSupported() || ComponentSettings.getInstance().isHighPrecisionScrollingEnabled())) {
-      double rotation = event.getPreciseWheelRotation();
-      ignore = rotation == 0.0D || !Double.isFinite(rotation);
+    if (ignore) {
+      ComponentSettings settings = ComponentSettings.getInstance();
+      if (settings.isSmoothScrollingSupported()) {
+        if (settings.isPixelPerfectScrollingEnabled() || settings.isHighPrecisionScrollingEnabled()) {
+          double rotation = event.getPreciseWheelRotation();
+          ignore = rotation == 0.0D || !Double.isFinite(rotation);
+        }
+      }
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
-
-  /**
-   * Indicates whether we can use MouseWheelEvent#getPreciseWheelRotation to scroll.
-   *
-   * @deprecated will be removed after fixing a blit-scrolling
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static boolean isPreciseRotationSupported() {
-    if (PRECISE_ROTATION_SUPPORTED) {
-      if (SystemInfo.isMac) return Registry.is("ide.scroll.precise.rotation.mac");
-      if (SystemInfo.isWindows) return Registry.is("ide.scroll.precise.rotation.windows");
-    }
-    return false;
-  }
-
-  /**
-   * Indicates whether the system property "idea.true.smooth.scrolling" is not set to "true"
-   * (it is needed to avoid possible conflicts with another scrolling implementation)
-   * and the current JVM contains our fixes for MouseWheelEvent#getPreciseWheelRotation.
-   */
-  private static final boolean PRECISE_ROTATION_SUPPORTED = !isTrueSmoothScrollingEnabled() &&
-                                                            (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9"));
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
