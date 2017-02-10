@@ -104,16 +104,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
    */
   private boolean myIsActive;
 
-  public ClassesFilteredView(@NotNull XDebugSession debugSession) {
+  public ClassesFilteredView(@NotNull XDebugSession debugSession, @NotNull DebugProcessImpl debugProcess) {
     super();
 
     myProject = debugSession.getProject();
-    final DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
-      .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-
-    if (debugProcess == null) {
-      throw new NullPointerException("Failed to receive a java debug process");
-    }
 
     myInstancesTracker = InstancesTracker.getInstance(myProject);
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {

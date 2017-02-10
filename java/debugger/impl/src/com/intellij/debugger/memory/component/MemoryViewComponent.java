@@ -57,7 +57,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
         final DebugProcessImpl processImpl = (DebugProcessImpl)javaProcess;
         ApplicationManager.getApplication().invokeLater(() -> {
           final RunnerLayoutUi ui = session.getUI();
-          final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session);
+          final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, processImpl);
           classesFilteredView.setActive(true);
           final Content memoryViewContent =
             ui.createContent(MEMORY_VIEW_CONTENT_ID, classesFilteredView, "Memory View",
@@ -69,7 +69,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          ui.addContent(memoryViewContent, -1, PlaceInGrid.right, true);
+          ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
 
           ui.addListener(new ContentManagerAdapter() {
             @Override
