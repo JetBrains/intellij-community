@@ -22,10 +22,13 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.PsiNavigateUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -71,8 +74,13 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
       @Override
       public void navigate(MouseEvent e, PsiElement elt) {
         final PsiElement restoredRelatedElement = relatedElementPointer.getElement();
-        if (restoredRelatedElement != null) {
-          PsiNavigateUtil.navigate(restoredRelatedElement);
+        if (restoredRelatedElement == null) {
+          return;
+        }
+        final int offset = restoredRelatedElement instanceof PsiFile ? -1 : restoredRelatedElement.getTextOffset();
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(restoredRelatedElement);
+        if (virtualFile != null && virtualFile.isValid()) {
+          new OpenFileDescriptor(restoredRelatedElement.getProject(), virtualFile, offset).navigate(true);
         }
       }
     }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));

@@ -15,14 +15,26 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,28 +67,101 @@ public class CaptureConfigurable implements SearchableConfigurable {
     TableColumnModel columnModel = table.getColumnModel();
     TableUtil.setupCheckboxColumn(columnModel.getColumn(MyTableModel.ENABLED_COLUMN));
 
-    return ToolbarDecorator.createDecorator(table)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTableModel.addRow();
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
+    decorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        myTableModel.addRow();
+      }
+    });
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.removeSelectedItems(table);
+      }
+    });
+    decorator.setMoveUpAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.moveSelectedItemsUp(table);
+      }
+    });
+    decorator.setMoveDownAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.moveSelectedItemsDown(table);
+      }
+    });
+
+    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+          @Override
+          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+            return super.isFileVisible(file, showHiddenFiles) &&
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
+          }
+
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            return file.getFileType() == StdFileTypes.XML;
+          }
+        };
+        descriptor.setDescription("Please select a file to import.");
+        descriptor.setTitle("Import Capture Points");
+
+        VirtualFile file = FileChooser.chooseFile(descriptor, e.getProject(), null);
+        if (file == null) return;
+        try {
+          Document document = JDOMUtil.loadDocument(file.getInputStream());
+          table.getSelectionModel().clearSelection();
+          int start = table.getRowCount();
+          List<Element> children = document.getRootElement().getChildren();
+          children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
+          table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(table);
+        catch (Exception ex) {
+          final String msg = ex.getLocalizedMessage();
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
         }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.moveSelectedItemsUp(table);
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
+          .createSaveFileDialog(new FileSaverDescriptor("Export Selected Capture Points to File...", "", "xml"), e.getProject())
+          .save(null, null);
+        if (wrapper == null) return;
+
+        Element rootElement = new Element("capture-points");
+        for (int row : table.getSelectedRows()) {
+          CapturePoint c = myTableModel.get(table.convertRowIndexToModel(row));
+          try {
+            CapturePoint clone = c.clone();
+            clone.myEnabled = false;
+            rootElement.addContent(XmlSerializer.serialize(clone));
+          }
+          catch (CloneNotSupportedException ignore) {
+          }
         }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.moveSelectedItemsDown(table);
+        try {
+          JDOMUtil.writeDocument(new Document(rootElement), wrapper.getFile(), "\n");
         }
-      }).createPanel();
+        catch (Exception ex) {
+          final String msg = ex.getLocalizedMessage();
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+        }
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+    });
+
+    return decorator.createPanel();
   }
 
   private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
@@ -167,17 +252,23 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return String.class;
     }
 
-    public void addRow() {
-      myCapturePoints.add(new CapturePoint());
+    CapturePoint get(int idx) {
+      return myCapturePoints.get(idx);
+    }
+
+    public void add(CapturePoint p) {
+      myCapturePoints.add(p);
       int lastRow = getRowCount() - 1;
       fireTableRowsInserted(lastRow, lastRow);
     }
 
+    public void addRow() {
+      add(new CapturePoint());
+    }
+
     public void removeRow(final int row) {
-      if (row >= 0 && row < getRowCount()) {
-        myCapturePoints.remove(row);
-        fireTableRowsDeleted(row, row);
-      }
+      myCapturePoints.remove(row);
+      fireTableRowsDeleted(row, row);
     }
   }
 

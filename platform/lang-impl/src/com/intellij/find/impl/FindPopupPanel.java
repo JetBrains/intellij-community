@@ -72,10 +72,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,17 +170,26 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myBalloon = builder
         .setProject(myHelper.getProject())
         .setResizable(true)
-        .setMovable(true)
+        .setMinSize(new JBDimension(670, 240))
         .setMayBeParent(true)
         .setModalContext(false)
         .setRequestFocus(true)
+        .setCancelCallback(() -> {
+          DimensionService.getInstance().setSize(SIZE_KEY, myBalloon.getSize(), myHelper.getProject() );
+          DimensionService.getInstance().setLocation(SIZE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
+          return Boolean.TRUE;
+        })
         .createPopup();
       Disposer.register(myBalloon, myDisposable);
       registerCloseAction(myBalloon);
       final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
       Component parent = UIUtil.findUltimateParent(window);
       RelativePoint showPoint = null;
-      if (parent != null) {
+      Point screenPoint = DimensionService.getInstance().getLocation(SIZE_KEY);
+      if (screenPoint != null) {
+        showPoint = new RelativePoint(screenPoint);
+      }
+      if (parent != null && showPoint == null) {
         int height = UISettings.getInstance().getShowNavigationBar() ? 135 : 115;
         if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
           height -= 20;
@@ -196,7 +202,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       } else {
         myBalloon.showCenteredInCurrentWindow(myProject);
       }
+      WindowMoveListener windowListener = new WindowMoveListener(this);
+      myTitleLabel.addMouseListener(windowListener);
+      myTitleLabel.addMouseMotionListener(windowListener);
       myBalloon.pack(true, true);
+      Dimension panelSize = getPreferredSize();
+      Dimension prev = DimensionService.getInstance().getSize(SIZE_KEY);
+      int width = prev != null && prev.width > panelSize.width ? prev.width : panelSize.width;
+      myBalloon.setSize(new Dimension(width, panelSize.height));
     }
   }
 
@@ -566,8 +579,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     splitter.setSecondComponent(myCodePreviewComponent);
 
     setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0"));
-    add(myTitleLabel, "gapleft 4");
-    add(Box.createHorizontalStrut(JBUI.scale(50)), "growx");
+    add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
     add(myCbCaseSensitive);
     add(myCbPreserveCase);
     add(myCbWholeWordsOnly);
@@ -1029,7 +1041,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       SearchScope selectedScope = myScopeCombo.getSelectedScope();
       String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
       model.setCustomScopeName(customScopeName);
-      model.setCustomScope(selectedScope == null ? null : selectedScope);
+      model.setCustomScope(selectedScope);
       model.setCustomScope(true);
     }
 
