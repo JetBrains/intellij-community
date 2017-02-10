@@ -135,6 +135,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     features.add(MonospaceEditorCustomization.getInstance());
+    features.add(ErrorStripeEditorCustomization.ENABLED);
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
