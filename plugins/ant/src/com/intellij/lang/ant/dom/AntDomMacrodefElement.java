@@ -33,4 +33,10 @@ public abstract class AntDomMacrodefElement extends AntDomNamedElement {
   @Convert(value = AntBooleanConverterDefaultFalse.class)
   public abstract GenericAttributeValue<Boolean> isImplicit();
 
+  /**
+   * @since Apache Ant 1.6.1
+   * @return
+   */
+  @Attribute("description")
+  public abstract GenericAttributeValue<String> getDescription();
 }

@@ -27,4 +27,17 @@ public abstract class AntDomMacrodefAttribute extends AntDomNamedElement {
   @Attribute("default")
   public abstract GenericAttributeValue<String> getDefaultValue();
 
+  /**
+   * @since Apache Ant 1.6.1
+   * @return
+   */
+  @Attribute("description")
+  public abstract GenericAttributeValue<String> getDescription();
+
+  /**
+   * @since Apache Ant 1.8.3
+   * @return
+   */
+  @Attribute("doubleexpanding")
+  public abstract GenericAttributeValue<Boolean> isDoubleExpanding();
 }

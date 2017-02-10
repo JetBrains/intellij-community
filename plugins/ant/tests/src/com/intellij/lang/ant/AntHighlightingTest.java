@@ -112,6 +112,10 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMacroDefElementDescription() throws Exception {
+    doTest();
+  }
+
   public void testBigFile() throws Exception {
     configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
 
