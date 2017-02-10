@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Kirill Likhodedov
@@ -53,6 +54,15 @@ class GitBrancherImpl implements GitBrancher {
 
   private GitBranchWorker newWorker(ProgressIndicator indicator) {
     return new GitBranchWorker(myProject, myGit, new GitBranchUiHandlerImpl(myProject, myGit, indicator));
+  }
+
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    new CommonBackgroundTask(myProject, "Creating branch " + name, null) {
+      @Override public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).createBranch(name, startPoints);
+      }
+    }.runInBackground();
   }
 
   @Override

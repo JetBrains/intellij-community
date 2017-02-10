@@ -1688,7 +1688,7 @@ public class Messages {
     }
   }
 
-  protected static class InputDialog extends MessageDialog {
+  public static class InputDialog extends MessageDialog {
     protected JTextComponent myField;
     private final InputValidator myValidator;
 
