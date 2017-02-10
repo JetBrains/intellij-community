@@ -17,9 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -92,16 +89,7 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
     }
 
     private void analyze(PsiElement context) {
-      final DataFlowRunner dfaRunner = new StandardDataFlowRunner(false, true, isOnTheFly()) {
-        private final DfaOptionalValue myPresentValue = new DfaOptionalValue(getFactory(), true);
-        private final DfaOptionalValue myAbsentValue = new DfaOptionalValue(getFactory(), false);
-
-        @NotNull
-        @Override
-        protected DfaMemoryState createMemoryState() {
-          return new OptionalMemoryState(getFactory(), myPresentValue, myAbsentValue);
-        }
-      };
+      final DataFlowRunner dfaRunner = new StandardDataFlowRunner(false, true, isOnTheFly());
       dfaRunner.analyzeMethod(context, new StandardInstructionVisitor() {
         @Override
         public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -109,65 +97,12 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           if (call != null) {
             String methodName = call.getMethodExpression().getReferenceName();
             PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-            OptionalMemoryState optionalMemState = (OptionalMemoryState)memState;
-            if (qualifier != null && TypeUtils.isOptional(qualifier.getType())) {
-              if ("isPresent".equals(methodName)) {
-                DfaValue qualifierValue = optionalMemState.peek();
-                ThreeState state = optionalMemState.checkOptional(qualifierValue);
-                if(state == ThreeState.UNSURE) {
-                  DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-                  if(states.length != 1) return states;
-                  OptionalMemoryState trueState = (OptionalMemoryState)states[0].getMemoryState();
-                  trueState.pop();
-                  OptionalMemoryState falseState = trueState.createCopy();
-                  trueState.push(optionalMemState.getBoolean(true));
-                  trueState.applyIsPresentCheck(true, qualifierValue);
-                  falseState.push(optionalMemState.getBoolean(false));
-                  falseState.applyIsPresentCheck(false, qualifierValue);
-                  return new DfaInstructionState[] {states[0], new DfaInstructionState(states[0].getInstruction(), falseState)};
-                } else {
-                  return replaceResult(instruction, runner, memState, optionalMemState.getBoolean(state.toBoolean()));
-                }
-              }
-              else if (isOptionalGetMethodName(methodName)) {
-                ThreeState state = optionalMemState.checkOptional(memState.peek());
-                seen.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
-              }
-            }
-            if ("of".equals(methodName)) {
-              PsiMethod method = call.resolveMethod();
-              if (method != null && TypeUtils.isOptional(method.getContainingClass())) {
-                return replaceResult(instruction, runner, memState, optionalMemState.getOptional(true));
-              }
-            }
-            if ("ofNullable".equals(methodName)) {
-              PsiMethod method = call.resolveMethod();
-              if (method != null &&
-                  TypeUtils.isOptional(method.getContainingClass()) &&
-                  call.getArgumentList().getExpressions().length == 1) {
-                if(memState.isNotNull(memState.peek())) {
-                  return replaceResult(instruction, runner, memState, optionalMemState.getOptional(true));
-                }
-              }
-            }
-            if ("empty".equals(methodName)) {
-              PsiMethod method = call.resolveMethod();
-              if (method != null && TypeUtils.isOptional(method.getContainingClass())) {
-                return replaceResult(instruction, runner, memState, optionalMemState.getOptional(false));
-              }
+            if (qualifier != null && TypeUtils.isOptional(qualifier.getType()) && isOptionalGetMethodName(methodName)) {
+              ThreeState state = memState.checkOptional(memState.peek());
+              seen.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
             }
           }
           return super.visitMethodCall(instruction, runner, memState);
-        }
-
-        private DfaInstructionState[] replaceResult(MethodCallInstruction instruction,
-                                                    DataFlowRunner runner,
-                                                    DfaMemoryState memState,
-                                                    DfaValue result) {
-          DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-          memState.pop();
-          memState.push(result);
-          return states;
         }
       });
     }
@@ -189,77 +124,6 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
 
     private static boolean isOptionalGetMethodName(String name) {
       return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
-    }
-
-    static class OptionalMemoryState extends DfaMemoryStateImpl {
-      private final DfaOptionalValue myPresentValue;
-      private final DfaOptionalValue myAbsentValue;
-
-      public OptionalMemoryState(DfaValueFactory factory,
-                                 DfaOptionalValue presentValue,
-                                 DfaOptionalValue absentValue) {
-        super(factory);
-        myPresentValue = presentValue;
-        myAbsentValue = absentValue;
-      }
-
-      public OptionalMemoryState(OptionalMemoryState state) {
-        super(state);
-        myPresentValue = state.myPresentValue;
-        myAbsentValue = state.myAbsentValue;
-      }
-
-      public DfaValue getBoolean(boolean val) {
-        return val ? getFactory().getConstFactory().getTrue() : getFactory().getConstFactory().getFalse();
-      }
-
-      public DfaValue getOptional(boolean present) {
-        return present ? myPresentValue : myAbsentValue;
-      }
-
-      @NotNull
-      @Override
-      protected DfaVariableState createVariableState(@NotNull DfaVariableValue var) {
-        return new ValuableDataFlowRunner.ValuableDfaVariableState(var);
-      }
-
-      public ThreeState checkOptional(DfaValue value) {
-        if (value instanceof DfaVariableValue) {
-          DfaVariableValue var = (DfaVariableValue)value;
-          DfaValue newCond = getVariableState(var).getValue();
-          if (newCond == null) {
-            return checkOptional(getVariableState(var.createNegated()).getValue());
-          }
-          return checkOptional(newCond);
-        }
-        return value instanceof DfaOptionalValue ? ThreeState.fromBoolean(((DfaOptionalValue)value).myPresent) : ThreeState.UNSURE;
-      }
-
-      void applyIsPresentCheck(boolean present, DfaValue qualifier) {
-        if (qualifier instanceof DfaVariableValue) {
-          DfaVariableValue optionalVar = (DfaVariableValue)qualifier;
-          setVariableState(optionalVar, getVariableState(optionalVar).withValue(getOptional(present)));
-        }
-      }
-
-      @NotNull
-      @Override
-      public OptionalMemoryState createCopy() {
-        return new OptionalMemoryState(this);
-      }
-    }
-  }
-
-  static class DfaOptionalValue extends DfaValue {
-    final boolean myPresent;
-
-    protected DfaOptionalValue(DfaValueFactory factory, boolean isPresent) {
-      super(factory);
-      myPresent = isPresent;
-    }
-
-    public String toString() {
-      return myPresent ? "Optional with value" : "Empty optional";
     }
   }
 }

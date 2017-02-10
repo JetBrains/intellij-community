@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,11 @@ public interface DfaMemoryState {
 
   boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
 
+  void applyIsPresentCheck(boolean present, DfaValue qualifier);
+
   boolean applyCondition(DfaValue dfaCond);
+
+  ThreeState checkOptional(DfaValue value);
 
   void flushFields();
 
