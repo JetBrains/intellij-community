@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,17 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       return createUserFriendlyError(msg, null);
     }
 
+    final String rootCauseMessage = rootCause.getMessage();
+    // CommandLineArgumentException class can be loaded by different classloaders
+    if (rootCause.getClass().getName().equals(CommandLineArgumentException.class.getName())) {
+      if (StringUtil.contains(rootCauseMessage, "Unknown command-line option '--include-build'")) {
+        String msg = String.format(
+          "Gradle composite build support available for Gradle 3.1 or better version (<a href=\"%s\">Fix Gradle settings</a>)",
+          OpenGradleSettingsCallback.ID);
+        return createUserFriendlyError(msg, location, OpenGradleSettingsCallback.ID);
+      }
+    }
+
     final String rootCauseText = rootCause.toString();
     if (StringUtil.startsWith(rootCauseText, "org.gradle.api.internal.MissingMethodException")) {
       String method = parseMissingMethod(rootCauseText);
@@ -93,10 +105,9 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
     if (rootCause instanceof OutOfMemoryError) {
       // The OutOfMemoryError happens in the Gradle daemon process.
-      String originalMessage = rootCause.getMessage();
       String msg = "Out of memory";
-      if (originalMessage != null && !originalMessage.isEmpty()) {
-        msg = msg + ": " + originalMessage;
+      if (rootCauseMessage != null && !rootCauseMessage.isEmpty()) {
+        msg = msg + ": " + rootCauseMessage;
       }
       if (msg.endsWith("Java heap space")) {
         msg += ". Configure Gradle memory settings using '-Xmx' JVM option (e.g. '-Xmx2048m'.)";
@@ -110,14 +121,14 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ClassNotFoundException) {
-      String msg = String.format("Unable to load class '%1$s'.", rootCause.getMessage()) + EMPTY_LINE +
+      String msg = String.format("Unable to load class '%1$s'.", rootCauseMessage) + EMPTY_LINE +
                    UNEXPECTED_ERROR_FILE_BUG;
       // Location of build.gradle is useless for this error. Omitting it.
       return createUserFriendlyError(msg, null);
     }
 
     if (rootCause instanceof UnknownHostException) {
-      String msg = String.format("Unknown host '%1$s'.", rootCause.getMessage()) +
+      String msg = String.format("Unknown host '%1$s'.", rootCauseMessage) +
                    EMPTY_LINE + "Please ensure the host name is correct. " +
                    SET_UP_HTTP_PROXY;
       // Location of build.gradle is useless for this error. Omitting it.
@@ -125,7 +136,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ConnectException) {
-      String msg = rootCause.getMessage();
+      String msg = rootCauseMessage;
       if (msg != null && msg.contains("timed out")) {
         msg += msg.endsWith(".") ? " " : ". ";
         msg += SET_UP_HTTP_PROXY;
@@ -134,7 +145,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof RuntimeException) {
-      String msg = rootCause.getMessage();
+      String msg = rootCauseMessage;
 
       if (msg != null && UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN.matcher(msg).matches()) {
         if (!msg.endsWith(".")) {
@@ -147,13 +158,13 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     final String errMessage;
-    if (rootCause.getMessage() == null) {
+    if (rootCauseMessage == null) {
       StringWriter writer = new StringWriter();
       rootCause.printStackTrace(new PrintWriter(writer));
       errMessage = writer.toString();
     }
     else {
-      errMessage = rootCause.getMessage();
+      errMessage = rootCauseMessage;
     }
     return createUserFriendlyError(errMessage, location);
   }

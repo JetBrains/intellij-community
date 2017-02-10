@@ -133,7 +133,7 @@ public class NavBarModel {
     Object projectChild;
     Object projectGrandChild = null;
 
-    CommonProcessors.FindFirstAndOnlyProcessor<Object> processor = new CommonProcessors.FindFirstAndOnlyProcessor<Object>();
+    CommonProcessors.FindFirstAndOnlyProcessor<Object> processor = new CommonProcessors.FindFirstAndOnlyProcessor<>();
     processChildren(project, processor);
     projectChild = processor.reset();
     if (projectChild != null) {
@@ -145,7 +145,7 @@ public class NavBarModel {
 
   protected void updateModel(final PsiElement psiElement) {
 
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new HashSet<>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
 
@@ -165,7 +165,7 @@ public class NavBarModel {
       }
     }
 
-    final List<Object> updatedModel = new ArrayList<Object>();
+    final List<Object> updatedModel = new ArrayList<>();
 
     ApplicationManager.getApplication().runReadAction(() -> traverseToRoot(psiElement, roots, updatedModel));
 
@@ -173,7 +173,7 @@ public class NavBarModel {
   }
 
   void revalidate() {
-    final List<Object> objects = new ArrayList<Object>();
+    final List<Object> objects = new ArrayList<>();
     boolean update = false;
     for (Object o : myModel) {
       if (isValid(o)) {
@@ -203,7 +203,7 @@ public class NavBarModel {
       updateModel((PsiElement)object);
     }
     else if (object instanceof Module) {
-      List<Object> l = new ArrayList<Object>();
+      List<Object> l = new ArrayList<>();
       l.add(myProject);
       l.add(object);
       setModel(l);
@@ -250,7 +250,7 @@ public class NavBarModel {
 
 
   protected boolean hasChildren(Object object) {
-    return !processChildren(object, new CommonProcessors.FindFirstProcessor<Object>());
+    return !processChildren(object, new CommonProcessors.FindFirstProcessor<>());
   }
 
   //to avoid the following situation: element was taken from NavBarPanel via data context and all left children

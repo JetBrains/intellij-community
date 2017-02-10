@@ -42,7 +42,7 @@ public class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
 
   private final HttpConfigurable myHttpConfigurable;
-  private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<Pair<ProxySelector, String>>();
+  private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
 
   public IdeaWideProxySelector(HttpConfigurable configurable) {
     myHttpConfigurable = configurable;

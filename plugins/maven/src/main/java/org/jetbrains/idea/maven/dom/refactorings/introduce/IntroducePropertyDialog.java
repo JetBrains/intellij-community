@@ -110,7 +110,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private String[] getSuggestions(int level) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new THashSet<>();
 
     String value = mySelectedString.trim();
     boolean addUnqualifiedForm = true;
@@ -163,7 +163,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
       level--;
     }
 
-    result = new ArrayList<String>(result);
+    result = new ArrayList<>(result);
     Collections.sort((List)result, CodeStyleSettingsManager.getSettings(myProject).PREFER_LONGER_NAMES ?
                                    StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
     return ArrayUtil.toStringArray(result);
@@ -220,7 +220,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
 
 
   private List<MavenDomProjectModel> getProjects() {
-    List<MavenDomProjectModel> projects = new ArrayList<MavenDomProjectModel>();
+    List<MavenDomProjectModel> projects = new ArrayList<>();
 
     projects.add(myMavenDomProjectModel);
     projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel));

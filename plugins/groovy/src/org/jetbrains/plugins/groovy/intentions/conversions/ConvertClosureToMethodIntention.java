@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ConvertClosureToMethodIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrField field;
     if (element.getParent() instanceof GrField) {
       field = (GrField)element.getParent();
@@ -85,7 +85,7 @@ public class ConvertClosureToMethodIntention extends Intention {
       field = (GrField)resolved;
     }
 
-    final HashSet<PsiReference> usages = new HashSet<PsiReference>();
+    final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
     for (GrAccessorMethod getter : getters) {
@@ -98,8 +98,8 @@ public class ConvertClosureToMethodIntention extends Intention {
 
     final String fieldName = field.getName();
     LOG.assertTrue(fieldName != null);
-    final Collection<PsiElement> fieldUsages = new HashSet<PsiElement>();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final Collection<PsiElement> fieldUsages = new HashSet<>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiReference usage : usages) {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;

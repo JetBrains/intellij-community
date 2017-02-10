@@ -43,7 +43,7 @@ class PyPullUpViewInitializationInfo extends MembersViewInitializationInfo {
                                  @NotNull final List<PyMemberInfo<PyElement>> memberInfos,
                                  @NotNull final Collection<PyClass> parents) {
     super(memberInfoModel, memberInfos);
-    myParents = new ArrayList<PyClass>(parents);
+    myParents = new ArrayList<>(parents);
   }
 
   @NotNull

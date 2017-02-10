@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,24 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMigration;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +44,22 @@ import java.util.ArrayList;
 /**
  * @author ven
  */
-class MigrationProcessor extends BaseRefactoringProcessor {
+public class MigrationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationProcessor");
   private final MigrationMap myMigrationMap;
   private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
   private PsiMigration myPsiMigration;
+  private final GlobalSearchScope mySearchScope;
+  private ArrayList<SmartPsiElementPointer<PsiElement>> myRefsToShorten;
 
   public MigrationProcessor(Project project, MigrationMap migrationMap) {
+    this(project, migrationMap, GlobalSearchScope.projectScope(project));
+  }
+
+  public MigrationProcessor(Project project, MigrationMap migrationMap, GlobalSearchScope scope) {
     super(project);
     myMigrationMap = migrationMap;
+    mySearchScope = scope;
     myPsiMigration = startMigration(project);
   }
 
@@ -79,7 +93,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> usagesVector = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> usagesVector = new ArrayList<>();
     try {
       if (myMigrationMap == null) {
         return UsageInfo.EMPTY_ARRAY;
@@ -88,10 +102,10 @@ class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         UsageInfo[] usages;
         if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          usages = MigrationUtil.findPackageUsages(myProject, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findPackageUsages(myProject, myPsiMigration, entry.getOldName(), mySearchScope);
         }
         else {
-          usages = MigrationUtil.findClassUsages(myProject, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findClassUsages(myProject, myPsiMigration, entry.getOldName(), mySearchScope);
         }
 
         for (UsageInfo usage : usages) {
@@ -100,10 +114,22 @@ class MigrationProcessor extends BaseRefactoringProcessor {
       }
     }
     finally {
-      myPsiMigration.finish();
-      myPsiMigration = null;
+      Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode()) {
+        finishFindMigration();
+      }
+      else {
+        //invalidating resolve caches without write action could lead to situations when somebody with read action resolves reference and gets ResolveResult
+        //then here, in another read actions, all caches are invalidated but those resolve result is used without additional checks inside that read action - but it's already invalid
+        application.invokeLater(() -> WriteAction.run(() -> finishFindMigration()), ModalityState.NON_MODAL);
+      }
     }
-    return usagesVector.toArray(new MigrationUsageInfo[usagesVector.size()]);
+    return usagesVector.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private void finishFindMigration() {
+    myPsiMigration.finish();
+    myPsiMigration = null;
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
@@ -119,21 +145,22 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 
+    myRefsToShorten = new ArrayList<>();
     try {
+      boolean sameShortNames = false;
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
-        if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          MigrationUtil.doPackageMigration(myProject, psiMigration, entry.getNewName(), usages);
-        }
-        if (entry.getType() == MigrationMapEntry.CLASS) {
-          MigrationUtil.doClassMigration(myProject, psiMigration, entry.getNewName(), usages);
+        String newName = entry.getNewName();
+        PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
+                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName);
+        MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
+        if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
+          sameShortNames = true;
         }
       }
 
-      for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-        Object preparedData = helper.prepareOperation(usages);
-        //noinspection unchecked
-        helper.performOperation(myProject, preparedData);
+      if (!sameShortNames) {
+        myRefsToShorten.clear();
       }
     }
     finally {
@@ -143,14 +170,25 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Override
+  protected void performPsiSpoilingRefactoring() {
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
+    for (SmartPsiElementPointer<PsiElement> pointer : myRefsToShorten) {
+      PsiElement element = pointer.getElement();
+      if (element != null) {
+        styleManager.shortenClassReferences(element);
+      }
+    }
+  }
+
   protected String getCommandName() {
     return REFACTORING_NAME;
   }
 
-  public static class MigrationUsageInfo extends UsageInfo {
-    public MigrationMapEntry mapEntry;
+  static class MigrationUsageInfo extends UsageInfo {
+    MigrationMapEntry mapEntry;
 
-    public MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
+    MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
       super(info.getElement(), info.getRangeInElement().getStartOffset(), info.getRangeInElement().getEndOffset());
       this.mapEntry = mapEntry;
     }

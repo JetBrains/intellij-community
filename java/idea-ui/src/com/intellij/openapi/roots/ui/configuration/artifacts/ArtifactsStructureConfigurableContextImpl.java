@@ -53,10 +53,10 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   private final ArtifactAdapter myModifiableModelListener;
   private final StructureConfigurableContext myContext;
   private final Project myProject;
-  private final Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
-  private final Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
-  private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
-  private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
+  private final Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<>();
+  private final Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<>();
+  private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<>();
+  private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<>();
   private final ArtifactEditorSettings myDefaultSettings;
   private final ManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 

@@ -15,18 +15,41 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.internationalization.NonNlsUtils;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ObjectToStringInspection extends BaseInspection {
+  public boolean IGNORE_NONNLS = false;
+  public boolean IGNORE_EXCEPTION = false;
+  public boolean IGNORE_ASSERT = false;
+  public boolean IGNORE_TOSTRING = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.nonnls"), "IGNORE_NONNLS");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "IGNORE_EXCEPTION");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "IGNORE_ASSERT");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "IGNORE_TOSTRING");
+    return panel;
+  }
 
   @Override
   @NotNull
@@ -45,7 +68,7 @@ public class ObjectToStringInspection extends BaseInspection {
     return new ObjectToStringVisitor();
   }
 
-  private static class ObjectToStringVisitor extends BaseInspectionVisitor {
+  private class ObjectToStringVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -122,34 +145,37 @@ public class ObjectToStringInspection extends BaseInspection {
     }
 
     private void checkExpression(PsiExpression expression) {
-      if (expression == null) {
-        return;
-      }
+      if (expression == null) return;
+
       final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType)) return;
+
+      if (IGNORE_TOSTRING && MethodUtils.isToString(PsiTreeUtil.getParentOfType(expression, PsiMethod.class))) return;
+
+      if (IGNORE_EXCEPTION && (
+        ExceptionUtils.isExceptionArgument(expression) ||
+        PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class, true, PsiCodeBlock.class, PsiClass.class) != null)) return;
+
+      if (IGNORE_ASSERT &&
+          PsiTreeUtil.getParentOfType(expression, PsiAssertStatement.class, true, PsiCodeBlock.class, PsiClass.class) != null) {
         return;
       }
+
+      if (IGNORE_NONNLS && NonNlsUtils.isNonNlsAnnotatedUse(expression)) return;
+
       final PsiClassType classType = (PsiClassType)type;
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        return;
-      }
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return;
+
       final PsiClass referencedClass = classType.resolve();
-      if (referencedClass == null || referencedClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (referencedClass.isEnum() || referencedClass.isInterface()) {
-        return;
-      }
-      if (referencedClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (hasGoodToString(referencedClass)) {
-        return;
-      }
+      if (referencedClass == null || referencedClass instanceof PsiTypeParameter) return;
+      if (referencedClass.isEnum() || referencedClass.isInterface()) return;
+      if (referencedClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(expression instanceof PsiSuperExpression)) return;
+      if (hasGoodToString(referencedClass)) return;
+
       registerError(expression);
     }
 
-    private static boolean hasGoodToString(PsiClass aClass) {
+    private boolean hasGoodToString(PsiClass aClass) {
       final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.TO_STRING, true);
       for (PsiMethod method : methods) {
         final PsiClass containingClass = method.getContainingClass();

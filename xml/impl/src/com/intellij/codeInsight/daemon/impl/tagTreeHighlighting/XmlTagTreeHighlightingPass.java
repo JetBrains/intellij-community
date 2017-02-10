@@ -68,7 +68,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private final EditorEx myEditor;
   private final BreadcrumbsInfoProvider myInfoProvider;
 
-  private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<Pair<TextRange, TextRange>>();
+  private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<>();
 
   public XmlTagTreeHighlightingPass(@NotNull PsiFile file, @NotNull EditorEx editor) {
     super(file.getProject(), editor.getDocument(), true);
@@ -184,7 +184,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     clearLineMarkers(myEditor);
 
     final int count = myPairsToHighlight.size();
-    final List<HighlightInfo> highlightInfos = new ArrayList<HighlightInfo>(count * 2);
+    final List<HighlightInfo> highlightInfos = new ArrayList<>(count * 2);
     final MarkupModel markupModel = myEditor.getMarkupModel();
 
     final Color[] baseColors = XmlTagTreeHighlightingUtil.getBaseColors();
@@ -192,7 +192,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
                                     new Color[] {myEditor.getColorsScheme().getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES).getBackgroundColor()};
     final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
-    final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> newHighlighters = new ArrayList<>();
 
     assert colorsForEditor.length > 0;
 

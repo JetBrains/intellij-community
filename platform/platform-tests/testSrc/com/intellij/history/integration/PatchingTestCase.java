@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,8 +49,14 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
   protected void applyPatch() throws Exception {
     PatchReader reader = PatchVirtualFileReader.create(LocalFileSystem.getInstance().refreshAndFindFileByPath(patchFilePath));
 
-    List<FilePatch> patches = new ArrayList<FilePatch>(reader.readAllPatches());
+    List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
 
     new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null, null).execute();
+  }
+
+  protected static void createChildDataWithContent(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+    createChildData(dir, name);
+    VirtualFile file = dir.findChild(name);
+    setFileText(file, "some content");
   }
 }

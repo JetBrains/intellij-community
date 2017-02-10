@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PrepareAllToDeployAction extends PrepareToDeployAction {
@@ -34,7 +35,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    List<Module> pluginModules = new ArrayList<Module>();
+    List<Module> pluginModules = new ArrayList<>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
       if (PluginModuleType.isOfType(aModule)) {
         pluginModules.add(aModule);
@@ -51,14 +52,11 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
   }
 
   public void update(AnActionEvent e) {
-    int moduleCount = 0;
+    long moduleCount = 0;
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
-        if (PluginModuleType.isOfType(aModule)) {
-          moduleCount++;
-        }
-      }
+      moduleCount = Arrays.stream(ModuleManager.getInstance(project).getModules()).filter(PluginModuleType::isOfType)
+        .limit(2).count();
     }
     boolean enabled = false;
     if (moduleCount > 1) {

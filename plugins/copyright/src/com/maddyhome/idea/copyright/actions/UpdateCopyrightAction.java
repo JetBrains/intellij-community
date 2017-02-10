@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -37,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +133,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
-    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<PsiFile, Runnable>();
+    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
     Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {

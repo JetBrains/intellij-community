@@ -62,15 +62,10 @@ public class ComparisonToNaNInspection extends BaseInspection {
   }
 
   private static class ComparisonToNaNFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("comparison.to.nan.replace.quickfix");
     }
 

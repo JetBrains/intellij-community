@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,23 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
  */
 public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName)
+  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName)
     throws Exception {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    super.doAction(text, actionShouldBeAvailable, testFullPath, testName);
+    super.doAction(actionHint, testFullPath, testName);
 
-    if (actionShouldBeAvailable) {
+    if (actionHint.shouldPresent()) {
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.gotoEnd(false);
+      if (state != null) {
+        state.gotoEnd(false);
+      }
     }
   }
 

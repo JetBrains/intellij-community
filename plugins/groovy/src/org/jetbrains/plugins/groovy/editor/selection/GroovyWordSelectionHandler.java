@@ -64,7 +64,7 @@ public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
       }
     }
     else {
-      ranges = new ArrayList<TextRange>();
+      ranges = new ArrayList<>();
       ranges.add(e.getTextRange());
     }
 

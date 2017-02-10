@@ -54,9 +54,6 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
     }
     final RefModule refModule = (RefModule)refEntity;
     final List<RefEntity> children = refModule.getChildren();
-    if (children == null) {
-      return null;
-    }
     int numClasses = 0;
     for (RefEntity child : children) {
       if (child instanceof RefClass) {

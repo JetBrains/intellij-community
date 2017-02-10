@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(
@@ -49,8 +48,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @NonNls private static final String FIND_SCOPE_GLOBAL = "global";
   @NonNls private static final String FIND_SCOPE_SELECTED = "selected";
   private static final String DEFAULT_SEARCH_SCOPE = FindBundle.message("find.scope.all.project.classes");
-  
-  private static final int MAX_RECENT_SIZE = 30;
 
   public FindSettingsImpl() {
     recentFileMasks.add("*.properties");
@@ -116,7 +113,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @Tag("recentFileMasks")
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "mask", elementValueAttribute = "")
-  public List<String> recentFileMasks = new ArrayList<String>();
+  public List<String> recentFileMasks = new ArrayList<>();
 
   @Override
   public void loadState(FindSettingsImpl state) {
@@ -283,50 +280,31 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     model.setCustomScopeName(FIND_SCOPE);
   }
 
-  private static void addStringToList(@NotNull String str, @NotNull List<String> list, int maxSize) {
-    if (list.contains(str)) {
-      list.remove(str);
-    }
-    list.add(str);
-    while (list.size() > maxSize) {
-      list.remove(0);
-    }
-  }
-
   @Override
   public void addStringToFind(@NotNull String s){
-    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
-      return;
-    }
-    addStringToList(s, FindRecents.getInstance().findStrings, MAX_RECENT_SIZE);
+    FindRecents.getInstance().addStringToFind(s);
   }
 
   @Override
   public void addStringToReplace(@NotNull String s) {
-    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
-      return;
-    }
-    addStringToList(s, FindRecents.getInstance().replaceStrings, MAX_RECENT_SIZE);
+    FindRecents.getInstance().addStringToReplace(s);
   }
 
   @Override
   public void addDirectory(@NotNull String s) {
-    if (s.isEmpty()){
-      return;
-    }
-    addStringToList(s, FindRecents.getInstance().dirStrings, MAX_RECENT_SIZE);
+    FindRecents.getInstance().addDirectory(s);
   }
 
   @NotNull
   @Override
   public String[] getRecentFindStrings(){
-    return ArrayUtil.toStringArray(FindRecents.getInstance().findStrings);
+    return FindRecents.getInstance().getRecentFindStrings();
   }
 
   @NotNull
   @Override
   public String[] getRecentReplaceStrings(){
-    return ArrayUtil.toStringArray(FindRecents.getInstance().replaceStrings);
+    return FindRecents.getInstance().getRecentReplaceStrings();
   }
 
   @NotNull
@@ -338,7 +316,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @NotNull
   @Override
   public List<String> getRecentDirectories(){
-    return new ArrayList<String>(FindRecents.getInstance().dirStrings);
+    return FindRecents.getInstance().getRecentDirectories();
   }
 
   @Override
@@ -351,7 +329,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   public void setFileMask(String _fileMask) {
     FILE_MASK = _fileMask;
     if (!StringUtil.isEmptyOrSpaces(_fileMask)) {
-      addStringToList(_fileMask, recentFileMasks, MAX_RECENT_SIZE);
+      FindInProjectSettingsBase.addRecentStringToList(_fileMask, recentFileMasks);
     }
   }
 
@@ -429,48 +407,9 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     name = "FindRecents",
     storages = {@Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED)}
   )
-  static final class FindRecents implements PersistentStateComponent<FindRecents> {
+  static final class FindRecents extends FindInProjectSettingsBase {
     public static FindRecents getInstance() {
       return ServiceManager.getService(FindRecents.class);
-    }
-
-    @Tag("findStrings")
-    @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "find", elementValueAttribute = "")
-    public List<String> findStrings = new ArrayList<String>();
-
-    @Tag("replaceStrings")
-    @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "replace", elementValueAttribute = "")
-    public List<String> replaceStrings = new ArrayList<String>();
-
-    @Tag("dirStrings")
-    @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "dir", elementValueAttribute = "")
-    public List<String> dirStrings = new ArrayList<String>();
-
-    @Override
-    public void loadState(FindRecents state) {
-      XmlSerializerUtil.copyBean(state, this);
-      //Avoid duplicates
-      LinkedHashSet<String> tmp = new LinkedHashSet<>(findStrings);
-      findStrings.clear();
-      findStrings.addAll(tmp);
-
-      tmp.clear();
-      tmp.addAll(replaceStrings);
-      replaceStrings.clear();
-      replaceStrings.addAll(tmp);
-
-      tmp.clear();
-      tmp.addAll(dirStrings);
-      dirStrings.clear();
-      dirStrings.addAll(tmp);
-    }
-
-    @Override
-    public FindRecents getState() {
-      return this;
     }
   }
 }

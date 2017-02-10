@@ -36,7 +36,7 @@ import java.util.regex.PatternSyntaxException;
 public class FilterPattern {
 
     private static final Logger LOG = Logger.getInstance("#FilterPattern");
-    private static final Set<String> loggerNames = new THashSet<String>();
+    private static final Set<String> loggerNames = new THashSet<>();
     static {
       Collections.addAll(loggerNames,
                          "org.apache.log4j.Logger", "java.util.logging.Logger", "org.apache.commons.logging.Log", "org.slf4j.Logger");

@@ -112,7 +112,7 @@ public class ThrowSearchUtil {
   }
 
   public static boolean addThrowUsages(@NotNull Processor<UsageInfo> processor, @NotNull Root root, @NotNull FindUsagesOptions options) {
-    Set<PsiMethod> processed = new HashSet<PsiMethod>();
+    Set<PsiMethod> processed = new HashSet<>();
     return scanCatches(root.myElement, processor, root, options, processed);
   }
 

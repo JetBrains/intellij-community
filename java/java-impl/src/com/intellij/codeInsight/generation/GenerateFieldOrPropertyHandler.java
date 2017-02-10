@@ -88,7 +88,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
           }
         }
       }
-      return ContainerUtil.concat(Collections.singletonList(new PsiGenerationInfo<PsiField>(psiField)), Arrays.asList(infos));
+      return ContainerUtil.concat(Collections.singletonList(new PsiGenerationInfo<>(psiField)), Arrays.asList(infos));
     }
     catch (IncorrectOperationException e) {
       assert false : e;

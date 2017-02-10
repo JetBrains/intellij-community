@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,23 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AddReturnFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
   private final PsiMethod myMethod;
 
   public AddReturnFix(@NotNull PsiMethod method) {
@@ -59,22 +59,21 @@ public class AddReturnFix implements IntentionAction {
         ;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myMethod;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
+    String value = suggestReturnValue();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
+    PsiCodeBlock body = myMethod.getBody();
+    returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
-    try {
-      String value = suggestReturnValue();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-      PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
-      PsiCodeBlock body = myMethod.getBody();
-      returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
-
-      MethodReturnTypeFix.selectReturnValueInEditor(returnStatement, editor);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    MethodReturnTypeFix.selectReturnValueInEditor(returnStatement, editor);
   }
 
   private String suggestReturnValue() {
@@ -87,11 +86,37 @@ public class AddReturnFix implements IntentionAction {
         return variable.getName();
       }
     }
+    // then try to find a conversion of local variable to the required type
+    for (PsiVariable variable : variables) {
+      String conversion = getConversionToType(variable, type);
+      if (conversion != null) {
+        return conversion;
+      }
+    }
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
+  private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type) {
+    PsiType varType = variable.getType();
+    if (type instanceof PsiArrayType) {
+      PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
+      if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
+          InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
+        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
+          if (arrayComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return variable.getName() + ".toArray()";
+          }
+          return variable.getName() + ".toArray(new " + arrayComponentType.getCanonicalText() + "[0])";
+        }
+      }
+    }
+    return null;
+  }
+
   private static PsiVariable[] getDeclaredVariables(PsiMethod method) {
-    List<PsiVariable> variables = new ArrayList<PsiVariable>();
+    List<PsiVariable> variables = new ArrayList<>();
     PsiStatement[] statements = method.getBody().getStatements();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiDeclarationStatement) {

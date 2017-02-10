@@ -72,7 +72,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   private class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
       if (isConfusingAssignmentUsage(grAssignmentExpression)) {
         registerError(grAssignmentExpression);

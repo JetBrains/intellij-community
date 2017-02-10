@@ -36,7 +36,7 @@ public abstract class MavenModuleConfigurer {
   public static List<MavenModuleConfigurer> getConfigurers() {
     List<MavenModuleConfigurer> configurers = ourConfigurersList;
     if (configurers == null) {
-      configurers = new ArrayList<MavenModuleConfigurer>();
+      configurers = new ArrayList<>();
 
       for (MavenModuleConfigurer configurer : new MavenModuleConfigurer[]{
         new MavenCompilerConfigurer(),

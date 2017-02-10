@@ -59,7 +59,7 @@ public abstract class UIPropertyBinding {
   public abstract void addAllPropertiesTo(Collection<AbstractProperty> properties);
 
   public static class Composite extends UIPropertyBinding {
-    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<UIPropertyBinding>();
+    private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
 
     public ToggleButtonBinding bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
@@ -100,7 +100,7 @@ public abstract class UIPropertyBinding {
     }
 
     public <T extends JDOMExternalizable> TableListBinding<T> bindList(JTable table, ColumnInfo[] columns, ListProperty<T> property) {
-      final TableListBinding<T> binding = new TableListBinding<T>(table, columns, property);
+      final TableListBinding<T> binding = new TableListBinding<>(table, columns, property);
       myBindings.add(binding);
       return binding;
     }
@@ -128,7 +128,7 @@ public abstract class UIPropertyBinding {
     }
 
     public <T> OrderListBinding<T> bindList(JList list, ListProperty<T> property) {
-      OrderListBinding<T> binding = new OrderListBinding<T>(list, property);
+      OrderListBinding<T> binding = new OrderListBinding<>(list, property);
       addBinding(binding);
       return binding;
     }
@@ -346,7 +346,7 @@ public abstract class UIPropertyBinding {
   public static class TableListBinding<T> extends ComponentBinding<JTable, ListProperty<T>> {
     private final ListProperty<T> myProperty;
     private final ListTableModel<T> myModel;
-    private final Collection<JComponent> myComponents = new ArrayList<JComponent>();
+    private final Collection<JComponent> myComponents = new ArrayList<>();
     private StorageProperty myColumnWidthProperty;
 
     public TableListBinding(final JTable table, ColumnInfo[] columns, ListProperty<T> property) {
@@ -357,7 +357,7 @@ public abstract class UIPropertyBinding {
       header.setReorderingAllowed(false);
       header.setResizingAllowed(false);
       TableColumnModel columnModel = table.getColumnModel();
-      myModel = new ListTableModel<T>(columns);
+      myModel = new ListTableModel<>(columns);
       myModel.setSortable(false);
       table.setModel(myModel);
       for (int i = 0; i < columns.length; i++) {
@@ -443,7 +443,7 @@ public abstract class UIPropertyBinding {
           if (item == null) {
             return;
           }
-          ArrayList<T> items = new ArrayList<T>(myModel.getItems());
+          ArrayList<T> items = new ArrayList<>(myModel.getItems());
           items.add(item);
           myModel.setItems(items);
           int newIndex = myModel.indexOf(item);
@@ -499,7 +499,7 @@ public abstract class UIPropertyBinding {
   }
 
   private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
-    private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
+    private final ArrayList<JComponent> myComponents = new ArrayList<>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
 
@@ -527,7 +527,7 @@ public abstract class UIPropertyBinding {
 
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       ListModel model = myList.getModel();
-      ArrayList<Item> list = new ArrayList<Item>();
+      ArrayList<Item> list = new ArrayList<>();
       for (int i = 0; i < model.getSize(); i++) {
         list.add((Item)model.getElementAt(i));
       }
@@ -550,7 +550,7 @@ public abstract class UIPropertyBinding {
   public static class SortedListBinding<T extends JDOMExternalizable> extends BaseListBinding<T> {
     public SortedListBinding(JList list, ListProperty<T> property, Comparator<T> comparator) {
       super(property, list);
-      list.setModel(new SortedListModel<T>(comparator));
+      list.setModel(new SortedListModel<>(comparator));
     }
 
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +34,9 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
   public ApplicationConfigurationType() {
     myFactory = new ConfigurationFactoryEx(this) {
+      @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
 
@@ -72,12 +72,12 @@ public class ApplicationConfigurationType implements ConfigurationType {
     while (element != null) {
       if (element instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)element;
-        if (PsiMethodUtil.findMainInClass(aClass) != null){
+        if (PsiMethodUtil.findMainInClass(aClass) != null) {
           return aClass;
         }
-      } else if (element instanceof PsiJavaFile) {
-        final PsiJavaFile javaFile = (PsiJavaFile)element;
-        final PsiClass[] classes = javaFile.getClasses();
+      }
+      else if (element instanceof PsiJavaFile) {
+        final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
         for (PsiClass aClass : classes) {
           if (PsiMethodUtil.findMainInClass(aClass) != null) {
             return aClass;
@@ -92,7 +92,6 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
   @Override
   @NotNull
-  @NonNls
   public String getId() {
     return "Application";
   }

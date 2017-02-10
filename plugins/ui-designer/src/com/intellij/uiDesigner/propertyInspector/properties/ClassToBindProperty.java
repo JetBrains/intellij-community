@@ -100,7 +100,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         }
       };
       myActionListener = new MyActionListener();
-      myTfWithButton = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, myActionListener);
+      myTfWithButton = new ComponentWithBrowseButton<>(myEditorTextField, myActionListener);
       myEditorTextField.setBorder(null);
       new MyCancelEditingAction().registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
       /*

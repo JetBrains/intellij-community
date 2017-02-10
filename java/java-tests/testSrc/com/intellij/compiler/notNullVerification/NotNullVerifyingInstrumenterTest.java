@@ -16,6 +16,7 @@
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,7 +89,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   }
 
   public void testUseParameterNames() throws Exception {
-    Class<?> testClass = prepareTest(true);
+    Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Constructor constructor = testClass.getConstructor(Object.class, Object.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'obj2' of UseParameterNames.<init> must not be null", null, constructor, null, null);
 
@@ -101,13 +102,13 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   }
 
   public void testLongParameter() throws Exception {
-    Class<?> testClass = prepareTest(true);
+    Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", long.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of LongParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
   }
 
   public void testDoubleParameter() throws Exception {
-    Class<?> testClass = prepareTest(true);
+    Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", double.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of DoubleParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
   }
@@ -162,8 +163,26 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     }
   }
 
+  public void testMultipleMessages() throws Exception {
+    Class<?> test = prepareTest();
+    Object instance = test.newInstance();
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar1 must not be null", instance, test.getMethod("bar1", Object.class),
+                              (Object)null);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar2 must not be null", instance, test.getMethod("bar2", Object.class),
+                              (Object)null);
+    verifyCallThrowsException("@NotNull method MultipleMessages.foo1 must not return null", instance, test.getMethod("foo1"));
+    verifyCallThrowsException("@NotNull method MultipleMessages.foo2 must not return null", instance, test.getMethod("foo2"));
+  }
+
+  public void testMultipleAnnotations() throws Exception {
+    Class<?> test = prepareTest(false, "FooAnno", "BarAnno");
+    Object instance = test.newInstance();
+    verifyCallThrowsException("@FooAnno method MultipleAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
+    verifyCallThrowsException("@BarAnno method MultipleAnnotations.foo2 must not return null", instance, test.getMethod("foo2"));
+  }
+
   public void testMalformedBytecode() throws Exception {
-    Class<?> testClass = prepareTest(false);
+    Class<?> testClass = prepareTest(false, AnnotationUtil.NOT_NULL);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
   }
 
@@ -187,10 +206,10 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   }
 
   private Class prepareTest() throws IOException {
-    return prepareTest(false);
+    return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
   
-  private Class prepareTest(boolean withDebugInfo) throws IOException {
+  private Class prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
     String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
     final String baseClassName = getTestName(false);
     String path = base + baseClassName;
@@ -217,7 +236,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
 
         FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer);
+        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnos);
 
         byte[] instrumented = writer.toByteArray();
         final String className = FileUtil.getNameWithoutExtension(fileName);

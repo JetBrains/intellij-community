@@ -32,7 +32,7 @@ import static com.intellij.patterns.PlatformPatterns.virtualFile
 class Context {
   private final List<ContextFilter> myFilters = []
 
-  public Context(Map args) {
+  Context(Map args) {
     // Named parameter processing
     if (!args) return
 

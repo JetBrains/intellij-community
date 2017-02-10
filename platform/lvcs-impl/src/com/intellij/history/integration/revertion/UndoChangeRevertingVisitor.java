@@ -40,7 +40,7 @@ import java.util.Set;
 
 public class UndoChangeRevertingVisitor extends ChangeVisitor {
   private final IdeaGateway myGateway;
-  private final Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
+  private final Set<DelayedApply> myDelayedApplies = new HashSet<>();
 
   private final long myFromChangeId;
   private final long myToChangeId;
@@ -184,7 +184,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   private void unregisterDelayedApplies(VirtualFile fileOrDir) {
-    List<DelayedApply> toRemove = new ArrayList<DelayedApply>();
+    List<DelayedApply> toRemove = new ArrayList<>();
 
     for (DelayedApply a : myDelayedApplies) {
       if (VfsUtil.isAncestor(fileOrDir, a.getFile(), false)) {

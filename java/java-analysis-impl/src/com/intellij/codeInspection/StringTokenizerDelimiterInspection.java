@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
       final Object value = ((PsiLiteralExpression)delimiterArgument).getValue();
       if (value instanceof String) {
         String delimiters = (String)value;
-        final Set<Character> chars = new THashSet<Character>();
+        final Set<Character> chars = new THashSet<>();
         for (char c : delimiters.toCharArray()) {
           if (!chars.add(c)) {
             holder.registerProblem(delimiterArgument, "Delimiters argument contains duplicated characters", new ReplaceDelimitersWithUnique(delimiterArgument));
@@ -91,19 +91,22 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
     @NotNull
     @Override
     public String getFamilyName() {
+      //noinspection DialogTitleCapitalization
       return "Replace StringTokenizer delimiters parameter with unique symbols";
     }
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      final Set<Character> uniqueChars = new LinkedHashSet<Character>();
+      final Set<Character> uniqueChars = new LinkedHashSet<>();
       final PsiLiteralExpression delimiterArgument = (PsiLiteralExpression)startElement;
-      for (char c : ((String)delimiterArgument.getValue()).toCharArray()) {
+      final Object literal = delimiterArgument.getValue();
+      if(!(literal instanceof String)) return;
+      for (char c : ((String)literal).toCharArray()) {
         uniqueChars.add(c);
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, null).fun(
+      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, "\"").fun(
         newDelimiters)), null));
     }
   }

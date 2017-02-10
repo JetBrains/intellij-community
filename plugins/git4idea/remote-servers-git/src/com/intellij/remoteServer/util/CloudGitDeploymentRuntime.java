@@ -1,7 +1,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -193,7 +192,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     throws ServerRuntimeException {
 
     Collection<Change> changes = activeChangeList.getChanges();
-    final List<Change> relevantChanges = new ArrayList<Change>();
+    final List<Change> relevantChanges = new ArrayList<>();
     for (Change change : changes) {
       if (isRelevant(change.getBeforeRevision()) || isRelevant(change.getAfterRevision())) {
         relevantChanges.add(change);
@@ -203,7 +202,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     final Semaphore commitSemaphore = new Semaphore();
     commitSemaphore.down();
 
-    final Ref<Boolean> commitSucceeded = new Ref<Boolean>(false);
+    final Ref<Boolean> commitSucceeded = new Ref<>(false);
     Boolean commitStarted = runOnEdt(() -> CommitChangeListDialog.commitChanges(getProject(),
                                                                             relevantChanges,
                                                                             activeChangeList,
@@ -246,8 +245,8 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   private static <T> T runOnEdt(final Computable<T> computable) {
-    final Ref<T> result = new Ref<T>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
+    final Ref<T> result = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()));
     return result.get();
   }
 
@@ -498,7 +497,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   public CloudGitApplication findApplication4Repository() throws ServerRuntimeException {
-    final List<String> repositoryUrls = new ArrayList<String>();
+    final List<String> repositoryUrls = new ArrayList<>();
     for (GitRemote remote : getRepository().getRemotes()) {
       for (String url : remote.getUrls()) {
         repositoryUrls.add(url);

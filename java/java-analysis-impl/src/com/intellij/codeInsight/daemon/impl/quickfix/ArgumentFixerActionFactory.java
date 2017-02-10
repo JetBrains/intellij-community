@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,12 @@ public abstract class ArgumentFixerActionFactory {
 
   public void registerCastActions(@NotNull CandidateInfo[] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
-    List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
+    List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
+    if (list == null) return;
     PsiExpression[] expressions = list.getExpressions();
     if (expressions.length == 0) return;
-    // filter out not castable candidates
+    // filter out not cast-able candidates
     nextMethod:
     for (int i = methodCandidates.size() - 1; i >= 0; i--) {
       CandidateInfo candidate = methodCandidates.get(i);
@@ -78,12 +79,11 @@ public abstract class ArgumentFixerActionFactory {
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
         PsiType exprType = expression.getType();
-        Set<String> suggestedCasts = new THashSet<String>();
+        Set<String> suggestedCasts = new THashSet<>();
         // find to which type we can cast this param to get valid method call
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
-          assert method != null;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           PsiType originalParameterType = parameters[i].getType();
           PsiType parameterType = substitutor.substitute(originalParameterType);
@@ -101,7 +101,9 @@ public abstract class ArgumentFixerActionFactory {
           PsiCall newCall = (PsiCall) call.copy();
           PsiExpression modifiedExpression = getModifiedArgument(expression, parameterType);
           if (modifiedExpression == null) continue;
-          newCall.getArgumentList().getExpressions()[i].replace(modifiedExpression);
+          PsiExpressionList argumentList = newCall.getArgumentList();
+          if (argumentList == null) continue;
+          argumentList.getExpressions()[i].replace(modifiedExpression);
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
@@ -115,8 +117,7 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  public abstract boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context);
+  public abstract boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull PsiElement context);
 
-  public abstract MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType parameterType);
-
+  public abstract MethodArgumentFix createFix(PsiExpressionList list, int i, PsiType parameterType);
 }

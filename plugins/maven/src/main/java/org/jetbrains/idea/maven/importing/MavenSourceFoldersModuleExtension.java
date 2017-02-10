@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,12 @@ import java.util.*;
  * @author Vladislav.Soroka
  * @since 4/30/2014
  */
-public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSourceFoldersModuleExtension> {
+public class MavenSourceFoldersModuleExtension extends ModuleExtension {
 
   private ModifiableRootModel myRootModel;
   private JpsModule myDummyJpsModule;
   private JpsRootModel myDummyJpsRootModel;
-  private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<JpsSourceFolder>(ContentFolderComparator.INSTANCE);
+  private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<>(ContentFolderComparator.INSTANCE);
   private boolean isJpsSourceFoldersChanged;
 
   public void init(@NotNull Module module, @NotNull ModifiableRootModel modifiableRootModel) {
@@ -149,11 +149,11 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
   }
 
   public void clearSourceFolders() {
@@ -200,7 +200,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSour
 
   @NotNull
   public String[] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
       if (includingTests || !eachFolder.isTestSource()) {
         result.add(eachFolder.getUrl());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,10 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -54,9 +52,10 @@ import java.util.List;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+public class GitHistoryProvider implements VcsHistoryProviderEx,
+                                           VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
                                            VcsBaseRevisionAdviser {
-  private static final Logger log = Logger.getInstance(GitHistoryProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitHistoryProvider.class.getName());
 
   @NotNull private final Project myProject;
 
@@ -65,7 +64,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
   }
 
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
+    return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
@@ -103,7 +102,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
   }
 
   @Nullable
-  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = null;
     try {
       revisions = GitHistoryUtils.history(myProject, filePath);
@@ -123,8 +122,8 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
         }
         catch (VcsException e) {
           // likely the file is not under VCS anymore.
-          if (log.isDebugEnabled()) {
-            log.debug("Unable to retrieve the current revision number", e);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Unable to retrieve the current revision number", e);
           }
           return null;
         }
@@ -181,7 +180,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
   public void reportAppendableHistory(@NotNull FilePath path, 
                                       @Nullable VcsRevisionNumber startingRevision, 
                                       @NotNull final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList(), null);
+    final VcsAbstractHistorySession emptySession = createSession(path, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -191,18 +190,12 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
 
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
     GitHistoryUtils.history(myProject, refreshPath(path), null, startingRevision == null ? GitRevisionNumber.HEAD : startingRevision,
-                            new Consumer<GitFileRevision>() {
-                              public void consume(GitFileRevision gitFileRevision) {
-                                partner.acceptRevision(gitFileRevision);
+                            fileRevision -> partner.acceptRevision(fileRevision),
+                            exception -> {
+                              if (validator.checkExecutableAndNotifyIfNeeded()) {
+                                partner.reportException(exception);
                               }
-                            }, 
-                            new Consumer<VcsException>() {
-                              public void consume(VcsException e) {
-                                if (validator.checkExecutableAndNotifyIfNeeded()) {
-                                  partner.reportException(e);
-                                }
-                              }
-                            }, 
+                            },
                             additionalArgs);
   }
 

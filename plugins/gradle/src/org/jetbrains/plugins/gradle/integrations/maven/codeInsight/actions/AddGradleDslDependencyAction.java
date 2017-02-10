@@ -35,7 +35,7 @@ import java.util.List;
  * @since 10/23/13
  */
 public class AddGradleDslDependencyAction extends CodeInsightAction {
-  static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<List<MavenId>>();
+  static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();
 
   public AddGradleDslDependencyAction() {
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.description"));

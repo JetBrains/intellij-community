@@ -85,13 +85,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
-    QualifiedName result = null;
-    for (QualifiedName name : qNames) {
-      if (result == null || name.getComponentCount() < result.getComponentCount()) {
-        result = name;
-      }
-    }
-    return result;
+    return qNames.stream().min((o1, o2) -> o1.getComponentCount() - o2.getComponentCount()).orElse(null);
   }
 
   @Nullable
@@ -201,7 +195,7 @@ public class QualifiedNameFinder {
    */
   private static class PathChoosingVisitor implements RootVisitor {
     @Nullable private final VirtualFile myVFile;
-    @NotNull private final List<QualifiedName> myResults = new ArrayList<QualifiedName>();
+    @NotNull private final List<QualifiedName> myResults = new ArrayList<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {

@@ -95,7 +95,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
       return;
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e, isEnabledInModalContext()));
   }
 
   protected boolean isEnabled(AnActionEvent e) {

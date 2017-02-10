@@ -210,7 +210,7 @@ public class SvnChangeProvider implements ChangeProvider {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
     final String copyFromURL = ObjectUtils.assertNotNull(copiedFile.getCopyFromURL());
-    final Set<SvnChangedFile> deletedToDelete = new HashSet<SvnChangedFile>();
+    final Set<SvnChangedFile> deletedToDelete = new HashSet<>();
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
       final Status deletedStatus = deletedFile.getStatus();

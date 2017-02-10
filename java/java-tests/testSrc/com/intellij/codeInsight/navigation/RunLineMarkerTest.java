@@ -18,23 +18,27 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
+import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("ConstantConditions")
 public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
-
   public void testRunLineMarker() throws Exception {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
@@ -43,7 +47,8 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
                                                "    }\n" +
                                                "}");
     assertEquals(0, myFixture.findGuttersAtCaret().size());
-    assertEquals(2, myFixture.findAllGutters().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
   }
 
   public void testTestClassWithMain() throws Exception {
@@ -73,11 +78,33 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
   }
 
+  public void testNestedTestClass() throws Exception {
+    TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
+    String testUrl = "java:suite://Main$MainTest";
+    try {
+      stateStorage.writeState(testUrl, new TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.getValue(), new Date(), 0));
+      myFixture.addClass("package junit.framework; public class TestCase {}");
+      PsiFile file = myFixture.configureByText("MainTest.java", "public class Main {\n" +
+                                                                "  public class Main<caret>Test extends junit.framework.TestCase {\n" +
+                                                                "    public void testFoo() {\n" +
+                                                                "    }\n" +
+                                                                "  }" +
+                                                                "}");
+
+      RunLineMarkerContributor.Info info = new TestRunLineMarkerProvider().getInfo(file.findElementAt(myFixture.getCaretOffset()));
+      assertNotNull(info);
+      assertEquals(AllIcons.RunConfigurations.TestState.Red2, info.icon);
+    }
+    finally {
+      stateStorage.removeState(testUrl);
+    }
+  }
+
   public void testConfigurable() throws Exception {
     GutterIconsConfigurable configurable = new GutterIconsConfigurable();
     configurable.createComponent();
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
-    Set<String> strings = ContainerUtil.map2Set(descriptors, descriptor -> descriptor.getId());
+    Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
     assertEquals(descriptors.size(), strings.size());
   }
 }

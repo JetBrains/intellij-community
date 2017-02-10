@@ -27,7 +27,7 @@ public class VarVersionsGraph {
 
   public int counter = 0;
 
-  public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<VarVersionNode, VarVersionPair>();
+  public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<>();
 
   private GenericDominatorEngine engine;
 
@@ -48,13 +48,13 @@ public class VarVersionsGraph {
     }
     else {
 
-      HashSet<VarVersionNode> marked = new HashSet<VarVersionNode>();
+      HashSet<VarVersionNode> marked = new HashSet<>();
 
       if (domnodes.contains(node)) {
         return true;
       }
 
-      LinkedList<VarVersionNode> lstNodes = new LinkedList<VarVersionNode>();
+      LinkedList<VarVersionNode> lstNodes = new LinkedList<>();
       lstNodes.add(node);
 
       while (!lstNodes.isEmpty()) {
@@ -85,7 +85,7 @@ public class VarVersionsGraph {
 
   public void initDominators() {
 
-    final HashSet<VarVersionNode> roots = new HashSet<VarVersionNode>();
+    final HashSet<VarVersionNode> roots = new HashSet<>();
 
     for (VarVersionNode node : nodes) {
       if (node.preds.isEmpty()) {
@@ -108,12 +108,12 @@ public class VarVersionsGraph {
 
   private static LinkedList<VarVersionNode> getReversedPostOrder(Collection<VarVersionNode> roots) {
 
-    LinkedList<VarVersionNode> lst = new LinkedList<VarVersionNode>();
-    HashSet<VarVersionNode> setVisited = new HashSet<VarVersionNode>();
+    LinkedList<VarVersionNode> lst = new LinkedList<>();
+    HashSet<VarVersionNode> setVisited = new HashSet<>();
 
     for (VarVersionNode root : roots) {
 
-      LinkedList<VarVersionNode> lstTemp = new LinkedList<VarVersionNode>();
+      LinkedList<VarVersionNode> lstTemp = new LinkedList<>();
       addToReversePostOrderListIterative(root, lstTemp, setVisited);
 
       lst.addAll(lstTemp);
@@ -124,10 +124,10 @@ public class VarVersionsGraph {
 
   private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, HashSet<VarVersionNode> setVisited) {
 
-    HashMap<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<VarVersionNode, List<VarVersionEdge>>();
+    HashMap<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<>();
 
-    LinkedList<VarVersionNode> stackNode = new LinkedList<VarVersionNode>();
-    LinkedList<Integer> stackIndex = new LinkedList<Integer>();
+    LinkedList<VarVersionNode> stackNode = new LinkedList<>();
+    LinkedList<Integer> stackIndex = new LinkedList<>();
 
     stackNode.add(root);
     stackIndex.add(0);
@@ -141,7 +141,7 @@ public class VarVersionsGraph {
 
       List<VarVersionEdge> lstSuccs = mapNodeSuccs.get(node);
       if (lstSuccs == null) {
-        mapNodeSuccs.put(node, lstSuccs = new ArrayList<VarVersionEdge>(node.succs));
+        mapNodeSuccs.put(node, lstSuccs = new ArrayList<>(node.succs));
       }
 
       for (; index < lstSuccs.size(); index++) {

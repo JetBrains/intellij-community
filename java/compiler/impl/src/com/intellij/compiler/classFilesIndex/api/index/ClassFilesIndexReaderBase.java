@@ -72,7 +72,7 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
       final File projectBuildSystemDirectory = BuildManager.getInstance().getProjectSystemDirectory(project);
       final File indexDir = ClassFilesIndexStorageBase.getIndexDir(canonicalIndexName, projectBuildSystemDirectory);
       try {
-        index = new ClassFilesIndexStorageReader<K, V>(indexDir, keyDescriptor, valueExternalizer);
+        index = new ClassFilesIndexStorageReader<>(indexDir, keyDescriptor, valueExternalizer);
       }
       catch (final IOException e) {
         exception = e;

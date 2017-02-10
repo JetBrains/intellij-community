@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,9 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -181,7 +176,7 @@ public class GroovyConsole {
     ui.add(consoleViewComponent, BorderLayout.CENTER);
     ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (file.equals(contentFile)) {
@@ -211,12 +206,7 @@ public class GroovyConsole {
   private static ProcessHandler createProcessHandler(Module module) {
     try {
       final JavaParameters javaParameters = createJavaParameters(module);
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      assert sdk != null;
-      SdkTypeId sdkType = sdk.getSdkType();
-      assert sdkType instanceof JavaSdkType;
-      final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
-      final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
+      final GeneralCommandLine commandLine = javaParameters.toCommandLine();
       return new OSProcessHandler(commandLine) {
         @Override
         public boolean isSilentlyDestroyOnClose() {
@@ -240,6 +230,7 @@ public class GroovyConsole {
     }
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
     res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
+    res.setUseDynamicClasspath(true);
     return res;
   }
 

@@ -93,7 +93,7 @@ public class StructClass extends StructMember {
 
     // fields
     length = in.readUnsignedShort();
-    fields = new VBStyleCollection<StructField, String>();
+    fields = new VBStyleCollection<>();
     for (int i = 0; i < length; i++) {
       StructField field = new StructField(in, this);
       fields.addWithKey(field, InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor()));
@@ -101,7 +101,7 @@ public class StructClass extends StructMember {
 
     // methods
     length = in.readUnsignedShort();
-    methods = new VBStyleCollection<StructMethod, String>();
+    methods = new VBStyleCollection<>();
     for (int i = 0; i < length; i++) {
       StructMethod method = new StructMethod(in, this);
       methods.addWithKey(method, InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()));

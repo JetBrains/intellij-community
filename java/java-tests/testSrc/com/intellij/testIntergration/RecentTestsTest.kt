@@ -19,7 +19,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.FAILED_INDEX
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.PASSED_INDEX
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testIntegration.RecentTestsData
+import com.intellij.testIntegration.*
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -48,23 +48,20 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     now = Date()
   }
   
-  fun `test show suites without run configuration`() {
-    data.addTest("Test.x".test(), PASSED_INDEX, now, null)
-    data.addSuite("Test".suite(), PASSED_INDEX, now, null)
-    
-    val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(1)
-  }
-
   fun `test all tests passed`() {
-    data.addTest("Test.textXXX".test(), PASSED_INDEX, now, allTests)
-    data.addSuite("Test".suite(), PASSED_INDEX, now, allTests)
-    data.addSuite("JFSDTest".suite(), PASSED_INDEX, now, allTests)
-    data.addTest("Test.textYYY".test(), PASSED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), PASSED_INDEX, now, allTests)
-    data.addTest("Test.textZZZ".test(), PASSED_INDEX, now, allTests)
-    data.addTest("Test.textQQQ".test(), PASSED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
+    
+    
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    
+    data.addTest(SingleTestEntry("Test.textYYY".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textZZZ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textQQQ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
 
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(1)
@@ -73,39 +70,75 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
 
   fun `test if one failed in run configuration show failed suite`() {
-    data.addSuite("JFSDTest".suite(), FAILED_INDEX, now, allTests)
-    data.addSuite("Test".test(), PASSED_INDEX, now, allTests)
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
 
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
     
-    data.addTest("Test.textXXX".test(), PASSED_INDEX, now, allTests)
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
     
     val tests = data.getTestsToShow()
 
-    assertThat(tests).hasSize(3)
+    assertThat(tests).hasSize(1)
     
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
-    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
-    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[2].presentation).isEqualTo("all tests")
-    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
+    assertThat(tests[0].failed).isEqualTo(true)
   }
   
   
   fun `test if configuration with single test show failed test`() {
-    data.addSuite("JFSDTest".suite(), FAILED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
     
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(2)
+    assertThat(tests).hasSize(1)
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
-    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
   }
+
+
+  fun `test show test without suite`() {
+    data.addTest(SingleTestEntry("Test.sssss".test(), now, allTests, FAILED_INDEX))
+    val testsToShow = data.getTestsToShow()
+    assertThat(testsToShow).hasSize(1)
+  }
+
+
+  fun `test additional entries`() {
+    data.addSuite(SuiteEntry("Test2".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+
+    val failedTest = tests[0]
+
+    val collector = TestConfigurationCollector()
+    failedTest.accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(2)
+    assertThat(configs[0]).isInstanceOf(SuiteEntry::class.java)
+    assertThat(configs[1]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
+  fun `test if configuration consists of single test show only configuration`() {
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
+    val tests = data.getTestsToShow()
+    
+    assertThat(tests).hasSize(1)
+    
+    val collector = TestConfigurationCollector()
+    tests[0].accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(1)
+    assertThat(configs[0]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
   
   
 }

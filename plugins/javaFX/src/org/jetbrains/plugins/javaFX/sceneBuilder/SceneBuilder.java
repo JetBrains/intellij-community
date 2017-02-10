@@ -11,6 +11,8 @@ import java.net.URL;
 public interface SceneBuilder {
   JComponent getPanel();
 
+  boolean reload();
+
   void close();
 
   static SceneBuilder create(URL url, Project project, EditorCallback editorCallback) throws Exception {

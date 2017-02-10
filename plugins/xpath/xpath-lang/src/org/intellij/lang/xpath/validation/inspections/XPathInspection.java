@@ -118,7 +118,7 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
 
     void addProblem(ProblemDescriptor problem) {
       if (myProblems == null) {
-        myProblems = new SmartList<ProblemDescriptor>();
+        myProblems = new SmartList<>();
       }
       myProblems.add(problem);
     }

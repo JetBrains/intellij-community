@@ -37,7 +37,7 @@ import java.util.List;
 @Deprecated
 public abstract class LogicalRootsManager {
 
-  public static final Topic<LogicalRootListener> LOGICAL_ROOTS = new Topic<LogicalRootListener>("logical root changes", LogicalRootListener.class);
+  public static final Topic<LogicalRootListener> LOGICAL_ROOTS = new Topic<>("logical root changes", LogicalRootListener.class);
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
     return ServiceManager.getService(project, LogicalRootsManager.class);

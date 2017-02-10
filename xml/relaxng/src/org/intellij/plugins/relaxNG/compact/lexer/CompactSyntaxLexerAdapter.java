@@ -61,7 +61,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   private static final Token START = new Token();
 
   private CompactSyntaxTokenManager myLexer;
-  private final LinkedList<Token> myTokenQueue = new LinkedList<Token>();
+  private final LinkedList<Token> myTokenQueue = new LinkedList<>();
   private Token myCurrentToken;
   private int myCurrentOffset;
   private int myCurrentEnd;

@@ -56,6 +56,11 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected boolean replaceSuppressionComments(PsiElement container) {
     return false;
   }

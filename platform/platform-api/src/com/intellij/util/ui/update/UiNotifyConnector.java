@@ -36,7 +36,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   private Activatable myTarget;
 
   public UiNotifyConnector(@NotNull final Component component, @NotNull final Activatable target) {
-    myComponent = new WeakReference<Component>(component);
+    myComponent = new WeakReference<>(component);
     myTarget = target;
     if (component.isShowing()) {
       showNotify();

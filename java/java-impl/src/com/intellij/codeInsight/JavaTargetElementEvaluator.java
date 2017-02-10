@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -78,6 +79,11 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       }
     }
     return super.adjustTargetElement(editor, offset, flags, targetElement);
+  }
+
+  @Override
+  public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
+    return !(parent instanceof PsiDocTag);
   }
 
   @Override
@@ -161,19 +167,25 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);
   }
 
-
   @Nullable
   @Override
-  public PsiElement getNamedElement(@NotNull final PsiElement element) {
-    PsiElement parent = element.getParent();
+  public PsiElement getNamedElement(@NotNull PsiElement element) {
     if (element instanceof PsiIdentifier) {
-      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier())
-        || parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier())
-        || parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier())
-        || parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier()) ||
+          parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier()) ||
+          parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier()) ||
+          parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
         return parent;
       }
+      if (parent instanceof PsiJavaModuleReferenceElement) {
+        PsiElement grand = parent.getParent();
+        if (grand instanceof PsiJavaModule) {
+          return grand;
+        }
+      }
     }
+
     return null;
   }
 
@@ -210,7 +222,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()
-                                                                            : callExpr instanceof PsiNewExpression ? ((PsiNewExpression)callExpr).getQualifier() : null;
+                                                                            : ((PsiNewExpression)callExpr).getQualifier();
       if (qualifier == null) {
         allowStatics = true;
       }
@@ -220,7 +232,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       }
       PsiResolveHelper helper = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper();
       PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
-      final Collection<PsiElement> methods = new LinkedHashSet<PsiElement>();
+      final Collection<PsiElement> methods = new LinkedHashSet<>();
       for (PsiElement candidate1 : candidates) {
         PsiMethod candidate = (PsiMethod)candidate1;
         if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
@@ -263,16 +275,16 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @NotNull PsiElement element) {
     if (reference instanceof PsiReferenceExpression && element instanceof PsiMember) {
-      return getMemberClass(reference, element) != null;
+      return getClassesWithMember(reference, (PsiMember)element) != null;
     }
     return super.acceptImplementationForReference(reference, element);
   }
 
-  private static PsiClass[] getMemberClass(final PsiReference reference, final PsiElement element) {
+  private static PsiClass[] getClassesWithMember(final PsiReference reference, final PsiMember member) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
       @Override
       public PsiClass[] compute() {
-        PsiClass containingClass = ((PsiMember)element).getContainingClass();
+        PsiClass containingClass = member.getContainingClass();
         final PsiExpression expression = ((PsiReferenceExpression)reference).getQualifierExpression();
         PsiClass psiClass;
         if (reference instanceof PsiMethodReferenceExpression) {
@@ -280,10 +292,11 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         }
         else if (expression != null) {
           psiClass = PsiUtil.resolveClassInType(expression.getType());
-        } else {
-          if (element instanceof PsiClass) {
-            psiClass = (PsiClass)element;
-            final PsiElement resolve = reference.resolve();
+        }
+        else {
+          if (member instanceof PsiClass) {
+            psiClass = (PsiClass)member;
+            final PsiElement resolve = ((PsiReferenceExpression)reference).advancedResolve(true).getElement();
             if (resolve instanceof PsiClass) {
               containingClass = (PsiClass)resolve;
             }
@@ -294,17 +307,34 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
 
         if (containingClass == null && psiClass == null) return PsiClass.EMPTY_ARRAY;
         if (containingClass != null) {
-          PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<PsiClass>(containingClass);
-          while (psiClass != null) {
-            if (!processor1.process(psiClass) ||
-                !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<PsiClass>(psiClass)) ||
-                !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
-              return new PsiClass[] {psiClass};
-            }
-            psiClass = psiClass.getContainingClass();
-          }
+          PsiClass[] inheritors = getInheritors(containingClass, psiClass, new HashSet<>());
+          return inheritors.length == 0 ? null : inheritors;
         }
         return null;
+      }
+
+      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<PsiClass> visited) {
+        if (psiClass instanceof PsiTypeParameter) {
+          List<PsiClass> result = new ArrayList<>();
+          for (PsiClassType classType : psiClass.getExtendsListTypes()) {
+            PsiClass aClass = classType.resolve();
+            if (aClass != null && visited.add(aClass)) {
+              ContainerUtil.addAll(result, getInheritors(containingClass, aClass, visited));
+            }
+          }
+          return result.toArray(PsiClass.EMPTY_ARRAY);
+        }
+
+        PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<>(containingClass);
+        while (psiClass != null) {
+          if (!processor1.process(psiClass) ||
+              !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<>(psiClass)) ||
+              !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
+            return new PsiClass[] {psiClass};
+          }
+          psiClass = psiClass.getContainingClass();
+        }
+        return PsiClass.EMPTY_ARRAY;
       }
     });
   }
@@ -315,18 +345,18 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public SearchScope getSearchScope(Editor editor, @NotNull final PsiElement element) {
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
-      final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
+      final PsiClass[] memberClass = getClassesWithMember(referenceExpression, (PsiMember)element);
       if (memberClass != null && memberClass.length == 1) {
         return CachedValuesManager.getCachedValue(memberClass[0], () -> {
           final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
           classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
 
-          final Set<PsiClass> supers = new HashSet<PsiClass>();
+          final Set<PsiClass> supers = new HashSet<>();
           for (PsiClass psiClass : classesToSearch) {
             supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
           }
 
-          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          final List<PsiElement> elements = new ArrayList<>();
           elements.addAll(classesToSearch);
           elements.addAll(supers);
           elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());

@@ -48,7 +48,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
 
   /**
    * @return top component on which focus watcher was installed.
-   * The method always return <code>null</code> if focus watcher was installed
+   * The method always return {@code null} if focus watcher was installed
    * on some component hierarchy.
    */
   public Component getTopComponent() {
@@ -115,7 +115,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   /**
-   * @return last focused component or <code>null</code>.
+   * @return last focused component or {@code null}.
    */
   public final Component getFocusedComponent(){
     return SoftReference.dereference(myFocusedComponent);
@@ -170,11 +170,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   /**
-   * Override this method to get notifications about focus. <code>FocusWatcher</code> invokes
+   * Override this method to get notifications about focus. {@code FocusWatcher} invokes
    * this method each time one of the populated  component gains focus. All "temporary" focus
    * event are ignored.
    *
-   * @param component currenly focused component. The component can be <code>null</code>
+   * @param component currenly focused component. The component can be {@code null}
    * @param cause
    */
   protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}

@@ -56,7 +56,7 @@ class GrChageSignatureUsageSearcher {
   }
 
   public UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiElement element = myChangeInfo.getMethod();
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
@@ -104,7 +104,7 @@ class GrChageSignatureUsageSearcher {
     if (!GroovyLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
+    final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<>();
     if (isOriginal) {
       ContainerUtil.addAll(deletedOrRenamedParameters, parameters);
       for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {

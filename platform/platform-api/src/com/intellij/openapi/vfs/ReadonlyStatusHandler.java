@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
+
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
     return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
@@ -66,5 +67,4 @@ public abstract class ReadonlyStatusHandler {
   public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);
   }
-
 }

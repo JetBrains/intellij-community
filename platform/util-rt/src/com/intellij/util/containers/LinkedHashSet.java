@@ -35,6 +35,7 @@ class LinkedHashSet<E> extends java.util.LinkedHashSet<E> {
     super(i);
   }
 
+  @Override
   public void clear() {
     if (size() == 0) return; // optimization
     super.clear();

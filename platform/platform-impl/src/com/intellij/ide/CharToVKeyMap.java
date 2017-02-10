@@ -15,20 +15,19 @@
  */
 package com.intellij.ide;
 
+import gnu.trove.TObjectIntHashMap;
+
 import java.awt.event.KeyEvent;
-import java.util.HashMap;
 
 /**
  * @author Denis Fokin
  */
 class CharToVKeyMap {
-
   private CharToVKeyMap() {}
 
-  private static HashMap<Character, Integer> charToVKeyMap =
-    new HashMap<Character, Integer>();
+  private static final TObjectIntHashMap<Character> charToVKeyMap = new TObjectIntHashMap<>();
 
-  public static Integer get (Character ch) {
+  public static int get(Character ch) {
     return charToVKeyMap.containsKey(ch) ? charToVKeyMap.get(ch) : KeyEvent.VK_UNDEFINED;
   }
 

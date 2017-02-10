@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedScopesHolder implements PersistentStateComponent<Element> {
-  private List<NamedScope> myScopes = new ArrayList<NamedScope>();
+  private List<NamedScope> myScopes = new ArrayList<>();
   @NonNls private static final String SCOPE_TAG = "scope";
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
@@ -74,7 +74,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @NotNull public NamedScope[] getScopes() {
-    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    final List<NamedScope> scopes = new ArrayList<>();
     List<NamedScope> list = getPredefinedScopes();
     scopes.addAll(list);
     scopes.addAll(myScopes);
@@ -91,7 +91,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   public void setScopes(NamedScope[] scopes) {
-    myScopes = new ArrayList<NamedScope>(Arrays.asList(scopes));
+    myScopes = new ArrayList<>(Arrays.asList(scopes));
     fireScopeListeners();
   }
 
@@ -102,8 +102,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @Nullable
   public static NamedScope getScope(@NotNull Project project, final String scopeName) {
-    final NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
-    for (NamedScopesHolder holder : holders) {
+    for (NamedScopesHolder holder : getAllNamedScopeHolders(project)) {
       final NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
         return scope;

@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,9 @@ public class TaskFile {
   private int myIndex = -1;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
+  private boolean myTrackLengths = true;
   private boolean myHighlightErrors = false;
-  @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
+  @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<>();
   @Transient private Task myTask;
 
   public TaskFile() {
@@ -42,6 +44,16 @@ public class TaskFile {
 
   public List<AnswerPlaceholder> getAnswerPlaceholders() {
     return myAnswerPlaceholders;
+  }
+
+  public List<AnswerPlaceholder> getActivePlaceholders() {
+    List<AnswerPlaceholder> result = new ArrayList<>();
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      if (placeholder.getActiveSubtaskInfo() != null) {
+        result.add(placeholder);
+      }
+    }
+    return result;
   }
 
   public void setAnswerPlaceholders(List<AnswerPlaceholder> answerPlaceholders) {
@@ -76,20 +88,20 @@ public class TaskFile {
    */
   @Nullable
   public AnswerPlaceholder getAnswerPlaceholder(int offset) {
-    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
-      int placeholderStart = placeholder.getOffset();
-      int placeholderEnd = placeholderStart + placeholder.getRealLength();
-      if (placeholderStart <= offset && offset <= placeholderEnd) {
-        return placeholder;
-      }
-    }
-    return null;
+    return StudyUtils.getAnswerPlaceholder(offset, getActivePlaceholders());
   }
 
+  public boolean isTrackLengths() {
+    return myTrackLengths;
+  }
+
+  public void setTrackLengths(boolean trackLengths) {
+    myTrackLengths = trackLengths;
+  }
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
-    List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getAnswerPlaceholders();
-    List<AnswerPlaceholder> answerPlaceholdersCopy = new ArrayList<AnswerPlaceholder>(sourceAnswerPlaceholders.size());
+    List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getActivePlaceholders();
+    List<AnswerPlaceholder> answerPlaceholdersCopy = new ArrayList<>(sourceAnswerPlaceholders.size());
     for (AnswerPlaceholder answerPlaceholder : sourceAnswerPlaceholders) {
       AnswerPlaceholder answerPlaceholderCopy = new AnswerPlaceholder();
       answerPlaceholderCopy.setTaskText(answerPlaceholder.getTaskText());

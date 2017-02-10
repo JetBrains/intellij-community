@@ -80,7 +80,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
                                                                    final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
     PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
-    final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+    final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
     if (extendClass != null) {
       if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
         String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());

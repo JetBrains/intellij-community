@@ -148,8 +148,8 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
 
       final Collection<File> files = Collections.singleton(srcFile);
 
-      final Set<File> cp = new LinkedHashSet<File>();
-      final List<File> platformCp = new ArrayList<File>();
+      final Set<File> cp = new LinkedHashSet<>();
+      final List<File> platformCp = new ArrayList<>();
 
       final Computable<OrderEnumerator> orderEnumerator = module != null ? (Computable<OrderEnumerator>)() -> ModuleRootManager.getInstance(module).orderEntries()
                                                                          : (Computable<OrderEnumerator>)() -> ProjectRootManager.getInstance(project).orderEntries();
@@ -163,7 +163,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
         }
       });
 
-      final List<String> options = new ArrayList<String>();
+      final List<String> options = new ArrayList<>();
       options.add("-g"); // always compile with debug info
       final JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(targetSdk);
       if (sdkVersion != null) {
@@ -176,7 +176,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       options.add("-proc:none"); // disable annotation processing
 
       final Collection<ClassObject> result = CompilerManager.getInstance(project).compileJavaCode(
-        options, platformCp, cp, Collections.<File>emptyList(), files, outputDir
+        options, platformCp, cp, Collections.emptyList(), Collections.emptyList(), files, outputDir
       );
       for (ClassObject classObject : result) {
         final byte[] bytes = classObject.getContent();

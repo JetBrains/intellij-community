@@ -18,8 +18,6 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,12 +84,11 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+  public void testInvalidConditional() throws Exception {
+    doTest();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
+  private void doTest() {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

@@ -19,10 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,8 +32,8 @@ import java.util.Set;
  */
 public class OffsetMap implements Disposable {
   private final Document myDocument;
-  private final Map<OffsetKey, RangeMarker> myMap = new THashMap<OffsetKey, RangeMarker>();
-  private final Set<OffsetKey> myModified = new THashSet<OffsetKey>();
+  private final Map<OffsetKey, RangeMarker> myMap = new THashMap<>();
+  private final Set<OffsetKey> myModified = new THashSet<>();
   private volatile boolean myDisposed;
 
   public OffsetMap(final Document document) {
@@ -48,10 +48,10 @@ public class OffsetMap implements Disposable {
   public int getOffset(OffsetKey key) {
     synchronized (myMap) {
       final RangeMarker marker = myMap.get(key);
-      if (marker == null) return -1;
+      if (marker == null) throw new IllegalArgumentException("Offset " + key + " is not registered");
       if (!marker.isValid()) {
         removeOffset(key);
-        return -1;
+        throw new IllegalStateException("Offset " + key + " is invalid: " + marker);
       }
 
       final int endOffset = marker.getEndOffset();
@@ -60,6 +60,11 @@ public class OffsetMap implements Disposable {
       }
       return endOffset;
     }
+  }
+
+  public boolean containsOffset(OffsetKey key) {
+    final RangeMarker marker = myMap.get(key);
+    return marker != null && marker.isValid();
   }
 
   /**
@@ -108,7 +113,7 @@ public class OffsetMap implements Disposable {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
       assert !myDisposed;
-      return new ArrayList<OffsetKey>(myMap.keySet());
+      return ContainerUtil.filter(myMap.keySet(), this::containsOffset);
     }
   }
 

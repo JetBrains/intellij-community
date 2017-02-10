@@ -42,7 +42,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   private int myCachedHashCode;
 
-  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Module[] modules) {
+  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<Module> modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<>();
@@ -64,6 +64,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Collections.addAll(myEntries, entry.getRootFiles(OrderRootType.CLASSES));
+    Collections.addAll(myEntries, entry.getRootFiles(OrderRootType.SOURCES));
   }
 
   public int hashCode() {
@@ -96,6 +97,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         final Library library = libraryOrderEntry.getLibrary();
         if (library != null && processedLibraries.add(library)) {
           ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
+          ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.SOURCES));
         }
         return value;
       }
@@ -122,6 +124,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
           ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
+          ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.SOURCES));
         }
         return value;
       }
@@ -135,7 +138,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   @Nullable
   private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    if (myIndex.isInContent(file)) {
+    if (myIndex.isInContent(file) || myIndex.isInLibrarySource(file)) {
       return myIndex.getSourceRootForFile(file);
     }
     if (myIndex.isInLibraryClasses(file)) {

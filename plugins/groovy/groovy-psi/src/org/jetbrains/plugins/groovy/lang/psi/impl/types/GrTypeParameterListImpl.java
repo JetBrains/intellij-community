@@ -47,11 +47,6 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
     super(node);
   }
 
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
   public String toString() {
     return "Type parameter list";
   }

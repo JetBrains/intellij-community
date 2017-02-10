@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
@@ -53,7 +50,7 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
           if (value != null && FxmlConstants.TYPE.equals(key)) {
             Set<String> paths = map.get(value);
             if (paths == null) {
-              paths = new HashSet<String>();
+              paths = new HashSet<>();
               map.put(value, paths);
             }
             paths.add(path);
@@ -118,28 +115,6 @@ public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String,
                                            @NotNull final String className,
                                            final Function<VirtualFile, T> f,
                                            final GlobalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {
-      @Override
-      public List<T> compute() {
-        final Collection<VirtualFile> files;
-        try {
-          files = FileBasedIndex.getInstance().getContainingFiles(KEY, className,
-                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
-        }
-        catch (IndexNotReadyException e) {
-          return Collections.emptyList();
-        }
-        if (files.isEmpty()) return Collections.emptyList();
-        List<T> result = new ArrayList<T>();
-        for (VirtualFile file : files) {
-          if (!file.isValid()) continue;
-          final T fFile = f.fun(file);
-          if (fFile != null) {
-            result.add(fFile);
-          }
-        }
-        return result;
-      }
-    });
+    return JavaFxControllerClassIndex.findFxmls(KEY, project, className, f, scope);
   }
 }

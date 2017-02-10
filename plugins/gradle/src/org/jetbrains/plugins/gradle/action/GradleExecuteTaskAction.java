@@ -151,7 +151,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true));
 
     final Map<String, List<String>> optionsMap =
-      commandLineConverter.convert(parsedCommandLine, new HashMap<String, List<String>>());
+      commandLineConverter.convert(parsedCommandLine, new HashMap<>());
 
     final List<String> systemProperties = optionsMap.remove("system-prop");
     final String vmOptions = systemProperties == null ? "" : StringUtil.join(systemProperties, entry -> "-D" + entry, " ");

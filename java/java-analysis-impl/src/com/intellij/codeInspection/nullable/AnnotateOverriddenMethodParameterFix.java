@@ -21,7 +21,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -31,7 +30,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,7 +39,6 @@ import java.util.List;
  * @author cdr
  */
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   private final String myAnnotation;
   private final String[] myAnnosToRemove;
 
@@ -57,6 +54,11 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
@@ -67,7 +69,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int index = ArrayUtilRt.find(parameters, parameter);
 
-    List<PsiParameter> toAnnotate = new ArrayList<PsiParameter>();
+    List<PsiParameter> toAnnotate = new ArrayList<>();
 
     PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod psiMethod : methods) {
@@ -81,15 +83,10 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
-      try {
-        assert psiParam != null : toAnnotate;
-        if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
-          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, PsiNameValuePair.EMPTY_ARRAY, myAnnosToRemove);
-          fix.invoke(project, psiParam.getContainingFile(), psiParam, psiParam);
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+      assert psiParam != null : toAnnotate;
+      if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
+        AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, PsiNameValuePair.EMPTY_ARRAY, myAnnosToRemove);
+        fix.invoke(project, psiParam.getContainingFile(), psiParam, psiParam);
       }
     }
   }

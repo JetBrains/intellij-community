@@ -15,10 +15,7 @@
  */
 package org.jetbrains.debugger.values
 
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Obsolescent
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -42,12 +39,5 @@ abstract class ValueManager() : Obsolescent {
 
   fun markObsolete() {
     obsolete = true
-  }
-
-  companion object {
-    val OBSOLETE_CONTEXT_PROMISE = rejectedPromise<Any?>(AsyncPromise.OBSOLETE_ERROR)
-
-    @Suppress("CAST_NEVER_SUCCEEDS")
-    fun <T> reject() = OBSOLETE_CONTEXT_PROMISE as Promise<T>
   }
 }

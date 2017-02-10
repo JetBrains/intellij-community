@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,16 +331,9 @@ public class ClassWriter {
       buffer.append("class ");
     }
 
-    GenericClassDescriptor descriptor = null;
-    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttributes().getWithKey("Signature");
-      if (attr != null) {
-        descriptor = GenericMain.parseClassSignature(attr.getSignature());
-      }
-    }
-
     buffer.append(node.simpleName);
 
+    GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
     if (descriptor != null && !descriptor.fparameters.isEmpty()) {
       appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
     }
@@ -1051,7 +1044,17 @@ public class ClassWriter {
     }
   }
 
-  private static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<List<GenericType>> bounds) {
+  public static GenericClassDescriptor getGenericClassDescriptor(StructClass cl) {
+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttributes().getWithKey("Signature");
+      if (attr != null) {
+        return GenericMain.parseClassSignature(attr.getSignature());
+      }
+    }
+    return null;
+  }
+
+  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<List<GenericType>> bounds) {
     buffer.append('<');
 
     for (int i = 0; i < parameters.size(); i++) {

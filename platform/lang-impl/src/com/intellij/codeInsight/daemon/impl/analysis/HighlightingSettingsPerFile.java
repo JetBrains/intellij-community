@@ -17,11 +17,10 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +47,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
   }
 
-  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlightingSetting[]>();
+  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
   private static int getRootIndex(PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
@@ -56,7 +55,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     if (languages.size() == 1) {
       return 0;
     }
-    List<Language> array = new ArrayList<Language>(languages);
+    List<Language> array = new ArrayList<>(languages);
     Collections.sort(array, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (int i = 0; i < array.size(); i++) {
       Language language = array.get(i);
@@ -133,7 +132,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
       if (url == null) continue;
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(url);
       if (fileByUrl != null) {
-        final List<FileHighlightingSetting> settings = new ArrayList<FileHighlightingSetting>();
+        final List<FileHighlightingSetting> settings = new ArrayList<>();
         int index = 0;
         while (child.getAttributeValue(ROOT_ATT_PREFIX + index) != null) {
           final String attributeValue = child.getAttributeValue(ROOT_ATT_PREFIX + index++);
@@ -170,8 +169,6 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
 
   @Override
   public boolean shouldInspect(@NotNull PsiElement psiRoot) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
-
     final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
     if (settingForRoot == FileHighlightingSetting.SKIP_HIGHLIGHTING ||
         settingForRoot == FileHighlightingSetting.SKIP_INSPECTION) {
@@ -181,7 +178,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
 
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) {
+      return false;
+    }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;

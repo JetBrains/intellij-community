@@ -15,11 +15,9 @@
  */
 package com.intellij.psi.codeStyle.extractor.ui;
 
-import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.extractor.values.Value;
@@ -32,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -416,7 +415,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     treeTable.setTableHeader(null);
 
-    OptionTableWithPreviewPanel.expandTree(tree);
+    TreeUtil.expandAll(tree);
 
     treeTable.getColumnModel().getSelectionModel().setAnchorSelectionIndex(1);
     treeTable.getColumnModel().getSelectionModel().setLeadSelectionIndex(1);

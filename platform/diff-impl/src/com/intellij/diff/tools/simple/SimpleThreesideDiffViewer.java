@@ -16,7 +16,7 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
@@ -33,7 +33,6 @@ import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -48,8 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
-  public static final Logger LOG = Logger.getInstance(SimpleThreesideDiffViewer.class);
-
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
 
@@ -70,8 +67,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT));
     group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
     group.add(Separator.getInstance());
@@ -125,8 +122,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       });
 
       final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
-                                                                    comparisonPolicy, indicator);
+
+      ComparisonManager manager = ComparisonManager.getInstance();
+      List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                   comparisonPolicy, indicator);
 
       List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
         indicator.checkCanceled();

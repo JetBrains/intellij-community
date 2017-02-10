@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,12 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
@@ -65,8 +63,9 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts,
-                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> modifierList.setModifierProperty(getModifier(), true)));
+      final ConflictsDialog conflictsDialog =
+        new ConflictsDialog(project, conflicts,
+                            () -> ApplicationManager.getApplication().runWriteAction(() -> modifierList.setModifierProperty(getModifier(), true)));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {
@@ -94,7 +93,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       if (name.equals(className)) {
         return MultiMap.emptyInstance();
       }
-      final MultiMap<PsiElement, String> conflicts = new MultiMap();
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       conflicts.putValue(aClass, IntentionPowerPackBundle.message(
         "0.is.declared.in.1.but.when.public.should.be.declared.in.a.file.named.2",
         RefactoringUIUtil.getDescription(aClass, false),
@@ -106,7 +105,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return MultiMap.emptyInstance();
     }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (member instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)member;
       SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
@@ -138,7 +137,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     }
     final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
     modifierListCopy.setModifierProperty(getModifier(), true);
-    final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
+    final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
     search.forEach(reference -> {
       final PsiElement element = reference.getElement();
       if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {

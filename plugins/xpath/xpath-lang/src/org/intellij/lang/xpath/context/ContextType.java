@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class ContextType {
-    private static final Map<String, ContextType> ourRegistry = new HashMap<String, ContextType>();
+    private static final Map<String, ContextType> ourRegistry = new HashMap<>();
 
     public static final ContextType PLAIN = lookupOrCreate("PLAIN", XPathVersion.V1);
     public static final ContextType PLAIN_V2 = lookupOrCreate("PLAIN_V2", XPathVersion.V2);

@@ -46,14 +46,8 @@ import java.util.*;
 public class AddCallSuperQuickFix implements LocalQuickFix {
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.add.super");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.add.super");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -118,8 +112,8 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   private static Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull ParametersInfo origInfo,
                                                                                  @NotNull ParametersInfo superInfo,
                                                                                  boolean addSelfToCall) {
-    final List<String> newFunctionParams = new ArrayList<String>();
-    final List<String> superCallArgs = new ArrayList<String>();
+    final List<String> newFunctionParams = new ArrayList<>();
+    final List<String> superCallArgs = new ArrayList<>();
 
     final PyParameter selfParameter = origInfo.getSelfParameter();
     if (selfParameter != null && StringUtil.isNotEmpty(selfParameter.getName())) {
@@ -261,11 +255,11 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     /**
      * Parameters without default value that come before first "*..." parameter.
      */
-    private final List<PyParameter> myRequiredParams = new ArrayList<PyParameter>();
+    private final List<PyParameter> myRequiredParams = new ArrayList<>();
     /**
      * Parameters with default value that come before first "*..." parameter.
      */
-    private final List<PyParameter> myOptionalParams = new ArrayList<PyParameter>();
+    private final List<PyParameter> myOptionalParams = new ArrayList<>();
     /**
      * Parameter of form "*args" (positional vararg), not the same as single "*".
      */
@@ -277,17 +271,17 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     /**
      * Parameters without default value that come after first "*..." parameter.
      */
-    private final List<PyParameter> myRequiredKwOnlyParams = new ArrayList<PyParameter>();
+    private final List<PyParameter> myRequiredKwOnlyParams = new ArrayList<>();
     /**
      * Parameters with default value that come after first "*..." parameter.
      */
-    private final List<PyParameter> myOptionalKwOnlyParams = new ArrayList<PyParameter>();
+    private final List<PyParameter> myOptionalKwOnlyParams = new ArrayList<>();
     /**
      * Parameter of form "**kwargs" (keyword vararg).
      */
     private final PyParameter myKeywordContainerParam;
 
-    private final Set<String> myAllParameterNames = new LinkedHashSet<String>();
+    private final Set<String> myAllParameterNames = new LinkedHashSet<>();
 
     public ParametersInfo(@NotNull PyParameterList parameterList) {
       PyParameter positionalContainer = null;
@@ -382,7 +376,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
 
   @NotNull
   private static List<String> collectParameterNames(@NotNull PyParameter param) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     collectParameterNames(param, result);
     return result;
   }

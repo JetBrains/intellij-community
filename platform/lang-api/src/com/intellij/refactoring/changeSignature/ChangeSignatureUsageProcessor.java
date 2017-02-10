@@ -31,7 +31,7 @@ import java.util.List;
  */
 public interface ChangeSignatureUsageProcessor {
   ExtensionPointName<ChangeSignatureUsageProcessor> EP_NAME =
-    new ExtensionPointName<ChangeSignatureUsageProcessor>("com.intellij.refactoring.changeSignatureUsageProcessor");
+    new ExtensionPointName<>("com.intellij.refactoring.changeSignatureUsageProcessor");
 
   UsageInfo[] findUsages(ChangeInfo info);
 

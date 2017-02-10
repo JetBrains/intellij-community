@@ -73,7 +73,7 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   public static Artifact[] getVersions(@NotNull URL... urls) {
-    Set<Artifact> versions = new HashSet<Artifact>();
+    Set<Artifact> versions = new HashSet<>();
     for (URL url : urls) {
       final Artifacts allArtifacts = deserialize(url);
       if (allArtifacts != null) {

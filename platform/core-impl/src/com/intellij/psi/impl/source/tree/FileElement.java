@@ -23,11 +23,9 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
   public static final FileElement[] EMPTY_ARRAY = new FileElement[0];
@@ -50,13 +48,11 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     return myCharTable;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public LighterAST getLighterAST() {
-    final IFileElementType contentType = (IFileElementType)getElementType();
-    assert contentType instanceof ILightStubFileElementType:contentType; // method should not be called for such element types
-
-    if (!isParsed()) {
+    IElementType contentType = getElementType();
+    if (!isParsed() && contentType instanceof ILightStubFileElementType) {
       return new FCTSBackedLighterAST(getCharTable(), ((ILightStubFileElementType<?>)contentType).parseContentsLight(this));
     }
     return new TreeBackedLighterAST(this);

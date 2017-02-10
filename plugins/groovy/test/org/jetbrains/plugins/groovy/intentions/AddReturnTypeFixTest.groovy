@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.intentions
 
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev
  */
-public class AddReturnTypeFixTest extends GrIntentionTestCase {
+class AddReturnTypeFixTest extends GrIntentionTestCase {
   AddReturnTypeFixTest() {
     super('Add return type')
   }

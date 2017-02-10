@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -49,11 +50,14 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     final PsiElement gParent = parent.getParent();
     if ((gParent instanceof PsiExpression || gParent instanceof PsiExpressionList || gParent instanceof PsiReturnStatement) && rExpression != null) {
       if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;
-      if (gParent instanceof PsiParenthesizedExpression) {
-        gParent.replace(rExpression);
-      } else {
-        parent.replace(rExpression);
-      }
+      PsiExpression finalRExpr = rExpression;
+      WriteAction.run(() -> {
+        if (gParent instanceof PsiParenthesizedExpression) {
+          gParent.replace(finalRExpr);
+        } else {
+          parent.replace(finalRExpr);
+        }
+      });
       return;
     }
 

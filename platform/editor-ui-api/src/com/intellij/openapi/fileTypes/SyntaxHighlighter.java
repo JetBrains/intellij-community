@@ -37,7 +37,7 @@ public interface SyntaxHighlighter {
    * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    */
   SyntaxHighlighterProvider PROVIDER =
-    new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, EP_NAME).get();
+    new FileTypeExtensionFactory<>(SyntaxHighlighterProvider.class, EP_NAME).get();
 
   /**
    * Returns the lexer used for highlighting the file. The lexer is invoked incrementally when the file is changed, so it must be

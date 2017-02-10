@@ -42,7 +42,7 @@ public class GdslClosureCompleter extends ClosureCompleter {
                                                          PsiMethod method,
                                                          PsiSubstitutor substitutor,
                                                          PsiElement place) {
-    final ArrayList<ClosureDescriptor> descriptors = new ArrayList<ClosureDescriptor>();
+    final ArrayList<ClosureDescriptor> descriptors = new ArrayList<>();
     GrReferenceExpression ref = (GrReferenceExpression)place;
     PsiType qtype = PsiImplUtil.getQualifierType(ref);
     if (qtype == null) return null;

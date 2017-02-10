@@ -28,12 +28,13 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 
-public class UndesirableClassUsageInspection extends InternalInspection {
+public class UndesirableClassUsageInspection extends DevKitInspectionBase {
 
   private static final Map<String, String> CLASSES = ContainerUtil.<String, String>immutableMapBuilder()
     .put(JList.class.getName(), JBList.class.getName())

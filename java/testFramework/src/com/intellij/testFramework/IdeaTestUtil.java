@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -27,28 +28,23 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assume;
 
 import java.io.File;
 import java.util.List;
 
-import static org.junit.Assume.assumeTrue;
-
 public class IdeaTestUtil extends PlatformTestUtil {
   private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
 
-  public static void main(String[] args) {
-    printDetectedPerformanceTimings();
-  }
-
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void printDetectedPerformanceTimings() {
     System.out.println(Timings.getStatistics());
   }
@@ -76,20 +72,30 @@ public class IdeaTestUtil extends PlatformTestUtil {
     modifiable.commit();
   }
 
+  @TestOnly
   public static Sdk getMockJdk17() {
     return getMockJdk17("java 1.7");
   }
 
+  @NotNull
+  @TestOnly
+  private static Sdk createMockJdk(@NotNull String name, String path) {
+    return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk(name, path, false);
+  }
+
+  @TestOnly
   public static Sdk getMockJdk17(@NotNull String name) {
-    return JavaSdk.getInstance().createJdk(name, getMockJdk17Path().getPath(), false);
+    return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
+  @TestOnly
   public static Sdk getMockJdk18() {
-    return JavaSdk.getInstance().createJdk("java 1.8", getMockJdk18Path().getPath(), false);
+    return createMockJdk("java 1.8", getMockJdk18Path().getPath());
   }
 
+  @TestOnly
   public static Sdk getMockJdk14() {
-    return JavaSdk.getInstance().createJdk("java 1.4", getMockJdk14Path().getPath(), false);
+    return createMockJdk("java 1.4", getMockJdk14Path().getPath());
   }
 
   public static File getMockJdk14Path() {
@@ -117,17 +123,27 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return mockJdkCEPath.exists() ? mockJdkCEPath : new File(PathManager.getHomePath(), "community/java/" + name);
   }
 
+  @TestOnly
   public static Sdk getWebMockJdk17() {
     Sdk jdk = getMockJdk17();
-    addWebJarsTo(jdk);
+    jdk=addWebJarsTo(jdk);
     return jdk;
   }
 
-  public static void addWebJarsTo(@NotNull Sdk jdk) {
+  @NotNull
+  @Contract(pure=true)
+  public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
+    try {
+      jdk = (Sdk)jdk.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
     SdkModificator sdkModificator = jdk.getSdkModificator();
     sdkModificator.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
     sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
     sdkModificator.commitChanges();
+    return jdk;
   }
 
   private static VirtualFile findJar(String name) {
@@ -145,12 +161,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     final String oldVersionString = sdk.getVersionString();
     ((ProjectJdkImpl)sdk).setVersionString(testVersion.getDescription());
     assert JavaSdk.getInstance().getVersion(sdk) == testVersion;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ((ProjectJdkImpl)sdk).setVersionString(oldVersionString);
-      }
-    });
+    Disposer.register(parentDisposable, () -> ((ProjectJdkImpl)sdk).setVersionString(oldVersionString));
   }
 
 
@@ -164,7 +175,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
         return path;
       }
     }
-    assumeTrue("Cannot find JDK, checked paths: " + paths, false);
+    Assume.assumeTrue("Cannot find JDK, checked paths: " + paths, false);
     return null;
   }
 }

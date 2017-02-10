@@ -18,8 +18,9 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.SystemInfoRt
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
+
 /**
- * @author nik
+ * @deprecated use {@link BuildTasks} instead.
  */
 class WinInstallerBuilder {
   GantBuilder ant

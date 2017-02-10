@@ -210,7 +210,7 @@ public class ControlFlowBuilder {
 
   public void processPending(final PendingProcessor processor) {
     final List<Pair<PsiElement, Instruction>> pending = this.pending;
-    this.pending = new ArrayList<Pair<PsiElement, Instruction>>();
+    this.pending = new ArrayList<>();
     for (Pair<PsiElement, Instruction> pair : pending) {
       processor.process(pair.getFirst(), pair.getSecond());
     }

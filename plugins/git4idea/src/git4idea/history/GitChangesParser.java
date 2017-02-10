@@ -45,7 +45,7 @@ public class GitChangesParser {
     GitRevisionNumber thisRevision = new GitRevisionNumber(hash, date);
     List<GitRevisionNumber> parentRevisions = prepareParentRevisions(parentsHashes);
 
-    List<Change> result = new ArrayList<Change>();
+    List<Change> result = new ArrayList<>();
     for (GitLogStatusInfo statusInfo : statusInfos) {
       result.add(parseChange(project, root, parentRevisions, statusInfo, thisRevision));
     }
@@ -53,12 +53,12 @@ public class GitChangesParser {
   }
 
   private static List<GitRevisionNumber> prepareParentRevisions(List<String> parentsHashes) {
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsHashes.size());
+    final List<AbstractHash> parents = new ArrayList<>(parentsHashes.size());
     for (String parentsShortHash : parentsHashes) {
       parents.add(AbstractHash.create(parentsShortHash));
     }
 
-    final List<GitRevisionNumber> parentRevisions = new ArrayList<GitRevisionNumber>(parents.size());
+    final List<GitRevisionNumber> parentRevisions = new ArrayList<>(parents.size());
     for (AbstractHash parent : parents) {
       parentRevisions.add(new GitRevisionNumber(parent.getString()));
     }

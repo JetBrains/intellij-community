@@ -36,7 +36,7 @@ import java.util.List;
  * @author yole
  */
 class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchFilter<ComponentItem> {
-  private final ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
+  private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private final ComponentItem myInitialSelection;
   private final Processor<ComponentItem> myRunnable;
   private final String myTitle;

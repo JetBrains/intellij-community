@@ -134,7 +134,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
       return null;
     }
 
-    List<URL> urls = new ArrayList<URL>();
+    List<URL> urls = new ArrayList<>();
     final VirtualFile libDir = sdkHome.findChild("lib");
     assert libDir != null;
     for (final VirtualFile child : libDir.getChildren()) {

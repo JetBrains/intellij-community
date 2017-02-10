@@ -114,8 +114,8 @@ public class PsiProximityComparator implements Comparator<Object> {
 
     if (contextModule == null) return null;
 
-    return new WeighingComparable<PsiElement,ProximityLocation>(elementComputable,
-                                                                new ProximityLocation(context, contextModule, processingContext),
-                                                                PROXIMITY_WEIGHERS);
+    return new WeighingComparable<>(elementComputable,
+                                    new ProximityLocation(context, contextModule, processingContext),
+                                    PROXIMITY_WEIGHERS);
   }
 }

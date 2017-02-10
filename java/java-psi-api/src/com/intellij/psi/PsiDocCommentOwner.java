@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,12 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.javadoc.PsiDocComment;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * Represents a PSI element which can have an attached JavaDoc comment.
  */
-public interface PsiDocCommentOwner extends PsiMember {
+public interface PsiDocCommentOwner extends PsiMember, PsiJavaDocumentedElement {
   /**
-   * Returns the JavaDoc comment for the element.
-   *
-   * @return the JavaDoc comment instance, or null if the element has no JavaDoc comment.
-   */
-  @Nullable
-  PsiDocComment getDocComment();
-
-  /**
-   * Checks if the element is marked as deprecated via an annotation or JavaDoc tag.
-   *
-   * @return true is the element is marked as deprecated, false otherwise.
+   * Returns {@code true} if the element is marked as deprecated via an annotation or a JavaDoc tag.
    */
   boolean isDeprecated();
 }

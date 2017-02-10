@@ -28,7 +28,7 @@ import org.netbeans.lib.cvsclient.command.Command;
 import java.util.Collection;
 
 public class GetAllBranchesOperation extends LocalPathIndifferentOperation implements BranchesProvider {
-  private final Collection<String> myTags = new HashSet<String>();
+  private final Collection<String> myTags = new HashSet<>();
   @NonNls private final static String START = "symbolic names:";
   @NonNls private final static String END = "keyword substitution:";
   private boolean myIsInBranchesMode = false;

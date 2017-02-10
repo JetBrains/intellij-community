@@ -18,9 +18,9 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
@@ -32,11 +32,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -84,9 +86,9 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   private final SettingsFilter myFilter;
   private final MyRoot myRoot;
   private final JScrollPane myScroller;
-  private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<Configurable, MyNode>();
+  private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
   private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper> myConfigurableToWrapperMap
-    = new IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>();
+    = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
     .setRestartTimerOnAdd(true);
 
@@ -159,9 +161,6 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         return myHeader;
       }
     });
-    if (!Registry.is("ide.scroll.new.layout")) {
-      myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    }
     if (!Registry.is("ide.scroll.background.auto")) {
       myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
       myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -192,7 +191,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         select(node == null ? null : node.myConfigurable);
       }
     });
-    if (ApplicationManager.getApplication().isInternal()) {
+    if (Registry.is("show.configurables.ids.in.settings")) {
       new HeldDownKeyListener() {
         @Override
         protected void heldKeyTriggered(JComponent component, boolean pressed) {
@@ -215,7 +214,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   }
 
   private static String[] getPathNames(MyNode node) {
-    ArrayDeque<String> path = new ArrayDeque<String>();
+    ArrayDeque<String> path = new ArrayDeque<>();
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();
@@ -268,34 +267,49 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
 
   @Nullable
   Project findConfigurableProject(@Nullable Configurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      return getProjectFromWrapper((ConfigurableWrapper)configurable);
-    }
-    return findConfigurableProject(findNode(configurable));
+    MyNode node = findNode(configurable);
+    return node == null ? null : findConfigurableProject(node, true);
   }
 
   @Nullable
-  private static Project findConfigurableProject(@Nullable MyNode node) {
-    if (node != null) {
-      Configurable configurable = node.myConfigurable;
-      if (configurable instanceof ConfigurableWrapper) {
-        return getProjectFromWrapper((ConfigurableWrapper)configurable);
-      }
-      SimpleNode parent = node.getParent();
-      if (parent instanceof MyNode) {
-        return findConfigurableProject((MyNode)parent);
-      }
+  private static Project findConfigurableProject(@NotNull MyNode node, boolean checkProjectLevel) {
+    Configurable configurable = node.myConfigurable;
+    Project project = node.getProject();
+    if (checkProjectLevel) {
+      Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
+      if (wrapped != null) return wrapped.isProjectLevel() ? project : null;
     }
-    return null;
+    if (configurable instanceof ConfigurableWrapper) return project;
+    if (configurable instanceof SortedConfigurableGroup) return project;
+
+    SimpleNode parent = node.getParent();
+    return parent instanceof MyNode
+           ? findConfigurableProject((MyNode)parent, checkProjectLevel)
+           : null;
   }
-  
+
   @Nullable
-  private static Project getProjectFromWrapper(@NotNull ConfigurableWrapper wrapper) {
-    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, wrapper);
-    if (wrapped != null && !wrapped.isProjectLevel()) {
-      return null;
+  private static Project prepareProject(CachingSimpleNode parent, Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      return wrapper.getExtensionPoint().getProject();
     }
-    return wrapper.getExtensionPoint().getProject();
+    if (configurable instanceof SortedConfigurableGroup) {
+      SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+      Configurable[] configurables = group.getConfigurables();
+      if (configurables != null && configurables.length != 0) {
+        Project project = prepareProject(parent, configurables[0]);
+        if (project != null) {
+          for (int i = 1; i < configurables.length; i++) {
+            if (project != prepareProject(parent, configurables[i])) {
+              return null;
+            }
+          }
+        }
+        return project;
+      }
+    }
+    return parent == null ? null : parent.getProject();
   }
 
   private static int getLeftMargin(int level) {
@@ -437,7 +451,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       if (myGroups == null || myGroups.length == 0) {
         return NO_CHILDREN;
       }
-      ArrayList<MyNode> list = new ArrayList<MyNode>();
+      ArrayList<MyNode> list = new ArrayList<>();
       for (ConfigurableGroup group : myGroups) {
         for (Configurable configurable : group.getConfigurables()) {
           list.add(new MyNode(this, configurable, 0));
@@ -454,7 +468,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     private final int myLevel;
 
     private MyNode(CachingSimpleNode parent, Configurable configurable, int level) {
-      super(parent);
+      super(prepareProject(parent, configurable), parent);
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
@@ -482,6 +496,11 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         }
       }
       return result;
+    }
+
+    protected void update(PresentationData presentation) {
+      super.update(presentation);
+      presentation.addText(myDisplayName, getPlainAttributes());
     }
 
     @Override
@@ -554,23 +573,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       // configure project icon
       Project project = null;
       if (node != null) {
-        SimpleNode parent = node.getParent();
-        if (parent instanceof MyNode) {
-          if (myRoot == parent.getParent()) {
-            project = findConfigurableProject(node); // show icon for top-level nodes
-            if (node.myConfigurable instanceof SortedConfigurableGroup) { // special case for custom subgroups (build.tools)
-              Configurable[] configurables = ((SortedConfigurableGroup)node.myConfigurable).getConfigurables();
-              if (configurables != null) { // assume that all configurables have the same project
-                project = findConfigurableProject(configurables[0]);
-              }
-            }
-          }
-          else if (((MyNode)parent).myConfigurable instanceof SortedConfigurableGroup) {
-            if (((MyNode)node.getParent()).myConfigurable instanceof SortedConfigurableGroup) {
-              project = findConfigurableProject(node); // special case for custom subgroups
-            }
-          }
-        }
+        project = findConfigurableProject(node, false);
       }
       if (project != null) {
         myProjectIcon.setIcon(selected
@@ -604,7 +607,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
                     node.myConfigurable.getClass().getSimpleName();
         PluginDescriptor plugin = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint().getPluginDescriptor() : null;
         String pluginId = plugin == null ? null : plugin.getPluginId().getIdString();
-        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId)? null :
+        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) ? null :
                             plugin instanceof IdeaPluginDescriptor ? ((IdeaPluginDescriptor)plugin).getName() : pluginId;
         myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
         myTextLabel.append(pluginName == null ? id : id + " (" + pluginName + ")", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
@@ -836,7 +839,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
 
     @Override
     protected ActionCallback refilterNow(Object preferredSelection, boolean adjustSelection) {
-      final List<Object> toRestore = new ArrayList<Object>();
+      final List<Object> toRestore = new ArrayList<>();
       if (myFilter.myContext.isHoldingFilter() && !myWasHoldingFilter && myToExpandOnResetFilter == null) {
         myToExpandOnResetFilter = myBuilder.getUi().getExpandedElements();
       }
@@ -863,7 +866,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         selected = new TreePath[0];
       }
 
-      List<TreePath> toCollapse = new ArrayList<TreePath>();
+      List<TreePath> toCollapse = new ArrayList<>();
 
       for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
         if (!myTree.isExpanded(eachRow)) continue;

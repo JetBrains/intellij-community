@@ -44,7 +44,7 @@ public class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsPro
       @Nullable
       @Override
       public String getHelpTopic() {
-        return null;
+        return "settings.editor.codeStyle.other";
       }
     };
   }

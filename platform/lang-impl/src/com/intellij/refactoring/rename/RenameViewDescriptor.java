@@ -42,8 +42,8 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
 
     myElements = PsiUtilCore.toPsiElementArray(renamesMap.keySet());
 
-    Set<String> processedElementsHeaders = new THashSet<String>();
-    Set<String> codeReferences = new THashSet<String>();
+    Set<String> processedElementsHeaders = new THashSet<>();
+    Set<String> codeReferences = new THashSet<>();
 
     for (final PsiElement element : myElements) {
       LOG.assertTrue(element.isValid(), "Invalid element: " + element.toString());

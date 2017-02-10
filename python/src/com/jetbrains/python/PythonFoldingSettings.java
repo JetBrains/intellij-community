@@ -28,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage("editor.codeinsight.xml")
 )
 public class PythonFoldingSettings implements PersistentStateComponent<PythonFoldingSettings> {
-  public boolean COLLAPSE_LONG_STRINGS = false;
-  public boolean COLLAPSE_LONG_COLLECTIONS = false;
-  public boolean COLLAPSE_SEQUENTIAL_COMMENTS = false;
+  public boolean COLLAPSE_LONG_STRINGS;
+  public boolean COLLAPSE_LONG_COLLECTIONS;
+  public boolean COLLAPSE_SEQUENTIAL_COMMENTS;
 
   @Nullable
   @Override

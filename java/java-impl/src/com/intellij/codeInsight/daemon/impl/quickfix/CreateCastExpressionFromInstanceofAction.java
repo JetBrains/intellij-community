@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -46,8 +45,6 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
     PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);

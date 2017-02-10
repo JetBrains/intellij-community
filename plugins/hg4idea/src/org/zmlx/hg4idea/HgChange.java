@@ -12,8 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public final class HgChange {
 
@@ -81,7 +82,7 @@ public final class HgChange {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(beforeFile, afterFile, status);
+    return Objects.hash(beforeFile, afterFile, status);
   }
 
   @Override

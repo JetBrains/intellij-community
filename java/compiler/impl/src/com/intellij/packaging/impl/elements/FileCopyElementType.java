@@ -54,7 +54,7 @@ public class FileCopyElementType extends PackagingElementType<FileCopyPackagingE
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, true);
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
-    final List<FileCopyPackagingElement> list = new ArrayList<FileCopyPackagingElement>();
+    final List<FileCopyPackagingElement> list = new ArrayList<>();
     for (VirtualFile file : files) {
       list.add(new FileCopyPackagingElement(file.getPath()));
     }

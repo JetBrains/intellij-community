@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -62,8 +63,8 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  public PsiDocCommentOwner getOwner() {
-    return myParent;
+  public PsiJavaDocumentedElement getOwner() {
+    return PsiImplUtil.findDocCommentOwner(this);
   }
 
   @Override

@@ -37,7 +37,7 @@ public abstract class XPathFunctionProvider {
 
     public static List<Pair<QName, ? extends Function>> getAvailableFunctions(ContextType type) {
         final XPathFunctionProvider[] components = Extensions.getExtensions(EXTENSION_POINT_NAME);
-        final ArrayList<Pair<QName, ? extends Function>> list = new ArrayList<Pair<QName, ? extends Function>>();
+        final ArrayList<Pair<QName, ? extends Function>> list = new ArrayList<>();
         for (XPathFunctionProvider provider : components) {
             final Map<QName, ? extends Function> functions = provider.getFunctions(type);
 

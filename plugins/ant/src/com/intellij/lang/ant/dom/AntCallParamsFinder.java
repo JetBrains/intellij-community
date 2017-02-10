@@ -28,7 +28,7 @@ import java.util.List;
 
 public class AntCallParamsFinder extends AntDomRecursiveVisitor {
   private final String myPropertyName;
-  private final List<PsiElement> myResult = new ArrayList<PsiElement>();
+  private final List<PsiElement> myResult = new ArrayList<>();
 
   private AntCallParamsFinder(@NotNull String propertyName) {
     myPropertyName = propertyName;

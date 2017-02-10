@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -27,6 +30,14 @@ import java.util.EventListener;
 @SuppressWarnings("JavadocReference")
 public interface DocumentListener extends EventListener{
   DocumentListener[] EMPTY_ARRAY = new DocumentListener[0];
+  ArrayFactory<DocumentListener> ARRAY_FACTORY = new ArrayFactory<DocumentListener>() {
+    @NotNull
+    @Override
+    public DocumentListener[] create(int count) {
+      return count == 0 ? EMPTY_ARRAY : new DocumentListener[count];
+    }
+  };
+
   /**
    * Called before the text of the document is changed.
    *

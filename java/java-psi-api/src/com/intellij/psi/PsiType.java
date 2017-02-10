@@ -90,13 +90,20 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }
 
   /**
    * Returns text of the type that can be presented to a user (references normally non-qualified).
+   */
+  @NotNull
+  public String getPresentableText(boolean annotated) {
+    return getPresentableText();
+  }
+
+  /**
+   * Same as {@code getPresentableText(false)}.
    */
   @NotNull
   public abstract String getPresentableText();
@@ -120,7 +127,9 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
    * todo[r.sh] merge with getPresentableText()
    */
   @NotNull
-  public abstract String getInternalCanonicalText();
+  public String getInternalCanonicalText() {
+    return getCanonicalText();
+  }
 
   /**
    * Checks if the type is currently valid.
@@ -131,14 +140,14 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   public abstract boolean isValid();
 
   /**
-   * @return true if values of type <code>type</code> can be assigned to rvalues of this type.
+   * @return true if values of type {@code type} can be assigned to rvalues of this type.
    */
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return TypeConversionUtil.isAssignable(this, type);
   }
 
   /**
-   * Checks whether values of type <code>type</code> can be casted to this type.
+   * Checks whether values of type {@code type} can be casted to this type.
    */
   public boolean isConvertibleFrom(@NotNull PsiType type) {
     return TypeConversionUtil.areTypesConvertible(type, this);
@@ -263,7 +272,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   /**
    * Returns the innermost component type for an array type.
    *
-   * @return the innermost (non-array) component of the type, or <code>this</code> if the type is not
+   * @return the innermost (non-array) component of the type, or {@code this} if the type is not
    *         an array type.
    */
   @NotNull
@@ -336,9 +345,6 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
     return "PsiType:" + getPresentableText();
   }
 
-  /**
-   * Temporary class to facilitate transition to {@link #getCanonicalText(boolean)}.
-   */
   protected static abstract class Stub extends PsiType {
     protected Stub(@NotNull PsiAnnotation[] annotations) {
       super(annotations);
@@ -347,6 +353,16 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
     protected Stub(@NotNull TypeAnnotationProvider annotations) {
       super(annotations);
     }
+
+    @NotNull
+    @Override
+    public final String getPresentableText() {
+      return getPresentableText(false);
+    }
+
+    @NotNull
+    @Override
+    public abstract String getPresentableText(boolean annotated);
 
     @NotNull
     @Override

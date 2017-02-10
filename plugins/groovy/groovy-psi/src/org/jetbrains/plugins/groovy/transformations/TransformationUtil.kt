@@ -59,3 +59,7 @@ fun isUnderTransformation(clazz: PsiClass?): Boolean {
     false
   }
 }
+
+infix operator fun TransformationContext.plusAssign(method: PsiMethod) = addMethod(method)
+
+infix operator fun TransformationContext.plusAssign(field: GrField) = addField(field)

@@ -51,9 +51,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RegistryValue value = Registry.get(key);
-    boolean enter = !value.asBoolean();
-    value.setValue(enter);
+    alternateCurrentDistractionFreeModeSetting();
+    boolean enter = isDistractionFreeModeEnabled();
 
     if (project == null) return;
 
@@ -103,5 +102,14 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.HIDE_TOOL_STRIPES));         ui.HIDE_TOOL_STRIPES        = p.getBoolean(after + "HIDE_TOOL_STRIPES", !value);
     p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.EDITOR_TAB_PLACEMENT));      ui.EDITOR_TAB_PLACEMENT     = p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE);
     // @formatter:on
+  }
+
+  public static boolean isDistractionFreeModeEnabled() {
+    return Registry.get(key).asBoolean();
+  }
+
+  private static void alternateCurrentDistractionFreeModeSetting() {
+    RegistryValue value = Registry.get(key);
+    value.setValue(!value.asBoolean());
   }
 }

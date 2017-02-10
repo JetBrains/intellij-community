@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
         }
         // don't care about errors in multiCaret mode
         else if (editor.getCaretModel().getAllCarets().size() == 1) {
-          LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+          LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
                     AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
         }
         return;
@@ -150,7 +150,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
-      LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(), 
+      LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
                     AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
@@ -222,7 +222,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(context.getProject(), () -> template.expand(context, editor), "Expand postfix template", POSTFIX_TEMPLATE_ID));
+    if (template.startInWriteAction()) {
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
+        .executeCommand(context.getProject(), () -> template.expand(context, editor), "Expand postfix template", POSTFIX_TEMPLATE_ID));
+    }
+    else {
+      template.expand(context, editor);
+    }
   }
 
 
@@ -273,7 +279,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
 
     if (copy instanceof PsiFileImpl) {
-      ((PsiFileImpl) copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));
+      ((PsiFileImpl)copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));
     }
 
     VirtualFile vFile = copy.getVirtualFile();

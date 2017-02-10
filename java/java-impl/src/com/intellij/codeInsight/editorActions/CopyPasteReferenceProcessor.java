@@ -37,7 +37,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
@@ -53,7 +56,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       return Collections.emptyList();
     }
 
-    final ArrayList<ReferenceData> array = new ArrayList<ReferenceData>();
+    final ArrayList<ReferenceData> array = new ArrayList<>();
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
@@ -81,9 +84,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
           referenceData = (ReferenceTransferableData)content.getTransferData(flavor);
         }
       }
-      catch (UnsupportedFlavorException ignored) {
-      }
-      catch (IOException ignored) {
+      catch (UnsupportedFlavorException | IOException ignored) {
       }
     }
 
@@ -155,7 +156,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 
-    ArrayList<Object> array = new ArrayList<Object>();
+    ArrayList<Object> array = new ArrayList<>();
     Object[] refObjects = new Object[refs.length];
     for (int i = 0; i < referenceData.length; i++) {
       PsiElement ref = refs[i];

@@ -58,7 +58,7 @@ public class JavaCompletionSorting {
     final boolean smart = type == CompletionType.SMART;
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
 
-    List<LookupElementWeigher> afterProximity = new ArrayList<LookupElementWeigher>();
+    List<LookupElementWeigher> afterProximity = new ArrayList<>();
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     afterProximity.add(new PreferShorter(expectedTypes));
 
@@ -444,7 +444,7 @@ public class JavaCompletionSorting {
   private static class PreferExpected extends LookupElementWeigher {
     private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
-    private final List<PsiType> myExpectedClasses = new SmartList<PsiType>();
+    private final List<PsiType> myExpectedClasses = new SmartList<>();
     private final String myExpectedMemberName;
 
     public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
@@ -524,7 +524,7 @@ public class JavaCompletionSorting {
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
           String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
-            final THashSet<String> set = new THashSet<String>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
+            final THashSet<String> set = new THashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);
             max = Math.max(max, set.size());
           }

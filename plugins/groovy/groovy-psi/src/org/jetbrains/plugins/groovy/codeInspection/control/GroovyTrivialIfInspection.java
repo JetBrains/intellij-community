@@ -75,12 +75,12 @@ public class GroovyTrivialIfInspection extends BaseInspection {
   private static class TrivialIfFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Simplify";
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement ifKeywordElement = descriptor.getPsiElement();
       final GrIfStatement statement =

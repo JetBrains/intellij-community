@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
+  @NotNull
   @Override
   public FileType getFileType() {
     return JavaFileType.INSTANCE;
@@ -56,12 +57,17 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
 
   @NotNull
   @Override
+  public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
+    return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
+      .map(factory -> factory.getFileType().getLanguage())
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
-      PsiElement context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-      return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
-        .map(factory -> factory.getFileType().getLanguage())
-        .collect(Collectors.toList());
+      return getSupportedLanguages(getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project));
     }
     return Collections.emptyList();
   }
@@ -82,17 +88,21 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
                                                  @Nullable PsiElement context,
                                                  boolean isPhysical) {
     TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
-    if (text != null && context != null) {
+    if (text != null) {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
 
-      final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
-      if (contextClass != null) {
-        final PsiClassType contextType =
-          JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+      if (context != null) {
+        PsiType contextType = context.getUserData(DebuggerUtilsImpl.PSI_TYPE_KEY);
+        if (contextType == null) {
+          PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
+          if (contextClass != null) {
+            contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+          }
+        }
         codeFragment.setThisType(contextType);
       }
+
       return codeFragment;
     }
     else {

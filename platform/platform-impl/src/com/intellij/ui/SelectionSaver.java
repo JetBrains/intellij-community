@@ -31,7 +31,7 @@ import java.util.Collection;
 public class SelectionSaver implements TreeSelectionListener, TreeModelListener, PropertyChangeListener{
 
   private final JTree myTree;
-  private Collection<TreeNode> myCurrentSelection = new ArrayList<TreeNode>();
+  private Collection<TreeNode> myCurrentSelection = new ArrayList<>();
 
 
   private SelectionSaver(JTree tree) {
@@ -72,7 +72,7 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
   }
 
   public void valueChanged(TreeSelectionEvent e) {
-    myCurrentSelection = new ArrayList<TreeNode>();
+    myCurrentSelection = new ArrayList<>();
     TreePath[] selection = myTree.getSelectionModel().getSelectionPaths();
     if (selection == null) return;
     for (int i = 0; i < selection.length; i++) {

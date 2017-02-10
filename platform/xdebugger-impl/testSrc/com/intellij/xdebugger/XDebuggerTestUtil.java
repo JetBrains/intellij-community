@@ -161,9 +161,17 @@ public class XDebuggerTestUtil {
     return Pair.create(all, container.frameToSelect);
   }
 
+  /**
+   * @deprecated use {@link XDebuggerTestUtil#collectChildren(XValueContainer)}
+   */
+  @Deprecated
   public static List<XValue> collectVariables(XStackFrame frame) throws InterruptedException {
+    return collectChildren(frame);
+  }
+
+  public static List<XValue> collectChildren(XValueContainer value) throws InterruptedException {
     XTestCompositeNode container = new XTestCompositeNode();
-    frame.computeChildren(container);
+    value.computeChildren(container);
     return container.waitFor(TIMEOUT).first;
   }
 
@@ -436,21 +444,16 @@ public class XDebuggerTestUtil {
   public static <T extends XBreakpointType> XBreakpoint addBreakpoint(@NotNull final Project project,
                                                                       @NotNull final Class<T> exceptionType,
                                                                       @NotNull final XBreakpointProperties properties) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
-    final Ref<XBreakpoint> breakpoint = Ref.create(null);
-    for (XBreakpointType type : types) {
-      if (exceptionType.isInstance(type)) {
-        final T breakpointType = exceptionType.cast(type);
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            breakpoint.set(breakpointManager.addBreakpoint(breakpointType, properties));
-          }
-        }.execute();
-        break;
-      }
-    }
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    Ref<XBreakpoint> breakpoint = Ref.create(null);
+    XBreakpointUtil.breakpointTypes().select(exceptionType).findFirst().ifPresent(type ->
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          breakpoint.set(breakpointManager.addBreakpoint(type, properties));
+        }
+      }.execute()
+    );
     return breakpoint.get();
   }
 
@@ -468,11 +471,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
-      public XBreakpoint<?>[] compute() {
-        return breakpointManager.getAllBreakpoints();
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<XBreakpoint<?>[]>)breakpointManager::getAllBreakpoints);
   }
 
   public static <B extends XBreakpoint<?>>

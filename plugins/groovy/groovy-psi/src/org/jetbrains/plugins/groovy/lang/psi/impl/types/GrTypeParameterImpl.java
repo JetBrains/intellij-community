@@ -63,11 +63,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   @Nullable
   public GrTypeDefinitionBody getBody() {
     return null;

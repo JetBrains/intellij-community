@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,11 +111,11 @@ public class TypesDistinctProver {
     final PsiClass boundClass2 = classResolveResult2.getElement();
 
     if (boundClass1 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1, type2)) return false;
     }
 
     if (boundClass2 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2, type1)) return false;
     }
 
     if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
@@ -140,12 +140,20 @@ public class TypesDistinctProver {
       if (level < 2) return false;
     }
 
+    if (boundClass1 == null || boundClass2 == null) {
+      return type1 != null && type2 != null && !type1.equals(type2);
+    }
+
     return type2 != null && type1 != null && !type1.equals(type2) &&
+           !(level == 0 && boundClass1.isInterface() && boundClass2.isInterface()) &&
            (!InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) ||
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));
   }
 
-  private static boolean distinguishFromTypeParam(PsiTypeParameter typeParam, PsiClass boundClass, PsiType type1) {
+  private static boolean distinguishFromTypeParam(PsiTypeParameter typeParam,
+                                                  PsiClass boundClass,
+                                                  PsiType type1,
+                                                  PsiType type2) {
     final PsiClassType[] paramBounds = typeParam.getExtendsListTypes();
     if (paramBounds.length == 0 && type1 instanceof PsiClassType) return false;
     for (PsiClassType classType : paramBounds) {
@@ -153,6 +161,9 @@ public class TypesDistinctProver {
       if (paramBound != null &&
           (InheritanceUtil.isInheritorOrSelf(paramBound, boundClass, true) ||
            InheritanceUtil.isInheritorOrSelf(boundClass, paramBound, true))) {
+        return false;
+      }
+      if (type2 instanceof PsiArrayType && TypeConversionUtil.isAssignable(classType, type2)) {
         return false;
       }
     }

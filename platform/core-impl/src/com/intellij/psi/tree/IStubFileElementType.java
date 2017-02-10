@@ -48,7 +48,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   @NotNull
   @Override
   public String getExternalId() {
-    return "psi.file";
+    return DEFAULT_EXTERNAL_ID;
   }
 
   @Override
@@ -67,10 +67,5 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   public boolean shouldBuildStubFor(final VirtualFile file) {
     return true;
-  }
-
-  @Override
-  public boolean isDefault() {
-    return getExternalId().equals(PsiFileStubImpl.TYPE.getExternalId());
   }
 }

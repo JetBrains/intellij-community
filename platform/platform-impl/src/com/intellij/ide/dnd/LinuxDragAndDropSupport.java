@@ -63,7 +63,7 @@ public class LinuxDragAndDropSupport {
 
   @NotNull
   private static List<File> getFiles(@Nullable final String transferData) {
-    final List<File> fileList = new ArrayList<File>();
+    final List<File> fileList = new ArrayList<>();
 
     if (transferData != null) {
       final String[] uriList = StringUtil.convertLineSeparators(transferData).split("\n");

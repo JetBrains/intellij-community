@@ -28,8 +28,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.EventListener;
-import java.util.Set;
+import java.util.*;
 
 public class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
@@ -46,6 +45,8 @@ public class HeavyProcessLatch {
    */
   private static final int MAX_PRIORITIZATION_MILLIS = 12 * 1000;
   private volatile long myPrioritizingStarted;
+
+  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<Runnable>();
 
   private HeavyProcessLatch() {
   }
@@ -77,6 +78,24 @@ public class HeavyProcessLatch {
       myHeavyProcesses.remove(operationName);
     }
     myEventDispatcher.getMulticaster().processFinished();
+    List<Runnable> toRunNow;
+    synchronized (myHeavyProcesses) {
+      if (isRunning()) {
+        toRunNow = Collections.emptyList();
+      }
+      else {
+        toRunNow = new ArrayList<Runnable>(toExecuteOutOfHeavyActivity);
+        toExecuteOutOfHeavyActivity.clear();
+      }
+    }
+    for (Runnable runnable : toRunNow) {
+      try {
+        runnable.run();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public boolean isRunning() {
@@ -97,12 +116,30 @@ public class HeavyProcessLatch {
     void processFinished();
   }
 
-  public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+  public void addListener(@NotNull HeavyProcessListener listener,
+                          @NotNull Disposable parentDisposable) {
     myEventDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void addUIActivityListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
+  public void addUIActivityListener(@NotNull HeavyProcessListener listener,
+                                    @NotNull Disposable parentDisposable) {
     myUIProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public void executeOutOfHeavyProcess(@NotNull Runnable runnable) {
+    boolean runNow;
+    synchronized (myHeavyProcesses) {
+      if (isRunning()) {
+        runNow = false;
+        toExecuteOutOfHeavyActivity.add(runnable);
+      }
+      else {
+        runNow = true;
+      }
+    }
+    if (runNow) {
+      runnable.run();
+    }
   }
 
   /**

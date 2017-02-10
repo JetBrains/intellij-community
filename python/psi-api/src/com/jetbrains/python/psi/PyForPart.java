@@ -24,13 +24,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyForPart extends PyStatementPart {
   /**
-   * @return target: the "x" in "<code>for x in (1, 2, 3)</code>".
+   * @return target: the "x" in "{@code for x in (1, 2, 3)}".
    */
   @Nullable
   PyExpression getTarget();
 
   /**
-   * @return source of iteration: the "(1, 2, 3)" in "<code>for x in (1, 2, 3)</code>".
+   * @return source of iteration: the "(1, 2, 3)" in "{@code for x in (1, 2, 3)}".
    */
   @Nullable
   PyExpression getSource();

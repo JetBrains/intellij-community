@@ -22,10 +22,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -146,14 +143,31 @@ public class FindUtil {
     model.setPromptOnReplace(false);
   }
 
-  public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with) {
+  public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with, boolean saveFindString) {
     FindModel model = FindManager.getInstance(project).getFindInFileModel();
     model.setCaseSensitive(with.isCaseSensitive());
     model.setWholeWordsOnly(with.isWholeWordsOnly());
     model.setRegularExpressions(with.isRegularExpressions());
     model.setSearchContext(with.getSearchContext());
+
+    if (saveFindString && !with.getStringToFind().isEmpty()) {
+      model.setStringToFind(with.getStringToFind());
+    }
+
     if (with.isReplaceState()) {
       model.setPreserveCase(with.isPreserveCase());
+      if (saveFindString) model.setStringToReplace(with.getStringToReplace());
+    }
+  }
+
+  public static void useFindStringFromFindInFileModel(FindModel findModel, Editor editor) {
+    if (editor != null) {
+      EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
+      if (editorSearchSession != null) {
+        FindModel currentFindModel = editorSearchSession.getFindModel();
+        findModel.setStringToFind(currentFindModel.getStringToFind());
+        if (findModel.isReplaceState()) findModel.setStringToReplace(currentFindModel.getStringToReplace());
+      }
     }
   }
 
@@ -191,8 +205,9 @@ public class FindUtil {
       return;
     }
     FindManager findManager = FindManager.getInstance(project);
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
     String s = text.subSequence(start, end).toString();
-    FindSettings.getInstance().addStringToFind(s);
+    findInProjectSettings.addStringToFind(s);
     findManager.getFindInFileModel().setStringToFind(s);
     findManager.setFindWasPerformed();
     findManager.clearFindingNextUsageInFile();
@@ -562,6 +577,7 @@ public class FindUtil {
         TextRange textRange = doReplace(project, document, model, result, toReplace, toPrompt, rangesToChange);
         replaced = true;
         newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
+        if (textRange.isEmpty()) ++newOffset;
         occurrences++;
       }
       else {
@@ -964,7 +980,7 @@ public class FindUtil {
    *
    * @param caretShiftFromSelectionStart if non-negative, defines caret position relative to selection start, for each created selection.
    *                                     if negative, caret will be positioned at selection end
-   * @return <code>true</code> if caret was added successfully, <code>false</code> if it cannot be done, e.g. because a caret already
+   * @return {@code true} if caret was added successfully, {@code false} if it cannot be done, e.g. because a caret already
    * exists at target position
    */
   public static boolean selectSearchResultInEditor(@NotNull Editor editor, @NotNull FindResult result, int caretShiftFromSelectionStart) {
@@ -972,8 +988,10 @@ public class FindUtil {
       return false;
     }
     int caretOffset = getCaretPosition(result, caretShiftFromSelectionStart);
+    LogicalPosition caretPosition = editor.offsetToLogicalPosition(caretOffset);
+    if (caretShiftFromSelectionStart == 0) caretPosition = caretPosition.leanForward(true);
     EditorActionUtil.makePositionVisible(editor, caretOffset);
-    Caret newCaret = editor.getCaretModel().addCaret(editor.offsetToVisualPosition(caretOffset));
+    Caret newCaret = editor.getCaretModel().addCaret(editor.logicalToVisualPosition(caretPosition));
     if (newCaret == null) {
       return false;
     }

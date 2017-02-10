@@ -18,7 +18,7 @@ public class SSBasedInspectionTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     SSBasedInspection inspection = new SSBasedInspection();
-    List<Configuration> configurations = new ArrayList<Configuration>();
+    List<Configuration> configurations = new ArrayList<>();
     SearchConfiguration configuration = new SearchConfiguration();
     MatchOptions options = new MatchOptions();
     options.setFileType(StdFileTypes.JAVA);

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,13 +23,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
 
   @Deprecated
-  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
-  public boolean ignoreWithoutParameters = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreWithoutParameters;
 
   @Nls
   @NotNull

@@ -35,7 +35,7 @@ public class TargetResolver extends PropertyProviderFinder {
 
   public static class Result {
     private String myRefsString;
-    private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<String, Pair<AntDomTarget, String>>(); // declared target name -> pair[target, effective name]
+    private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<>(); // declared target name -> pair[target, effective name]
     private Map<String, AntDomTarget> myVariants;
 
     void add(String declaredTargetRef, Pair<AntDomTarget, String> pair) {
@@ -73,7 +73,7 @@ public class TargetResolver extends PropertyProviderFinder {
   private TargetResolver(@NotNull Collection<String> declaredDependencyRefs, @Nullable AntDomTarget contextElement) {
     super(contextElement);
     myResult = new Result();
-    myDeclaredTargetRefs = new ArrayList<String>(declaredDependencyRefs);
+    myDeclaredTargetRefs = new ArrayList<>(declaredDependencyRefs);
     myContextTarget = contextElement;
   }
 

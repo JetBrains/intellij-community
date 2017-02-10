@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,9 +53,10 @@ public class WinIntelliJButtonPainter implements Border, UIResource {
           g.translate(x,y);
 
           if (hasFocus) {
-            g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1, new float[]{1}, 1));
+            //g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1, new float[]{1}, 1));
             g.setColor(Gray.x0F);
-            g.drawRect(2*dd, 2*dd, width - 4*dd - 1, height - 4*dd - 1);
+            UIUtil.drawDottedRectangle(g, 2*dd, 2*dd, width - 2*dd - 1, height - 2*dd - 1);
+            //g.drawRect(2*dd, 2*dd, width - 4*dd - 1, height - 4*dd - 1);
           }
           g.translate(-x,-y);
         }

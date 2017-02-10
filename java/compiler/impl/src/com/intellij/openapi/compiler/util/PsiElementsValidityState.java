@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class PsiElementsValidityState implements ValidityState {
-  private final Map<String, Long> myDependencies = new HashMap<String, Long>();
+  private final Map<String, Long> myDependencies = new HashMap<>();
 
   public PsiElementsValidityState() {
   }

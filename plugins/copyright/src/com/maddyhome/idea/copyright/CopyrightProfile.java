@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.maddyhome.idea.copyright;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileEx;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
@@ -30,11 +31,11 @@ public class CopyrightProfile extends ProfileEx {
 
   private String notice = DEFAULT_COPYRIGHT_NOTICE;
   private String keyword = EntityUtil.encode("Copyright");
-  private String allowReplaceKeyword = "";
+  private String allowReplaceRegexp = "";
 
   //read external
   public CopyrightProfile() {
-    super("", new SmartSerializer());
+    this("");
   }
 
   public CopyrightProfile(String profileName) {
@@ -57,11 +58,27 @@ public class CopyrightProfile extends ProfileEx {
     this.keyword = keyword;
   }
 
+  /**
+   * @deprecated use {@link #getAllowReplaceRegexp()} instead
+   */
+  @Deprecated
   public String getAllowReplaceKeyword() {
-    return allowReplaceKeyword;
+    return "";
   }
 
+  /**
+   * @deprecated use {@link #setAllowReplaceRegexp(String)} instead
+   */
+  @Deprecated
   public void setAllowReplaceKeyword(String allowReplaceKeyword) {
-    this.allowReplaceKeyword = allowReplaceKeyword;
+    allowReplaceRegexp = StringUtil.escapeToRegexp(allowReplaceKeyword);
+  }
+
+  public String getAllowReplaceRegexp() {
+    return allowReplaceRegexp;
+  }
+
+  public void setAllowReplaceRegexp(final String allowReplaceRegexp) {
+    this.allowReplaceRegexp = allowReplaceRegexp;
   }
 }

@@ -94,7 +94,7 @@ public class MappingsToRoots {
     if (addInnerModules) {
       final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
       final DefaultVcsRootPolicy defaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(myProject);
-      final List<VirtualFile> modules = new ArrayList<VirtualFile>();
+      final List<VirtualFile> modules = new ArrayList<>();
       defaultVcsRootPolicy.addDefaultVcsRoots(myMappings, vcsName, modules);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {

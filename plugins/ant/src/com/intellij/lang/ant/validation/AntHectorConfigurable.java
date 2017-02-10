@@ -51,7 +51,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   private final XmlFile myFile;
   private final String myLocalPath;
-  private final Map<String, XmlFile> myPathToFileMap = new HashMap<String, XmlFile>();
+  private final Map<String, XmlFile> myPathToFileMap = new HashMap<>();
   private String myOriginalContext = NONE;
   
   private JComboBox myCombo;
@@ -100,7 +100,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
       }
     }
 
-    final List<String> paths = new ArrayList<String>(myPathToFileMap.keySet());
+    final List<String> paths = new ArrayList<>(myPathToFileMap.keySet());
     Collections.sort(paths, (o1, o2) -> o1.compareTo(o2));
 
     myCombo.addItem(NONE);

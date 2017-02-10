@@ -35,10 +35,10 @@ public class LiveTemplateBuilder {
   private static final Logger LOGGER = Logger.getInstance(LiveTemplateBuilder.class);
 
   private final StringBuilder myText = new StringBuilder();
-  private final List<Variable> myVariables = new ArrayList<Variable>();
-  private final Set<String> myVarNames = new HashSet<String>();
-  private final List<VarOccurence> myVariableOccurrences = new ArrayList<VarOccurence>();
-  private final List<Marker> myMarkers = new ArrayList<Marker>();
+  private final List<Variable> myVariables = new ArrayList<>();
+  private final Set<String> myVarNames = new HashSet<>();
+  private final List<VarOccurence> myVariableOccurrences = new ArrayList<>();
+  private final List<Marker> myMarkers = new ArrayList<>();
   private final int mySegmentLimit;
   private final boolean myAddEndVariableAtTheEndOfTemplate;
   private String myLastEndVarName;
@@ -229,8 +229,8 @@ public class LiveTemplateBuilder {
 
     String text = template.getTemplateText();
     insertText(offset, text, false);
-    Map<String, String> newVarNames = new HashMap<String, String>();
-    Set<String> oldVarNames = new HashSet<String>();
+    Map<String, String> newVarNames = new HashMap<>();
+    Set<String> oldVarNames = new HashSet<>();
     for (int i = 0; i < template.getVariableCount(); i++) {
       String varName = template.getVariableNameAt(i);
       oldVarNames.add(varName);

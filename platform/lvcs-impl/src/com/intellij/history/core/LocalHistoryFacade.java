@@ -139,7 +139,7 @@ public class LocalHistoryFacade {
   }
 
   public List<RecentChange> getRecentChanges(RootEntry root) {
-    List<RecentChange> result = new ArrayList<RecentChange>();
+    List<RecentChange> result = new ArrayList<>();
 
     for (ChangeSet c : myChangeList.iterChanges()) {
       if (c.isContentChangeOnly()) continue;

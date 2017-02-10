@@ -163,7 +163,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<>());
         if (res != null) {
           return res;
         }
@@ -243,7 +243,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     if (!hasPrefix) {
       MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (domProjectModel != null) {
-        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<DomElement>());
+        PsiElement res = resolveModelProperty(domProjectModel, unprefixed, new HashSet<>());
         if (res != null) {
           return res;
         }
@@ -337,8 +337,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @NotNull
   public Object[] getVariants() {
-    List<Object> result = new ArrayList<Object>();
-    collectVariants(result, new THashSet<String>());
+    List<Object> result = new ArrayList<>();
+    collectVariants(result, new THashSet<>());
     return ArrayUtil.toObjectArray(result);
   }
 
@@ -492,7 +492,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
     XmlElementDescriptor[] descriptors = desc.getRootElementsDescriptors(document);
-    return doProcessSchema(descriptors, null, processor, new THashSet<XmlElementDescriptor>());
+    return doProcessSchema(descriptors, null, processor, new THashSet<>());
   }
 
   private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,

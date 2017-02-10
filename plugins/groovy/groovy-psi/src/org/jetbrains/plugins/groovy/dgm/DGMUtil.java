@@ -25,12 +25,13 @@ import com.intellij.psi.PsiFile;
  * @author Max Medvedev
  */
 public class DGMUtil {
+  public static final String ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE = "org.codehaus.groovy.runtime.ExtensionModule";
   public static final String[] KEYS = new String[]{"moduleName", "moduleVersion", "extensionClasses", "staticExtensionClasses",};
 
   public static boolean isInDGMFile(PsiElement e) {
     PsiFile file = e.getContainingFile();
     return file instanceof PropertiesFile &&
-           Comparing.equal(file.getName(), GroovyExtensionProvider.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE,
+           Comparing.equal(file.getName(), ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE,
                            SystemInfo.isFileSystemCaseSensitive);
   }
 }

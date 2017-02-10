@@ -26,6 +26,7 @@ public class GradleConstants {
 
   @NotNull @NonNls public static final String OFFLINE_MODE_CMD_OPTION = "--offline";
   @NotNull @NonNls public static final String INIT_SCRIPT_CMD_OPTION = "--init-script";
+  @NotNull @NonNls public static final String INCLUDE_BUILD_CMD_OPTION = "--include-build";
 
   @NotNull @NonNls public static final String GRADLE_SOURCE_SET_MODULE_TYPE_KEY = "sourceSet";
 

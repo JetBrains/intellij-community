@@ -60,7 +60,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         final ProgressManager pm = ProgressManager.getInstance();
         final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
 
-        final List<VirtualFile> patchTypeFiles = new ArrayList<VirtualFile>();
+        final List<VirtualFile> patchTypeFiles = new ArrayList<>();
         final boolean filesFound = pm.runProcessWithProgressSynchronously(new Runnable() {
           @Override
           public void run() {
@@ -79,7 +79,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         pm.runProcessWithProgressSynchronously(new Runnable() {
           @Override
           public void run() {
-            final List<VcsException> exceptions = new ArrayList<VcsException>();
+            final List<VcsException> exceptions = new ArrayList<>();
             final List<ShelvedChangeList> lists =
               shelveChangesManager.importChangeLists(patchTypeFiles, new Consumer<VcsException>() {
                 @Override

@@ -95,7 +95,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   @NotNull
   public Process startProcessWithPty(@NotNull List<String> commands, boolean console) throws IOException {
-    Map<String, String> env = new HashMap<String, String>();
+    Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
 
     if (isRedirectErrorStream()) {

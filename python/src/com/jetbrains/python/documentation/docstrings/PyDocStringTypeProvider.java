@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.psi.types.PyTypeProviderBase;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +39,17 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
     if (docString != null) {
       final String typeText = docString.getParamType(param.getName());
       if (StringUtil.isNotEmpty(typeText)) {
-        return parseType(func, typeText);
+        final Ref<PyType> typeRef = parseType(func, typeText);
+
+        if (param.isPositionalContainer()) {
+          return Ref.create(PyTypeUtil.toPositionalContainerType(param, typeRef.get()));
+        }
+
+        if (param.isKeywordContainer()) {
+          return Ref.create(PyTypeUtil.toKeywordContainerType(param, typeRef.get()));
+        }
+
+        return typeRef;
       }
     }
     return null;

@@ -51,10 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
   public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
@@ -230,7 +227,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos, conflicts);
     for (PsiClass targetClass : myTargetClasses) {
       if (targetClass instanceof PsiAnonymousClass) {
@@ -302,7 +299,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
-      new PushDownProcessor<MemberInfo, PsiMember, PsiClass>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
+      new PushDownProcessor<>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
 
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
       for (UsageInfo usageInfo : usages) {
@@ -358,11 +355,18 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return "refactoring.inline.class";
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+    return myCurrentInheritor != null ? Collections.emptyList()
+                                      : super.getElementsToWrite(descriptor);
+  }
+
   private void replaceInnerTypeUsages() {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-    final Map<UsageInfo, PsiElement> replacementMap = new HashMap<UsageInfo, PsiElement>();
+    final Map<UsageInfo, PsiElement> replacementMap = new HashMap<>();
     for (final PsiClass targetClass : myTargetClasses) {
       if (skipTargetClass(targetClass)) continue;
       final PsiSubstitutor superClassSubstitutor =
@@ -395,6 +399,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
+          }
+        }
+
+        @Override
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          super.visitReferenceElement(reference);
+          if (reference.resolve() == mySuperClass && PsiTreeUtil.getParentOfType(reference, PsiComment.class) != null) {
+            replacementMap.put(new UsageInfo(reference), elementFactory.createClassReferenceElement(targetClass));
           }
         }
       });

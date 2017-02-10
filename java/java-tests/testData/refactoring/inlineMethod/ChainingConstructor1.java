@@ -3,6 +3,9 @@ class TestInlineMethod {
         this(Integer.valueOf(s1, r1), Integer.valueOf(s2, r2));
     }
 
+    /**
+     * {@link #TestInlineMethod(String, int, String, int)}
+     */
     public TestInlineMethod(Integer i1, Integer i2) {
     }
 

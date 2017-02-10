@@ -27,13 +27,13 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -50,11 +50,10 @@ import java.util.Map;
  * @author max
  */
 public abstract class HTMLComposerImpl extends HTMLComposer {
-  protected HTMLExporter myExporter;
   private final int[] myListStack;
   private int myListStackTop;
-  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<Key, HTMLComposerExtension>();
-  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<Language, HTMLComposerExtension>();
+  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
+  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
   @NonNls protected static final String BR = "<br>";
   @NonNls protected static final String NBSP = "&nbsp;";
   @NonNls protected static final String CODE_CLOSING = "</code>";
@@ -81,12 +80,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public abstract void compose(StringBuffer buf, RefEntity refEntity);
 
   public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {}
-
-  public void composeWithExporter(StringBuffer buf, RefEntity refEntity, HTMLExporter exporter) {
-    myExporter = exporter;
-    compose(buf, refEntity);
-    myExporter = null;
-  }
 
   protected void genPageHeader(final StringBuffer buf, RefEntity refEntity) {
     if (refEntity instanceof RefElement) {
@@ -141,6 +134,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
     if (refEntity == null) return;
+
     String qName = "";
 
     while (!(refEntity instanceof RefProject)) {
@@ -159,6 +153,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       }
 
       qName = name + qName;
+      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
+        buf.append(qName);
+        return;
+      }
       refEntity = refEntity.getOwner();
     }
 
@@ -172,14 +170,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {
-    if (myExporter == null) {
-      final String url = ((RefElementImpl)refElement).getURL();
-      if (url != null) {
-        appendElementReference(buf, url, linkText, frameName);
-      }
-    }
-    else {
-      appendElementReference(buf, myExporter.getURL(refElement), linkText, frameName);
+    final String url = ((RefElementImpl)refElement).getURL();
+    if (url != null) {
+      appendElementReference(buf, url, linkText, frameName);
     }
   }
 
@@ -199,9 +192,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   }
 
   protected void appendQuickFix(@NonNls final StringBuffer buf, String text) {
-    if (myExporter == null) {
-      buf.append(text);
-    }
+    buf.append(text);
   }
 
   @Override
@@ -213,12 +204,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     } else if (refElement instanceof RefFile) {
       buf.append(A_HREF_OPENING);
 
-      if (myExporter == null) {
-        buf.append(((RefElementImpl)refElement).getURL());
-      }
-      else {
-        buf.append(myExporter.getURL(refElement));
-      }
+      buf.append(((RefElementImpl)refElement).getURL());
 
       buf.append("\">");
       String refElementName = refElement.getName();
@@ -288,7 +274,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   }
 
   protected void appendResolution(StringBuffer buf, RefEntity where, String[] quickFixes) {
-    if (myExporter != null) return;
     if (where instanceof RefElement && !where.isValid()) return;
     if (quickFixes != null) {
       boolean listStarted = false;

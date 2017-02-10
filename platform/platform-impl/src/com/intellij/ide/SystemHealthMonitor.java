@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -50,17 +51,25 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NonNls;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -88,6 +97,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
+  private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
+  private static final String LATEST_JDK_RELEASE = "1.8.0u112";
 
   /** Count of action events fired. This is used as a proxy for user initiated activity in the IDE. */
   public static final AtomicLong ourStudioActionCount = new AtomicLong(0);
@@ -120,6 +131,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkSignalBlocking();
+    checkLauncherScript();
     startDiskSpaceMonitoring();
 
     if (ApplicationManager.getApplication().isInternal() || StatisticsUploadAssistant.isSendAllowed()) {
@@ -172,15 +185,61 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     try {
       Class.forName("com.sun.jdi.Value");
     } catch (Throwable t) {
-      showNotification("unsupported.jre");
+      showNotification(new KeyHyperlinkAdapter("unsupported.jre"));
     }
 
     if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") &&
         !SystemInfo.isJetbrainsJvm && !SystemInfo.isStudioJvm) {
-      showNotification("unsupported.jvm.openjdk.message");
+      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.openjdk.message"));
     }
-    else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
-      showNotification("unsupported.jvm.ea.message");
+
+    if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
+      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
+
+    }
+    JdkBundle bundle = JdkBundle.createBoot();
+    if (bundle != null && !bundle.isBundled()) {
+      Version version = bundle.getVersion();
+      Integer updateNumber = bundle.getUpdateNumber();
+      if (version != null && updateNumber != null && updateNumber < 112) {
+        final String bundleVersion = version.toCompactString() + "u" + updateNumber;
+        boolean showSwitchOption = false;
+
+        final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
+        if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
+          if (SystemInfo.isMacIntel64) {
+            showSwitchOption = true;
+          }
+          else if (SystemInfo.isWindows || SystemInfo.isLinux) {
+            JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
+            if (bundledJdk.getVersion() != null) {
+              showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
+            }
+          }
+        }
+
+        if (showSwitchOption) {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
+                           @Override
+                           protected void hyperlinkActivated(HyperlinkEvent e) {
+                             String url = e.getDescription();
+                             if ("ack".equals(url)) {
+                               myProperties.setValue(getIgnoreKey(), "true");
+                             }
+                             else if ("switch".equals(url)) {
+                               ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+                             }
+                             else {
+                               BrowserUtil.browse(url);
+                             }
+                           }
+                         }, bundleVersion, LATEST_JDK_RELEASE);
+        }
+        else {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message2"),
+                           bundleVersion, LATEST_JDK_RELEASE);
+        }
+      }
     }
 
     if (SystemInfoRt.isMac &&
@@ -190,7 +249,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         !SystemInfo.isJavaVersionAtLeast("1.8.0_76")) {
       // Upstream JDK8 bug tracked by https://bugs.openjdk.java.net/browse/JDK-8134917, affecting 1.8.0_60 up to 1.8.0_76.
       // Fixed by Jetbrains in their 1.8.0_40-b108 JRE and tracked in https://youtrack.jetbrains.com/issue/IDEA-146691
-      showNotification("unsupported.jvm.dragndrop.message");
+      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.dragndrop.message"));
     }
   }
 
@@ -204,7 +263,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
             String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
             if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification("ibus.blocking.warn.message");
+              showNotification(new KeyHyperlinkAdapter("ibus.blocking.warn.message"));
             }
           }
         }
@@ -265,19 +324,44 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
   }
 
-  private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
-    final String ignoreKey = "ignore." + key;
+  private void checkSignalBlocking() {
+    if (SystemInfo.isUnix) {
+      try {
+        LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+        Memory buf = new Memory(1024);
+        if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
+          long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
+          if (handler == LibC.SIG_IGN) {
+            showNotification(new KeyHyperlinkAdapter("ide.sigint.ignored.message"));
+          }
+        }
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+      }
+    }
+  }
+
+  private void checkLauncherScript() {
+    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
+      showNotification(new KeyHyperlinkAdapter("ide.launcher.script.outdated"));
+    }
+  }
+
+  private void showNotification(final KeyHyperlinkAdapter keyHyperlinkAdapter, Object... params) {
+    @PropertyKey(resourceBundle = "messages.IdeBundle") String key = keyHyperlinkAdapter.getKey();
+    final String ignoreKey = keyHyperlinkAdapter.getIgnoreKey();
     boolean ignored = myProperties.isValueSet(ignoreKey);
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    final String message = IdeBundle.message(key)
+    final String message = IdeBundle.message(key, params)
                            // Don't allow suppressing the JRE warning
                            + (key.equals("unsupported.jre") ?  "" :
                            IdeBundle.message("sys.health.acknowledge.link"));
 
     final Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(() -> {
@@ -285,18 +369,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           if (component != null) {
             Rectangle rect = component.getVisibleRect();
             JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
-                @Override
-                protected void hyperlinkActivated(HyperlinkEvent e) {
-                  String url = e.getDescription();
-                  if ("ack".equals(url)) {
-                    myProperties.setValue(ignoreKey, "true");
-                  }
-                  else {
-                    BrowserUtil.browse(url);
-                  }
-                }
-              })
+              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, keyHyperlinkAdapter)
               .setFadeoutTime(-1)
               .setHideOnFrameResize(false)
               .setHideOnLinkClick(true)
@@ -320,7 +393,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
     final File file = new File(PathManager.getSystemPath());
     final AtomicBoolean reported = new AtomicBoolean();
-    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
+    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
 
     JobScheduler.getScheduler().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
@@ -354,7 +427,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             ourFreeSpaceCalculation.set(null);
 
             if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
-              if (!notificationsComponentIsLoaded()) {
+              if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
                 JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
                 return;
@@ -387,15 +460,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             LOG.error(ex);
           }
         }
-      }
-
-      private boolean notificationsComponentIsLoaded() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<NotificationsConfiguration>() {
-          @Override
-          public NotificationsConfiguration compute() {
-            return NotificationsConfiguration.getNotificationsConfiguration();
-          }
-        }) != null;
       }
 
       private void restart(long timeout) {
@@ -574,7 +638,16 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
     if (reporter != null) {
       IdeaLoggingEvent e = new AndroidStudioAnrEvent(fileName, Joiner.on('\n').join(threadDump));
-      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
+
+      Component parentComponent = IdeFocusManager.findInstance().getFocusOwner();
+      if (parentComponent == null) {
+        parentComponent = IdeFrameImpl.getActiveFrame();
+      }
+      if (parentComponent == null) {
+        return;
+      }
+
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, parentComponent, info -> {
       });
     }
   }
@@ -587,7 +660,14 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
     if (reporter != null) {
       IdeaLoggingEvent e = new AndroidStudioCrashEvents(descriptions);
-      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
+      Component parentComponent = IdeFocusManager.findInstance().getFocusOwner();
+      if (parentComponent == null) {
+        parentComponent = IdeFrameImpl.getActiveFrame();
+      }
+      if (parentComponent == null) {
+        return;
+      }
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, parentComponent, info -> {
       });
     }
   }
@@ -636,6 +716,40 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     public Object getData() {
       return ImmutableMap.of("Type", "Crashes", // keep consistent with the error reporter in android plugin
                              "descriptions", myDescriptions);
+    }
+  }
+
+  @SuppressWarnings({"SpellCheckingInspection", "SameParameterValue"})
+  private interface LibC extends Library {
+    int SIGINT = 2;
+    long SIG_IGN = 1L;
+    int sigaction(int signum, Pointer act, Pointer oldact);
+  }
+
+  class KeyHyperlinkAdapter extends HyperlinkAdapter {
+    private final String key;
+
+    KeyHyperlinkAdapter(String key) {
+      this.key = key;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public String getIgnoreKey() {
+      return "ignore." + key;
+    }
+
+    @Override
+    protected void hyperlinkActivated(HyperlinkEvent e) {
+      String url = e.getDescription();
+      if ("ack".equals(url)) {
+        myProperties.setValue(getIgnoreKey(), "true");
+      }
+      else {
+        BrowserUtil.browse(url);
+      }
     }
   }
 }

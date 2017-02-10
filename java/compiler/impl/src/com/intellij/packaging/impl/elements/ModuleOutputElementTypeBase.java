@@ -50,7 +50,7 @@ public abstract class ModuleOutputElementTypeBase<E extends ModuleOutputPackagin
     List<Module> suitableModules = getSuitableModules(context);
     List<Module> selected = context.chooseModules(suitableModules, ProjectBundle.message("dialog.title.packaging.choose.module"));
 
-    final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> elements = new ArrayList<>();
     final ModulePointerManager pointerManager = ModulePointerManager.getInstance(context.getProject());
     for (Module module : selected) {
       elements.add(createElement(context.getProject(), pointerManager.create(module)));
@@ -62,7 +62,7 @@ public abstract class ModuleOutputElementTypeBase<E extends ModuleOutputPackagin
 
   private List<Module> getSuitableModules(ArtifactEditorContext context) {
     ModulesProvider modulesProvider = context.getModulesProvider();
-    ArrayList<Module> modules = new ArrayList<Module>();
+    ArrayList<Module> modules = new ArrayList<>();
     for (Module module : modulesProvider.getModules()) {
       if (isSuitableModule(modulesProvider, module)) {
         modules.add(module);

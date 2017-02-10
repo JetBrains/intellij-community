@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,27 +44,30 @@ public class TestStatusLine extends JPanel {
     add(myProgressPanel, BorderLayout.WEST);
     myProgressBar.setMaximum(100);
     myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                              new Insets(2, 8, 0, 8), 0, 0));
+                                                              JBUI.insets(2, 8, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
-  public void formatTestMessage(final int testsTotal,
+  public void formatTestMessage(int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
                                 final int ignoredTestsCount,
                                 final Long duration,
                                 final long endTime) {
     myState.clear();
-    if (testsTotal == 0) return;
+    if (testsTotal == 0) {
+      testsTotal = finishedTestsCount + failuresCount + ignoredTestsCount;
+      if (testsTotal == 0) return;
+    }
     if (duration == null || endTime == 0) {
-      myState.append(finishedTestsCount + " of " + getTestsTotalMessage(testsTotal) + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
+      myState.append(finishedTestsCount + " of " + (testsTotal > 0 ? getTestsTotalMessage(testsTotal) : "<undefined>") + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
       return;
     }
     String result = "";
-    if (finishedTestsCount == testsTotal) {
+    if (finishedTestsCount == testsTotal || testsTotal < 0) {
       if (testsTotal > 1 && (failuresCount == 0 && ignoredTestsCount == 0 || failuresCount == testsTotal || ignoredTestsCount == testsTotal)) {
         result = "All ";
       }
@@ -74,7 +76,7 @@ public class TestStatusLine extends JPanel {
       result = "Stopped. " + finishedTestsCount + " of ";
     }
 
-    result += getTestsTotalMessage(testsTotal);
+    result += getTestsTotalMessage(testsTotal > 0 ? testsTotal : finishedTestsCount);
 
     if (failuresCount == 0 && ignoredTestsCount == 0) {
       myState.append(result + " passed");

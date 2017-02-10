@@ -73,7 +73,7 @@ public class PluginBuildUtil {
   public static Module[] getWrongSetDependencies(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       public Module[] compute() {
-        ArrayList<Module> result = new ArrayList<Module>();
+        ArrayList<Module> result = new ArrayList<>();
         final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
         for (Module projectModule : projectModules) {
           if (ArrayUtil.find(ModuleRootManager.getInstance(projectModule).getDependencies(), module) > -1) {

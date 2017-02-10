@@ -29,7 +29,6 @@ import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -68,8 +67,8 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
         result.add(breakpoint);
       }
     }
-    Collections.sort(result, (o1, o2) -> StringUtil.compare(((MyBreakpointProperties)o1.getProperties()).myOption,
-                                                        ((MyBreakpointProperties)o2.getProperties()).myOption, true));
+    result.sort((o1, o2) -> StringUtil.compare(((MyBreakpointProperties)o1.getProperties()).myOption,
+                                               ((MyBreakpointProperties)o2.getProperties()).myOption, true));
     return result;
   }
 }

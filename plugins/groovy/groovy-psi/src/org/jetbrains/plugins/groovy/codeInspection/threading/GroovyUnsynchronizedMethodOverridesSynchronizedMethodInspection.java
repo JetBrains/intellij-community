@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection ext
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethod(GrMethod method) {
+    public void visitMethod(@NotNull GrMethod method) {
       super.visitMethod(method);
       if (method.isConstructor()) {
         return;

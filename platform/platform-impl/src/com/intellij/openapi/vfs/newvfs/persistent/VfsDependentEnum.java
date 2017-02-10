@@ -117,8 +117,8 @@ public class VfsDependentEnum<T> {
         return false;
       }
 
-      List<T> elements = new ArrayList<T>();
-      Map<T, Integer> elementToIdMap = new THashMap<T, Integer>();
+      List<T> elements = new ArrayList<>();
+      Map<T, Integer> elementToIdMap = new THashMap<>();
       int savedVersion = DataInputOutputUtil.readINT(input);
       try {
         if (savedVersion == myVersion) {

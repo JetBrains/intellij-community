@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -36,18 +37,18 @@ import java.util.Map;
 public class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
 
   @Override
-  public boolean isEnabled(GutterIconDescriptor descriptor) {
+  public boolean isEnabled(@NotNull GutterIconDescriptor descriptor) {
     Boolean aBoolean = providers.get(descriptor.getId());
     return aBoolean == null || aBoolean;
   }
 
   @Override
-  public void setEnabled(GutterIconDescriptor descriptor, boolean selected) {
+  public void setEnabled(@NotNull GutterIconDescriptor descriptor, boolean selected) {
     providers.put(descriptor.getId(), selected);
   }
 
   @MapAnnotation
-  public Map<String, Boolean> providers = new HashMap<String, Boolean>();
+  public Map<String, Boolean> providers = new HashMap<>();
 
   @Nullable
   @Override

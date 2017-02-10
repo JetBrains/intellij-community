@@ -33,7 +33,7 @@ class DevelopersLoader {
     return HttpRequests.request(DEVELOPERS_LIST_URL).connect(new HttpRequests.RequestProcessor<Collection<Developer>>() {
       @Override
       public Collection<Developer> process(@NotNull HttpRequests.Request request) throws IOException {
-        List<Developer> developers = new LinkedList<Developer>();
+        List<Developer> developers = new LinkedList<>();
         developers.add(Developer.NULL);
 
         String line;

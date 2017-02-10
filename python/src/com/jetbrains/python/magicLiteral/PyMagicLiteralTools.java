@@ -77,7 +77,7 @@ public final class PyMagicLiteralTools {
           return Ref.create(magicLiteralExtensionPoint);
         }
       }
-      return new Ref<PyMagicLiteralExtensionPoint>();
+      return new Ref<>();
     }
   }
 }

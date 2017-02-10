@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,13 +43,18 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   protected final SmartPsiElementPointer<PsiClass> myPointer;
   protected static final Logger LOG = Logger.getInstance(AbstractRegisterFix.class);
 
-  public AbstractRegisterFix(@NotNull SmartPsiElementPointer<PsiClass> klass) {
+  protected AbstractRegisterFix(@NotNull SmartPsiElementPointer<PsiClass> klass) {
     myPointer = klass;
   }
 
   @NotNull
   public String getFamilyName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @NotNull
@@ -76,7 +81,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
       return;
     }
     LOG.assertTrue(psiFile != null);
-    final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
+    final Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
     assert module != null;
 
     Runnable command = () -> {
@@ -84,7 +89,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
         if (PluginModuleType.isOfType(module)) {
           XmlFile pluginXml = PluginModuleType.getPluginXml(module);
           if (pluginXml != null) {
-            DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXml);
+            DescriptorUtil.patchPluginXml(this, element, pluginXml);
           }
         }
         else {
@@ -101,7 +106,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
             pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
           }
 
-          DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXmls);
+          DescriptorUtil.patchPluginXml(this, element, pluginXmls);
         }
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       }

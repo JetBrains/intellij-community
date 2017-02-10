@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
@@ -73,6 +74,15 @@ public class SearchTextField extends JPanel {
       public void processKeyEvent(final KeyEvent e) {
         if (preprocessEventForTextField(e)) return;
         super.processKeyEvent(e);
+      }
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        TextUI ui = getUI();
+        //noinspection unchecked
+        if (ui instanceof Condition && ((Condition)ui).value(e)) return;
+
+        super.processMouseEvent(e);
       }
 
       @Override
@@ -278,7 +288,7 @@ public class SearchTextField extends JPanel {
 
   public List<String> getHistory() {
     final int itemsCount = myModel.getSize();
-    final List<String> history = new ArrayList<String>(itemsCount);
+    final List<String> history = new ArrayList<>(itemsCount);
     for (int i = 0; i < itemsCount; i++) {
       history.add(myModel.getElementAt(i));
     }
@@ -337,7 +347,7 @@ public class SearchTextField extends JPanel {
   }
 
   public class MyModel extends AbstractListModel {
-    private List<String> myFullList = new ArrayList<String>();
+    private List<String> myFullList = new ArrayList<>();
 
     private String mySelectedItem;
 
@@ -397,7 +407,7 @@ public class SearchTextField extends JPanel {
     }
 
     public void setItems(List<String> aList) {
-      myFullList = new ArrayList<String>(aList);
+      myFullList = new ArrayList<>(aList);
       fireContentsChanged();
     }
   }

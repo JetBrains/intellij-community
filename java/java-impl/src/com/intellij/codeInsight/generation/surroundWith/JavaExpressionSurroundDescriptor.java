@@ -61,7 +61,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   @Override
   @NotNull public Surrounder[] getSurrounders() {
     if (mySurrounders == null) {
-      final ArrayList<Surrounder> list = new ArrayList<Surrounder>();
+      final ArrayList<Surrounder> list = new ArrayList<>();
       Collections.addAll(list, SURROUNDERS);
       Collections.addAll(list, Extensions.getExtensions(JavaExpressionSurrounder.EP_NAME));
       mySurrounders = list.toArray(new Surrounder[list.size()]);

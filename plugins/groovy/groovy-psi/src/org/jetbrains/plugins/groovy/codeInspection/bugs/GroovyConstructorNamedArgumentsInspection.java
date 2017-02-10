@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
   private static class MyVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitNewExpression(GrNewExpression newExpression) {
+    public void visitNewExpression(@NotNull GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
 
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
@@ -137,7 +137,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               element = ((PsiMember)element).getContainingClass();
             }
 
-            List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(2);
+            List<LocalQuickFix> fixes = new ArrayList<>(2);
             if (element instanceof GrTypeDefinition) {
               fixes.add(GroovyQuickFixFactory.getInstance().createCreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
             }

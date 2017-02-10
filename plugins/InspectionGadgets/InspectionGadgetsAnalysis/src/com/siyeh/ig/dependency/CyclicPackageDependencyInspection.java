@@ -53,7 +53,7 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
     final RefPackage refPackage = (RefPackage)refEntity;
     final Set<RefPackage> dependencies = DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
     final Set<RefPackage> dependents = DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
-    final Set<RefPackage> mutualDependents = new HashSet<RefPackage>(dependencies);
+    final Set<RefPackage> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();
     if (numMutualDependents == 0) {

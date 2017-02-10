@@ -195,7 +195,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     synchronized (myMappings) {
       cleanup();
       final Element element = new Element("x");
-      final List<VirtualFile> files = new ArrayList<VirtualFile>(myMappings.keySet());
+      final List<VirtualFile> files = new ArrayList<>(myMappings.keySet());
       Collections.sort(files, (o1, o2) -> {
         if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
         return o1.getPath().compareTo(o2.getPath());
@@ -227,7 +227,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   public void loadState(final Element state) {
     synchronized (myMappings) {
-      final THashMap<String, T> dialectMap = new THashMap<String, T>();
+      final THashMap<String, T> dialectMap = new THashMap<>();
       for (T dialect : getAvailableValues()) {
         String key = serialize(dialect);
         if (key != null) {

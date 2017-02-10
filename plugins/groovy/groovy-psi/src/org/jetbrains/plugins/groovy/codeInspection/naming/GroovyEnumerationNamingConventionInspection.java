@@ -78,7 +78,7 @@ public class GroovyEnumerationNamingConventionInspection extends ConventionInspe
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
       @Override
-      public void visitEnumDefinition(GrEnumTypeDefinition aClass) {
+      public void visitEnumDefinition(@NotNull GrEnumTypeDefinition aClass) {
         super.visitEnumDefinition(aClass);
 
         final String name = aClass.getName();

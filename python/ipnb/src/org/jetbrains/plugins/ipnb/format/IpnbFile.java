@@ -36,7 +36,7 @@ public class IpnbFile {
     return myPath;
   }
 
-  public Map<String, Object> getMetadata () {
+  public Map<String, Object> getMetadata() {
     return myMetadata;
   }
 

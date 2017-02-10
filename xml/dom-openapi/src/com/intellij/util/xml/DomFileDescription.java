@@ -46,14 +46,14 @@ public class DomFileDescription<T> {
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
-  private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<ScopeProvider>();
+  private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;
   private volatile boolean myInitialized;
-  private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
-  private final List<DomReferenceInjector> myInjectors = new SmartList<DomReferenceInjector>();
+  private final List<DomReferenceInjector> myInjectors = new SmartList<>();
   private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
     ContainerUtil.newConcurrentMap();
 
@@ -97,7 +97,7 @@ public class DomFileDescription<T> {
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new ConstantFunction<XmlTag, List<String>>(Arrays.asList(namespaces)));
+    registerNamespacePolicy(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
   }
 
   /**
@@ -126,7 +126,7 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * @return some version. Override and change (e.g. <code>super.getVersion()+1</code>) when after some changes some files stopped being
+   * @return some version. Override and change (e.g. {@code super.getVersion()+1}) when after some changes some files stopped being
    * described by this description or vice versa, so that the
    * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
@@ -202,7 +202,7 @@ public class DomFileDescription<T> {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
     if (namespace != null) {
       final String key = namespace.value();
-      Set<String> allNs = new HashSet<String>(getAllowedNamespaces(key, file));
+      Set<String> allNs = new HashSet<>(getAllowedNamespaces(key, file));
       if (allNs.isEmpty()) {
         return false;
       }

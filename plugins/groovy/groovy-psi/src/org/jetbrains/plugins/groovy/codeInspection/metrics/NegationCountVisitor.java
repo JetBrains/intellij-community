@@ -30,7 +30,7 @@ class NegationCountVisitor extends GroovyRecursiveElementVisitor {
   private int negationCount = 0;
 
   @Override
-  public void visitElement(GroovyPsiElement element) {
+  public void visitElement(@NotNull GroovyPsiElement element) {
     int oldCount = 0;
     if (element instanceof GrMethod) {
       oldCount = negationCount;
@@ -56,7 +56,7 @@ class NegationCountVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
+  public void visitUnaryExpression(@NotNull GrUnaryExpression grUnaryExpression) {
     super.visitUnaryExpression(grUnaryExpression);
     final IElementType sign = grUnaryExpression.getOperationTokenType();
     if (GroovyTokenTypes.mLNOT.equals(sign)) {

@@ -16,10 +16,11 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderEx
-import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.nullPromise
 
 interface AttachStateManager {
-  fun detach() = resolvedPromise()
+  fun detach(): Promise<*> = nullPromise()
 
   val isAttached: Boolean
     get() = true
@@ -41,7 +42,7 @@ interface Vm : UserDataHolderEx {
   /**
    * Controls whether VM stops on exceptions
    */
-  fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
+  fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
   var captureAsyncStackTraces: Boolean
 

@@ -15,18 +15,16 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class EncapsulateVariableFix extends InspectionGadgetsFix {
+public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix implements RefactoringQuickFix {
 
   private final String fieldName;
 
@@ -37,8 +35,7 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message("encapsulate.variable.quickfix",
-                                           fieldName);
+    return InspectionGadgetsBundle.message("encapsulate.variable.quickfix", fieldName);
   }
 
   @NotNull
@@ -48,36 +45,22 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
-    final PsiElement nameElement = descriptor.getPsiElement();
-    final PsiElement parent = nameElement.getParent();
-    final PsiField field;
-    if (parent instanceof PsiField) {
-      field = (PsiField)parent;
-    }
-    else if (parent instanceof PsiReferenceExpression) {
+  public PsiElement getElementToRefactor(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
-        return;
-      }
-      field = (PsiField)target;
+      assert target instanceof PsiField;
+      return target;
     }
     else {
-      return;
+      return super.getElementToRefactor(element);
     }
-    final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
-    final RefactoringActionHandler encapsulateFieldsHandler = factory.createEncapsulateFieldsHandler();
-    encapsulateFieldsHandler.invoke(project, new PsiElement[]{field}, null);
   }
 
+  @NotNull
   @Override
-  protected boolean prepareForWriting() {
-    return false;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  public RefactoringActionHandler getHandler() {
+    return JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
   }
 }

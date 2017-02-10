@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +52,12 @@ public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
         }
       }
     }
+    doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
+  }
+
+  static void doStepInto(DebuggerSession session, boolean force, MethodFilter filter) {
     session.sessionResumed();
-    session.stepInto(true, null);
+    session.stepInto(force, filter);
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

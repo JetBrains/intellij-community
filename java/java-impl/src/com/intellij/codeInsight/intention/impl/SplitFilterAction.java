@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,49 +69,42 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    try {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(element, true, false);
 
-      final PsiJavaToken token = (PsiJavaToken)element;
-      final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(element, true, false);
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
+    LOG.assertTrue(lambdaExpression != null);
+    final String lambdaParameterName = lambdaExpression.getParameterList().getParameters()[0].getName();
 
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
-      LOG.assertTrue(lambdaExpression != null);
-      final String lambdaParameterName = lambdaExpression.getParameterList().getParameters()[0].getName();
+    final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+    LOG.assertTrue(methodCallExpression != null, expression);
 
-      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
-      LOG.assertTrue(methodCallExpression != null, expression);
-      
-      PsiExpression lOperand = getLOperands(expression, token);
-      PsiExpression rOperand = getROperands(expression, token);
+    PsiExpression lOperand = getLOperands(expression, token);
+    PsiExpression rOperand = getROperands(expression, token);
 
-      final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(expression, PsiComment.class);
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(expression, PsiComment.class);
 
-      final PsiMethodCallExpression chainedCall =
-        (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a.filter(" + lambdaParameterName + " -> x)", expression);
-      final PsiExpression argExpression = chainedCall.getArgumentList().getExpressions()[0];
-      final PsiElement rReplaced = ((PsiLambdaExpression)argExpression).getBody().replace(rOperand);
+    final PsiMethodCallExpression chainedCall =
+      (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a.filter(" + lambdaParameterName + " -> x)", expression);
+    final PsiExpression argExpression = chainedCall.getArgumentList().getExpressions()[0];
+    final PsiElement rReplaced = ((PsiLambdaExpression)argExpression).getBody().replace(rOperand);
 
-      final PsiExpression compoundArg = methodCallExpression.getArgumentList().getExpressions()[0];
+    final PsiExpression compoundArg = methodCallExpression.getArgumentList().getExpressions()[0];
 
-      final int separatorOffset = token.getTextOffset();
-      for (PsiComment comment : comments) {
-        if (comment.getTextOffset() < separatorOffset) {
-          compoundArg.getParent().add(comment);
-        }
-        else {
-          rReplaced.getParent().add(comment);
-        }
+    final int separatorOffset = token.getTextOffset();
+    for (PsiComment comment : comments) {
+      if (comment.getTextOffset() < separatorOffset) {
+        compoundArg.getParent().add(comment);
       }
-
-      ((PsiLambdaExpression)compoundArg).getBody().replace(lOperand);
-
-      chainedCall.getMethodExpression().getQualifierExpression().replace(methodCallExpression);
-      methodCallExpression.replace(chainedCall);
+      else {
+        rReplaced.getParent().add(comment);
+      }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+
+    ((PsiLambdaExpression)compoundArg).getBody().replace(lOperand);
+
+    chainedCall.getMethodExpression().getQualifierExpression().replace(methodCallExpression);
+    methodCallExpression.replace(chainedCall);
   }
 
 }

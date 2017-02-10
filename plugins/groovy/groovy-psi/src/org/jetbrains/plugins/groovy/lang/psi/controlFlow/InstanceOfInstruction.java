@@ -61,7 +61,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       final PsiElement resolved = result.getElement();
       if (resolved instanceof PsiClass) {
         PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)resolved, result.getSubstitutor());
-        return new Pair<GrExpression, PsiType>(left, type);
+        return new Pair<>(left, type);
       }
     }
     return null;

@@ -1,0 +1,11 @@
+PsiJavaFile:Incomplete4.java
+  PsiJavaModule:X
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:X('X')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:Module statement expected
+      PsiIdentifier:junk('junk')

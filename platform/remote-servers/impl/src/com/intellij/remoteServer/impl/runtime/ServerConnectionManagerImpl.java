@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
-  private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
+  private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
   @NotNull

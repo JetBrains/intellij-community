@@ -1,4 +1,4 @@
-// "Static import method 'java.util.Collections.emptyList'" "true"
+// "Import static method 'java.util.Collections.emptyList'" "true"
 import java.util.List;
 
 import static java.util.Collections.emptyList;

@@ -28,7 +28,7 @@ import java.util.Collection;
  */
 public class MockChangeList extends LocalChangeList {
 
-  Collection<Change> myChanges = new ArrayList<Change>();
+  Collection<Change> myChanges = new ArrayList<>();
   private final String myName;
 
   public MockChangeList(String name) {

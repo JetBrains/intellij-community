@@ -19,10 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.TransferToEDTQueue;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -39,8 +39,9 @@ abstract class Invoker implements Disposable {
   private final String description;
   volatile boolean disposed;
 
-  private Invoker(String prefix, String name) {
-    description = "Invoker." + prefix + ":" + name + " " + UID.getAndIncrement();
+  private Invoker(String prefix, Disposable parent) {
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+    Disposer.register(parent, this);
   }
 
   @Override
@@ -136,12 +137,12 @@ abstract class Invoker implements Disposable {
   public static class EDT extends Invoker {
     private final TransferToEDTQueue<Runnable> queue;
 
-    public EDT(@NotNull @NonNls String name) {
-      this(name, 200);
+    public EDT(@NotNull Disposable parent) {
+      this(parent, 200);
     }
 
-    public EDT(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
-      super("EDT", name);
+    public EDT(@NotNull Disposable parent, int maxUnitOfWorkThresholdMs) {
+      super("EDT", parent);
       queue = TransferToEDTQueue.createRunnableMerger(toString(), maxUnitOfWorkThresholdMs);
     }
 
@@ -169,8 +170,8 @@ abstract class Invoker implements Disposable {
    * but requires a good synchronization.
    */
   public static class Background extends Invoker {
-    public Background(@NotNull @NonNls String name) {
-      super("Background", name);
+    public Background(@NotNull Disposable parent) {
+      super("Background", parent);
     }
 
     @Override
@@ -198,8 +199,8 @@ abstract class Invoker implements Disposable {
   public static class BackgroundQueue extends Invoker {
     private final QueueProcessor<Runnable> queue;
 
-    public BackgroundQueue(@NotNull @NonNls String name) {
-      super("Background", name);
+    public BackgroundQueue(@NotNull Disposable parent) {
+      super("Background.Queue", parent);
       queue = QueueProcessor.createRunnableQueueProcessor();
     }
 

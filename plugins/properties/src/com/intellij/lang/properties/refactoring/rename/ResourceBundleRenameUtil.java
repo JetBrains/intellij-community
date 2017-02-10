@@ -115,10 +115,12 @@ public class ResourceBundleRenameUtil {
       myResourceBundle = resourceBundle;
     }
 
+    @Override
     public boolean checkInput(String inputString) {
       return inputString.indexOf(File.separatorChar) < 0 && inputString.indexOf('/') < 0;
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
       for (PropertiesFile propertiesFile : propertiesFiles) {

@@ -44,9 +44,9 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiClassOwner> imple
     PsiClassOwner element = getElement();
     if (element == null) return Collections.emptyList();
     PsiClass[] classes = element.getClasses();
-    ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    ArrayList<StructureViewTreeElement> result = new ArrayList<>();
     for (PsiClass aClass : classes) {
-      result.add(new JavaClassTreeElement(aClass, false, new HashSet<PsiClass>()));
+      result.add(new JavaClassTreeElement(aClass, false, new HashSet<>()));
     }
     return result;
 

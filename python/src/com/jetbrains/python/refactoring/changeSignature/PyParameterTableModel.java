@@ -63,7 +63,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
   }
 
   private static ColumnInfo[] getColumns(Project project) {
-    final Collection<ColumnInfo> result = new ArrayList<ColumnInfo>();
+    final Collection<ColumnInfo> result = new ArrayList<>();
     result.add(new PyParameterColumn(project));
     result.add(new PyDefaultValueColumn(project));
     return result.toArray(new ColumnInfo[result.size()]);
@@ -103,7 +103,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
 
     @Override
     public Pair<PsiCodeFragment, Boolean> valueOf(TableItem item) {
-      return new Pair<PsiCodeFragment, Boolean>(item.defaultValueCodeFragment, ((PyParameterTableModelItem)item).isDefaultInSignature());
+      return new Pair<>(item.defaultValueCodeFragment, ((PyParameterTableModelItem)item).isDefaultInSignature());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     private final Project myProject;
     private final FileType myFileType;
     protected EditorTextField myEditorTextField;
-    private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
+    private Set<DocumentListener> myListeners = new HashSet<>();
 
     public MyCodeFragmentTableCellEditor(Project project) {
       myProject = project;

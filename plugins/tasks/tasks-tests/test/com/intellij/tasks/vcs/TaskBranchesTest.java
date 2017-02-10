@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     String defaultBranchName = getDefaultBranchName();
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
     OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
-    Disposer.register(myTestRootDisposable, dialog.getDisposable());
+    Disposer.register(getTestRootDisposable(), dialog.getDisposable());
     dialog.createTask();
     assertEquals("foo", myTaskManager.getActiveTask().getSummary());
     List<BranchInfo> branches = task.getBranches(true);

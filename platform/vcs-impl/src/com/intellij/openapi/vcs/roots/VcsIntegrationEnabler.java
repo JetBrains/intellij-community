@@ -15,54 +15,48 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static java.util.stream.Collectors.toList;
 
-public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
+public abstract class VcsIntegrationEnabler {
 
-  protected final @NotNull Project myProject;
-  protected final @NotNull VcsT myVcs;
+  @NotNull protected final Project myProject;
+  @NotNull private final AbstractVcs myVcs;
 
-
-  protected VcsIntegrationEnabler(@NotNull VcsT vcs) {
+  protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs) {
     myProject = vcs.getProject();
     myVcs = vcs;
   }
 
   public void enable(@NotNull Collection<VcsRoot> vcsRoots) {
-    Collection<VcsRoot> vcsFilterRoots = ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {
-      @Override
-      public boolean value(VcsRoot root) {
+    Collection<VirtualFile> roots = vcsRoots.stream().
+      filter(root -> {
         AbstractVcs vcs = root.getVcs();
         return vcs != null && vcs.getName().equals(myVcs.getName());
-      }
-    });
-    Collection<VirtualFile> roots = VcsRootErrorsFinder.vcsRootsToVirtualFiles(vcsFilterRoots);
+      }).
+      map(VcsRoot::getPath).collect(toList());
+
     VirtualFile projectDir = myProject.getBaseDir();
     assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
 
-    if (vcsFilterRoots.isEmpty()) {
+    if (roots.isEmpty()) {
       boolean succeeded = initOrNotifyError(projectDir);
       if (succeeded) {
         addVcsRoots(Collections.singleton(projectDir));
       }
     }
     else {
-      assert !roots.isEmpty();
       if (roots.size() > 1 || isProjectBelowVcs(roots)) {
         notifyAddedRoots(roots);
       }
@@ -70,40 +64,28 @@ public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
     }
   }
 
-  private boolean isProjectBelowVcs(@NotNull Collection<VirtualFile> vcsRoots) {
+  private boolean isProjectBelowVcs(@NotNull Collection<VirtualFile> roots) {
     //check if there are vcs roots strictly above the project dir
-    VirtualFile baseDir = myProject.getBaseDir();
-    for (VirtualFile root : vcsRoots) {
-      if (VfsUtilCore.isAncestor(root, baseDir, true)) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.exists(roots, root -> VfsUtilCore.isAncestor(root, myProject.getBaseDir(), true));
   }
 
   @NotNull
   public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
-    return StringUtil.join(roots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPresentableUrl();
-      }
-    }, ", ");
+    return StringUtil.join(roots, VirtualFile::getPresentableUrl, ", ");
   }
 
   protected abstract boolean initOrNotifyError(@NotNull final VirtualFile projectDir);
 
   protected void notifyAddedRoots(Collection<VirtualFile> roots) {
-    VcsNotifier notifier = VcsNotifier.getInstance(myProject);
-    notifier
-      .notifySuccess("", String.format("Added %s %s: %s", myVcs.getName(), pluralize("root", roots.size()), joinRootsPaths(roots)));
+    String message = String.format("Added %s %s: %s", myVcs.getName(), pluralize("root", roots.size()), joinRootsPaths(roots));
+    VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 
   private void addVcsRoots(@NotNull Collection<VirtualFile> roots) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     List<VirtualFile> currentVcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myVcs));
 
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings(myVcs));
+    List<VcsDirectoryMapping> mappings = new ArrayList<>(vcsManager.getDirectoryMappings(myVcs));
 
     for (VirtualFile root : roots) {
       if (!currentVcsRoots.contains(root)) {
@@ -113,18 +95,7 @@ public abstract class VcsIntegrationEnabler<VcsT extends AbstractVcs> {
     vcsManager.setDirectoryMappings(mappings);
   }
 
-  protected static void refreshVcsDir(@NotNull final VirtualFile projectDir, @NotNull final String vcsDirName) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
-          }
-        });
-      }
-    });
+  protected static void refreshVcsDir(@NotNull VirtualFile projectDir, @NotNull String vcsDirName) {
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
   }
-
 }

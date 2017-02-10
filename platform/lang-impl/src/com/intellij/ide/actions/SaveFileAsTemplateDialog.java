@@ -15,9 +15,12 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,5 +40,16 @@ public class SaveFileAsTemplateDialog extends SingleConfigurableEditor {
   @Override
   protected JComponent createNorthPanel() {
     return super.createNorthPanel();
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    return ArrayUtil.append(super.createActions(), getHelpAction());
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.save.file.as.template");
   }
 }

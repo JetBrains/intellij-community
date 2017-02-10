@@ -32,7 +32,7 @@ public class AntInstallationClassLoaderHolder extends ClassLoaderHolder {
   }
 
   protected ClassLoader buildClasspath() {
-    final ArrayList<File> files = new ArrayList<File>();
+    final ArrayList<File> files = new ArrayList<>();
     // ant installation jars
     final List<AntClasspathEntry> cp = AntInstallation.CLASS_PATH.get(myOptions);
     for (final AntClasspathEntry entry : cp) {
@@ -42,7 +42,7 @@ public class AntInstallationClassLoaderHolder extends ClassLoaderHolder {
     // jars from user home
     files.addAll(AntBuildFileImpl.getUserHomeLibraries());
 
-    final List<URL> urls = new ArrayList<URL>(files.size());
+    final List<URL> urls = new ArrayList<>(files.size());
     for (File file : files) {
       try {
         urls.add(file.toURI().toURL());

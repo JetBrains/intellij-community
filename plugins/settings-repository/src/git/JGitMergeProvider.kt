@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.merge.MergeData
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MergeSession
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.ColumnInfo
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
 import java.util.*
@@ -53,7 +50,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
     // not null if user accepts some revision (virtual file will be directly modified), otherwise document will be modified
     if (bytes == null) {
       val chars = FileDocumentManager.getInstance().getCachedDocument(file)!!.immutableCharSequence
-      val byteBuffer = CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(chars))
+      val byteBuffer = Charsets.UTF_8.encode(CharBuffer.wrap(chars))
       addFile(byteBuffer.array(), file, byteBuffer.remaining())
     }
     else {

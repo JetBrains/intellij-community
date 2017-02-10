@@ -44,7 +44,7 @@ public class MvcModuleNode extends AbstractModuleNode {
   @Override
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
-    final List<AbstractTreeNode> nodesList = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> nodesList = new ArrayList<>();
 
     final Module module = getValue();
 

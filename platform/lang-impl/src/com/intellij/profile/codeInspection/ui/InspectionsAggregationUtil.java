@@ -36,13 +36,13 @@ public class InspectionsAggregationUtil {
   }
 
   public static List<InspectionConfigTreeNode> getInspectionsNodes(final InspectionConfigTreeNode node) {
-    final Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(1);
+    final Queue<InspectionConfigTreeNode> q = new Queue<>(1);
     q.addLast(node);
     return getInspectionsNodes(q);
   }
 
   public static List<InspectionConfigTreeNode> getInspectionsNodes(final TreePath[] paths) {
-    final Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(paths.length);
+    final Queue<InspectionConfigTreeNode> q = new Queue<>(paths.length);
     for (final TreePath path : paths) {
       if (path != null) {
         q.addLast((InspectionConfigTreeNode)path.getLastPathComponent());
@@ -52,7 +52,7 @@ public class InspectionsAggregationUtil {
   }
 
   private static List<InspectionConfigTreeNode> getInspectionsNodes(final Queue<InspectionConfigTreeNode> queue) {
-    final Set<InspectionConfigTreeNode> nodes = new THashSet<InspectionConfigTreeNode>();
+    final Set<InspectionConfigTreeNode> nodes = new THashSet<>();
     while (!queue.isEmpty()) {
       final InspectionConfigTreeNode node = queue.pullFirst();
       if (node.getDescriptors() == null) {
@@ -64,6 +64,6 @@ public class InspectionsAggregationUtil {
         nodes.add(node);
       }
     }
-    return new ArrayList<InspectionConfigTreeNode>(nodes);
+    return new ArrayList<>(nodes);
   }
 }

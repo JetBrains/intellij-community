@@ -17,6 +17,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.ImageUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
 
@@ -70,6 +71,7 @@ public class ShadowBorderPainter {
   }
 
   public static Shadow createShadow(Image source, int x, int y, boolean paintSource, int shadowSize) {
+    source = ImageUtil.toBufferedImage(source);
     final float w = source.getWidth(null);
     final float h = source.getHeight(null);
     float ratio = w / h;

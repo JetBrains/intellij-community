@@ -16,7 +16,9 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +27,7 @@ import javax.swing.*;
 import java.awt.*;
 
 
-public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider {
+public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
   protected final ContentManager myContentManager;
   private final String myHelpId;
   private final boolean myVerticalToolbar;
@@ -47,7 +49,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
       myContentManager.addContentManagerListener(new ContentManagerAdapter(){
         public void contentRemoved(ContentManagerEvent event) {
           if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
-            dispose();
+            Disposer.dispose(PanelWithActionsAndCloseButton.this);
             myContentManager.removeContentManagerListener(this);
           }
         }
@@ -95,8 +97,6 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   protected abstract JComponent createCenterPanel();
 
   protected void addActionsTo(DefaultActionGroup group) {}
-
-  protected void dispose() {}
 
   private class MyCloseAction extends CloseTabToolbarAction {
     @Override

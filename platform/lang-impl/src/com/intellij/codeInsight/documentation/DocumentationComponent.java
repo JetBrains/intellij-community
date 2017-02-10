@@ -19,7 +19,6 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -84,6 +83,7 @@ import java.util.*;
 import java.util.List;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
+  public static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
   private static Logger LOGGER = Logger.getInstance(DocumentationComponent.class);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
@@ -99,8 +99,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
 
-  private final Stack<Context> myBackStack = new Stack<Context>();
-  private final Stack<Context> myForwardStack = new Stack<Context>();
+  private final Stack<Context> myBackStack = new Stack<>();
+  private final Stack<Context> myForwardStack = new Stack<>();
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
@@ -165,7 +165,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private JBPopup myHint;
 
-  private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
+  private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<>();
 
   @Override
   public boolean requestFocusInWindow() {
@@ -258,7 +258,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
     }
-    myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    myEditorPane.setBackground(DOCUMENTATION_COLOR);
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit(false));
     myScrollPane = new JBScrollPane(myEditorPane) {
       @Override
@@ -268,8 +268,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           return;
         }
 
-        int change = Math.abs(e.getWheelRotation());
-        boolean increase = e.getWheelRotation() <= 0;
+        int rotation = e.getWheelRotation();
+        if (rotation == 0) return;
+        int change = Math.abs(rotation);
+        boolean increase = rotation <= 0;
         FontSize newFontSize = getQuickDocFontSize();
         for (; change > 0; change--) {
           if (increase) {

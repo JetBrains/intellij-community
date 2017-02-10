@@ -1,0 +1,14 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a[^bc]>
+    RegExpBranchImpl: <a[^bc]>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpClassImpl: <[^bc]>
+        PsiElement(CLASS_BEGIN)('[')
+        PsiElement(CARET)('^')
+        RegExpUnionImpl: <bc>
+          RegExpCharImpl: <b>
+            PsiElement(CHARACTER)('b')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
+        PsiElement(CLASS_END)(']')

@@ -15,14 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +29,14 @@ import java.util.*;
 class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
   private final MethodContract myContract;
-  private final boolean myOnTheFly;
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
   private ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
+    super(false, true, onTheFly);
     myMethod = method;
     myContract = contract;
-    myOnTheFly = onTheFly;
   }
 
   static Map<PsiElement, String> checkContractClause(PsiMethod method,
@@ -70,12 +63,6 @@ class ContractChecker extends DataFlowRunner {
 
     checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Arrays.asList(initialState));
     return checker.getErrors();
-  }
-
-  @Override
-  protected boolean shouldCheckTimeLimit() {
-    if (!myOnTheFly) return false;
-    return super.shouldCheckTimeLimit();
   }
 
   @NotNull
@@ -108,6 +95,10 @@ class ContractChecker extends DataFlowRunner {
         ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
         myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
       ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
+      return DfaInstructionState.EMPTY_ARRAY;
+    }
+
+    if (instruction instanceof ConditionalGotoInstruction && memState.peek() == DfaUnknownValue.getInstance()) {
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

@@ -30,8 +30,8 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
   private int misses = 0;
 
   public IntSLRUCache(int protectedQueueSize, int probationalQueueSize) {
-    myProtectedQueue = new IntObjectLinkedMap<Entry>(protectedQueueSize);
-    myProbationalQueue = new IntObjectLinkedMap<Entry>(probationalQueueSize);
+    myProtectedQueue = new IntObjectLinkedMap<>(protectedQueueSize);
+    myProbationalQueue = new IntObjectLinkedMap<>(probationalQueueSize);
   }
 
   public Entry cacheEntry(final Entry entry) {

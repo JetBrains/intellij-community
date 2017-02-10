@@ -1,10 +1,17 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,10 +20,12 @@ import java.util.List;
 
 public class JsonBySchemaDocumentationProvider implements DocumentationProvider {
 
+  @NotNull private final VirtualFile mySchemaFile;
   @NotNull
   private final JsonSchemaObject myRootSchema;
 
-  public JsonBySchemaDocumentationProvider(@NotNull JsonSchemaObject schema) {
+  public JsonBySchemaDocumentationProvider(@NotNull VirtualFile schemaFile, @NotNull JsonSchemaObject schema) {
+    mySchemaFile = schemaFile;
     myRootSchema = schema;
   }
 
@@ -35,13 +44,27 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    if (element instanceof JsonProperty) {
+    final JsonProperty jsonProperty = element instanceof JsonProperty ? (JsonProperty) element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
+
+    if (jsonProperty != null) {
+      if (JsonSchemaFileType.INSTANCE.equals(jsonProperty.getContainingFile().getFileType())) {
+        final JsonValue value = jsonProperty.getValue();
+        if (value instanceof JsonObject) {
+          final JsonProperty description = ((JsonObject)value).findProperty("description");
+          if (description != null && description.getValue() instanceof JsonStringLiteral)
+            return StringUtil.unquoteString(description.getValue().getText());
+        }
+        return null;
+      }
+
       final Ref<String> result = Ref.create();
-      final JsonProperty jsonProperty = (JsonProperty)element;
       final String propertyName = jsonProperty.getName();
       JsonSchemaWalker.findSchemasForCompletion(jsonProperty, new JsonSchemaWalker.CompletionSchemesConsumer() {
         @Override
-        public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
+        public void consume(boolean isName,
+                            @NotNull JsonSchemaObject schema,
+                            @NotNull VirtualFile schemaFile,
+                            @NotNull List<JsonSchemaWalker.Step> steps) {
           JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
             @Override
             public boolean process(String name, JsonSchemaObject schema) {
@@ -54,7 +77,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
             }
           }, schema);
         }
-      }, myRootSchema);
+      }, myRootSchema, mySchemaFile);
 
       return result.get();
     }

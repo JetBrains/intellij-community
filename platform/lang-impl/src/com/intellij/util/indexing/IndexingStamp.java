@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -198,10 +199,10 @@ public class IndexingStamp {
 
           while(stream.available() > 0) {
             ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-            if (id != null) {
+            if (id != null && !(id instanceof StubIndexKey)) {
               long stamp = getIndexCreationStamp(id);
               if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
               if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
           }
@@ -209,9 +210,10 @@ public class IndexingStamp {
           if (outdatedIndices != null) {
             for(int outdatedIndexId:outdatedIndices) {
               ID<?, ?> id = ID.findById(outdatedIndexId);
-              if (id != null) {
+              if (id != null && !(id instanceof StubIndexKey)) {
+                if (getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
                 long stamp = INDEX_DATA_OUTDATED_STAMP;
-                if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+                if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
                 if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
               }
             }
@@ -289,7 +291,7 @@ public class IndexingStamp {
     }
 
     private void set(ID<?, ?> id, long tmst) {
-      if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+      if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
 
       if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
         return;
@@ -304,7 +306,7 @@ public class IndexingStamp {
   }
 
   private static final ConcurrentIntObjectMap<Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
-  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<Integer>(100);
+  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
     Lock readLock = getStripedLock(fileId).readLock();
@@ -357,7 +359,7 @@ public class IndexingStamp {
       try {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-          final SmartList<ID<?, ?>> retained = new SmartList<ID<?, ?>>();
+          final SmartList<ID<?, ?>> retained = new SmartList<>();
           stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
             @Override
             public boolean execute(ID<?, ?> object) {
@@ -385,7 +387,7 @@ public class IndexingStamp {
     if (finishedFile != null && finishedFile == INVALID_FILE_ID) finishedFile = 0;
     // todo make better (e.g. FinishedFiles striping, remove integers)
     while (finishedFile == null || !ourFinishedFiles.offer(finishedFile)) {
-      List<Integer> files = new ArrayList<Integer>(ourFinishedFiles.size());
+      List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
       ourFinishedFiles.drainTo(files);
 
       if (!files.isEmpty()) {

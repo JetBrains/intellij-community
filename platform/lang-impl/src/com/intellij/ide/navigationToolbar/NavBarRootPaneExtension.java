@@ -56,12 +56,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR && source.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE);
+      public void uiSettingsChanged(UISettings uiSettings) {
+        toggleRunPanel(!uiSettings.SHOW_MAIN_TOOLBAR && uiSettings.SHOW_NAVIGATION_BAR && !uiSettings.PRESENTATION_MODE);
       }
-    }, this);
+    });
 
     myNavToolbarGroupExist = runToolbarExists();
 

@@ -104,13 +104,7 @@ public class CodeInsightTestUtil {
     if (intentionAction == null) {
       Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
     }
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        fixture.launchAction(intentionAction);
-      }
-    }.execute();
-    UIUtil.dispatchAllInvocationEvents();
+    fixture.launchAction(intentionAction);
     fixture.checkResultByFile(after, false);
   }
 

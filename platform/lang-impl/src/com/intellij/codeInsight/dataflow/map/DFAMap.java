@@ -41,7 +41,7 @@ public class DFAMap<V> {
   private DFAMap(DFAMap<V> initialMap) {
     myK = initialMap.myK;
     myV = initialMap.myV;
-    myAll = initialMap.myAll == null ? null : new HashMap<String,V>(initialMap.myAll);
+    myAll = initialMap.myAll == null ? null : new HashMap<>(initialMap.myAll);
   }
 
   public static <V> DFAMap<V> empty() {
@@ -65,7 +65,7 @@ public class DFAMap<V> {
     }
     else {
       if (myAll == null) {
-        myAll = new HashMap<String,V>();
+        myAll = new HashMap<>();
         myAll.put(myK, myV);
       }
       myAll.put(key, value);
@@ -113,7 +113,7 @@ public class DFAMap<V> {
     }
     if (myK != null && (names2Include == null || names2Include.contains(myK))) {
       if (names2Include != null && names2Include.size() == 1) return names2Include;
-      final HashSet<String> result = new HashSet<String>();
+      final HashSet<String> result = new HashSet<>();
       result.add(myK);
       return result;
     }
@@ -171,7 +171,7 @@ public class DFAMap<V> {
   }
 
   public DFAMap<V> asWritable() {
-    return new DFAMap<V>(this);
+    return new DFAMap<>(this);
   }
 
   @Override

@@ -40,9 +40,9 @@ import java.util.Map;
  */
 public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRootContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootContainerImpl");
-  private final Map<OrderRootType, CompositeProjectRoot> myRoots = new HashMap<OrderRootType, CompositeProjectRoot>();
+  private final Map<OrderRootType, CompositeProjectRoot> myRoots = new HashMap<>();
 
-  private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<OrderRootType, VirtualFile[]>();
+  private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<>();
 
   private boolean myInsideChange = false;
   private final List<ProjectRootListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -80,7 +80,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   @Override
   public void finishChange() {
     LOG.assertTrue(myInsideChange);
-    HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<OrderRootType, VirtualFile[]>(myFiles);
+    HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<>(myFiles);
 
     boolean changes = false;
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
@@ -164,7 +164,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      myFiles = new HashMap<OrderRootType, VirtualFile[]>();
+      myFiles = new HashMap<>();
       for (OrderRootType rootType : myRoots.keySet()) {
         CompositeProjectRoot root = myRoots.get(rootType);
         if (myNoCopyJars) {
@@ -252,7 +252,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       }
     }
 
-    myFiles = new HashMap<OrderRootType, VirtualFile[]>();
+    myFiles = new HashMap<>();
     for (OrderRootType rootType : myRoots.keySet()) {
       myFiles.put(rootType, myRoots.get(rootType).getVirtualFiles());
     }

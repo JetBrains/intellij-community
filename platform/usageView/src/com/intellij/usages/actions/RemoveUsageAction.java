@@ -20,9 +20,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Manuel Stadelmann
@@ -59,17 +59,7 @@ public class RemoveUsageAction extends AnAction {
     return usages == null ? Usage.EMPTY_ARRAY : usages;
   }
 
-  private static Usage getNextToSelect(UsageView usageView, Usage toDelete) {
-    List<Usage> sortedUsages = usageView.getSortedUsages();
-    int curIndex = sortedUsages.indexOf(toDelete);
-
-    int selectIndex = 0;
-    if (curIndex < sortedUsages.size() - 1) {
-      selectIndex = curIndex + 1;
-    }
-    else if (curIndex > 0) {
-      selectIndex = curIndex - 1;
-    }
-    return sortedUsages.get(selectIndex);
+  private static Usage getNextToSelect(@NotNull UsageView usageView, @NotNull Usage toDelete) {
+    return ((UsageViewImpl)usageView).getNextToSelect(toDelete);
   }
 }

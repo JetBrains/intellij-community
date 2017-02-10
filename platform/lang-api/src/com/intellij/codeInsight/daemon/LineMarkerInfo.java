@@ -24,17 +24,18 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo<T extends PsiElement> {
   protected final Icon myIcon;
-  private final WeakReference<T> elementRef;
+  private final SmartPsiElementPointer<T> elementRef;
   public final int startOffset;
   public final int endOffset;
   public Color separatorColor;
@@ -43,14 +44,14 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
-  private AnAction myNavigateAction = new NavigateAction<T>(this);
+  private AnAction myNavigateAction = new NavigateAction<>(this);
   @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
   /**
    * Creates a line marker info for the element.
    * @param element         the element for which the line marker is created.
-   * @param startOffset     the offset (relative to beginning of file) with which the marker is associated
+   * @param range     the range (relative to beginning of file) with which the marker is associated
    * @param icon            the icon to show in the gutter for the line marker
    * @param updatePass      the ID of the daemon pass during which the marker should be recalculated
    * @param tooltipProvider the callback to calculate the tooltip for the gutter icon
@@ -66,12 +67,11 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
-    elementRef = new WeakReference<T>(element);
+    elementRef = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
-    this.updatePass = updatePass;
-
     endOffset = range.getEndOffset();
+    this.updatePass = 11; //Pass.LINE_MARKERS;
   }
 
   /**
@@ -102,7 +102,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new LineMarkerGutterIconRenderer<T>(this);
+    return new LineMarkerGutterIconRenderer<>(this);
   }
 
   @Nullable
@@ -114,7 +114,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Nullable
   public T getElement() {
-    return elementRef.get();
+    return elementRef.getElement();
   }
 
   void setNavigateAction(@NotNull  AnAction navigateAction) {
@@ -192,6 +192,6 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Override
   public String toString() {
-    return "("+startOffset+","+endOffset+") -> "+elementRef.get();
+    return "("+startOffset+","+endOffset+") -> "+elementRef;
   }
 }

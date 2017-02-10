@@ -42,7 +42,7 @@ public class MembersViewInitializationInfo {
    */
   public MembersViewInitializationInfo(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel,
                                        @NotNull final Collection<PyMemberInfo<PyElement>> memberInfos) {
-    myMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(memberInfos);
+    myMemberInfos = new ArrayList<>(memberInfos);
     myMemberInfoModel = memberInfoModel;
   }
 

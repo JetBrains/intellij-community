@@ -84,7 +84,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   protected PsiField createFieldToStartTemplateOn(final String[] names,
                                                 final PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
+    final PsiField field = ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
         PsiField field = elementFactory.createField(chooseName(names, myParentClass.getLanguage()), defaultType);
@@ -97,10 +97,12 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
         if (visibility != null) {
           PsiUtil.setModifierProperty(field, visibility, true);
         }
-         myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
+        myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
         return field;
       }
     });
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+    return field;
   }
 
   @Override

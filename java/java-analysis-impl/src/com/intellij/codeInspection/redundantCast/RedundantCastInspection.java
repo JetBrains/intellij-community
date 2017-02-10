@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
@@ -59,7 +58,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   public ProblemDescriptor[] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
-    List<ProblemDescriptor> descriptions = new ArrayList<ProblemDescriptor>(redundantCasts.size());
+    List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());
     for (PsiTypeCastExpression redundantCast : redundantCasts) {
       ProblemDescriptor descriptor = createDescription(redundantCast, manager, isOnTheFly);
       if (descriptor != null) {
@@ -90,10 +89,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     PsiExpression operand = cast.getOperand();
     PsiTypeElement castType = cast.getCastType();
     if (operand == null || castType == null) return null;
-    PsiElement parent = cast.getParent();
-    while (parent instanceof PsiParenthesizedExpression){
-      parent = parent.getParent();
-    }
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (parent instanceof PsiReferenceExpression) {
       if (IGNORE_ANNOTATED_METHODS) {
         final PsiElement gParent = parent.getParent();
@@ -116,7 +112,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<PsiMethod>(),
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(),
                                           new IntArrayList());
         if (message != null) {
           return null;
@@ -133,24 +129,17 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   private static class AcceptSuggested implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {
         RedundantCastUtil.removeCast(cast);
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

@@ -40,7 +40,7 @@ import java.util.Set;
 @State(name = "RecentTaskRepositories", storages = @Storage("other.xml"))
 public class RecentTaskRepositories implements PersistentStateComponent<Element> {
 
-  private final Set<TaskRepository> myRepositories = new THashSet<TaskRepository>(HASHING_STRATEGY);
+  private final Set<TaskRepository> myRepositories = new THashSet<>(HASHING_STRATEGY);
 
   private static final TObjectHashingStrategy<TaskRepository> HASHING_STRATEGY = new TObjectHashingStrategy<TaskRepository>() {
     public int computeHashCode(TaskRepository object) {
@@ -57,12 +57,12 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
   }
 
   public Set<TaskRepository> getRepositories() {
-    return new THashSet<TaskRepository>(ContainerUtil.findAll(myRepositories,
-                                                              repository -> !StringUtil.isEmptyOrSpaces(repository.getUrl())), HASHING_STRATEGY);
+    return new THashSet<>(ContainerUtil.findAll(myRepositories,
+                                                repository -> !StringUtil.isEmptyOrSpaces(repository.getUrl())), HASHING_STRATEGY);
   }
 
   public void addRepositories(Collection<TaskRepository> repositories) {
-    Collection<TaskRepository> old = new ArrayList<TaskRepository>(myRepositories);
+    Collection<TaskRepository> old = new ArrayList<>(myRepositories);
     myRepositories.clear();
     if (doAddReps(repositories)) return;
     doAddReps(old);

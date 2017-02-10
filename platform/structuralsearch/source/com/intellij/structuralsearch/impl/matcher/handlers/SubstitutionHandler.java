@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -119,22 +134,26 @@ public class SubstitutionHandler extends MatchingHandler {
       return false;
     }
 
-    MatchResultImpl result = context.getResult().findSon(name);
-    
+    MatchResultImpl result = context.hasResult() ? context.getResult().findSon(name) : null;
+
     if (result == null && context.getPreviousResult() != null) {
       result = context.getPreviousResult().findSon(name);
     }
 
-    if (result!=null) {
+    if (result != null) {
       if (minOccurs == 1 && maxOccurs == 1) {
         // check if they are the same
         return validateOneMatch(match, start, end, result,context);
-      } else if (maxOccurs > 1 && totalMatchedOccurs!=-1) {
-        final int size = result.getAllSons().size();
-        if (matchedOccurs >= size) {
-          return false;
+      } else if (maxOccurs > 1 && totalMatchedOccurs != -1) {
+        if (result.isMultipleMatch()) {
+          final int size = result.getAllSons().size();
+          if (matchedOccurs >= size) {
+            return false;
+          }
+          if (size != 0) {
+            result = (MatchResultImpl)result.getAllSons().get(matchedOccurs);
+          }
         }
-        result = size == 0 ?result:(MatchResultImpl)result.getAllSons().get(matchedOccurs);
         // check if they are the same
         return validateOneMatch(match, start, end, result, context);
       }
@@ -241,7 +260,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   boolean validate(MatchContext context, Class elementContext) {
-    MatchResult substitution = context.getResult().findSon(name);
+    MatchResult substitution = context.hasResult() ? context.getResult().findSon(name) : null;
 
     if (minOccurs >= 1 &&
         ( substitution == null ||
@@ -324,7 +343,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
             if (handler.match(patternNode, matchedNode, context)) {
               ++matchedOccurs;
-              if (matchedElements == null) matchedElements = new HashSet<PsiElement>();
+              if (matchedElements == null) matchedElements = new HashSet<>();
               matchedElements.add(matchedNode);
               if (handler.shouldAdvanceThePatternFor(patternNode, matchedNode)) {
                 break;

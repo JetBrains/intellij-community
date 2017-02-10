@@ -109,7 +109,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private void syncSelection() {
     // Found selected components
     final RadContainer rootContainer=myEditor.getRootContainer();
-    final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> selection = new ArrayList<>();
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<RadComponent>() {

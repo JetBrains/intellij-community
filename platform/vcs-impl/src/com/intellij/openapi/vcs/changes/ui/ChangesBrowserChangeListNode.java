@@ -58,10 +58,9 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
         renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       } 
       else if (myClManager.isInUpdate()) {
-        renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
-                        SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendUpdatingState(renderer);
       }
-      if (! myChangeListRemoteState.getState()) {
+      if (! myChangeListRemoteState.allUpToDate()) {
         renderer.append(spaceAndThinSpace());
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
@@ -97,7 +96,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
 
-    final List<VirtualFile> toUpdate = new ArrayList<VirtualFile>();
+    final List<VirtualFile> toUpdate = new ArrayList<>();
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
@@ -114,8 +113,8 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public int getSortWeight() {
-    if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
-    return 2;
+    if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return DEFAULT_CHANGE_LIST_SORT_WEIGHT;
+    return CHANGE_LIST_SORT_WEIGHT;
   }
 
   @Override

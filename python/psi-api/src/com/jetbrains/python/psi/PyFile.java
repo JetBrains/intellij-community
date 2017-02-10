@@ -27,6 +27,7 @@ import java.util.List;
 public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
   List<PyStatement> getStatements();
 
+  @NotNull
   List<PyClass> getTopLevelClasses();
 
   @NotNull
@@ -35,13 +36,13 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<PyTargetExpression> getTopLevelAttributes();
 
   @Nullable
-  PyFunction findTopLevelFunction(String name);
+  PyFunction findTopLevelFunction(@NotNull String name);
 
   @Nullable
-  PyClass findTopLevelClass(String name);
+  PyClass findTopLevelClass(@NotNull String name);
 
   @Nullable
-  PyTargetExpression findTopLevelAttribute(String name);
+  PyTargetExpression findTopLevelAttribute(@NotNull String name);
 
   LanguageLevel getLanguageLevel();
 

@@ -13,6 +13,7 @@ public class IpnbFunctionElementType extends PyFunctionElementType {
     super("IPNB_FUNCTION");
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new IpnbPyFunction(node);

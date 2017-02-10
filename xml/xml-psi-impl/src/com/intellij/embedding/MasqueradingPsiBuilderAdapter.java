@@ -257,7 +257,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   private void initTokenListAndCharSequence(MasqueradingLexer lexer) {
     lexer.start(getDelegate().getOriginalText());
-    myShrunkSequence = new ArrayList<MyShiftedToken>();
+    myShrunkSequence = new ArrayList<>();
     StringBuilder charSequenceBuilder = new StringBuilder();
 
     int realPos = 0;

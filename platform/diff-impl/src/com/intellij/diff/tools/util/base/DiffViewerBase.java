@@ -24,11 +24,11 @@ import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -228,7 +228,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @Nullable
-  protected OpenFileDescriptor getOpenFileDescriptor() {
+  protected Navigatable getNavigatable() {
     return null;
   }
 
@@ -282,11 +282,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getOpenFileDescriptor();
-    }
-    else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
-      return getOpenFileDescriptor();
+    if (DiffDataKeys.NAVIGATABLE.is(dataId)) {
+      return getNavigatable();
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;

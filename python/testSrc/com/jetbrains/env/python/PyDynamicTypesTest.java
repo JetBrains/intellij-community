@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
@@ -31,8 +32,6 @@ import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static com.intellij.testFramework.UsefulTestCase.edt;
 
 /**
  * @author traff
@@ -76,19 +75,8 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForTerminate();
 
-        edt(() -> {
-          myFixture.configureByFile("dynamicTypes/" + scriptName);
-
-          try {
-            //copy signature attributes from real file to temporary test file
-            byte[] bytes = PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE
-              .readAttributeBytes(getVirtualFile());
-            PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(myFixture.getFile().getVirtualFile(),
-                                                                                      bytes);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+        EdtTestUtil.runInEdtAndWait(() -> {
+          myFixture.configureByFile(scriptName);
 
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorTestUtil.CaretAndSelectionState(
             Lists.newArrayList(new EditorTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));

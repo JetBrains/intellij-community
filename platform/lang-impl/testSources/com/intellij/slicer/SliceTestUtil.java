@@ -46,7 +46,7 @@ public class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocument(final Document document) {
-    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<String, RangeMarker>();
+    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
 
     extract(document, sliceUsageName2Offset, "");
     int index = document.getText().indexOf("<flown");
@@ -92,9 +92,9 @@ public class SliceTestUtil {
   }
 
   public static void checkUsages(final SliceUsage usage, final TIntObjectHashMap<IntArrayList> flownOffsets) {
-    final List<SliceUsage> children = new ArrayList<SliceUsage>();
+    final List<SliceUsage> children = new ArrayList<>();
     boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> usage.processChildren(new CommonProcessors.CollectProcessor<SliceUsage>(children)), "Expanding", true, usage.getElement().getProject());
+      () -> usage.processChildren(new CommonProcessors.CollectProcessor<>(children)), "Expanding", true, usage.getElement().getProject());
     assertTrue(b);
     int startOffset = usage.getElement().getTextOffset();
     IntArrayList list = flownOffsets.get(startOffset);

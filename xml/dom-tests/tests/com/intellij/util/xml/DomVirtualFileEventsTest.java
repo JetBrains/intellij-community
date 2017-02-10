@@ -90,7 +90,7 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
         final VirtualFile data = dir.createChildData(this, "abc.xml");
         setFileText(data, "<a/>");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        final DomFileElementImpl<DomElement> fileElement = getFileElement(data);
+        DomFileElementImpl<DomElement> fileElement = getFileElement(data);
         assertEventCount(0);
         assertResultsAndClear();
 
@@ -100,6 +100,7 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
         assertResultsAndClear();
         assertEquals(fileElement, getFileElement(data));
         assertTrue(fileElement.isValid());
+        fileElement = getFileElement(data);
 
         data.rename(this, "fff.xml");
         assertEventCount(1);

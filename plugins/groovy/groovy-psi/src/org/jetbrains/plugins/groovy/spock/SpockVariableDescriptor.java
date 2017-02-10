@@ -46,7 +46,7 @@ public class SpockVariableDescriptor {
   public SpockVariableDescriptor(PsiElement navigationElement, String name) {
     myName = name;
     myNavigationElement = navigationElement;
-    myExpressions = new ArrayList<GrExpression>();
+    myExpressions = new ArrayList<>();
   }
 
   public SpockVariableDescriptor addExpression(@Nullable GrExpression expression) {
@@ -56,7 +56,7 @@ public class SpockVariableDescriptor {
 
   public SpockVariableDescriptor addExpressionOfCollection(@Nullable GrExpression expression) {
     if (myExpressionsOfCollection == null) {
-      myExpressionsOfCollection = new ArrayList<GrExpression>();
+      myExpressionsOfCollection = new ArrayList<>();
     }
 
     myExpressionsOfCollection.add(expression);

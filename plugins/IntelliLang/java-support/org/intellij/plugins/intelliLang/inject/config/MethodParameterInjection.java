@@ -39,7 +39,7 @@ public class MethodParameterInjection extends BaseInjection {
   private String myClassName = "";
 
   @NotNull
-  private final Map<String, MethodInfo> myParameterMap = new THashMap<String, MethodInfo>();
+  private final Map<String, MethodInfo> myParameterMap = new THashMap<>();
 
   public MethodParameterInjection() {
     super(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
@@ -83,7 +83,7 @@ public class MethodParameterInjection extends BaseInjection {
       setClassName(JDOMExternalizer.readString(e, "CLASS"));
       //setApplyInHierarchy(JDOMExternalizer.readBoolean(e, "APPLY_IN_HIERARCHY"));
       readOldFormat(e);
-      final THashMap<String, String> map = new THashMap<String, String>();
+      final THashMap<String, String> map = new THashMap<>();
       JDOMExternalizer.readMap(e, map, null, "SIGNATURES");
       for (String s : map.keySet()) {
         final String fixedSignature = fixSignature(s, false);
@@ -389,7 +389,7 @@ public class MethodParameterInjection extends BaseInjection {
   }
 
   public static List<String> getPatternString(final MethodParameterInjection injection) {
-    final ArrayList<String> list = new ArrayList<String>();
+    final ArrayList<String> list = new ArrayList<>();
     final String className = injection.getClassName();
     for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
       final boolean[] paramFlags = info.getParamFlags();

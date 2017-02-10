@@ -74,7 +74,6 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.progressLoggerFactory = progressLoggerFactory;
     }
 
-    @Override
     public void download(URI address, File destination) throws Exception {
       ProgressLogger progressLogger = progressLoggerFactory.newOperation(DistributionFactory.class);
       progressLogger.setDescription(String.format("Download %s", address));
@@ -98,12 +97,10 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.locationDisplayName = locationDisplayName;
     }
 
-    @Override
     public String getDisplayName() {
       return displayName;
     }
 
-    @Override
     public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory,
                                                        File userHomeDir,
                                                        BuildCancellationToken cancellationToken) {
@@ -130,7 +127,7 @@ public class DistributionFactoryExt extends DistributionFactory {
         throw new IllegalArgumentException(
           String.format("The specified %s does not appear to contain a Gradle distribution.", locationDisplayName));
       }
-      Set<File> files = new LinkedHashSet<File>();
+      Set<File> files = new LinkedHashSet<>();
       //noinspection ConstantConditions
       for (File file : libDir.listFiles()) {
         if (file.getName().endsWith(".jar")) {
@@ -151,13 +148,11 @@ public class DistributionFactoryExt extends DistributionFactory {
       this.executorFactory = executorFactory;
     }
 
-    @Override
     public String getDisplayName() {
       return String.format("Gradle distribution '%s'", wrapperConfiguration.getDistribution());
     }
 
-    @Override
-    public ClassPath getToolingImplementationClasspath(final ProgressLoggerFactory progressLoggerFactory, final File userHomeDir, BuildCancellationToken cancellationToken) {
+    public ClassPath getToolingImplementationClasspath(org.gradle.internal.logging.progress.ProgressLoggerFactory progressLoggerFactory, final File userHomeDir, BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
         Callable<File> installDistroTask = () -> {
           File installDir;

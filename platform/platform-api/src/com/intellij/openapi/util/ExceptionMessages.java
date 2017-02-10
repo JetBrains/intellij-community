@@ -23,7 +23,7 @@ import java.util.HashMap;
 public class ExceptionMessages {
   static  final HashMap<Integer, String> ourIOMessages;
   static {
-    ourIOMessages = new HashMap<Integer,String>();
+    ourIOMessages = new HashMap<>();
     if(SystemInfo.isWindows) {
       ourIOMessages.put(new Integer(1), CommonBundle.message("incorrect.function.error.message"));
       ourIOMessages.put(new Integer(2), CommonBundle.message("the.system.cannot.find.the.file.specified.error.message"));

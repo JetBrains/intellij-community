@@ -1,7 +1,7 @@
 {\rtf1\ansi\deff0{\colortbl;\red0\green0\blue0;\red255\green255\blue255;\red0\green0\blue109;\red15\green112\blue3;}
 {\fonttbl{\f1 ___PLATFORM_SPECIFIC___;}}
 
-\s0\box\cbpat2\cb2\fs___PLATFORM_SPECIFIC___
+\s0\box\cbpat2\cb2\cf1\fs___PLATFORM_SPECIFIC___
 \cf3
 \f1
 \i0\b
@@ -9,7 +9,7 @@
 public class \cf1
 \i0\b0
 
-Basic \{\line
+Basic \{\
 
   \cf3
 \i0\b
@@ -17,9 +17,9 @@ Basic \{\line
 int \cf1
 \i0\b0
 
-field;\line
+field;\
 
-\line
+\
 
   \cf3
 \i0\b
@@ -27,7 +27,7 @@ field;\line
 public static void \cf1
 \i0\b0
 
-main(String[] args) \{\line
+main(String[] args) \{\
 
     System.out.println(\cf4
 \i0\b
@@ -39,9 +39,9 @@ main(String[] args) \{\line
 world!"\cf1
 \i0\b0
 
-);\line
+);\
 
-  \}\line
+  \}\
 
-\}\line
+\}\
 \par}

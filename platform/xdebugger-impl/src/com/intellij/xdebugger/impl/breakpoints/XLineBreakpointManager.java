@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -52,12 +53,10 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -74,7 +73,7 @@ public class XLineBreakpointManager {
   private final XDependentBreakpointManager myDependentBreakpointManager;
   private final StartupManagerEx myStartupManager;
 
-  public XLineBreakpointManager(Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
+  public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
     myProject = project;
     myDependentBreakpointManager = dependentBreakpointManager;
     myStartupManager = (StartupManagerEx)startupManager;
@@ -114,20 +113,13 @@ public class XLineBreakpointManager {
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
 
     // Update breakpoints colors if global color schema was changed
-    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
-      colorsManager.addEditorColorsListener(new MyEditorColorsListener(), project);
-    }
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
   }
 
   public void updateBreakpointsUI() {
     if (myProject.isDefault()) return;
 
-    DumbAwareRunnable runnable = () -> {
-      for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-        breakpoint.updateUI();
-      }
-    };
+    DumbAwareRunnable runnable = () -> myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
 
     if (ApplicationManager.getApplication().isUnitTestMode() || myStartupManager.startupActivityPassed()) {
       runnable.run();
@@ -221,9 +213,7 @@ public class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
-          breakpoint.updateUI();
-        }
+        myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
       }
     });
   }
@@ -282,8 +272,12 @@ public class XLineBreakpointManager {
       if (line >= 0 && line < document.getLineCount() && file != null) {
         ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-        final Promise<XLineBreakpoint> lineBreakpoint = XBreakpointUtil.toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false);
-        lineBreakpoint
+        XBreakpointUtil.toggleLineBreakpoint(myProject,
+                                             XSourcePositionImpl.create(file, line),
+                                             editor,
+                                             mouseEvent.isAltDown(),
+                                             false,
+                                             !mouseEvent.isShiftDown() && !Registry.is("debugger.click.disable.breakpoints"))
           .done(breakpoint -> {
             if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
               breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
@@ -336,7 +330,7 @@ public class XLineBreakpointManager {
     }
   }
 
-  private class MyEditorColorsListener extends EditorColorsAdapter {
+  private class MyEditorColorsListener implements EditorColorsListener {
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       updateBreakpointsUI();

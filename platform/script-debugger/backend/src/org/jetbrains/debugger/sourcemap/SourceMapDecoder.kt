@@ -176,7 +176,7 @@ private fun parseMap(reader: JsonReaderEx,
       SourceMappingList(entries)
     }
   }
-  return SourceMap(file, GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory(sources, sourcesContent), !names.isNullOrEmpty())
+  return OneLevelSourceMap(file, GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory(sources, sourcesContent), !names.isNullOrEmpty())
 }
 
 private fun readSourcePath(reader: JsonReaderEx) = PathUtil.toSystemIndependentName(StringUtil.nullize(reader.nextString().trim { it <= ' ' }))
@@ -269,10 +269,10 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
 }
 
 private fun getMapping(reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>, sourceIndex: Int): MutableList<MappingEntry> {
-  var reverseMappings = reverseMappingsBySourceUrl[sourceIndex]
+  var reverseMappings = reverseMappingsBySourceUrl.get(sourceIndex)
   if (reverseMappings == null) {
     reverseMappings = ArrayList<MappingEntry>()
-    reverseMappingsBySourceUrl[sourceIndex] = reverseMappings
+    reverseMappingsBySourceUrl.set(sourceIndex, reverseMappings)
   }
   return reverseMappings
 }
@@ -289,11 +289,7 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
 /**
  * Not mapped to a section in the original source.
  */
-private open class UnmappedEntry(line: Int, column: Int) : MappingEntry {
-  override val generatedColumn = column
-
-  override val generatedLine = line
-
+private data class UnmappedEntry(override val generatedLine: Int, override val generatedColumn: Int) : MappingEntry {
   override val sourceLine = UNMAPPED
 
   override val sourceColumn = UNMAPPED
@@ -302,23 +298,30 @@ private open class UnmappedEntry(line: Int, column: Int) : MappingEntry {
 /**
  * Mapped to a section in the original source.
  */
-private open class UnnamedEntry(line: Int, column: Int, override val source: Int, override val sourceLine: Int, override val sourceColumn: Int) : UnmappedEntry(line, column) {
-}
+private data class UnnamedEntry(override val generatedLine: Int,
+                                override val generatedColumn: Int,
+                                override val source: Int,
+                                override val sourceLine: Int,
+                                override val sourceColumn: Int) : MappingEntry
 
 /**
  * Mapped to a section in the original source, and is associated with a name.
  */
-private class NamedEntry(override val name: String, line: Int, column: Int, source: Int, sourceLine: Int, sourceColumn: Int) : UnnamedEntry(line, column, source, sourceLine, sourceColumn) {
-}
+private data class NamedEntry(override val name: String,
+                              override val generatedLine: Int,
+                              override val generatedColumn: Int,
+                              override val source: Int,
+                              override val sourceLine: Int,
+                              override val sourceColumn: Int) : MappingEntry
 
 // java CharacterIterator is ugly, next() impl, so, we reinvent
 private class CharSequenceIterator(private val content: CharSequence) : CharIterator {
   private val length = content.length
   private var current = 0
 
-  override fun next() = content[current++]
+  override fun next() = content.get(current++)
 
-  internal fun peek() = content[current]
+  internal fun peek() = content.get(current)
 
   override fun hasNext() = current < length
 }
@@ -328,7 +331,7 @@ private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mapp
 
   override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
 
-  override fun getComparator() = MAPPING_COMPARATOR_BY_SOURCE_POSITION
+  override val comparator = MAPPING_COMPARATOR_BY_SOURCE_POSITION
 }
 
 private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
@@ -336,6 +339,6 @@ private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(m
 
   override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
 
-  override fun getComparator() = MAPPING_COMPARATOR_BY_GENERATED_POSITION
+  override val comparator = MAPPING_COMPARATOR_BY_GENERATED_POSITION
 }
 

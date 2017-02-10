@@ -69,9 +69,9 @@ public final class Settings {
     myMakeClassParameter = classParameterName != null;
     myClassParameterName = classParameterName;
     myMakeFieldParameters = variableDatum != null;
-    myFieldToNameList = new ArrayList<FieldParameter>();
+    myFieldToNameList = new ArrayList<>();
     if(myMakeFieldParameters) {
-      myFieldToNameMapping = new HashMap<PsiField, String>();
+      myFieldToNameMapping = new HashMap<>();
       for (VariableData data : variableDatum) {
         if (data.passAsParameter) {
           myFieldToNameMapping.put((PsiField)data.variable, data.name);
@@ -90,9 +90,9 @@ public final class Settings {
     myMakeClassParameter = classParameterName != null;
     myClassParameterName = classParameterName;
     myMakeFieldParameters = fields.length > 0;
-    myFieldToNameList = new ArrayList<FieldParameter>();
+    myFieldToNameList = new ArrayList<>();
     if (myMakeFieldParameters) {
-      myFieldToNameMapping = new HashMap<PsiField, String>();
+      myFieldToNameMapping = new HashMap<>();
       for (int i = 0; i < fields.length; i++) {
         final PsiField field = fields[i];
         final String name = names[i];

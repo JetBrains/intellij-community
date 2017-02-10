@@ -106,8 +106,8 @@ public final class ErrorAnalyzer {
 
     // 2. Validate bindings to fields
     // field name -> error message
-    final ArrayList<String> usedBindings = new ArrayList<String>(); // for performance reasons
-    final Set<IButtonGroup> processedGroups = new HashSet<IButtonGroup>();
+    final ArrayList<String> usedBindings = new ArrayList<>(); // for performance reasons
+    final Set<IButtonGroup> processedGroups = new HashSet<>();
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
@@ -201,7 +201,7 @@ public final class ErrorAnalyzer {
       // Run inspections for form elements
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
       if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
-        final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
+        final List<FormInspectionTool> formInspectionTools = new ArrayList<>();
         final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
         for (FormInspectionTool formInspectionTool : registeredFormInspections) {
           if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
@@ -225,7 +225,7 @@ public final class ErrorAnalyzer {
                   if (errorInfos != null) {
                     ArrayList<ErrorInfo> errorList = getErrorInfos(component);
                     if (errorList == null) {
-                      errorList = new ArrayList<ErrorInfo>();
+                      errorList = new ArrayList<>();
                       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                     }
                     Collections.addAll(errorList, errorInfos);
@@ -326,7 +326,7 @@ public final class ErrorAnalyzer {
   private static void putError(final IComponent component, final ErrorInfo errorInfo) {
     ArrayList<ErrorInfo> errorList = getErrorInfos(component);
     if (errorList == null) {
-      errorList = new ArrayList<ErrorInfo>();
+      errorList = new ArrayList<>();
       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
     }
 
@@ -367,7 +367,7 @@ public final class ErrorAnalyzer {
   }
 
   @NotNull public static ErrorInfo[] getAllErrorsForComponent(@NotNull IComponent component) {
-    List<ErrorInfo> result = new ArrayList<ErrorInfo>();
+    List<ErrorInfo> result = new ArrayList<>();
     ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
     if (errorInfo != null) {
       result.add(errorInfo);

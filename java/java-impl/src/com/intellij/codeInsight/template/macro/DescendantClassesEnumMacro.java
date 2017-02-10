@@ -78,18 +78,17 @@ public class DescendantClassesEnumMacro extends Macro {
       JavaPsiFacade.getInstance(instance.getProject()).findClass(paramResult, GlobalSearchScope.allScope(context.getProject()));
 
     if (myBaseClass != null) {
-      final List<PsiClass> classes = new ArrayList<PsiClass>();
+      final List<PsiClass> classes = new ArrayList<>();
 
-      ClassInheritorsSearch.search(myBaseClass).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-          @Override
-          public boolean execute(@NotNull PsiClass element) {
-            if (isAllowAbstract || !isAbstractOrInterface(element)) {
-              classes.add(element);
-            }
-            return true;
+      ClassInheritorsSearch.search(myBaseClass).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+        @Override
+        public boolean execute(@NotNull PsiClass element) {
+          if (isAllowAbstract || !isAbstractOrInterface(element)) {
+            classes.add(element);
           }
-
-        }));
+          return true;
+        }
+      }));
 
       return classes;
     }
@@ -111,7 +110,7 @@ public class DescendantClassesEnumMacro extends Macro {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
 
-    Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+    Set<LookupElement> set = new LinkedHashSet<>();
     boolean isShortName = params.length > 1 && !Boolean.valueOf(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {

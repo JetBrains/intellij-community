@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -53,8 +54,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
-import com.intellij.psi.scope.processor.VariablesProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -228,7 +227,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    final List<PsiExpression> expressions = new ArrayList<>();
     /*for (PsiElement element : statementsInRange) {
       if (element instanceof PsiExpressionStatement) {
         final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
@@ -353,14 +352,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     try {
       text = file.getText().subSequence(startOffset, endOffset).toString();
       String prefix = null;
-      String stripped = text;
       if (startLiteralExpression != null) {
         final int startExpressionOffset = startLiteralExpression.getTextOffset();
-        if (startOffset == startExpressionOffset) {
-          if (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\'')) {
-            stripped = text.substring(1);
-          }
-        } else if (startOffset == startExpressionOffset + 1) {
+        if (startOffset == startExpressionOffset + 1) {
           text = "\"" + text;
         } else if (startOffset > startExpressionOffset + 1){
           prefix = "\" + ";
@@ -371,34 +365,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       String suffix = null;
       if (endLiteralExpression != null) {
         final int endExpressionOffset = endLiteralExpression.getTextOffset() + endLiteralExpression.getTextLength();
-        if (endOffset == endExpressionOffset ) {
-          if (StringUtil.endsWithChar(stripped, '\"') || StringUtil.endsWithChar(stripped, '\'')) {
-            stripped = stripped.substring(0, stripped.length() - 1);
-          }
-        } else if (endOffset == endExpressionOffset - 1) {
+        if (endOffset == endExpressionOffset - 1) {
           text += "\"";
         } else if (endOffset < endExpressionOffset - 1) {
           suffix = " + \"";
           text += "\"";
         }
-      }
-
-      boolean primitive = false;
-      if (stripped.equals("true") || stripped.equals("false")) {
-        primitive = true;
-      }
-      else {
-        try {
-          Integer.parseInt(stripped);
-          primitive = true;
-        }
-        catch (NumberFormatException e1) {
-          //then not primitive
-        }
-      }
-
-      if (primitive) {
-        text = stripped;
       }
 
       if (literalExpression != null && text.equals(literalExpression.getText())) return literalExpression;
@@ -621,7 +593,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       !isInJspHolderMethod(expr);
 
     if (isInplaceAvailableOnDataContext) {
-      final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       checkInLoopCondition(expr, conflicts);
       if (!conflicts.isEmpty()) {
         showErrorMessage(project, editor, StringUtil.join(conflicts.values(), "<br>"));
@@ -634,7 +606,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
 
-    final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
+    final List<PsiExpression> nonWrite = new ArrayList<>();
     boolean cantReplaceAll = false;
     boolean cantReplaceAllButWrite = false;
     for (PsiExpression occurrence : occurrences) {
@@ -679,7 +651,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
 
           final boolean noWrite = choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
-          final List<PsiExpression> allOccurrences = new ArrayList<PsiExpression>();
+          final List<PsiExpression> allOccurrences = new ArrayList<>();
           for (PsiExpression occurrence : occurrences) {
             if (expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement) continue;
             if (choice == OccurrencesChooser.ReplaceChoice.ALL || (noWrite && !PsiUtil.isAccessedForWriting(occurrence)) ||  expr.equals(occurrence)) {
@@ -725,8 +697,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               final PsiElement chosenAnchor =
                 chooseAnchor(settings.isReplaceAllOccurrences(), hasWriteAccess, nonWrite, anchorStatementIfAll, anchorStatement);
 
-              variable = ApplicationManager.getApplication().runWriteAction(
-                introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings));
+              variable = introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings);
             }
             finally {
               final RefactoringEventData afterData = new RefactoringEventData();
@@ -779,26 +750,33 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {
-    boolean skipForStatement = true;
-    final PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class);
-    if (forStatement != null) {
-      final VariablesProcessor variablesProcessor = new VariablesProcessor(false) {
-        @Override
-        protected boolean check(PsiVariable var, ResolveState state) {
-          return PsiTreeUtil.isAncestor(forStatement.getInitialization(), var, true);
+    Set<PsiVariable> vars = new HashSet<>();
+    SyntaxTraverser.psiTraverser().withRoot(expr)
+      .filter(element -> element instanceof PsiReferenceExpression)
+      .forEach(element -> {
+        final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+        if (resolve instanceof PsiVariable) {
+          vars.add((PsiVariable)resolve);
         }
-      };
-      PsiScopesUtil.treeWalkUp(variablesProcessor, expr, null);
-      skipForStatement = variablesProcessor.size() == 0;
-    }
+      });
 
     PsiElement containerParent = tempContainer;
     PsiElement lastScope = tempContainer;
     while (true) {
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
-      if (containerParent instanceof PsiLambdaExpression) break;
-      if (!skipForStatement && containerParent instanceof PsiForStatement) break;
+      if (containerParent instanceof PsiLambdaExpression) {
+        PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
+        if (Arrays.stream(parameters).anyMatch(parameter -> vars.contains(parameter))) {
+          break;
+        }
+      }
+      if (containerParent instanceof PsiForStatement) {
+        PsiForStatement forStatement = (PsiForStatement)containerParent;
+        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(forStatement.getInitialization(), variable, true))) {
+          break;
+        }
+      }
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
         lastScope = containerParent;
@@ -819,12 +797,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return parent3 instanceof JspHolderMethod;
   }
 
-  public static Computable<PsiVariable> introduce(final Project project,
-                                                  final PsiExpression expr,
-                                                  final Editor editor,
-                                                  final PsiElement anchorStatement,
-                                                  final PsiExpression[] occurrences,
-                                                  final IntroduceVariableSettings settings) {
+  public static PsiVariable introduce(final Project project,
+                                      final PsiExpression expr,
+                                      final Editor editor,
+                                      final PsiElement anchorStatement,
+                                      final PsiExpression[] occurrences,
+                                      final IntroduceVariableSettings settings) {
     final PsiElement container = anchorStatement.getParent();
     PsiElement child = anchorStatement;
     final boolean isInsideLoop = RefactoringUtil.isLoopOrIf(container);
@@ -866,9 +844,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(container, PsiCodeBlock.class, false);
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
-    return new Computable<PsiVariable>() {
+    SmartPsiElementPointer<PsiVariable> pointer = ApplicationManager.getApplication().runWriteAction(new Computable<SmartPsiElementPointer<PsiVariable>> () {
       @Override
-      public PsiVariable compute() {
+      public SmartPsiElementPointer<PsiVariable> compute() {
         try {
           PsiStatement statement = null;
           if (!isInsideLoop && deleteSelf) {
@@ -881,8 +859,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             settings.getSelectedType());
           initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
+          PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, project);
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer, container);
+            .createVariableDeclarationStatement(settings.getEnteredName(), type, initializer, container);
           if (!isInsideLoop) {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
@@ -904,7 +883,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
           PsiExpression ref = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(settings.getEnteredName(), null);
           if (settings.isReplaceAllOccurrences()) {
-            ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+            ArrayList<PsiElement> array = new ArrayList<>();
             for (PsiExpression occurrence : occurrences) {
               if (deleteSelf && occurrence.equals(expr)) continue;
               if (occurrence.equals(expr)) {
@@ -937,7 +916,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());
           fieldConflictsResolver.fix();
-          return var;
+          return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(var);
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
@@ -969,7 +948,28 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
         return  (PsiDeclarationStatement) container.addBefore(declaration, anchor);
       }
-    };
+    });
+    return pointer != null ? pointer.getElement() : null;
+  }
+
+  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final Project project) {
+    PsiType type = selectedType.getType();
+    if (type == null) return null;
+    final PsiAnnotation[] annotations = type.getAnnotations();
+    type = type.annotate(new TypeAnnotationProvider() {
+      @NotNull
+      @Override
+      public PsiAnnotation[] getAnnotations() {
+        final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+        final Set<String> nullables = new HashSet<>();
+        nullables.addAll(manager.getNotNulls());
+        nullables.addAll(manager.getNullables());
+        return Arrays.stream(annotations)
+          .filter(annotation -> !nullables.contains(annotation.getQualifiedName()))
+          .toArray(PsiAnnotation[]::new);
+      }
+    });
+    return type;
   }
 
   private static boolean isFinalVariableOnLHS(PsiExpression expr) {
@@ -1189,7 +1189,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement loopForLoopCondition = RefactoringUtil.getLoopForLoopCondition(occurence);
     if (loopForLoopCondition == null) return;
     final List<PsiVariable> referencedVariables = RefactoringUtil.collectReferencedVariables(occurence);
-    final List<PsiVariable> modifiedInBody = new ArrayList<PsiVariable>();
+    final List<PsiVariable> modifiedInBody = new ArrayList<>();
     for (PsiVariable psiVariable : referencedVariables) {
       if (RefactoringUtil.isModifiedInScope(psiVariable, loopForLoopCondition)) {
         modifiedInBody.add(psiVariable);

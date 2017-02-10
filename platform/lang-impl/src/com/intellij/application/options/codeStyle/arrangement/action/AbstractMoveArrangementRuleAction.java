@@ -39,7 +39,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
       return;
     }
 
-    final List<int[]> mappings = new ArrayList<int[]>();
+    final List<int[]> mappings = new ArrayList<>();
     fillMappings(control, mappings);
     for (int[] mapping : mappings) {
       if (mapping[0] != mapping[1]) {
@@ -61,7 +61,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
 
     control.runOperationIgnoreSelectionChange(() -> {
       control.hideEditor();
-      final List<int[]> mappings = new ArrayList<int[]>();
+      final List<int[]> mappings = new ArrayList<>();
       fillMappings(control, mappings);
 
       if (mappings.isEmpty()) {

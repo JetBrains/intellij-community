@@ -76,7 +76,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
       PsiReplacementUtil.replaceStatement(switchStatement, newStatementText.toString());
       return;
     }
-    final Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants = new HashMap<PsiEnumConstant, PsiEnumConstant>(fields.length);
+    final Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants = new HashMap<>(fields.length);
     PsiEnumConstant previous = null;
     for (PsiEnumConstant enumConstant : missingEnumElements) {
       if (previous != null) {

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ListCreationQuickFix implements LocalQuickFix {
   private final PyAssignmentStatement myStatement;
-  private final List<PyExpressionStatement> myStatements = new ArrayList<PyExpressionStatement>();
+  private final List<PyExpressionStatement> myStatements = new ArrayList<>();
 
   public ListCreationQuickFix(PyAssignmentStatement statement) {
     myStatement = statement;
@@ -41,13 +41,8 @@ public class ListCreationQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.list.creation");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.list.creation");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

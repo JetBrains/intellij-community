@@ -21,31 +21,21 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 class SimpleDocTagInfo implements JavadocTagInfo {
   private final String myName;
-  private final Class myContext;
-  private final Class myAdditionalContext;
+  private final Class[] myContexts;
   private final boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
-  public SimpleDocTagInfo(@NonNls String name, Class context, boolean isInline, LanguageLevel level) {
+  SimpleDocTagInfo(@NotNull String name, @NotNull LanguageLevel level, boolean isInline, @NotNull Class... contexts) {
     myName = name;
-    myContext = context;
-    myAdditionalContext = null;
+    myContexts = contexts;
     myInline = isInline;
-    myLanguageLevel = level;
-  }
-
-  public SimpleDocTagInfo(@NonNls String name, Class context, Class additionalContext, LanguageLevel level) {
-    myName = name;
-    myContext = context;
-    myAdditionalContext = additionalContext;
-    myInline = false;
     myLanguageLevel = level;
   }
 
@@ -64,8 +54,10 @@ class SimpleDocTagInfo implements JavadocTagInfo {
     if (element != null && PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
       return false;
     }
-
-    return myContext.isInstance(element) || (myAdditionalContext != null && myAdditionalContext.isInstance(element));
+    for (Class context : myContexts) {
+      if (context.isInstance(element)) return true;
+    }
+    return false;
   }
 
   @Override

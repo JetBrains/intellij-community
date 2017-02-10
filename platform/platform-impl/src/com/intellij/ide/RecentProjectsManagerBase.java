@@ -33,6 +33,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.project.ProjectKt;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
@@ -64,7 +66,7 @@ import java.util.List;
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
-  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
+  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<>();
   private static Icon ourSmallAppIcon;
   private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
@@ -74,10 +76,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   public static class State {
-    public List<String> recentPaths = new SmartList<String>();
-    public List<String> openPaths = new SmartList<String>();
+    public List<String> recentPaths = new SmartList<>();
+    public List<String> openPaths = new SmartList<>();
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
-    public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
+    public List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
@@ -139,7 +141,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   protected void removeDuplicates(State state) {
-    for (String path : new ArrayList<String>(state.recentPaths)) {
+    for (String path : new ArrayList<>(state.recentPaths)) {
       if (path.endsWith(File.separator)) {
         state.recentPaths.remove(path);
         state.additionalInfo.remove(path);
@@ -225,7 +227,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Nullable
   public static Icon getProjectIcon(String path, boolean isDark) {
-    File file = isDark ? new File(path + "/.idea/icon_dark.png") : new File(path + "/.idea/icon.png");
+    final MyIcon icon = ourProjectIcons.get(path);
+    if (icon != null) {
+      return icon.getIcon();
+    }
+    return IconDeferrer.getInstance().defer(EmptyIcon.ICON_16,
+                                            Pair.create(path, isDark),
+                                            p -> calculateIcon(p.first, p.second));
+  }
+
+  @Nullable
+  protected static Icon calculateIcon(String path, boolean isDark) {
+    File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
     if (file.exists()) {
       final long timestamp = file.lastModified();
       MyIcon icon = ourProjectIcons.get(path);
@@ -256,10 +269,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (UIUtil.isRetina()) {
+        // [tav] todo: the icon is created in def screen scale
+        if (UIUtil.isJDKManagedHiDPIScreen()) {
           final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          newG.scale(0.5, 0.5);
-          newG.drawImage(image, x/2, y/2, null);
+          float s = JBUI.sysScale();
+          newG.scale(1/s, 1/s);
+          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
           newG.scale(1, 1);
           newG.dispose();
         }
@@ -270,12 +285,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
       @Override
       public int getIconWidth() {
-        return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+        return UIUtil.isJDKManagedHiDPIScreen() ? (int)(image.getWidth() / JBUI.sysScale()) : image.getWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+        return UIUtil.isJDKManagedHiDPIScreen() ? (int)(image.getHeight() / JBUI.sysScale()) : image.getHeight();
       }
     };
   }
@@ -283,7 +298,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private static BufferedImage loadAndScaleImage(File file) {
     try {
       Image img = ImageLoader.loadFromUrl(file.toURL());
-      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
     }
     catch (MalformedURLException e) {//
     }
@@ -313,11 +328,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         Icon appIcon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getIconUrl());
 
         if (appIcon != null) {
-          if (appIcon.getIconWidth() == JBUI.scale(16) && appIcon.getIconHeight() == JBUI.scale(16)) {
+          if (appIcon.getIconWidth() == JBUI.pixScale(16) && appIcon.getIconHeight() == JBUI.pixScale(16)) {
             ourSmallAppIcon = appIcon;
           } else {
             BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
-            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
+            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
             ourSmallAppIcon = toRetinaAwareIcon(image);
           }
         }
@@ -367,7 +382,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
     }
 
-    Set<String> openedPaths = new THashSet<String>();
+    Set<String> openedPaths = new THashSet<>();
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
     }
@@ -375,11 +390,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     paths.remove(null);
     paths.removeAll(openedPaths);
 
-    List<AnAction> actions = new SmartList<AnAction>();
+    List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     if (useGroups) {
-      final List<ProjectGroup> groups = new ArrayList<ProjectGroup>(new ArrayList<ProjectGroup>(myState.groups));
-      final List<String> projectPaths = new ArrayList<String>(paths);
+      final List<ProjectGroup> groups = new ArrayList<>(new ArrayList<>(myState.groups));
+      final List<String> projectPaths = new ArrayList<>(paths);
       Collections.sort(groups, new Comparator<ProjectGroup>() {
         @Override
         public int compare(ProjectGroup o1, ProjectGroup o2) {
@@ -405,7 +420,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
 
       for (ProjectGroup group : groups) {
-        final List<AnAction> children = new ArrayList<AnAction>();
+        final List<AnAction> children = new ArrayList<>();
         for (String path : group.getProjects()) {
           final AnAction action = createOpenAction(path, duplicates);
           if (action != null) {
@@ -493,11 +508,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
-  public static boolean isValidProjectPath(String projectPath) {
-    final File file = new File(projectPath);
-    return file.exists() && (!file.isDirectory() || new File(file, Project.DIRECTORY_STORE_FOLDER).exists());
-  }
-
   private class MyProjectListener extends ProjectManagerAdapter {
     @Override
     public void projectOpened(final Project project) {
@@ -510,9 +520,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void projectClosing(Project project) {
+      String path = getProjectPath(project);
       synchronized (myStateLock) {
-        myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+        myState.names.put(path, getProjectDisplayName(project));
       }
+      myNameCache.put(path, project.getName());
     }
 
     @Override
@@ -541,7 +553,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myNamesResolver.addRequest(() -> {
       final Set<String> paths;
       synchronized (myNamesToResolve) {
-        paths = new HashSet<String>(myNamesToResolve);
+        paths = new HashSet<>(myNamesToResolve);
         myNamesToResolve.clear();
       }
       for (String p : paths) {
@@ -554,8 +566,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void clearNameCache() {
-    myNameCache.clear();
-    myDuplicatesCache = null;
   }
 
   private static String readProjectName(@NotNull String path) {
@@ -601,7 +611,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
       }
       for (String openPath : openPaths) {
-        if (isValidProjectPath(openPath)) {
+        if (ProjectKt.isValidProjectPath(openPath)) {
           doOpenProject(openPath, null, forceNewFrame);
         }
       }
@@ -625,7 +635,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myState.groups.remove(group);
   }
 
-  private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
+  private class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {

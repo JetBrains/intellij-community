@@ -67,6 +67,8 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.ZipOutputStream;
 
+import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
+
 /**
  * @author Ralf Quebbemann
  */
@@ -118,10 +120,13 @@ public class MavenExternalParameters {
 
     params.setWorkingDirectory(parameters.getWorkingDirFile());
 
-    params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
+    Sdk jdk = getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings);
+    params.setJdk(jdk);
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
+    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
+    verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
 
     params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
@@ -156,7 +161,7 @@ public class MavenExternalParameters {
       params.getClassPath().add(path);
     }
 
-    params.setEnv(new HashMap<String, String>(runnerSettings.getEnvironmentProperties()));
+    params.setEnv(new HashMap<>(runnerSettings.getEnvironmentProperties()));
     params.setPassParentEnvs(runnerSettings.isPassParentEnv());
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
@@ -489,7 +494,7 @@ public class MavenExternalParameters {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
 
-    List<String> classpathEntries = new ArrayList<String>();
+    List<String> classpathEntries = new ArrayList<>();
 
     File[] files = mavenHomeBootAsFile.listFiles();
     if (files != null) {

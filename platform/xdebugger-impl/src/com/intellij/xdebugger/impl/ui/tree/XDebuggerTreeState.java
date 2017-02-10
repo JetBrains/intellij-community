@@ -16,17 +16,19 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -126,16 +128,30 @@ public class XDebuggerTreeState {
     }
 
     @Nullable
-    public NodeInfo removeChild(String name) {
+    public NodeInfo getChild(XNamedTreeNode node) {
+      String name = node.getName();
       if (myChildren == null) {
         return null;
       }
-      Collection<NodeInfo> infos = myChildren.get(name);
-      NodeInfo item = ContainerUtil.getFirstItem(infos);
-      if (item != null) {
-        infos.remove(item);
+      List<NodeInfo> infos = (List<NodeInfo>)myChildren.get(name);
+      if (infos.size() > 1) {
+        TreeNode parent = node.getParent();
+        if (parent instanceof XDebuggerTreeNode) {
+          int idx = 0;
+          for (XDebuggerTreeNode treeNode : ((XDebuggerTreeNode)parent).getLoadedChildren()) {
+            if (treeNode == node) {
+              break;
+            }
+            if (treeNode instanceof XNamedTreeNode && Comparing.equal(((XNamedTreeNode)treeNode).getName(), name)) {
+              idx++;
+            }
+          }
+          if (idx < infos.size()) {
+            return infos.get(idx);
+          }
+        }
       }
-      return item;
+      return ContainerUtil.getFirstItem(infos);
     }
   }
 }

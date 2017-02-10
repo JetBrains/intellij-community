@@ -36,7 +36,7 @@ public class Generation {
 
   private Generation(@NotNull final Gens bestGens) {
     myParentKind = -1;
-    myGensPool = new ArrayList<Gens>(GENERATION_POOL_SIZE);
+    myGensPool = new ArrayList<>(GENERATION_POOL_SIZE);
     for (int i = 0; i < GENERATION_POOL_SIZE; ++i) {
       // the best goes as is
       myGensPool.add(new Gens(bestGens).mutate(i == 0 ? 0 : MUTATION_PER_GEN));
@@ -47,7 +47,7 @@ public class Generation {
   private Generation(@NotNull Generation previous, int parentKind) {
     myAge = previous.myAge + 1;
     myParentKind = parentKind;
-    myGensPool = new ArrayList<Gens>(GENERATION_POOL_SIZE);
+    myGensPool = new ArrayList<>(GENERATION_POOL_SIZE);
     int mutationsCount = MUTATION_PER_GEN;
     //if (myAge < 30) {
     //  if (myAge < 5) {
@@ -89,7 +89,7 @@ public class Generation {
   }
 
   private int reduceToSize(Differ differ, int newPoolSize) {
-    List<Pair<Integer, Integer>> ranges = new ArrayList<Pair<Integer, Integer>>(myGensPool.size());
+    List<Pair<Integer, Integer>> ranges = new ArrayList<>(myGensPool.size());
 
     int i = 0;
     for (final Gens gens : myGensPool) {
@@ -104,7 +104,7 @@ public class Generation {
 
     Collections.sort(ranges, (o1, o2) -> o1.first - o2.first);
 
-    final ArrayList<Gens> gensPool = new ArrayList<Gens>(newPoolSize);
+    final ArrayList<Gens> gensPool = new ArrayList<>(newPoolSize);
     int count = 0;
     int worseForward = 0;
     for (final Pair<Integer, Integer> pair : ranges) {

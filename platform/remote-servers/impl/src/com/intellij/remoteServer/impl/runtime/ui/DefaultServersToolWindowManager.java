@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.openapi.project.Project;
+import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultServersToolWindowManager extends ServersToolWindowManager {
@@ -23,7 +24,7 @@ public class DefaultServersToolWindowManager extends ServersToolWindowManager {
   public static final String WINDOW_ID = "Application Servers";
 
   public DefaultServersToolWindowManager(Project project) {
-    super(project, WINDOW_ID);
+    super(project, WINDOW_ID, RemoteServersIcons.ServersToolWindow);
   }
 
   @NotNull

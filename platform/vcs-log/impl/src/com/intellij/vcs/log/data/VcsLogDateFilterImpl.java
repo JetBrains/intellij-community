@@ -57,4 +57,10 @@ public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilt
   public Date getBefore() {
     return myBefore;
   }
+
+  @Override
+  public String toString() {
+    return (myAfter != null ? "after " + myAfter + (myBefore != null ? " " : "") : "") +
+           (myBefore != null ? "before " + myBefore : "");
+  }
 }

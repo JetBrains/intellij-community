@@ -39,7 +39,7 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   public Collection<? extends PsiField> getVariants(ConvertContext context) {
     PsiClass aClass = getEPBeanClass(context);
     if (aClass == null) return Collections.emptyList();
-    List<PsiField> result = new ArrayList<PsiField>();
+    List<PsiField> result = new ArrayList<>();
     for (PsiField field : aClass.getAllFields()) {
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         PsiType type = field.getType();

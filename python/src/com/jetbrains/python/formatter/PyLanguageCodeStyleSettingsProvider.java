@@ -62,7 +62,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                                    "SPACE_AROUND_SHIFT_OPERATORS",
                                    "SPACE_WITHIN_METHOD_CALL_PARENTHESES",
+                                   "SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES",
                                    "SPACE_WITHIN_METHOD_PARENTHESES",
+                                   "SPACE_WITHIN_EMPTY_METHOD_PARENTHESES",
                                    "SPACE_WITHIN_BRACKETS",
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_BEFORE_COMMA",
@@ -129,6 +131,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_BEFORE_RIGHT_BRACE",
                                 ApplicationBundle.message("wrapping.rbrace.on.new.line"),
                                 PyBundle.message("formatter.dictionary.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "HANG_CLOSING_BRACKETS", PyBundle.message("formatter.hang.closing.brackets"), null);
     }
   }
 
@@ -159,9 +162,13 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                    "    x = dict[1]\n" +
                                                    "    expr = (1+2)*3 << 4**5 & 16\n" +
                                                    "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
-                                                   "    settings_preview(key=1)\n\n" +
+                                                   "    settings_preview(key=1)\n" +
+                                                   "\n" +
                                                    "foo =\\\n" +
-                                                   "    bar";
+                                                   "    bar\n" +
+                                                   "\n" +
+                                                   "def no_params():\n" +
+                                                   "    return globals()";
 
   @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +

@@ -196,7 +196,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   // parses the output of merge conflict returning files which would be overwritten by merge. These files will be stashed.
   private List<FilePath> getFilesOverwrittenByMerge(@NotNull List<String> mergeOutput) {
-    final List<FilePath> paths = new ArrayList<FilePath>();
+    final List<FilePath> paths = new ArrayList<>();
     for  (String line : mergeOutput) {
       if (StringUtil.isEmptyOrSpaces(line)) {
         continue;
@@ -220,7 +220,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private Collection<Change> getLocalChangesFilteredByFiles(List<FilePath> paths) {
-    final Collection<Change> changes = new HashSet<Change>();
+    final Collection<Change> changes = new HashSet<>();
     for(LocalChangeList list : myChangeListManager.getChangeLists()) {
       for (Change change : list.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
@@ -246,7 +246,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   private static class MergeLineListener extends GitLineHandlerAdapter {
     private MergeError myMergeError;
-    private List<String> myOutput = new ArrayList<String>();
+    private List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
 
     @Override

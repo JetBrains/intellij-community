@@ -35,14 +35,8 @@ import java.util.Map;
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.remove.parameter");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.remove.parameter");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

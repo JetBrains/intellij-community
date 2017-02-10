@@ -8,13 +8,10 @@ except:
     from urllib.parse import quote  # @UnresolvedImport
 
 import inspect
-from _pydevd_bundle.pydevd_constants import IS_PY3K, GC_SUPPORTED
+from _pydevd_bundle.pydevd_constants import IS_PY3K
 import sys
 from _pydev_bundle import pydev_log
-try:
-    import gc
-except ImportError:
-    GC_SUPPORTED = False
+
 
 def save_main_module(file, module_name):
     # patch provided by: Scott Schlesier - when script is run, it does not
@@ -127,51 +124,26 @@ else:
 
 def get_clsname_for_code(code, frame):
     clsname = None
-    if GC_SUPPORTED:
-        ## use of gc.get_referrers() was suggested by Michael Hudson
-        # all functions which refer to this code object
-        funcs = [f for f in gc.get_referrers(code)
-                 if inspect.isfunction(f)]
-        # require len(func) == 1 to avoid ambiguity caused by calls to
-        # new.function(): "In the face of ambiguity, refuse the
-        # temptation to guess."
-        if len(funcs) == 1:
-            dicts = [d for d in gc.get_referrers(funcs[0])
-                     if isinstance(d, dict)]
-            if len(dicts) == 1:
-                classes = [c for c in gc.get_referrers(dicts[0])
-                           if hasattr(c, "__bases__") or inspect.isclass(c)]
-            elif len(dicts) > 1:   #new-style classes
-                classes = [c for c in gc.get_referrers(dicts[1])
-                           if hasattr(c, "__bases__") or inspect.isclass(c)]
-            else:
-                classes = []
-
-            if len(classes) == 1:
-                # ditto for new.classobj()
-                clsname = classes[0].__name__
-
-    if clsname is None:
-        # If gc is not supported we are checking the first argument of the function
+    if len(code.co_varnames) > 0:
+        # We are checking the first argument of the function
         # (`self` or `cls` for methods).
-        func_name = code.co_name
-        if len(code.co_varnames) > 0:
-            first_arg_name = code.co_varnames[0]
-            if first_arg_name in frame.f_locals:
-                first_arg_obj = frame.f_locals[first_arg_name]
-                if inspect.isclass(first_arg_obj):  # class method
-                    first_arg_class = first_arg_obj
-                else:  # instance method
-                    first_arg_class = first_arg_obj.__class__
-                if hasattr(first_arg_class, func_name):
-                    method = getattr(first_arg_class, func_name)
-                    func_code = None
-                    if hasattr(method, 'func_code'):  # Python2
-                        func_code = method.func_code
-                    elif hasattr(method, '__code__'):  # Python3
-                        func_code = method.__code__
-                    if func_code and func_code == code:
-                        clsname = first_arg_class.__name__
+        first_arg_name = code.co_varnames[0]
+        if first_arg_name in frame.f_locals:
+            first_arg_obj = frame.f_locals[first_arg_name]
+            if inspect.isclass(first_arg_obj):  # class method
+                first_arg_class = first_arg_obj
+            else:  # instance method
+                first_arg_class = first_arg_obj.__class__
+            func_name = code.co_name
+            if hasattr(first_arg_class, func_name):
+                method = getattr(first_arg_class, func_name)
+                func_code = None
+                if hasattr(method, 'func_code'):  # Python2
+                    func_code = method.func_code
+                elif hasattr(method, '__code__'):  # Python3
+                    func_code = method.__code__
+                if func_code and func_code == code:
+                    clsname = first_arg_class.__name__
     return clsname
 
 

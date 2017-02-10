@@ -33,6 +33,10 @@ public abstract class ParameterTypeInferencePolicy {
 
   public abstract Pair<PsiType, ConstraintType> getInferredTypeWithNoConstraint(PsiManager manager, PsiType superType);
 
+  public boolean inferRuntimeExceptionForThrownBoundWithNoConstraints() {
+    return true;
+  }
+
   public abstract PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType second);
 
   public boolean isVarargsIgnored() {

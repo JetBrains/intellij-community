@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
@@ -32,11 +32,11 @@ public class TimedCommitParser {
    *             timestamp|-hash commit|-parent hashes
    */
   @NotNull
-  public static TimedVcsCommit parseTimestampParentHashes(@NotNull String line) {
+  private static TimedVcsCommit parseTimestampParentHashes(@NotNull String line) {
     int firstSeparatorIndex = CommitParser.nextSeparatorIndex(line, 0);
-    String timestampStr = line.substring(0, firstSeparatorIndex);
     long timestamp;
     try {
+      String timestampStr = line.substring(0, firstSeparatorIndex);
       if (timestampStr.isEmpty()) {
         timestamp = 0;
       }
@@ -47,7 +47,7 @@ public class TimedCommitParser {
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("bad timestamp in line: " + line);
     }
-    com.intellij.vcs.log.graph.GraphCommit<Integer> commit = CommitParser.parseCommitParentsAsInteger(line.substring(firstSeparatorIndex + 2));
+    GraphCommit<Integer> commit = CommitParser.parseCommitParentsAsInteger(line.substring(firstSeparatorIndex + 2));
     List<Hash> parents = ContainerUtil.newArrayList();
     for (int p : commit.getParents()) {
       parents.add(intToHash(p));
@@ -61,12 +61,7 @@ public class TimedCommitParser {
 
   @NotNull
   public static List<TimedVcsCommit> log(@NotNull List<String> commits) {
-    return ContainerUtil.map(commits, new Function<String, TimedVcsCommit>() {
-      @Override
-      public TimedVcsCommit fun(String commit) {
-        return parseTimestampParentHashes(commit);
-      }
-    });
+    return ContainerUtil.map(commits, TimedCommitParser::parseTimestampParentHashes);
   }
 
   @NotNull

@@ -1,0 +1,6 @@
+<root>
+  <item
+      name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

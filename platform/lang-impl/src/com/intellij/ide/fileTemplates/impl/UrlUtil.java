@@ -64,7 +64,7 @@ public class UrlUtil {
   }
 
   private static List<String> getChildPathsFromFile(URL root) {
-    final List<String> paths = new ArrayList<String>();
+    final List<String> paths = new ArrayList<>();
     final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
       void collectFiles(File fromFile, String prefix) {
@@ -86,7 +86,7 @@ public class UrlUtil {
   }
 
   private static List<String> getChildPathsFromJar(URL root) throws IOException {
-    final List<String> paths = new ArrayList<String>();
+    final List<String> paths = new ArrayList<>();
     String file = root.getFile();
     file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
     final int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);

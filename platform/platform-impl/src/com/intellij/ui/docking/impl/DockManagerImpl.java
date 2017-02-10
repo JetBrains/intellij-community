@@ -69,11 +69,11 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private final Project myProject;
 
-  private final Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
+  private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
 
-  private final Set<DockContainer> myContainers = new HashSet<DockContainer>();
+  private final Set<DockContainer> myContainers = new HashSet<>();
 
-  private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<DockContainer, DockWindow>();
+  private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<>();
 
   private MyDragSession myCurrentDragSession;
 
@@ -239,7 +239,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         ratio = requiredSize / height;
       }
 
-      BufferedImage buffer = UIUtil.createImage((int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage buffer = UIUtil.createImage(myWindow, (int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
       buffer.createGraphics().drawImage(previewImage, 0, 0, (int)width, (int)height, null);
 
       myDefaultDragImage = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);
@@ -426,7 +426,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private final DockContainer myContainer;
 
     private final VerticalBox myNorthPanel = new VerticalBox();
-    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
+    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<>();
 
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
@@ -476,12 +476,12 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       }, this);
 
-      UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
         @Override
-        public void uiSettingsChanged(UISettings source) {
+        public void uiSettingsChanged(UISettings uiSettings) {
           updateNorthPanel();
         }
-      }, this);
+      });
 
       updateNorthPanel();
     }
@@ -500,7 +500,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
       IdeRootPaneNorthExtension[] extensions =
         Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
-      HashSet<String> processedKeys = new HashSet<String>();
+      HashSet<String> processedKeys = new HashSet<>();
       for (IdeRootPaneNorthExtension each : extensions) {
         processedKeys.add(each.getKey());
         if (myNorthExtensions.containsKey(each.getKey())) continue;

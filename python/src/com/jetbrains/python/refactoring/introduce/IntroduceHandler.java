@@ -43,7 +43,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -164,7 +163,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
     Collection<String> candidates = generateSuggestedNames(expression);
 
-    Collection<String> res = new ArrayList<String>();
+    Collection<String> res = new ArrayList<>();
     for (String name : candidates) {
       if (myValidator.checkPossibleName(name, expression)) {
         res.add(name);
@@ -368,7 +367,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       elementAtCaret = file.findElementAt(offset - 1);
     }
     if (!checkIntroduceContext(file, editor, elementAtCaret)) return true;
-    final List<PyExpression> expressions = new ArrayList<PyExpression>();
+    final List<PyExpression> expressions = new ArrayList<>();
     while (elementAtCaret != null) {
       if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
         break;
@@ -480,7 +479,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
       final InplaceVariableIntroducer<PsiElement> introducer =
               new PyInplaceVariableIntroducer(target, operation, occurrences);
-      introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+      introducer.performInplaceRefactoring(new LinkedHashSet<>(operation.getSuggestedNames()));
     }
   }
 
@@ -546,7 +545,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (data != null) {
         final PsiElement parent = data.getFirst();
         final String text = parent.getText();
-        final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(text);
+        final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(text);
         final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
         final TextRange range = data.getSecond();
         final String substring = range.substring(text);
@@ -629,7 +628,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           PyExpression newExpression = createExpression(project, operation.getName(), declaration);
 
           if (operation.isReplaceAll()) {
-            List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
+            List<PsiElement> newOccurrences = new ArrayList<>();
             for (PsiElement occurrence : operation.getOccurrences()) {
               final PsiElement replaced = replaceExpression(occurrence, newExpression, operation);
               if (replaced != null) {

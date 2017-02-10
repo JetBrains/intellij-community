@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.server;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +51,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
   public static final long CONSTANT_SEARCH_TIME_LIMIT = 60 * 1000L; // one minute
   private final Project myProject;
-  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
+  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DefaultMessageHandler pool");
   private volatile long myConstantSearchTime = 0L;
 
   protected DefaultMessageHandler(Project project) {
@@ -168,7 +169,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
             if (classes.length > 0) {
               final Collection<PsiField> changedFields = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiField>>() {
                 public Collection<PsiField> compute() {
-                  final List<PsiField> fields = new SmartList<PsiField>();
+                  final List<PsiField> fields = new SmartList<>();
                   for (PsiClass aClass : classes) {
                     if (!aClass.isValid()) {
                       return Collections.emptyList();
@@ -191,7 +192,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                     // optimization: don't need to search, cause may be used only in this class
                     continue;
                   }
-                  affectDirectUsages(changedField, accessFlags, accessChanged, affectedPaths);
+                  affectDirectUsages(changedField, accessChanged, affectedPaths);
                 }
               }
             }
@@ -262,7 +263,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
 
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final PsiFile fieldContainingFile = aClass != null? aClass.getContainingFile() : null;
 
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
@@ -318,20 +319,25 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
       }
     };
-    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true, false);
+    SearchScope javaScope = searchScope instanceof GlobalSearchScope
+                            ? GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, JavaFileType.INSTANCE)
+                            : searchScope;
+    return helper.processElementsWithWord(processor1, javaScope, identifier, searchContext, true, false);
   }
 
-  private void affectDirectUsages(final PsiField psiField, final int fieldAccessFlags, final boolean ignoreAccessScope, final Set<String> affectedPaths) throws ProcessCanceledException {
+  private void affectDirectUsages(final PsiField psiField,
+                                  final boolean ignoreAccessScope,
+                                  final Set<String> affectedPaths) throws ProcessCanceledException {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();
-        final Set<PsiFile> processedFiles = new HashSet<PsiFile>();
+        final Set<PsiFile> processedFiles = new HashSet<>();
         if (fieldContainingFile != null) {
           processedFiles.add(fieldContainingFile);
         }
         // if field is invalid, the file might be changed, so next time it is compiled,
         // the constant value change, if any, will be processed
-        final Collection<PsiReferenceExpression> references = doFindReferences(psiField, fieldAccessFlags, ignoreAccessScope);
+        final Collection<PsiReferenceExpression> references = doFindReferences(psiField, ignoreAccessScope);
         for (final PsiReferenceExpression ref : references) {
           final PsiElement usage = ref.getElement();
           final PsiFile containingPsi = usage.getContainingFile();
@@ -346,10 +352,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     });
   }
 
-  private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, int fieldAccessFlags, boolean ignoreAccessScope) {
-    final SmartList<PsiReferenceExpression> result = new SmartList<PsiReferenceExpression>();
+  private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, boolean ignoreAccessScope) {
+    final SmartList<PsiReferenceExpression> result = new SmartList<>();
 
-    final SearchScope searchScope = ignoreAccessScope? GlobalSearchScope.projectScope(myProject) : getSearchScope(psiField.getContainingClass(), fieldAccessFlags);
+    final SearchScope searchScope = (ignoreAccessScope? psiField.getContainingFile() : psiField).getUseScope();
 
     processIdentifiers(PsiSearchHelper.SERVICE.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
       @Override

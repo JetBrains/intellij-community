@@ -118,7 +118,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     myParentClass = getParentClass(selectedExpr);
-    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<>();
     PsiClass aClass = myParentClass;
     while (aClass != null) {
       classes.add(aClass);
@@ -132,7 +132,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
-    else {
+    else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE,
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
@@ -160,8 +160,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             getRefactoringName(), getHelpID());
         return true;
       }
+      else if ("package-info.java".equals(file.getName())) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                                            getRefactoringName(), getHelpID());
+        return true;
+      }
       else {
-        LOG.assertTrue(false);
+        LOG.error(file);
         return true;
       }
     }
@@ -636,7 +641,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiDirectory psiDirectory;
       if (psiPackage != null) {
         final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(myProject));
-        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<PsiDirectory, String>()) : directories[0];
+        psiDirectory = directories.length > 1 ? DirectoryChooserUtil.chooseDirectory(directories, null, myProject, new HashMap<>()) : directories[0];
       } else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
       }
@@ -737,7 +742,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
-        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
+        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
+            PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 
@@ -811,7 +817,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         if (myReplaceAll) {
-          List<PsiElement> array = new ArrayList<PsiElement>();
+          List<PsiElement> array = new ArrayList<>();
           for (PsiExpression occurrence : myOccurrences) {
             if (occurrence instanceof PsiExpression) {
               occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);

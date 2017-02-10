@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
   public char[] getChars() {
     if (myStart == 0) return myChars;
     char[] chars = new char[length()];
-    System.arraycopy(myChars, myStart, chars, 0, length());
+    getChars(chars, 0);
     return chars;
   }
 
@@ -73,24 +73,14 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 
-  @Override
   public boolean equals(Object anObject) {
     if (this == anObject) {
       return true;
     }
-    if (anObject instanceof CharSequence) {
-      CharSequence anotherString = (CharSequence)anObject;
-      int n = myEnd - myStart;
-      if (n == anotherString.length()) {
-        for (int i = 0; i < n; i++) {
-          if (myChars[myStart + i] != anotherString.charAt(i)) {
-            return false;
-          }
-        }
-        return true;
-      }
+    if (anObject == null || getClass() != anObject.getClass() || length() != ((CharSequence)anObject).length()) {
+      return false;
     }
-    return false;
+    return CharArrayUtil.regionMatches(myChars, myStart, myEnd, (CharSequence)anObject);
   }
 
   /**
@@ -104,7 +94,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     return readChars;
   }
 
-  private int hash;
+  private transient int hash;
   @Override
   public int hashCode() {
     int h = hash;

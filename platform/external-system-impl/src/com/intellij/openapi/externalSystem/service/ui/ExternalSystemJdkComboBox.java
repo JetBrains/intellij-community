@@ -136,7 +136,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private Map<String, JdkComboBoxItem> collectComboBoxItem() {
-    Map<String, JdkComboBoxItem> result = new LinkedHashMap<String, JdkComboBoxItem>();
+    Map<String, JdkComboBoxItem> result = new LinkedHashMap<>();
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
       String name = projectJdk.getName();

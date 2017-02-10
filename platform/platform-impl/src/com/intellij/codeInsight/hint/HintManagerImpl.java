@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -70,7 +69,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private LightweightHint myQuestionHint = null;
   private QuestionAction myQuestionAction = null;
 
-  private final List<HintInfo> myHintsStack = new ArrayList<HintInfo>();
+  private final List<HintInfo> myHintsStack = new ArrayList<>();
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
   private boolean myRequestFocusForNextHint;
@@ -828,7 +827,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     });
 
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false,
+    showEditorHint(hint, editor, p,
+                   HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR | DONT_CONSUME_ESCAPE,
+                   0, false,
                    createHintHint(editor, p, hint, constraint));
     myQuestionAction = action;
     myQuestionHint = hint;
@@ -940,7 +941,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * selected editor by mouse. These clicks are not AnActions so they are not
    * fired by ActionManager.
    */
-  private final class MyEditorManagerListener extends FileEditorManagerAdapter {
+  private final class MyEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       hideHints(0, false, true);
@@ -960,8 +961,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     @Override
     public void projectClosed(Project project) {
       ApplicationManager.getApplication().assertIsDispatchThread();
+
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
+      ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
 
       myQuestionAction = null;
       myQuestionHint = null;
@@ -1015,10 +1018,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
         if ((info.flags & mask) != 0 || editorChanged && !info.reviveOnEditorChange) {
           info.hint.hide();
           myHintsStack.remove(info);
-          if (onlyOne) {
-            return true;
+          if ((mask & HIDE_BY_ESCAPE) == 0 || (info.flags & DONT_CONSUME_ESCAPE) == 0) {
+            if (onlyOne) {
+              return true;
+            }
+            done = true;
           }
-          done = true;
         }
       }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -189,7 +188,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     final int[] count = new int[]{0};
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         count[0]++;
@@ -225,7 +224,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     importProject();
 
     final int[] count = new int[]{0};
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         count[0]++;

@@ -419,7 +419,7 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   private void checkinPaths(FilePath... files) {
-    final List<Change> changes = new ArrayList<Change>();
+    final List<Change> changes = new ArrayList<>();
     for (FilePath file : files) {
       final Change change = myChangeListManager.getChange(file);
       Assert.assertNotNull(change);
@@ -437,13 +437,13 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   private HashSet<String> checkinFiles(VirtualFile... files) {
-    final List<Change> changes = new ArrayList<Change>();
+    final List<Change> changes = new ArrayList<>();
     for (VirtualFile file : files) {
       final Change change = myChangeListManager.getChange(file);
       Assert.assertNotNull(change);
       changes.add(change);
     }
-    final HashSet<String> feedback = new HashSet<String>();
+    final HashSet<String> feedback = new HashSet<>();
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list",
       new NullableFunction<Object, Object>() {
         @Nullable

@@ -28,15 +28,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ImportOptimizer {
   /**
-   * Call to this method is made before the <code>processFile()</code> call to ensure implementation can process the file given
+   * Call to this method is made before the {@code processFile()} call to ensure implementation can process the file given
    *
    * @param file file to check
-   * @return <code>true</code> if implementation can handle the file
+   * @return {@code true} if implementation can handle the file
    */
   boolean supports(PsiFile file);
 
   /**
-   * Implementers of the method are expected to perform all necessary calculations synchronously and return a <code>Runnable</code>,
+   * Implementers of the method are expected to perform all necessary calculations synchronously and return a {@code Runnable},
    * which performs modifications based on preprocessing results.
    * processFile() is guaranteed to run with {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} privileges and
    * the Runnable returned is guaranteed to run with {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)} privileges.
@@ -44,9 +44,9 @@ public interface ImportOptimizer {
    * One can theoretically delay all the calculation until Runnable is called but this code will be executed in Swing thread thus
    * lengthy calculations may block user interface for some significant time.
    *
-   * @param file to optimize an imports in. It's guaranteed to have a language this <code>ImportOptimizer</code> have been
+   * @param file to optimize an imports in. It's guaranteed to have a language this {@code ImportOptimizer} have been
    * issued from.
-   * @return a <code>java.lang.Runnable</code> object, which being called will replace original file imports with optimized version.
+   * @return a {@code java.lang.Runnable} object, which being called will replace original file imports with optimized version.
    */
   @NotNull
   Runnable processFile(PsiFile file);

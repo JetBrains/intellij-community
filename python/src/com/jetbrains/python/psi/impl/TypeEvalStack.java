@@ -31,7 +31,7 @@ public class TypeEvalStack {
     }
   };
 
-  private final Set<PsiElement> myBeingEvaluated = new HashSet<PsiElement>();
+  private final Set<PsiElement> myBeingEvaluated = new HashSet<>();
 
   public static boolean mayEvaluate(PsiElement element) {
     final TypeEvalStack curStack = STACK.get();

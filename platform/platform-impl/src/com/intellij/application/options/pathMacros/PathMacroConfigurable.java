@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.application.options.pathMacros;
 
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -47,7 +46,7 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
     myEditor.commit();
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      StorageUtil.checkUnknownMacros(project, false);
+      StorageUtilKt.checkUnknownMacros(project, false);
     }
   }
 
@@ -81,11 +80,5 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

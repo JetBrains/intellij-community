@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,7 +392,7 @@ public class CompilerTask extends Task.Backgroundable {
     if (!text.contains("\n")) {
       return new String[]{text};
     }
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", false);
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());
@@ -621,10 +621,6 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void projectOpened(Project project) {
-    }
-
-    @Override
     public void projectClosed(Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
@@ -652,4 +648,3 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 }
-                                      

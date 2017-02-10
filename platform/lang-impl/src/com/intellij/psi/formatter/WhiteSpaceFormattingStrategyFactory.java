@@ -41,7 +41,7 @@ public class WhiteSpaceFormattingStrategyFactory {
   );
 
   private static final AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
-    = new AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>>();
+    = new AtomicReference<>();
   
   private WhiteSpaceFormattingStrategyFactory() {
   }
@@ -82,11 +82,11 @@ public class WhiteSpaceFormattingStrategyFactory {
     final Collection<Language> languages = Language.getRegisteredLanguages();
     if (languages == null) {
       final List<WhiteSpaceFormattingStrategy> result = Collections.emptyList();
-      myCachedStrategies.set(new PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>(result));
+      myCachedStrategies.set(new PatchedWeakReference<>(result));
       return result;
     }
 
-    Set<WhiteSpaceFormattingStrategy> result = new HashSet<WhiteSpaceFormattingStrategy>(SHARED_STRATEGIES);
+    Set<WhiteSpaceFormattingStrategy> result = new HashSet<>(SHARED_STRATEGIES);
     final LanguageWhiteSpaceFormattingStrategy languageStrategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE;
     for (Language language : languages) {
       final WhiteSpaceFormattingStrategy strategy = languageStrategy.forLanguage(language);
@@ -94,7 +94,7 @@ public class WhiteSpaceFormattingStrategyFactory {
         result.add(strategy);
       }
     }
-    myCachedStrategies.set(new PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>(result));
+    myCachedStrategies.set(new PatchedWeakReference<>(result));
     return result;
   }
 

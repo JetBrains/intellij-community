@@ -30,7 +30,7 @@ public class RenameInputValidatorRegistry {
 
   @Nullable
   public static Condition<String> getInputValidator(final PsiElement element) {
-    final LinkedHashMap<RenameInputValidator, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidator, ProcessingContext>();
+    final LinkedHashMap<RenameInputValidator, ProcessingContext> acceptedValidators = new LinkedHashMap<>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
       if (validator.getPattern().accepts(element, context)) {
@@ -49,7 +49,7 @@ public class RenameInputValidatorRegistry {
 
   @Nullable
   public static Function<String, String> getInputErrorValidator(final PsiElement element) {
-    final LinkedHashMap<RenameInputValidatorEx, ProcessingContext> acceptedValidators = new LinkedHashMap<RenameInputValidatorEx, ProcessingContext>();
+    final LinkedHashMap<RenameInputValidatorEx, ProcessingContext> acceptedValidators = new LinkedHashMap<>();
     for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
       if (validator instanceof RenameInputValidatorEx && validator.getPattern().accepts(element, context)) {

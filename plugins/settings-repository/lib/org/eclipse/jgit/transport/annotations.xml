@@ -51,6 +51,9 @@
   <item name='org.eclipse.jgit.transport.Transport org.eclipse.jgit.transport.Transport open(org.eclipse.jgit.lib.Repository, org.eclipse.jgit.transport.RemoteConfig)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.transport.URIish java.lang.String getHost()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.jgit.transport.URIish java.lang.String toPrivateString()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

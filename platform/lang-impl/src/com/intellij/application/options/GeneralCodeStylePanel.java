@@ -133,7 +133,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myPanel.setBorder(JBUI.Borders.empty(10, 10));
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
-    myScrollPane.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
 
     myAdditionalSettingsPanel.setLayout(new VerticalFlowLayout(true, true));
     myAdditionalSettingsPanel.removeAll();

@@ -34,9 +34,9 @@ public class QueueProcessorRemovePartner<Key, Task> {
 
   public QueueProcessorRemovePartner(final Project project, Consumer<Task> consumer) {
     myConsumer = consumer;
-    myMap = new HashMap<Key, Task>();
+    myMap = new HashMap<>();
     myLock = new Object();
-    myProcessor = new QueueProcessor<Key>(key -> {
+    myProcessor = new QueueProcessor<>(key -> {
       final Task task;
       synchronized (myLock) {
         task = myMap.remove(key);

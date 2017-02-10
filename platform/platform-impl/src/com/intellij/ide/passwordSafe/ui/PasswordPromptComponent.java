@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,29 +30,35 @@ public class PasswordPromptComponent {
   private JPanel myRootPanel;
   private JPanel myMessagePanel;
   private JPanel myUserPanel;
-  private JPanel myPasswordPanel;
   private JPasswordField myPasswordField;
   private JCheckBox myRememberCheckBox;
   private JLabel myPasswordLabel;
-  private JLabel myUserLabel;
   private JTextField myUserTextField;
   private JLabel myIconLabel;
 
-  public PasswordPromptComponent(PasswordSafeSettings.ProviderType type,
-                                 String message,
-                                 boolean showUserName,
-                                 String passwordFieldLabel,
-                                 String rememberCheckBoxLabel) {
+  public PasswordPromptComponent(boolean memoryOnly, String message) {
+    this(memoryOnly, message, true, null);
+  }
+
+  public PasswordPromptComponent(boolean memoryOnly, String message, boolean showUserName, @Nullable String passwordFieldLabel) {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
     JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
     myMessagePanel.add(Messages.wrapToScrollPaneIfNeeded(messageField, 0, 4), BorderLayout.CENTER);
-    setTargetProviderType(type);
+
+    if (memoryOnly) {
+      myRememberCheckBox.setVisible(false);
+      myRememberCheckBox.setEnabled(false);
+      myRememberCheckBox.setSelected(false);
+    }
+    else {
+      myRememberCheckBox.setSelected(false); // do not force people to un-check this every time!
+      myRememberCheckBox.setToolTipText("The password will be stored between application sessions.");
+    }
+
     setUserInputVisible(showUserName);
-    if (passwordFieldLabel != null) myPasswordLabel.setText(passwordFieldLabel);
-    if (rememberCheckBoxLabel != null) {
-      myRememberCheckBox.setText(rememberCheckBoxLabel);
-      DialogUtil.registerMnemonic(myRememberCheckBox);
+    if (passwordFieldLabel != null) {
+      myPasswordLabel.setText(passwordFieldLabel);
     }
   }
 
@@ -68,29 +73,6 @@ public class PasswordPromptComponent {
   private void setUserInputVisible(boolean visible) {
     UIUtil.setEnabled(myUserPanel, visible, true);
     myUserPanel.setVisible(visible);
-  }
-
-  private void setTargetProviderType(PasswordSafeSettings.ProviderType type) {
-    switch (type) {
-      case MASTER_PASSWORD:
-        myRememberCheckBox.setEnabled(true);
-        myRememberCheckBox.setSelected(true);
-        myRememberCheckBox.setToolTipText("The password will be stored between application sessions.");
-        break;
-      case MEMORY_ONLY:
-        myRememberCheckBox.setEnabled(true);
-        myRememberCheckBox.setSelected(true);
-        myRememberCheckBox.setToolTipText("The password will be stored only during this application session.");
-        break;
-      case DO_NOT_STORE:
-        myRememberCheckBox.setVisible(false);
-        myRememberCheckBox.setEnabled(false);
-        myRememberCheckBox.setSelected(false);
-        myRememberCheckBox.setToolTipText("The password storing is disabled.");
-        break;
-      default:
-        throw new AssertionError("Unknown policy type: " + type);
-    }
   }
 
   public String getUserName() {
@@ -111,9 +93,5 @@ public class PasswordPromptComponent {
 
   public boolean isRememberSelected() {
     return myRememberCheckBox.isSelected();
-  }
-
-  public void setRememberSelected(boolean selected) {
-    myRememberCheckBox.setSelected(selected);
   }
 }

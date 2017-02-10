@@ -68,7 +68,7 @@ public interface Storage {
   }
 
   class MapStorage implements Storage {
-    private final Map<String, String> myValues = new HashMap<String, String>();
+    private final Map<String, String> myValues = new HashMap<>();
 
     @Override
     public String get(String key) {

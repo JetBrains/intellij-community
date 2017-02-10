@@ -62,7 +62,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   public VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
-    myRevNumbersCache = new HashMap<VirtualFile, VcsRevisionNumber>();
+    myRevNumbersCache = new HashMap<>();
     myCache = new ExceptionInfoCache(scope);
   }
 
@@ -106,12 +106,8 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionWorker worker = new ExceptionWorker(myCache);
-      final String[] lineText = new String[1];
-      ApplicationManager.getApplication().runReadAction(() -> {
-        lineText[0] = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-        worker.execute(lineText[0], lineEndOffset);
-      });
-      if (worker.getResult() != null) {
+      final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+      if (ApplicationManager.getApplication().runReadAction((Computable<Result>)() -> worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
@@ -133,7 +129,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
           if (document == null) return;
 
           int startFileOffset = worker.getInfo().getThird().getStartOffset();
-          int idx = lineText[0].indexOf(':', startFileOffset);
+          int idx = lineText.indexOf(':', startFileOffset);
           int endIdx = idx == -1 ? worker.getInfo().getThird().getEndOffset() : idx;
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
 
@@ -162,7 +158,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
         }
       }
       previousLineResult = worker.getResult() == null ? null :
-                           new Trinity<PsiClass, PsiFile, String>(worker.getPsiClass(), worker.getFile(), worker.getMethod());
+                           new Trinity<>(worker.getPsiClass(), worker.getFile(), worker.getMethod());
     }
   }
 
@@ -178,7 +174,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
 
     private LocalChangesCorrector(final Project project) {
       myProject = project;
-      myRecentlyChanged = new HashMap<VirtualFile, UpToDateLineNumberProvider>();
+      myRecentlyChanged = new HashMap<>();
     }
 
     public boolean isFileAlreadyIdentifiedAsChanged(final VirtualFile vf) {
@@ -239,7 +235,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       public List<TextRange> compute() {
         List<TextRange> ranges = getTextRangeForMethod(worker, previousLineResult);
         if (ranges == null) return null;
-        final List<TextRange> result = new ArrayList<TextRange>();
+        final List<TextRange> result = new ArrayList<>();
         for (TextRange range : ranges) {
           result.add(new TextRange(document.getLineNumber(range.getStartOffset()),
                                        document.getLineNumber(range.getEndOffset())));
@@ -254,7 +250,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   private static List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
     if (previousLineResult == null || previousLineResult.getThird() == null) return null;
 
-    final List<PsiMethod> result = new SmartList<PsiMethod>();
+    final List<PsiMethod> result = new SmartList<>();
     for (final PsiMethod method : methods) {
       method.accept(new JavaRecursiveElementVisitor() {
         @Override
@@ -292,7 +288,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       } else {
         List<PsiMethod> selectedMethods = selectMethod(methods, previousLineResult);
         final List<PsiMethod> toIterate = selectedMethods == null ? Arrays.asList(methods) : selectedMethods;
-        final List<TextRange> result = new ArrayList<TextRange>();
+        final List<TextRange> result = new ArrayList<>();
         for (PsiMethod psiMethod : toIterate) {
           result.add(psiMethod.getTextRange());
         }

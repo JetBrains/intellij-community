@@ -41,14 +41,13 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
     FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
   }
 
-  @Override
   public void addBrowseFolderListener(@Nullable String title,
                                       @Nullable String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<TextFieldWithHistory> accessor,
                                       boolean autoRemoveOnHide) {
-    super.addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, autoRemoveOnHide);
+    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
     FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
   }
 

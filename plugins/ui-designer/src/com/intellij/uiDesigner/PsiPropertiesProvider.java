@@ -40,7 +40,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
 
   public PsiPropertiesProvider(@NotNull final Module module) {
     myModule = module;
-    myCache = new HashMap<String, HashMap>();
+    myCache = new HashMap<>();
   }
 
   @Nullable

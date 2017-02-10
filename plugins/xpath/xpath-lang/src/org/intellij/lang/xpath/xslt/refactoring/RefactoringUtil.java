@@ -49,7 +49,7 @@ public class RefactoringUtil {
         final VariableReferenceCollector visitor = new VariableReferenceCollector();
         block.accept(visitor);
 
-        final List<XPathVariableReference> list = new ArrayList<XPathVariableReference>(visitor.getMatches());
+        final List<XPathVariableReference> list = new ArrayList<>(visitor.getMatches());
         Collections.sort(list, XsltCodeInsightUtil.POSITION_COMPARATOR);
         return list;
     }
@@ -123,7 +123,7 @@ public class RefactoringUtil {
         private final Set<XPathVariableReference> myList;
 
         protected VariableReferenceCollector() {
-            myList = new HashSet<XPathVariableReference>();
+            myList = new HashSet<>();
         }
 
         protected void visitXPathExpression(XPathExpression expr) {
@@ -143,7 +143,7 @@ public class RefactoringUtil {
 
         public ExpressionCollector(XPathExpression expression) {
             myExpression = expression;
-            myList = new HashSet<XPathExpression>();
+            myList = new HashSet<>();
         }
 
         protected void visitXPathExpression(XPathExpression expr) {

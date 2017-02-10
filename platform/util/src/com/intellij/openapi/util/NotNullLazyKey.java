@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.util.NotNullFunction;
 
 /**
  * @author peter
@@ -38,7 +38,12 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
       data = myFunction.fun(h);
       if (stamp.mayCacheNow()) {
-        h.putUserData(this, data);
+        if (h instanceof UserDataHolderEx) {
+          data = ((UserDataHolderEx)h).putUserDataIfAbsent(this, data);
+        }
+        else {
+          h.putUserData(this, data);
+        }
       }
     }
     return data;

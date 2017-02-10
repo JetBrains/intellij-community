@@ -28,13 +28,10 @@ import java.util.LinkedHashSet;
 /**
  * @author max
  */
-public class ExternalClasspathClassLoader extends URLClassLoader {
-  private ExternalClasspathClassLoader(URL[] urls) {
-    super(urls, Thread.currentThread().getContextClassLoader());
-  }
+public class ExternalClasspathClassLoader {
 
   private static String[] parseUrls(String classpathFilePath) {
-    Collection<String> roots = new LinkedHashSet<String>();
+    Collection<String> roots = new LinkedHashSet<>();
     File file = new File(classpathFilePath);
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -75,12 +72,24 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
     try {
       URL[] urls = parseUrls();
       if (urls != null) {
-        Thread.currentThread().setContextClassLoader(new ExternalClasspathClassLoader(urls));
+        URLClassLoader auxLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+        Thread.currentThread().setContextClassLoader(auxLoader);
+        Thread.currentThread().setContextClassLoader(loadOptimizedLoader(urls, auxLoader));
       }
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static ClassLoader loadOptimizedLoader(Object urls, URLClassLoader auxLoader) throws Exception {
+    Object builder = auxLoader.loadClass("com.intellij.util.lang.UrlClassLoader").getMethod("build").invoke(null);
+    builder.getClass().getMethod("urls", URL[].class).invoke(builder, urls);
+    builder.getClass().getMethod("useCache").invoke(builder);
+    builder.getClass().getMethod("allowLock").invoke(builder);
+    builder.getClass().getMethod("allowBootstrapResources").invoke(builder);
+    builder.getClass().getMethod("parent", ClassLoader.class).invoke(builder, auxLoader.getParent());
+    return (ClassLoader)builder.getClass().getMethod("get").invoke(builder);
   }
 
   private static URL[] parseUrls() {

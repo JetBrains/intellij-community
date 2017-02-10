@@ -142,8 +142,8 @@ public class SemServiceImpl extends SemService{
 
     RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
 
-    LinkedHashSet<T> result = new LinkedHashSet<T>();
-    final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
+    LinkedHashSet<T> result = new LinkedHashSet<>();
+    final Map<SemKey, List<SemElement>> map = new THashMap<>();
     for (final SemKey each : key.getInheritors()) {
       List<SemElement> list = createSemElements(each, psi);
       map.put(each, list);
@@ -157,7 +157,7 @@ public class SemServiceImpl extends SemService{
       }
     }
 
-    return new ArrayList<T>(result);
+    return new ArrayList<>(result);
   }
 
   private void ensureInitialized() {
@@ -176,7 +176,7 @@ public class SemServiceImpl extends SemService{
         try {
           final SemElement element = producer.fun(psi);
           if (element != null) {
-            if (result == null) result = new SmartList<SemElement>();
+            if (result == null) result = new SmartList<>();
             result.add(element);
           }
         }
@@ -217,7 +217,7 @@ public class SemServiceImpl extends SemService{
         }
 
         if (result == null) {
-          result = new LinkedHashSet<T>(singleList);
+          result = new LinkedHashSet<>(singleList);
         }
         result.addAll(cached);
       }
@@ -232,7 +232,7 @@ public class SemServiceImpl extends SemService{
       return Collections.emptyList();
     }
 
-    return new ArrayList<T>(result);
+    return new ArrayList<>(result);
   }
 
   @Nullable

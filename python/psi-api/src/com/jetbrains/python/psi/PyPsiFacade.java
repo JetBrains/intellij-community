@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -53,7 +54,7 @@ public abstract class PyPsiFacade {
   public abstract PyType createUnionType(@NotNull Collection<PyType> members);
 
   @Nullable
-  public abstract PyType createTupleType(@NotNull Collection<PyType> members, @NotNull PsiElement anchor);
+  public abstract PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
 
   @Nullable
   public abstract PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);

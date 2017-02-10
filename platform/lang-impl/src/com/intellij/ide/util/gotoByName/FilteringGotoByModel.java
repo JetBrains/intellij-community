@@ -42,7 +42,7 @@ public abstract class FilteringGotoByModel<T> extends ContributorsBasedGotoByMod
    */
   public synchronized void setFilterItems(Collection<T> filterItems) {
     // get and set method are called from different threads
-    myFilterItems = new HashSet<T>(filterItems);
+    myFilterItems = new HashSet<>(filterItems);
   }
 
   /**

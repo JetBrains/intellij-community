@@ -304,7 +304,7 @@ public class GradleInstallationManager {
         if (startFile.isFile()) {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
-            myCachedGradleHomeFromPath = new Ref<File>(candidate);
+            myCachedGradleHomeFromPath = new Ref<>(candidate);
             return candidate;
           }
         }
@@ -486,7 +486,7 @@ public class GradleInstallationManager {
 
 
   private List<File> findGradleSdkClasspath(Project project, String rootProjectPath) {
-    List<File> result = new ArrayList<File>();
+    List<File> result = new ArrayList<>();
 
     if (StringUtil.isEmpty(rootProjectPath)) return result;
 

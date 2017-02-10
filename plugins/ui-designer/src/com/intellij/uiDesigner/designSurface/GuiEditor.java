@@ -76,7 +76,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -374,8 +373,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     UsageTrigger.trigger("swing-designer.open");
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-      PaletteToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
+      DesignerToolWindowManager.getInstance(myProject).bind(this);
+      PaletteToolWindowManager.getInstance(myProject).bind(this);
     });
   }
 
@@ -698,7 +697,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private void refreshProperties() {
-    final Ref<Boolean> anythingModified = new Ref<Boolean>();
+    final Ref<Boolean> anythingModified = new Ref<>();
     FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         final RadComponent radComponent = (RadComponent)component;
@@ -922,7 +921,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private Map<String, String> saveTabbedPaneSelectedTabs() {
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = new HashMap<>();
     FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof RadTabbedPane) {

@@ -24,12 +24,17 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.TransferTarget;
+import com.intellij.codeInspection.dataFlow.Trap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,18 +106,6 @@ public class DfaValueFactory {
     return getConstFactory().create(literal);
   }
 
-  @Nullable
-  public static PsiVariable resolveUnqualifiedVariable(PsiReferenceExpression refExpression) {
-    if (isEffectivelyUnqualified(refExpression)) {
-      PsiElement resolved = refExpression.resolve();
-      if (resolved instanceof PsiVariable) {
-        return (PsiVariable)resolved;
-      }
-    }
-
-    return null;
-  }
-
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
     PsiExpression qualifier = refExpression.getQualifierExpression();
     if (qualifier == null) {
@@ -128,6 +121,13 @@ public class DfaValueFactory {
     }
     return false;
   }
+
+  public DfaControlTransferValue controlTransfer(TransferTarget kind, FList<Trap> traps) {
+    return myControlTransfers.get(Pair.create(kind, traps));
+  }
+
+  private final Map<Pair<TransferTarget, FList<Trap>>, DfaControlTransferValue> myControlTransfers =
+    FactoryMap.createMap(p -> new DfaControlTransferValue(this, p.first, p.second));
 
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;

@@ -18,15 +18,15 @@ package com.jetbrains.python.sdk.flavors;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -78,10 +78,10 @@ public abstract class PythonSdkFlavor {
   }
 
   public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
-    List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
+    List<PythonSdkFlavor> result = new ArrayList<>();
 
     if (SystemInfo.isWindows) {
-      result.add(WinPythonSdkFlavor.INSTANCE);
+      result.add(ServiceManager.getService(WinPythonSdkFlavor.class));
     }
     else if (SystemInfo.isMac) {
       result.add(MacPythonSdkFlavor.INSTANCE);
@@ -90,8 +90,16 @@ public abstract class PythonSdkFlavor {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
 
-    if (addPlatformIndependent)
+    if (addPlatformIndependent) {
       result.addAll(getPlatformIndependentFlavors());
+    }
+
+    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
+      PythonSdkFlavor flavor = provider.getFlavor(addPlatformIndependent);
+      if (flavor != null) {
+        result.add(flavor);
+      }
+    }
 
     return result;
   }
@@ -104,7 +112,6 @@ public abstract class PythonSdkFlavor {
     result.add(PyPySdkFlavor.INSTANCE);
     result.add(VirtualEnvSdkFlavor.INSTANCE);
     result.add(PyRemoteSdkFlavor.INSTANCE);
-    result.add(MayaSdkFlavor.INSTANCE);
 
     return result;
   }

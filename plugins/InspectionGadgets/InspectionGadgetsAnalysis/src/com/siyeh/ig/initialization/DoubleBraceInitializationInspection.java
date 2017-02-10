@@ -61,14 +61,8 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("double.brace.initialization.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("double.brace.initialization.quickfix");
     }
 
     @Override

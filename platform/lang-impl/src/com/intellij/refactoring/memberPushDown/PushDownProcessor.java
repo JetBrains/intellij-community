@@ -53,13 +53,13 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
     super(sourceClass.getProject());
     myDelegate = PushDownDelegate.findDelegate(sourceClass);
     LOG.assertTrue(myDelegate != null);
-    myPushDownData = new PushDownData<MemberInfo, Member>(sourceClass, memberInfos, javaDocPolicy);
+    myPushDownData = new PushDownData<>(sourceClass, memberInfos, javaDocPolicy);
   }
 
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
-    return new PushDownUsageViewDescriptor<MemberInfo, Member, Klass>((Klass)myPushDownData.getSourceClass(), myPushDownData.getMembersToMove());
+    return new PushDownUsageViewDescriptor<>((Klass)myPushDownData.getSourceClass(), myPushDownData.getMembersToMove());
   }
 
   @NotNull
@@ -80,7 +80,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   @Nullable
   @Override
   protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    final List<PsiElement> elements = new ArrayList<>();
     for (UsageInfo usage : usages) {
       elements.add(usage.getElement());
     }

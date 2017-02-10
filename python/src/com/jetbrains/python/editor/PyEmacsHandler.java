@@ -122,7 +122,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    * case of success.
    * 
    * @param context       current processing context
-   * @return              <code>true</code> if target line has the sole indent and it is applied; <code>false</code> otherwise
+   * @return              {@code true} if target line has the sole indent and it is applied; {@code false} otherwise
    */
   private static boolean defineSoleIndentIfPossible(@NotNull ChangeIndentContext context) {
     int prevLine = context.targetLine - 1;
@@ -243,7 +243,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    *                      stored by their indent size in ascending order
    */
   private static List<LineInfo> collectIndentsGreaterOrEqualToCurrent(@NotNull ChangeIndentContext context, int targetLine) {
-    List<LineInfo> result = new ArrayList<LineInfo>();
+    List<LineInfo> result = new ArrayList<>();
     int targetLineIndent = getLineIndent(context, targetLine);
     int indentUsedLastTime = Integer.MAX_VALUE;
     for (int i = targetLine - 1; i >= 0 && indentUsedLastTime > targetLineIndent; i--) {

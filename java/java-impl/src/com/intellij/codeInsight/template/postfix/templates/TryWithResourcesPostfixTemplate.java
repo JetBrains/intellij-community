@@ -100,11 +100,6 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate {
   @NotNull
   private static Collection<PsiClassType> getUnhandled(@NotNull PsiExpression expression) {
     assert expression.getType() != null;
-    PsiMethod methodCloser = PsiUtil.getResourceCloserMethodForType((PsiClassType)expression.getType());
-    PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(expression.getType()).getSubstitutor();
-
-    return methodCloser != null
-           ? ExceptionUtil.getUnhandledExceptions(methodCloser, expression, null, substitutor)
-           : Collections.<PsiClassType>emptyList();
+    return ExceptionUtil.getUnhandledCloserExceptions(expression, null, expression.getType());
   }
 }

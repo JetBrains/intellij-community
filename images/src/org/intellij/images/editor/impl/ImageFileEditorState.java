@@ -67,7 +67,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
 
   @Override
   public Map<String, String> getTransferableOptions() {
-    final HashMap<String, String> map = new HashMap<String, String>();
+    final HashMap<String, String> map = new HashMap<>();
     map.put(BACKGROUND_VISIBLE_OPTION, String.valueOf(backgroundVisible));
     map.put(GRID_VISIBLE_OPTION, String.valueOf(gridVisible));
     map.put(ZOOM_FACTOR_OPTION, String.valueOf(zoomFactor));

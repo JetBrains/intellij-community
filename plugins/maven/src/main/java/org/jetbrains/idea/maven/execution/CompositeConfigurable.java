@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeConfigurable implements Configurable {
-  private final List<Configurable> configurables = new ArrayList<Configurable>();
+  private final List<Configurable> configurables = new ArrayList<>();
   private JTabbedPane tabbedPane;
   private int selectedTabIndex = 0;
 

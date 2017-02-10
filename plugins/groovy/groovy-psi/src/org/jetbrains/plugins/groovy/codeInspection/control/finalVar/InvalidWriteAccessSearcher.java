@@ -38,7 +38,7 @@ public class InvalidWriteAccessSearcher {
   public static List<ReadWriteVariableInstruction> findInvalidWriteAccess(@NotNull Instruction[] flow,
                                                                           @NotNull Map<String, GrVariable> variables,
                                                                           @NotNull Set<GrVariable> alreadyInitialized) {
-    DFAEngine<MyData> engine = new DFAEngine<MyData>(flow, new MyDFAInstance(), new MySemilattice());
+    DFAEngine<MyData> engine = new DFAEngine<>(flow, new MyDFAInstance(), new MySemilattice());
     final ArrayList<MyData> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) return null;
 

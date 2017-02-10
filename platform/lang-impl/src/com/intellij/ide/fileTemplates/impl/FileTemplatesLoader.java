@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class FileTemplatesLoader {
   private final FTManager myCodeTemplatesManager;
   private final FTManager myJ2eeTemplatesManager;
 
-  private final Map<String, FTManager> myDirToManagerMap = new HashMap<String, FTManager>();
+  private final Map<String, FTManager> myDirToManagerMap = new HashMap<>();
   private final FTManager[] myAllManagers;
 
   private static final String INTERNAL_DIR = "internal";
@@ -69,9 +70,9 @@ public class FileTemplatesLoader {
 
   protected FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     myTypeManager = typeManager;
-    File configDir = project == null
+    File configDir = project == null || project.isDefault()
                      ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
-                     : new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR);
+                     : new File(ProjectKt.getStateStore(project).getDirectoryStorePath(true) + "/" + TEMPLATES_DIR);
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
     myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, new File(configDir, INTERNAL_DIR), true);
     myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, new File(configDir, INCLUDES_DIR));
@@ -132,7 +133,7 @@ public class FileTemplatesLoader {
   }
 
   private void loadDefaultTemplates() {
-    final Set<URL> processedUrls = new HashSet<URL>();
+    final Set<URL> processedUrls = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
@@ -164,7 +165,7 @@ public class FileTemplatesLoader {
     if (children.isEmpty()) {
       return;
     }
-    final Set<String> descriptionPaths = new HashSet<String>();
+    final Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
         myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));

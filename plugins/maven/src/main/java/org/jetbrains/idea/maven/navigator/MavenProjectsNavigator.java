@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -213,7 +213,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
       @Override
       public void beforeRunTasksChanged() {
         scheduleStructureRequest(() -> myStructure.updateGoals());
@@ -227,7 +227,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> myStructure.updateRunConfigurations());
       }
@@ -411,12 +411,12 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     @Override
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
-      scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.<MavenProject>emptyList());
+      scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.emptyList());
     }
 
     @Override
     public void pluginsResolved(MavenProject project) {
-      scheduleUpdateProjects(Collections.singletonList(project), Collections.<MavenProject>emptyList());
+      scheduleUpdateProjects(Collections.singletonList(project), Collections.emptyList());
     }
 
     private void scheduleUpdateProjects(final List<MavenProject> projects, final List<MavenProject> deleted) {

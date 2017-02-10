@@ -546,14 +546,14 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     @NotNull
     public PropertyRenderer<Double> getRenderer() {
       if (myRenderer == null) {
-        myRenderer = new LabelPropertyRenderer<Double>();
+        myRenderer = new LabelPropertyRenderer<>();
       }
       return myRenderer;
     }
 
     public PropertyEditor<Double> getEditor() {
       if (myEditor == null) {
-        myEditor = new PrimitiveTypeEditor<Double>(Double.class);
+        myEditor = new PrimitiveTypeEditor<>(Double.class);
       }
       return myEditor;
     }

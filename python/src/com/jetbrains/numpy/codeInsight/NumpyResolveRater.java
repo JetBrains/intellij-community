@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class NumpyResolveRater extends PyResolveResultRaterBase {
   public int getMemberRate(PsiElement member, PyType type, TypeEvalContext context) {
     if (member instanceof PsiNamedElement) {
       final PyType ndArray = PyTypeParser.getTypeByName(member, NumpyDocStringTypeProvider.NDARRAY);
-      if (PyTypeChecker.match(ndArray, type, context) &&
+      if (ndArray != null && PyTypeChecker.match(ndArray, type, context) &&
           PyNames.isRightOperatorName(((PsiNamedElement)member).getName())) {
         return 100;
       }

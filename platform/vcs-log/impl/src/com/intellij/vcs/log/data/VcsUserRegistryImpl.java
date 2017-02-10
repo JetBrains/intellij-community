@@ -43,22 +43,23 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
 
   private static final File USER_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-users");
   private static final Logger LOG = Logger.getInstance(VcsUserRegistryImpl.class);
-  private static final int STORAGE_VERSION = 1;
+  private static final int STORAGE_VERSION = 2;
   private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = id -> true;
 
-  @Nullable private final PersistentEnumerator<VcsUser> myPersistentEnumerator;
+  @Nullable private final PersistentEnumeratorBase<VcsUser> myPersistentEnumerator;
   @NotNull private final Interner<VcsUser> myInterner;
 
   VcsUserRegistryImpl(@NotNull Project project) {
     final File mapFile = new File(USER_CACHE_APP_DIR, project.getLocationHash() + "." + STORAGE_VERSION);
     myPersistentEnumerator = initEnumerator(mapFile);
-    myInterner = new Interner<VcsUser>();
+    myInterner = new Interner<>();
   }
 
   @Nullable
-  private PersistentEnumerator<VcsUser> initEnumerator(@NotNull final File mapFile) {
+  private PersistentEnumeratorBase<VcsUser> initEnumerator(@NotNull final File mapFile) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<VcsUser>(mapFile, new MyDescriptor(), Page.PAGE_SIZE), mapFile);
+      return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(mapFile, new MyDescriptor(), Page.PAGE_SIZE, null,
+                                                                                 STORAGE_VERSION), mapFile);
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -122,6 +123,15 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     catch (IOException e) {
       LOG.warn(e);
     }
+  }
+
+  public int getUserId(@NotNull VcsUser user) throws IOException {
+    return myPersistentEnumerator.enumerate(user);
+  }
+
+  @Nullable
+  public VcsUser getUserById(Integer userId) throws IOException {
+    return myPersistentEnumerator.valueOf(userId);
   }
 
   private class MyDescriptor implements KeyDescriptor<VcsUser> {

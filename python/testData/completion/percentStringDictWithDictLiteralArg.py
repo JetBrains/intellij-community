@@ -1,0 +1,1 @@
+print("Other string %(<caret>)d" % dict({'three': 3, 'one': 1, 'two': 2}))

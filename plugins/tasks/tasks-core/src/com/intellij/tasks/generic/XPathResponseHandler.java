@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @Tag("XPathResponseHandler")
 public final class XPathResponseHandler extends SelectorBasedResponseHandler {
-  private final Map<String, XPath> myCompiledCache = new HashMap<String, XPath>();
+  private final Map<String, XPath> myCompiledCache = new HashMap<>();
 
   /**
    * Serialization constructor

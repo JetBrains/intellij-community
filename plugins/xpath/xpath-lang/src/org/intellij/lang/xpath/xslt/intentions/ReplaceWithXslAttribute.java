@@ -87,7 +87,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         assert valueElement != null;
         final String s = attr.getValueTextRange().substring(valueElement.getText());
 
-        final List<Pair<String, Boolean>> chunks = new ArrayList<Pair<String, Boolean>>();
+        final List<Pair<String, Boolean>> chunks = new ArrayList<>();
         final StringBuilder builder = new StringBuilder(s.length());
 
         final PsiFile[] files = XsltSupport.getFiles(attr);

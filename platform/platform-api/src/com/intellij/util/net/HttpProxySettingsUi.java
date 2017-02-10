@@ -165,7 +165,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
         final HttpConfigurable settings = HttpConfigurable.getInstance();
         apply(settings);
-        final AtomicReference<IOException> exceptionReference = new AtomicReference<IOException>();
+        final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
         myCheckButton.setEnabled(false);
         myCheckButton.setText("Check connection (in progress...)");
         myConnectionCheckInProgress = true;

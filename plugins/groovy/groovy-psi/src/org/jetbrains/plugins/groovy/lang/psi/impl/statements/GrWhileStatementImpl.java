@@ -67,7 +67,7 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
   @Override
   @Nullable
   public GrStatement getBody() {
-    List<GrStatement> statements = new ArrayList<GrStatement>();
+    List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
     }

@@ -24,6 +24,10 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     echo "Unsupported platform, JRE download skipped"
     return
   }
+  if (jreArchitecture == "disable") {
+    echo "JRE update disabled"
+    return
+  }
   if (!(jreArchitecture == "64" || jreArchitecture == "32" && platform == "win")) {
     echo "Acceptable architecture (32 or 64 bit) is not defined, JRE download skipped"
     return

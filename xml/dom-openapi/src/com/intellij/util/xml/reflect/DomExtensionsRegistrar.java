@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,34 +22,49 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Type;
 
 /**
+ * Allows runtime extension of DOM Model.
+ *
  * @author peter
  */
 public interface DomExtensionsRegistrar {
 
-  @NotNull DomExtension registerFixedNumberChildExtension(@NotNull XmlName name, @NotNull Type type);
+  /**
+   * Register single occurrence subtag extension.
+   */
+  @NotNull
+  DomExtension registerFixedNumberChildExtension(@NotNull XmlName name, @NotNull Type type);
 
-  @NotNull DomExtension registerCollectionChildrenExtension(@NotNull XmlName name, @NotNull Type type);
+  /**
+   * Register multiple occurrence subtag extension.
+   */
+  @NotNull
+  DomExtension registerCollectionChildrenExtension(@NotNull XmlName name, @NotNull Type type);
 
-  @NotNull DomExtension registerGenericAttributeValueChildExtension(@NotNull XmlName name, final Type parameterType);
+  /**
+   * Register {@link com.intellij.util.xml.GenericAttributeValue} using given parameterType.
+   */
+  @NotNull
+  DomExtension registerGenericAttributeValueChildExtension(@NotNull XmlName name, final Type parameterType);
 
   /**
    * @param name attribute qualified name
    * @param type should extend GenericAttributeValue
    * @return dom extension object
    */
-  @NotNull DomExtension registerAttributeChildExtension(@NotNull XmlName name, @NotNull final Type type);
+  @NotNull
+  DomExtension registerAttributeChildExtension(@NotNull XmlName name, @NotNull final Type type);
 
   /**
-   * @param type
-   * @return
    * @see com.intellij.util.xml.CustomChildren
    */
-  @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type);
+  @NotNull
+  DomExtension registerCustomChildrenExtension(@NotNull final Type type);
 
-  @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type,
-                                                        @NotNull CustomDomChildrenDescription.TagNameDescriptor descriptor);
+  @NotNull
+  DomExtension registerCustomChildrenExtension(@NotNull final Type type,
+                                               @NotNull CustomDomChildrenDescription.TagNameDescriptor descriptor);
 
-  @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type,
-                                                        @NotNull CustomDomChildrenDescription.AttributeDescriptor attributeDescriptor);
-
+  @NotNull
+  DomExtension registerCustomChildrenExtension(@NotNull final Type type,
+                                               @NotNull CustomDomChildrenDescription.AttributeDescriptor attributeDescriptor);
 }

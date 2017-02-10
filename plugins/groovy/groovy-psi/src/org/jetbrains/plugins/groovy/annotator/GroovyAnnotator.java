@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -105,6 +102,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContribut
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
+
 /**
  * @author ven
  */
@@ -122,7 +121,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+  public void visitTypeArgumentList(@NotNull GrTypeArgumentList typeArgumentList) {
     PsiElement parent = typeArgumentList.getParent();
     if (!(parent instanceof GrReferenceElement)) return;
 
@@ -166,7 +165,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitNamedArgument(GrNamedArgument argument) {
+  public void visitNamedArgument(@NotNull GrNamedArgument argument) {
     PsiElement parent = argument.getParent();
     if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
@@ -177,13 +176,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
     super.visitApplicationStatement(applicationStatement);
     checkForCommandExpressionSyntax(applicationStatement);
   }
 
   @Override
-  public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
     super.visitMethodCallExpression(methodCallExpression);
     checkForCommandExpressionSyntax(methodCallExpression);
   }
@@ -197,16 +196,16 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitElement(GroovyPsiElement element) {
+  public void visitElement(@NotNull GroovyPsiElement element) {
     if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(myHolder, element);
     }
   }
 
   @Override
-  public void visitTryStatement(GrTryCatchStatement statement) {
+  public void visitTryStatement(@NotNull GrTryCatchStatement statement) {
     final GrCatchClause[] clauses = statement.getCatchClauses();
-    List<PsiType> usedExceptions = new ArrayList<PsiType>();
+    List<PsiType> usedExceptions = new ArrayList<>();
 
     for (GrCatchClause clause : clauses) {
       final GrParameter parameter = clause.getParameter();
@@ -222,7 +221,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           types[i] = elements[i].getType();
         }
 
-        List<PsiType> usedInsideDisjunction = new ArrayList<PsiType>();
+        List<PsiType> usedInsideDisjunction = new ArrayList<>();
         for (int i = 0; i < types.length; i++) {
           if (checkExceptionUsed(usedExceptions, parameter, elements[i], types[i])) {
             usedInsideDisjunction.add(types[i]);
@@ -247,7 +246,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitCatchClause(GrCatchClause clause) {
+  public void visitCatchClause(@NotNull GrCatchClause clause) {
     final GrParameter parameter = clause.getParameter();
     if (parameter == null) return;
 
@@ -263,7 +262,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitDocComment(GrDocComment comment) {
+  public void visitDocComment(@NotNull GrDocComment comment) {
     String text = comment.getText();
     if (!text.endsWith("*/")) {
       TextRange range = comment.getTextRange();
@@ -272,7 +271,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+  public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
     if (variableDeclaration.isTuple()) {
       final GrModifierList list = variableDeclaration.getModifierList();
 
@@ -302,7 +301,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
     checkFinalFieldAccess(referenceExpression);
@@ -374,7 +373,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+  public void visitTypeDefinitionBody(@NotNull GrTypeDefinitionBody typeDefinitionBody) {
     final PsiElement parent = typeDefinitionBody.getParent();
     if (!(parent instanceof GrAnonymousClassDefinition)) return;
 
@@ -398,7 +397,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+  public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
     final PsiElement parent = typeDefinition.getParent();
     if (!(typeDefinition.isAnonymous() ||
           parent instanceof GrTypeDefinitionBody ||
@@ -417,6 +416,18 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkAnnotationCollector(myHolder, typeDefinition);
 
     checkSameNameMethodsWithDifferentAccessModifiers(myHolder, typeDefinition.getCodeMethods());
+    checkInheritorOfSelfTypes(myHolder, typeDefinition);
+  }
+
+  private static void checkInheritorOfSelfTypes(AnnotationHolder holder, GrTypeDefinition definition) {
+    if (!(definition instanceof GrClassDefinition)) return;
+    List<PsiClass> selfTypeClasses = GrTraitUtil.getSelfTypeClasses(definition);
+    for (PsiClass selfClass : selfTypeClasses) {
+      if (InheritanceUtil.isInheritorOrSelf(definition, selfClass, true)) continue;
+      String message = GroovyBundle.message("selfType.class.does.not.inherit", definition.getQualifiedName(), selfClass.getQualifiedName());
+      holder.createErrorAnnotation(GrHighlightUtil.getClassHeaderTextRange(definition), message);
+      break;
+    }
   }
 
   private static void checkSameNameMethodsWithDifferentAccessModifiers(AnnotationHolder holder, GrMethod[] methods) {
@@ -500,7 +511,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitEnumConstant(GrEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
     final GrArgumentList argumentList = enumConstant.getArgumentList();
 
@@ -516,7 +527,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkRecursiveConstructors(AnnotationHolder holder, PsiMethod[] constructors) {
-    Map<PsiMethod, PsiMethod> nodes = new HashMap<PsiMethod, PsiMethod>(constructors.length);
+    Map<PsiMethod, PsiMethod> nodes = new HashMap<>(constructors.length);
 
     Set<PsiMethod> set = ContainerUtil.set(constructors);
 
@@ -535,13 +546,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       nodes.put(constructor, resolved);
     }
 
-    Set<PsiMethod> checked = new HashSet<PsiMethod>();
+    Set<PsiMethod> checked = new HashSet<>();
 
     Set<PsiMethod> current;
     for (PsiMethod constructor : constructors) {
       if (!checked.add(constructor)) continue;
 
-      current = new HashSet<PsiMethod>();
+      current = new HashSet<>();
       current.add(constructor);
       for (constructor = nodes.get(constructor); constructor != null && current.add(constructor); constructor = nodes.get(constructor)) {
         checked.add(constructor);
@@ -560,7 +571,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitUnaryExpression(GrUnaryExpression expression) {
+  public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
     if (expression.getOperationTokenType() == GroovyTokenTypes.mINC ||
         expression.getOperationTokenType() == GroovyTokenTypes.mDEC) {
       GrExpression operand = expression.getOperand();
@@ -578,7 +589,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitOpenBlock(GrOpenBlock block) {
+  public void visitOpenBlock(@NotNull GrOpenBlock block) {
     if (block.getParent() instanceof GrMethod) {
       final GrMethod method = (GrMethod)block.getParent();
       if (method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) || GrTraitUtil.isInterface(method.getContainingClass())) {
@@ -589,7 +600,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitMethod(GrMethod method) {
+  public void visitMethod(@NotNull GrMethod method) {
     checkDuplicateMethod(method);
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
@@ -695,7 +706,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         final String superPresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
         final String superQName = getQNameOfMember(superMethod);
 
-        final PsiElement modifier = PsiUtil.findModifierInList(method.getModifierList(), currentModifier);
+        final PsiElement modifier = method.getModifierList().getModifier(currentModifier);
         holder.createErrorAnnotation(
           modifier != null? modifier : method.getNameIdentifierGroovy(),
           GroovyBundle.message("method.0.cannot.have.weaker.access.privileges.1.than.2.in.3.4", currentPresentation, currentModifier, superPresentation, superQName, superModifier)
@@ -753,7 +764,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
 
   @Override
-  public void visitVariable(GrVariable variable) {
+  public void visitVariable(@NotNull GrVariable variable) {
     checkName(variable);
 
     PsiElement parent = variable.getParent();
@@ -834,7 +845,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
     if (!PsiUtil.mightBeLValue(lValue)) {
       myHolder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
@@ -842,7 +853,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitReturnStatement(GrReturnStatement returnStatement) {
+  public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) {
       final PsiType type = value.getType();
@@ -867,7 +878,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeParameterList(GrTypeParameterList list) {
+  public void visitTypeParameterList(@NotNull GrTypeParameterList list) {
     final PsiElement parent = list.getParent();
     if (parent instanceof GrMethod && ((GrMethod)parent).isConstructor() ||
         parent instanceof GrEnumTypeDefinition ||
@@ -877,7 +888,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitListOrMap(GrListOrMap listOrMap) {
+  public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     final PsiReference constructorReference = listOrMap.getReference();
     if (constructorReference instanceof LiteralConstructorReference &&
         ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
@@ -902,7 +913,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitClassTypeElement(GrClassTypeElement typeElement) {
+  public void visitClassTypeElement(@NotNull GrClassTypeElement typeElement) {
     super.visitClassTypeElement(typeElement);
 
     final GrCodeReferenceElement ref = typeElement.getReferenceElement();
@@ -916,7 +927,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+  public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
     PsiElement resolved = refElement.resolve();
     if (resolved instanceof PsiClass &&
         (((PsiClass)resolved).isAnnotationType() ||
@@ -927,7 +938,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeElement(GrTypeElement typeElement) {
+  public void visitTypeElement(@NotNull GrTypeElement typeElement) {
     final PsiElement parent = typeElement.getParent();
     if (!(parent instanceof GrMethod)) return;
 
@@ -943,7 +954,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitModifierList(GrModifierList modifierList) {
+  public void visitModifierList(@NotNull GrModifierList modifierList) {
     final PsiElement parent = modifierList.getParent();
     if (parent instanceof GrMethod) {
       checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
@@ -951,8 +962,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (parent instanceof GrTypeDefinition) {
       checkTypeDefinitionModifiers(myHolder, (GrTypeDefinition)parent);
     }
-    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinition) {
+    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinitionBody) {
       checkFieldModifiers(myHolder, (GrVariableDeclaration)parent);
+    }
+    else if (parent instanceof GrVariableDeclaration) {
+      checkVariableModifiers(myHolder, ((GrVariableDeclaration)parent));
     }
     else if (parent instanceof GrClassInitializer) {
       checkClassInitializerModifiers(myHolder, modifierList);
@@ -971,7 +985,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitClassInitializer(GrClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
     final PsiClass aClass = initializer.getContainingClass();
     if (GrTraitUtil.isInterface(aClass)) {
       final TextRange range = GrHighlightUtil.getInitializerHeaderTextRange(initializer);
@@ -999,44 +1013,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       registerFix(annotation, new GrModifierFix(member, PsiModifier.FINAL, true, false, GrModifierFix.MODIFIER_LIST), modifierList);
     }
 
-    checkModifierIsNotAllowed(modifierList, PsiModifier.NATIVE, GroovyBundle.message("variable.cannot.be.native"), holder);
-    checkModifierIsNotAllowed(modifierList, PsiModifier.ABSTRACT, GroovyBundle.message("variable.cannot.be.abstract"), holder);
-
     if (member.getContainingClass() instanceof GrInterfaceDefinition) {
       checkModifierIsNotAllowed(modifierList,
                                 PsiModifier.PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
       checkModifierIsNotAllowed(modifierList, PsiModifier.PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be",
                                                                                           PsiModifier.PROTECTED),
                                 holder);
-    }
-  }
-
-  private static void registerFix(Annotation annotation, LocalQuickFix fix, PsiElement place) {
-    final InspectionManager manager = InspectionManager.getInstance(place.getProject());
-    assert !place.getTextRange().isEmpty() : place.getContainingFile().getName();
-
-    final ProblemDescriptor descriptor = manager.createProblemDescriptor(place, place, annotation.getMessage(),
-                                                                         annotation.getHighlightType(), true, LocalQuickFix.EMPTY_ARRAY);
-    final TextRange range = TextRange.create(annotation.getStartOffset(), annotation.getEndOffset());
-    annotation.registerFix(fix, range, null, descriptor);
-  }
-
-  private static void checkModifierIsNotAllowed(@NotNull GrModifierList modifierList,
-                                                @NotNull @GrModifier.GrModifierConstant String modifier,
-                                                @Nullable String message,
-                                                @NotNull AnnotationHolder holder) {
-    checkModifierIsNotAllowedImpl(modifierList, modifier, message, holder, false);
-  }
-
-  private static void checkModifierIsNotAllowedImpl(@NotNull GrModifierList modifierList,
-                                                    @NotNull @GrModifier.GrModifierConstant String modifier,
-                                                    @Nullable String message,
-                                                    @NotNull AnnotationHolder holder,
-                                                    final boolean explicit) {
-    if (explicit ? modifierList.hasModifierProperty(modifier) : modifierList.hasExplicitModifier(modifier)) {
-      PsiElement modifierOrList = getModifierOrList(modifierList, modifier);
-      final Annotation annotation = holder.createErrorAnnotation(modifierOrList, message);
-      registerFix(annotation, new GrModifierFix((PsiMember)modifierList.getParent(), modifier, true, false, GrModifierFix.MODIFIER_LIST), modifierList);
     }
   }
 
@@ -1163,7 +1145,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
+  public void visitWildcardTypeArgument(@NotNull GrWildcardTypeArgument wildcardTypeArgument) {
     super.visitWildcardTypeArgument(wildcardTypeArgument);
 
     checkTypeArgForPrimitive(wildcardTypeArgument.getBoundTypeElement(), GroovyBundle.message("primitive.bound.types.are.not.allowed"));
@@ -1198,7 +1180,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitNewExpression(GrNewExpression newExpression) {
+  public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     GrTypeArgumentList constructorTypeArguments = newExpression.getConstructorTypeArguments();
     if (constructorTypeArguments != null) {
       myHolder.createErrorAnnotation(constructorTypeArguments, GroovyBundle.message("groovy.does.not.support.constructor.type.arguments"));
@@ -1246,12 +1228,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitArgumentList(GrArgumentList list) {
+  public void visitArgumentList(@NotNull GrArgumentList list) {
     checkNamedArgs(list.getNamedArguments(), true);
   }
 
   @Override
-  public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
     final GroovyResolveResult resolveResult = invocation.advancedResolve();
     if (resolveResult.getElement() == null) {
       final GroovyResolveResult[] results = invocation.multiResolve(false);
@@ -1275,23 +1257,23 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitBreakStatement(GrBreakStatement breakStatement) {
+  public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
     checkFlowInterruptStatement(breakStatement, myHolder);
   }
 
   @Override
-  public void visitContinueStatement(GrContinueStatement continueStatement) {
+  public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
     checkFlowInterruptStatement(continueStatement, myHolder);
   }
 
   @Override
-  public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
+  public void visitPackageDefinition(@NotNull GrPackageDefinition packageDefinition) {
     final GrModifierList modifierList = packageDefinition.getAnnotationList();
     checkAnnotationList(myHolder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
   }
 
   @Override
-  public void visitClosure(GrClosableBlock closure) {
+  public void visitClosure(@NotNull GrClosableBlock closure) {
     super.visitClosure(closure);
     if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
       myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
@@ -1339,7 +1321,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitLiteralExpression(GrLiteral literal) {
+  public void visitLiteralExpression(@NotNull GrLiteral literal) {
     final IElementType elementType = literal.getFirstChild().getNode().getElementType();
     if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
       checkStringLiteral(literal);
@@ -1350,7 +1332,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitRegexExpression(GrRegex regex) {
+  public void visitRegexExpression(@NotNull GrRegex regex) {
     checkRegexLiteral(regex);
   }
 
@@ -1396,7 +1378,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitGStringExpression(GrString gstring) {
+  public void visitGStringExpression(@NotNull GrString gstring) {
     for (GrStringContent part : gstring.getContents()) {
       final String text = part.getText();
       if (!GrStringUtil.parseStringCharacters(text, new StringBuilder(text.length()), null)) {
@@ -1408,7 +1390,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitGStringInjection(GrStringInjection injection) {
+  public void visitGStringInjection(@NotNull GrStringInjection injection) {
     if (((GrString)injection.getParent()).isPlainString()) {
       if (StringUtil.indexOf(injection.getText(), '\n') != -1) {
         myHolder.createErrorAnnotation(injection, GroovyBundle.message("injection.should.not.contain.line.feeds"));
@@ -1446,7 +1428,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitForInClause(GrForInClause forInClause) {
+  public void visitForInClause(@NotNull GrForInClause forInClause) {
     final GrVariable var = forInClause.getDeclaredVariable();
     if (var == null) return;
     final GrModifierList modifierList = var.getModifierList();
@@ -1462,7 +1444,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitFile(GroovyFileBase file) {
+  public void visitFile(@NotNull GroovyFileBase file) {
     final PsiClass scriptClass = file.getScriptClass();
     if (scriptClass != null) {
       checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getMethods());
@@ -1471,17 +1453,17 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
 
   @Override
-  public void visitAnnotation(GrAnnotation annotation) {
+  public void visitAnnotation(@NotNull GrAnnotation annotation) {
     new AnnotationChecker(myHolder).checkApplicability(annotation, annotation.getOwner());
   }
 
   @Override
-  public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
+  public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     new AnnotationChecker(myHolder).checkAnnotationArgumentList((GrAnnotation)annotationArgumentList.getParent());
   }
 
   @Override
-  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+  public void visitAnnotationMethod(@NotNull GrAnnotationMethod annotationMethod) {
     super.visitAnnotationMethod(annotationMethod);
 
     final GrAnnotationMemberValue value = annotationMethod.getDefaultValue();
@@ -1493,7 +1475,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+  public void visitAnnotationNameValuePair(@NotNull GrAnnotationNameValuePair nameValuePair) {
     final PsiElement identifier = nameValuePair.getNameIdentifierGroovy();
     if (identifier == null) {
       final PsiElement parent = nameValuePair.getParent();
@@ -1582,12 +1564,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitImportStatement(GrImportStatement importStatement) {
+  public void visitImportStatement(@NotNull GrImportStatement importStatement) {
     checkAnnotationList(myHolder, importStatement.getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
   }
 
   @Override
-  public void visitExtendsClause(GrExtendsClause extendsClause) {
+  public void visitExtendsClause(@NotNull GrExtendsClause extendsClause) {
     GrTypeDefinition typeDefinition = (GrTypeDefinition)extendsClause.getParent();
 
     if (typeDefinition.isAnnotationType()) {
@@ -1610,7 +1592,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitImplementsClause(GrImplementsClause implementsClause) {
+  public void visitImplementsClause(@NotNull GrImplementsClause implementsClause) {
     GrTypeDefinition typeDefinition = (GrTypeDefinition)implementsClause.getParent();
 
     if (typeDefinition.isAnnotationType()) {
@@ -1873,7 +1855,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @NotNull
   private static PsiElement getModifierOrList(@NotNull GrModifierList modifiersList, @GrModifier.GrModifierConstant final String modifier) {
-    PsiElement m = PsiUtil.findModifierInList(modifiersList, modifier);
+    PsiElement m = modifiersList.getModifier(modifier);
     return m != null ? m : modifiersList;
   }
 
@@ -1924,11 +1906,17 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isInterface()) {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("intarface.cannot.have.modifier.final"), holder);
     }
+
+    if (GroovyConfigUtils.getInstance().isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_8)) {
+      if (typeDefinition.getContainingClass() == null && !(typeDefinition instanceof GrTraitTypeDefinition)) {
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, holder);
+      }
+    }
   }
 
   private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {
     final PsiElement[] modifiers = list.getModifiers();
-    Set<String> set = new THashSet<String>(modifiers.length);
+    Set<String> set = new THashSet<>(modifiers.length);
     for (PsiElement modifier : modifiers) {
       if (modifier instanceof GrAnnotation) continue;
       @GrModifier.GrModifierConstant String name = modifier.getText();
@@ -1982,8 +1970,13 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private void doCheckDuplicateMethod(@NotNull GrMethod method, @NotNull PsiClass clazz) {
-    MethodSignature signature = GrClassImplUtil.getDuplicatedMethods(clazz).get(method);
-    if (signature == null) return;
+    Set<MethodSignature> duplicatedSignatures = GrClassImplUtil.getDuplicatedSignatures(clazz);
+    if (duplicatedSignatures.isEmpty()) return; // optimization
+
+    PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(method);
+    MethodSignature signature = method.getSignature(substitutor);
+    if (!duplicatedSignatures.contains(signature)) return;
+
     String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
     GrMethod original = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
     myHolder.createErrorAnnotation(
@@ -2023,6 +2016,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("annotation.type.cannot.be.inner"));
     }
 
+    if (!typeDefinition.hasModifierProperty(PsiModifier.STATIC)
+        && (typeDefinition.getContainingClass() != null || typeDefinition instanceof GrAnonymousClassDefinition)) {
+      GrTypeDefinition owner = PsiTreeUtil.getParentOfType(typeDefinition, GrTypeDefinition.class);
+      if (owner instanceof GrTraitTypeDefinition) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("non.static.classes.not.allowed"));
+      }
+    }
+
     checkDuplicateClass(typeDefinition, holder);
 
     checkCyclicInheritance(holder, typeDefinition);
@@ -2030,7 +2031,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkCyclicInheritance(AnnotationHolder holder,
                                              GrTypeDefinition typeDefinition) {
-    final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<PsiClass>());
+    final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<>());
     if (psiClass != null) {
       String qname = psiClass.getQualifiedName();
       assert qname != null;

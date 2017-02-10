@@ -16,6 +16,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -36,6 +37,11 @@ public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl
   protected void notifyInspectionsFinished(AnalysisScope scope) {
     super.notifyInspectionsFinished(scope);
     myFinished = true;
+  }
+
+  @Override
+  protected boolean includeDoNotShow(final InspectionProfile profile) {
+    return true;
   }
 
   public boolean isFinished() {

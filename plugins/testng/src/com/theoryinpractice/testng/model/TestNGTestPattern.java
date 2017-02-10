@@ -101,7 +101,7 @@ public class TestNGTestPattern extends TestNGTestObject {
       }
     }
     if (classes.size() != patterns.size()) {
-      final List<Pattern> compilePatterns = new ArrayList<Pattern>();
+      final List<Pattern> compilePatterns = new ArrayList<>();
       for (String p : patterns) {
         final Pattern compilePattern;
         try {

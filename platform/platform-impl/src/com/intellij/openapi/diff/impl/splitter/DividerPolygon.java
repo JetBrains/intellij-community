@@ -163,7 +163,7 @@ public class DividerPolygon {
     Interval indices = lineBlocks.getVisibleIndices(visibleArea);
     Transformation[] transformations = new Transformation[]{getTransformation(editor1),
       getTransformation(editor2)};
-    ArrayList<DividerPolygon> polygons = new ArrayList<DividerPolygon>();
+    ArrayList<DividerPolygon> polygons = new ArrayList<>();
     for (int i = indices.getStart(); i < indices.getEnd(); i++) {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
       final TextDiffType type = lineBlocks.getType(i);

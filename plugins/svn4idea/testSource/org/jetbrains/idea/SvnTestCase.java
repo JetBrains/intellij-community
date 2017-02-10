@@ -365,7 +365,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       myS2File = findOrCreateChild(mySourceDir, "s2.txt", ourS2Contents);
 
       myTargetDir = findOrCreateChild(myRootDir, "target", null);
-      myTargetFiles = new ArrayList<VirtualFile>();
+      myTargetFiles = new ArrayList<>();
       for (int i = 0; i < 10; i++) {
         myTargetFiles.add(findOrCreateChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents));
       }

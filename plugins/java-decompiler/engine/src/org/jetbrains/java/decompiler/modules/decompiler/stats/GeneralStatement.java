@@ -39,7 +39,7 @@ public class GeneralStatement extends Statement {
     first = head;
     stats.addWithKey(head, head.id);
 
-    HashSet<Statement> set = new HashSet<Statement>(statements);
+    HashSet<Statement> set = new HashSet<>(statements);
     set.remove(head);
 
     for (Statement st : set) {

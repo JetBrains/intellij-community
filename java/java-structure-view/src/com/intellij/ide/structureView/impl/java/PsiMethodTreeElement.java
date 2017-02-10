@@ -60,12 +60,12 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
     if (!range.substring(fileText).contains(PsiKeyword.CLASS)) return emptyResult;
 
-    final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    final ArrayList<StructureViewTreeElement> result = new ArrayList<>();
 
     element.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override public void visitClass(PsiClass aClass) {
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
-          result.add(new JavaClassTreeElement(aClass, isInherited(), new HashSet<PsiClass>(Arrays.asList(aClass.getSupers()))));
+          result.add(new JavaClassTreeElement(aClass, isInherited(), new HashSet<>(Arrays.asList(aClass.getSupers()))));
         }
       }
     });

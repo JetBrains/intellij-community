@@ -208,6 +208,16 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
     return false;
   }
 
+  @NotNull
+  @Override
+  public CaretVisualAttributes getVisualAttributes() {
+    return CaretVisualAttributes.DEFAULT;
+  }
+
+  @Override
+  public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
+  }
+
   private SelectionModel getSelectionModel() {
     return myEditor.getSelectionModel();
   }

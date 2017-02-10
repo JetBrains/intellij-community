@@ -52,7 +52,7 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
       final MvcFramework framework = MvcFramework.getInstance(module);
       if (framework == null) continue;
 
-      if (result == null) result = new HashSet<String>();
+      if (result == null) result = new HashSet<>();
 
       File sdkWorkDir = framework.getCommonPluginsDir(module);
       if (sdkWorkDir != null) {

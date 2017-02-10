@@ -146,7 +146,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
       final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
       final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
       final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
-      final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(domElement1, true, HighlightSeverity.WARNING));
+      final List<DomElementProblemDescriptor> warningProblems =
+        new ArrayList<>(holder.getProblems(domElement1, true, HighlightSeverity.WARNING));
       warningProblems.removeAll(errorProblems);
 
       Color background = getDefaultBackground();

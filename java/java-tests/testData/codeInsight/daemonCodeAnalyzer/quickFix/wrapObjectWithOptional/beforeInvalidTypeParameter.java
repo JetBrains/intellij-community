@@ -4,7 +4,7 @@ import java.util.Optional;
 public class Test {
 
   void m(String ss) {
-    f(ss);
+    f(<caret>ss);
   }
 
 

@@ -77,7 +77,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
     }
 
     public void addParameter() {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put("", "");
         parameterList.addAll(map.entrySet());
         setParameterList(parameterList);
@@ -97,7 +97,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
                 break;
         }
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put(key, value);
         parameterList.set(rowIndex, map.entrySet().iterator().next());
         setParameterList(parameterList);

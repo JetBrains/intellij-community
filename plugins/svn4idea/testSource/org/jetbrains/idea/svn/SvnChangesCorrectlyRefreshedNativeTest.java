@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -78,7 +93,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -104,7 +119,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -129,7 +144,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -161,7 +176,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s2.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -197,7 +212,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     Assert.assertEquals(SubTree.ourS1Contents, text.toString());
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -220,7 +235,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.myRootDir, "target");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
 
     for (VirtualFile file : files) {
       Assert.assertTrue(file.getPath(), clManager.isUnversioned(file));
@@ -228,7 +243,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
   }
 
   private List<VirtualFile> getAllFiles(final SubTree subTree) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     files.addAll(Arrays.asList(subTree.myRootDir, subTree.mySourceDir, subTree.myS2File, subTree.myS1File, subTree.myTargetDir));
     files.addAll(subTree.myTargetFiles);
     return files;
@@ -263,7 +278,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.myTargetDir, "t15.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Nullable

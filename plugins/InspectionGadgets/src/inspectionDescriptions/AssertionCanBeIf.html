@@ -1,0 +1,11 @@
+<html>
+<body>
+This inspection looks for <b>assert</b> statements.
+For example, <br>
+<code><b>assert</b> param != <b>null</b>;</code>
+<p>Quick fix replaces it with
+<b>if</b> statement throwing an <b>java.lang.AssertionError</b>.
+<p>Example:<br>
+<code>if (param == <b>null</b>) <b>throw new</b> AssertionError();</code>
+</body>
+</html>

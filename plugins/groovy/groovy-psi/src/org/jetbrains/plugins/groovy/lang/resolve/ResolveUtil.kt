@@ -15,9 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
+
+@JvmField val NON_CODE = Key.create<Boolean?>("groovy.process.non.code.members")
+
+fun initialState(processNonCodeMembers: Boolean) = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
+
+fun ResolveState.processNonCodeMembers(): Boolean = get(NON_CODE).let { it == null || it }
+
+fun treeWalkUp(place: PsiElement, processor: PsiScopeProcessor, state: ResolveState): Boolean {
+  return ResolveUtil.treeWalkUp(place, place, processor, state)
+}
 
 fun shouldProcessDynamicMethods(processor: PsiScopeProcessor): Boolean {
   return processor.getHint(DynamicMembersHint.KEY)?.shouldProcessMethods() ?: false
 }
+
+fun wrapClassType(type: PsiType, context: PsiElement) = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)

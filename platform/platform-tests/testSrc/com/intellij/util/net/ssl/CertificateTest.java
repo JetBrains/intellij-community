@@ -123,7 +123,7 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   public void testDeadlockDetection() throws Exception {
-    final Ref<Throwable> throwableRef = new Ref<Throwable>();
+    final Ref<Throwable> throwableRef = new Ref<>();
 
     final long interruptionTimeout = CertificateManager.DIALOG_VISIBILITY_TIMEOUT + 1000;
     // Will be interrupted after at most interruptionTimeout (6 seconds originally)

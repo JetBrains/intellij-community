@@ -54,13 +54,13 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();
+    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<>();
 
     group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
 
     group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
     group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<MavenRunConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 

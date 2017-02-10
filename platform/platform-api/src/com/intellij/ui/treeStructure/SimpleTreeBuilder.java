@@ -54,12 +54,12 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     }
 
     if (EventQueue.isDispatchThread()) {
-      SimpleTreeBuilder.super.queueUpdate();
+      super.queueUpdate();
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!isDisposed()) {
-          SimpleTreeBuilder.super.queueUpdate();
+          super.queueUpdate();
         }
       });
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
@@ -50,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class ShelvedChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
@@ -190,7 +190,7 @@ public class ShelvedChange {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
+    return Objects.hash(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
   }
 
   private class PatchedContentRevision implements ContentRevision {

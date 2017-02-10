@@ -33,7 +33,7 @@ public class VcsGoToRefComparator implements Comparator<VcsRef> {
   @Override
   public int compare(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
     VcsLogProvider provider1 = myProviders.get(ref1.getRoot());
-    VcsLogProvider provider2 = myProviders.get(ref1.getRoot());
+    VcsLogProvider provider2 = myProviders.get(ref2.getRoot());
 
     if (provider1 == null) return provider2 == null ? ref1.getName().compareTo(ref2.getName()) : 1;
     if (provider2 == null) return -1;

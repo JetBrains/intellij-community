@@ -61,7 +61,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
 
   public void createUIComponents() {
     myMarkStateDescriptor = new MavenProfileKindMarkStateDescriptor();
-    profileChooser = new MultiStateElementsChooser<String, MavenProfileKind>(true, myMarkStateDescriptor);
+    profileChooser = new MultiStateElementsChooser<>(true, myMarkStateDescriptor);
   }
 
   public JComponent getComponent() {
@@ -72,8 +72,8 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     List<String> allProfiles = getBuilder().getProfiles();
     List<String> activatedProfiles = getBuilder().getActivatedProfiles();
     MavenExplicitProfiles selectedProfiles = getBuilder().getSelectedProfiles();
-    List<String> enabledProfiles = new ArrayList<String>(selectedProfiles.getEnabledProfiles());
-    List<String> disabledProfiles = new ArrayList<String>(selectedProfiles.getDisabledProfiles());
+    List<String> enabledProfiles = new ArrayList<>(selectedProfiles.getEnabledProfiles());
+    List<String> disabledProfiles = new ArrayList<>(selectedProfiles.getDisabledProfiles());
     enabledProfiles.retainAll(allProfiles); // mark only existing profiles
     disabledProfiles.retainAll(allProfiles); // mark only existing profiles
 
@@ -122,7 +122,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     }
 
     public void setActivatedProfiles(Collection<String> activatedProfiles) {
-      myActivatedProfiles = new THashSet<String>(activatedProfiles);
+      myActivatedProfiles = new THashSet<>(activatedProfiles);
     }
 
     @NotNull

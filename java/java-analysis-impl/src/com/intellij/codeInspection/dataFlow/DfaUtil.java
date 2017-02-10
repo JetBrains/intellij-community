@@ -171,9 +171,9 @@ public class DfaUtil {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
     static class PlaceResult {
-      final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<PsiVariable, FList<PsiExpression>>(true);
-      final Set<PsiVariable> myNulls = new THashSet<PsiVariable>();
-      final Set<PsiVariable> myNotNulls = new THashSet<PsiVariable>();
+      final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<>(true);
+      final Set<PsiVariable> myNulls = new THashSet<>();
+      final Set<PsiVariable> myNotNulls = new THashSet<>();
     }
 
     @Override
@@ -251,7 +251,7 @@ public class DfaUtil {
       return concatenation.getHead();
     }
     String text = StringUtil
-      .join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), expression -> expression.getText(), "+");
+      .join(ContainerUtil.reverse(new ArrayList<>(concatenation)), expression -> expression.getText(), "+");
     try {
       return JavaPsiFacade.getElementFactory(concatenation.getHead().getProject()).createExpressionFromText(text, concatenation.getHead());
     }

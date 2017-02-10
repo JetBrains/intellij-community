@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class MessageViewImpl implements MessageView {
   private ToolWindow myToolWindow;
-  private final List<Runnable> myPostponedRunnables = new ArrayList<Runnable>();
+  private final List<Runnable> myPostponedRunnables = new ArrayList<>();
 
   public MessageViewImpl(final Project project, final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
     final Runnable runnable = () -> {

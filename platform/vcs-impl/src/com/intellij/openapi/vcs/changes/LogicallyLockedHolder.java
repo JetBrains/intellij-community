@@ -29,7 +29,7 @@ public class LogicallyLockedHolder implements FileHolder {
 
   public LogicallyLockedHolder(final Project project) {
     myProject = project;
-    myMap = new HashMap<VirtualFile, LogicalLock>();
+    myMap = new HashMap<>();
   }
 
   public void cleanAll() {

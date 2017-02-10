@@ -26,7 +26,7 @@ final class LocalFiles {
 
   // Fields =================================================================
 
-  private final Collection<String> fileNames = new ArrayList<String>();
+  private final Collection<String> fileNames = new ArrayList<>();
 
   // Setup ==================================================================
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,9 @@ public class JavaParserUtil {
     }
   }
 
-  private static final TokenSet PRECEDING_COMMENT_SET = ElementType.FULL_MEMBER_BIT_SET;
+  private static final TokenSet PRECEDING_COMMENT_SET = TokenSet.orSet(
+    TokenSet.create(JavaElementType.MODULE), ElementType.FULL_MEMBER_BIT_SET);
+
   private static final TokenSet TRAILING_COMMENT_SET = TokenSet.orSet(
     TokenSet.create(JavaElementType.PACKAGE_STATEMENT),
     ElementType.IMPORT_STATEMENT_BASE_BIT_SET, ElementType.FULL_MEMBER_BIT_SET, ElementType.JAVA_STATEMENT_BIT_SET);

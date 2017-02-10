@@ -48,7 +48,7 @@ public class JiraRestApi2 extends JiraRestApi {
   @Override
   protected List<JiraIssue> parseIssues(String response) {
     JiraResponseWrapper.Issues<JiraIssueApi2> wrapper = JiraRepository.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
-    return new ArrayList<JiraIssue>(wrapper.getIssues());
+    return new ArrayList<>(wrapper.getIssues());
   }
 
   @NotNull

@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.TestDialog;
 import git4idea.commands.Git;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import java.io.IOException;

@@ -42,7 +42,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public ExecutionTargetManagerImpl(@NotNull Project project, @NotNull RunManager runManager) {
     myProject = project;
 
-    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerListener() {
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {
@@ -151,7 +151,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (settings == null) return Collections.emptyList();
 
-    List<ExecutionTarget> result = new ArrayList<ExecutionTarget>();
+    List<ExecutionTarget> result = new ArrayList<>();
     for (ExecutionTargetProvider eachTargetProvider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
       for (ExecutionTarget eachTarget : eachTargetProvider.getTargets(myProject, settings)) {
         if (canRun(settings, eachTarget)) result.add(eachTarget);

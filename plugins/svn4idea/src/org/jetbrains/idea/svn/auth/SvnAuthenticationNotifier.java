@@ -110,7 +110,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     myVerificationInProgress = true;
 
-    final Ref<Boolean> resultRef = new Ref<Boolean>();
+    final Ref<Boolean> resultRef = new Ref<>();
 
     final Runnable checker = new Runnable() {
       @Override
@@ -160,7 +160,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     myCopiesPassiveResults.put(getKey(obj), true);
     myVcs.invokeRefreshSvnRoots();
 
-    final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
+    final List<SVNURL> outdatedRequests = new LinkedList<>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
     for (SVNURL key : keys) {
       final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
@@ -379,11 +379,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       // start svnkit authentication cycle
       SvnVcs.getInstance(project).getSvnKitManager().createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
       //SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
-    } catch (SVNAuthenticationException e) {
+    } catch (SVNAuthenticationException | SVNCancelException e) {
       log(e);
-      return false;
-    } catch (SVNCancelException e) {
-      log(e); // auth canceled
       return false;
     } catch (final SVNException e) {
       if (e.getErrorMessage().getErrorCode().isAuthentication()) {

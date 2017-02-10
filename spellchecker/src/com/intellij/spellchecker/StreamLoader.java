@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public class StreamLoader implements Loader {
   private final InputStream stream;
@@ -39,16 +41,14 @@ public class StreamLoader implements Loader {
 
   @Override
   public void load(@NotNull Consumer<String> consumer) {
-    try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
-      try {
-        String line;
-        while ((line = br.readLine()) != null) {
-          consumer.consume(line);
-        }
-      }
-      finally {
-        br.close();
+    doLoad(stream, consumer);
+  }
+
+  static void doLoad(@NotNull InputStream stream, @NotNull Consumer<String> consumer) {
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        consumer.consume(line);
       }
     }
     catch (Exception e) {

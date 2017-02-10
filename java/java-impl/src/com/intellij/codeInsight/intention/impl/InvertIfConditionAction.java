@@ -17,7 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -76,8 +75,6 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
 
     LOG.assertTrue(ifStatement != null);
@@ -315,15 +312,17 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     ifStatement.setElseBranch(thenBranch);
   }
 
-  private static void addAfter(PsiIfStatement ifStatement, PsiStatement thenBranch) throws IncorrectOperationException {
-    if (thenBranch instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStatement = (PsiBlockStatement) thenBranch;
-      PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-      if (statements.length > 0) {
-        ifStatement.getParent().addRangeAfter(statements[0], statements[statements.length - 1], ifStatement);
+  static void addAfter(PsiIfStatement ifStatement, PsiStatement branch) throws IncorrectOperationException {
+    if (branch instanceof PsiBlockStatement) {
+      PsiBlockStatement blockStatement = (PsiBlockStatement) branch;
+      final PsiCodeBlock block = blockStatement.getCodeBlock();
+      final PsiElement firstBodyElement = block.getFirstBodyElement();
+      final PsiElement lastBodyElement = block.getLastBodyElement();
+      if (firstBodyElement != null && lastBodyElement != null) {
+        ifStatement.getParent().addRangeAfter(firstBodyElement, lastBodyElement, ifStatement);
       }
     } else {
-      ifStatement.getParent().addAfter(thenBranch, ifStatement);
+      ifStatement.getParent().addAfter(branch, ifStatement);
     }
   }
 

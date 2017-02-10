@@ -67,7 +67,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> result = new ArrayList<PyCallableParameter>();
+    final List<PyCallableParameter> result = new ArrayList<>();
     for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
       result.add(new PyCallableParameterImpl(parameter));
     }

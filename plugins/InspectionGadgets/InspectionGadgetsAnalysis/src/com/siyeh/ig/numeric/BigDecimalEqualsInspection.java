@@ -50,13 +50,8 @@ public class BigDecimalEqualsInspection extends BaseInspection {
   private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("big.decimal.equals.replace.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("big.decimal.equals.replace.quickfix");
     }
 
     @Override

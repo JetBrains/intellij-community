@@ -80,6 +80,15 @@ class IdeaSuite extends Suite {
 
   protected List getChildren() {
     final List children = new ArrayList(super.getChildren());
+    boolean containsSuiteInside = false;
+    for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+      Object child = iterator.next();
+      if (isSuite(child)) {
+        containsSuiteInside = true;
+        break;
+      }
+    }
+    if (!containsSuiteInside) return children;
     final Set allNames = new HashSet();
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();

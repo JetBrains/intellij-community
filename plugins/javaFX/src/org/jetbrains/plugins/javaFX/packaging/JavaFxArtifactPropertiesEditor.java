@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Base64Converter;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,9 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -108,7 +109,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     });
 
-    final List<String> bundleNames = new ArrayList<String>();
+    final List<String> bundleNames = new ArrayList<>();
     for (JavaFxPackagerConstants.NativeBundles bundle : JavaFxPackagerConstants.NativeBundles.values()) {
       bundleNames.add(bundle.name());
     }
@@ -148,9 +149,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       if (isModified(myProperties.getAlias(), myDialog.myPanel.myAliasTF)) return true;
       if (isModified(myProperties.getKeystore(), myDialog.myPanel.myKeystore)) return true;
       final String keypass = myProperties.getKeypass();
-      if (isModified(keypass != null ? Base64Converter.decode(keypass) : "", myDialog.myPanel.myKeypassTF)) return true;
+      if (isModified(keypass != null ? new String(Base64.getDecoder().decode(keypass), StandardCharsets.UTF_8) : "", myDialog.myPanel.myKeypassTF)) return true;
       final String storepass = myProperties.getStorepass();
-      if (isModified(storepass != null ? Base64Converter.decode(storepass) : "", myDialog.myPanel.myStorePassTF)) return true;
+      if (isModified(storepass != null ? new String(Base64.getDecoder().decode(storepass), StandardCharsets.UTF_8) : "", myDialog.myPanel.myStorePassTF)) return true;
       if (myProperties.isSelfSigning() != myDialog.myPanel.mySelfSignedRadioButton.isSelected()) return true;
     }
 
@@ -194,9 +195,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
       myProperties.setKeystore(myDialog.myPanel.myKeystore.getText());
       final String keyPass = String.valueOf((myDialog.myPanel.myKeypassTF.getPassword()));
-      myProperties.setKeypass(!StringUtil.isEmptyOrSpaces(keyPass) ? Base64Converter.encode(keyPass) : null);
+      myProperties.setKeypass(!StringUtil.isEmptyOrSpaces(keyPass) ? Base64.getEncoder().encodeToString(keyPass.getBytes(StandardCharsets.UTF_8)) : null);
       final String storePass = String.valueOf(myDialog.myPanel.myStorePassTF.getPassword());
-      myProperties.setStorepass(!StringUtil.isEmptyOrSpaces(storePass) ? Base64Converter.encode(storePass) : null);
+      myProperties.setStorepass(!StringUtil.isEmptyOrSpaces(storePass) ? Base64.getEncoder().encodeToString(storePass.getBytes(StandardCharsets.UTF_8)) : null);
     }
 
     myProperties.setCustomManifestAttributes(myCustomManifestAttributes);

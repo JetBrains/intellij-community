@@ -176,3 +176,15 @@ class AssignmentToFinalInsideLambda {
     };
   }
 }
+
+class NonInitializedButWrittenTwice {
+  private void test(boolean b) {
+    int s;
+    if(b) {
+      s = 1;
+      J is = () -> <error descr="Variable used in lambda expression should be final or effectively final">s</error>;
+      System.out.println(is.m());
+    }
+    <error descr="Variable 's' might not have been initialized">s</error>++;
+  }
+}

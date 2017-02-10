@@ -39,8 +39,8 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -287,9 +287,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    int offset = getCurrentEditor().getCaretModel().getOffset();
-    return getCurrentContent().getOpenFileDescriptor(offset);
+  protected Navigatable getNavigatable() {
+    return getCurrentContent().getNavigatable(LineCol.fromCaret(getCurrentEditor()));
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -302,12 +301,11 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
-    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+    protected Navigatable getNavigatable(@NotNull Editor editor, int line) {
       ThreeSide side = getEditorSide(editor);
       if (side == null) return null;
 
-      int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
-      return getContent(side).getOpenFileDescriptor(offset);
+      return getContent(side).getNavigatable(new LineCol(line));
     }
   }
 

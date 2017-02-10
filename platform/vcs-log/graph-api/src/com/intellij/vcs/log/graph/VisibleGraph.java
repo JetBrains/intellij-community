@@ -36,4 +36,6 @@ public interface VisibleGraph<Id> {
 
   @NotNull
   ActionController<Id> getActionController();
+
+  int getRecommendedWidth();
 }

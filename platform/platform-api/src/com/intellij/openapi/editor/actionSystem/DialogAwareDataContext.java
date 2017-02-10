@@ -32,7 +32,7 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DI
 */
 final class DialogAwareDataContext implements DataContext {
   private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, PSI_FILE};
-  private final Map<String, Object> values = new HashMap<String, Object>();
+  private final Map<String, Object> values = new HashMap<>();
 
   DialogAwareDataContext(DataContext context) {
     for (DataKey key : keys) {

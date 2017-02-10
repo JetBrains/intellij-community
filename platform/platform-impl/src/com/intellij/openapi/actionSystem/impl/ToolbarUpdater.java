@@ -171,7 +171,7 @@ public abstract class ToolbarUpdater implements Activatable {
       myForced = forced;
       myHash = updater.hashCode();
 
-      myUpdaterRef = new WeakReference<ToolbarUpdater>(updater);
+      myUpdaterRef = new WeakReference<>(updater);
     }
 
     @Override

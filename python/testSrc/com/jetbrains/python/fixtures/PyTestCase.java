@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -127,6 +128,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture.setUp();
 
     myFixture.setTestDataPath(getTestDataPath());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   /**
@@ -143,13 +145,16 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    setLanguageLevel(null);
-    myFixture.tearDown();
-    myFixture = null;
-    final PythonLanguageLevelPusher levelPusher = Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class);
-    levelPusher.flushLanguageLevelCache();
-    super.tearDown();
-    clearFields(this);
+    try {
+      setLanguageLevel(null);
+      myFixture.tearDown();
+      myFixture = null;
+      Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    finally {
+      super.tearDown();
+      clearFields(this);
+    }
   }
 
   @Nullable
@@ -263,8 +268,8 @@ public abstract class PyTestCase extends UsefulTestCase {
    */
   @NotNull
   protected Collection<PsiElement> findUsage(@NotNull final PsiElement element) {
-    final Collection<PsiElement> result = new ArrayList<PsiElement>();
-    final CollectProcessor<Usage> usageCollector = new CollectProcessor<Usage>();
+    final Collection<PsiElement> result = new ArrayList<>();
+    final CollectProcessor<Usage> usageCollector = new CollectProcessor<>();
     for (final CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensions()) {
       searcher.processElementUsages(element, usageCollector, new FindUsagesOptions(myFixture.getProject()));
     }
@@ -294,7 +299,7 @@ public abstract class PyTestCase extends UsefulTestCase {
    */
   @NotNull
   protected Set<PsiElement> getElementsToNavigate(@Nullable final PsiElement element) {
-    final Set<PsiElement> result = new HashSet<PsiElement>();
+    final Set<PsiElement> result = new HashSet<>();
     final PsiElement elementToProcess = ((element != null) ? element : myFixture.getElementAtCaret());
     for (final PsiReference reference : elementToProcess.getReferences()) {
       final PsiElement directResolve = reference.resolve();
@@ -344,7 +349,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                         @NotNull final DirectoryProjectConfigurator configurator) {
     final VirtualFile newPath =
       myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<Module>(myFixture.getModule());
+    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
     configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
@@ -389,7 +394,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                           @NotNull final Set<String> actual,
                                           @NotNull final Set<String> expected) {
     final Joiner joiner = Joiner.on("\n");
-    Assert.assertEquals(message, joiner.join(new TreeSet<String>(actual)), joiner.join(new TreeSet<String>(expected)));
+    Assert.assertEquals(message, joiner.join(new TreeSet<>(actual)), joiner.join(new TreeSet<>(expected)));
   }
 
 

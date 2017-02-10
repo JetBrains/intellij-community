@@ -1,0 +1,14 @@
+PsiJavaFile:Name2.java
+  PsiJavaModule:AB
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:A('A')
+      PsiErrorElement:'.' expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:B('B')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

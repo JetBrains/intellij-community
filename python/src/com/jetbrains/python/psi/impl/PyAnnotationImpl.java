@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
 import org.jetbrains.annotations.Nullable;
@@ -38,5 +39,10 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
   @Override
   public PyExpression getValue() {
     return findChildByClass(PyExpression.class);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyAnnotation(this);
   }
 }

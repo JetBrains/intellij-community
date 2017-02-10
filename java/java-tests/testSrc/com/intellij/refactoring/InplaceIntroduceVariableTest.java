@@ -115,7 +115,16 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       }
     });
   }
-  
+
+  public void testPlaceInsideLambdaBodyMultipleOccurrences1() throws Exception {
+    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("expr");
+      }
+    });
+  }
+
   public void testRanges() throws Exception {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override
@@ -139,6 +148,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       @Override
       public void pass(AbstractInplaceIntroducer introducer) {
         type("height");
+      }
+    });
+  }
+
+  public void testConflictWithFieldNoCast() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("weights");
       }
     });
   }
@@ -185,6 +203,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   
   public void testAllIncomplete() throws Exception {
     doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+  }
+
+  public void testBrokenFormattingWithInValidation() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("bool");
+      }
+    });
   }
 
   public void testStopEditing() {

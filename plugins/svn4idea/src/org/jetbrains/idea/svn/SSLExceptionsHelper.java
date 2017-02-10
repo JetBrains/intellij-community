@@ -22,7 +22,7 @@ package org.jetbrains.idea.svn;
  * Time: 4:44 PM
  */
 public class SSLExceptionsHelper {
-  private final static ThreadLocal<String> myAdditionalInfo = new ThreadLocal<String>();
+  private final static ThreadLocal<String> myAdditionalInfo = new ThreadLocal<>();
 
   public static void addInfo(final String s) {
     myAdditionalInfo.set(s);

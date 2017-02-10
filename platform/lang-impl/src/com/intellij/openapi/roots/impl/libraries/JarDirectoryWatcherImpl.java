@@ -47,8 +47,8 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
   public void updateWatchedRoots() {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!myJarDirectories.isEmpty()) {
-      final Set<String> recursiveRoots = new HashSet<String>();
-      final Set<String> flatRoots = new HashSet<String>();
+      final Set<String> recursiveRoots = new HashSet<>();
+      final Set<String> flatRoots = new HashSet<>();
       final VirtualFileManager fm = VirtualFileManager.getInstance();
       for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
         for (String url : myJarDirectories.getDirectories(rootType)) {

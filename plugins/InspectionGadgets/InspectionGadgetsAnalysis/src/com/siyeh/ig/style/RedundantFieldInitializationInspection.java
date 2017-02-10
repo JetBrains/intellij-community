@@ -66,14 +66,8 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("redundant.field.initialization.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("redundant.field.initialization.remove.quickfix");
     }
 
     @Override

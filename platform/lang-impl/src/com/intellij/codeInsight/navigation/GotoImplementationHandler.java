@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -58,20 +61,50 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         return false;
       }
     }.searchImplementations(editor, source, offset);
+    if (targets == null) return null;
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
-    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
+    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
+      @Override
+      public void onFinished() {
+        super.onFinished();
+        PsiElement oneElement = getTheOnlyOneElement();
+        if (oneElement != null && navigateToElement(oneElement)) {
+          myPopup.cancel();
+        }
+      }
+    };
     return gotoData;
   }
 
+
+  private static PsiElement getContainer(PsiElement refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+      final PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
   @Override
   @NotNull
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
-    return CodeInsightBundle.message("goto.implementation.chooserTitle", name, length, finished ? "" : " so far");
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+    ItemPresentation presentation = ((NavigationItem)sourceElement).getPresentation();
+    String fullName;
+    if (presentation == null) {
+      fullName = name;
+    }
+    else {
+      PsiElement container = getContainer(sourceElement);
+      ItemPresentation containerPresentation = container == null || container instanceof PsiFile ? null : ((NavigationItem)container).getPresentation();
+      String containerText = containerPresentation == null ? null : containerPresentation.getPresentableText();
+      fullName = (containerText == null ? "" : containerText+".") + presentation.getPresentableText();
+    }
+    return CodeInsightBundle.message("goto.implementation.chooserTitle", fullName, length, finished ? "" : " so far");
   }
 
   @NotNull
   @Override
-  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.findUsages.title", name, length);
   }
 
@@ -85,7 +118,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
-    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
+    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {

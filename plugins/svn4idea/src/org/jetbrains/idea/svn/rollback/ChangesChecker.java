@@ -49,14 +49,14 @@ public class ChangesChecker {
     myCollector = collector;
     myForAdds = new SuperfluousRemover(true);
     myForDeletes = new SuperfluousRemover(false);
-    myForEdits = new ArrayList<File>();
-    myExceptions = new ArrayList<VcsException>();
+    myForEdits = new ArrayList<>();
+    myExceptions = new ArrayList<>();
   }
 
   public void gather(final List<Change> changes) {
-    final TreeMap<String, File> renames = new TreeMap<String, File>();
-    final Set<String> alsoReverted = new HashSet<String>();
-    final Map<String, FilePath> files = new HashMap<String, FilePath>();
+    final TreeMap<String, File> renames = new TreeMap<>();
+    final Set<String> alsoReverted = new HashSet<>();
+    final Map<String, FilePath> files = new HashMap<>();
     for (Change change : changes) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       final ContentRevision afterRevision = change.getAfterRevision();
@@ -71,7 +71,7 @@ public class ChangesChecker {
       }
     }
     if (! renames.isEmpty()) {
-      final ArrayList<String> paths = new ArrayList<String>(renames.keySet());
+      final ArrayList<String> paths = new ArrayList<>(renames.keySet());
       if (paths.size() > 1) {
         FilterFilePathStrings.getInstance().doFilter(paths);
       }

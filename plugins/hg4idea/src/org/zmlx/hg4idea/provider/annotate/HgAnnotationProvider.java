@@ -80,8 +80,4 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
       .getHistory(hgFile.toFilePath(), vcsRoot, myProject, (HgRevisionNumber)revision, -1);
     return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision);
   }
-
-  public boolean isAnnotationValid(@NotNull VcsFileRevision rev) {
-    return true;
-  }
 }

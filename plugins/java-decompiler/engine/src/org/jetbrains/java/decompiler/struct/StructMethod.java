@@ -119,7 +119,7 @@ public class StructMethod extends StructMember {
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
-    VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<Instruction, Integer>();
+    VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<>();
 
     int bytecode_version = classStruct.getBytecodeVersion();
 
@@ -137,7 +137,7 @@ public class StructMethod extends StructMember {
         opcode = in.readUnsignedByte();
       }
 
-      List<Integer> operands = new ArrayList<Integer>();
+      List<Integer> operands = new ArrayList<>();
 
       if (opcode >= opc_iconst_m1 && opcode <= opc_iconst_5) {
         operands.add(new Integer(opr_iconst[opcode - opc_iconst_m1]));
@@ -331,7 +331,7 @@ public class StructMethod extends StructMember {
     }
 
     // initialize exception table
-    List<ExceptionHandler> lstHandlers = new ArrayList<ExceptionHandler>();
+    List<ExceptionHandler> lstHandlers = new ArrayList<>();
 
     int exception_count = in.readUnsignedShort();
     for (int i = 0; i < exception_count; i++) {

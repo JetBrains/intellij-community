@@ -15,7 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -41,14 +41,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
-
-
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
-  public void setUpProject(@NotNull final Project project, @NotNull final SetupHandler handler) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+  protected static final String TEST_MODULE_NAME = "light_idea_test_case";
+
+  public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+    WriteAction.run(() -> {
       Module module = createMainModule(project);
       handler.moduleCreated(module);
       VirtualFile sourceRoot = createSourcesRoot(module);
@@ -60,9 +59,12 @@ public class LightProjectDescriptor {
   }
 
   @NotNull
-  public Module createMainModule(@NotNull final Project project) {
-    return ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> {
-      String moduleFilePath = "light_idea_test_case.iml";
+  public Module createMainModule(@NotNull Project project) {
+    return createModule(project, FileUtil.join(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
+  }
+
+  protected Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+    return WriteAction.compute(() -> {
       File imlFile = new File(moduleFilePath);
       if (imlFile.exists()) {
         //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
@@ -78,29 +80,32 @@ public class LightProjectDescriptor {
   }
 
   @Nullable
-  public VirtualFile createSourcesRoot(@NotNull final Module module) {
+  public VirtualFile createSourcesRoot(@NotNull Module module) {
+    return createSourceRoot(module, "src");
+  }
+
+  protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
     VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assert dummyRoot != null;
     dummyRoot.refresh(false, false);
 
-    final VirtualFile srcRoot;
+    VirtualFile srcRoot;
     try {
-      srcRoot = dummyRoot.createChildDirectory(this, "src");
+      srcRoot = dummyRoot.createChildDirectory(this, srcPath);
       cleanSourceRoot(srcRoot);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
 
-    final IndexableFileSet indexableFileSet = new IndexableFileSet() {
+    IndexableFileSet indexableFileSet = new IndexableFileSet() {
       @Override
-      public boolean isInSet(@NotNull final VirtualFile file) {
-        return file.getFileSystem() == srcRoot.getFileSystem() &&
-               module.getProject().isOpen();
+      public boolean isInSet(@NotNull VirtualFile file) {
+        return file.getFileSystem() == srcRoot.getFileSystem() && module.getProject().isOpen();
       }
 
       @Override
-      public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
+      public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
         VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
           @Override
           public boolean visitFile(@NotNull VirtualFile file) {
@@ -116,8 +121,8 @@ public class LightProjectDescriptor {
     return srcRoot;
   }
 
-  protected void createContentEntry(@NotNull final Module module, @NotNull final VirtualFile srcRoot) {
-    updateModel(module, model -> {
+  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {
         model.setSdk(sdk);
@@ -145,14 +150,12 @@ public class LightProjectDescriptor {
     }
   }
 
-  protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-  }
+  @SuppressWarnings("NullableProblems")
+  protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }
 
   public interface SetupHandler {
-    default void moduleCreated(@NotNull Module module) {
-    }
+    default void moduleCreated(@NotNull Module module) { }
 
-    default void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
-    }
+    default void sourceRootCreated(@NotNull VirtualFile sourceRoot) { }
   }
 }

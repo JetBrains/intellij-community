@@ -92,7 +92,8 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   }
 
   @Override
-  public boolean addInjectionInPlace(@NotNull Language language, @Nullable PsiLanguageInjectionHost psiElement) {
+  public boolean addInjectionInPlace(Language language, @Nullable PsiLanguageInjectionHost psiElement) {
+    if (language == null) return false;
     if (!isStringLiteral(psiElement)) return false;
 
 
@@ -105,13 +106,13 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
 
     GrLiteralContainer host = (GrLiteralContainer)psiElement;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = ContainerUtil.newHashMap();
-    final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
     collectInjections(host, configuration, this, injectionsMap, annotations);
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<>(injectionsMap.keySet());
     final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections,
                                                                        (NullableFunction<BaseInjection, BaseInjection>)injection -> {
                                                                          final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);

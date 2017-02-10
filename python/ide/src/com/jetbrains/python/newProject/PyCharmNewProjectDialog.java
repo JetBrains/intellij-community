@@ -16,7 +16,7 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
-import com.jetbrains.python.newProject.actions.PyCharmNewProjectStep;
+import com.jetbrains.python.newProject.steps.PyCharmNewProjectStep;
 
 public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   @Override

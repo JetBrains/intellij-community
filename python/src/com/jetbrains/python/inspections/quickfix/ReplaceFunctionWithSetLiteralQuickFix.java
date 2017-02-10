@@ -32,14 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
   @Override
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.replace.function.set.with.literal");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.replace.function.set.with.literal");
   }
 
   @Override

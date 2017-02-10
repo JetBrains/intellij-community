@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -41,10 +42,12 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private final RmicCompilerOptions myRmicSettings;
+  private final Project myProject;
   private JLabel myFieldLabel;
 
   public RmicConfigurable(final Project project) {
     myRmicSettings = RmicConfiguration.getOptions(project);
+    myProject = project;
     myCbEnabled.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         setOptionsEnabled(e.getStateChange() == ItemEvent.SELECTED);
@@ -74,10 +77,6 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   public JComponent createComponent() {
     return myPanel;
   }
@@ -93,11 +92,16 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
   }
 
   public void apply() throws ConfigurationException {
-    myRmicSettings.IS_EANABLED =  myCbEnabled.isSelected();
-    myRmicSettings.GENERATE_IIOP_STUBS =  myCbGenerateIiopStubs.isSelected();
-    myRmicSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
-    myRmicSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
-    myRmicSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    try {
+      myRmicSettings.IS_EANABLED =  myCbEnabled.isSelected();
+      myRmicSettings.GENERATE_IIOP_STUBS =  myCbGenerateIiopStubs.isSelected();
+      myRmicSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
+      myRmicSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
+      myRmicSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    }
+    finally {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public void reset() {

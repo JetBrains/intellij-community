@@ -32,7 +32,7 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
   public IntObjectLinkedMap(int capacity) {
     myCapacity = capacity;
     myArray = new MapEntry[capacity * 8 / 5];
-    myHeader = new MapEntry<Object>(0, null);
+    myHeader = new MapEntry<>(0, null);
     myHeader.before = myHeader.after = myHeader;
   }
 

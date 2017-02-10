@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.project;
 
-/**
- * Permits the dumb mode to start at a specific moment, either modally or in background.
- * @see DumbService#allowStartingDumbModeInside(DumbModePermission, Runnable)
- */
+@Deprecated
 public enum DumbModePermission {
   MAY_START_MODAL,
   MAY_START_BACKGROUND

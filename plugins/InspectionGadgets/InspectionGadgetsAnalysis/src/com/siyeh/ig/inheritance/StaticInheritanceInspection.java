@@ -74,7 +74,7 @@ public class StaticInheritanceInspection extends BaseInspection {
           return;
         }
         final PsiClass targetClass = (PsiClass)target;
-        if (targetClass.isInterface() && interfaceContainsOnlyConstants(targetClass, new HashSet<PsiClass>())) {
+        if (targetClass.isInterface() && interfaceContainsOnlyConstants(targetClass, new HashSet<>())) {
           registerError(reference);
         }
       }

@@ -43,14 +43,14 @@ public class HgRootsHandler implements AbstractVcs.RootsConvertor {
   @NotNull
   @Override
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> original) {
-    final Set<VirtualFile> result = new THashSet<VirtualFile>(original.size());
+    final Set<VirtualFile> result = new THashSet<>(original.size());
     for (VirtualFile vf : original) {
       final VirtualFile root = convertRoot(vf);
       if (root != null) {
         result.add(root);
       }
     }
-    return new ArrayList<VirtualFile>(result);
+    return new ArrayList<>(result);
   }
 
   @Nullable

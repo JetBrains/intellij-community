@@ -75,13 +75,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class RenameFileWithClassIntention extends Intention implements Consumer<
   private String myNewFileName = null;
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiFile file = element.getContainingFile();
     new RenameRefactoringImpl(project, file, myNewFileName, true, true).run();
   }
@@ -59,5 +59,10 @@ public class RenameFileWithClassIntention extends Intention implements Consumer<
     final String name = def.getName();
     final PsiFile file = def.getContainingFile();
     myNewFileName = name + "." + FileUtilRt.getExtension(file.getName());
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

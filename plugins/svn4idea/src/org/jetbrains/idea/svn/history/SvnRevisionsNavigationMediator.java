@@ -53,10 +53,10 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     myProject = project;
     final SvnVcs vcs = SvnVcs.getInstance(project);
 
-    myChunks = new LinkedList<List<Fragment>>();
+    myChunks = new LinkedList<>();
 
     final VcsException[] exception = new VcsException[1];
-    final Ref<Info> infoRef = new Ref<Info>();
+    final Ref<Info> infoRef = new Ref<>();
 
     Runnable process = new Runnable() {
       @Override
@@ -130,7 +130,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
       return;
     }
 
-    final Ref<Boolean> canNotGoBackRef = new Ref<Boolean>();
+    final Ref<Boolean> canNotGoBackRef = new Ref<>();
     final List<Fragment> fragments = myChunkFactory.goBack(CHUNK_SIZE, canNotGoBackRef);
     myCanNotGoBack = canNotGoBackRef.get().booleanValue();
 
@@ -163,7 +163,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
   }
 
   private List<CommittedChangeList> fragmentsToLists(final List<Fragment> fragments) {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     for (Fragment fragment : fragments) {
       result.addAll(fragment.getList());
     }
@@ -221,7 +221,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     }
 
     public void doCacheUpdate(final List<List<Fragment>> fragmentsListList) {
-      final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> lists = new ArrayList<>();
       LoadedRevisionsCache.Bunch bindAddress = null;
       boolean consistent = false;
 

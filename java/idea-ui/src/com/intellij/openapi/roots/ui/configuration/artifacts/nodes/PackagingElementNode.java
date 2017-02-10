@@ -42,8 +42,8 @@ import java.util.*;
  */
 public class PackagingElementNode<E extends PackagingElement<?>> extends ArtifactsTreeNode {
   private final List<E> myPackagingElements;
-  private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<PackagingElement<?>, CompositePackagingElement<?>>(1);
-  private final MultiValuesMap<PackagingElement<?>, PackagingNodeSource> myNodeSources = new MultiValuesMap<PackagingElement<?>, PackagingNodeSource>();
+  private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<>(1);
+  private final MultiValuesMap<PackagingElement<?>, PackagingNodeSource> myNodeSources = new MultiValuesMap<>();
   private final CompositePackagingElementNode myParentNode;
 
   public PackagingElementNode(@NotNull E packagingElement, ArtifactEditorContext context, @Nullable CompositePackagingElementNode parentNode,
@@ -53,7 +53,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myParentNode = parentNode;
     myParentElements.put(packagingElement, parentElement);
     myNodeSources.putAll(packagingElement, nodeSources);
-    myPackagingElements = new SmartList<E>();
+    myPackagingElements = new SmartList<>();
     doAddElement(packagingElement);
   }
 
@@ -165,7 +165,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
 
   public List<PackagingElementNode<?>> getNodesByPath(List<PackagingElement<?>> pathToPlace) {
-    List<PackagingElementNode<?>> result = new ArrayList<PackagingElementNode<?>>();
+    List<PackagingElementNode<?>> result = new ArrayList<>();
     PackagingElementNode<?> current = this;
     int i = 0;
     result.add(current);

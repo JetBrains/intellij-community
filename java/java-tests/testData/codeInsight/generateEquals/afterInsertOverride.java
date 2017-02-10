@@ -1,7 +1,7 @@
 class Test {
  int i;
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -13,7 +13,7 @@ class Test {
         return true;
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return i;
     }

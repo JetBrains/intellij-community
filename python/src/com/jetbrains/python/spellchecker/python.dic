@@ -595,6 +595,7 @@ frozentable
 frsize
 fsblkcnt
 fsfilcnt
+fspath
 fstring
 ftext
 ftpcache

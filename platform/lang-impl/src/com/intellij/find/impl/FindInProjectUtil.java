@@ -100,26 +100,32 @@ public class FindInProjectUtil {
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 
+    if (directoryName == null) {
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+      if (virtualFile != null && virtualFile.isDirectory()) directoryName = virtualFile.getPresentableUrl();
+    }
+
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    if (module != null) {
+      model.setModuleName(module.getName());
+    }
+
+    // model contains previous find in path settings
+    // apply explicit settings from context
     if (module != null) {
       model.setModuleName(module.getName());
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (model.getModuleName() == null || editor == null) {
-      model.setDirectoryName(directoryName);
-      model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
       if (directoryName != null) {
+        model.setDirectoryName(directoryName);
         model.setCustomScope(false); // to select "Directory: " radio button
       }
-
-      // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
-      if (directoryName == null) {
-        VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-        if (virtualFile != null && !virtualFile.isDirectory()) virtualFile = virtualFile.getParent();
-        if (virtualFile != null) model.setDirectoryName(virtualFile.getPresentableUrl());
-      }
     }
+
+    // set project scope if we have no other settings
+    model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
   /**
@@ -161,7 +167,7 @@ public class FindInProjectUtil {
 
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
   @NotNull
-  public static Condition<String> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
+  public static Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
     if (filter == null) {
       return Conditions.alwaysTrue();
     }
@@ -174,7 +180,8 @@ public class FindInProjectUtil {
       mask = mask.trim();
       if (StringUtil.startsWith(mask, "!")) {
         negativePattern += (negativePattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
-      } else {
+      }
+      else {
         pattern += (pattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask) + ")";
       }
     }
@@ -183,11 +190,11 @@ public class FindInProjectUtil {
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
-    return new Condition<String>() {
+    return new Condition<CharSequence>() {
       final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
       final Pattern negativeRegExp = StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
       @Override
-      public boolean value(String input) {
+      public boolean value(CharSequence input) {
         return regExp.matcher(input).matches() && (negativeRegExp == null || !negativeRegExp.matcher(input).matches());
       }
     };
@@ -240,6 +247,7 @@ public class FindInProjectUtil {
 
   // returns number of hits
   static int processUsagesInFile(@NotNull final PsiFile psiFile,
+                                 @NotNull final VirtualFile virtualFile,
                                  @NotNull final FindModel findModel,
                                  @NotNull final Processor<UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
@@ -248,8 +256,6 @@ public class FindInProjectUtil {
       }
       return 1;
     }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
     final Document document = ApplicationManager.getApplication().runReadAction(
       (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
@@ -422,6 +428,14 @@ public class FindInProjectUtil {
         }, "");
       }
     });
+  }
+
+  public static void initStringToFindFromDataContext(FindModel findModel, @NotNull DataContext dataContext) {
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    FindUtil.initStringToFindWithSelection(findModel, editor);
+    if (editor == null || !editor.getSelectionModel().hasSelection()) {
+      FindUtil.useFindStringFromFindInFileModel(findModel, CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext));
+    }
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {

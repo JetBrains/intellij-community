@@ -71,7 +71,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     PsiClass baseClass = myClass.getSuperClass();
     LOG.assertTrue(baseClass != null);
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
-    List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
+    List<PsiMethodMember> baseConstructors = new ArrayList<>();
     PsiMethod[] baseConstrs = baseClass.getConstructors();
     for (PsiMethod baseConstr : baseConstrs) {
       if (PsiUtil.isAccessible(baseConstr, myClass, myClass)) baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
@@ -97,7 +97,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     LOG.assertTrue(constructors.length >=1); // Otherwise we won't have been messing with all this stuff
     boolean isCopyJavadoc = true;
     if (constructors.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
+      MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(constructors, false, true, project);
       chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();
       if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;

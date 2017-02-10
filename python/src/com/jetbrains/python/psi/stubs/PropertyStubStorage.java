@@ -42,7 +42,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   protected Maybe<String> translate(@Nullable PyExpression ref) {
     if (ref != null) {
       final String name = ref.getName();
-      return name != null ? new Maybe<String>(name) : unknown;
+      return name != null ? new Maybe<>(name) : unknown;
     }
     return none;
   }
@@ -83,8 +83,8 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     return me;
   }
 
-  private static final Maybe<String> unknown = new Maybe<String>();
-  private static final Maybe<String> none = new Maybe<String>(null);
+  private static final Maybe<String> unknown = new Maybe<>();
+  private static final Maybe<String> none = new Maybe<>(null);
 
   @Nullable
   private static Maybe<String> readOne(StubInputStream stream) throws IOException {
@@ -93,7 +93,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     else {
       String s = ref.getString();
       if (IMPOSSIBLE_NAME.equals(s)) return unknown;
-      else return new Maybe<String>(s);
+      else return new Maybe<>(s);
     }
   }
 

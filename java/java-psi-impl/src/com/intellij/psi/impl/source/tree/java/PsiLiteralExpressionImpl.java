@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,6 +23,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 
 public class PsiLiteralExpressionImpl
-  extends StubBasedPsiElementBase<PsiLiteralStub>
+  extends JavaStubPsiElement<PsiLiteralStub>
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
   @NonNls private static final String QUOT = "&quot;";
 
@@ -56,11 +56,6 @@ public class PsiLiteralExpressionImpl
 
   public PsiLiteralExpressionImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
   }
 
   @Override
@@ -102,7 +97,7 @@ public class PsiLiteralExpressionImpl
   }
 
   public IElementType getLiteralElementType() {
-    PsiLiteralStub stub = getStub();
+    PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralType();
 
     return getNode().getFirstChildNode().getElementType();
@@ -115,7 +110,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public String getText() {
-    PsiLiteralStub stub = getStub();
+    PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralText();
 
     return super.getText();
@@ -124,6 +119,17 @@ public class PsiLiteralExpressionImpl
   @Override
   public Object getValue() {
     final IElementType type = getLiteralElementType();
+    if (type == JavaTokenType.TRUE_KEYWORD) {
+      return Boolean.TRUE;
+    }
+    if (type == JavaTokenType.FALSE_KEYWORD) {
+      return Boolean.FALSE;
+    }
+    if (type == JavaTokenType.STRING_LITERAL) {
+      String innerText = getInnerText();
+      return innerText == null ? null : internedParseStringCharacters(innerText);
+    }
+
     String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
     final int textLength = text.length();
 
@@ -204,16 +210,6 @@ public class PsiLiteralExpressionImpl
       if (!success) return null;
       if (chars.length() != 1) return null;
       return Character.valueOf(chars.charAt(0));
-    }
-    if (type == JavaTokenType.STRING_LITERAL) {
-      String innerText = getInnerText();
-      return innerText == null ? null : internedParseStringCharacters(innerText);
-    }
-    if (type == JavaTokenType.TRUE_KEYWORD) {
-      return Boolean.TRUE;
-    }
-    if (type == JavaTokenType.FALSE_KEYWORD) {
-      return Boolean.FALSE;
     }
 
     return null;

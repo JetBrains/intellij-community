@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -33,7 +32,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -55,7 +53,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
 
@@ -70,7 +71,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<PsiMethod, MethodParameterInjection.MethodInfo>();
+  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
@@ -160,10 +161,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     try {
       return ((PsiTypeCodeFragment)psiFile).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e1) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e1) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e1) {
       return null;
     }
   }
@@ -184,7 +182,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
         findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
       if (classes.length == 0) return;
-      final THashSet<String> visitedSignatures = new THashSet<String>();
+      final THashSet<String> visitedSignatures = new THashSet<>();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiModifierList modifiers = method.getModifierList();
@@ -203,7 +201,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(myData.keySet());
+    final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
     Collections.sort(methods, (o1, o2) -> {
       final int names = o1.getName().compareTo(o2.getName());
       if (names != 0) return names;
@@ -248,7 +246,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<String, MethodParameterInjection.MethodInfo>();
+    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<>();
     for (PsiMethod method : myData.keySet()) {
       final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
       map.put(methodInfo.getMethodSignature(), methodInfo);

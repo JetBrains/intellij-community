@@ -59,7 +59,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   public void addHistoryConfigurationToFront(Configuration configuration) {
-    if (historyConfigurations == null) historyConfigurations = new ArrayList<Configuration>();
+    if (historyConfigurations == null) historyConfigurations = new ArrayList<>();
 
     historyConfigurations.remove(configuration);
     historyConfigurations.add(0, configuration);
@@ -73,7 +73,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   public void addConfiguration(Configuration configuration) {
-    if (configurations == null) configurations = new ArrayList<Configuration>();
+    if (configurations == null) configurations = new ArrayList<>();
 
     if (configurations.indexOf(configuration) == -1) {
       configurations.add(configuration);
@@ -117,8 +117,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public void loadConfigurations(Element element) {
     if (configurations != null) return;
-    ArrayList<Configuration> configurations = new ArrayList<Configuration>();
-    ArrayList<Configuration> historyConfigurations = new ArrayList<Configuration>();
+    ArrayList<Configuration> configurations = new ArrayList<>();
+    ArrayList<Configuration> historyConfigurations = new ArrayList<>();
     readConfigurations(element, configurations, historyConfigurations);
     this.configurations = configurations;
     this.historyConfigurations = historyConfigurations;

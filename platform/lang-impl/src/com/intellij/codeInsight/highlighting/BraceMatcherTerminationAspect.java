@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * opening '{' brace because of enclosing ')' parenthesis. Therefore we should not treat '}' as a pair brace for '{'
  * before ')'.
  * <p>
- * In the described case a class implementing <code>PairedBraceMatcher</code> may also implement this aspect to
+ * In the described case a class implementing {@code PairedBraceMatcher} may also implement this aspect to
  * perform its own specific checks.
  * </p>
  *

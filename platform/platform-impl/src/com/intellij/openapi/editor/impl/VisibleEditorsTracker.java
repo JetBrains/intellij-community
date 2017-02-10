@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VisibleEditorsTracker extends CommandAdapter {
-  private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<Editor>();
+  private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;
 

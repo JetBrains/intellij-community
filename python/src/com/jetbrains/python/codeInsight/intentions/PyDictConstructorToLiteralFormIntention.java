@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * dict(foo) -> no transformation
  * dict(**foo) -> no transformation
  */
-public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction {
+public class PyDictConstructorToLiteralFormIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.convert.dict.constructor.to.dict.literal");
@@ -69,7 +68,7 @@ public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyCallExpression expression =
           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);

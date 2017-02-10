@@ -93,7 +93,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
           return Boolean.TRUE;
         }
       };
-    memberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
+    memberInfoModel.memberInfoChanged(new MemberInfoChange<>(myMemberInfos));
     memberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
     memberSelectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
 

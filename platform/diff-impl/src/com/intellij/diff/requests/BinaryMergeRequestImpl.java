@@ -71,6 +71,8 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
     myTitles = contentTitles;
 
     myApplyCallback = applyCallback;
+
+    onAssigned(true);
   }
 
   @NotNull
@@ -105,41 +107,53 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    final byte[] applyContent;
-    switch (result) {
-      case CANCEL:
-        applyContent = myOriginalContent;
-        break;
-      case LEFT:
-        applyContent = ThreeSide.LEFT.select(myByteContents);
-        break;
-      case RIGHT:
-        applyContent = ThreeSide.RIGHT.select(myByteContents);
-        break;
-      case RESOLVED:
-        applyContent = null;
-        break;
-      default:
-        throw new IllegalArgumentException(result.toString());
-    }
+    try {
+      final byte[] applyContent;
+      switch (result) {
+        case CANCEL:
+          applyContent = myOriginalContent;
+          break;
+        case LEFT:
+          applyContent = ThreeSide.LEFT.select(myByteContents);
+          break;
+        case RIGHT:
+          applyContent = ThreeSide.RIGHT.select(myByteContents);
+          break;
+        case RESOLVED:
+          applyContent = null;
+          break;
+        default:
+          throw new IllegalArgumentException(result.toString());
+      }
 
-    if (applyContent != null) {
-      new WriteCommandAction.Simple(null) {
-        @Override
-        protected void run() throws Throwable {
-          try {
-            VirtualFile file = myFile.getFile();
-            if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
-            file.setBinaryContent(applyContent);
+      if (applyContent != null) {
+        new WriteCommandAction.Simple(null) {
+          @Override
+          protected void run() throws Throwable {
+            try {
+              VirtualFile file = myFile.getFile();
+              if (!DiffUtil.makeWritable(myProject, file)) throw new IOException("File is read-only: " + file.getPresentableName());
+              file.setBinaryContent(applyContent);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+              Messages.showErrorDialog(myProject, "Can't apply result", CommonBundle.getErrorTitle());
+            }
           }
-          catch (IOException e) {
-            LOG.error(e);
-            Messages.showErrorDialog(myProject, "Can't apply result", CommonBundle.getErrorTitle());
-          }
-        }
-      }.execute();
-    }
+        }.execute();
+      }
 
-    if (myApplyCallback != null) myApplyCallback.consume(result);
+      if (myApplyCallback != null) myApplyCallback.consume(result);
+    }
+    finally {
+      onAssigned(false);
+    }
+  }
+
+  private void onAssigned(boolean assigned) {
+    myFile.onAssigned(assigned);
+    for (DiffContent content : myContents) {
+      content.onAssigned(assigned);
+    }
   }
 }

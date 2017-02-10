@@ -71,8 +71,8 @@ final class DiffHttpService extends RestService {
   @Override
   @Nullable
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    final List<DiffContent> contents = new ArrayList<DiffContent>();
-    final List<String> titles = new ArrayList<String>();
+    final List<DiffContent> contents = new ArrayList<>();
+    final List<String> titles = new ArrayList<>();
     boolean focused = true;
     String windowTitle = null;
     JsonReader reader = createJsonReader(request);

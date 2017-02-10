@@ -25,5 +25,5 @@ public class PreviewManagerState {
   //@Tag("providers")
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false)
-  public Map<String, Boolean> myArtifactFilesMap = new LinkedHashMap<String, Boolean>();
+  public Map<String, Boolean> myArtifactFilesMap = new LinkedHashMap<>();
 }

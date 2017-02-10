@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
@@ -68,168 +67,168 @@ public interface HighlightInfoType {
   HighlightSeverity SYMBOL_TYPE_SEVERITY = new HighlightSeverity("SYMBOL_TYPE_SEVERITY", HighlightSeverity.INFORMATION.myVal-2);
 
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.LOCAL_VARIABLE or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.LOCAL_VARIABLE or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FIELD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType INSTANCE_FINAL_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FIELD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FINAL_FIELD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FINAL_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_FINAL_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.PARAMETER or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.PARAMETER or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType PARAMETER = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.PARAMETER_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.METHOD_CALL or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.METHOD_CALL or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType METHOD_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_CALL_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.METHOD_DECLARATION or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.METHOD_DECLARATION or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType METHOD_DECLARATION = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.CONSTRUCTOR_CALL or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.CONSTRUCTOR_CALL or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType CONSTRUCTOR_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.CONSTRUCTOR_DECLARATION or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.CONSTRUCTOR_DECLARATION or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType CONSTRUCTOR_DECLARATION = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_METHOD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_METHOD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ABSTRACT_METHOD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ABSTRACT_METHOD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ABSTRACT_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.INHERITED_METHOD or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.INHERITED_METHOD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType INHERITED_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INHERITED_METHOD_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.CLASS_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.CLASS_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CLASS_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ANONYMOUS_CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.INTERFACE_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.INTERFACE_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType INTERFACE_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ENUM_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ENUM_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ENUM_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ENUM_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.TYPE_PARAMETER_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.TYPE_PARAMETER_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType TYPE_PARAMETER_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ABSTRACT_CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ANNOTATION_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ANNOTATION_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ANNOTATION_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType ANNOTATION_ATTRIBUTE_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType REASSIGNED_LOCAL_VARIABLE = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.REASSIGNED_PARAMETER or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.REASSIGNED_PARAMETER or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
   HighlightInfoType REASSIGNED_PARAMETER = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
   /**
-   * @deprecated For Java use JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER or create a language-specific HighlightInfoType. 
+   * @deprecated For Java use JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @SuppressWarnings({"deprecation", "unused"})
@@ -266,7 +265,7 @@ public interface HighlightInfoType {
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey) {
       this(severity, attributesKey, true);
     }
-    
+
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
       mySeverity = severity;
       myAttributesKey = attributesKey;
@@ -341,11 +340,9 @@ public interface HighlightInfoType {
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
-                                  ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
-                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
-      HighlightDisplayLevel level = profile.getErrorLevel(myToolKey, psiElement);
-      LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
-      return level.getSeverity();
+                                  ? InspectionProfileManager.getInstance().getCurrentProfile()
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
+      return profile.getErrorLevel(myToolKey, psiElement).getSeverity();
     }
 
     @Override
@@ -363,7 +360,7 @@ public interface HighlightInfoType {
       return myToolKey;
     }
   }
-  
+
   interface Iconable {
     Icon getIcon();
   }

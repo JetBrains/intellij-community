@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -120,7 +121,7 @@ public class ParameterInfoController implements Disposable {
 
     final Object[] objects = myComponent.getObjects();
     int selectedParameterIndex = myComponent.getCurrentParameterIndex();
-    List<Object> params = new ArrayList<Object>(objects.length);
+    List<Object> params = new ArrayList<>(objects.length);
 
     final Object highlighted = myComponent.getHighlighted();
     for(Object o:objects) {
@@ -152,7 +153,7 @@ public class ParameterInfoController implements Disposable {
   private static List<ParameterInfoController> getAllControllers(@NotNull Editor editor) {
     List<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null){
-      array = new ArrayList<ParameterInfoController>();
+      array = new ArrayList<>();
       editor.putUserData(ALL_CONTROLLERS_KEY, array);
     }
     return array;
@@ -275,7 +276,7 @@ public class ParameterInfoController implements Disposable {
       return;
     }
 
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile file =  PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;

@@ -1,41 +1,73 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://bitbucket.org/ned/coveragepy/src/default/NOTICE.txt
+
 """Execute files of Python code."""
 
-import imp, marshal, os, sys
+import marshal
+import os
+import sys
+import types
 
-from coverage.backward import exec_code_object, open_source
-from coverage.misc import ExceptionDuringRun, NoCode, NoSource
+from coverage.backward import BUILTINS
+from coverage.backward import PYC_MAGIC_NUMBER, imp, importlib_util_find_spec
+from coverage.misc import ExceptionDuringRun, NoCode, NoSource, isolate_module
+from coverage.phystokens import compile_unicode
+from coverage.python import get_python_source
 
-
-try:
-    # In Py 2.x, the builtins were in __builtin__
-    BUILTINS = sys.modules['__builtin__']
-except KeyError:
-    # In Py 3.x, they're in builtins
-    BUILTINS = sys.modules['builtins']
-
-
-def rsplit1(s, sep):
-    """The same as s.rsplit(sep, 1), but works in 2.3"""
-    parts = s.split(sep)
-    return sep.join(parts[:-1]), parts[-1]
+os = isolate_module(os)
 
 
-def run_python_module(modulename, args):
-    """Run a python module, as though with ``python -m name args...``.
+class DummyLoader(object):
+    """A shim for the pep302 __loader__, emulating pkgutil.ImpLoader.
 
-    `modulename` is the name of the module, possibly a dot-separated name.
-    `args` is the argument array to present as sys.argv, including the first
-    element naming the module being executed.
-
+    Currently only implements the .fullname attribute
     """
-    openfile = None
-    glo, loc = globals(), locals()
-    try:
+    def __init__(self, fullname, *_args):
+        self.fullname = fullname
+
+
+if importlib_util_find_spec:
+    def find_module(modulename):
+        """Find the module named `modulename`.
+
+        Returns the file path of the module, and the name of the enclosing
+        package.
+        """
+        try:
+            spec = importlib_util_find_spec(modulename)
+        except ImportError as err:
+            raise NoSource(str(err))
+        if not spec:
+            raise NoSource("No module named %r" % (modulename,))
+        pathname = spec.origin
+        packagename = spec.name
+        if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
+            mod_main = modulename + ".__main__"
+            spec = importlib_util_find_spec(mod_main)
+            if not spec:
+                raise NoSource(
+                    "No module named %s; "
+                    "%r is a package and cannot be directly executed"
+                    % (mod_main, modulename)
+                )
+            pathname = spec.origin
+            packagename = spec.name
+        packagename = packagename.rpartition(".")[0]
+        return pathname, packagename
+else:
+    def find_module(modulename):
+        """Find the module named `modulename`.
+
+        Returns the file path of the module, and the name of the enclosing
+        package.
+        """
+        openfile = None
+        glo, loc = globals(), locals()
         try:
             # Search for the module - inside its parent package, if any - using
             # standard import mechanics.
             if '.' in modulename:
-                packagename, name = rsplit1(modulename, '.')
+                packagename, name = modulename.rsplit('.', 1)
                 package = __import__(packagename, glo, loc, ['__path__'])
                 searchpath = package.__path__
             else:
@@ -57,51 +89,92 @@ def run_python_module(modulename, args):
                 package = __import__(packagename, glo, loc, ['__path__'])
                 searchpath = package.__path__
                 openfile, pathname, _ = imp.find_module(name, searchpath)
-        except ImportError:
-            _, err, _ = sys.exc_info()
+        except ImportError as err:
             raise NoSource(str(err))
-    finally:
-        if openfile:
-            openfile.close()
+        finally:
+            if openfile:
+                openfile.close()
 
-    # Finally, hand the file off to run_python_file for execution.
+        return pathname, packagename
+
+
+def run_python_module(modulename, args):
+    """Run a Python module, as though with ``python -m name args...``.
+
+    `modulename` is the name of the module, possibly a dot-separated name.
+    `args` is the argument array to present as sys.argv, including the first
+    element naming the module being executed.
+
+    """
+    pathname, packagename = find_module(modulename)
+
     pathname = os.path.abspath(pathname)
     args[0] = pathname
-    run_python_file(pathname, args, package=packagename)
+    run_python_file(pathname, args, package=packagename, modulename=modulename, path0="")
 
 
-def run_python_file(filename, args, package=None):
-    """Run a python file as if it were the main program on the command line.
+def run_python_file(filename, args, package=None, modulename=None, path0=None):
+    """Run a Python file as if it were the main program on the command line.
 
     `filename` is the path to the file to execute, it need not be a .py file.
     `args` is the argument array to present as sys.argv, including the first
     element naming the file being executed.  `package` is the name of the
     enclosing package, if any.
 
+    `modulename` is the name of the module the file was run as.
+
+    `path0` is the value to put into sys.path[0].  If it's None, then this
+    function will decide on a value.
+
     """
+    if modulename is None and sys.version_info >= (3, 3):
+        modulename = '__main__'
+
     # Create a module to serve as __main__
     old_main_mod = sys.modules['__main__']
-    main_mod = imp.new_module('__main__')
+    main_mod = types.ModuleType('__main__')
     sys.modules['__main__'] = main_mod
     main_mod.__file__ = filename
     if package:
         main_mod.__package__ = package
+    if modulename:
+        main_mod.__loader__ = DummyLoader(modulename)
+
     main_mod.__builtins__ = BUILTINS
 
     # Set sys.argv properly.
     old_argv = sys.argv
     sys.argv = args
 
+    if os.path.isdir(filename):
+        # Running a directory means running the __main__.py file in that
+        # directory.
+        my_path0 = filename
+
+        for ext in [".py", ".pyc", ".pyo"]:
+            try_filename = os.path.join(filename, "__main__" + ext)
+            if os.path.exists(try_filename):
+                filename = try_filename
+                break
+        else:
+            raise NoSource("Can't find '__main__' module in '%s'" % filename)
+    else:
+        my_path0 = os.path.abspath(os.path.dirname(filename))
+
+    # Set sys.path correctly.
+    old_path0 = sys.path[0]
+    sys.path[0] = path0 if path0 is not None else my_path0
+
     try:
         # Make a code object somehow.
-        if filename.endswith(".pyc") or filename.endswith(".pyo"):
+        if filename.endswith((".pyc", ".pyo")):
             code = make_code_from_pyc(filename)
         else:
             code = make_code_from_py(filename)
 
         # Execute the code object.
         try:
-            exec_code_object(code, main_mod.__dict__)
+            exec(code, main_mod.__dict__)
         except SystemExit:
             # The user called sys.exit().  Just pass it along to the upper
             # layers, where it will be handled.
@@ -109,37 +182,34 @@ def run_python_file(filename, args, package=None):
         except:
             # Something went wrong while executing the user code.
             # Get the exc_info, and pack them into an exception that we can
-            # throw up to the outer loop.  We peel two layers off the traceback
+            # throw up to the outer loop.  We peel one layer off the traceback
             # so that the coverage.py code doesn't appear in the final printed
             # traceback.
             typ, err, tb = sys.exc_info()
-            raise ExceptionDuringRun(typ, err, tb.tb_next.tb_next)
-    finally:
-        # Restore the old __main__
-        sys.modules['__main__'] = old_main_mod
 
-        # Restore the old argv and path
+            # PyPy3 weirdness.  If I don't access __context__, then somehow it
+            # is non-None when the exception is reported at the upper layer,
+            # and a nested exception is shown to the user.  This getattr fixes
+            # it somehow? https://bitbucket.org/pypy/pypy/issue/1903
+            getattr(err, '__context__', None)
+
+            raise ExceptionDuringRun(typ, err, tb.tb_next)
+    finally:
+        # Restore the old __main__, argv, and path.
+        sys.modules['__main__'] = old_main_mod
         sys.argv = old_argv
+        sys.path[0] = old_path0
+
 
 def make_code_from_py(filename):
     """Get source from `filename` and make a code object of it."""
     # Open the source file.
     try:
-        source_file = open_source(filename)
-    except IOError:
-        raise NoSource("No file to run: %r" % filename)
+        source = get_python_source(filename)
+    except (IOError, NoSource):
+        raise NoSource("No file to run: '%s'" % filename)
 
-    try:
-        source = source_file.read()
-    finally:
-        source_file.close()
-
-    # We have the source.  `compile` still needs the last line to be clean,
-    # so make sure it is, then compile a code object from it.
-    if not source or source[-1] != '\n':
-        source += '\n'
-    code = compile(source, filename, "exec")
-
+    code = compile_unicode(source, filename, "exec")
     return code
 
 
@@ -148,13 +218,13 @@ def make_code_from_pyc(filename):
     try:
         fpyc = open(filename, "rb")
     except IOError:
-        raise NoCode("No file to run: %r" % filename)
+        raise NoCode("No file to run: '%s'" % filename)
 
-    try:
+    with fpyc:
         # First four bytes are a version-specific magic number.  It has to
         # match or we won't run the file.
         magic = fpyc.read(4)
-        if magic != imp.get_magic():
+        if magic != PYC_MAGIC_NUMBER:
             raise NoCode("Bad magic number in .pyc file")
 
         # Skip the junk in the header that we don't need.
@@ -165,7 +235,5 @@ def make_code_from_pyc(filename):
 
         # The rest of the file is the code object we want.
         code = marshal.load(fpyc)
-    finally:
-        fpyc.close()
 
     return code

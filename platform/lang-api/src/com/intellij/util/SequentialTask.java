@@ -30,14 +30,14 @@ public interface SequentialTask {
   void prepare();
 
   /**
-   * @return      <code>true</code> if the processing is complete; <code>false</code> otherwise
+   * @return      {@code true} if the processing is complete; {@code false} otherwise
    */
   boolean isDone();
 
   /**
    * Asks current task to perform one more processing iteration.
    * 
-   * @return    <code>true</code> if the processing is done; <code>false</code> otherwise
+   * @return    {@code true} if the processing is done; {@code false} otherwise
    */
   boolean iteration();
 

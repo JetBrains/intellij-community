@@ -46,7 +46,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     SectionBasedDocString.RAISES_SECTION
   );
 
-  private final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
+  private final List<AddParameter> myAddParameterRequests = new ArrayList<>();
 
   public SectionBasedDocStringUpdater(@NotNull SectionBasedDocString docString, @NotNull String minContentIndent) {
     super(docString, minContentIndent);
@@ -154,7 +154,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   @Override
   protected void beforeApplyingModifications() {
-    final List<AddParameter> newParams = new ArrayList<AddParameter>();
+    final List<AddParameter> newParams = new ArrayList<>();
     for (AddParameter param : myAddParameterRequests) {
       if (param.type != null) {
         final Substring typeSub = myOriginalDocString.getParamTypeSubstring(param.name);
@@ -243,7 +243,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     if (index < 0) {
       return Pair.create(findLastNonEmptyLine(), true);
     }
-    final Map<String, Section> namedSections = new HashMap<String, Section>();
+    final Map<String, Section> namedSections = new HashMap<>();
     for (Section section : myOriginalDocString.getSections()) {
       final String normalizedTitle = section.getNormalizedTitle();
       // leave only first occurrences

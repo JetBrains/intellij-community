@@ -55,7 +55,7 @@ public class BuildJarTarget extends Target {
     final String moduleName = module.getName();
 
 
-    final HashSet<Library> libs = new HashSet<Library>();
+    final HashSet<Library> libs = new HashSet<>();
     for (Module module1 : modules) {
       PluginBuildUtil.getLibraries(module1, libs);
     }

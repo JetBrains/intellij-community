@@ -34,8 +34,8 @@ public class UpdatedFilesReverseSide {
 
   public UpdatedFilesReverseSide(final UpdatedFiles files) {
     myFiles = files;
-    myGroupHolder = new HashMap<String, FileGroup>();
-    myFileIdx = new HashMap<String, FileGroup>();
+    myGroupHolder = new HashMap<>();
+    myFileIdx = new HashMap<>();
   }
 
   public boolean isEmpty() {

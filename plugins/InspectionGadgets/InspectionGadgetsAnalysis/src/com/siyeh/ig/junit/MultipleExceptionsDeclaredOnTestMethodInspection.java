@@ -58,15 +58,9 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "multiple.exceptions.declared.on.test.method.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

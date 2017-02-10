@@ -72,7 +72,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
                                            MoveCallback moveCallback) {
     super(project);
     if (targetDirectory != null) {
-      final List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(Arrays.asList(directories));
+      final List<PsiDirectory> dirs = new ArrayList<>(Arrays.asList(directories));
       for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext(); ) {
         final PsiDirectory directory = iterator.next();
         if (targetDirectory.equals(directory.getParentDirectory()) || targetDirectory.equals(directory)) {
@@ -86,8 +86,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
-    myFilesToMove = new HashMap<PsiFile, TargetDirectoryWrapper>();
-    myNestedDirsToMove = new HashMap<PsiDirectory, TargetDirectoryWrapper>();
+    myFilesToMove = new HashMap<>();
+    myNestedDirsToMove = new HashMap<>();
     for (PsiDirectory dir : directories) {
       collectFiles2Move(myFilesToMove, myNestedDirsToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
     }
@@ -109,7 +109,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
       helper.findUsages(myFilesToMove.keySet(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
     }
@@ -118,7 +118,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiFile psiFile : myFilesToMove.keySet()) {
       try {
         myFilesToMove.get(psiFile).checkMove(psiFile);
@@ -158,8 +158,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       return;
     }
     try {
-      final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
-      final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
+      final List<PsiFile> movedFiles = new ArrayList<>();
+      final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
       for (PsiFile psiFile : myFilesToMove.keySet()) {
         for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
           helper.beforeMove(psiFile);

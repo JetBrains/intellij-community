@@ -92,6 +92,10 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testInsideLambdaWithNonInferredTypeParameters() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(false));
   }

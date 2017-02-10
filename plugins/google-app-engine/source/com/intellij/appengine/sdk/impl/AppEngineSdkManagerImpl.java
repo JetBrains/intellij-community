@@ -29,7 +29,7 @@ import java.util.Map;
  * @author nik
  */
 public class AppEngineSdkManagerImpl extends AppEngineSdkManager {
-  private final Map<String, AppEngineSdkImpl> myPath2Sdk = new THashMap<String, AppEngineSdkImpl>();
+  private final Map<String, AppEngineSdkImpl> myPath2Sdk = new THashMap<>();
 
   @NotNull
   @Override

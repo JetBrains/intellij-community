@@ -33,7 +33,7 @@ public class CommitContext implements UserDataHolder {
   private final Map<Key, Object> myMap;
 
   public CommitContext() {
-    myMap = new HashMap<Key, Object>();
+    myMap = new HashMap<>();
   }
 
   @Override

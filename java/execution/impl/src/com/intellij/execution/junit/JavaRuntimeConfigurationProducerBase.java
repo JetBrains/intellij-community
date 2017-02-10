@@ -76,7 +76,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
             for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
               if (virtualFile.equals(entry.getFile())) {
                 final SourceFolder[] folders = entry.getSourceFolders();
-                Set<String> packagePrefixes = new HashSet<String>();
+                Set<String> packagePrefixes = new HashSet<>();
                 for (SourceFolder folder : folders) {
                   packagePrefixes.add(folder.getPackagePrefix());
                 }

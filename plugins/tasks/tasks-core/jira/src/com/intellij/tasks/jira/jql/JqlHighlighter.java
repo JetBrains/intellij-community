@@ -16,7 +16,7 @@ import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
  * @author Mikhail Golubev
  */
 public class JqlHighlighter extends SyntaxHighlighterBase {
-  private static final Map<IElementType, TextAttributesKey> KEYS = new HashMap<IElementType, TextAttributesKey>();
+  private static final Map<IElementType, TextAttributesKey> KEYS = new HashMap<>();
   static {
     KEYS.put(JqlTokenTypes.STRING_LITERAL, STRING);
     KEYS.put(JqlTokenTypes.NUMBER_LITERAL, NUMBER);

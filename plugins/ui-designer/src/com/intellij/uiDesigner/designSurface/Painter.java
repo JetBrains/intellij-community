@@ -80,7 +80,7 @@ public final class Painter {
 
   public static void paintComponentDecoration(final GuiEditor editor, final RadComponent component, final Graphics g) {
     // Collect selected components and paint decoration for non selected components
-    final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> selection = new ArrayList<>();
     final Rectangle layeredPaneRect = editor.getLayeredPane().getVisibleRect();
     FormEditingUtil.iterate(
       component,

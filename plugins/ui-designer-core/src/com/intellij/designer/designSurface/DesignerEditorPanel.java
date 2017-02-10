@@ -129,10 +129,10 @@ public abstract class DesignerEditorPanel extends JPanel
 
   private PaletteItem myActivePaletteItem;
   private List<?> myExpandedComponents;
-  private final Map<String, Property> mySelectionPropertyMap = new HashMap<String, Property>();
+  private final Map<String, Property> mySelectionPropertyMap = new HashMap<>();
   private int[][] myExpandedState;
   private int[][] mySelectionState;
-  private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
+  private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<>(16);
 
   private FixableMessageAction myWarnAction;
 
@@ -171,7 +171,7 @@ public abstract class DesignerEditorPanel extends JPanel
     createProgressPanel();
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerEditorPanel designer = DesignerEditorPanel.this;
+      DesignerEditorPanel designer = this;
       getDesignerWindowManager().bind(designer);
       getPaletteWindowManager().bind(designer);
     });
@@ -641,7 +641,7 @@ public abstract class DesignerEditorPanel extends JPanel
     DesignerToolWindowContent toolManager = getDesignerToolWindow();
 
     if (myExpandedState != null) {
-      List<RadComponent> expanded = new ArrayList<RadComponent>();
+      List<RadComponent> expanded = new ArrayList<>();
       for (int[] path : myExpandedState) {
         pathToComponent(expanded, myRootComponent, path, 0);
       }
@@ -650,7 +650,7 @@ public abstract class DesignerEditorPanel extends JPanel
       myExpandedState = null;
     }
 
-    List<RadComponent> selection = new ArrayList<RadComponent>();
+    List<RadComponent> selection = new ArrayList<>();
 
     int[][] selectionState = mySourceSelectionState.get(getEditorText());
     if (selectionState != null) {
@@ -1216,7 +1216,7 @@ public abstract class DesignerEditorPanel extends JPanel
     public String myMessage;
     public String myDisplayMessage;
 
-    public final List<FixableMessageInfo> myMessages = new ArrayList<FixableMessageInfo>();
+    public final List<FixableMessageInfo> myMessages = new ArrayList<>();
 
     public Throwable myThrowable;
 

@@ -684,7 +684,9 @@ class ModuleRedeclarator(object):
                 try:
                     item = getattr(p_class, item_name) # let getters do the magic
                 except AttributeError:
-                    item = field_source[item_name] # have it raw
+                    item = field_source.get(item_name) # have it raw
+                    if item is None:
+                        continue
                 except Exception:
                     continue
             if is_callable(item) and not isinstance(item, type):
@@ -1012,6 +1014,8 @@ class ModuleRedeclarator(object):
 
             if self.doing_builtins and p_name == BUILTIN_MOD_NAME:
                 txt = create_generator()
+                self.classes_buf.out(0, txt)
+                txt = create_async_generator()
                 self.classes_buf.out(0, txt)
                 txt = create_function()
                 self.classes_buf.out(0, txt)

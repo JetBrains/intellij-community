@@ -15,20 +15,14 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.IGInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CStyleArrayDeclarationInspectionTest extends LightInspectionTestCase {
+public class CStyleArrayDeclarationInspectionTest extends IGInspectionTestCase {
 
-  public void testCStyleArrayDeclaration() { doTest(); }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new CStyleArrayDeclarationInspection();
+  public void testCStyleArrayDeclaration() {
+    doTest("com/siyeh/igtest/style/cstyle_array_declaration", new CStyleArrayDeclarationInspection());
   }
 }

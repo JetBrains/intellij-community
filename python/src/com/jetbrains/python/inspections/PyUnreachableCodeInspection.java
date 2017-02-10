@@ -62,7 +62,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
       if (element instanceof ScopeOwner) {
         final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)element);
         final Instruction[] instructions = flow.getInstructions();
-        final List<PsiElement> unreachable = new ArrayList<PsiElement>();
+        final List<PsiElement> unreachable = new ArrayList<>();
         if (instructions.length > 0) {
           ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, instruction -> {
             if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {

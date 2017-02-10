@@ -1,17 +1,17 @@
 '''An helper file for the pydev debugger (REPL) console
 '''
-from code import InteractiveConsole
 import sys
 import traceback
+from code import InteractiveConsole
 
 from _pydev_bundle import _pydev_completer
-from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
-from _pydevd_bundle.pydevd_vars import make_valid_xml_value
-from _pydev_bundle.pydev_imports import Exec
-from _pydevd_bundle.pydevd_io import IOBuf
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
 from _pydevd_bundle import pydevd_save_locals
+from _pydevd_bundle.pydevd_io import IOBuf
+from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
+from _pydevd_bundle.pydevd_xml import make_valid_xml_value
 
 CONSOLE_OUTPUT = "output"
 CONSOLE_ERROR = "error"
@@ -80,7 +80,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
     """
 
     overrides(BaseInterpreterInterface.create_std_in)
-    def create_std_in(self):
+    def create_std_in(self, *args, **kwargs):
         try:
             if not self.__buffer_output:
                 return sys.stdin
@@ -160,6 +160,12 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
         except:
             self.showtraceback()
 
+    def get_namespace(self):
+        dbg_namespace = {}
+        dbg_namespace.update(self.frame.f_globals)
+        dbg_namespace.update(self.frame.f_locals)  # locals later because it has precedence over the actual globals
+        return dbg_namespace
+
 
 #=======================================================================================================================
 # InteractiveConsoleCache
@@ -175,6 +181,7 @@ class InteractiveConsoleCache:
 def get_interactive_console(thread_id, frame_id, frame, console_message):
     """returns the global interactive console.
     interactive console should have been initialized by this time
+    :rtype: DebugConsole
     """
     if InteractiveConsoleCache.thread_id == thread_id and InteractiveConsoleCache.frame_id == frame_id:
         return InteractiveConsoleCache.interactive_console_instance
@@ -216,6 +223,16 @@ def execute_console_command(frame, thread_id, frame_id, line, buffer_output=True
         console_message.add_console_message(CONSOLE_ERROR, message)
 
     return console_message
+
+
+def get_description(frame, thread_id, frame_id, expression):
+    console_message = ConsoleMessage()
+    interpreter = get_interactive_console(thread_id, frame_id, frame, console_message)
+    try:
+        interpreter.frame = frame
+        return interpreter.getDescription(expression)
+    finally:
+        interpreter.frame = None
 
 
 def get_completions(frame, act_tok):

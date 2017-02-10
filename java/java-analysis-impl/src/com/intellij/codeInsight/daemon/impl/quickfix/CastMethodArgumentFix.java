@@ -61,6 +61,9 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
+        if (PsiType.NULL.equals(exprType)) {
+          return true;
+        }
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
         if (parameterType == null) return false;
       }

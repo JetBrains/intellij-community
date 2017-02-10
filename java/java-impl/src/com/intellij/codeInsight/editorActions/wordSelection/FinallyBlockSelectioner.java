@@ -34,7 +34,7 @@ public class FinallyBlockSelectioner extends BasicSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
 
     final PsiElement parent = e.getParent();
     if (parent instanceof PsiTryStatement) {

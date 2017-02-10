@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class RestAnnotatingVisitor implements Annotator {
   private static final Logger LOGGER = Logger.getInstance(RestAnnotatingVisitor.class.getName());
-  private final List<RestAnnotator> myAnnotators = new ArrayList<RestAnnotator>();
+  private final List<RestAnnotator> myAnnotators = new ArrayList<>();
 
   public RestAnnotatingVisitor() {
     for (Class<? extends RestAnnotator> cls : ((RestLanguage)RestFileType.INSTANCE.getLanguage()).getAnnotators()) {

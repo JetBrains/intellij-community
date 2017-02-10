@@ -52,7 +52,7 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   @Override
   @Nullable
   protected Collection<AbstractTreeNode> getChildrenImpl() {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final Module module = getModule();
 
     final GrTypeDefinition grTypeDefinition = extractPsiFromValue();

@@ -22,7 +22,7 @@ import java.util.List;
 
 public class ConcurrentMostlySingularMultiMapTest extends TestCase {
   public void testReplace() {
-    ConcurrentMostlySingularMultiMap<String,String> map = new ConcurrentMostlySingularMultiMap<String, String>();
+    ConcurrentMostlySingularMultiMap<String,String> map = new ConcurrentMostlySingularMultiMap<>();
     List<String> xxxList = Collections.singletonList("xxx");
     List<String> empty = Collections.emptyList();
     String KEY = "key";

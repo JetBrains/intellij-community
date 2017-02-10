@@ -29,7 +29,7 @@ public class EduStepicUpdater {
     if (!checkNeeded()) {
       return;
     }
-    application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
 
@@ -47,7 +47,7 @@ public class EduStepicUpdater {
   private static ActionCallback updateCourseList() {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<CourseInfo> courses = EduStepicConnector.getCourses();
+      final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
       final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
       StudyProjectGenerator.flushCache(courses);
       StepicUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());

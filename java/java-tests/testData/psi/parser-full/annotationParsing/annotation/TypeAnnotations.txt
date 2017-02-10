@@ -632,7 +632,7 @@ PsiJavaFile:TypeAnnotations.java
               PsiIdentifier:m('m')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')
-              PsiMethodReferenceExpression:@Vernal Date::getDay
+              PsiMethodReferenceExpression
                 PsiReferenceExpression:@Vernal Date
                   PsiReferenceParameterList
                     <empty list>
@@ -661,7 +661,7 @@ PsiJavaFile:TypeAnnotations.java
               PsiIdentifier:m('m')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')
-              PsiMethodReferenceExpression:@IllegalAnnotation java.util.@Vernal Date::getDay
+              PsiMethodReferenceExpression
                 PsiReferenceExpression:@IllegalAnnotation java.util.@Vernal Date
                   PsiReferenceExpression:@IllegalAnnotation java.util
                     PsiReferenceExpression:@IllegalAnnotation java
@@ -709,7 +709,7 @@ PsiJavaFile:TypeAnnotations.java
               PsiIdentifier:m('m')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')
-              PsiMethodReferenceExpression:List<@English String>::size
+              PsiMethodReferenceExpression
                 PsiTypeElement:List<@English String>
                   PsiJavaCodeReferenceElement:List<@English String>
                     PsiIdentifier:List('List')
@@ -745,7 +745,7 @@ PsiJavaFile:TypeAnnotations.java
               PsiIdentifier:m('m')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')
-              PsiMethodReferenceExpression:Arrays::<@NonNegative Integer>sort
+              PsiMethodReferenceExpression
                 PsiReferenceExpression:Arrays
                   PsiReferenceParameterList
                     <empty list>
@@ -780,7 +780,7 @@ PsiJavaFile:TypeAnnotations.java
               PsiIdentifier:m('m')
             PsiExpressionList
               PsiJavaToken:LPARENTH('(')
-              PsiLambdaExpression:(@TA Object x, @TB Object y) -> { System.out.println("x=" + x + " y=" + y); }
+              PsiLambdaExpression
                 PsiParameterList:(@TA Object x, @TB Object y)
                   PsiJavaToken:LPARENTH('(')
                   PsiParameter:x

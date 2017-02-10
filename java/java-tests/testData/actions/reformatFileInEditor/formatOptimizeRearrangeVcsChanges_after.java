@@ -5,6 +5,6 @@ public class Main {
     protected Object obj = null;
     private long e = 4;
 
-  public static void main(String[] args) {
+    public static void main(String[] args) {
   }
 }

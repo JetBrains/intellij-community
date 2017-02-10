@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
   }
 
   private class Visitor extends BaseInspectionVisitor {
-    private final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(5);
+    private final Set<IElementType> arithmeticTokens = new HashSet<>(5);
 
     {
       arithmeticTokens.add(GroovyTokenTypes.mPLUS);
@@ -90,7 +90,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
     }
 
     @Override
-    public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }

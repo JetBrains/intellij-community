@@ -31,7 +31,7 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
   }
 
   public static <T> ListProperty<T> create(@NonNls String name) {
-    return new ListProperty<T>(name);
+    return new ListProperty<>(name);
   }
 
   public String getName() {
@@ -53,7 +53,7 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
       modifiableList = (ArrayList<T>)list;
     }
     else {
-      modifiableList = new ArrayList<T>(list);
+      modifiableList = new ArrayList<>(list);
       set(container, modifiableList);
     }
     // remove nulls

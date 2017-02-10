@@ -18,7 +18,7 @@ import java.util.List;
 public class EduDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
   private final boolean myTrackLength;
-  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholderWrapper>();
+  private final List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<>();
 
 
   public EduDocumentListener(TaskFile taskFile) {
@@ -73,7 +73,9 @@ public class EduDocumentListener extends DocumentAdapter {
           if (answerPlaceholder.getUseLength()) {
             answerPlaceholder.setLength(length);
           } else {
-            answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
+            if (answerPlaceholder.isActive() && myTaskFile.isTrackLengths()) {
+              answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
+            }
           }
         }
       }

@@ -21,6 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Stores predefined and custom (user-defined) path variables. Path variables are used to convert paths from absolute to portable form and
+ * vice versa. It allows us to reuse project configuration files on different machines.
+ * <p>
+ * In order to make a path (or URL) portable the serialization subsystem replaces its prefix by name of a corresponding path variable.
+ * There are {@link #getSystemMacroNames() predefined path variables} and also it's possible to specify {@link #getUserMacroNames() custom path variables}.
+ * </p>
+ */
 public abstract class PathMacros {
   public static PathMacros getInstance() {
     return ServiceManager.getService(PathMacros.class);
@@ -30,7 +38,7 @@ public abstract class PathMacros {
 
   public abstract String getValue(String name);
 
-  public abstract void setMacro(String name, String value);
+  public abstract void setMacro(@NotNull String name, @NotNull String value);
 
   /**
    * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted

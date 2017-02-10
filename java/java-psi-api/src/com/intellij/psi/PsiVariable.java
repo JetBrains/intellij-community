@@ -62,8 +62,8 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
   /**
    * Ensures that the variable declaration is not combined in the same statement with
    * other declarations. Also, if the variable is an array, ensures that the array
-   * brackets are used in Java style (<code>int[] a</code>)
-   * and not in C style (<code> int a[]</code>).
+   * brackets are used in Java style ({@code int[] a})
+   * and not in C style ({@code int a[]}).
    *
    * @throws IncorrectOperationException if the modification fails for some reason.
    */

@@ -78,7 +78,7 @@ public class ClassInheritanceDepthInspection
         return;
       }
       final int inheritanceDepth =
-        getInheritanceDepth(aClass, new HashSet<PsiClass>());
+        getInheritanceDepth(aClass, new HashSet<>());
       if (inheritanceDepth <= getLimit()) {
         return;
       }

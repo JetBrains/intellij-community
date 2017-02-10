@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,17 @@ public interface ProblemDescriptionsProcessor {
    * @return the problems found for the specified node.
    */
   @Nullable
-  CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity);
+  default CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
+    return CommonProblemDescriptor.EMPTY_ARRAY;
+  }
 
   /**
    * Drops all problems which have been collected for the specified reference graph node.
    *
    * @param refEntity the reference graph node.
    */
-  void ignoreElement(@NotNull RefEntity refEntity);
+  default void ignoreElement(@NotNull RefEntity refEntity) {
+  }
 
   /**
    * Registers a problem or several problems, with optional quickfixes, for the specified
@@ -50,7 +53,10 @@ public interface ProblemDescriptionsProcessor {
    * @param refEntity                the reference graph node.
    * @param commonProblemDescriptors the descriptors for the problems to register.
    */
-  void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors);
+  default void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+  }
 
-  RefEntity getElement(@NotNull CommonProblemDescriptor descriptor);
+  default RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
+    return null;
+  }
 }

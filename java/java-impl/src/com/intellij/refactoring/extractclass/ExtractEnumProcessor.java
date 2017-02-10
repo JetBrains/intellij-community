@@ -57,7 +57,7 @@ public class ExtractEnumProcessor {
 
   public void findEnumConstantConflicts(final Ref<UsageInfo[]> refUsages) {
     if (hasUsages2Migrate()) {
-      final List<UsageInfo> resolvableConflicts = new ArrayList<UsageInfo>();
+      final List<UsageInfo> resolvableConflicts = new ArrayList<>();
       for (UsageInfo failedUsage : myTypeMigrationProcessor.getLabeler().getFailedUsages()) {
         final PsiElement element = failedUsage.getElement();
         if (element instanceof PsiReferenceExpression) {
@@ -74,7 +74,7 @@ public class ExtractEnumProcessor {
         }
       }
       if (!resolvableConflicts.isEmpty()) {
-        final List<UsageInfo> usageInfos = new ArrayList<UsageInfo>(Arrays.asList(refUsages.get()));
+        final List<UsageInfo> usageInfos = new ArrayList<>(Arrays.asList(refUsages.get()));
         for (Iterator<UsageInfo> iterator = resolvableConflicts.iterator(); iterator.hasNext();) {
           final UsageInfo conflict = iterator.next();
           for (UsageInfo usageInfo : usageInfos) {
@@ -95,9 +95,9 @@ public class ExtractEnumProcessor {
   }
 
   public List<FixableUsageInfo> findEnumConstantUsages(List<FixableUsageInfo> fieldUsages) {
-    final List<FixableUsageInfo> result = new ArrayList<FixableUsageInfo>();
+    final List<FixableUsageInfo> result = new ArrayList<>();
     if (!myEnumConstants.isEmpty()) {
-      final Set<PsiSwitchStatement> switchStatements = new HashSet<PsiSwitchStatement>();
+      final Set<PsiSwitchStatement> switchStatements = new HashSet<>();
       for (UsageInfo usage : fieldUsages) {
         if (usage instanceof ReplaceStaticVariableAccess) {
           final PsiElement element = usage.getElement();
@@ -110,7 +110,7 @@ public class ExtractEnumProcessor {
 
       final PsiConstantEvaluationHelper evaluationHelper =
         JavaPsiFacade.getInstance(myProject).getConstantEvaluationHelper();
-      final Set<Object> enumValues = new HashSet<Object>();
+      final Set<Object> enumValues = new HashSet<>();
       for (PsiField enumConstant : myEnumConstants) {
         enumValues.add(evaluationHelper.computeConstantExpression(enumConstant.getInitializer()));
       }
@@ -171,7 +171,7 @@ public class ExtractEnumProcessor {
 
   public void performEnumConstantTypeMigration(UsageInfo[] usageInfos) {
     if (hasUsages2Migrate()) {
-      final List<UsageInfo> migrationInfos = new ArrayList<UsageInfo>();
+      final List<UsageInfo> migrationInfos = new ArrayList<>();
       for (UsageInfo usageInfo : usageInfos) {
         if (usageInfo instanceof EnumTypeMigrationUsageInfo) {
           migrationInfos.add(((EnumTypeMigrationUsageInfo)usageInfo).getUsageInfo());

@@ -36,7 +36,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     // fake event indicating upgrade start
     callHandler(handler, createEvent(path, EventAction.UPDATE_COMPLETED));
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, path);
 
@@ -53,7 +53,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   @Override
   public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
-    List<WorkingCopyFormat> result = new ArrayList<WorkingCopyFormat>();
+    List<WorkingCopyFormat> result = new ArrayList<>();
 
     result.add(WorkingCopyFormat.from(myFactory.createVersionClient().getVersion()));
 
@@ -88,7 +88,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
     private UpgradeLineCommandListener(@NotNull FileStatusResultParser parser) {
       this.parser = parser;
-      exception = new AtomicReference<VcsException>();
+      exception = new AtomicReference<>();
     }
 
     @Override

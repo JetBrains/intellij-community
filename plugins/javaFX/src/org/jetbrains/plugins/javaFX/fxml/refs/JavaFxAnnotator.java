@@ -34,6 +34,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -57,10 +58,14 @@ public class JavaFxAnnotator implements Annotator {
     final PsiFile containingFile = element.getContainingFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
-      final PsiReference[] references = element.getReferences();
       final String value = ((XmlAttributeValue)element).getValue();
       if (!JavaFxPsiUtil.isExpressionBinding(value) && !JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
+        final PsiReference[] references = element.getReferences();
         for (PsiReference reference : references) {
+          if (reference instanceof JavaFxColorReference) {
+            attachColorIcon(element, holder, StringUtil.unquoteString(element.getText()));
+            continue;
+          }
           final PsiElement resolve = reference.resolve();
           if (resolve instanceof PsiMember) {
             if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
@@ -73,9 +78,6 @@ public class JavaFxAnnotator implements Annotator {
             }
           }
         }
-      }
-      if (references.length == 1 && references[0] instanceof JavaFxColorReference) {
-        attachColorIcon(element, holder, StringUtil.unquoteString(element.getText()));
       }
     } else if (element instanceof XmlAttribute) {
       final XmlAttribute attribute = (XmlAttribute)element;
@@ -131,7 +133,7 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (color != null) {
-        final ColorIcon icon = new ColorIcon(8, color);
+        final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
         final Annotation annotation = holder.createInfoAnnotation(element, null);
         annotation.setGutterIconRenderer(new ColorIconRenderer(icon, element));
       }

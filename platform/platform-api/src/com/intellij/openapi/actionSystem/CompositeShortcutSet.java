@@ -31,7 +31,7 @@ public class CompositeShortcutSet implements ShortcutSet {
   @Override
   @NotNull
   public Shortcut[] getShortcuts() {
-    List<Shortcut> result = new ArrayList<Shortcut>();
+    List<Shortcut> result = new ArrayList<>();
     for (ShortcutSet each : mySets) {
       Collections.addAll(result, each.getShortcuts());
     }

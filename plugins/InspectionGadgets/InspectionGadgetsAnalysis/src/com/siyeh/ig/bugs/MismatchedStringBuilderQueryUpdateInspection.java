@@ -35,7 +35,7 @@ import java.util.Set;
 public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> returnSelfNames = new HashSet<String>();
+  private static final Set<String> returnSelfNames = new HashSet<>();
 
   static {
     returnSelfNames.add("append");
@@ -200,7 +200,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> updateNames = new HashSet<String>();
+    private static final Set<String> updateNames = new HashSet<>();
 
     static {
       updateNames.add("append");
@@ -262,7 +262,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> queryNames = new HashSet<String>();
+    private static final Set<String> queryNames = new HashSet<>();
 
     static {
       queryNames.add("toString");

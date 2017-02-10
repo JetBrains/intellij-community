@@ -24,7 +24,7 @@ import java.util.List;
  * author: lesya
  */
 public class CompositeCommittable implements Committable, Highlightable {
-  private final List<Committable> myComponents = new ArrayList<Committable>();
+  private final List<Committable> myComponents = new ArrayList<>();
 
   public final <T extends Committable> T addComponent(T panel) {
     myComponents.add(panel);

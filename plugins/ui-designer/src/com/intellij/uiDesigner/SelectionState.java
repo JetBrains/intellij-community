@@ -37,7 +37,7 @@ public final class SelectionState{
   private boolean myInsideChange;
 
   public SelectionState(@NotNull final GuiEditor editor) {
-    mySelectionHistory = new Stack<ComponentPtr[]>();
+    mySelectionHistory = new Stack<>();
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
   }
 

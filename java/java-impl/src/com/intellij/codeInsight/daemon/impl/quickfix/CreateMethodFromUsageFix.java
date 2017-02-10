@@ -112,7 +112,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> targets = super.getTargetClasses(element);
-    ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+    ArrayList<PsiClass> result = new ArrayList<>();
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
@@ -259,6 +259,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
+          if (brokenOff) return;
           WriteCommandAction.runWriteCommandAction(project, () -> {
             PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
             final int offset = newEditor.getCaretModel().getOffset();

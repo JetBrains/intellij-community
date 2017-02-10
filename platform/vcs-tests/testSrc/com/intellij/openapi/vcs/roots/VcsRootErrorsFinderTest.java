@@ -175,7 +175,7 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
     initProject(vcsRootConfiguration);
     addVcsRoots(vcsRootConfiguration.getRoots());
 
-    Collection<VcsRootError> expected = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> expected = new ArrayList<>();
     expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
     expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
     myProjectRoot.refresh(false, true);
@@ -202,7 +202,7 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
 
   @NotNull
   Collection<VcsRootError> unregAll(@NotNull Collection<String> paths) {
-    Collection<VcsRootError> unregRoots = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> unregRoots = new ArrayList<>();
     for (String path : paths) {
       unregRoots.add(unreg(path));
     }
@@ -211,7 +211,7 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
 
   @NotNull
   Collection<VcsRootError> extraAll(@NotNull Collection<String> paths) {
-    Collection<VcsRootError> extraRoots = new ArrayList<VcsRootError>();
+    Collection<VcsRootError> extraRoots = new ArrayList<>();
     for (String path : paths) {
       extraRoots.add(extra(path));
     }

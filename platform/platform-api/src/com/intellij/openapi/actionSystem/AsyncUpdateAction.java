@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutorService;
 public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
 
-  private static final ExecutorService ourUpdaterService = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
+  private static final ExecutorService ourUpdaterService = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncUpdateAction pool", 1);
 
   // Async update
   @Override
@@ -46,7 +46,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
           if (originalPresentation.isVisible() != realPresentation.isVisible()) {
             LOG.error("Async update is not supported for actions that change their visibility." +
                       "Either stop extending AsyncUpdateAction or override forceSyncUpdate() to return true." +
-                      "Action class is: " + AsyncUpdateAction.this.getClass().getName());
+                      "Action class is: " + this.getClass().getName());
           }
           originalPresentation.copyFrom(realPresentation);
         });

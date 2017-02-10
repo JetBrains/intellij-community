@@ -156,7 +156,7 @@ public class TemplateResource implements Serializable {
   /**
    * Gets the method signature
    * <p/>
-   * <code>public String toString()</code>
+   * {@code public String toString()}
    */
   public String getMethodSignature() {
     return getMethodSignature(template);
@@ -165,6 +165,11 @@ public class TemplateResource implements Serializable {
   private static String getMethodSignature(String template) {
     final String trimmed = template.trim();
     String s = trimmed.startsWith("/*") ? after(trimmed, "*/") : trimmed;
+
+    final int indexOf = s.indexOf('{');
+    if (indexOf > 0) {
+      return s.substring(0, indexOf).trim();
+    }
 
     StringBuffer signature = new StringBuffer();
 

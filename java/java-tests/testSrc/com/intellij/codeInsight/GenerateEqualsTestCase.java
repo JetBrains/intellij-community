@@ -64,7 +64,7 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
   }
 
   private static PsiField[] getIndexed(PsiField[] fields, int[] indices) {
-    ArrayList<PsiField> result = new ArrayList<PsiField>();
+    ArrayList<PsiField> result = new ArrayList<>();
     for (int indice : indices) {
       result.add(fields[indice]);
     }

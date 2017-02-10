@@ -137,7 +137,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<TrelloCard> cards = fetchCards(offset + limit, withClosed);
-    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, TrelloRepository.this));
+    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, this));
   }
 
   @Nullable
@@ -153,7 +153,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
       final URIBuilder url = new URIBuilder(getRestApiUrl("cards", id))
         .addParameter("actions", "commentCard")
         .addParameter("fields", TrelloCard.REQUIRED_FIELDS);
-      return executeMethod(new HttpGet(url.build()), new GsonSingleObjectDeserializer<TrelloCard>(TrelloUtil.GSON, TrelloCard.class, true));
+      return executeMethod(new HttpGet(url.build()), new GsonSingleObjectDeserializer<>(TrelloUtil.GSON, TrelloCard.class, true));
     }
     // Trello returns string "The requested resource was not found." or "invalid id"
     // if card can't be found, which not only cannot be deserialized, but also not valid JSON at all.
@@ -341,13 +341,13 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   private <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull TypeToken<List<T>> type) throws Exception {
-    final List<T> result = executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<T>(TrelloUtil.GSON, type));
+    final List<T> result = executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<>(TrelloUtil.GSON, type));
     return ObjectUtils.assertNotNull(result);
   }
 
   @Nullable
   private <T> T makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull Class<T> cls) throws Exception {
-    return executeMethod(new HttpGet(url), new GsonSingleObjectDeserializer<T>(TrelloUtil.GSON, cls));
+    return executeMethod(new HttpGet(url), new GsonSingleObjectDeserializer<>(TrelloUtil.GSON, cls));
   }
 
   @Override
@@ -427,7 +427,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     final TrelloCard card = fetchCardById(task.getId());
     if (card != null) {
       final List<TrelloList> lists = fetchBoardLists(card.getIdBoard());
-      final Set<CustomTaskState> result = new HashSet<CustomTaskState>();
+      final Set<CustomTaskState> result = new HashSet<>();
       for (TrelloList list : lists) {
         if (!list.getId().equals(card.getIdList())) {
           result.add(new CustomTaskState(list.getId(), list.getName()));

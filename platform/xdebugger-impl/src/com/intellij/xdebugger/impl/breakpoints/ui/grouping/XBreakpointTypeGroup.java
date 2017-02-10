@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
@@ -75,6 +74,6 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
   }
 
   private static int indexOfType(XBreakpointType type) {
-    return ArrayUtil.find(XBreakpointUtil.getBreakpointTypes(), type);
+    return (int)XBreakpointUtil.breakpointTypes().indexOf(type).orElse(-1);
   }
 }

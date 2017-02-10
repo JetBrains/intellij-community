@@ -52,6 +52,8 @@ class VcsPreviewPanel implements PreviewPanel {
   public VcsPreviewPanel() {
     DocumentImpl document = new DocumentImpl("", true);
     myEditor = (EditorEx)EditorFactory.getInstance().createViewer(document);
+    myEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+    myEditor.getSettings().setFoldingOutlineShown(true);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * @author dyoma
- */
 public class DefaultExecutionResult implements ExecutionResult {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
+
   private AnAction[] myActions;
-  @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
-  private final List<AnAction> myStopActions = new ArrayList<AnAction>();
 
   public DefaultExecutionResult() {
     myConsole = null;
@@ -41,11 +34,15 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = AnAction.EMPTY_ARRAY;
   }
 
-  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
+  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler, final AnAction... actions) {
+  public DefaultExecutionResult(@NotNull ProcessHandler processHandler) {
+    this(null, processHandler, AnAction.EMPTY_ARRAY);
+  }
+
+  public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, @NotNull AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;
@@ -56,12 +53,13 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myConsole;
   }
 
+  @NotNull
   @Override
   public AnAction[] getActions() {
     return myActions;
   }
 
-  public void setActions(@NotNull final AnAction... actions) {
+  public void setActions(@NotNull AnAction... actions) {
     myActions = actions;
   }
 
@@ -70,18 +68,14 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myRestartActions;
   }
 
-  // TODO: Find all usages, make sure there is no null and make this method NotNull
-  public void setRestartActions(@Nullable AnAction... restartActions) {
-    myRestartActions = (restartActions != null ? restartActions : AnAction.EMPTY_ARRAY);
-  }
-
-  public void addStopAction(AnAction action) {
-    myStopActions.add(action);
+  public void setRestartActions(@NotNull AnAction... restartActions) {
+    myRestartActions = restartActions;
   }
 
   @NotNull
+  @Deprecated
   public AnAction[] getAdditionalStopActions() {
-    return myStopActions.toArray(new AnAction[myStopActions.size()]);
+    return AnAction.EMPTY_ARRAY;
   }
 
   @Override

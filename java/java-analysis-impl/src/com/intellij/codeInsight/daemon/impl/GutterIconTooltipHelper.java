@@ -48,7 +48,7 @@ public class GutterIconTooltipHelper {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
-    Set<String> names = new LinkedHashSet<String>();
+    Set<String> names = new LinkedHashSet<>();
     for (PsiElement element : elements) {
       String descr = "";
       if (element instanceof PsiClass) {

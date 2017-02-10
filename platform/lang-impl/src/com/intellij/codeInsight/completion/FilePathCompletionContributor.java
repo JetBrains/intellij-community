@@ -114,7 +114,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
           final VirtualFile contextFile = originalFile.getVirtualFile();
           if (contextFile != null) {
             final String[] fileNames = getAllNames(project);
-            final Set<String> resultNames = new TreeSet<String>();
+            final Set<String> resultNames = new TreeSet<>();
             for (String fileName : fileNames) {
               if (filenameMatchesPrefixOrType(fileName, prefix, set.getSuitableFileTypes(), parameters.getInvocationCount())) {
                 resultNames.add(fileName);
@@ -143,7 +143,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
                   if (virtualFile == null || !virtualFile.isValid() || Comparing.equal(virtualFile, contextFile)) {
                     continue;
                   }
-                  List<FileReferenceHelper> helperList = new ArrayList<FileReferenceHelper>();
+                  List<FileReferenceHelper> helperList = new ArrayList<>();
                   for (FileReferenceHelper contextHelper : helpers) {
                     ProgressManager.checkCanceled();
 
@@ -195,7 +195,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
   private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file, @NotNull final List<String> pathPrefix) {
     if (file == null) return false;
 
-    final List<String> contextParts = new ArrayList<String>();
+    final List<String> contextParts = new ArrayList<>();
     PsiFileSystemItem parentFile = file;
     PsiFileSystemItem parent;
     while ((parent = parentFile.getParent()) != null) {
@@ -214,7 +214,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
   }
 
   private static String[] getAllNames(@NotNull final Project project) {
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new HashSet<>();
     final ChooseByNameContributor[] nameContributors = ChooseByNameContributor.FILE_EP_NAME.getExtensions();
     for (final ChooseByNameContributor contributor : nameContributors) {
       try {

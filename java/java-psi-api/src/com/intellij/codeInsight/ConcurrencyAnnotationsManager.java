@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ public class ConcurrencyAnnotationsManager {
   private static final String THREAD_SAFE = "ThreadSafe";
   private static final String NOT_THREAD_SAFE = "NotThreadSafe";
 
-  private List<String> myImmutableList = new ArrayList<String>();
-  private List<String> myGuardedByList = new ArrayList<String>();
-  private List<String> myThreadSafeList = new ArrayList<String>();
-  private List<String> myNotThreadSafeList = new ArrayList<String>();
+  private final List<String> myImmutableList = new ArrayList<String>();
+  private final List<String> myGuardedByList = new ArrayList<String>();
+  private final List<String> myThreadSafeList = new ArrayList<String>();
+  private final List<String> myNotThreadSafeList = new ArrayList<String>();
 
   public ConcurrencyAnnotationsManager() {
     fillDefaults(myImmutableList, IMMUTABLE);

@@ -65,7 +65,7 @@ public class ModelMergerUtil {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);
       }
     };
-    new ImplementationProcessor<T>(processor, true).process(element);
+    new ImplementationProcessor<>(processor, true).process(element);
     return (V)processor.getFoundValue();
   }
 
@@ -78,7 +78,7 @@ public class ModelMergerUtil {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);
       }
     };
-    new ImplementationProcessor<T>(processor, true).process(element);
+    new ImplementationProcessor<>(processor, true).process(element);
     return (Collection<V>)processor.getResults();
   }
 
@@ -101,13 +101,13 @@ public class ModelMergerUtil {
     if (element == null) return Collections.emptyList();
     List<T> result = new ArrayList<>();
     Processor<T> processor = Processors.cancelableCollectProcessor(result);
-    new ImplementationProcessor<T>(processor, false).process(element);
+    new ImplementationProcessor<>(processor, false).process(element);
     return result;
   }
 
   @NotNull
   public static <T> Processor<T> createFilteringProcessor(final Processor<T> processor) {
-    return new ImplementationProcessor<T>(processor, false);
+    return new ImplementationProcessor<>(processor, false);
   }
 
   public static class ImplementationProcessor<T> implements Processor<T> {

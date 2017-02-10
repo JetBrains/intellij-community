@@ -21,13 +21,17 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
@@ -47,6 +51,11 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    actionPerformed(e.getRequiredData(CommonDataKeys.PROJECT), notNull(getGateway()), e);
+  }
+
   protected String getText(@NotNull AnActionEvent e) {
     return e.getPresentation().getTextWithMnemonic();
   }
@@ -55,8 +64,15 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     return isEnabled(vcs, gw, getFile(e), e);
   }
 
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    actionPerformed(p, gw, notNull(getFile(e)), e);
+  }
+
   protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @Nullable VirtualFile f, @NotNull AnActionEvent e) {
     return true;
+  }
+
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
   }
 
   @Nullable
@@ -71,6 +87,6 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
   @Nullable
   protected VirtualFile getFile(@NotNull AnActionEvent e) {
-    return VcsUtil.getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    return getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
   }
 }

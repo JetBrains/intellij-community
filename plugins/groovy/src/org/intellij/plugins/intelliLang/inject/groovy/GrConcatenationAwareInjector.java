@@ -93,6 +93,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
 
       @Override
       protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
+        if (methodName == null) return false;
         if (getAnnotatedElementsValue().contains(methodName)) {
           return true;
         }
@@ -131,8 +132,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
       final PsiElement topBlock = ControlFlowUtils.findControlFlowOwner(firstOperand);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof GrCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-      final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
+      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
         @Override
@@ -201,7 +202,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           if (!processCommentInjections(variable)) {
             myShouldStop = true;
           }
-          else if (areThereInjectionsWithName(variable.getName(), false)) {
+          else {
             process(variable, null, -1);
           }
           return false;
@@ -266,16 +267,12 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     }
 
     private boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
-      final String checkName;
       if (annoElement instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
-        checkName = scope instanceof PsiMethod ? ((PsiNamedElement)scope).getName() : ((PsiNamedElement)annoElement).getName();
+        if (scope instanceof PsiMethod && !areThereInjectionsWithName(((PsiNamedElement)scope).getName(), true)) {
+          return true;
+        }
       }
-      else if (annoElement instanceof PsiNamedElement) {
-        checkName = ((PsiNamedElement)annoElement).getName();
-      }
-      else checkName = null;
-      if (checkName == null || !areThereInjectionsWithName(checkName, true)) return true;
       final PsiAnnotation[] annotations =
         GrConcatenationInjector.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true, true);
       if (annotations.length > 0) {

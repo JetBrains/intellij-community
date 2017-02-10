@@ -1,6 +1,7 @@
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.writeUtf8
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -8,7 +9,6 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
-import org.jetbrains.io.writeUtf8
 import java.net.InetSocketAddress
 import java.util.*
 

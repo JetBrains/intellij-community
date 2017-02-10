@@ -14,8 +14,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.computeOrNull
-import com.intellij.util.exists
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  * Implement [WebServerRootsProvider] to add your provider
  */
 class WebServerPathToFileManager(application: Application, private val project: Project) {
-  val pathToInfoCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()
+  val pathToInfoCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
   // time to expire should be greater than pathToFileCache
   private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
 
@@ -55,7 +55,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project) = ServiceManager.getService(project, WebServerPathToFileManager::class.java)
+    @JvmStatic fun getInstance(project: Project) = ServiceManager.getService(project, WebServerPathToFileManager::class.java)!!
   }
 
   private fun clearCache() {

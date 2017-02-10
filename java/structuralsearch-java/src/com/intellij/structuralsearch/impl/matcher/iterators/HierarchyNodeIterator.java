@@ -90,7 +90,7 @@ public class HierarchyNodeIterator extends NodeIterator {
   }
 
   public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
-    remaining = new ArrayList<PsiElement>();
+    remaining = new ArrayList<>();
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
     this.acceptFirstElement = acceptFirstElement;
@@ -99,7 +99,7 @@ public class HierarchyNodeIterator extends NodeIterator {
       reference = reference.getParent();
     }
 
-    build(reference,new HashSet<PsiElement>());
+    build(reference, new HashSet<>());
   }
 
   public boolean hasNext() {

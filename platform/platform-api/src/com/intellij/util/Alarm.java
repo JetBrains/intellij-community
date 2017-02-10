@@ -55,7 +55,9 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
+  // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
+  // requests not yet scheduled to myExecutorService (because e.g. corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -71,7 +73,7 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      if (myThreadToUse != ThreadToUse.SWING_THREAD) {
+      if (myExecutorService != EdtExecutorService.getScheduledExecutorInstance()) {
         myExecutorService.shutdownNow();
       }
     }
@@ -121,8 +123,6 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
-    LOG.assertTrue(threadToUse != ThreadToUse.POOLED_THREAD && threadToUse != ThreadToUse.OWN_THREAD,
-                   "You must provide parent Disposable for ThreadToUse.POOLED_THREAD and ThreadToUse.OWN_THREAD Alarm");
   }
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
@@ -135,9 +135,20 @@ public class Alarm implements Disposable {
                         // or pass to app pooled thread.
                         // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
-                        AppExecutorUtil.createBoundedScheduledExecutorService(1);
+                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm pool",1);
 
-    if (parentDisposable != null) {
+    if (parentDisposable == null) {
+      if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
+        boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
+        IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
+        if (crash) {
+          throw t;
+        }
+        // do not crash yet in case of deprecated SHARED_THREAD
+        LOG.warn(t);
+      }
+    }
+    else {
       Disposer.register(parentDisposable, this);
     }
   }
@@ -163,7 +174,7 @@ public class Alarm implements Disposable {
     if (myThreadToUse != ThreadToUse.SWING_THREAD) return null;
     Application application = ApplicationManager.getApplication();
     if (application == null) return null;
-    return application.getCurrentModalityState();
+    return application.getDefaultModalityState();
   }
 
   public void addRequest(@NotNull Runnable request, long delayMillis) {
@@ -242,18 +253,17 @@ public class Alarm implements Disposable {
     }
   }
 
+  // returns number of requests canceled
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      int count = cancelAllRequests(myRequests);
+      return cancelAllRequests(myRequests) +
       cancelAllRequests(myPendingRequests);
-      return count;
     }
   }
 
   private int cancelAllRequests(@NotNull List<Request> list) {
-    int count = 0;
+    int count = list.size();
     for (Request request : list) {
-      count++;
       request.cancel();
     }
     list.clear();
@@ -287,8 +297,12 @@ public class Alarm implements Disposable {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  /**
+   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * and then wait for the execution to finish.
+   */
   @TestOnly
-  void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     List<Request> requests;
     synchronized (LOCK) {
       requests = new ArrayList<>(myRequests);
@@ -360,22 +374,15 @@ public class Alarm implements Disposable {
             synchronized (LOCK) {
               task = myTask;
               myTask = null;
-
-              myRequests.remove(Request.this);
-              myFuture = null;
             }
-            if (task == null) return;
-
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
               EdtInvocationManager.getInstance().invokeLater(() -> {
-                if (!myDisposed) {
-                  QueueProcessor.runSafely(task);
-                }
+                runSafely(task);
               });
             }
             else {
-              QueueProcessor.runSafely(task);
+              runSafely(task);
             }
           }
 
@@ -402,6 +409,21 @@ public class Alarm implements Disposable {
       catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
+      }
+    }
+
+    private void runSafely(@Nullable Runnable task) {
+      try {
+        if (!myDisposed && task != null) {
+          QueueProcessor.runSafely(task);
+        }
+      }
+      finally {
+        // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
+        synchronized (LOCK) {
+          myRequests.remove(Request.this);
+          myFuture = null;
+        }
       }
     }
 

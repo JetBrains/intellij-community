@@ -1,3 +1,3 @@
-from foo import MyClass
+from bar import MyClass
 
 MyClass()

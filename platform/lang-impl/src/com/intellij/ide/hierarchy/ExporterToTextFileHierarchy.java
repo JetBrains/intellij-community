@@ -16,6 +16,7 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,7 @@ import java.util.Enumeration;
 import java.util.TooManyListenersException;
 
 class ExporterToTextFileHierarchy implements ExporterToTextFile {
+  private static final Logger LOG = Logger.getInstance(ExporterToTextFileHierarchy.class);
   private final HierarchyBrowserBase myHierarchyBrowserBase;
 
   public ExporterToTextFileHierarchy(@NotNull HierarchyBrowserBase hierarchyBrowserBase) {
@@ -49,7 +51,9 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   @Override
   public String getReportText() {
     StringBuilder buf = new StringBuilder();
-    appendNode(buf, myHierarchyBrowserBase.getCurrentBuilder().getRootNode(), SystemProperties.getLineSeparator(), "");
+    HierarchyTreeBuilder currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
+    LOG.assertTrue(currentBuilder != null);
+    appendNode(buf, currentBuilder.getRootNode(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }
 
@@ -91,6 +95,6 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
 
   @Override
   public boolean canExport() {
-    return true;
+    return myHierarchyBrowserBase.getCurrentBuilder() != null;
   }
 }

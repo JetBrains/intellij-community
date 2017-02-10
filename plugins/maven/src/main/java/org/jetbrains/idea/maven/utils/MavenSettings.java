@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
       }
     };
 
-    myChildren = new ArrayList<Configurable>();
+    myChildren = new ArrayList<>();
     myChildren.add(new MavenImportingConfigurable(myProject));
     myChildren.add(new MavenIgnoredFilesConfigurable(myProject));
 
@@ -62,14 +62,6 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
   public boolean hasOwnContent() {
     return true;
-  }
-
-  public boolean isVisible() {
-    return true;
-  }
-
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public JComponent createComponent() {

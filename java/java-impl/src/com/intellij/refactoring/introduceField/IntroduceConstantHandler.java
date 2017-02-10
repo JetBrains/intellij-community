@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -201,7 +200,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (editor != null) {
       final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final TextRange textRange = errorElement.getTextRange();
-      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, new ArrayList<RangeHighlighter>());
+      HighlightManager.getInstance(project).addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true,
+                                                              new ArrayList<>());
     }
   }
 
@@ -230,6 +230,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {
     private PsiElement myElementReference;
     private final PsiExpression myInitializer;
+    private boolean myCheckThrowables = true;
 
     public IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
       super(aClass);
@@ -251,10 +252,23 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
-      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{callExpression});
+      if (!myCheckThrowables) return;
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
       if (!checkedExceptions.isEmpty()) {
         myElementReference = callExpression;
       }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      myCheckThrowables = false;
+      super.visitClass(aClass);
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      myCheckThrowables = false;
+      super.visitLambdaExpression(expression);
     }
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {

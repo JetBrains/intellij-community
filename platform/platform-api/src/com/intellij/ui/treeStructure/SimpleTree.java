@@ -178,7 +178,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   public SimpleNode[] getSelectedNodesIfUniform() {
-    List<SimpleNode> result = new ArrayList<SimpleNode>();
+    List<SimpleNode> result = new ArrayList<>();
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       SimpleNode lastNode = null;
@@ -396,7 +396,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
-    Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(SimpleTree.this, e);
+    Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(this, e);
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
@@ -477,11 +477,9 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   private void debugTree(AbstractTreeBuilder aBuilder) {
-    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        System.out.println("Node: " + node);
-        return true;
-      }
+    TreeUtil.traverseDepth((TreeNode)aBuilder.getTree().getModel().getRoot(), node -> {
+      System.out.println("Node: " + node);
+      return true;
     });
   }
 

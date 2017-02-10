@@ -138,6 +138,12 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
   }
 
+  @NotNull
+  @Override
+  protected Icon getElementIcon(@IconFlags int flags) {
+    return PlatformIcons.PROPERTY_ICON;
+  }
+
   @Override
   public ItemPresentation getPresentation() {
     final YAMLFile yamlFile = (YAMLFile)getContainingFile();
@@ -155,7 +161,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       }
 
       public Icon getIcon(boolean open) {
-        return PlatformIcons.PROPERTY_ICON;
+        return YAMLKeyValueImpl.this.getIcon(0);
       }
     };
   }

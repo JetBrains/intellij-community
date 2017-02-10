@@ -65,19 +65,24 @@ public class PsiPolyExpressionUtil {
    public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
     if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
       if (method != null) {
-        final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
-        if (!typeParameters.isEmpty()) {
-          final PsiType returnType = method.getReturnType();
-          if (returnType != null) {
-            return mentionsTypeParameters(returnType, typeParameters);
-          }
-        }
-        else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
-          return true;
-        }
+        return isMethodCallTypeDependsOnInference(expression, method);
       } else {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
+    final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
+    if (!typeParameters.isEmpty()) {
+      final PsiType returnType = method.getReturnType();
+      if (returnType != null) {
+        return mentionsTypeParameters(returnType, typeParameters);
+      }
+    }
+    else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
+      return true;
     }
     return false;
   }

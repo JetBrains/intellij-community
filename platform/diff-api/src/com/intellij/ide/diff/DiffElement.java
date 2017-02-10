@@ -18,15 +18,14 @@ package com.intellij.ide.diff;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,7 @@ public abstract class DiffElement<T> {
   public abstract DiffElement[] getChildren() throws IOException;
 
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+  public Navigatable getNavigatable(@Nullable Project project) {
     return null;
   }
 
@@ -108,7 +107,7 @@ public abstract class DiffElement<T> {
       byte[] content = getContent();
       if (content == null) throw new DiffRequestProducerException("Can't get content");
 
-      return DiffContentFactory.getInstance().create(new String(content, getCharset()), getFileType());
+      return DiffContentFactory.getInstance().create(project, new String(content, getCharset()), getFileType());
     }
     catch (IOException e) {
       throw new DiffRequestProducerException(e);
@@ -123,8 +122,8 @@ public abstract class DiffElement<T> {
   /**
    * Defines is it possible to perform such operations as copy or delete through Diff Panel
    *
-   * @return <code>true</code> if copy, delete, etc operations are allowed,
-   *        <code>false</code> otherwise
+   * @return {@code true} if copy, delete, etc operations are allowed,
+   *        {@code false} otherwise
    */
   public boolean isOperationsEnabled() {
     return false;
@@ -135,8 +134,8 @@ public abstract class DiffElement<T> {
    *
    * @param container file directory or other container
    * @param relativePath relative path from root
-   * @return <code>true</code> if coping was completed successfully,
-   *        <code>false</code> otherwise
+   * @return {@code true} if coping was completed successfully,
+   *        {@code false} otherwise
    */
   @Nullable
   public DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
@@ -145,8 +144,8 @@ public abstract class DiffElement<T> {
 
   /**
    * Deletes element
-   * @return <code>true</code> if deletion was completed successfully,
-   *        <code>false</code> otherwise
+   * @return {@code true} if deletion was completed successfully,
+   *        {@code false} otherwise
    */
   public boolean delete() {
     return false;

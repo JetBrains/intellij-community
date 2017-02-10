@@ -20,7 +20,6 @@ import com.google.common.collect.PeekingIterator;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +27,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TopCommitsCache {
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private List<VcsCommitMetadata> mySortedDetails = ContainerUtil.newArrayList();
 
-  public TopCommitsCache(@NotNull VcsLogHashMap hashMap) {
+  public TopCommitsCache(@NotNull VcsLogStorage hashMap) {
     myHashMap = hashMap;
   }
 
@@ -46,17 +45,23 @@ public class TopCommitsCache {
     Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
 
     List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    boolean isBroken = false;
     while (it.hasNext()) {
       VcsCommitMetadata detail = it.next();
+      int index = getIndex(detail);
+      if (index == VcsLogStorageImpl.NO_INDEX) {
+        isBroken = true;
+        continue; // means some error happened (and reported) earlier, nothing we can do here
+      }
       if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
         result.add(detail);
-        myCache.put(getIndex(detail), detail);
+        myCache.put(index, detail);
       }
       else {
-        myCache.remove(getIndex(detail));
+        myCache.remove(index);
       }
     }
-    assert result.size() == myCache.size();
+    assert result.size() == myCache.size() || isBroken : result.size() + " details to store, yet " + myCache.size() + " indexes in cache.";
     mySortedDetails = result;
   }
 

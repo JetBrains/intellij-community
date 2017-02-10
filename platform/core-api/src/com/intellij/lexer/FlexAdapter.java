@@ -120,4 +120,9 @@ public class FlexAdapter extends LexerBase {
       LOG.warn(myFlex.getClass().getName(), e);
     }
   }
+
+  @Override
+  public String toString() {
+    return "FlexAdapter for " + myFlex.getClass().getName();
+  }
 }

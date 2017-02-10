@@ -51,8 +51,6 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -73,7 +71,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -88,9 +85,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
-  private TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
+  private final TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
-  EditorTabbedContainer(final EditorWindow window, Project project, final int tabPlacement) {
+  EditorTabbedContainer(final EditorWindow window, Project project) {
     myWindow = window;
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
@@ -99,13 +96,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(
       () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
-      .setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
-      @Override
-      @NotNull
-      public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8));
-      }
-    }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
+      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8))).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener.Adapter() {
         @Override
@@ -126,18 +117,14 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
             VfsUtil.markDirtyAndRefresh(true, false, false, newFile);
           }
         }
-      }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
-    .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {
-      @NotNull
-      @Override
-      public ActionCallback execute(TabInfo info, boolean requestFocus, @NotNull final ActiveRunnable doChangeSelection) {
-        final ActionCallback result = new ActionCallback();
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
-          result.notify(doChangeSelection.run());
-        }, "EditorChange", null);
-        return result;
-      }
+      })
+    .setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
+      final ActionCallback result = new ActionCallback();
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
+        result.notify(doChangeSelection.run());
+      }, "EditorChange", null);
+      return result;
     }).getPresentation().setRequestFocusOnLastFocusedComponent(true);
     myTabs.addMouseListener(new MouseAdapter() {
       @Override
@@ -166,12 +153,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
     });
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings source) {
-        updateTabBorder();
-      }
-    }, this);
+    project.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> updateTabBorder());
 
     Disposer.register(project, this);
   }
@@ -180,16 +162,18 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return myTabs.getTabCount();
   }
 
+  @NotNull
   public ActionCallback setSelectedIndex(final int indexToSelect) {
     return setSelectedIndex(indexToSelect, true);
   }
 
+  @NotNull
   public ActionCallback setSelectedIndex(final int indexToSelect, boolean focusEditor) {
     if (indexToSelect >= myTabs.getTabCount()) return ActionCallback.REJECTED;
     return myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
   }
 
-
+  @NotNull
   public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
     return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file));
   }
@@ -211,10 +195,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
     if (!uiSettings.HIDE_TOOL_STRIPES && !uiSettings.PRESENTATION_MODE) {
-      border.top = topIds.size() > 0 ? 1 : 0;
-      border.bottom = bottom.size() > 0 ? 1 : 0;
-      border.left = leftIds.size() > 0 ? 1 : 0;
-      border.right = rightIds.size() > 0 ? 1 : 0;
+      border.top = !topIds.isEmpty() ? 1 : 0;
+      border.bottom = !bottom.isEmpty() ? 1 : 0;
+      border.left = !leftIds.isEmpty() ? 1 : 0;
+      border.right = !rightIds.isEmpty() ? 1 : 0;
     }
 
     for (String each : ids) {
@@ -265,17 +249,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return myTabs.getIndexOf(myTabs.getSelectedInfo());
   }
 
-  public void setForegroundAt(final int index, final Color color) {
+  void setForegroundAt(final int index, final Color color) {
     myTabs.getTabAt(index).setDefaultForeground(color);
   }
 
-  public void setWaveColor(final int index, @Nullable final Color color) {
+  void setWaveColor(final int index, @Nullable final Color color) {
     final TabInfo tab = myTabs.getTabAt(index);
     tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
     tab.setDefaultWaveColor(color);
   }
 
-  public void setIconAt(final int index, final Icon icon) {
+  void setIconAt(final int index, final Icon icon) {
     myTabs.getTabAt(index).setIcon(icon);
   }
 
@@ -283,15 +267,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myTabs.getTabAt(index).setText(text);
   }
 
-  public void setToolTipTextAt(final int index, final String text) {
+  void setToolTipTextAt(final int index, final String text) {
     myTabs.getTabAt(index).setTooltipText(text);
   }
 
-  public void setBackgroundColorAt(final int index, final Color color) {
+  void setBackgroundColorAt(final int index, final Color color) {
     myTabs.getTabAt(index).setTabColor(color);
   }
 
-  public void setTabLayoutPolicy(final int policy) {
+  void setTabLayoutPolicy(final int policy) {
     switch (policy) {
       case JTabbedPane.SCROLL_TAB_LAYOUT:
         myTabs.getPresentation().setSingleRow(true);
@@ -345,7 +329,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myTabs.addTabSilently(tab, indexToInsert);
   }
 
-  public boolean isEmptyVisible() {
+  boolean isEmptyVisible() {
     return myTabs.isEmptyVisible();
   }
 
@@ -359,15 +343,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  public void setPaintBlocked(boolean blocked) {
-    ((JBTabsImpl)myTabs).setPaintBlocked(blocked, true);
+  void setPaintBlocked(boolean blocked) {
+    myTabs.setPaintBlocked(blocked, true);
   }
 
   private static class MyQueryable implements Queryable {
 
     private final TabInfo myTab;
 
-    public MyQueryable(TabInfo tab) {
+    MyQueryable(TabInfo tab) {
       myTab = tab;
     }
 
@@ -424,7 +408,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
 
-    public CloseTab(JComponent c, TabInfo info) {
+    CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
       myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c);
     }
@@ -503,13 +487,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
     AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone(new Consumer<EditorWindow>() {
-      @Override
-      public void consume(EditorWindow wnd) {
-        if (wnd != null) {
-          if (wnd.findFileComposite(file) != null) {
-            mgr.closeFile(file, wnd);
-          }
+    window.doWhenDone((Consumer<EditorWindow>)wnd -> {
+      if (wnd != null) {
+        if (wnd.findFileComposite(file) != null) {
+          mgr.closeFile(file, wnd);
         }
       }
     });
@@ -561,7 +542,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfo.isMac && e.isControlDown())) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
@@ -570,42 +551,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           }
         }
       }
-    }
-  }
-
-  private class MySwitchProvider implements SwitchProvider {
-    @Override
-    public List<SwitchTarget> getTargets(final boolean onlyVisible, boolean originalProvider) {
-      TabInfo selected = myTabs.getSelectedInfo();
-      if (selected == null) return Collections.emptyList();
-      return UIUtil.uiTraverser(selected.getComponent())
-        .traverse()
-        .filter(JBTabs.class)
-        .filter(Conditions.notEqualTo(myTabs))
-        .flatten(o -> o.getTargets(onlyVisible, false))
-        .toList();
-    }
-
-    @Override
-    public SwitchTarget getCurrentTarget() {
-      TabInfo selected = myTabs.getSelectedInfo();
-      if (selected == null) return null;
-      JBTabs tabs = UIUtil.uiTraverser(selected.getComponent())
-        .traverse()
-        .filter(JBTabs.class)
-        .filter(Conditions.notEqualTo(myTabs))
-        .first();
-      return tabs == null ? null : tabs.getCurrentTarget();
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return null;
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return false;
     }
   }
 
@@ -673,11 +618,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   public static class DockableEditor implements DockableContent<VirtualFile> {
     final Image myImg;
-    private DockableEditorTabbedContainer myContainer;
-    private Presentation myPresentation;
-    private Dimension myPreferredSize;
-    private boolean myPinned;
-    private VirtualFile myFile;
+    private final DockableEditorTabbedContainer myContainer;
+    private final Presentation myPresentation;
+    private final Dimension myPreferredSize;
+    private final boolean myPinned;
+    private final VirtualFile myFile;
 
     public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, Dimension preferredSize, boolean isFilePinned) {
       myImg = img;
@@ -749,7 +694,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   private static class MyShadowBorder implements Border {
     private final JBEditorTabs myTabs;
 
-    public MyShadowBorder(JBEditorTabs tabs) {
+    MyShadowBorder(JBEditorTabs tabs) {
       myTabs = tabs;
     }
 

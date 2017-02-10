@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -57,7 +58,13 @@ public class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      myProvider = TypeAnnotationProvider.Static.create(provider.getAnnotations());
+      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), new Function<PsiAnnotation, PsiAnnotation>() {
+        @Override
+        public PsiAnnotation fun(PsiAnnotation annotation) {
+          return (PsiAnnotation)annotation.copy();
+        }
+      }, PsiAnnotation.EMPTY_ARRAY);
+      myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
 
@@ -291,6 +298,7 @@ public class CanonicalTypes {
 
   private static class Creator extends PsiTypeVisitor<Type> {
     public static final Creator INSTANCE = new Creator();
+    private static final Logger LOG = Logger.getInstance(Creator.class);
 
     @Override
     public Type visitPrimitiveType(PsiPrimitiveType type) {
@@ -299,12 +307,20 @@ public class CanonicalTypes {
 
     @Override
     public Type visitEllipsisType(PsiEllipsisType type) {
-      return new Ellipsis(type, type.getComponentType().accept(this));
+      return new Ellipsis(type, substituteComponents(type));
     }
 
     @Override
     public Type visitArrayType(PsiArrayType type) {
-      return new Array(type, type.getComponentType().accept(this));
+      return new Array(type, substituteComponents(type));
+    }
+
+    @NotNull
+    private Type substituteComponents(PsiArrayType type) {
+      final PsiType componentType = type.getComponentType();
+      final Type substituted = componentType.accept(this);
+      LOG.assertTrue(substituted != null, componentType);
+      return substituted;
     }
 
     @Override

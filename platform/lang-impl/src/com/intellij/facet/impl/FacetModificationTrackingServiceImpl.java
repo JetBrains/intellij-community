@@ -27,17 +27,17 @@ import com.intellij.openapi.util.ModificationTrackerListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.EventDispatcher;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class FacetModificationTrackingServiceImpl extends FacetModificationTrackingService {
-  private final Map<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
-    new THashMap<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>>();
+  private final ConcurrentMap<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
+    ContainerUtil.newConcurrentMap();
 
   public FacetModificationTrackingServiceImpl(final Module module) {
     module.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener());
@@ -51,17 +51,17 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
 
   private Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> getFacetInfo(final Facet facet) {
     Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
-    if (pair == null) {
-      pair = Pair.create(new SimpleModificationTracker(), EventDispatcher.create(ModificationTrackerListener.class));
-      myModificationsTrackers.put(facet, pair);
-    }
-    return pair;
+    if (pair != null) return pair;
+
+    myModificationsTrackers.putIfAbsent(facet, Pair.create(new SimpleModificationTracker(), EventDispatcher.create(ModificationTrackerListener.class)));
+    return myModificationsTrackers.get(facet);
   }
 
   @Override
   public void incFacetModificationTracker(@NotNull final Facet facet) {
     final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
     pair.first.incModificationCount();
+    //noinspection unchecked
     pair.second.getMulticaster().modificationCountChanged(facet);
   }
 
@@ -78,11 +78,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
   private class FacetModificationTrackingListener extends FacetManagerAdapter {
     @Override
     public void facetConfigurationChanged(@NotNull final Facet facet) {
-      final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
-      if (pair != null) {
-        pair.first.incModificationCount();
-        pair.second.getMulticaster().modificationCountChanged(facet);
-      }
+      incFacetModificationTracker(facet);
     }
 
     @Override

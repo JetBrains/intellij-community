@@ -72,7 +72,7 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
     if (aPackage == null) return false;
     final Module module = configuration.getConfigurationModule().getModule();
     if (module == null) return false;
-    final Set<Module> modulesWithPackage = new HashSet<Module>();
+    final Set<Module> modulesWithPackage = new HashSet<>();
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
       final Module currentModule = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);

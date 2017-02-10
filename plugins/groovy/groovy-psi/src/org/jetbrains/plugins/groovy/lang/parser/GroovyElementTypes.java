@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
@@ -219,9 +217,9 @@ public interface GroovyElementTypes {
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
   GroovyElementType RANGE_EXPRESSION = new GroovyElementType("Range expression");
-  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("Composite shift sign <<");
-  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType("Composite shift sign >>");
-  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType("Composite shift sign >>>");
+  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("<<");
+  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType(">>");
+  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType(">>>");
   GroovyElementType MORE_OR_EQUALS_SIGN = new GroovyElementType(">=");
   GroovyElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
   GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");
@@ -285,6 +283,7 @@ public interface GroovyElementTypes {
       return new GrTypeParameterImpl(stub);
     }
 
+    @NotNull
     @Override
     public GrTypeParameterStub createStub(@NotNull GrTypeParameter psi, StubElement parentStub) {
       return new GrTypeParameterStub(parentStub, StringRef.fromString(psi.getName()));
@@ -322,8 +321,8 @@ public interface GroovyElementTypes {
   };
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
-  GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments", true);
-  GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
+  GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = new GrAnnotationArgumentListElementType();
+  GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = new GrNameValuePairElementType();
 
   GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrAnnotationElementType("annotation");
   //parameters
@@ -341,6 +340,7 @@ public interface GroovyElementTypes {
       return new GrParameterImpl(stub);
     }
 
+    @NotNull
     @Override
     public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
       return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(
@@ -413,22 +413,11 @@ public interface GroovyElementTypes {
       throw new UnsupportedOperationException("Not implemented");
     }
   };
-  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
-    new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyLanguage.INSTANCE) {
-      @Override
-      public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
-        return new GrVariableDeclarationImpl(stub);
-      }
-
-      @Override
-      public boolean shouldCreateStub(ASTNode node) {
-        return SharedImplUtil.getParent(node) instanceof GrTypeDefinitionBody;
-      }
-    };
+  GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType();
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
 
-  GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
+  GrVariableElementType VARIABLE = new GrVariableElementType();
 
   //modifiers
   GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");

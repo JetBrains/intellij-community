@@ -15,8 +15,10 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -41,16 +43,19 @@ import java.nio.charset.Charset;
 
 /**
  * @author nik
+ *
+ * Class is not final since it is overridden in Upsource
  */
-public final class FileContentImpl extends UserDataHolderBase implements FileContent {
-  private final VirtualFile myFile;
-  private final String myFileName;
-  private final FileType myFileType;
-  private final Charset myCharset;
-  private byte[] myContent;
-  private CharSequence myContentAsText;
-  private final long myStamp;
-  private byte[] myHash;
+public class FileContentImpl extends UserDataHolderBase implements FileContent {
+  protected final VirtualFile myFile;
+  protected final String myFileName;
+  protected final FileType myFileType;
+  protected final Charset myCharset;
+  protected byte[] myContent;
+  protected CharSequence myContentAsText;
+  protected final long myStamp;
+  protected byte[] myHash;
+  private boolean myLighterASTShouldBeThreadSafe;
 
   @Override
   public Project getProject() {
@@ -82,11 +87,19 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   public @NotNull LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
-      lighterAST = getPsiFileForPsiDependentIndex().getNode().getLighterAST();
-      assert lighterAST != null;
+      FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
+      lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
     return lighterAST;
+  }
+
+  /**
+   * Expand the AST to ensure {@link com.intellij.lang.FCTSBackedLighterAST} won't be used, because it's not thread-safe,
+   * but unsaved documents may be indexed in many concurrent threads
+   */
+  void ensureThreadSafeLighterAST() {
+    myLighterASTShouldBeThreadSafe = true;
   }
 
   public PsiFile createFileFromText(@NotNull CharSequence text) {
@@ -94,10 +107,15 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();
     }
-    final Language language = ((LanguageFileType)getFileTypeWithoutSubstitution()).getLanguage();
-    final VirtualFile file = getFile();
+    return createFileFromText(project, text, (LanguageFileType)getFileTypeWithoutSubstitution(), myFile, myFileName);
+  }
+
+  @NotNull
+  public static PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
+                                           @NotNull VirtualFile file, @NotNull String fileName) {
+    final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-    return PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, text, false, false, true, file);
+    return PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, true, file);
   }
 
   public static class IllegalDataException extends RuntimeException {
@@ -230,6 +248,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     myHash = hash;
   }
 
+  @NotNull
   public PsiFile getPsiFileForPsiDependentIndex() {
     Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
     PsiFile psi = null;

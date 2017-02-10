@@ -46,7 +46,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     myFooElementFile = (XmlFile)createFile("a.xml", "<a/>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<FooElement>(FooElement.class, "a", myFooElementFile), myDisposable);
+    getDomManager().registerFileDescription(new MockDomFileDescription<>(FooElement.class, "a", myFooElementFile), myDisposable);
 
     myBarElementFile = (XmlFile)createFile("b.xml", "<b/>");
 
@@ -125,7 +125,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   public void testCopyFileDescriptionFromOriginalFile() throws Throwable {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", file), myDisposable);
+    getDomManager().registerFileDescription(new MockDomFileDescription<>(MyElement.class, "b", file), myDisposable);
     ApplicationManager.getApplication().runWriteAction(() -> {
       file.setName("b.xml");
     });
@@ -139,7 +139,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   public void testDependantFileDescriptionCauseStackOverflow() throws Throwable {
     final XmlFile interestingFile = (XmlFile)createFile("a.xml", "<b>42</b>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", (XmlFile)null), myDisposable);
+    getDomManager().registerFileDescription(new MockDomFileDescription<>(MyElement.class, "b", (XmlFile)null), myDisposable);
     for (int i = 0; i < 239; i++) {
       getDomManager().registerFileDescription(new MockDomFileDescription<AbstractElement>(AbstractElement.class, "b", (XmlFile)null) {
         @Override

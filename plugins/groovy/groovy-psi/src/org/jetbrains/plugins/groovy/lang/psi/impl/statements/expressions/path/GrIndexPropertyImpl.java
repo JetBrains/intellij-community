@@ -22,7 +22,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -117,7 +120,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
     //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
     PsiType[] args = PsiUtil
-      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null, false);
+      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null);
     final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
     final PsiElement element = candidate.getElement();
     if (element instanceof PsiNamedElement) {
@@ -158,7 +161,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrArgumentList argList = getArgumentList();
 
     //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument, false);
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument);
     if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GlobalSearchScope resolveScope = getResolveScope();

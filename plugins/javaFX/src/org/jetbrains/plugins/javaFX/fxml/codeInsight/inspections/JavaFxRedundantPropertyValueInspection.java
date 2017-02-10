@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -172,7 +171,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
   }
 
   /**
-   * The file format is <code>ClassName#propertyName:type=value</code> per line, line with leading double dash (--) is commented out
+   * The file format is {@code ClassName#propertyName:type=value} per line, line with leading double dash (--) is commented out
    */
   @NotNull
   private static Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {

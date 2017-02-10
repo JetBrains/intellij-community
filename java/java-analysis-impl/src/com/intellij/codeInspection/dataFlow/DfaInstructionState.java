@@ -65,7 +65,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
 }
 
 class StateQueue {
-  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<DfaInstructionState>();
+  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<>();
   private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
   
   void offer(DfaInstructionState state) {

@@ -555,6 +555,7 @@ public class GeneratedParserUtilBase {
     state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
   }
 
+  @SafeVarargs
   public static <T> void register_hook_(PsiBuilder builder, Hook<T[]> hook, T... param) {
     ErrorState state = ErrorState.get(builder);
     state.hooks = Hooks.concat(hook, param, state.level, state.hooks);
@@ -839,7 +840,7 @@ public class GeneratedParserUtilBase {
 
     @Override
     public String fun(Object o) {
-      return o.toString();
+      return convertItem(o);
     }
 
     public void addItem(@NotNull PsiBuilder builder, @NotNull String text) {
@@ -929,10 +930,10 @@ public class GeneratedParserUtilBase {
     public boolean altMode;
 
     int lastExpectedVariantPos = -1;
-    MyList<Variant> variants = new MyList<Variant>(INITIAL_VARIANTS_SIZE);
-    MyList<Variant> unexpected = new MyList<Variant>(INITIAL_VARIANTS_SIZE / 10);
+    MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
+    MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
 
-    final LimitedPool<Variant> VARIANTS = new LimitedPool<Variant>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
+    final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
       @NotNull
       @Override
       public Variant create() {
@@ -943,7 +944,7 @@ public class GeneratedParserUtilBase {
       public void cleanup(@NotNull Variant o) {
       }
     });
-    final LimitedPool<Frame> FRAMES = new LimitedPool<Frame>(FRAMES_POOL_SIZE, new LimitedPool.ObjectFactory<Frame>() {
+    final LimitedPool<Frame> FRAMES = new LimitedPool<>(FRAMES_POOL_SIZE, new LimitedPool.ObjectFactory<Frame>() {
       @NotNull
       @Override
       public Frame create() {
@@ -1146,7 +1147,7 @@ public class GeneratedParserUtilBase {
     }
 
     static <E> Hooks<E> concat(Hook<E> hook, E param, int level, Hooks<?> hooks) {
-      return new Hooks<E>(hook, param, level, hooks);
+      return new Hooks<>(hook, param, level, hooks);
     }
   }
 
@@ -1154,8 +1155,8 @@ public class GeneratedParserUtilBase {
   private static final int MAX_CHILDREN_IN_TREE = 10;
   public static boolean parseAsTree(ErrorState state, final PsiBuilder builder, int level, final IElementType chunkType,
                                     boolean checkBraces, final Parser parser, final Parser eatMoreCondition) {
-    final LinkedList<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parenList = new LinkedList<Pair<PsiBuilder.Marker, PsiBuilder.Marker>>();
-    final LinkedList<Pair<PsiBuilder.Marker, Integer>> siblingList = new LinkedList<Pair<PsiBuilder.Marker, Integer>>();
+    final LinkedList<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parenList = new LinkedList<>();
+    final LinkedList<Pair<PsiBuilder.Marker, Integer>> siblingList = new LinkedList<>();
     PsiBuilder.Marker marker = null;
 
     final Runnable checkSiblingsRunnable = () -> {

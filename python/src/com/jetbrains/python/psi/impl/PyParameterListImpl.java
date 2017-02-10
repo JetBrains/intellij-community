@@ -103,7 +103,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   @Override
   @Nullable
   public PyNamedParameter findParameterByName(@NotNull final String name) {
-    final Ref<PyNamedParameter> result = new Ref<PyNamedParameter>();
+    final Ref<PyNamedParameter> result = new Ref<>();
     ParamHelper.walkDownParamArray(getParameters(), new ParamHelper.ParamVisitor() {
       @Override
       public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {

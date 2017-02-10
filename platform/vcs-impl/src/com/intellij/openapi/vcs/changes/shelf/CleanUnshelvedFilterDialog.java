@@ -68,7 +68,7 @@ public class CleanUnshelvedFilterDialog extends DialogWrapper {
     mySystemUnshelvedButton = new JRadioButton("created automatically", true);
     myUnshelvedWithFilterButton = new JRadioButton("older than one", false);
     myAllUnshelvedButton = new JRadioButton("all", false);
-    myTimePeriodComboBox = new ComboBox(new EnumComboBoxModel<TimePeriod>(TimePeriod.class));
+    myTimePeriodComboBox = new ComboBox(new EnumComboBoxModel<>(TimePeriod.class));
     myTimePeriodComboBox.setEnabled(myUnshelvedWithFilterButton.isSelected());
     myUnshelvedWithFilterButton.addItemListener(new ItemListener() {
       @Override

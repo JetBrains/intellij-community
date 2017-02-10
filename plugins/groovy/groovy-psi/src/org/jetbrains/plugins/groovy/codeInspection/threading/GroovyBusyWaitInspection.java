@@ -56,8 +56,7 @@ public class GroovyBusyWaitInspection extends BaseInspection {
   private static class BusyWaitVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-        @NotNull GrMethodCallExpression grMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
 
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

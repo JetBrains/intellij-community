@@ -7,7 +7,7 @@ class A {
     ArrayList<String> strings = new ArrayList<String>();
     Stream<String> it = strings.stream();
 
-    int i = (int) it.flatMap((t) -> Collections.singletonList(t).stream()).count();
+    int i = (int) it.flatMap(t -> Collections.singletonList(t).stream()).count();
 
   }
 }

@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
  */
 class XmlMarkupBuilderTest extends LightGroovyTestCase {
 
-  public void testHighlighting() {
+  void testHighlighting() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection)
     myFixture.configureByText "A.groovy", """\
 new groovy.xml.MarkupBuilder().root {
@@ -54,7 +54,7 @@ new groovy.xml.MarkupBuilder().root {
     myFixture.testHighlighting(true, false, true)
   }
 
-  public void testResolveToMethod1() {
+  void testResolveToMethod1() {
     myFixture.configureByText "A.groovy", """
 class A {
     void foo() {}
@@ -74,7 +74,7 @@ class A {
     assert method.getContainingClass().getName() == "A"
   }
 
-  public void testResolveToMethod2() {
+  void testResolveToMethod2() {
     myFixture.configureByText "A.groovy", """\
 class A {
     void testSomething() {
@@ -92,7 +92,7 @@ class A {
     assert method.containingClass.name == "MarkupBuilder"
   }
 
-  public void testResolveToDynamicMethod() {
+  void testResolveToDynamicMethod() {
     myFixture.configureByText "A.groovy", """\
 def xml = new groovy.xml.MarkupBuilder()
 xml.records() {

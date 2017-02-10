@@ -66,7 +66,7 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(GrNewExpression newExpression) {
+    public void visitNewExpression(@NotNull GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
       final GrCodeReferenceElement refElement = newExpression.getReferenceElement();
       if (refElement == null) return;      //new expression is not correct so we shouldn't check it

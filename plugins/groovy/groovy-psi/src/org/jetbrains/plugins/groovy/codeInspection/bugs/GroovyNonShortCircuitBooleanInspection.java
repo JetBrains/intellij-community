@@ -69,12 +69,12 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Replace with short-circuit expression";
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrBinaryExpression expression =
           (GrBinaryExpression) descriptor.getPsiElement();

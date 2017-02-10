@@ -163,7 +163,7 @@ public final class PythonImportUtils {
   private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
                                                 Set<String> seenCandidateNames, PsiFile existingImportFile) {
     Project project = node.getProject();
-    List<PsiElement> symbols = new ArrayList<PsiElement>();
+    List<PsiElement> symbols = new ArrayList<>();
     symbols.addAll(PyClassNameIndex.find(refText, project, true));
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(node);
     if (!isQualifier(node)) {
@@ -237,7 +237,7 @@ public final class PythonImportUtils {
   }
 
   private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
       if (isImportableModule(targetFile, file)) {

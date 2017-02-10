@@ -33,11 +33,11 @@ import java.util.*;
 public class BuildIcons {
   public static void main(String[] args) throws Exception {
     File root = new File("/Users/max/IDEA/out/classes/production/");
-    final MultiMap<Couple<Integer>, String> dimToPath = new MultiMap<Couple<Integer>, String>();
+    final MultiMap<Couple<Integer>, String> dimToPath = new MultiMap<>();
 
     walk(root, dimToPath, root);
 
-    ArrayList<Couple<Integer>> keys = new ArrayList<Couple<Integer>>(dimToPath.keySet());
+    ArrayList<Couple<Integer>> keys = new ArrayList<>(dimToPath.keySet());
     Collections.sort(keys, (o1, o2) -> {
       int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
       if (d0 != 0) return d0;
@@ -83,7 +83,7 @@ public class BuildIcons {
         }
         else {
           target = new File("/Users/max/images/icons", relativePath);
-          dimToPath.putValue(new Couple<Integer>(width, height), relativePath);
+          dimToPath.putValue(new Couple<>(width, height), relativePath);
         }
         FileUtil.copy(file, target);
       }

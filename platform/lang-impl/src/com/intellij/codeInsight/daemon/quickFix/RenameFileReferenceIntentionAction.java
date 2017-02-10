@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -78,7 +77,6 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myFileReference.handleElementRename(myExistingElementName);
   }
 

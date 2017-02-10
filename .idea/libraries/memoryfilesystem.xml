@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="memoryfilesystem">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/memoryfilesystem-0.8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/memoryfilesystem-0.8.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

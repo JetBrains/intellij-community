@@ -49,15 +49,15 @@ public class HgLogParseTest {
   @Test
   public void testParseUserNameAndEmail() {
     assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin <asdasd@localhost>"),
-                 new Couple<String>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
-    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Couple<String>("Vasya Pavlovich Pupkin", ""));
+                 new Couple<>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
+    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Couple<>("Vasya Pavlovich Pupkin", ""));
     assertEquals(HgUtil.parseUserNameAndEmail("vasya.pupkin@localhost.com"),
-                 new Couple<String>("", "vasya.pupkin@localhost.com"));
+                 new Couple<>("", "vasya.pupkin@localhost.com"));
     assertEquals(HgUtil.parseUserNameAndEmail("<vasya.pupkin@localhost.com>"),
-                 new Couple<String>("", "vasya.pupkin@localhost.com"));
+                 new Couple<>("", "vasya.pupkin@localhost.com"));
     assertEquals(HgUtil.parseUserNameAndEmail("<vasya@localhost.com>"),
-                 new Couple<String>("", "vasya@localhost.com"));
+                 new Couple<>("", "vasya@localhost.com"));
     assertEquals(HgUtil.parseUserNameAndEmail("Vasya <vas@localhost.com>"),
-                 new Couple<String>("Vasya", "vas@localhost.com"));
+                 new Couple<>("Vasya", "vas@localhost.com"));
   }
 }

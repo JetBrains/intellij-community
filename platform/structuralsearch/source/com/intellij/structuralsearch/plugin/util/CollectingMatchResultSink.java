@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CollectingMatchResultSink extends DefaultMatchResultSink {
-  private final List<MatchResult> matches = new ArrayList<MatchResult>();
+  private final List<MatchResult> matches = new ArrayList<>();
 
   @Override
   public void newMatch(MatchResult result) {

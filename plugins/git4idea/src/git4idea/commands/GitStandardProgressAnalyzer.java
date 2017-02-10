@@ -33,7 +33,7 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
 
   // progress of each operation is stored here. this is an overhead since operations go one by one,
   // but it looks simpler than storing current operation, checking that there was no skipped, etc.
-  private TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<Operation>(4);
+  private TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<>(4);
 
   public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();

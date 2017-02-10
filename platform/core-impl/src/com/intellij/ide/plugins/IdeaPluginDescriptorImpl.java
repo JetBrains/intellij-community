@@ -120,7 +120,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * @deprecated 
    * use {@link JDOMUtil#internElement(Element, StringInterner)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static void internJDOMElement(@NotNull Element rootElement) {
   }
@@ -165,13 +164,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = path;
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
+  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
     Application application = ApplicationManager.getApplication();
-    readExternal(document, url, application != null && application.isUnitTestMode());
+    readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
+  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude, pathResolver);
     Element rootElement = document.getRootElement();
     JDOMUtil.internElement(rootElement, new StringInterner());
     readExternal(document.getRootElement());
@@ -180,7 +179,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url);
+      readExternal(document, url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
     catch (FileNotFoundException e) {
       throw e;
@@ -196,7 +195,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // used in upsource
   protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-
+    if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
     String idString = pluginBean.id;

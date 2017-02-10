@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
@@ -63,7 +64,7 @@ class CompletionAutoPopupTester {
   private static void waitPhase(Closure condition) {
     for (j in 1..1000) {
       def phase = null
-      UsefulTestCase.edt { phase = CompletionServiceImpl.completionPhase }
+      EdtTestUtil.runInEdtAndWait { phase = CompletionServiceImpl.completionPhase }
       if (condition(phase)) {
         return
       }
@@ -73,7 +74,7 @@ class CompletionAutoPopupTester {
         println "\n\n----------------------------\n\n"
         if (SystemInfo.isLinux) {
           try {
-            Process process = new ProcessBuilder().command(["top", "-b", "-n", "1"] as String[]).redirectErrorStream(true).start();
+            Process process = new ProcessBuilder().command(["top", "-b", "-n", "1"] as String[]).redirectErrorStream(true).start()
             println FileUtil.loadTextAndClose(process.getInputStream())
           }
           catch (IOException e) {
@@ -84,32 +85,32 @@ class CompletionAutoPopupTester {
       }
       Thread.sleep(10)
     }
-    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.phaseRaw)
+    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.completionPhase)
   }
 
   final static AtomicInteger cnt = new AtomicInteger()
   def joinCommit(Closure c1={}) {
     final AtomicBoolean committed = new AtomicBoolean()
     final AtomicBoolean run = new AtomicBoolean()
-    boolean executed=true;
+    boolean executed=true
     def closureSeq = cnt.getAndIncrement()
     Runnable r = new Runnable() {
       @Override
-      public void run() {
+      void run() {
         run.set(true)
         ApplicationManager.application.invokeLater {
-          c1();
+          c1()
           committed.set(true)
-        };
+        }
       }
 
       @Override
-      public String toString() {
-        return "Closure "+closureSeq;
+      String toString() {
+        return "Closure "+closureSeq
       }
-    };
-    UsefulTestCase.edt {
-      executed = PsiDocumentManager.getInstance(myFixture.project).performWhenAllCommitted(r);
+    }
+    EdtTestUtil.runInEdtAndWait {
+      executed = PsiDocumentManager.getInstance(myFixture.project).performWhenAllCommitted(r)
     }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed()
     assert !ApplicationManager.getApplication().isReadAccessAllowed()
@@ -120,7 +121,7 @@ class CompletionAutoPopupTester {
         UsefulTestCase.fail("too long waiting for documents to be committed. executed: $executed; r: $r; run: $run; ")
         UsefulTestCase.printThreadDump()
       }
-      UIUtil.pump();
+      UIUtil.pump()
     }
   }
 

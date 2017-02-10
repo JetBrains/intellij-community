@@ -81,7 +81,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                 if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
                   return Collections.emptyMap();
                 }
-                final HashMap<String, Kind> map = new HashMap<String, Kind>();
+                final HashMap<String, Kind> map = new HashMap<>();
                 NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
                     int depth;
@@ -122,7 +122,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     @NotNull
     @Override
     public DataExternalizer<Kind> getValueExternalizer() {
-        return new EnumDataDescriptor<Kind>(Kind.class);
+        return new EnumDataDescriptor<>(Kind.class);
     }
 
     @NotNull
@@ -204,7 +204,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         private final PsiManager myMgr;
         private final String myName;
 
-        private final Collection<NavigationItem> myResult = new ArrayList<NavigationItem>();
+        private final Collection<NavigationItem> myResult = new ArrayList<>();
 
         public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
             myMgr = PsiManager.getInstance(project);

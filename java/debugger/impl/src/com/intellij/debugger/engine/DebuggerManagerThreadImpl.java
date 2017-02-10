@@ -29,10 +29,12 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author lex
@@ -110,9 +112,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     invoke(command);
 
     if (currentCommand != null) {
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(() -> {
-        try {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(
+        () -> {
           if (currentCommand == myEvents.getCurrentEvent()) {
             // if current command is still in progress, cancel it
             getCurrentRequest().requestStop();
@@ -130,11 +131,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
               }
             }
           }
-        }
-        finally {
-          Disposer.dispose(alarm);
-        }
-      }, terminateTimeout);
+        }, terminateTimeout, TimeUnit.MILLISECONDS);
     }
   }
 

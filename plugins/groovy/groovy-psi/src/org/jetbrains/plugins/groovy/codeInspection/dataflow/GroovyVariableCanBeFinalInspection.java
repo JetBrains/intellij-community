@@ -95,10 +95,10 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   @Override
   public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<TObjectIntHashMap<GrVariable>>(
+    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
-      new WritesCounterSemilattice<GrVariable>()
+      new WritesCounterSemilattice<>()
     );
     final List<TObjectIntHashMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null || dfaResult.isEmpty()) return;

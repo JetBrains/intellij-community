@@ -68,7 +68,7 @@ final class FileSystemScanner {
   // Utils ==================================================================
 
   private void scanDirectories(DirectoryObject rootDirectoryObject, CvsFiles cvsFiles) throws IOException {
-    final List<DirectoryObject> directories = new LinkedList<DirectoryObject>();
+    final List<DirectoryObject> directories = new LinkedList<>();
     directories.add(rootDirectoryObject);
     while (directories.size() > 0) {
       final DirectoryObject directoryObject = directories.remove(0);
@@ -87,7 +87,7 @@ final class FileSystemScanner {
 
     cvsFiles.add(CvsFile.createCvsDirectory(directoryObject));
 
-    final Set<String> subDirectoryNames = new HashSet<String>();
+    final Set<String> subDirectoryNames = new HashSet<>();
     final LocalFiles localFiles = new LocalFiles(directoryObject, clientEnvironment);
 
     // get all the entries we know about, and process them
@@ -110,7 +110,7 @@ final class FileSystemScanner {
       cvsFiles.add(CvsFile.createCvsFileForExistingFile(FileObject.createInstance(directoryObject, fileName)));
     }
 
-    final List<DirectoryObject> subDirectories = new ArrayList<DirectoryObject>(subDirectoryNames.size());
+    final List<DirectoryObject> subDirectories = new ArrayList<>(subDirectoryNames.size());
     for (final String directoryName : subDirectoryNames) {
       subDirectories.add(DirectoryObject.createInstance(directoryObject, directoryName));
     }

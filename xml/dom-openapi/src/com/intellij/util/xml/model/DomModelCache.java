@@ -36,7 +36,7 @@ public abstract class DomModelCache<T, H extends UserDataHolder> {
 
   public DomModelCache(Project project, @NonNls String keyName) {
     myProject = project;
-    myKey = new Key<CachedValue<T>>(keyName);
+    myKey = new Key<>(keyName);
   }
 
   @Nullable

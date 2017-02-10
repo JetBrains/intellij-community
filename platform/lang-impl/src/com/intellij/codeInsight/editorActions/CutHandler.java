@@ -79,7 +79,7 @@ public class CutHandler extends EditorWriteActionHandler {
 
     int start = selectionModel.getSelectionStart();
     int end = selectionModel.getSelectionEnd();
-    final List<TextRange> selections = new ArrayList<TextRange>();
+    final List<TextRange> selections = new ArrayList<>();
     if (editor.getCaretModel().supportsMultipleCarets()) {
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override

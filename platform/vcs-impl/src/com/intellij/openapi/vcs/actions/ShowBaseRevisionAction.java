@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -100,13 +99,8 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   }
 
   @Override
-  protected void update(VcsContext vcsContext, Presentation presentation) {
+  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, null));
-  }
-
-  @Override
-  protected boolean forceSyncUpdate(AnActionEvent e) {
-    return true;
   }
 
   static class NotificationPanel extends JPanel {

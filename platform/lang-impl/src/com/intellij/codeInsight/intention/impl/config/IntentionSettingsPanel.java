@@ -74,9 +74,9 @@ public class IntentionSettingsPanel implements MasterDetails {
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        final HashSet<String> quoted = new HashSet<String>();
+        final HashSet<String> quoted = new HashSet<>();
         List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
-        List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
+        List<IntentionActionMetaData> result = new ArrayList<>();
         for (IntentionActionMetaData metaData : list) {
           if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)){
             result.add(metaData);

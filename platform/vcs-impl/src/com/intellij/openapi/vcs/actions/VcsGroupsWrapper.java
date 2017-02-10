@@ -22,19 +22,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
@@ -42,17 +38,12 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
 
   @NotNull private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private Collection<StandardVcsGroup> myVcsGroups;
 
   public void update(@NotNull AnActionEvent e) {
     if (e.getProject() == null) {
       e.getPresentation().setVisible(false);
     }
     else {
-      if (myVcsGroups == null) {
-        myVcsGroups = collectVcsGroups(e);
-      }
-
       updateVcsGroups(e);
     }
   }
@@ -64,8 +55,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
       e.getPresentation().setVisible(false);
     }
     else {
-      Map<String, StandardVcsGroup> vcsGroupMap =
-        myVcsGroups.stream().collect(toMap(group -> group.getVcsName(e.getProject()), Function.identity()));
+      Map<String, StandardVcsGroup> vcsGroupMap = collectVcsGroups(e);
       StandardVcsGroup firstVcsGroup = vcsGroupMap.get(getFirstItem(currentVcses));
       DefaultActionGroup allVcsesGroup =
         currentVcses.size() == 1 && firstVcsGroup != null ? firstVcsGroup : createAllVcsesGroup(vcsGroupMap, currentVcses);
@@ -87,29 +77,30 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
 
   @NotNull
   private static Set<String> collectVcses(@NotNull VcsContext context) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(context.getProject());
+
     return context.getSelectedFilesStream()
-      .map(file -> ChangesUtil.getVcsForFile(file, context.getProject()))
+      .map(vcsManager::getVcsFor)
       .filter(Objects::nonNull)
       .map(AbstractVcs::getName)
       .distinct()
-      .limit(ProjectLevelVcsManager.getInstance(context.getProject()).getAllActiveVcss().length)
+      .limit(vcsManager.getAllActiveVcss().length)
       .collect(toSet());
   }
 
   @NotNull
-  private static Collection<StandardVcsGroup> collectVcsGroups(@NotNull AnActionEvent e) {
+  private static Map<String, StandardVcsGroup> collectVcsGroups(@NotNull AnActionEvent e) {
+    Map<String, StandardVcsGroup> result = ContainerUtil.newHashMap();
     DefaultActionGroup vcsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
-    AnAction[] children = vcsGroup.getChildren(e);
-    Collection<StandardVcsGroup> result = ContainerUtil.newArrayList();
 
-    for (AnAction child : children) {
+    for (AnAction child : vcsGroup.getChildren(e)) {
       if (!(child instanceof StandardVcsGroup)) {
-        LOG.error(MessageFormat.format(
-          "Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. GroupId class: {0} group ID: {1}",
-          child.getClass().getName(), ActionManager.getInstance().getId(child)));
+        LOG.error(MessageFormat.format("Any version control group should extend {0}. Violated by {1}, {2}.", StandardVcsGroup.class,
+                                       ActionManager.getInstance().getId(child), child.getClass()));
       }
       else {
-        result.add((StandardVcsGroup)child);
+        StandardVcsGroup group = (StandardVcsGroup)child;
+        result.put(group.getVcsName(e.getProject()), group);
       }
     }
 

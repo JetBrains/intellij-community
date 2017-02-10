@@ -198,7 +198,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
-      ArrayList<Object> result = new ArrayList<Object>();
+      ArrayList<Object> result = new ArrayList<>();
       final ConvertContext convertContext = getConvertContext();
       for (T variant: resolvingConverter.getVariants(convertContext)) {
         LookupElement lookupElement = resolvingConverter.createLookupElement(variant);

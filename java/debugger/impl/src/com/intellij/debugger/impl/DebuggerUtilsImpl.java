@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,24 +33,34 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
+  public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
   @Override
@@ -138,6 +148,33 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return PositionUtil.getContextElement(context);
   }
 
+  @NotNull
+  public static Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+    PsiElement contextClass = null;
+    PsiType contextType = null;
+    if (!StringUtil.isEmpty(className)) {
+      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
+      if (primitiveType != null) {
+        contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
+        contextType = primitiveType;
+      }
+      else {
+        contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
+        if (contextClass != null) {
+          contextClass = contextClass.getNavigationElement();
+        }
+        if (contextClass instanceof PsiCompiledElement) {
+          contextClass = ((PsiCompiledElement)contextClass).getMirror();
+        }
+        contextType = getType(className, project);
+      }
+      if (contextClass != null) {
+        contextClass.putUserData(PSI_TYPE_KEY, contextType);
+      }
+    }
+    return Pair.create(contextClass, contextType);
+  }
+
   @Override
   public PsiClass chooseClassDialog(String title, Project project) {
     TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createAllProjectScopeChooser(title);
@@ -187,5 +224,50 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   public static boolean isRemote(DebugProcess debugProcess) {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
+  }
+
+  public interface SupplierThrowing<T, E extends Throwable> {
+    T get() throws E;
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier, T defaultValue) throws E {
+    return suppressExceptions(supplier, defaultValue, true, null);
+  }
+
+  public static <T, E extends Exception> T suppressExceptions(SupplierThrowing<T, E> supplier,
+                                                              T defaultValue,
+                                                              boolean ignorePCE,
+                                                              Class<E> rethrow) throws E {
+    try {
+      return supplier.get();
+    }
+    catch (ProcessCanceledException e) {
+      if (!ignorePCE) {
+        throw e;
+      }
+    }
+    catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
+    catch (InternalException e) {LOG.info(e);}
+    catch (Exception | AssertionError e) {
+      if (rethrow != null && rethrow.isInstance(e)) {
+        throw e;
+      }
+      else {
+        LOG.error(e);
+      }
+    }
+    return defaultValue;
+  }
+
+  public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
+    if (ApplicationManagerEx.getApplicationEx().holdsReadLock()) {
+      return action.compute();
+    }
+    Ref<T> res = Ref.create();
+    while (true) {
+      if (ProgressManager.getInstance().runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
+        return res.get();
+      }
+    }
   }
 }

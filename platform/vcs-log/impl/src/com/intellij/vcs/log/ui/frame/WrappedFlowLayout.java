@@ -18,7 +18,7 @@ package com.intellij.vcs.log.ui.frame;
 import javax.swing.*;
 import java.awt.*;
 
-class WrappedFlowLayout extends FlowLayout {
+public class WrappedFlowLayout extends FlowLayout {
 
   public WrappedFlowLayout(int hgap, int vgap) {
     super(FlowLayout.LEADING, hgap, vgap);
@@ -38,6 +38,10 @@ class WrappedFlowLayout extends FlowLayout {
     Container parent = SwingUtilities.getUnwrappedParent(target);
     int maxWidth = parent.getWidth() - (parent.getInsets().left + parent.getInsets().right);
 
+    return getDimension(target, maxWidth);
+  }
+
+  public Dimension getDimension(Container target, int maxWidth) {
     Insets insets = target.getInsets();
     int height = insets.top + insets.bottom;
     int width = insets.left + insets.right;

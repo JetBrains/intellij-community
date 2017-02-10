@@ -69,7 +69,7 @@ public final class PyExtractSuperclassHelper {
 
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
-    selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
+    selectedMemberInfos = new ArrayList<>(selectedMemberInfos);
 
     final RefactoringEventData beforeData = new RefactoringEventData();
     beforeData.addElements(JBIterable.from(selectedMemberInfos).transform(

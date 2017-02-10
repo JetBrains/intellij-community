@@ -45,11 +45,7 @@ public class XDebuggerHistoryManager {
       return false;
     }
 
-    LinkedList<XExpression> list = myRecentExpressions.get(id);
-    if (list == null) {
-      list = new LinkedList<>();
-      myRecentExpressions.put(id, list);
-    }
+    LinkedList<XExpression> list = myRecentExpressions.computeIfAbsent(id, k -> new LinkedList<>());
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
       list.removeLast();
     }

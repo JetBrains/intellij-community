@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATION_DELEGATE_FQN;
 
 public class BindableTransformationSupport implements AstTransformationSupport {
 
@@ -57,8 +58,8 @@ public class BindableTransformationSupport implements AstTransformationSupport {
 
     final PsiManager manager = clazz.getManager();
     final GlobalSearchScope scope = clazz.getResolveScope();
-
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(clazz.getProject());
+
     final PsiType pclType = facade.getElementFactory().createTypeByFQClassName(PCL_FQN, scope);
     final PsiArrayType pclArrayType = new PsiArrayType(pclType);
     final PsiType stringType = PsiType.getJavaLangString(manager, scope);
@@ -111,13 +112,10 @@ public class BindableTransformationSupport implements AstTransformationSupport {
         .addParameter("name", stringType)
     );
 
-    PsiClass docDelegate = facade.findClass(PCS_FQN, context.getCodeClass().getResolveScope());
-
     for (LightMethodBuilder method : methods) {
       method.addModifier(PsiModifier.PUBLIC);
       method.setOriginInfo(ORIGIN_INFO);
-      if (docDelegate == null) continue;
-      method.putUserData(ResolveUtil.DOCUMENTATION_DELEGATE, docDelegate.findMethodBySignature(method, false));
+      method.putUserData(DOCUMENTATION_DELEGATE_FQN, PCS_FQN);
     }
 
     context.addMethods(methods);

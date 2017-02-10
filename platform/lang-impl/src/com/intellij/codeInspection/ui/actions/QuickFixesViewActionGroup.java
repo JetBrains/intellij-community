@@ -34,13 +34,15 @@ public class QuickFixesViewActionGroup extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     final InspectionResultsView view = getView(e);
-    if (view == null) {
+    if (view == null || InvokeQuickFixAction.cantApplyFixes(view)) {
       return AnAction.EMPTY_ARRAY;
     }
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
-    if (wrapper == null) return AnAction.EMPTY_ARRAY;
-
-    final QuickFixAction[] fixes = view.getProvider().getQuickFixes(wrapper, view.getTree());
-    return fixes == null ? AnAction.EMPTY_ARRAY : fixes;
+    InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(true);
+    if (toolWrapper == null) return AnAction.EMPTY_ARRAY;
+    final QuickFixAction[] quickFixes = view.getProvider().getQuickFixes(toolWrapper, view.getTree());
+    if (quickFixes == null || quickFixes.length == 0) {
+      return AnAction.EMPTY_ARRAY;
+    }
+    return quickFixes;
   }
 }

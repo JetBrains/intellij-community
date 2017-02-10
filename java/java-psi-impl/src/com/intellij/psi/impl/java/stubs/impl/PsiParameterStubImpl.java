@@ -23,7 +23,6 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,15 +39,15 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     return flags;
   }
 
-  private StringRef myName;
+  private String myName;
   private final TypeInfo myType;
   private byte myFlags;
 
   public PsiParameterStubImpl(StubElement parent, @NotNull String name, @NotNull TypeInfo type, boolean ellipsis, boolean generatedName) {
-    this(parent, StringRef.fromString(name), type, packFlags(ellipsis, generatedName));
+    this(parent, name, type, packFlags(ellipsis, generatedName));
   }
 
-  public PsiParameterStubImpl(StubElement parent, @NotNull StringRef name, @NotNull TypeInfo type, byte flags) {
+  public PsiParameterStubImpl(StubElement parent, @NotNull String name, @NotNull TypeInfo type, byte flags) {
     super(parent, JavaStubElementTypes.PARAMETER);
     myName = name;
     myType = type;
@@ -79,11 +78,11 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   @NotNull
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   public void setName(String name) {
-    myName = StringRef.fromString(name);
+    myName = name;
     myFlags = BitUtil.set(myFlags, GENERATED_NAME, false);
   }
 

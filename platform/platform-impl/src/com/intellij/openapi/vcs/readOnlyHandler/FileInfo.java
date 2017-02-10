@@ -22,7 +22,7 @@ import com.intellij.util.ListWithSelection;
 
 class FileInfo {
   private final VirtualFile myFile;
-  private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<HandleType>();
+  private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<>();
 
   public FileInfo(VirtualFile file, Project project) {
     myFile = file;

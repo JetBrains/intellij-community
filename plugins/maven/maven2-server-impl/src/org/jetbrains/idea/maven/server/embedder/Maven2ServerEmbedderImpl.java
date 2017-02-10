@@ -155,6 +155,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
+  @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = Maven2ModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
@@ -728,6 +729,11 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
         return null;
       }
     });
+  }
+
+  @Override
+  public MavenModel readModel(File file) throws RemoteException {
+    return null;
   }
 
   private void withProjectCachesDo(Function<Map, ?> func) throws RemoteException {

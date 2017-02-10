@@ -26,7 +26,7 @@ class DeclarationSearcher {
   private final PsiMethod myMethod;
   private final PsiType myTargetType;
 
-  private final Map<PsiElement, PsiVariable> cache = new HashMap<PsiElement, PsiVariable>();
+  private final Map<PsiElement, PsiVariable> cache = new HashMap<>();
 
   DeclarationSearcher(@NotNull PsiMethod method, @NotNull PsiType targetType) {
     myMethod = method;

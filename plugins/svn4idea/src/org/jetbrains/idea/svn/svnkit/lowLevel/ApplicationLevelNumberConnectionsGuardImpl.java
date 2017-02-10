@@ -55,14 +55,14 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
 
   public ApplicationLevelNumberConnectionsGuardImpl() {
     myDelay = DELAY;
-    mySet = new HashSet<CachingSvnRepositoryPool>();
+    mySet = new HashSet<>();
     myService = Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("SVN connection"));
     myLock = new Object();
     myDisposed = false;
     myRecheck = new Runnable() {
       @Override
       public void run() {
-        HashSet<CachingSvnRepositoryPool> pools = new HashSet<CachingSvnRepositoryPool>();
+        HashSet<CachingSvnRepositoryPool> pools = new HashSet<>();
         synchronized (myLock) {
           pools.addAll(mySet);
         }
@@ -150,7 +150,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
       }
     }
     // maybe too many opened? reduce request
-    final Set<CachingSvnRepositoryPool> copy = new HashSet<CachingSvnRepositoryPool>();
+    final Set<CachingSvnRepositoryPool> copy = new HashSet<>();
     synchronized (myLock) {
       if (myCurrentlyOpenedConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
         copy.addAll(mySet);

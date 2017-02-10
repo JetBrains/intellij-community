@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -28,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,7 +87,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       }
     }
     if (DomUtil.hasXml(element)) {
-      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
         if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
@@ -115,7 +113,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
-      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new ProcessingContext());
       GenericDomValueReference domReference = ContainerUtil.findInstance(psiReferences, GenericDomValueReference.class);
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
@@ -266,14 +264,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     }
 
     private void doFix(XmlTag parentTag) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(parentTag.getContainingFile())) return;
-
-      try {
-        parentTag.add(parentTag.createChildTag(tagName, tagNamespace, null, false));
-      }
-      catch (IncorrectOperationException e) {
-        throw new RuntimeException(e);
-      }
+      parentTag.add(parentTag.createChildTag(tagName, tagNamespace, null, false));
     }
   }
 }

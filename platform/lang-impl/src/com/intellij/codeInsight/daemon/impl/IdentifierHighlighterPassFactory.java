@@ -23,6 +23,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
+        !DumbService.isDumb(myProject) &&
         (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting) &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file.getProject(), file, editor);

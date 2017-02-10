@@ -208,7 +208,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
     addAll(newChildrenCandidates, true);
     sort(myChildrenList);
-    List<ExternalSystemNode> visibleNodes = new ArrayList<ExternalSystemNode>();
+    List<ExternalSystemNode> visibleNodes = new ArrayList<>();
     for (ExternalSystemNode each : myChildrenList) {
       if (each.isVisible()) visibleNodes.add(each);
     }

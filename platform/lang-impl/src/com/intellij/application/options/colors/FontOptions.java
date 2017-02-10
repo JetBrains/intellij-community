@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,17 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FontComboBox;
+import com.intellij.ui.FontInfoRenderer;
+import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
@@ -52,8 +52,8 @@ import java.util.Set;
 public class FontOptions extends JPanel implements OptionsPanel{
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
     @Override
-    protected AntialiasingType getAntialiasingType() {
-      return UISettings.getShadowInstance().EDITOR_AA_TYPE;
+    protected boolean isEditorFont() {
+      return true;
     }
   };
 
@@ -66,7 +66,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final FontComboBox mySecondaryCombo = new FontComboBox();
+  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false);
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
@@ -74,19 +74,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private boolean myIsInSchemeChange;
 
 
-  public FontOptions(ColorAndFontOptions options) {
-    this(options, ApplicationBundle.message("group.editor.font"));
-  }
-
-  protected FontOptions(@NotNull ColorAndFontOptions options, final String title) {
+  public FontOptions(@NotNull ColorAndFontOptions options) {
     setLayout(new MigLayout("ins 0, gap 5, flowx"));
-    Insets borderInsets = new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                     IdeBorderFactory.TITLED_BORDER_LEFT_INSET,
-                                     0,
-                                     IdeBorderFactory.TITLED_BORDER_RIGHT_INSET);
-    setBorder(IdeBorderFactory.createTitledBorder(title, false, borderInsets));
     myOptions = options;
-    add(myOnlyMonospacedCheckBox, "sgx b, sx 2");
+    add(myOnlyMonospacedCheckBox, "newline 10, sgx b, sx 2");
 
     add(new JLabel(ApplicationBundle.message("primary.font")), "newline, ax right");
     add(myPrimaryCombo, "sgx b");
@@ -110,7 +101,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
                                                ApplicationBundle.message("ligatures.jre.warning",
                                                                          ApplicationNamesInfo.getInstance().getFullProductName())));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    updateWarningIconVisibility(warningIcon);
+    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm);
     panel.add(warningIcon);
     add(panel, "newline, sx 2");
 
@@ -148,8 +139,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
         String selectedFont = myPrimaryCombo.getFontName();
         if (selectedFont != null) {
-          FontPreferences fontPreferences = getFontPreferences();
-          fontPreferences.register(selectedFont, getFontSizeFromField());
+          setFontSize(getFontSizeFromField());
         }
         updateDescription(true);
       }
@@ -198,12 +188,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
     myEnableLigaturesCheckbox.addActionListener(e -> {
       getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected());
-      updateWarningIconVisibility(warningIcon);
+      updateDescription(true);
     });
-  }
-
-  private void updateWarningIconVisibility(JLabel warningIcon) {
-    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm && getFontPreferences().useLigatures());
   }
 
   private int getFontSizeFromField() {
@@ -264,26 +250,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     updateDescription(true);
   }
 
-
-  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
-    if (!sharedScheme) {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.readonly.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
-    else {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
-  }
-
   @Override
   public void updateOptionsList() {
     myIsInSchemeChange = true;
@@ -305,7 +271,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly);
+    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetbrainsJvm);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
@@ -314,6 +280,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
   @NotNull
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getFontPreferences();
+  }
+
+  protected void setFontSize(int fontSize) {
+    getCurrentScheme().setEditorFontSize(fontSize);
   }
 
   protected float getLineSpacing() {
@@ -345,8 +315,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
+    if (modified && ColorAndFontOptions.isReadOnly(scheme)) {
       return false;
     }
 

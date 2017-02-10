@@ -30,19 +30,19 @@ public class SocketConnectionFactory {
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
     SocketConnection<Request, Response> createServerConnection(int defaultPort, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<Request, Response>(defaultPort, attempts, factory);
+    return new ServerSocketConnectionImpl<>(defaultPort, attempts, factory);
   }
 
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
     SocketConnection<Request, Response> createServerConnection(int defaultPort, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<Request, Response>(defaultPort, 1, factory);
+    return new ServerSocketConnectionImpl<>(defaultPort, 1, factory);
   }
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
   ClientSocketConnection<Request, Response> createConnection(final @Nullable InetAddress host, int initialPort,
                                                              int portsNumberToTry,
                                                              RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new SocketConnectionImpl<Request, Response>(host, initialPort, portsNumberToTry, factory);
+    return new SocketConnectionImpl<>(host, initialPort, portsNumberToTry, factory);
   }
 }

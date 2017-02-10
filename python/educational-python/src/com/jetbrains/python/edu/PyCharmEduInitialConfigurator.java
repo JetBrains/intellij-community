@@ -127,7 +127,7 @@ public class PyCharmEduInitialConfigurator {
                                                                              "Goto Error/Bookmark Actions", "GoToEditPointGroup",
                                                                              "Change Navigation Actions", "Method Navigation Actions",
                                                                              "EvaluateExpression", "Pause", "ViewBreakpoints",
-                                                                             "XDebugger.MuteBreakpoints", "SaveAs");
+                                                                             "XDebugger.MuteBreakpoints", "SaveAs", "XDebugger.SwitchWatchesInVariables");
 
   public static class First {
 
@@ -187,7 +187,7 @@ public class PyCharmEduInitialConfigurator {
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
 
@@ -308,6 +308,7 @@ public class PyCharmEduInitialConfigurator {
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
+    rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {

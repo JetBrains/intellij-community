@@ -45,18 +45,18 @@ import java.util.Map;
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
 
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
-    new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
-  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
-  public static final CustomizationKey<String> CLASS_TEMPLATE = new CustomizationKey<String>("CLASS_TEMPLATE");
-  public static final CustomizationKey<ClassKind> CLASS_KIND = new CustomizationKey<ClassKind>("CLASS_KIND");
-  public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
-  public static final CustomizationKey<Boolean> CONCRETE = new CustomizationKey<Boolean>("CONCRETE");
-  public static final CustomizationKey<Boolean> NOT_INTERFACE = new CustomizationKey<Boolean>("NOT_INTERFACE");
-  public static final CustomizationKey<Boolean> NOT_ENUM= new CustomizationKey<Boolean>("NOT_ENUM");
-  public static final CustomizationKey<Boolean> ADVANCED_RESOLVE = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
-  public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
-  public static final CustomizationKey<Boolean> ALLOW_DOLLAR_NAMES = new CustomizationKey<Boolean>("ALLOW_DOLLAR_NAMES");
-  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
+    new CustomizationKey<>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
+  public static final CustomizationKey<String> CLASS_TEMPLATE = new CustomizationKey<>("CLASS_TEMPLATE");
+  public static final CustomizationKey<ClassKind> CLASS_KIND = new CustomizationKey<>("CLASS_KIND");
+  public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<>("INSTANTIATABLE");
+  public static final CustomizationKey<Boolean> CONCRETE = new CustomizationKey<>("CONCRETE");
+  public static final CustomizationKey<Boolean> NOT_INTERFACE = new CustomizationKey<>("NOT_INTERFACE");
+  public static final CustomizationKey<Boolean> NOT_ENUM= new CustomizationKey<>("NOT_ENUM");
+  public static final CustomizationKey<Boolean> ADVANCED_RESOLVE = new CustomizationKey<>("RESOLVE_ONLY_CLASSES");
+  public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<>("JVM_FORMAT");
+  public static final CustomizationKey<Boolean> ALLOW_DOLLAR_NAMES = new CustomizationKey<>("ALLOW_DOLLAR_NAMES");
+  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
   @Nullable private Map<CustomizationKey, Object> myOptions;
 
   private boolean myAllowEmpty;
@@ -64,7 +64,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   private final ParameterizedCachedValueProvider<List<PsiElement>, Project> myProvider = new ParameterizedCachedValueProvider<List<PsiElement>, Project>() {
       @Override
       public CachedValueProvider.Result<List<PsiElement>> compute(Project project) {
-        final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
+        final List<PsiElement> psiPackages = new ArrayList<>();
         final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
         if (StringUtil.isNotEmpty(defPackageName)) {
           final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage(defPackageName);
@@ -84,7 +84,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
-      myOptions = new THashMap<CustomizationKey, Object>();
+      myOptions = new THashMap<>();
     }
     option.putValue(myOptions, value);
   }

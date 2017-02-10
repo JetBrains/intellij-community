@@ -54,33 +54,33 @@ public class PatchProjectUtil {
   }
 
   /**
-   * Excludes folders specified in patterns in the <code>idea.exclude.patterns</code> system property from the project.
+   * Excludes folders specified in patterns in the {@code idea.exclude.patterns} system property from the project.
    *
    * <p>Pattern syntax:
    * <br>
    *
    * <ul>
-   *   <li><code>patterns := pattern(';'pattern)*</code>
-   *   <li><code>pattern := ('['moduleRegEx']')? directoryAntPattern</code>
+   *   <li>{@code patterns := pattern(';'pattern)*}
+   *   <li>{@code pattern := ('['moduleRegEx']')? directoryAntPattern}
    * </ul>
    *
    * Where
    * <ul>
-   *   <li> <code>moduleRegex</code> - regular expression to match module name.
-   *   <li> <code>directoryAntPattern</code> - ant-style pattern to match folder in a module.
-   *        <code>directoryAntPattern</code> considers paths <b>relative</b> to a content root of a module.
+   *   <li> {@code moduleRegex} - regular expression to match module name.
+   *   <li> {@code directoryAntPattern} - ant-style pattern to match folder in a module.
+   *        {@code directoryAntPattern} considers paths <b>relative</b> to a content root of a module.
    * </ul>
    *
    *
    * <p>
    * Example:<br>
-   * <code>
+   * {@code
    *   -Didea.exclude.patterns=testData/**;.reports/**;[sql]/test/*.sql;[graph]/**;[graph-openapi]/**
-   * </code>
+   * }
    * <br>
    *
-   * In this example the <code>testData/**</code> pattern is applied to all modules
-   * and the pattern <code>/test/*.sql</code> to applied to the module <code>sql</code> only.
+   * In this example the {@code testData/**} pattern is applied to all modules
+   * and the pattern {@code /test/*.sql} to applied to the module {@code sql} only.
    *
    * @param project project to patch
    * @see <a href="http://ant.apache.org/manual/dirtasks.html">http://ant.apache.org/manual/dirtasks.html</a>
@@ -101,7 +101,7 @@ public class PatchProjectUtil {
       for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
-        final Set<VirtualFile> included = new HashSet<VirtualFile>();
+        final Set<VirtualFile> included = new HashSet<>();
         iterate(contentRoot, new ContentIterator() {
           @Override
           public boolean processFile(final VirtualFile fileOrDir) {
@@ -141,7 +141,7 @@ public class PatchProjectUtil {
 
   public static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
     if (included.isEmpty()) return;
-    final Set<VirtualFile> parents = new HashSet<VirtualFile>();
+    final Set<VirtualFile> parents = new HashSet<>();
     for (VirtualFile file : included) {
       if (Comparing.equal(file, contentEntry.getFile())) return;
       final VirtualFile parent = file.getParent();
@@ -177,11 +177,11 @@ public class PatchProjectUtil {
    * Parses patterns for exclude items.
    *
    * @param propertyKey system property key for pattern
-   * @return A map in the form <code>ModulePattern -> DirectoryPattern*</code>.
+   * @return A map in the form {@code ModulePattern -> DirectoryPattern*}.
    *         ModulePattern may be null (meaning that a directory pattern is applied to all modules).
    */
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
-    final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
+    final Map<Pattern, Set<Pattern>> result = new HashMap<>();
     final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
       final String[] pathPatterns = patterns.split(";");
@@ -196,7 +196,7 @@ public class PatchProjectUtil {
         final Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx)));
         Set<Pattern> dirPatterns = result.get(modulePattern);
         if (dirPatterns == null) {
-          dirPatterns = new HashSet<Pattern>();
+          dirPatterns = new HashSet<>();
           result.put(modulePattern, dirPatterns);
         }
         dirPatterns.add(pattern);

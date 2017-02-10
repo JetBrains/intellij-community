@@ -17,9 +17,7 @@ package com.intellij.lang.properties.projectView;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -42,6 +40,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     return ResourceBundle.ARRAY_DATA_KEY.getData(dataContext) != null;
   }
 
+  @Override
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     return false;
   }

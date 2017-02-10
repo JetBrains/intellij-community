@@ -28,7 +28,7 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#PROJECT} instead
+   * @deprecated use {@link PlatformDataKeys#PROJECT} instead
    */
   String PROJECT = CommonDataKeys.PROJECT.getName();
 
@@ -42,42 +42,42 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.vfs.VirtualFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE} instead
+   * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE} instead
    */
   String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
    * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
+   * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
    */
   String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.openapi.editor.Editor}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
+   * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
   String EDITOR = CommonDataKeys.EDITOR.getName();
 
   /**
    * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#FILE_EDITOR} instead
+   * @deprecated use {@link PlatformDataKeys#FILE_EDITOR} instead
    */
   String FILE_EDITOR = PlatformDataKeys.FILE_EDITOR.getName();
 
   /**
    * Returns {@link com.intellij.openapi.fileEditor.OpenFileDescriptor}
    *
-   * @deprecated {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE} should be used instead
+   * @deprecated {@link PlatformDataKeys#NAVIGATABLE} should be used instead
    */
   @NonNls String OPEN_FILE_DESCRIPTOR = "openFileDescriptor";
 
   /**
    * Returns the text of currently selected file/file revision
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKey#FILE_TEXT} instead
+   * @deprecated use {@link PlatformDataKeys#FILE_TEXT} instead
    */
   String FILE_TEXT = PlatformDataKeys.FILE_TEXT.getName();
 
@@ -86,35 +86,35 @@ public interface DataConstants {
    * Boolean.FALSE if action is executed not in modal context. If context
    * is unknown then the value of this data constant is <code>null</code>.
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#IS_MODAL_CONTEXT} instead
+   * @deprecated use {@link PlatformDataKeys#IS_MODAL_CONTEXT} instead
    */
   String IS_MODAL_CONTEXT = PlatformDataKeys.IS_MODAL_CONTEXT.getName();
 
   /**
    * Returns {@link com.intellij.openapi.diff.DiffViewer}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#DIFF_VIEWER} instead
+   * @deprecated use {@link PlatformDataKeys#DIFF_VIEWER} instead
    */
   String DIFF_VIEWER = PlatformDataKeys.DIFF_VIEWER.getName();
 
   /**
    * Returns help id (String)
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#HELP_ID} instead
+   * @deprecated use {@link PlatformDataKeys#HELP_ID} instead
    */
   String HELP_ID = PlatformDataKeys.HELP_ID.getName();
 
   /**
    * Returns project if project node is selected (in project view)
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#PROJECT_CONTEXT} instead
+   * @deprecated use {@link PlatformDataKeys#PROJECT_CONTEXT} instead
    */
   String PROJECT_CONTEXT = PlatformDataKeys.PROJECT_CONTEXT.getName();
 
   /**
    * Returns module if module node is selected (in module view)
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys.MODULE_CONTEXT} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE_CONTEXT} instead
    */
   @NonNls String MODULE_CONTEXT = "context.Module";
 
@@ -126,49 +126,49 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.pom.Navigatable}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE} instead
+   * @deprecated use {@link PlatformDataKeys#NAVIGATABLE} instead
    */
   String NAVIGATABLE = CommonDataKeys.NAVIGATABLE.getName();
 
   /**
    * Returns an array of {@link com.intellij.pom.Navigatable}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE_ARRAY} instead
+   * @deprecated use {@link PlatformDataKeys#NAVIGATABLE_ARRAY} instead
    */
   String NAVIGATABLE_ARRAY = CommonDataKeys.NAVIGATABLE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.ide.ExporterToTextFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EXPORTER_TO_TEXT_FILE} instead
+   * @deprecated use {@link PlatformDataKeys#EXPORTER_TO_TEXT_FILE} instead
    */
   String EXPORTER_TO_TEXT_FILE = PlatformDataKeys.EXPORTER_TO_TEXT_FILE.getName();
 
   /**
    * Returns {@link com.intellij.psi.PsiElement}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#PSI_ELEMENT} instead
+   * @deprecated use {@link CommonDataKeys#PSI_ELEMENT} instead
    */
   @NonNls String PSI_ELEMENT = "psi.Element";
 
   /**
    * Returns {@link com.intellij.psi.PsiFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE} instead
+   * @deprecated use {@link CommonDataKeys#PSI_FILE} instead
    */
   @NonNls String PSI_FILE = "psi.File";
 
   /**
    * Returns {@link com.intellij.lang.Language}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys.LANGUAGE} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#LANGUAGE} instead
    */
   @NonNls String LANGUAGE = "Language";
 
   /**
    * Returns java.awt.Component currently in focus, DataContext should be retrieved for
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#CONTEXT_COMPONENT} instead
+   * @deprecated use {@link PlatformDataKeys#CONTEXT_COMPONENT} instead
    */
   String CONTEXT_COMPONENT = PlatformDataKeys.CONTEXT_COMPONENT.getName();
 
@@ -206,45 +206,45 @@ public interface DataConstants {
   /**
    * Returns com.intellij.ide.CopyProvider
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#COPY_PROVIDER} instead
+   * @deprecated use {@link PlatformDataKeys#COPY_PROVIDER} instead
    */
   String COPY_PROVIDER = PlatformDataKeys.COPY_PROVIDER.getName();
 
   /**
    * Returns com.intellij.ide.CutProvider
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#CUT_PROVIDER} instead
+   * @deprecated use {@link PlatformDataKeys#CUT_PROVIDER} instead
    */
   String CUT_PROVIDER = PlatformDataKeys.CUT_PROVIDER.getName();
 
   /**
    * Returns com.intellij.ide.PasteProvider
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#PASTE_PROVIDER} instead
+   * @deprecated use {@link PlatformDataKeys#PASTE_PROVIDER} instead
    */
   String PASTE_PROVIDER = PlatformDataKeys.PASTE_PROVIDER.getName();
 
   /**
    * Returns com.intellij.ide.DeleteProvider
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#DELETE_ELEMENT_PROVIDER} instead
+   * @deprecated use {@link PlatformDataKeys#DELETE_ELEMENT_PROVIDER} instead
    */
   String DELETE_ELEMENT_PROVIDER = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName();
 
   /**
    * Returns com.intellij.openapi.editor.Editor even if focuses currently is in find bar
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
+   * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
   String EDITOR_EVEN_IF_INACTIVE = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName();
 
   /**
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#SELECTED_ITEM} instead
+   * @deprecated use {@link PlatformDataKeys#SELECTED_ITEM} instead
    */
   String SELECTED_ITEM = PlatformDataKeys.SELECTED_ITEM.getName();
 
   /**
-   * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#DOMINANT_HINT_AREA_RECTANGLE} instead
+   * @deprecated use {@link PlatformDataKeys#DOMINANT_HINT_AREA_RECTANGLE} instead
    */
   String DOMINANT_HINT_AREA_RECTANGLE = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getName();
 }

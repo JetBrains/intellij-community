@@ -33,9 +33,9 @@ import java.util.List;
  */
 public final class Option {
   @NotNull
-  private final List<String> myLongNames = new ArrayList<String>();
+  private final List<String> myLongNames = new ArrayList<>();
   @NotNull
-  private final List<String> myShortNames = new ArrayList<String>();
+  private final List<String> myShortNames = new ArrayList<>();
   @Nullable
   private final Pair<Integer, Argument> myArgumentAndQuantity;
   @NotNull
@@ -72,7 +72,7 @@ public final class Option {
    */
   @NotNull
   public List<String> getAllNames() {
-    final List<String> result = new ArrayList<String>(myLongNames);
+    final List<String> result = new ArrayList<>(myLongNames);
     result.addAll(myShortNames);
     return result;
   }

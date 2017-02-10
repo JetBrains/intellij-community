@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -49,7 +50,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +73,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author: Roman Chernyatchik
@@ -111,11 +112,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   // custom progress
   private String myCurrentCustomProgressCategory;
-  private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
+  private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
-  private Alarm myUpdateQueue;
-  private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
+  private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
   private boolean myDisposed = false;
   private SMTestProxy myLastFailed;
 
@@ -160,7 +160,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
+    myTreeBuilder.setTestsComparator(myProperties);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -199,7 +199,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
-    myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     return myTreeView;
   }
 
@@ -269,7 +268,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        myTreeBuilder.setTestsComparator(myProperties);
       }
     };
     if (myLastSelected == null) {
@@ -561,8 +560,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (myRequests.add(update) && !myUpdateQueue.isDisposed()) {
-      myUpdateQueue.addRequest(update, 100);
+    else if (myRequests.add(update) && !myDisposed) {
+      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
     }
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 
@@ -625,7 +624,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
-      myStatusLine.formatTestMessage(myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
+      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
     }
     else {
       myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
@@ -633,6 +632,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                         myFailedTestCount, myMentionedCategories,
                                                                         launchedAndFinished));
     }
+  }
+
+  private boolean isUndefined() {
+    return myProperties instanceof SMTRunnerConsoleProperties && ((SMTRunnerConsoleProperties)myProperties).isUndefined();
   }
 
   /**
@@ -709,7 +712,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void updateProgressOnTestDone() {
     int doneTestCount = myFinishedTestCount;
     // update progress
-    if (myTotalTestCount != 0) {
+    if (isUndefined()) {
+      myStatusLine.setFraction(1.0);
+    }
+    else if (myTotalTestCount != 0) {
       // if total is set
       myStatusLine.setFraction((double) doneTestCount / myTotalTestCount);
     }

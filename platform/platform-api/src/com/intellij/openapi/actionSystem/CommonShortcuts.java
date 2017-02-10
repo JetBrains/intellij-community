@@ -52,7 +52,7 @@ public class CommonShortcuts {
   public static final ShortcutSet MOVE_DOWN = CustomShortcutSet.fromString("alt DOWN");
 
   public static ShortcutSet getNewForDialogs() {
-    final ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+    final ArrayList<Shortcut> shortcuts = new ArrayList<>();
     for (Shortcut shortcut : getNew().getShortcuts()) {
       if (isCtrlEnter(shortcut)) continue;
       shortcuts.add(shortcut);

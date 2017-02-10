@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -41,19 +42,19 @@ public class LoadingDecorator {
   boolean myStartRequest;
 
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs) {
     this(content, parent, startDelayMs, false);
   }
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize) {
     this(content, parent, startDelayMs, useMinimumSize, new AsyncProcessIcon.Big("Loading"));
   }
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
     myPane = new MyLayeredPane(useMinimumSize ? content : null);
     myLoadingLayer = new LoadingLayer(icon);
     myDelay = startDelayMs;
-    myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
+    myStartAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parent);
 
     setLoadingText("Loading...");
 
@@ -65,7 +66,8 @@ public class LoadingDecorator {
 
       @Override
       protected void paintCycleEnd() {
-        myLoadingLayer.setVisible(false);
+        myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
+        hideLoadingLayer();
         myLoadingLayer.setAlpha(-1);
       }
     };
@@ -73,9 +75,38 @@ public class LoadingDecorator {
 
 
     myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
-    myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    if (!SystemProperties.isTrueSmoothScrollingEnabled()) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    }
 
     Disposer.register(parent, myLoadingLayer.myProgress);
+  }
+
+  private void hideLoadingLayer() {
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      myPane.remove(myLoadingLayer);
+    }
+    myLoadingLayer.setVisible(false);
+  }
+
+  public void setLoadingLayerVisible(boolean visible, boolean takeSnapshot) {
+    if (SystemProperties.isTrueSmoothScrollingEnabled() && visible) {
+      setLoadingLayerPresent();
+    }
+    myLoadingLayer.setVisible(visible, takeSnapshot);
+  }
+
+  /* Placing the invisible layer on top of JViewport suppresses blit-accelerated scrolling
+     as JViewport.canUseWindowBlitter() doesn't take component's visibility into account.
+
+     We need to add / remove the loading layer on demand to preserve the blit-based scrolling.
+
+     Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+     This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+  private void setLoadingLayerPresent() {
+    if (myPane.getComponentCount() < 2) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    }
   }
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
@@ -114,7 +145,7 @@ public class LoadingDecorator {
   }
 
   protected void _startLoading(final boolean takeSnapshot) {
-    myLoadingLayer.setVisible(true, takeSnapshot);
+    setLoadingLayerVisible(true, takeSnapshot);
   }
 
   public void stopLoading() {
@@ -123,7 +154,7 @@ public class LoadingDecorator {
 
     if (!isLoading()) return;
 
-    myLoadingLayer.setVisible(false, false);
+    setLoadingLayerVisible(false, false);
   }
 
 
@@ -173,7 +204,7 @@ public class LoadingDecorator {
         myCurrentAlpha = -1;
 
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
-          mySnapshot = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+          mySnapshot = UIUtil.createImage(getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
           final Graphics2D g = mySnapshot.createGraphics();
           myPane.paint(g);
           final Component opaque = UIUtil.findNearestOpaque(this);

@@ -107,7 +107,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     selectRegisteredProjectButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
+        final Ref<JBPopup> popupRef = new Ref<>();
         final Tree tree = buildRegisteredProjectsTree(project, externalSystemId);
         tree.setBorder(IdeBorderFactory.createEmptyBorder(8));
         Runnable treeSelectionCallback = () -> {

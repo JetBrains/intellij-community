@@ -25,11 +25,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.ErrorLogger;
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.io.MappingFailedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +109,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         LogMessage message = messagePool.addIdeFatalMessage(event);
         if (message != null && ApplicationManager.getApplication() != null) {
           PluginErrorNotifications.maybeNotifyUi(message);
-          ErrorNotifier.notifyUi(message, messagePool);
         }
       }
     }

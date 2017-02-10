@@ -30,16 +30,16 @@ class ClasspathTableItem<T extends OrderEntry> {
   @Nullable
   public static ClasspathTableItem<?> createItem(OrderEntry orderEntry, StructureConfigurableContext context) {
     if (orderEntry instanceof JdkOrderEntry) {
-      return new ClasspathTableItem<OrderEntry>(orderEntry, false);
+      return new ClasspathTableItem<>(orderEntry, false);
     }
     else if (orderEntry instanceof LibraryOrderEntry) {
       return createLibItem((LibraryOrderEntry)orderEntry, context);
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
-      return new ClasspathTableItem<OrderEntry>(orderEntry, true);
+      return new ClasspathTableItem<>(orderEntry, true);
     }
     else if (orderEntry instanceof ModuleSourceOrderEntry) {
-      return new ClasspathTableItem<OrderEntry>(orderEntry, false);
+      return new ClasspathTableItem<>(orderEntry, false);
     }
     return null;
   }

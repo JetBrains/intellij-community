@@ -49,7 +49,7 @@ public class MessageViewHelper {
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<String>();
+  private final Set<String> myErrors = new THashSet<>();
 
   private final String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;

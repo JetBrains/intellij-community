@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,30 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.isFulfilled
+import com.intellij.credentialStore.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.jetbrains.keychain.Credentials
-import org.jetbrains.keychain.CredentialsStore
-import org.jetbrains.keychain.isFulfilled
-import org.jetbrains.keychain.isOSXCredentialsStoreSupported
-import org.jetbrains.settingsRepository.LOG
-import org.jetbrains.settingsRepository.nullize
+import org.jetbrains.settingsRepository.IcsCredentialsStore
+import org.jetbrains.settingsRepository.catchAndLog
 import org.jetbrains.settingsRepository.showAuthenticationForm
+import java.util.concurrent.TimeUnit
 
-class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
-  private var credentialsFromGit: Credentials? = null
+class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsStore>, private val repository: Repository) : CredentialsProvider() {
+  private val credentialsFromGit = CacheBuilder.newBuilder()
+      .expireAfterAccess(5, TimeUnit.MINUTES)
+      .build(object : CacheLoader<URIish, Credentials>() {
+        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
+      })
 
   override fun isInteractive() = true
 
@@ -83,77 +89,52 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
   }
 
   private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
-    var credentials: Credentials?
+    var credentials: Credentials? = null
 
     // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
     val userFromUri: String? = if (sshKeyFile == null) uri.user.nullize() else null
     val passwordFromUri: String? = uri.pass.nullize()
-    var saveCredentialsToStore = false
     if (userFromUri != null && passwordFromUri != null) {
       credentials = Credentials(userFromUri, passwordFromUri)
     }
     else {
-      // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
-      if (sshKeyFile == null || !isOSXCredentialsStoreSupported) {
-        if (credentialsFromGit == null) {
-          credentialsFromGit = getCredentialsUsingGit(uri, repository)
-        }
-        credentials = credentialsFromGit
-      }
-      else {
-        credentials = null
-      }
-
-      if (credentials == null) {
-        try {
-          credentials = credentialsStore.value.get(uri.host, sshKeyFile)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-
-        saveCredentialsToStore = true
-
-        if (userFromUri != null) {
-          // username is in url - read password only if it is for the same user
-          if (userFromUri != credentials?.id) {
-            credentials = Credentials(userFromUri, passwordFromUri)
-          }
-          else if (passwordFromUri != null && passwordFromUri != credentials?.token) {
-            credentials = Credentials(userFromUri, passwordFromUri)
-          }
+      catchAndLog {
+        credentials = credentialsStore.value.get(uri.host, sshKeyFile, userFromUri)
+        // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
+        if (!credentials.isFulfilled() && (sshKeyFile == null || !isMacOsCredentialStoreSupported)) {
+          credentials = credentialsFromGit.get(uri)
         }
       }
     }
 
     if (!credentials.isFulfilled()) {
       credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.host, uri.path, sshKeyFile)
+      if (credentials.isFulfilled()) {
+        credentialsStore.value.set(uri.host, sshKeyFile, credentials)
+      }
     }
 
-    if (saveCredentialsToStore && credentials.isFulfilled()) {
-      credentialsStore.value.save(uri.host, credentials!!, sshKeyFile)
-    }
-
-    userNameItem?.value = credentials?.id
+    userNameItem?.value = credentials?.userName
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
-        passwordItem.value = credentials?.token?.toCharArray()
+        passwordItem.value = credentials?.password?.toCharArray()
       }
       else {
-        (passwordItem as CredentialItem.StringType).value = credentials?.token
+        (passwordItem as CredentialItem.StringType).value = credentials?.password?.toString()
       }
     }
 
-    return credentials != null
+    return credentials.isFulfilled()
   }
 
   override fun reset(uri: URIish) {
-    credentialsFromGit = null
-    credentialsStore.value.reset(uri.host!!)
+    credentialsFromGit.invalidate(uri)
+    credentialsFromGit.cleanUp()
+    credentialsStore.value.set(uri.host!!, null, null)
   }
 }
 
-fun URIish.toStringWithoutCredentials(): String {
+private fun URIish.toStringWithoutCredentials(): String {
   val r = StringBuilder()
   if (scheme != null) {
     r.append(scheme)

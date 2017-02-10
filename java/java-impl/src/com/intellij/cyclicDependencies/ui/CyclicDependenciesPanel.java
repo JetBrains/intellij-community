@@ -60,7 +60,7 @@ import java.util.List;
  * Date: Jan 31, 2005
  */
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
+  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
 
   private final HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
   private final MyTree myLeftTree = new MyTree();
@@ -131,8 +131,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
             return;
           }
           final PackageDependenciesNode nextPackageNode = getNextPackageNode(selectedPackageNode);
-          Set<PsiFile> searchFor = new HashSet<PsiFile>();
-          Set<PackageNode> packNodes = new HashSet<PackageNode>();
+          Set<PsiFile> searchFor = new HashSet<>();
+          Set<PackageNode> packNodes = new HashSet<>();
           getPackageNodesHierarchy(selectedPackageNode, packNodes);
           for (PackageNode packageNode : packNodes) {
             searchFor.addAll(myBuilder.getDependentFilesInPackage((PsiPackage)packageNode.getPsiElement(),
@@ -253,7 +253,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private void updateLeftTreeModel() {
     final Set<PsiPackage> psiPackages = myDependencies.keySet();
-    final Set<PsiFile> psiFiles = new HashSet<PsiFile>();
+    final Set<PsiFile> psiFiles = new HashSet<>();
     for (PsiPackage psiPackage : psiPackages) {
       final Set<List<PsiPackage>> cycles = myDependencies.get(psiPackage);
       if (!mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES || cycles != null && !cycles.isEmpty()) {
@@ -323,7 +323,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private HashSet<PsiFile> getPackageFiles(final PsiPackage psiPackage) {
-    final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
+    final HashSet<PsiFile> psiFiles = new HashSet<>();
     final PsiClass[] classes = psiPackage.getClasses();
     for (PsiClass aClass : classes) {
       final PsiFile file = aClass.getContainingFile();
@@ -374,7 +374,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     if (paths == null || paths.length != 1) return EMPTY_FILE_SET;
     PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
     if (node.isRoot()) return EMPTY_FILE_SET;
-    Set<PsiFile> result = new HashSet<PsiFile>();
+    Set<PsiFile> result = new HashSet<>();
     node.fillFiles(result, true);
     return result;
   }

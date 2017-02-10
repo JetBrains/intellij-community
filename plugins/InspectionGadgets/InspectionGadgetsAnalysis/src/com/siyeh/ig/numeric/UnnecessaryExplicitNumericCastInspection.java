@@ -34,7 +34,7 @@ import java.util.Set;
 
 public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
-  private static final Set<IElementType> binaryPromotionOperators = new THashSet<IElementType>();
+  private static final Set<IElementType> binaryPromotionOperators = new THashSet<>();
 
   static {
     binaryPromotionOperators.add(JavaTokenType.ASTERISK);
@@ -73,15 +73,10 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   }
 
   private static class UnnecessaryExplicitNumericCastFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.quickfix");
     }
 

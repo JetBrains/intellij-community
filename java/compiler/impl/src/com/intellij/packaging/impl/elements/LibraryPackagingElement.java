@@ -67,7 +67,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     final Library library = findLibrary(context);
     if (library != null) {
       final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-      final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+      final List<PackagingElement<?>> elements = new ArrayList<>();
       for (VirtualFile file : files) {
         String localPath = PathUtil.getLocalPath(file);
         if (localPath != null) {

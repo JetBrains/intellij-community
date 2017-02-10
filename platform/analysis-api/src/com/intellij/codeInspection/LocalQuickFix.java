@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.IntentionLike;
+
 /**
- * QuickFix based on {@link com.intellij.codeInspection.ProblemDescriptor ProblemDescriptor}
+ * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
  * <p/>
  * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
  * Instead, use the {@link ProblemDescriptor#getPsiElement()}
@@ -32,9 +34,9 @@ package com.intellij.codeInspection;
  *
  * @author max
  * @see LocalQuickFixBase
- * @see com.intellij.codeInspection.ProblemDescriptor
+ * @see ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
  */
-public interface LocalQuickFix extends QuickFix<ProblemDescriptor> {
+public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, IntentionLike {
   LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
 }

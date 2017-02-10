@@ -98,9 +98,9 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
   private final ICvsFileSystem myCvsFileSystem;
   private final UpdatedFilesManager myUpdatedFilesManager;
   private final String myCvsRoot;
-  private final Map<File, Object> myFileToInfoMap = new HashMap<File, Object>();
+  private final Map<File, Object> myFileToInfoMap = new HashMap<>();
 
-  private final Collection<String> myPreviousErrorMessages = new ArrayList<String>();
+  private final Collection<String> myPreviousErrorMessages = new ArrayList<>();
   @NonNls private static final String CORRECT_ABOVE_ERRORS_FIRST_PREFIX = "correct above errors first";
 
   enum MessageType { MESSAGE, FILE_MESSAGE, WARNING, ERROR }

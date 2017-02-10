@@ -171,7 +171,7 @@ class JBZipOutputStream {
    * <p/>
    * <p>Default is DEFLATED.</p>
    *
-   * @param method an <code>int</code> from java.util.zip.ZipEntry
+   * @param method an {@code int} from java.util.zip.ZipEntry
    * @since 1.1
    */
   public void setMethod(int method) {

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 
-  private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<DataNode<ProjectData>>();
+  private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<>();
 
   @NotNull private final String myProjectPath;
   private final boolean myIsPreviewMode;

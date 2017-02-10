@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +29,7 @@ import javax.swing.*;
  * @author cdr
  */
 abstract class ChangeViewTypeActionBase extends ToggleAction {
-  public ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
+  ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
     super(shortDescription, longDescription, icon);
   }
 
@@ -54,7 +55,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     // its important to assign the myTypeHierarchyBrowser first
     super.update(event);
     final Presentation presentation = event.getPresentation();
@@ -62,7 +63,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
     presentation.setEnabled(browser != null && browser.isValidBase());
   }
 
-  protected static TypeHierarchyBrowserBase getTypeHierarchyBrowser(final DataContext context) {
+  static TypeHierarchyBrowserBase getTypeHierarchyBrowser(final DataContext context) {
     return TypeHierarchyBrowserBase.DATA_KEY.getData(context);
   }
 }

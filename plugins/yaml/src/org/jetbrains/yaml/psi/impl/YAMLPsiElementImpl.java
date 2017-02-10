@@ -23,7 +23,7 @@ public class YAMLPsiElementImpl extends ASTWrapperPsiElement implements YAMLPsiE
   }
 
   public List<YAMLPsiElement> getYAMLElements() {
-    final ArrayList<YAMLPsiElement> result = new ArrayList<YAMLPsiElement>();
+    final ArrayList<YAMLPsiElement> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(null)) {
       final PsiElement psi = node.getPsi();
       if (psi instanceof YAMLPsiElement){

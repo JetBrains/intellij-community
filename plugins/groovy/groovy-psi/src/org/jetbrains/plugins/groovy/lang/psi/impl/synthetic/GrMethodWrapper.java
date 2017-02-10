@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
@@ -33,10 +34,15 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
   };
 
   private final PsiMethod myWrappedMethod;
+  private PsiElement myContext;
   private volatile boolean myNavigationElementInit;
 
   protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor) {
-    super(method.getManager(), method.getName());
+    this(method, substitutor, method.getName());
+  }
+
+  protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor, String name) {
+    super(method.getManager(), name);
     myWrappedMethod = method;
     setContainingClass(method.getContainingClass());
     getModifierList().copyModifiers(method);
@@ -49,6 +55,16 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
     }
 
     setReturnType(TYPE_MARKER);
+  }
+
+  @Override
+  public PsiElement getContext() {
+    if (myContext != null) return myContext;
+    return super.getContext();
+  }
+
+  public void setContext(@Nullable PsiElement context) {
+    myContext = context;
   }
 
   @Override
@@ -92,6 +108,10 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
 
   public static GrLightMethodBuilder wrap(GrMethod method, PsiSubstitutor substitutor) {
     return new GrMethodWrapper(method, substitutor);
+  }
+
+  public static GrMethodWrapper wrap(@NotNull PsiMethod method, @NotNull String newName) {
+    return new GrMethodWrapper(method, PsiSubstitutor.EMPTY, newName);
   }
 
   @NotNull

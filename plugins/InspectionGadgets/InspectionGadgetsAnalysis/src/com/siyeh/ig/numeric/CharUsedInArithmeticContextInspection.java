@@ -53,7 +53,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {
@@ -79,15 +79,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   }
 
   private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.quickfix");
     }
 

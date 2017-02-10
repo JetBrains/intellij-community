@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,8 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
@@ -70,9 +74,9 @@ public class SearchResults implements DocumentListener {
   private @Nullable FindResult myCursor;
 
   @NotNull
-  private List<FindResult> myOccurrences = new ArrayList<FindResult>();
+  private List<FindResult> myOccurrences = new ArrayList<>();
 
-  private final Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
+  private final Set<RangeMarker> myExcluded = new HashSet<>();
 
   private Editor myEditor;
   private final Project myProject;
@@ -89,14 +93,15 @@ public class SearchResults implements DocumentListener {
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
 
-  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<Pair<FindModel, FindResult>>();
+  private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
-  private final SelectionManager mySelectionManager = new SelectionManager(this);
+  private final SelectionManager mySelectionManager;
 
   public SearchResults(Editor editor, Project project) {
     myEditor = editor;
     myProject = project;
     myEditor.getDocument().addDocumentListener(this);
+    mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
   public void setNotFoundState(boolean isForward) {
@@ -191,7 +196,7 @@ public class SearchResults implements DocumentListener {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<FindResult>(), getEditor(), null, false, null, getStamp());
+    searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
   public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
@@ -199,11 +204,11 @@ public class SearchResults implements DocumentListener {
 
     final Editor editor = getEditor();
 
-    final ArrayList<FindResult> results = new ArrayList<FindResult>();
+    final ArrayList<FindResult> results = new ArrayList<>();
     if (findModel != null) {
       updatePreviousFindModel(findModel);
-      final FutureResult<int[]> startsRef = new FutureResult<int[]>();
-      final FutureResult<int[]> endsRef = new FutureResult<int[]>();
+      final FutureResult<int[]> startsRef = new FutureResult<>();
+      final FutureResult<int[]> endsRef = new FutureResult<>();
       getSelection(editor, startsRef, endsRef);
 
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -215,9 +220,7 @@ public class SearchResults implements DocumentListener {
           starts = startsRef.get();
           ends = endsRef.get();
         }
-        catch (InterruptedException ignore) {
-        }
-        catch (ExecutionException ignore) {
+        catch (InterruptedException | ExecutionException ignore) {
         }
 
         if (starts.length == 0 || findModel.isGlobal()) {
@@ -265,9 +268,7 @@ public class SearchResults implements DocumentListener {
           ends.set(selection.getBlockSelectionEnds());
         });
       }
-      catch (InterruptedException ignore) {
-      }
-      catch (InvocationTargetException ignore) {
+      catch (InterruptedException | InvocationTargetException ignore) {
       }
     }
   }
@@ -286,9 +287,7 @@ public class SearchResults implements DocumentListener {
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
-      } catch(PatternSyntaxException e) {
-        result = null;
-      } catch (ProcessCanceledException e) {
+      } catch(PatternSyntaxException | ProcessCanceledException e) {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
@@ -347,7 +346,7 @@ public class SearchResults implements DocumentListener {
   }
 
   private void updateExcluded() {
-    Set<RangeMarker> invalid = new HashSet<RangeMarker>();
+    Set<RangeMarker> invalid = new HashSet<>();
     for (RangeMarker marker : myExcluded) {
       if (!marker.isValid()) {
         invalid.add(marker);

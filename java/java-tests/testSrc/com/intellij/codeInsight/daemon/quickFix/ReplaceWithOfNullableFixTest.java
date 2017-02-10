@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTestCase {
@@ -45,7 +43,7 @@ public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTest
   @Override
   protected void beforeActionStarted(String testName, String contents) {
     if (testName.contains("Guava")) {
-      ReplaceFromOfNullableFixTest.addGuavaOptional(myTestRootDisposable);
+      ReplaceFromOfNullableFixTest.addGuavaOptional(getTestRootDisposable());
     }
     super.beforeActionStarted(testName, contents);
   }
@@ -54,10 +52,5 @@ public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTest
   protected void afterActionCompleted(String testName, String contents) {
     ReplaceFromOfNullableFixTest.cleanupGuava();
     super.afterActionCompleted(testName, contents);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

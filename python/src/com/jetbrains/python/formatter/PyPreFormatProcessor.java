@@ -64,7 +64,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     private final Project myProject;
     private final CodeStyleSettings mySettings;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
-    private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<Couple<PsiComment>>();
+    private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<>();
     private TextRange myRange;
     private int myDelta = 0;
 

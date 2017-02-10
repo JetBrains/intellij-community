@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
@@ -304,7 +305,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -336,6 +337,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean isNotFromGroovyObject(@NotNull PsiMethod found) {
+    if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(found)) return false;
     PsiClass aClass = found.getContainingClass();
     if (aClass == null) return false;
     String qname = aClass.getQualifiedName();
@@ -580,7 +582,7 @@ public class GrUnresolvedAccessChecker {
 
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
 
-    CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+    CollectConsumer<PomTarget> consumer = new CollectConsumer<>();
     for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
       searcher.findDeclarationsAt(referenceExpression, 0, consumer);
       if (!consumer.getResult().isEmpty()) return false;

@@ -52,7 +52,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
   public JComponent getComponent() {
     JComponent result = SoftReference.dereference(myComponent);
     if (result == null) {
-      myComponent = new WeakReference<JComponent>(result = createComponent());
+      myComponent = new WeakReference<>(result = createComponent());
     }
     return result;
   }

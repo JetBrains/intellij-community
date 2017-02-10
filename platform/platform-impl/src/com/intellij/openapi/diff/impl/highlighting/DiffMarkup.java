@@ -50,11 +50,11 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
   private static final Logger LOG = Logger.getInstance(DiffMarkup.class);
   private static final int LAYER = HighlighterLayer.SELECTION - 1;
 
-  private final ArrayList<RangeHighlighter> myExtraHighLighters = new ArrayList<RangeHighlighter>();
-  private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
-  private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
+  private final ArrayList<RangeHighlighter> myExtraHighLighters = new ArrayList<>();
+  private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<>();
+  private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<>();
   @Nullable private final Project myProject;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<>();
   private boolean myDisposed = false;
 
   protected DiffMarkup(@Nullable Project project, @NotNull Disposable parentDisposable) {

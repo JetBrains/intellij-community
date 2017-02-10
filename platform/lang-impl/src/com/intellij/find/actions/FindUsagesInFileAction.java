@@ -40,6 +40,11 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

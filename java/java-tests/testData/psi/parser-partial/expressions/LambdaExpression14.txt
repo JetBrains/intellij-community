@@ -1,5 +1,5 @@
 PsiJavaFile:LambdaExpression14.java
-  PsiLambdaExpression:(String t) -> t
+  PsiLambdaExpression
     PsiParameterList:(String t)
       PsiJavaToken:LPARENTH('(')
       PsiParameter:t

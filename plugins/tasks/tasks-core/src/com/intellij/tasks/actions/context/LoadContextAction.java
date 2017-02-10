@@ -58,33 +58,34 @@ public class LoadContextAction extends BaseTaskAction {
     DefaultActionGroup group = new DefaultActionGroup();
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
-    List<ContextHolder> infos = new ArrayList<ContextHolder>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
-      @Override
-      void load(final boolean clear) {
-        LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
-        UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
-      }
+    List<ContextHolder> infos =
+      new ArrayList<>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+        @Override
+        void load(final boolean clear) {
+          LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
+          UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
+        }
 
-      @Override
-      void remove() {
-        manager.removeContext(info.name);
-      }
+        @Override
+        void remove() {
+          manager.removeContext(info.name);
+        }
 
-      @Override
-      Date getDate() {
-        return new Date(info.date);
-      }
+        @Override
+        Date getDate() {
+          return new Date(info.date);
+        }
 
-      @Override
-      String getComment() {
-        return info.comment;
-      }
+        @Override
+        String getComment() {
+          return info.comment;
+        }
 
-      @Override
-      Icon getIcon() {
-        return TasksIcons.SavedContext;
-      }
-    }));
+        @Override
+        Icon getIcon() {
+          return TasksIcons.SavedContext;
+        }
+      }));
     final TaskManager taskManager = TaskManager.getManager(project);
     List<LocalTask> tasks = taskManager.getLocalTasks();
     infos.addAll(ContainerUtil.mapNotNull(tasks, (NullableFunction<LocalTask, ContextHolder>)task -> {
@@ -139,8 +140,7 @@ public class LoadContextAction extends BaseTaskAction {
     }
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
-      .createActionGroupPopup("Load Context", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null,
-                              MAX_ROW_COUNT);
+      .createActionGroupPopup("Load Context", group, e.getDataContext(), false, null, MAX_ROW_COUNT);
     popup.setAdText("Press SHIFT to merge with current context");
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

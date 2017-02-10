@@ -97,7 +97,7 @@ public class SequentialModalProgressTask extends Task.Modal {
           task.stop();
           throw e;
         }
-      }, indicator.getModalityState());
+      });
     }
   }
 
@@ -120,5 +120,24 @@ public class SequentialModalProgressTask extends Task.Modal {
    */
   protected void prepare(@NotNull SequentialTask task) {
     task.prepare();
+  }
+
+  public abstract static class Adapter extends SequentialModalProgressTask implements SequentialTask {
+    public Adapter(@Nullable Project project, @NotNull String title) {
+      super(project, title);
+      setTask(this);
+    }
+
+    public Adapter(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+      super(project, title, canBeCancelled);
+    }
+
+    @Override
+    public void prepare() {
+    }
+
+    @Override
+    public void stop() {
+    }
   }
 }

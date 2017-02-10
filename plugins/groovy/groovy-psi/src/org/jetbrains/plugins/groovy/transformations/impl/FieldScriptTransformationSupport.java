@@ -16,42 +16,30 @@
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
+import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
+
 public class FieldScriptTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
     final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
-    scriptClass.getContainingFile().accept(new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitVariableDeclaration(GrVariableDeclaration element) {
-        if (element.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
-          for (GrVariable variable : element.getVariables()) {
-            context.addField(new GrScriptField(variable, scriptClass));
-          }
+    if (!hasNameInFile(scriptClass.getContainingFile(), "Field")) {
+      return;
+    }
+    for (GrVariableDeclaration declaration : scriptClass.getContainingFile().getScriptDeclarations(true)) {
+      if (declaration.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
+        for (GrVariable variable : declaration.getVariables()) {
+          context.addField(new GrScriptField(variable, scriptClass));
         }
-        super.visitVariableDeclaration(element);
       }
-
-      @Override
-      public void visitMethod(GrMethod method) {
-        //skip methods
-      }
-
-      @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
-        //skip type defs
-      }
-    });
+    }
   }
 }

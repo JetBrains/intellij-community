@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
@@ -66,7 +65,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final PsiClassStub stub = getStub();
+    final PsiClassStub stub = getGreenStub();
     if (stub == null) {
       myCachedBaseType = null;
       return getTypeByTree();
@@ -183,15 +182,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
 
-    final PsiClassStub stub = getStub();
-    if (stub != null) {
-      // no tree is loaded
-      // that means we could not have come from resolving something inside anonymous class, we just resolving the base class reference
-      // so skip the (very expensive) getBaseClassReference() call which would load tree
-      return true;
-    }
-
-    if (lastParent != null/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
+    if (lastParent instanceof PsiJavaCodeReferenceElement/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
         && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
       return true;
     }
@@ -200,7 +191,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
 
   @Override
   public boolean isInQualifiedNew() {
-    final PsiClassStub stub = getStub();
+    final PsiClassStub stub = getGreenStub();
     if (stub != null) {
       return stub.isAnonymousInQualifiedNew();
     }
@@ -209,8 +200,4 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
   }
 
-  @Override
-  public PsiElement getParent() {
-    return SharedImplUtil.getParent(getNode());
-  }
 }

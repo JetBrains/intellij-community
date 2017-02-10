@@ -100,6 +100,11 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     return IdeBundle.message("progress.creating.class", StringUtil.getQualifiedName(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName));
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }

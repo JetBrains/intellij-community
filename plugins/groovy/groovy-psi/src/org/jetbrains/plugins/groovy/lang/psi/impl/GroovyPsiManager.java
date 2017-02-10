@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
   private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
-                                                                                GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME,
+                                                                                GroovyCommonClassNames.GROOVY_OBJECT,
                                                                                 GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT,
                                                                                 GroovyCommonClassNames.GROOVY_LANG_SCRIPT,
                                                                                 CommonClassNames.JAVA_UTIL_LIST,
@@ -58,7 +58,7 @@ public class GroovyPsiManager {
                                                                                 CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
-  private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
+  private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();

@@ -72,7 +72,7 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public List<MatchResult> getMatches() {
-    if (matches==null) matches = new ArrayList<MatchResult>();
+    if (matches==null) matches = new ArrayList<>();
     return matches;
   }
 

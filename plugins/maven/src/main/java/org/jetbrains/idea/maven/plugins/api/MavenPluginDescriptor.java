@@ -42,7 +42,8 @@ import java.util.Map;
  */
 public class MavenPluginDescriptor extends AbstractExtensionPointBean {
 
-  public static final ExtensionPointName<MavenPluginDescriptor> EP_NAME = new ExtensionPointName<MavenPluginDescriptor>("org.jetbrains.idea.maven.pluginDescriptor");
+  public static final ExtensionPointName<MavenPluginDescriptor> EP_NAME =
+    new ExtensionPointName<>("org.jetbrains.idea.maven.pluginDescriptor");
 
   // Map artifactId -> groupId -> goal -> List<MavenPluginDescriptor>
   public static volatile Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> ourDescriptorsMap;
@@ -134,7 +135,7 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
   public static Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> getDescriptorsMap() {
     Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> res = ourDescriptorsMap;
     if (res == null) {
-      res = new HashMap<String, Map<String, Map<String, List<MavenPluginDescriptor>>>>();
+      res = new HashMap<>();
 
       for (MavenPluginDescriptor pluginDescriptor : MavenPluginDescriptor.EP_NAME.getExtensions()) {
         Pair<String, String> pluginId = parsePluginId(pluginDescriptor.mavenId);
@@ -145,7 +146,7 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
 
         List<MavenPluginDescriptor> descriptorList = goalsMap.get(pluginDescriptor.goal);
         if (descriptorList == null) {
-          descriptorList = new SmartList<MavenPluginDescriptor>();
+          descriptorList = new SmartList<>();
           goalsMap.put(pluginDescriptor.goal, descriptorList);
         }
 

@@ -80,7 +80,7 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitParameter(GrParameter grParameter) {
+    public void visitParameter(@NotNull GrParameter grParameter) {
       super.visitParameter(grParameter);
       final String name = grParameter.getName();
       final PsiElement scope = grParameter.getDeclarationScope();

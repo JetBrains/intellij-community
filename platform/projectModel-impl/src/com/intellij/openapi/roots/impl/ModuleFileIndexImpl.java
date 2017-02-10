@@ -21,9 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,50 +29,51 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   private final Module myModule;
-  private final ContentFilter myContentFilter;
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
-    super(directoryIndex, FileTypeRegistry.getInstance(), module.getProject());
+    super(directoryIndex, FileTypeRegistry.getInstance());
     myModule = module;
-    myContentFilter = new ContentFilter();
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator iterator) {
-    final List<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
-      @Override
-      public List<VirtualFile> compute() {
-        if (myModule.isDisposed()) return Collections.emptyList();
-        
-        List<VirtualFile> result = ContainerUtil.newArrayList();
-        for (VirtualFile contentRoot : ModuleRootManager.getInstance(myModule).getContentRoots()) {
-          VirtualFile parent = contentRoot.getParent();
+  public boolean iterateContent(@NotNull ContentIterator processor) {
+    final Set<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)() -> {
+      if (myModule.isDisposed()) return Collections.emptySet();
+
+      Set<VirtualFile> result = new LinkedHashSet<>();
+      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      for (VirtualFile[] roots : allRoots) {
+        for (VirtualFile root : roots) {
+          DirectoryInfo info = getInfoForFileOrDirectory(root);
+          if (!info.isInProject()) continue;
+
+          VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
             if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
           }
-          result.add(contentRoot);
+          result.add(root);
         }
-
-        return result;
       }
+
+      return result;
     });
     for (VirtualFile contentRoot : contentRoots) {
-      boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
-      if (!finished) return false;
+      if (!iterateContentUnderDirectory(contentRoot, processor)) {
+        return false;
+      }
     }
 
     return true;
   }
 
-  @Override
-  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
-  }
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
@@ -110,6 +109,11 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInModuleSource() && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+  }
+
+  @Override
+  protected boolean isScopeDisposed() {
+    return myModule.isDisposed();
   }
 
   @Nullable
@@ -199,25 +203,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     @Override
     public boolean isSynthetic() {
       throw new IncorrectOperationException();
-    }
-  }
-
-  private class ContentFilter implements VirtualFileFilter {
-    @Override
-    public boolean accept(@NotNull final VirtualFile file) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (myModule.isDisposed()) return false;
-          if (file.isDirectory()) {
-            DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
-            return info.isInProject() && myModule.equals(info.getModule());
-          }
-          else {
-            return !myFileTypeRegistry.isFileIgnored(file);
-          }
-        }
-      });
     }
   }
 }

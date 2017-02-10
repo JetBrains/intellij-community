@@ -56,15 +56,10 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
 
   private static class UnnecessarySuperConstructorFix
     extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.super.constructor.remove.quickfix");
     }

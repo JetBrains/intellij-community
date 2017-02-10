@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
@@ -53,15 +52,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
+import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
+
 public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
-  private static final Comparator<CommonProblemDescriptor> DESCRIPTOR_COMPARATOR = (c1, c2) -> {
-    if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
-      return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(),
-                                                   ((ProblemDescriptor)c1).getPsiElement());
-    }
-    return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
-  };
 
   @NotNull private final GlobalInspectionContextImpl myContext;
   @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
@@ -192,7 +186,7 @@ public class InspectionTree extends Tree {
       InspectionToolWrapper toolWrapper = getSelectedToolWrapper(true);
       if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
-      Set<RefEntity> result = new LinkedHashSet<RefEntity>();
+      Set<RefEntity> result = new LinkedHashSet<>();
       for (TreePath selectionPath : selectionPaths) {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
@@ -220,20 +214,21 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, true);
+    return getSelectedDescriptors(false, null, true, false);
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, false);
+    return getSelectedDescriptors(false, null, false, false);
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
                                                           @Nullable Set<VirtualFile> readOnlyFilesSink,
-                                                          boolean allowResolved) {
+                                                          boolean allowResolved,
+                                                          boolean allowSuppressed) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
-    final List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
+    final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
 
     MultiMap<Object, ProblemDescriptionNode> parentToChildNode = new MultiMap<>();
     final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();
@@ -242,7 +237,7 @@ public class InspectionTree extends Tree {
       final int length = pathAsArray.length;
       final Object node = pathAsArray[length - 1];
       if (node instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved)) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved, allowSuppressed)) {
           if (length >= 2) {
             parentToChildNode.putValue(pathAsArray[length - 2], (ProblemDescriptionNode)node);
           } else {
@@ -255,7 +250,7 @@ public class InspectionTree extends Tree {
     }
 
     for (InspectionTreeNode node : nonDescriptorNodes) {
-      processChildDescriptorsDeep(node, descriptors, sortedByPosition, allowResolved, readOnlyFilesSink);
+      processChildDescriptorsDeep(node, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
     }
 
     for (Map.Entry<Object, Collection<ProblemDescriptionNode>> entry : parentToChildNode.entrySet()) {
@@ -302,38 +297,10 @@ public class InspectionTree extends Tree {
     return true;
   }
 
-  public int getSelectedProblemCount() {
-    if (getSelectionCount() == 0) return 0;
-    final TreePath[] paths = getSelectionPaths();
-    LOG.assertTrue(paths != null);
-    Set<InspectionTreeNode> result = new HashSet<>();
-    MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
-    for (TreePath path : paths) {
-
-      final InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
-      final Collection<InspectionTreeNode> visitedChildren = rootDependencies.get(node);
-      for (InspectionTreeNode child : visitedChildren) {
-        result.remove(child);
-      }
-
-      boolean needToAdd = true;
-      for (int i = 0; i < path.getPathCount() - 1; i++) {
-        final InspectionTreeNode parent = (InspectionTreeNode) path.getPathComponent(i);
-        rootDependencies.putValue(parent, node);
-        if (result.contains(parent)) {
-          needToAdd = false;
-          break;
-        }
-      }
-
-      if (needToAdd) {
-        result.add(node);
-      }
-    }
-
+  public int getSelectedProblemCount(boolean allowSuppressed) {
     int count = 0;
-    for (InspectionTreeNode node : result) {
-      count += node.getProblemCount();
+    for (TreePath path : TreeUtil.selectMaximals(getSelectionPaths())) {
+      count += ((InspectionTreeNode)path.getLastPathComponent()).getProblemCount(allowSuppressed);
     }
     return count;
   }
@@ -342,12 +309,13 @@ public class InspectionTree extends Tree {
                                            List<CommonProblemDescriptor> descriptors,
                                            boolean sortedByPosition,
                                            boolean allowResolved,
+                                           boolean allowSuppressed,
                                            @Nullable Set<VirtualFile> readOnlyFilesSink) {
     List<CommonProblemDescriptor> descriptorChildren = null;
     for (int i = 0; i < node.getChildCount(); i++) {
       final TreeNode child = node.getChildAt(i);
       if (child instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)child, allowResolved)) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)child, allowResolved, allowSuppressed)) {
           if (sortedByPosition) {
             if (descriptorChildren == null) {
               descriptorChildren = new ArrayList<>();
@@ -359,7 +327,7 @@ public class InspectionTree extends Tree {
         }
       }
       else {
-        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition, allowResolved, readOnlyFilesSink);
+        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
       }
     }
 
@@ -375,10 +343,10 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved) {
+  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded(myExcludedManager) &&
-                               !node.isAlreadySuppressedFromView() &&
+                               (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
                                !node.isQuickFixAppliedFromView()));
   }
 

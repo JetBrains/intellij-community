@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +34,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class EncodingReference implements PsiReference {
+public class EncodingReference implements PsiReference, EmptyResolveMessageProvider {
   private final PsiElement myElement;
 
   private final String myCharsetName;
@@ -88,7 +90,7 @@ public class EncodingReference implements PsiReference {
   @NotNull
   public Object[] getVariants() {
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-    List<LookupElement> suggestions = new ArrayList<LookupElement>(charsets.length);
+    List<LookupElement> suggestions = new ArrayList<>(charsets.length);
     for (Charset charset : charsets) {
       suggestions.add(LookupElementBuilder.create(charset.name()).withCaseSensitivity(false));
     }
@@ -100,4 +102,10 @@ public class EncodingReference implements PsiReference {
     return false;
   }
 
+  @Override
+  @NotNull
+  public String getUnresolvedMessagePattern() {
+    //noinspection UnresolvedPropertyKey
+    return CodeInsightBundle.message("unknown.encoding.0");
+  }
 }

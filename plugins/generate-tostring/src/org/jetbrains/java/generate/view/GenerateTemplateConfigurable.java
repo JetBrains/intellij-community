@@ -54,7 +54,7 @@ import java.util.List;
 public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
-    private final List<String> availableImplicits = new ArrayList<String>();
+    private final List<String> availableImplicits = new ArrayList<>();
   private String myHint;
 
   public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
@@ -70,7 +70,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
         final PsiFile file = PsiFileFactory.getInstance(project)
             .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
         if (!template.isDefault()) {
-          final HashMap<String, PsiType> map = new LinkedHashMap<String, PsiType>();
+          final HashMap<String, PsiType> map = new LinkedHashMap<>();
           map.put("java_version", PsiType.INT);
           map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
           if (multipleFields) {

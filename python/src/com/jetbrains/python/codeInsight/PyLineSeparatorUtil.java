@@ -68,7 +68,7 @@ public class PyLineSeparatorUtil {
   }
 
   private static LineMarkerInfo<PsiElement> createLineSeparatorByElement(final PsiElement element) {
-    final LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), null, Pass.UPDATE_ALL, null, null);
+    final LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), null, Pass.LINE_MARKERS, null, null);
     info.separatorColor = EditorColorsManager.getInstance().getGlobalScheme().getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
     info.separatorPlacement = SeparatorPlacement.TOP;
     return info;

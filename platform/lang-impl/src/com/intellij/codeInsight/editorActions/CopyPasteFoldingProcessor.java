@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
-    final ArrayList<FoldingData> list = new ArrayList<FoldingData>();
+    final ArrayList<FoldingData> list = new ArrayList<>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
@@ -72,10 +72,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
         foldingData = (FoldingTransferableData)content.getTransferData(flavor);
       }
     }
-    catch (UnsupportedFlavorException e) {
-      // do nothing
-    }
-    catch (IOException e) {
+    catch (UnsupportedFlavorException | IOException e) {
       // do nothing
     }
 

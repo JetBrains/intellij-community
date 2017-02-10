@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -212,13 +213,13 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
         final PsiParameter parameter = getParameter();
         if (parameter != null) {
-          InplaceIntroduceParameterPopup.super.saveSettings(parameter);
+          super.saveSettings(parameter);
         }
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         performRefactoring.run();
       } else {
-        ApplicationManager.getApplication().invokeLater(performRefactoring);
+        TransactionGuard.getInstance().submitTransactionLater(myProject, performRefactoring);
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
@@ -242,7 +243,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
-      final List<TextRange> ranges2Remove = new ArrayList<TextRange>();
+      final List<TextRange> ranges2Remove = new ArrayList<>();
       TextRange addedRange = null;
       for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
         if (frst) {

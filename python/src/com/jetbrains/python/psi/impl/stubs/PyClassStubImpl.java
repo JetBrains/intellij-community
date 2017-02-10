@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,14 +31,29 @@ import java.util.Map;
  * @author max
  */
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+
+  @Nullable
   private final String myName;
+
+  @NotNull
   private final Map<QualifiedName, QualifiedName> mySuperClasses;
-  @Nullable private final QualifiedName myMetaClass;
+
+  @Nullable
+  private final QualifiedName myMetaClass;
+
+  @Nullable
   private final List<String> mySlots;
+
+  @Nullable
   private final String myDocString;
 
-  public PyClassStubImpl(final String name, StubElement parentStub, final Map<QualifiedName, QualifiedName> superClasses,
-                         @Nullable QualifiedName metaClass, final List<String> slots, String docString, IStubElementType stubElementType) {
+  public PyClassStubImpl(@Nullable String name,
+                         @Nullable StubElement parentStub,
+                         @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @Nullable QualifiedName metaClass,
+                         @Nullable List<String> slots,
+                         @Nullable String docString,
+                         @NotNull IStubElementType stubElementType) {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
@@ -46,10 +62,12 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     myDocString = docString;
   }
 
+  @Nullable
   public String getName() {
     return myName;
   }
 
+  @NotNull
   public Map<QualifiedName, QualifiedName> getSuperClasses() {
     return mySuperClasses;
   }
@@ -60,11 +78,13 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     return myMetaClass;
   }
 
+  @Nullable
   @Override
   public List<String> getSlots() {
     return mySlots;
   }
 
+  @Nullable
   @Override
   public String getDocString() {
     return myDocString;

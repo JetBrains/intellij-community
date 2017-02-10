@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -36,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * Intention to add documentation string for function
  * (with checked format)
  */
-public class PyGenerateDocstringIntention extends BaseIntentionAction {
+public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   private String myText;
 
   @NotNull
@@ -81,11 +79,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     }
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) {
-      return;
-    }
-
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     PyFunction function = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
 

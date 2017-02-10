@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ENUM;
@@ -74,7 +73,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
-    return new PsiClassType[]{createEnumType(), createGroovyObjectSupportType()};
+    return new PsiClassType[]{createEnumType()};
   }
 
   private PsiClassType createEnumType() {
@@ -91,10 +90,6 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
       return factory.createType(enumClass, substitutor);
     }
     return TypesUtil.createTypeByFQClassName(JAVA_LANG_ENUM, this);
-  }
-
-  private PsiClassType createGroovyObjectSupportType() {
-    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, this);
   }
 
   @Override
@@ -131,29 +126,29 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
       final PsiManagerEx manager = getManager();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
       defMethods[0] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
-        .setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", GrEnumTypeDefinitionImpl.this))
-        .setContainingClass(GrEnumTypeDefinitionImpl.this)
+        .setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this))
+        .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC)
         .addModifier(PsiModifier.STATIC);
 
       defMethods[1] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "next")
-        .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
-        .setContainingClass(GrEnumTypeDefinitionImpl.this)
+        .setMethodReturnType(factory.createType(this))
+        .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC);
 
       defMethods[2] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "previous")
-        .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
-        .setContainingClass(GrEnumTypeDefinitionImpl.this)
+        .setMethodReturnType(factory.createType(this))
+        .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC);
 
       defMethods[3] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "valueOf")
-        .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
-        .setContainingClass(GrEnumTypeDefinitionImpl.this)
+        .setMethodReturnType(factory.createType(this))
+        .setContainingClass(this)
         .addParameter("name", CommonClassNames.JAVA_LANG_STRING)
         .addModifier(PsiModifier.PUBLIC)
         .addModifier(PsiModifier.STATIC);
 
-      return CachedValueProvider.Result.create(defMethods, GrEnumTypeDefinitionImpl.this);
+      return CachedValueProvider.Result.create(defMethods, this);
     });
   }
 

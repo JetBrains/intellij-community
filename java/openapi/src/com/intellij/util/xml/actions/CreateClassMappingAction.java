@@ -76,7 +76,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
                                      final PsiFile file,
                                      final Project project,
                                      PsiClass selectedClass) {
-    final Map<String,String> map = new HashMap<String, String>();
+    final Map<String,String> map = new HashMap<>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
     new WriteCommandAction.Simple(project, file) {
       @Override

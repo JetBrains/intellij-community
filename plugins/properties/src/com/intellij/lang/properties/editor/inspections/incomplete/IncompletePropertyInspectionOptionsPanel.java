@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,12 +107,14 @@ public class IncompletePropertyInspectionOptionsPanel {
   }
 
   private class MyListModel extends AbstractListModel {
+    @Override
     public int getSize() {
       return mySuffixes.size();
     }
 
+    @Override
     public Object getElementAt(int index) {
-      return mySuffixes.toArray(new String[mySuffixes.size()])[index];
+      return ArrayUtil.toStringArray(mySuffixes)[index];
     }
 
     public void modified() {

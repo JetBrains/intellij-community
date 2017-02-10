@@ -32,10 +32,10 @@ import java.util.Map;
  * @author nik
  */
 public class LayoutTreeSelection {
-  private final List<PackagingElementNode<?>> mySelectedNodes = new ArrayList<PackagingElementNode<?>>();
-  private final List<PackagingElement<?>> mySelectedElements = new ArrayList<PackagingElement<?>>();
-  private final Map<PackagingElement<?>, PackagingElementNode<?>> myElement2Node = new HashMap<PackagingElement<?>, PackagingElementNode<?>>();
-  private final Map<PackagingElementNode<?>, TreePath> myNode2Path = new HashMap<PackagingElementNode<?>, TreePath>();
+  private final List<PackagingElementNode<?>> mySelectedNodes = new ArrayList<>();
+  private final List<PackagingElement<?>> mySelectedElements = new ArrayList<>();
+  private final Map<PackagingElement<?>, PackagingElementNode<?>> myElement2Node = new HashMap<>();
+  private final Map<PackagingElementNode<?>, TreePath> myNode2Path = new HashMap<>();
 
   public LayoutTreeSelection(@NotNull LayoutTree tree) {
     final TreePath[] paths = tree.getSelectionPaths();

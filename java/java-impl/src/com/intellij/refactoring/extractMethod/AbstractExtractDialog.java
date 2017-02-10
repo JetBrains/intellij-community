@@ -23,12 +23,14 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
+import org.jetbrains.annotations.NotNull;
 
 public interface AbstractExtractDialog {
 
   String getChosenMethodName();
   VariableData[] getChosenParameters();
   @PsiModifier.ModifierConstant
+  @NotNull
   String getVisibility();
   boolean isMakeStatic();
   boolean isChainedConstructor();

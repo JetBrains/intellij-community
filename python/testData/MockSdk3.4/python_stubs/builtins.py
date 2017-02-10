@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.138
+# by generator 1.145
 """
 Built-in functions, exceptions, and other objects.
 
@@ -24,7 +24,7 @@ def abs(*args, **kwargs): # real signature unknown
 def all(*args, **kwargs): # real signature unknown
     """
     Return True if bool(x) is True for all values x in the iterable.
-    
+
     If the iterable is empty, return True.
     """
     pass
@@ -32,7 +32,7 @@ def all(*args, **kwargs): # real signature unknown
 def any(*args, **kwargs): # real signature unknown
     """
     Return True if bool(x) is True for any x in the iterable.
-    
+
     If the iterable is empty, return False.
     """
     pass
@@ -48,7 +48,7 @@ def ascii(*args, **kwargs): # real signature unknown
     """
     pass
 
-def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
     """
     Return the binary representation of an integer.
     
@@ -60,7 +60,7 @@ def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored fr
 def callable(i_e_, some_kind_of_function): # real signature unknown; restored from __doc__
     """
     Return whether the object is callable (i.e., some kind of function).
-    
+
     Note that classes are callable, as are instances of classes with a
     __call__() method.
     """
@@ -127,13 +127,13 @@ def dir(p_object=None): # real signature unknown; restored from __doc__
     return []
 
 def divmod(x, y): # known case of builtins.divmod
-    """ Return the tuple ((x-x%y)/y, x%y).  Invariant: div*y + mod == x. """
+    """ Return the tuple (x//y, x%y).  Invariant: div*y + mod == x. """
     return (0, 0)
 
 def eval(*args, **kwargs): # real signature unknown
     """
     Evaluate the given source in the context of globals and locals.
-    
+
     The source may be a string representing a Python expression
     or a code object as returned by compile().
     The globals must be a dictionary and locals can be any mapping,
@@ -178,7 +178,7 @@ def getattr(object, name, default=None): # known special case of getattr
 def globals(*args, **kwargs): # real signature unknown
     """
     Return the dictionary containing the current scope's global variables.
-    
+
     NOTE: Updates to this dictionary *will* affect name lookups in the current
     global scope and vice-versa.
     """
@@ -187,7 +187,7 @@ def globals(*args, **kwargs): # real signature unknown
 def hasattr(*args, **kwargs): # real signature unknown
     """
     Return whether the object has an attribute with the given name.
-    
+
     This is done by calling getattr(obj, name) and catching AttributeError.
     """
     pass
@@ -213,7 +213,7 @@ def help(): # real signature unknown; restored from __doc__
     """
     pass
 
-def hex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+def hex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
     """
     Return the hexadecimal representation of an integer.
     
@@ -234,10 +234,10 @@ def id(*args, **kwargs): # real signature unknown
 def input(*args, **kwargs): # real signature unknown
     """
     Read a string from standard input.  The trailing newline is stripped.
-    
+
     The prompt string, if given, is printed to standard output without a
     trailing newline before reading input.
-    
+
     If the user hits EOF (*nix: Ctrl-D, Windows: Ctrl-Z+Return), raise EOFError.
     On *nix systems, readline is used if available.
     """
@@ -246,7 +246,7 @@ def input(*args, **kwargs): # real signature unknown
 def isinstance(x, A_tuple): # real signature unknown; restored from __doc__
     """
     Return whether an object is an instance of a class or of a subclass thereof.
-    
+
     A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
     check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
     or ...`` etc.
@@ -328,7 +328,7 @@ def next(iterator, default=None): # real signature unknown; restored from __doc_
     """
     pass
 
-def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
     """
     Return the octal representation of an integer.
     
@@ -467,7 +467,7 @@ def ord(*args, **kwargs): # real signature unknown
 def pow(*args, **kwargs): # real signature unknown
     """
     Equivalent to x**y (with two arguments) or x**y % z (with three arguments)
-    
+
     Some types, such as ints, are able to use a more efficient algorithm when
     invoked using the three argument form.
     """
@@ -492,7 +492,7 @@ def quit(*args, **kwargs): # real signature unknown
 def repr(obj): # real signature unknown; restored from __doc__
     """
     Return the canonical string representation of the object.
-    
+
     For many object types, including most builtins, eval(repr(obj)) == obj.
     """
     pass
@@ -518,7 +518,7 @@ def setattr(x, y, v): # real signature unknown; restored from __doc__
 def sorted(*args, **kwargs): # real signature unknown
     """
     Return a new list containing all items from the iterable in ascending order.
-    
+
     A custom key function can be supplied to customise the sort order, and the
     reverse flag can be set to request the result in descending order.
     """
@@ -602,6 +602,38 @@ class __generator(object):
         pass
 
 
+class __asyncgenerator(object):
+    '''A mock class representing the async generator function type.'''
+    def __init__(self):
+        '''Create an async generator object.'''
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.ag_await = None
+        self.ag_frame = None
+        self.ag_running = False
+        self.ag_code = None
+
+    def __aiter__(self):
+        '''Defined to support iteration over container.'''
+        pass
+
+    def __anext__(self):
+        '''Returns an awaitable, that performs one asynchronous generator iteration when awaited.'''
+        pass
+
+    def aclose(self):
+        '''Returns an awaitable, that throws a GeneratorExit exception into generator.'''
+        pass
+
+    def asend(self, value):
+        '''Returns an awaitable, that pushes the value object in generator.'''
+        pass
+
+    def athrow(self, type, value=None, traceback=None):
+        '''Returns an awaitable, that throws an exception into generator.'''
+        pass
+
+
 class __function(object):
     '''A mock class representing function type.'''
 
@@ -644,9 +676,6 @@ class __coroutine(object):
         self.cr_code = None
 
     def __await__(self):
-        return []
-
-    def __iter__(self):
         return []
 
     def close(self):
@@ -1338,7 +1367,7 @@ class bytearray(object):
     bytearray(int) -> bytes array of size given by the parameter initialized with null bytes
     bytearray() -> empty bytes array
     
-    Construct an mutable bytearray object from:
+    Construct a mutable bytearray object from:
       - an iterable yielding integers in range(256)
       - a text string encoded using the specified encoding
       - a bytes or a buffer object
@@ -1447,10 +1476,10 @@ class bytearray(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
         """
         Create a bytearray object from a string of hexadecimal numbers.
-        
+
         Spaces between two numbers are accepted.
         Example: bytearray.fromhex('B9 01EF') -> bytearray(b'\\xb9\\x01\\xef')
         """
@@ -1459,7 +1488,7 @@ class bytearray(object):
     def hex(self): # real signature unknown; restored from __doc__
         """
         B.hex() -> string
-        
+
         Create a string of hexadecimal numbers from a bytearray object.
         Example: bytearray([0xb9, 0x01, 0xef]).hex() -> 'b901ef'.
         """
@@ -1476,7 +1505,7 @@ class bytearray(object):
     def insert(self, *args, **kwargs): # real signature unknown
         """
         Insert a single item into the bytearray before the given index.
-        
+
           index
             The index where the value is to be inserted.
           item
@@ -1554,7 +1583,7 @@ class bytearray(object):
         Concatenate any number of bytes/bytearray objects.
         
         The bytearray whose method is called is inserted in between each pair.
-        
+
         The result is returned as a new bytearray object.
         """
         pass
@@ -1591,7 +1620,7 @@ class bytearray(object):
         
         The returned table will be one where each byte in frm is mapped to the byte at
         the same position in to.
-        
+
         The bytes objects frm and to must be of the same length.
         """
         pass
@@ -1603,7 +1632,7 @@ class bytearray(object):
         This will search for the separator sep in the bytearray. If the separator is
         found, returns a 3-tuple containing the part before the separator, the
         separator itself, and the part after it.
-        
+
         If the separator is not found, returns a 3-tuple containing the original
         bytearray object and two empty bytearray objects.
         """
@@ -1633,11 +1662,11 @@ class bytearray(object):
     def replace(self, *args, **kwargs): # real signature unknown
         """
         Return a copy with all occurrences of substring old replaced by new.
-        
+
           count
             Maximum number of occurrences to replace.
             -1 (the default value) means replace all occurrences.
-        
+
         If the optional argument count is given, only the first count occurrences are
         replaced.
         """
@@ -1683,7 +1712,7 @@ class bytearray(object):
         This will search for the separator sep in the bytearray, starting and the end.
         If the separator is found, returns a 3-tuple containing the part before the
         separator, the separator itself, and the part after it.
-        
+
         If the separator is not found, returns a 3-tuple containing two empty bytearray
         objects and the original bytearray object.
         """
@@ -1700,7 +1729,7 @@ class bytearray(object):
           maxsplit
             Maximum number of splits to do.
             -1 (the default value) means no limit.
-        
+
         Splitting is done starting at the end of the bytearray and working to the front.
         """
         pass
@@ -1780,7 +1809,7 @@ class bytearray(object):
         
           table
             Translation table, which must be a bytes object of length 256.
-        
+
         All characters occurring in the optional argument deletechars are removed.
         The remaining characters are mapped through the given translation table.
         """
@@ -1859,7 +1888,7 @@ class bytearray(object):
         bytearray(int) -> bytes array of size given by the parameter initialized with null bytes
         bytearray() -> empty bytes array
         
-        Construct an mutable bytearray object from:
+        Construct a mutable bytearray object from:
           - an iterable yielding integers in range(256)
           - a text string encoded using the specified encoding
           - a bytes or a buffer object
@@ -2027,10 +2056,10 @@ class bytes(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
         """
         Create a bytes object from a string of hexadecimal numbers.
-        
+
         Spaces between two numbers are accepted.
         Example: bytes.fromhex('B9 01EF') -> b'\\xb9\\x01\\xef'.
         """
@@ -2039,7 +2068,7 @@ class bytes(object):
     def hex(self): # real signature unknown; restored from __doc__
         """
         B.hex() -> string
-        
+
         Create a string of hexadecimal numbers from a bytes object.
         Example: b'\xb9\x01\xef'.hex() -> 'b901ef'.
         """
@@ -2118,14 +2147,14 @@ class bytes(object):
         """
         return False
 
-    def join(self, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def join(self, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
         """
         Concatenate any number of bytes objects.
         
         The bytes whose method is called is inserted in between each pair.
-        
+
         The result is returned as a new bytes object.
-        
+
         Example: b'.'.join([b'ab', b'pq', b'rs']) -> b'ab.pq.rs'.
         """
         pass
@@ -2150,7 +2179,7 @@ class bytes(object):
     def lstrip(self, *args, **kwargs): # real signature unknown
         """
         Strip leading bytes contained in the argument.
-        
+
         If the argument is omitted or None, strip leading  ASCII whitespace.
         """
         pass
@@ -2162,7 +2191,7 @@ class bytes(object):
         
         The returned table will be one where each byte in frm is mapped to the byte at
         the same position in to.
-        
+
         The bytes objects frm and to must be of the same length.
         """
         pass
@@ -2174,7 +2203,7 @@ class bytes(object):
         This will search for the separator sep in the bytes. If the separator is found,
         returns a 3-tuple containing the part before the separator, the separator
         itself, and the part after it.
-        
+
         If the separator is not found, returns a 3-tuple containing the original bytes
         object and two empty bytes objects.
         """
@@ -2187,7 +2216,7 @@ class bytes(object):
           count
             Maximum number of occurrences to replace.
             -1 (the default value) means replace all occurrences.
-        
+
         If the optional argument count is given, only the first count occurrences are
         replaced.
         """
@@ -2229,7 +2258,7 @@ class bytes(object):
         This will search for the separator sep in the bytes, starting and the end. If
         the separator is found, returns a 3-tuple containing the part before the
         separator, the separator itself, and the part after it.
-        
+
         If the separator is not found, returns a 3-tuple containing two empty bytes
         objects and the original bytes object.
         """
@@ -2246,7 +2275,7 @@ class bytes(object):
           maxsplit
             Maximum number of splits to do.
             -1 (the default value) means no limit.
-        
+
         Splitting is done starting at the end of the bytes and working to the front.
         """
         pass
@@ -2254,7 +2283,7 @@ class bytes(object):
     def rstrip(self, *args, **kwargs): # real signature unknown
         """
         Strip trailing bytes contained in the argument.
-        
+
         If the argument is omitted or None, strip trailing ASCII whitespace.
         """
         pass
@@ -2296,7 +2325,7 @@ class bytes(object):
     def strip(self, *args, **kwargs): # real signature unknown
         """
         Strip leading and trailing bytes contained in the argument.
-        
+
         If the argument is omitted or None, strip leading and trailing ASCII whitespace.
         """
         pass
@@ -2326,7 +2355,7 @@ class bytes(object):
         
           table
             Translation table, which must be a bytes object of length 256.
-        
+
         All characters occurring in the optional argument deletechars are removed.
         The remaining characters are mapped through the given translation table.
         """
@@ -2998,7 +3027,8 @@ class float(object):
         """ Return self, the complex conjugate of any float. """
         pass
 
-    def fromhex(self, string): # real signature unknown; restored from __doc__
+    @staticmethod # known case
+    def fromhex(string): # real signature unknown; restored from __doc__
         """
         float.fromhex(string) -> float
         
@@ -5719,7 +5749,7 @@ class __loader__(object):
     def load_module(self, *args, **kwargs): # real signature unknown
         """
         Load the specified module into sys.modules and return it.
-        
+
             This method is deprecated.  Use loader.exec_module instead.
         """
         pass

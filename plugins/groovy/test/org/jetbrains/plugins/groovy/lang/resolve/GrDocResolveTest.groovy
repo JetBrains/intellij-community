@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-public class GrDocResolveTest extends GroovyResolveTestCase {
+class GrDocResolveTest extends GroovyResolveTestCase {
 
   void 'test resolve to property from within class'() {
     resolveByText('''\

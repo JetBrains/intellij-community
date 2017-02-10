@@ -282,7 +282,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     if (initialTargetDirectory != null && 
         JavaMoveClassesOrPackagesHandler.packageHasMultipleDirectoriesInModule(myProject, initialTargetDirectory)) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      final Set<VirtualFile> initialRoots = new HashSet<VirtualFile>();
+      final Set<VirtualFile> initialRoots = new HashSet<>();
       collectSourceRoots(psiElements, fileIndex, initialRoots);
       if (initialRoots.size() > 1) {
         initialTargetDirectory = null;

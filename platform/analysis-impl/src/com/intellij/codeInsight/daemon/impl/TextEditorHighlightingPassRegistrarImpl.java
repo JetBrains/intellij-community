@@ -38,8 +38,8 @@ import java.util.List;
  * Date: 19-Apr-2006
  */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
-  private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<PassConfig>();
-  private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<DirtyScopeTrackingHighlightingPassFactory>();
+  private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
+  private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
   private int nextAvailableId = Pass.LAST_PASS + 1;
   private boolean checkedForCycles;
   private final Project myProject;
@@ -114,7 +114,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
-    final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
+    final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       @Override
@@ -168,7 +168,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   public List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull final PsiFile psiFile,
                                                                 @NotNull final Document document,
                                                                 @NotNull final HighlightInfoProcessor highlightInfoProcessor) {
-    final THashSet<TextEditorHighlightingPass> ids = new THashSet<TextEditorHighlightingPass>();
+    final THashSet<TextEditorHighlightingPass> ids = new THashSet<>();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       @Override
       public boolean execute(int passId) {
@@ -184,11 +184,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         return true;
       }
     });
-    return new ArrayList<TextEditorHighlightingPass>(ids);
+    return new ArrayList<>(ids);
   }
 
   private void checkForCycles() {
-    final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<TIntHashSet>();
+    final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<>();
 
     myRegisteredPassFactories.forEachEntry(new TIntObjectProcedure<PassConfig>() {
       @Override

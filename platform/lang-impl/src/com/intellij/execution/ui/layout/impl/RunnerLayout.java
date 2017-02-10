@@ -40,14 +40,14 @@ public class RunnerLayout  {
   public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
   private final String myID;
 
-  protected Map<String, ViewImpl> myViews = new LinkedHashMap<String, ViewImpl>();
-  private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
+  protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
+  private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<TabImpl>((o1, o2) -> o1.getIndex() - o2.getIndex());
-  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
+  protected Set<TabImpl> myTabs = new TreeSet<>((o1, o2) -> o1.getIndex() - o2.getIndex());
+  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<>();
 
   protected General myGeneral = new General();
-  private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<String, Pair<String, LayoutAttractionPolicy>>();
+  private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
   private Set<String> myLightWeightIds = null;
 
 
@@ -271,13 +271,13 @@ public class RunnerLayout  {
    */
   public void setLightWeight(Content content) {
     if (myLightWeightIds == null) {
-      myLightWeightIds = new HashSet<String>();
+      myLightWeightIds = new HashSet<>();
     }
     myLightWeightIds.add(getOrCreateContentId(content));
   }
 
   public static class General {
     public volatile boolean horizontalToolbar = false;
-    public volatile Map<String, String> focusOnCondition = new HashMap<String, String>();
+    public volatile Map<String, String> focusOnCondition = new HashMap<>();
   }
 }

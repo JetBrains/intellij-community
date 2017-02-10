@@ -67,11 +67,11 @@ public class MavenProjectImporter {
 
   private final ModifiableModuleModel myModuleModel;
 
-  private final List<Module> myCreatedModules = new ArrayList<Module>();
+  private final List<Module> myCreatedModules = new ArrayList<>();
 
-  private final Map<MavenProject, Module> myMavenProjectToModule = new THashMap<MavenProject, Module>();
-  private final Map<MavenProject, String> myMavenProjectToModuleName = new THashMap<MavenProject, String>();
-  private final Map<MavenProject, String> myMavenProjectToModulePath = new THashMap<MavenProject, String>();
+  private final Map<MavenProject, Module> myMavenProjectToModule = new THashMap<>();
+  private final Map<MavenProject, String> myMavenProjectToModuleName = new THashMap<>();
+  private final Map<MavenProject, String> myMavenProjectToModulePath = new THashMap<>();
 
   public MavenProjectImporter(Project p,
                               MavenProjectsTree projectsTree,
@@ -93,12 +93,12 @@ public class MavenProjectImporter {
 
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    List<MavenProjectsProcessorTask> postTasks = new ArrayList<MavenProjectsProcessorTask>();
+    List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
 
     boolean hasChanges;
 
     // in the case projects are changed during importing we must memorise them
-    myAllProjects = new LinkedHashSet<MavenProject>(myProjectsTree.getProjects());
+    myAllProjects = new LinkedHashSet<>(myProjectsTree.getProjects());
     myAllProjects.addAll(myProjectsToImportWithChanges.keySet()); // some projects may already have been removed from the tree
 
     hasChanges = deleteIncompatibleModules();
@@ -177,7 +177,7 @@ public class MavenProjectImporter {
   }
 
   private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
-    Map<MavenProject, MavenProjectChanges> result = new THashMap<MavenProject, MavenProjectChanges>(projectsToImport);
+    Map<MavenProject, MavenProjectChanges> result = new THashMap<>(projectsToImport);
     result.putAll(collectNewlyCreatedProjects()); // e.g. when 'create modules fro aggregators' setting changes
 
     Set<MavenProject> allProjectsToImport = result.keySet();
@@ -192,7 +192,7 @@ public class MavenProjectImporter {
   }
 
   private Map<MavenProject, MavenProjectChanges> collectNewlyCreatedProjects() {
-    Map<MavenProject, MavenProjectChanges> result = new THashMap<MavenProject, MavenProjectChanges>();
+    Map<MavenProject, MavenProjectChanges> result = new THashMap<>();
 
     for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
@@ -205,7 +205,7 @@ public class MavenProjectImporter {
   }
 
   private Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
-    Set<MavenProject> result = new THashSet<MavenProject>();
+    Set<MavenProject> result = new THashSet<>();
     for (MavenProject each : originalProjects) {
       if (!shouldCreateModuleFor(each)) continue;
       result.add(each);
@@ -272,8 +272,8 @@ public class MavenProjectImporter {
    * @return the first List in returned Pair contains already mavenized modules, the second List - not mavenized
    */
   private Pair<List<Pair<MavenProject, Module>>, List<Pair<MavenProject, Module>>> collectIncompatibleModulesWithProjects() {
-    List<Pair<MavenProject, Module>> incompatibleMavenized = new ArrayList<Pair<MavenProject, Module>>();
-    List<Pair<MavenProject, Module>> incompatibleNotMavenized = new ArrayList<Pair<MavenProject, Module>>();
+    List<Pair<MavenProject, Module>> incompatibleMavenized = new ArrayList<>();
+    List<Pair<MavenProject, Module>> incompatibleNotMavenized = new ArrayList<>();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (MavenProject each : myAllProjects) {
@@ -324,14 +324,14 @@ public class MavenProjectImporter {
   }
 
   private List<Module> collectObsoleteModules() {
-    List<Module> remainingModules = new ArrayList<Module>();
+    List<Module> remainingModules = new ArrayList<>();
     Collections.addAll(remainingModules, myModuleModel.getModules());
 
     for (MavenProject each : selectProjectsToImport(myAllProjects)) {
       remainingModules.remove(myMavenProjectToModule.get(each));
     }
 
-    List<Module> obsolete = new ArrayList<Module>();
+    List<Module> obsolete = new ArrayList<>();
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (Module each : remainingModules) {
       if (manager.isMavenizedModule(each)) {
@@ -371,12 +371,12 @@ public class MavenProjectImporter {
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
 
-    List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
+    List<MavenArtifact> artifacts = new ArrayList<>();
     for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
       artifacts.addAll(each.getDependencies());
     }
 
-    final Set<File> files = new THashSet<File>();
+    final Set<File> files = new THashSet<>();
     for (MavenArtifact each : artifacts) {
       if (each.isResolved()) files.add(each.getFile());
     }
@@ -422,7 +422,7 @@ public class MavenProjectImporter {
   private void importModules(final List<MavenProjectsProcessorTask> tasks) {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
 
-    Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<MavenProject>();
+    Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<>();
 
     for (MavenProject each : projectsWithChanges.keySet()) {
       if (ensureModuleCreated(each)) {
@@ -430,8 +430,8 @@ public class MavenProjectImporter {
       }
     }
 
-    List<Module> modulesToMavenize = new ArrayList<Module>();
-    List<MavenModuleImporter> importers = new ArrayList<MavenModuleImporter>();
+    List<Module> modulesToMavenize = new ArrayList<>();
+    List<MavenModuleImporter> importers = new ArrayList<>();
 
     for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
       MavenProject project = each.getKey();
@@ -515,7 +515,7 @@ public class MavenProjectImporter {
   private void configModuleGroups() {
     if (!myImportingSettings.isCreateModuleGroups()) return;
 
-    final Stack<String> groups = new Stack<String>();
+    final Stack<String> groups = new Stack<>();
     final boolean createTopLevelGroup = myProjectsTree.getRootProjects().size() > 1;
 
     myProjectsTree.visit(new MavenProjectsTree.SimpleVisitor() {
@@ -560,7 +560,7 @@ public class MavenProjectImporter {
   }
 
   private boolean removeUnusedProjectLibraries() {
-    Set<Library> unusedLibraries = new HashSet<Library>();
+    Set<Library> unusedLibraries = new HashSet<>();
     Collections.addAll(unusedLibraries, myModelsProvider.getAllLibraries());
 
     for (ModuleRootModel eachModel : collectModuleModels()) {
@@ -586,7 +586,7 @@ public class MavenProjectImporter {
   }
 
   private Collection<ModuleRootModel> collectModuleModels() {
-    Map<Module, ModuleRootModel> rootModels = new THashMap<Module, ModuleRootModel>();
+    Map<Module, ModuleRootModel> rootModels = new THashMap<>();
     for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
       Module module = myMavenProjectToModule.get(each);
       ModifiableRootModel rootModel = myModelsProvider.getModifiableRootModel(module);

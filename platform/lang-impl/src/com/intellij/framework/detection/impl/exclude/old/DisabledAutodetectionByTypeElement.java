@@ -37,7 +37,7 @@ public class DisabledAutodetectionByTypeElement {
   public static final Comparator<DisabledAutodetectionByTypeElement> COMPARATOR =
     (o1, o2) -> StringUtil.compare(o1.getFacetTypeId(), o2.getFacetTypeId(), true);
   private String myFacetTypeId;
-  private List<DisabledAutodetectionInModuleElement> myModuleElements = new SortedList<DisabledAutodetectionInModuleElement>(DisabledAutodetectionInModuleElement.COMPARATOR);
+  private List<DisabledAutodetectionInModuleElement> myModuleElements = new SortedList<>(DisabledAutodetectionInModuleElement.COMPARATOR);
   
   public DisabledAutodetectionByTypeElement() {
   }

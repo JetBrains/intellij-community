@@ -28,6 +28,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 
 public class CopyElementAction extends AnAction {
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

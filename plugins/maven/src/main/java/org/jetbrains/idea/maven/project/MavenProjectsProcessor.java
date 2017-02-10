@@ -33,7 +33,7 @@ public class MavenProjectsProcessor {
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<MavenProjectsProcessorTask>();
+  private final Queue<MavenProjectsProcessorTask> myQueue = new LinkedList<>();
   private boolean isProcessing;
 
   private volatile boolean isStopped;

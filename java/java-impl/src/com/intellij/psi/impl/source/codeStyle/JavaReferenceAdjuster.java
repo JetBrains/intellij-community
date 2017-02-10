@@ -166,7 +166,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, boolean useFqInJavadoc, boolean useFqInCode) {
-    List<ASTNode> array = new ArrayList<ASTNode>();
+    List<ASTNode> array = new ArrayList<>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for (ASTNode ref : array) {
       if (ref.getPsi().isValid()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -31,7 +32,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -50,36 +50,22 @@ public class CompilerTestUtil {
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
   }
 
-  /**
-   * @deprecated not needed anymore
-   */
-  public static void scanSourceRootsToRecompile(Project project) {
-  }
-
   @TestOnly
   public static void saveApplicationSettings() {
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        doSaveComponent(ProjectJdkTable.getInstance());
-        doSaveComponent(FileTypeManager.getInstance());
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      doSaveComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
+      doSaveComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
     });
   }
 
   @TestOnly
-  public static void saveApplicationComponent(final Object appComponent) {
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        doSaveComponent(appComponent);
-      }
-    });
+  public static void saveApplicationComponent(@NotNull PersistentStateComponent<?> appComponent) {
+    EdtTestUtil.runInEdtAndWait(() -> doSaveComponent(appComponent));
   }
 
-  private static void doSaveComponent(Object appComponent) {
+  private static void doSaveComponent(@NotNull PersistentStateComponent<?> component) {
     //noinspection TestOnlyProblems
-    ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
+    ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(component);
   }
 
   @TestOnly
@@ -95,26 +81,23 @@ public class CompilerTestUtil {
 
   @TestOnly
   public static void disableExternalCompiler(@NotNull  final Project project) {
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          Sdk internalJdk = table.getInternalJdk();
-          List<Module> modulesToRestore = new SmartList<Module>();
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-            if (sdk != null && sdk.equals(internalJdk)) {
-              modulesToRestore.add(module);
-            }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Sdk internalJdk = table.getInternalJdk();
+        List<Module> modulesToRestore = new SmartList<>();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.equals(internalJdk)) {
+            modulesToRestore.add(module);
           }
-          table.removeJdk(internalJdk);
-          for (Module module : modulesToRestore) {
-            ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
-          }
-          BuildManager.getInstance().clearState(project);
-        });
-      }
+        }
+        table.removeJdk(internalJdk);
+        for (Module module : modulesToRestore) {
+          ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
+        }
+        BuildManager.getInstance().clearState(project);
+      });
     });
   }
 }

@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -47,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -110,7 +110,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public LocalTask put(String key, LocalTask task) {
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
-        ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<Map.Entry<String,LocalTask>>(entrySet());
+        ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
         Collections.sort(list, (o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
@@ -132,7 +132,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final ChangeListAdapter myChangeListListener;
   private final ChangeListManager myChangeListManager;
 
-  private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
+  private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
@@ -172,7 +172,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {
 
-    Set<TaskRepository> set = new HashSet<TaskRepository>(myRepositories);
+    Set<TaskRepository> set = new HashSet<>(myRepositories);
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
@@ -363,7 +363,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
-    MultiMap<String, BranchInfo> multiMap = new MultiMap<String, BranchInfo>();
+    MultiMap<String, BranchInfo> multiMap = new MultiMap<>();
     for (BranchInfo branch : branches) {
       multiMap.putValue(branch.repository, branch);
     }
@@ -384,14 +384,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<BranchInfo>(multiMap.values()));
+    VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<>(multiMap.values()));
 
     switchBranch(info);
     return task;
   }
 
   private List<BranchInfo> getAllBranches(final String repo) {
-    ArrayList<BranchInfo> infos = new ArrayList<BranchInfo>();
+    ArrayList<BranchInfo> infos = new ArrayList<>();
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
@@ -411,7 +411,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
     if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.<String>emptyList());
-    MultiMap<String, String> map = new MultiMap<String, String>();
+    MultiMap<String, String> map = new MultiMap<>();
     for (BranchInfo branch : branches) {
       map.putValue(branch.name, branch.repository);
     }
@@ -583,7 +583,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
-    ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>();
+    ArrayList<TaskRepository> repositories = new ArrayList<>();
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Object o : element.getChildren()) {
         if (((Element)o).getName().equals(repositoryType.getName())) {
@@ -793,7 +793,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         LOG.info(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
                                timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
-        if (issues == null) issues = new ArrayList<Task>(tasks.length);
+        if (issues == null) issues = new ArrayList<>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
           List<Task> filteredTasks = TaskSearchSupport.filterTasks(request, ContainerUtil.list(tasks));
           ContainerUtil.addAll(issues, filteredTasks);
@@ -814,8 +814,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           reason = e.getMessage();
         }
         //noinspection InstanceofCatchParameter
-        if (e instanceof SocketTimeoutException) {
-          LOG.warn("Socket timeout from " + repository);
+        if (e instanceof SocketTimeoutException || e instanceof HttpRequests.HttpStatusException) {
+          LOG.warn("Can't connect to " + repository + ": " + e.getMessage());
         }
         else {
           LOG.warn("Cannot connect to " + repository, e);
@@ -885,7 +885,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public LocalTask getAssociatedTask(@NotNull LocalChangeList list) {
     for (LocalTask task : getLocalTasks()) {
-      for (ChangeListInfo changeListInfo : task.getChangeLists()) {
+      for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
         if (changeListInfo.id.equals(list.getId())) {
           return task;
         }
@@ -989,7 +989,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "task")
-    public List<LocalTaskImpl> tasks = new ArrayList<LocalTaskImpl>();
+    public List<LocalTaskImpl> tasks = new ArrayList<>();
 
     public int localTasksCounter = 1;
 

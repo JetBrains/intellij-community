@@ -36,7 +36,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
   private boolean myHasStaticInitializer;
 
   private final HashMap<String, String> myAnnotations;
-  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
+  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
 
   final Configuration.InstrumentationType myInstrumentationType;
   String myClassName;
@@ -167,7 +167,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     if ((access & ACC_STATIC) != 0 && name.equals("<clinit>")) {
       myHasStaticInitializer = true;
 
-      return new MethodVisitor(Opcodes.ASM5, methodvisitor) {
+      return new MethodVisitor(Opcodes.API_VERSION, methodvisitor) {
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);

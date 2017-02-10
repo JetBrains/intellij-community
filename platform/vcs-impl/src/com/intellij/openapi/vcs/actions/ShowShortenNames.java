@@ -34,7 +34,7 @@ public class ShowShortenNames extends ActionGroup {
 
   public ShowShortenNames(final EditorGutterComponentEx gutter) {
     super("Names", true);
-    final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
+    final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ShortNameType type : ShortNameType.values()) {
       kids.add(new SetShortNameTypeAction(type, gutter));
     }
@@ -45,10 +45,6 @@ public class ShowShortenNames extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myChildren;
-  }
-
-  public static boolean isSet() {
-    return getType() != ShortNameType.NONE;
   }
 
   public static ShortNameType getType() {

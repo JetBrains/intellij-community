@@ -23,9 +23,9 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class DirectoryContent {
-  private final Collection<String> mySubDirectories = new HashSet<String>();
-  private final Collection<String> myFiles = new HashSet<String>();
-  private final Collection<String> myModules = new HashSet<String>();
+  private final Collection<String> mySubDirectories = new HashSet<>();
+  private final Collection<String> myFiles = new HashSet<>();
+  private final Collection<String> myModules = new HashSet<>();
 
   public int getTotalSize() {
     return mySubDirectories.size() + myFiles.size() + myModules.size();
@@ -68,7 +68,7 @@ public class DirectoryContent {
   }
 
   private static Collection<String> convertToSortedCollection(Collection<String> collection) {
-    ArrayList<String> result = new ArrayList<String>(collection);
+    ArrayList<String> result = new ArrayList<>(collection);
     Collections.sort(result, (o, o1) -> o.compareToIgnoreCase(o1));
     return result;
   }

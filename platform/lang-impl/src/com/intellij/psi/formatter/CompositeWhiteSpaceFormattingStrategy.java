@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 
-  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<WhiteSpaceFormattingStrategy>();
+  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<>();
   private boolean myReplaceDefaultStrategy;
 
   public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<WhiteSpaceFormattingStrategy> strategies)

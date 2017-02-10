@@ -110,7 +110,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
   @Nullable
   private static OccurenceNavigator findNavigator(JComponent parent) {
-    LinkedList<JComponent> queue = new LinkedList<JComponent>();
+    LinkedList<JComponent> queue = new LinkedList<>();
     queue.addLast(parent);
     while (!queue.isEmpty()) {
       JComponent component = queue.removeFirst();

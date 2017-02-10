@@ -126,7 +126,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
   private void updateSelectedTypes() {
-    Set<String> selectedTypes = new LinkedHashSet<String>();
+    Set<String> selectedTypes = new LinkedHashSet<>();
 
     selectedTypes.add("Existing Sources");
 

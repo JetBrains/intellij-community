@@ -76,7 +76,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   private final AnActionButton myRemoveButton;
   private boolean myIsModified = false;
 
-  private final CompoundScheme.MutatorHelper<ToolsGroup<T>, T> mutatorHelper = new CompoundScheme.MutatorHelper<ToolsGroup<T>, T>();
+  private final CompoundScheme.MutatorHelper<ToolsGroup<T>, T> mutatorHelper = new CompoundScheme.MutatorHelper<>();
 
   protected BaseToolsPanel() {
     myTree = new CheckboxTree(
@@ -254,7 +254,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   @NotNull
   private List<ToolsGroup<T>> getGroupList() {
     MutableTreeNode root = (MutableTreeNode)myTree.getModel().getRoot();
-    List<ToolsGroup<T>> result = new ArrayList<ToolsGroup<T>>(root.getChildCount());
+    List<ToolsGroup<T>> result = new ArrayList<>(root.getChildCount());
     for (int i = 0; i < root.getChildCount(); i++) {
       final CheckedTreeNode node = (CheckedTreeNode)root.getChildAt(i);
       for (int j = 0; j < node.getChildCount(); j++) {
@@ -487,7 +487,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
   private String[] getGroups() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (ToolsGroup group : getGroupList()) {
       result.add(group.getName());
     }
@@ -516,7 +516,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     if (root == null || !(root instanceof CheckedTreeNode)) {
       return;
     }
-    final List<CheckedTreeNode> nodes = new ArrayList<CheckedTreeNode>();
+    final List<CheckedTreeNode> nodes = new ArrayList<>();
     new Object() {
       @SuppressWarnings("unchecked")
       public void collect(CheckedTreeNode node) {

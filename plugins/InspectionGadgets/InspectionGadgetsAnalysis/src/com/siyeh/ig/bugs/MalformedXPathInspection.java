@@ -37,7 +37,7 @@ public class MalformedXPathInspection extends BaseInspection {
    * @noinspection StaticCollection
    */
   @NonNls
-  private static final Set<String> xpathMethodNames = new HashSet<String>(2);
+  private static final Set<String> xpathMethodNames = new HashSet<>(2);
 
   static {
     xpathMethodNames.add("compile");

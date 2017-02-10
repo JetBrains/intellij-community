@@ -63,7 +63,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
 
   private static class MyFoldingVisitor extends JavaRecursiveElementWalkingVisitor {
     private PsiElement myLastElement;
-    private final List<FoldingDescriptor> myFoldingData = new ArrayList<FoldingDescriptor>();
+    private final List<FoldingDescriptor> myFoldingData = new ArrayList<>();
 
     @Override
       public void visitMethod(PsiMethod method) {

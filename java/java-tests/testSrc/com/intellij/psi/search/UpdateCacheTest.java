@@ -45,13 +45,16 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @PlatformTestCase.WrapInCommand
 public class UpdateCacheTest extends PsiTestCase {
@@ -93,7 +96,7 @@ public class UpdateCacheTest extends PsiTestCase {
     final PsiFile finalFile = file;
     file = new WriteAction<PsiFile>() {
       @Override
-      protected void run(Result<PsiFile> result) throws Throwable {
+      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
         PsiFile res = (PsiFile)root.add(finalFile);
         result.setResult(res);
       }
@@ -406,9 +409,10 @@ public class UpdateCacheTest extends PsiTestCase {
   }
 
   private void checkUsages(PsiElement element, @NonNls String[] expectedFiles){
-    PsiReference[] refs = ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
+    PsiReference[] refs = ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject), false).toArray(
+      PsiReference.EMPTY_ARRAY);
 
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = new ArrayList<>();
     for (PsiReference ref : refs) {
       PsiFile file = ref.getElement().getContainingFile();
       if (!files.contains(file)) {

@@ -19,9 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -54,13 +52,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
         model.loadModule(file.getPath());
       }
 
-      AccessToken token = WriteAction.start();
-      try {
-        model.commit();
-      }
-      finally {
-        token.finish();
-      }
+      WriteAction.run(() -> model.commit());
     }
     catch (Exception ex) {
       LOG.info(ex);
@@ -95,7 +87,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> modulesFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> modulesFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!file.getFileType().equals(StdFileTypes.IDEA_MODULE)) {
         return Collections.emptyList();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,16 +88,14 @@ public class ConvertUsagesUtil {
   //@NotNull
   public static Map<GroupDescriptor, Set<UsageDescriptor>> convertString(String usages) {
     assert usages != null;
-    Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+    Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<>();
     for (String groupStr : usages.split(Character.toString(GROUPS_SEPARATOR))) {
       if (!isEmptyOrSpaces(groupStr)) {
         final StringPair group = getPair(groupStr, Character.toString(GROUP_SEPARATOR));
         if (group != null) {
           final String groupId = group.first;
           assert groupId != null;
-          if (groupId.length() < GroupDescriptor.MAX_ID_LENGTH) {
-            descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
-          }
+          descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
         }
       }
     }
@@ -107,7 +105,7 @@ public class ConvertUsagesUtil {
   //@NotNull
   public static Map<GroupDescriptor, Set<UsageDescriptor>> convertValueString(GroupDescriptor groupId, String valueData) {
     assert groupId != null;
-    final Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
+    final Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<>();
     for (String value : valueData.split(Character.toString(GROUP_VALUE_SEPARATOR))) {
       if (!isEmptyOrSpaces(value)) {
         final StringPair pair = getPair(value, "=");
@@ -117,7 +115,7 @@ public class ConvertUsagesUtil {
             try {
               final int i = Integer.parseInt(count);
               if (!descriptors.containsKey(groupId)) {
-                descriptors.put(groupId, new LinkedHashSet<UsageDescriptor>());
+                descriptors.put(groupId, new LinkedHashSet<>());
               }
               descriptors.get(groupId).add(new UsageDescriptor(pair.first, i));
             }
@@ -149,7 +147,7 @@ public class ConvertUsagesUtil {
   //@NotNull
   public static <T extends UsageDescriptor> Map<GroupDescriptor, Set<T>> sortDescriptorsByPriority(Map<GroupDescriptor, Set<T>> descriptors) {
     assert descriptors != null;
-    final SortedMap<GroupDescriptor, Set<T>> map = new TreeMap<GroupDescriptor, Set<T>>((g1, g2) -> {
+    final SortedMap<GroupDescriptor, Set<T>> map = new TreeMap<>((g1, g2) -> {
       final int priority = (int)(g2.getPriority() - g1.getPriority());
       return priority == 0 ? g1.getId().compareTo(g2.getId()) : priority;
     });

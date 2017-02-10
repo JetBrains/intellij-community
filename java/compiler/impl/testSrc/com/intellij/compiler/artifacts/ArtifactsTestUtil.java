@@ -80,7 +80,7 @@ public class ArtifactsTestUtil {
       }
       min = Math.min(min, k);
     }
-    List<String> lines = new ArrayList<String>();
+    List<String> lines = new ArrayList<>();
     for (String s : strings) {
       lines.add(s.substring(min));
     }

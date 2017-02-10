@@ -18,8 +18,7 @@ package com.siyeh.ig.junit;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
-public class JUnitTestClassNamingConventionInspection
-  extends JUnitTestClassNamingConventionInspectionBase {
+public class JUnitTestClassNamingConventionInspection extends JUnitTestClassNamingConventionInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

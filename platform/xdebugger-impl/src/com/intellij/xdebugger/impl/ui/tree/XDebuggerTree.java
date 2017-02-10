@@ -23,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,6 +44,7 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -385,9 +385,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
           removeTreeListener(this); // remove the listener on first match
         }
       }
-
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {}
     });
   }
 
@@ -408,5 +405,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     });
+  }
+
+  public boolean isDetached() {
+    return DataManager.getInstance().getDataContext(this).getData(XDebugSessionTab.TAB_KEY) == null;
   }
 }

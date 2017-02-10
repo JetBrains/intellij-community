@@ -40,7 +40,7 @@ class CatchParameterUsedVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
     if (used) {
       return;
     }

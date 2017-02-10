@@ -85,7 +85,6 @@ public class NotificationPopup {
         .setClickHandler(clickHandler, closeOnClick)
         .createBalloon();
 
-      assert !balloon.isDisposed();
       ((BalloonImpl)balloon).traceDispose(true);
 
       BalloonLayout layout = frame.getBalloonLayout();

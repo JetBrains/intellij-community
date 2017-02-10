@@ -115,7 +115,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   }
 
   private List<String> getClassSearchResults(String pattern) {
-    List<String> actualArtifacts = new ArrayList<String>();
+    List<String> actualArtifacts = new ArrayList<>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
       String s = eachResult.className + "(" + eachResult.packageName + ")";
       for (MavenArtifactInfo eachVersion : eachResult.versions) {
@@ -128,7 +128,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   }
 
   private void assertArtifactSearchResults(String pattern, String... expected) {
-    List<String> actual = new ArrayList<String>();
+    List<String> actual = new ArrayList<>();
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher(true).search(myProject, pattern, 100)) {
       String s = "";
       for (MavenArtifactInfo eachVersion : eachResult.versions) {

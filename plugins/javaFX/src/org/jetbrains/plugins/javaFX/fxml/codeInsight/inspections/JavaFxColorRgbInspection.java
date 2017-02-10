@@ -62,7 +62,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
                                           @NotNull String propertyName,
                                           @NotNull String propertyValue,
                                           @NotNull PsiElement location) {
-        final PsiMember declaration = JavaFxPsiUtil.collectWritableProperties(psiClass).get(propertyName);
+        final PsiMember declaration = JavaFxPsiUtil.getWritableProperties(psiClass).get(propertyName);
         final String boxedQName = JavaFxPsiUtil.getBoxedPropertyType(psiClass, declaration);
         if (CommonClassNames.JAVA_LANG_FLOAT.equals(boxedQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(boxedQName)) {
           try {

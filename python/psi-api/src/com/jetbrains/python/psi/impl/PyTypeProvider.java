@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface PyTypeProvider {
   Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context);
 
   @Nullable
-  PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context);
+  Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context);
 
   @Nullable
   PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);

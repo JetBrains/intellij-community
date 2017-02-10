@@ -64,10 +64,10 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
         ReferenceInjector[] extensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensions();
-        final List<PsiReference> references = new SmartList<PsiReference>();
+        final List<PsiReference> references = new SmartList<>();
         Project project = element.getProject();
         Configuration configuration = Configuration.getProjectInstance(project);
-        final Ref<Boolean> injected = new Ref<Boolean>(Boolean.FALSE);
+        final Ref<Boolean> injected = new Ref<>(Boolean.FALSE);
         for (ReferenceInjector injector : extensions) {
           Collection<BaseInjection> injections = configuration.getInjectionsByLanguageId(injector.getId());
           for (BaseInjection injection : injections) {

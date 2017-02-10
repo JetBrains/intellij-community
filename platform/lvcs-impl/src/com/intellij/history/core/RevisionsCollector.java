@@ -32,7 +32,7 @@ public class RevisionsCollector extends ChangeSetsProcessor {
   private final String myProjectId;
   private final String myPattern;
 
-  private final List<Revision> myResult = new ArrayList<Revision>();
+  private final List<Revision> myResult = new ArrayList<>();
 
   public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
     super(path);

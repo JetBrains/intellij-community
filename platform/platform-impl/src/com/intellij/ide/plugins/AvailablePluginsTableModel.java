@@ -40,7 +40,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   public static final String BUILTIN_REPO = "Built-in Plugin Repository";
 
   private String myCategory = ALL;
-  private TreeSet<String> myAvailableCategories = new TreeSet<String>();
+  private TreeSet<String> myAvailableCategories = new TreeSet<>();
   private String myRepository = ALL;
   private String myVendor = null;
 

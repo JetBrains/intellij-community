@@ -193,6 +193,10 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
     });
   }
 
+  @Override
+  public void dispose() {
+  }
+
   /**
    * Wrapper for vcs root
    */

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +78,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
 
-    List<String> names = new ArrayList<String>(parameters.keySet());
+    List<String> names = new ArrayList<>(parameters.keySet());
     List<String> values = ContainerUtil.map(names, name -> parameters.get(name));
 
     String text = toEval.getText();
@@ -191,11 +190,11 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
-    final Map<String, String> parameters = new THashMap<String, String>();
-    final Map<GrExpression, String> replacements = new HashMap<GrExpression, String>();
+    final Map<String, String> parameters = new THashMap<>();
+    final Map<GrExpression, String> replacements = new HashMap<>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
         if (PsiUtil.isThisReference(referenceExpression) || PsiUtil.isSuperReference(referenceExpression)) {
@@ -274,7 +273,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
         if (refElement.getQualifier() == null) {
           PsiElement resolved = refElement.resolve();

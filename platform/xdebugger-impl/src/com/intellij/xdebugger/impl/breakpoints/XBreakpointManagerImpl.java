@@ -36,6 +36,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,9 +75,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         HttpVirtualFileListener httpVirtualFileListener = this::updateBreakpointInFile;
         HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
       }
-      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-        addDefaultBreakpoint(type);
-      }
+      XBreakpointUtil.breakpointTypes().forEach(this::addDefaultBreakpoint);
     }
   }
 
@@ -238,15 +237,16 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Collection<? extends XBreakpointBase<?,?,?>> breakpoints = myBreakpoints.get(type);
-    Collection<? extends B> regular = breakpoints != null ? Collections.unmodifiableCollection((Collection<? extends B>)breakpoints) : Collections.emptyList();
-
-    final XBreakpointBase<?, ?, ?> defaultBreakpoint = myDefaultBreakpoints.get(type);
-    if (defaultBreakpoint == null) return regular;
     List<B> result = new ArrayList<>();
-    result.add((B)defaultBreakpoint);
-    result.addAll(regular);
-    return result;
+    B defaultBreakpoint = getDefaultBreakpoint(type);
+    if (defaultBreakpoint != null) {
+      result.add(defaultBreakpoint);
+    }
+    Collection<XBreakpointBase<?, ?, ?>> breakpoints = myBreakpoints.get(type);
+    if (breakpoints != null) {
+      result.addAll((Collection<? extends B>)breakpoints);
+    }
+    return Collections.unmodifiableList(result);
   }
 
   @NotNull
@@ -288,12 +288,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   private <T extends XBreakpointProperties> EventDispatcher<XBreakpointListener> getOrCreateDispatcher(final XBreakpointType<?,T> type) {
-    EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
-    if (dispatcher == null) {
-      dispatcher = EventDispatcher.create(XBreakpointListener.class);
-      myDispatchers.put(type, dispatcher);
-    }
-    return dispatcher;
+    return myDispatchers.computeIfAbsent(type, k -> EventDispatcher.create(XBreakpointListener.class));
   }
 
   @Override
@@ -400,21 +395,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myBreakpointsDefaults.clear();
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      for (BreakpointState breakpointState : state.getDefaultBreakpoints()) {
-        loadBreakpoint(breakpointState, true);
-      }
-      for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-        if (!myDefaultBreakpoints.containsKey(type)) {
-          addDefaultBreakpoint(type);
-        }
-      }
+      state.getDefaultBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
-      for (XBreakpointBase<?, ?, ?> breakpoint : myBreakpoints.values()) {
-        doRemoveBreakpoint(breakpoint);
-      }
-      for (BreakpointState breakpointState : state.getBreakpoints()) {
-        loadBreakpoint(breakpointState, false);
-      }
+      XBreakpointUtil.breakpointTypes().remove(myDefaultBreakpoints::containsKey).forEach(this::addDefaultBreakpoint);
+
+      myBreakpoints.values().forEach(this::doRemoveBreakpoint);
+
+      state.getBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, false));
 
       for (BreakpointState defaults : state.getBreakpointsDefaults()) {
         XBreakpointType<?, ?> type = XBreakpointUtil.findType(defaults.getTypeId());
@@ -464,14 +451,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   public Set<String> getAllGroups() {
-    HashSet<String> res = new HashSet<>();
-    for (XBreakpointBase breakpoint : myAllBreakpoints) {
-      String group = breakpoint.getGroup();
-      if (group != null) {
-        res.add(group);
-      }
-    }
-    return res;
+    return StreamEx.of(myAllBreakpoints).map(XBreakpointBase::getGroup).nonNull().toSet();
   }
 
   public String getDefaultGroup() {
@@ -495,12 +475,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   @NotNull
   public BreakpointState getBreakpointDefaults(@NotNull XBreakpointType type) {
-    BreakpointState defaultState = myBreakpointsDefaults.get(type);
-    if (defaultState == null) {
-      defaultState = createBreakpointDefaults(type);
-      myBreakpointsDefaults.put(type, defaultState);
-    }
-    return defaultState;
+    return myBreakpointsDefaults.computeIfAbsent(type, k -> createBreakpointDefaults(type));
   }
 
   @NotNull

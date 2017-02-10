@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,7 +253,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
 
   static class MyOrderProvider implements TreeStructureProvider {
     private final Project myProject;
-    private final Map<String, Integer> myOrder = new LinkedHashMap<String, Integer>();
+    private final Map<String, Integer> myOrder = new LinkedHashMap<>();
 
     public MyOrderProvider(Project project) {
       myProject = project;
@@ -271,7 +271,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                                @NotNull Collection<AbstractTreeNode> children,
                                                ViewSettings settings) {
-      ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
       for (final AbstractTreeNode child : children) {
         ProjectViewNode treeNode = (ProjectViewNode)child;
@@ -348,11 +348,6 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
         result.add(treeNode);
       }
       return result;
-    }
-
-    @Override
-    public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-      return null;
     }
   }
 }

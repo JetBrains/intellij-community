@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,8 +101,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final Project project = myMethod.getProject();
 
     final PsiReference[] methodReferences =
-      ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
-    List<UsageInfo> result = new ArrayList<UsageInfo>();
+      ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
+    List<UsageInfo> result = new ArrayList<>();
     for (final PsiReference ref : methodReferences) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
@@ -158,7 +158,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
     if (!myTargetClass.isInterface()) {
       RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
@@ -209,7 +209,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {
     myTypeParameterReplacements = buildTypeParameterReplacements();
-    List<PsiClass> inheritors = new ArrayList<PsiClass>();
+    List<PsiClass> inheritors = new ArrayList<>();
 
     CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
@@ -301,7 +301,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         TypeConversionUtil.getSuperClassSubstitutor(myTargetClass, targetClass, PsiSubstitutor.EMPTY);
       final Map<PsiTypeParameter, PsiTypeParameter> map = calculateReplacementMap(superClassSubstitutor, myTargetClass, targetClass);
       if (map == null) return newMethod;
-      additionalReplacements = new HashMap<PsiTypeParameter, PsiTypeParameter>();
+      additionalReplacements = new HashMap<>();
       for (final Map.Entry<PsiTypeParameter, PsiTypeParameter> entry : map.entrySet()) {
         additionalReplacements.put(entry.getValue(), entry.getKey());
       }
@@ -398,7 +398,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private static Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
                                                                           final PsiClass targetClass,
                                                                           final PsiElement containingElement) {
-    final HashMap<PsiTypeParameter, PsiTypeParameter> result = new HashMap<PsiTypeParameter, PsiTypeParameter>();
+    final HashMap<PsiTypeParameter, PsiTypeParameter> result = new HashMap<>();
     for (PsiTypeParameter classTypeParameter : PsiUtil.typeParametersIterable(targetClass)) {
       final PsiType substitution = substitutor.substitute(classTypeParameter);
       if (!(substitution instanceof PsiClassType)) return null;

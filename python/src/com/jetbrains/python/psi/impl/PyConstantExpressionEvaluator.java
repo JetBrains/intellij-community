@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,9 @@ public class PyConstantExpressionEvaluator {
     Object result = evaluate(expr);
     if (result instanceof Boolean) {
       return (Boolean)result;
+    }
+    else if (result instanceof Integer) {
+      return ((Integer)result) != 0;
     }
     else {
       return defaultValue;

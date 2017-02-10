@@ -51,7 +51,7 @@ public class JavadocHelper {
   private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
-    = new Pair<JavadocParameterInfo, List<JavadocParameterInfo>>(null, Collections.<JavadocParameterInfo>emptyList());
+    = new Pair<>(null, Collections.<JavadocParameterInfo>emptyList());
   private static final JavadocHelper INSTANCE = new JavadocHelper();
   
   @NotNull
@@ -107,16 +107,15 @@ public class JavadocHelper {
     }
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings();
-    final int indentSize = codeStyleSettings.getIndentSize(psiFile.getFileType());
     int column;
     if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
       column = Math.max(descriptionStartColumn, parameterNameEndColumn);
       if (column <= parameterNameEndColumn) {
-        column = parameterNameEndColumn + indentSize;
+        column = parameterNameEndColumn + 1;
       }
     }
     else {
-      column = anchor.parameterNameEndPosition.column + indentSize;
+      column = anchor.parameterNameEndPosition.column + 1;
     }
     return new LogicalPosition(anchor.parameterNameEndPosition.line, column);
   }
@@ -133,7 +132,7 @@ public class JavadocHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
-    List<JavadocParameterInfo> result = new ArrayList<JavadocParameterInfo>();
+    List<JavadocParameterInfo> result = new ArrayList<>();
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(editor.getDocument());
     final PsiElement elementAtCaret = psiFile.findElementAt(offset);
     if (elementAtCaret == null) {

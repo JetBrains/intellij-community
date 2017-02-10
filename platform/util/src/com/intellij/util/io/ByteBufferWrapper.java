@@ -68,6 +68,10 @@ public abstract class ByteBufferWrapper {
 
   @Override
   public String toString() {
-    return "Buffer for " + myFile + " size: " + myLength;
+    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
+  }
+
+  public int allocationSize() {
+    return (int)myLength;
   }
 }

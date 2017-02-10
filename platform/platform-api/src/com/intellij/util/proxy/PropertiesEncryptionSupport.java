@@ -58,6 +58,11 @@ public class PropertiesEncryptionSupport {
   }
 
   public void store(@NotNull Properties props, @NotNull String comments, @NotNull File file) throws Exception {
+    if (props.isEmpty()) {
+      FileUtil.delete(file);
+      return;
+    }
+
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     props.store(out, comments);
     out.close();

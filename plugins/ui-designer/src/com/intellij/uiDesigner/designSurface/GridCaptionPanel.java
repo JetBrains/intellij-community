@@ -296,7 +296,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public int[] getSelectedCells(@Nullable final Point dragOrigin) {
-    ArrayList<Integer> selection = new ArrayList<Integer>();
+    ArrayList<Integer> selection = new ArrayList<>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
       return ArrayUtil.EMPTY_INT_ARRAY;

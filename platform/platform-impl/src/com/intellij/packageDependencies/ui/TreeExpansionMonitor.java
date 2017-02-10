@@ -56,8 +56,8 @@ public abstract class TreeExpansionMonitor<T> {
     };
   }
 
-  private final Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
-  private List<T> mySelectionNodes = new ArrayList<T>();
+  private final Set<TreePath> myExpandedPaths = new HashSet<>();
+  private List<T> mySelectionNodes = new ArrayList<>();
   private final JTree myTree;
   private boolean myFrozen = false;
 
@@ -66,7 +66,7 @@ public abstract class TreeExpansionMonitor<T> {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (myFrozen) return;
-        mySelectionNodes = new ArrayList<T>();
+        mySelectionNodes = new ArrayList<>();
         TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (TreePath path : paths) {

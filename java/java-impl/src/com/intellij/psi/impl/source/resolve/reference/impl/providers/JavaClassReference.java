@@ -249,7 +249,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
       else if (isDefinitelyStatic()) {
         final PsiClass[] psiClasses = aClass.getInnerClasses();
-        final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
+        final List<PsiClass> staticClasses = new ArrayList<>(psiClasses.length);
 
         for (PsiClass c : psiClasses) {
           if (c.hasModifierProperty(PsiModifier.STATIC)) {
@@ -515,7 +515,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         return Collections.singletonList(action);
       }
       else {
-        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
+        final ArrayList<LocalQuickFix> fixes = new ArrayList<>(list.size() + 1);
         fixes.addAll(list);
         fixes.add(action);
         return fixes;

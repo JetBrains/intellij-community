@@ -2,8 +2,10 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.refactoring.LightRefactoringTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +16,17 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // has to have src.zip
+  }
+
   public void testQualifiedExpression() throws Exception {
     doTest();
+  }
+
+  public void testQualifiedExpressionInLib() throws Exception {
+    doTest(true);
   }
 
   public void testQualifiedConstantExpression() throws Exception {
@@ -42,6 +53,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testDiamondInitializer() throws Exception {
+    doTest();
+  }
+
   public void testMultipleInitializers() throws Exception {
     configureByFile("/refactoring/inlineConstantField/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
@@ -51,6 +66,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   private void doTest() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(boolean inlineThisOnly) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
     configureByFile(fileName);
@@ -60,7 +79,7 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiField);
     PsiField field = (PsiField)element.getNavigationElement();
-    new InlineConstantFieldProcessor(field, getProject(), refExpr, element instanceof PsiCompiledElement).run();
+    new InlineConstantFieldProcessor(field, getProject(), refExpr, inlineThisOnly || element instanceof PsiCompiledElement).run();
     checkResultByFile(fileName + ".after");
   }
 }

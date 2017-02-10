@@ -49,4 +49,8 @@ public class Test {
       long d = 5;
       int a = 0;
   }
+
+  void m() {
+    "".equals("");
+  }
 }

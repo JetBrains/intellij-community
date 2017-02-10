@@ -87,7 +87,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
     else {
-      final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<PsiClass>();
+      final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
 
@@ -151,7 +151,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         name = "Pull method \'" + methodWithOverrides.getName() + "\' up and make it abstract";
       }
     } else {
-      final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<PsiClass>();
+      final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
       if (classesToPullUp.isEmpty()) {

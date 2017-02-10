@@ -39,7 +39,7 @@ public final class SimpleCommand implements Command {
   @NotNull
   private final ArgumentsInfo myArgumentsInfo;
   @NotNull
-  private final List<Option> myOptions = new ArrayList<Option>();
+  private final List<Option> myOptions = new ArrayList<>();
   @NotNull
   private final CommandExecutor myExecutor;
 

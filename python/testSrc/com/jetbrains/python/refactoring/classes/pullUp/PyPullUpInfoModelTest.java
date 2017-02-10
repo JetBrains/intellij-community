@@ -120,7 +120,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
    */
   @NotNull
   private List<String> getErrorMemberNames() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (final PyMemberInfo<PyElement> info : myMemberInfos) {
       if (mySut.checkForProblems(info) != MemberInfoModel.OK) {
         result.add(info.getDisplayName());

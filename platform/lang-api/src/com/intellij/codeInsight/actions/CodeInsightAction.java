@@ -42,6 +42,11 @@ public abstract class CodeInsightAction extends AnAction {
     }
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   @Nullable
   protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);
@@ -71,7 +76,7 @@ public abstract class CodeInsightAction extends AnAction {
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      getEditor(e.getDataContext(), project, false); // ensure documents are committed
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
     super.beforeActionPerformedUpdate(e);
   }

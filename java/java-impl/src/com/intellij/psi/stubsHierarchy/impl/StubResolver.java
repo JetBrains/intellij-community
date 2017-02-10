@@ -16,241 +16,198 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.Import;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
-import com.intellij.util.BitUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class StubResolver {
+  private static final Import[] DEFAULT_JAVA_IMPORTS = {importPackage("java.lang")};
+  private static final Import[] DEFAULT_GROOVY_IMPORTS = {
+    importPackage("java.lang"),
+    importPackage("java.util"),
+    importPackage("java.io"),
+    importPackage("java.net"),
+    importPackage("groovy.lang"),
+    importPackage("groovy.util"),
+    new Import(NameEnvironment.fromString("java.math"), NameEnvironment.hashIdentifier("BigInteger"), false),
+    new Import(NameEnvironment.fromString("java.math"), NameEnvironment.hashIdentifier("BigDecimal"), false),
+  };
   private final Symbols mySymbols;
-  private final NameEnvironment myNameEnvironment;
+  private final StubHierarchyConnector myConnector;
 
-  public StubResolver(Symbols symbols) {
+  public StubResolver(Symbols symbols, StubHierarchyConnector connector) {
     this.mySymbols = symbols;
-    this.myNameEnvironment = symbols.myNameEnvironment;
+    myConnector = connector;
+  }
+
+  private static Import importPackage(String qname) {
+    return new Import(NameEnvironment.fromString(qname), 0, false);
+  }
+
+  private static Import[] getDefaultImports(byte type) {
+    if (type == IndexTree.JAVA) return DEFAULT_JAVA_IMPORTS;
+    if (type == IndexTree.GROOVY) return DEFAULT_GROOVY_IMPORTS;
+    return Imports.EMPTY_ARRAY;
   }
 
   // resolve class `sym` extends/implements `baseId`
-  public Set<Symbol> resolveBase(Symbol.ClassSymbol sym, int[] baseId) {
-    Set<Symbol> prev = null;
-    Set<Symbol> result = null;
-    for (int i = 0; i < baseId.length; i++) {
-      int name = baseId[i];
-      int k = (i == baseId.length - 1) ? IndexTree.CLASS : IndexTree.CLASS | IndexTree.PACKAGE;
-      if (i == 0) {
-        result = findIdent(sym.myOwner, sym.myUnitInfo, name, k);
-      } else {
-        Set<Symbol> acc = new HashSet<Symbol>();
-        for (Symbol symbol : prev) {
-          selectSym(symbol, name, k, acc);;
-        }
-        result = acc;
-      }
-      prev = result;
+  Set<Symbol> resolveBase(Symbol.ClassSymbol sym, @ShortName int[] qname) throws IncompleteHierarchyException {
+    Set<Symbol> result = resolveUnqualified(sym, qname[0], qname.length > 1);
+    for (int i = 1; i < qname.length; i++) {
+      result = processQualifier(result, qname[i], i != qname.length - 1);
+    }
+    if (result.isEmpty()) {
+      throw IncompleteHierarchyException.INSTANCE;
+    }
+    return result;
+  }
 
+  Set<Symbol> resolveUnqualified(Symbol.ClassSymbol sym, @ShortName final int shortName, boolean processPackages) throws IncompleteHierarchyException {
+    Set<Symbol> symbols = findIdent(sym.myOwner, sym.myUnitInfo, shortName, processPackages);
+    if (symbols.isEmpty()) {
+      throw IncompleteHierarchyException.INSTANCE;
+    }
+    return symbols;
+  }
+
+  private Set<Symbol> processQualifier(Set<Symbol> contextResults, @ShortName final int shortName, final boolean processPackages) throws IncompleteHierarchyException {
+    Set<Symbol> result = new HashSet<>();
+    for (Symbol symbol : contextResults) {
+      selectSym(symbol, shortName, processPackages, result);
     }
     return result;
   }
 
   @NotNull
-  private Set<Symbol> findIdent(Symbol startScope, UnitInfo info, int name, int kind) {
-    Set<Symbol> result = new HashSet<Symbol>();
-    if (BitUtil.isSet(kind, IndexTree.CLASS)) {
-      findType(startScope, name, result);
-      findGlobalType(info, name, result);
-    }
+  private Set<Symbol> findIdent(Symbol startScope, UnitInfo info, @ShortName int name, boolean processPackages) throws IncompleteHierarchyException {
+    Set<Symbol> result = new HashSet<>();
+    findType(startScope, name, result);
+    findGlobalType(info, name, result);
 
-    if (BitUtil.isSet(kind, IndexTree.PACKAGE)) {
-      Symbol.PackageSymbol pkg = mySymbols.getPackage(myNameEnvironment.qualifiedName(null, name, false));
-      if (pkg != null)
-        result.add(pkg);
+    if (processPackages) {
+      ContainerUtil.addIfNotNull(result, mySymbols.getPackage(name));
     }
     return result;
   }
 
-  private void findType(Symbol startScope, int name, Set<Symbol> symbols) {
+  private void findType(Symbol startScope, int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
     // looking up
     for (Symbol s = startScope; s != null; s = s.myOwner)
-      findMemberType(s, name, symbols, new HashSet<Symbol>());
+      findMemberType(s, name, symbols);
     // type from current package
-    findIdentInPackage(startScope.pkg(), name, IndexTree.CLASS, symbols);
+    findIdentInPackage(startScope.pkg(), name, false, symbols);
   }
 
   // resolving `receiver.name`
-  private void selectSym(Symbol receiver, int name, int kind, Set<Symbol> symbols) {
+  private void selectSym(Symbol receiver, @ShortName int name, boolean processPackages, Set<Symbol> symbols) throws IncompleteHierarchyException {
     if (receiver.isPackage())
-      findIdentInPackage((Symbol.PackageSymbol)receiver, name, kind, symbols);
+      findIdentInPackage((Symbol.PackageSymbol)receiver, name, processPackages, symbols);
     else
-      findMemberType(receiver, name, symbols, new HashSet<Symbol>());
+      findMemberType(receiver, name, symbols);
   }
 
-  private void findIdentInPackage(Symbol.PackageSymbol pck, int name, int kind, Set<Symbol> symbols) {
-    QualifiedName fullname = mySymbols.myNameEnvironment.qualifiedName(pck.myQualifiedName, name, false);
-    if (fullname == null) {
-      return;
+  private void findIdentInPackage(Symbol.PackageSymbol pck, @ShortName int name, boolean processPackages, Set<Symbol> symbols) {
+    @QNameHash int fullname = NameEnvironment.qualifiedName(pck.myQualifiedName, name);
+    if (processPackages) {
+      ContainerUtil.addIfNotNull(symbols, mySymbols.getPackage(fullname));
     }
-    if (BitUtil.isSet(kind, IndexTree.PACKAGE)) {
-      Symbol.PackageSymbol pkg = mySymbols.getPackage(fullname);
-      if (pkg != null)
-        symbols.add(pkg);
-    }
-    if (BitUtil.isSet(kind, IndexTree.CLASS)) {
-      Collections.addAll(symbols, loadClass(fullname));
-    }
+    Collections.addAll(symbols, findGlobalType(fullname));
   }
 
-  private static void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) {
-    if (!processed.add(s)) {
-      return;
-    }
-    findImmediateMemberType(s, name, symbols);
-    if (s.isClass())
-      findInheritedMemberType((Symbol.ClassSymbol)s, name, symbols, processed);
-  }
-
-  private static void findImmediateMemberType(Symbol s, int name, Set<Symbol> symbols) {
-    Symbol.ClassSymbol[] members = s.members();
-    int index = getIndex(name, members);
-    if (index < 0) return;
-
-    // elem
-    Symbol.ClassSymbol member = members[index];
-    symbols.add(member);
-    // on the left
-    int i = index - 1;
-    while (i >= 0 && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i--;
-    }
-    // on the right
-    i = index + 1;
-    while (i < members.length && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i++;
+  private void findMemberType(Symbol s, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
+    if (s.isClass()) {
+      processInheritedMembers((Symbol.ClassSymbol)s, name, symbols, null);
+    } else {
+      processMembers(s.getMembers(), name, symbols);
     }
   }
 
-  private static void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed) {
-    for (Symbol.ClassSymbol st : c.getSuperClasses())
-      findMemberType(st, name, symbols, processed);
+  private void processInheritedMembers(Symbol.ClassSymbol s,
+                                       @ShortName int name,
+                                       Set<Symbol> symbols,
+                                       @Nullable Set<Symbol> processed) throws IncompleteHierarchyException {
+    processMembers(s.getMembers(), name, symbols);
+
+    @CompactArray(Symbol.ClassSymbol.class) Object supers = s.getSuperClasses(myConnector);
+    if (supers == null) return;
+
+    if (processed == null) processed = new HashSet<>();
+    if (!processed.add(s)) return;
+
+    if (supers instanceof Symbol.ClassSymbol) {
+      processInheritedMembers((Symbol.ClassSymbol)supers, name, symbols, processed);
+    } else if (supers instanceof Symbol.ClassSymbol[]) {
+      for (Symbol.ClassSymbol st : (Symbol.ClassSymbol[])supers) {
+        processInheritedMembers(st, name, symbols, processed);
+      }
+    }
   }
 
-  private Symbol.ClassSymbol[] loadClass(@NotNull QualifiedName fqn) {
-    return mySymbols.loadClass(fqn);
+  public Symbol.ClassSymbol[] findGlobalType(@QNameHash int nameId) {
+    return mySymbols.getClassSymbols(nameId);
   }
 
-  public Symbol.ClassSymbol[] findGlobalType(@NotNull QualifiedName name) {
-    return loadClass(name);
-  }
-
-  private void findGlobalType(UnitInfo info, int name, Set<Symbol> symbols) {
-    for (long anImport : Translator.getDefaultImports(info.getType(), myNameEnvironment))
+  private void findGlobalType(UnitInfo info, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
+    for (Import anImport : getDefaultImports(info.type))
       handleImport(anImport, name, symbols);
-    for (long anImport : info.getImports())
+    for (Import anImport : info.imports)
       handleImport(anImport, name, symbols);
   }
 
-  public void handleImport(long tree, int name, Set<Symbol> symbols) {
-    QualifiedName fullname = Import.getFullName(tree, myNameEnvironment);
-    if (Import.isOnDemand(tree)) {
-      if (Import.isStatic(tree)) {
-        for (Symbol.ClassSymbol p : findGlobalType(fullname))
-          importStaticAll(p, name, symbols);
+  public void handleImport(Import anImport, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
+    if (anImport.isOnDemand()) {
+      if (anImport.isStatic) {
+        for (Symbol.ClassSymbol p : findGlobalType(anImport.qualifier))
+          importNamedStatic(p, name, symbols);
       }
       else {
-        importAll(fullname, name, symbols);
+        importAll(anImport.qualifier, name, symbols);
       }
     }
     else {
-      QualifiedName prefix = myNameEnvironment.prefix(fullname);
-      if (prefix.isEmpty()) {
-        return;
-      }
-      int shortName = myNameEnvironment.shortName(fullname);
-      int alias = Import.getAlias(tree);
-      boolean shouldImport = ((alias & name) == name) || shortName == name;
-      if (!shouldImport)
-        return;
-      if (Import.isStatic(tree)) {
-          for (Symbol.ClassSymbol s : findGlobalType(prefix))
-            importNamedStatic(s, shortName, symbols);
+      @ShortName int importedName = anImport.getAlias() != 0 ? anImport.getAlias() : anImport.importedName;
+      if (name != importedName) return;
+
+      if (anImport.isStatic) {
+          for (Symbol.ClassSymbol s : findGlobalType(anImport.qualifier))
+            importNamedStatic(s, anImport.importedName, symbols);
       }
       else {
-        Collections.addAll(symbols, findGlobalType(fullname));
+        Collections.addAll(symbols, findGlobalType(NameEnvironment.qualifiedName(anImport.qualifier, anImport.importedName)));
       }
     }
   }
 
   // handling of `import prefix.*`
-  private void importAll(@NotNull final QualifiedName prefix, int suffix, final Set<Symbol> symbols) {
-
-      QualifiedName fullname = myNameEnvironment.qualifiedName(prefix, suffix, false);
-      // existing only
-      if (fullname != null) {
-        Symbol.ClassSymbol[] ss = findGlobalType(fullname);
-        Collections.addAll(symbols, ss);
-      }
-  }
-
-  // handling of `import static tsym.*`
-  private static void importStaticAll(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) {
-    new Object() {
-      Set<Symbol> processed = new HashSet<Symbol>();
-      void importFrom(Symbol.ClassSymbol cs) {
-        if (cs == null || !processed.add(cs))
-          return;
-        for (Symbol.ClassSymbol c : cs.getSuperClasses())
-          importFrom(c);
-        importMember(cs.members(), name, symbols, true);
-      }
-    }.importFrom(tsym);
+  private void importAll(@QNameHash int prefix, @ShortName int suffix, final Set<Symbol> symbols) {
+    Collections.addAll(symbols, findGlobalType(NameEnvironment.qualifiedName(prefix, suffix)));
   }
 
   // handling of import static `tsym.name` as
-  private static void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) {
-    new Object() {
-      Set<Symbol> processed = new HashSet<Symbol>();
-      void importFrom(Symbol.ClassSymbol cs) {
-        if (cs == null || !processed.add(cs))
-          return;
-        for (Symbol.ClassSymbol c : cs.getSuperClasses())
-          importFrom(c);
-        importMember(cs.members(), name, symbols, true);
-      }
-    }.importFrom(tsym);
+  private void importNamedStatic(final Symbol.ClassSymbol tsym, @ShortName final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
+    processInheritedMembers(tsym, name, symbols, null);
   }
 
-  private static void importMember(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean isStatic) {
+  private static void processMembers(Symbol.ClassSymbol[] members, @ShortName int name, Set<Symbol> symbols) {
     int index = getIndex(name, members);
     if (index < 0) return;
 
     // elem
-    Symbol.ClassSymbol member = members[index];
-    if (!isStatic || member.isStatic()) {
-      symbols.add(member);
-    }
+    symbols.add(members[index]);
     // on the left
     int i = index - 1;
     while (i >= 0 && members[i].myShortName == name) {
-      member = members[i];
-      if (!isStatic || member.isStatic()) {
-        symbols.add(member);
-      }
+      symbols.add(members[i]);
       i--;
     }
     // on the right
     i = index + 1;
     while (i < members.length && members[i].myShortName == name) {
-      member = members[i];
-      if (!isStatic || member.isStatic()) {
-        symbols.add(member);
-      }
+      symbols.add(members[i]);
       i++;
     }
   }

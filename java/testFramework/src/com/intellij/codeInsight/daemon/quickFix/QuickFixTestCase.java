@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -31,31 +31,35 @@ import java.util.List;
 public interface QuickFixTestCase {
   String getBasePath();
 
+  @NotNull
   String getTestDataPath();
 
-  Pair<String, Boolean> parseActionHintImpl(PsiFile file, String contents);
+  @NotNull
+  ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents);
 
-  void beforeActionStarted(String testName, String contents);
+  void beforeActionStarted(@NotNull String testName, @NotNull String contents);
 
-  void afterActionCompleted(String testName, String contents);
+  void afterActionCompleted(@NotNull String testName, @NotNull String contents);
 
-  void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception;
+  void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) throws Exception;
 
-  void checkResultByFile(String s, String expectedFilePath, boolean b) throws Exception;
+  void checkResultByFile(@NotNull String message, @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) throws Exception;
 
-  IntentionAction findActionWithText(String text);
+  IntentionAction findActionWithText(@NotNull String text);
 
   boolean shouldBeAvailableAfterExecution();
 
-  void invoke(IntentionAction action);
+  void invoke(@NotNull IntentionAction action);
 
+  @NotNull
   List<HighlightInfo> doHighlighting();
 
+  @NotNull
   List<IntentionAction> getAvailableActions();
 
   void bringRealEditorBack();
 
-  void configureFromFileText(String name, String contents) throws Throwable;
+  void configureFromFileText(@NotNull String name, @NotNull String contents) throws Throwable;
 
   PsiFile getFile();
 

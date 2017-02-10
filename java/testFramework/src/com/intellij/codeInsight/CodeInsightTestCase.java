@@ -53,7 +53,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +105,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     try {
       if (myProject != null) {
         FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        VirtualFile[] openFiles = editorManager.getOpenFiles();
-        for (VirtualFile openFile : openFiles) {
+        for (VirtualFile openFile : editorManager.getOpenFiles()) {
           editorManager.closeFile(openFile);
         }
       }
@@ -130,7 +128,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   /**
    * @param files the first file will be loaded in editor
    */
-  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) throws Exception {
+  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) {
     if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
@@ -139,11 +137,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
-    return configureByFiles(projectFile, vFiles);
+    try {
+      return configureByFiles(projectFile, vFiles);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(myTestRootDisposable, filePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
   }
 
   protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {

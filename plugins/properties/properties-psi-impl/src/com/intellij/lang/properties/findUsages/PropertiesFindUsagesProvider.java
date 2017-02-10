@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.findUsages;
 
+import com.intellij.lang.HelpID;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesWordsScanner;
@@ -33,7 +34,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(@NotNull PsiElement psiElement) {
-    return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
+    return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

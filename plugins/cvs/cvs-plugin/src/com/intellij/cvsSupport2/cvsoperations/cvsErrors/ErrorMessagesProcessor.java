@@ -33,7 +33,7 @@ public class ErrorMessagesProcessor extends CvsMessagesAdapter implements ErrorP
   }
 
   public ErrorMessagesProcessor() {
-    this(new ArrayList<VcsException>());
+    this(new ArrayList<>());
   }
 
   public void addError(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot, boolean warning) {

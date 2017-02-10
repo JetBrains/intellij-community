@@ -63,10 +63,10 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
     else {
       versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
     }
-    final List<FS> result = new ArrayList<FS>();
+    final List<FS> result = new ArrayList<>();
     for (Artifact version : versions) {
       final ArtifactItem[] items = version.getItems();
-      final List<F> files = new ArrayList<F>();
+      final List<F> files = new ArrayList<>();
       for (ArtifactItem item : items) {
         String url = item.getUrl();
         final String prefix = version.getUrlPrefix();

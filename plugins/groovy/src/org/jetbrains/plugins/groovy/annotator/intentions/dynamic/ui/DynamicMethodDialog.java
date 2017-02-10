@@ -81,7 +81,7 @@ public class DynamicMethodDialog extends DynamicDialog {
   }
 
   private void setupParameterList(List<ParamInfo> arguments) {
-    final ListTableModel<ParamInfo> dataModel = new ListTableModel<ParamInfo>(new NameColumnInfo(), new TypeColumnInfo());
+    final ListTableModel<ParamInfo> dataModel = new ListTableModel<>(new NameColumnInfo(), new TypeColumnInfo());
     dataModel.setItems(arguments);
     myParametersTable.setModel(dataModel);
 

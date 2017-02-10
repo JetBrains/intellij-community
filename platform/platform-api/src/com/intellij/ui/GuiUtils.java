@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -181,17 +183,17 @@ public class GuiUtils {
     final Icon defaultIcon = UIUtil.getRadioButtonIcon();
     LayeredIcon deficon = new LayeredIcon(2);
     deficon.setIcon(defaultIcon, 0);
-    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setIcon(deficon);
 
     LayeredIcon pressed = new LayeredIcon(2);
     pressed.setIcon(defaultIcon, 0);
-    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    pressed.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setPressedIcon(pressed);
 
     LayeredIcon selected = new LayeredIcon(2);
     selected.setIcon(defaultIcon, 0);
-    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
+    selected.setIcon(icon, 1, defaultIcon.getIconWidth() + JBUI.scale(5), 0);
     button.setSelectedIcon(selected);
   }
 
@@ -359,7 +361,7 @@ public class GuiUtils {
   }
 
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable);
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
@@ -367,6 +369,14 @@ public class GuiUtils {
       runnable.run();
     } else {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+    }
+  }
+
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
     }
   }
 

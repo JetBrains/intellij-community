@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,17 +76,17 @@ public class ChangelistConflictTracker {
     myDocumentManager = FileDocumentManager.getInstance();
     myFileStatusManager = fileStatusManager;
     myCheckSetLock = new Object();
-    myCheckSet = new HashSet<VirtualFile>();
+    myCheckSet = new HashSet<>();
 
     final Application application = ApplicationManager.getApplication();
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
     final Runnable runnable = () -> {
       if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) {
         return;
       }
       final Set<VirtualFile> localSet;
       synchronized (myCheckSetLock) {
-        localSet = new HashSet<VirtualFile>();
+        localSet = new HashSet<>();
         localSet.addAll(myCheckSet);
         myCheckSet.clear();
       }
@@ -137,13 +137,10 @@ public class ChangelistConflictTracker {
   }
 
   private void checkFiles(final Collection<VirtualFile> files) {
-    myChangeListManager.invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        final LocalChangeList list = myChangeListManager.getDefaultChangeList();
-        for (VirtualFile file : files) {
-          checkOneFile(file, list);
-        }
+    myChangeListManager.invokeAfterUpdate(() -> {
+      final LocalChangeList list = myChangeListManager.getDefaultChangeList();
+      for (VirtualFile file : files) {
+        checkOneFile(file, list);
       }
     }, InvokeAfterUpdateMode.SILENT, null, null);
   }
@@ -256,12 +253,7 @@ public class ChangelistConflictTracker {
   }
 
   public Collection<String> getIgnoredConflicts() {
-    return ContainerUtil.mapNotNull(myConflicts.entrySet(), new NullableFunction<Map.Entry<String, Conflict>, String>() {
-      @Override
-      public String fun(Map.Entry<String, Conflict> entry) {
-        return entry.getValue().ignored ? entry.getKey() : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(myConflicts.entrySet(), (NullableFunction<Map.Entry<String, Conflict>, String>)entry -> entry.getValue().ignored ? entry.getKey() : null);
   }
 
   public static class Conflict {

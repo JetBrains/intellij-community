@@ -76,7 +76,7 @@ public enum JqlStandardFunction {
     return NAME_LOOKUP.get(name);
   }
 
-  private static final MultiMap<Pair<JqlFieldType, Boolean>, String> TYPE_LOOKUP = new MultiMap<Pair<JqlFieldType, Boolean>, String>();
+  private static final MultiMap<Pair<JqlFieldType, Boolean>, String> TYPE_LOOKUP = new MultiMap<>();
   static {
     for (JqlStandardFunction function : VALUES) {
       TYPE_LOOKUP.putValue(Pair.create(function.getReturnType(), function.hasMultipleResults()), function.getName());
@@ -87,7 +87,7 @@ public enum JqlStandardFunction {
     if (type == JqlFieldType.UNKNOWN) {
       return ALL_FUNCTION_NAMES;
     }
-    return new ArrayList<String>(TYPE_LOOKUP.get(Pair.create(type, multipleResults)));
+    return new ArrayList<>(TYPE_LOOKUP.get(Pair.create(type, multipleResults)));
   }
 
   public static final List<String> ALL_FUNCTION_NAMES = ContainerUtil.map2List(VALUES, field -> field.myName);

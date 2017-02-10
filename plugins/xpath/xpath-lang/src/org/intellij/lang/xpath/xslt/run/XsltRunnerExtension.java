@@ -55,7 +55,7 @@ public abstract class XsltRunnerExtension {
     @NotNull
     public static List<XsltRunnerExtension> getExtensions(XsltRunConfiguration config, boolean debugger) {
         final XsltRunnerExtension[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
-        final ArrayList<XsltRunnerExtension> list = new ArrayList<XsltRunnerExtension>(extensions.length);
+        final ArrayList<XsltRunnerExtension> list = new ArrayList<>(extensions.length);
         for (XsltRunnerExtension extension : extensions) {
             if (extension.supports(config, debugger)) {
                 list.add(extension);

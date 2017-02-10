@@ -43,7 +43,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
@@ -69,7 +72,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @NotNull public final Object myLock = new Object();
 
   @NotNull private final Project myProject;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsBaseContentProvider myStatusProvider;
   @NotNull private final Application myApplication;
   @NotNull private final FileEditorManager myFileEditorManager;
@@ -85,20 +87,19 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   public LineStatusTrackerManager(@NotNull final Project project,
-                                  @NotNull final ProjectLevelVcsManager vcsManager,
                                   @NotNull final VcsBaseContentProvider statusProvider,
                                   @NotNull final Application application,
                                   @NotNull final FileEditorManager fileEditorManager,
                                   @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myLoadCounter = 0;
     myProject = project;
-    myVcsManager = vcsManager;
     myStatusProvider = statusProvider;
+
     myApplication = application;
     myFileEditorManager = fileEditorManager;
 
     myLineStatusTrackers = new HashMap<>();
-    myPartner = new QueueProcessorRemovePartner<Document, BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
+    myPartner = new QueueProcessorRemovePartner<>(myProject, new Consumer<BaseRevisionLoader>() {
       @Override
       public void consume(BaseRevisionLoader baseRevisionLoader) {
         baseRevisionLoader.run();
@@ -259,12 +260,10 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     if (isDisabled()) return false;
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
-    if (!virtualFile.isInLocalFileSystem()) return false;
     final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
     if (statusManager == null) return false;
-    final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
-    if (activeVcs == null) {
-      log("shouldBeInstalled failed: no active VCS", virtualFile);
+    if (!myStatusProvider.isSupported(virtualFile)) {
+      log("shouldBeInstalled failed: no support found", virtualFile);
       return false;
     }
     final FileStatus status = statusManager.getStatus(virtualFile);

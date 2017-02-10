@@ -17,6 +17,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
 import com.intellij.ui.FocusTrackback;
 import org.jetbrains.annotations.NotNull;
 
@@ -184,9 +185,10 @@ class HeadlessDialog implements AbstractDialog {
     myWrapper.close(DialogWrapper.OK_EXIT_CODE);
   }
 
+  @NotNull
   @Override
   public IdeFocusManager getFocusManager() {
-    return null;
+    return new IdeFocusManagerHeadless();
   }
 
   @Override

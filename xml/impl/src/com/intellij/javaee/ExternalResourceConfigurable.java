@@ -175,7 +175,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   @Override
   public void reset() {
 
-    myPairs = new ArrayList<NameLocationPair>(myNewPairs);
+    myPairs = new ArrayList<>(myNewPairs);
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
@@ -193,7 +193,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
 
     Collections.sort(myPairs);
 
-    myIgnoredUrls = new ArrayList<String>();
+    myIgnoredUrls = new ArrayList<>();
     final String[] ignoredResources = manager.getIgnoredResources();
     ContainerUtil.addAll(myIgnoredUrls, ignoredResources);
 
@@ -328,7 +328,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     final String[] myNames;
 
     {
-      List<String> names = new ArrayList<String>();
+      List<String> names = new ArrayList<>();
       names.add(XmlBundle.message("column.name.edit.external.resource.uri"));
       names.add(XmlBundle.message("column.name.edit.external.resource.location"));
       if (myProject != null) {

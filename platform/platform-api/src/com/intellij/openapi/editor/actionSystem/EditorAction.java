@@ -44,11 +44,6 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  @Override
-  public boolean startInTransaction() {
-    return false;
-  }
-
   public final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     ensureHandlersLoaded();
     EditorActionHandler tmp = myHandler;

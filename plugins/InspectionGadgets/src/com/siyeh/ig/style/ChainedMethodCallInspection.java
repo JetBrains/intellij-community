@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,17 +33,6 @@ public class ChainedMethodCallInspection extends ChainedMethodCallInspectionBase
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new IntroduceVariableFix(false) {
-      @Nullable
-      @Override
-      public PsiExpression getExpressionToExtract(PsiElement element) {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiReferenceExpression)) {
-          return null;
-        }
-        final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
-        return methodExpression.getQualifierExpression();
-      }
-    };
+    return new IntroduceVariableFix(true);
   }
 }

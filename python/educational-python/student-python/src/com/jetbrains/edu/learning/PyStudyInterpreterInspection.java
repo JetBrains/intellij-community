@@ -19,7 +19,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -106,11 +105,6 @@ public class PyStudyInterpreterInspection extends PyInspection {
   }
 
   private static class ConfigureInterpreterFix implements LocalQuickFix {
-    @NotNull
-    @Override
-    public String getName() {
-      return "Configure Python Interpreter";
-    }
 
     @NotNull
     @Override
@@ -119,11 +113,13 @@ public class PyStudyInterpreterInspection extends PyInspection {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        // outside of read action
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
-      });
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
     }
   }
 }

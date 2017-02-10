@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -145,7 +147,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(myEditor);
+    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
@@ -154,12 +156,14 @@ public class TextComponentSelectionModel implements SelectionModel {
 
     EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
       IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
+    handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
   @Override
   public void copySelectionToClipboard() {
-    throw new UnsupportedOperationException("Not implemented");
+    if (! (myTextComponent instanceof JPasswordField)) {
+      EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
+    }
   }
 
   @Override

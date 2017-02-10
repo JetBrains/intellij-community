@@ -38,6 +38,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,12 +58,13 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFilter = new FileTreeAccessFilter();
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myFilter, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myFilter, getTestRootDisposable());
   }
 
   @Override
   protected Sdk getTestProjectSdk() {
-    return PsiTestUtil.addJdkAnnotations(super.getTestProjectSdk());
+    // has to have JFrame and sources
+    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
   }
 
   private void doTest() throws Exception {

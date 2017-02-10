@@ -32,7 +32,7 @@ public abstract class CodeStyleSchemes {
   public abstract CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme);
 
   @TestOnly
-  public abstract void deleteScheme(CodeStyleScheme scheme);
+  public abstract void deleteScheme(@NotNull CodeStyleScheme scheme);
 
   @Nullable
   protected abstract CodeStyleScheme findSchemeByName(@NotNull String name);

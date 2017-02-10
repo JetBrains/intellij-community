@@ -54,8 +54,8 @@ import java.lang.reflect.Type;
  */
 public class DomUIFactoryImpl extends DomUIFactory {
 
-  private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<Function<DomWrapper<String>, BaseControl>>();
-  private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<Function<DomElement, TableCellEditor>>();
+  private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();
+  private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<>();
 
   public DomUIFactoryImpl() {
     final Function<DomElement, TableCellEditor> booleanCreator = domElement -> new BooleanTableCellEditor();
@@ -71,6 +71,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   @Override
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
     if (Enum.class.isAssignableFrom(type)) {
+      //noinspection unchecked
       return new ComboTableCellEditor((Class<? extends Enum>)type, false);
     }
 
@@ -159,8 +160,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
         if (document == null) return HighlightingPass.EMPTY_ARRAY;
 
         editor.commit();
-
-        psiDocumentManager.commitAllDocuments();
 
         GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(),
                                                                   true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());

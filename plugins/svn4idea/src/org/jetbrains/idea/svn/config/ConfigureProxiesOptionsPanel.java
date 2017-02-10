@@ -85,7 +85,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
 
   public List<String> getRepositories() {
     final ListModel model = myRepositoriesList.getModel();
-    final List<String> result = new ArrayList<String>(model.getSize());
+    final List<String> result = new ArrayList<>(model.getSize());
     for (int i = 0; i < model.getSize(); i++) {
       result.add((String) model.getElementAt(i));
     }
@@ -104,8 +104,8 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     myValidator = validator;
     myTestConnectionPerformer = testConnectionPerformer;
     
-    myComponent2Key = new HashMap<JComponent, String>();
-    myKey2Component = new HashMap<String, JComponent>();
+    myComponent2Key = new HashMap<>();
+    myKey2Component = new HashMap<>();
     fillMappings();
 
     initNumericValidation();

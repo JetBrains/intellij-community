@@ -22,7 +22,7 @@ import java.util.List;
 
 public class PrimitiveExprsList {
 
-  private final List<Exprent> lstExprents = new ArrayList<Exprent>();
+  private final List<Exprent> lstExprents = new ArrayList<>();
 
   private ExprentStack stack = new ExprentStack();
 

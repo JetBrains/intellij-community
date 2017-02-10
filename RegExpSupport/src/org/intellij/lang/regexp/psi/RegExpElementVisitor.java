@@ -50,6 +50,10 @@ public class RegExpElementVisitor extends PsiElementVisitor {
         visitRegExpElement(property);
     }
 
+    public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+        visitRegExpElement(namedCharacter);
+    }
+
     public void visitRegExpBranch(RegExpBranch branch) {
         visitRegExpElement(branch);
     }
@@ -96,5 +100,9 @@ public class RegExpElementVisitor extends PsiElementVisitor {
 
     public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
         visitRegExpElement(posixBracketExpression);
+    }
+
+    public void visitRegExpNumber(RegExpNumber number) {
+        visitRegExpElement(number);
     }
 }

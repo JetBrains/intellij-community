@@ -24,7 +24,7 @@ import java.util.List;
  * @author maxim
  */
 class CompositeAttributeTagDescriptor extends HtmlAttributeDescriptor {
-  final List<HtmlAttributeDescriptor> attributes = new LinkedList<HtmlAttributeDescriptor>();
+  final List<HtmlAttributeDescriptor> attributes = new LinkedList<>();
 
   HtmlAttributeDescriptor findHtmlAttributeInContext(XmlTag tag) {
     if (tag == null) return null;

@@ -51,7 +51,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
-  private static final ThreadLocal<Set<PsiFile>> myVisitedFiles = new ThreadLocal<Set<PsiFile>>();
+  private static final ThreadLocal<Set<PsiFile>> myVisitedFiles = new ThreadLocal<>();
   private static final ThreadLocal<Map<String, Set<Define>>> myDefines = new ThreadLocal<Map<String, Set<Define>>>() {
     @Override
     protected Map<String, Set<Define>> initialValue() {
@@ -118,7 +118,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public Set<Define> create() {
-    return new THashSet<Define>();
+    return new THashSet<>();
   }
 
   @Override
@@ -192,7 +192,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   private static class BackwardDefinitionResolver implements PsiElementProcessor<XmlFile> {
     private final String myValue;
     private Define myResult;
-    private final Set<PsiFile> myVisitedPsiFiles = new HashSet<PsiFile>();
+    private final Set<PsiFile> myVisitedPsiFiles = new HashSet<>();
 
     public BackwardDefinitionResolver(String value) {
       myValue = value;

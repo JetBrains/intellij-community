@@ -19,4 +19,8 @@ public class IpnbConnectionListenerBase implements IpnbConnectionListener {
   public void onPayload(@Nullable final String payload,
                         @NotNull String parentMessageId) {
   }
+
+  @Override
+  public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
+  }
 }

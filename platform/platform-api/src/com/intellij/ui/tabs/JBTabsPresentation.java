@@ -77,7 +77,4 @@ public interface JBTabsPresentation {
   JBTabsPosition getTabsPosition();
 
   JBTabsPresentation setTabDraggingEnabled(boolean enabled);
-
-  JBTabsPresentation setProvideSwitchTargets(boolean provide);
-
 }

@@ -38,7 +38,7 @@ public class Manifest extends Tag{
     ManifestBuilder.setGlobalAttributes(manifest.getMainAttributes());
     final Attributes mainAttributes = manifest.getMainAttributes();
 
-    List<Object> keys = new ArrayList<Object>(mainAttributes.keySet());
+    List<Object> keys = new ArrayList<>(mainAttributes.keySet());
     Collections.sort(keys, (o1, o2) -> {
       Attributes.Name name1 = (Attributes.Name)o1;
       Attributes.Name name2 = (Attributes.Name)o2;

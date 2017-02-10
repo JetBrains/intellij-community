@@ -393,7 +393,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       RootVisitorHost.visitSdkRoots(myContext.getSdk(), this);
     }
     else {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Context is empty. Provide some context: module, file, sdk, etc");
     }
   }
 
@@ -409,7 +409,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
     checkAccess();
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
         //noinspection unchecked

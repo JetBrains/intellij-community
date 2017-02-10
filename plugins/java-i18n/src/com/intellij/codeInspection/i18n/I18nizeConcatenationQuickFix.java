@@ -86,7 +86,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
     StringBuilder formatString = new StringBuilder();
-    final List<PsiExpression> args = new ArrayList<PsiExpression>();
+    final List<PsiExpression> args = new ArrayList<>();
     try {
       PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
     }

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
@@ -27,9 +30,9 @@ public abstract class TypeCommand extends AbstractCommand {
 
   private static final KeyStrokeMap ourMap = new KeyStrokeMap();
 
-  public TypeCommand(String text, int line) {
-    super(text, line);
-    }
+  public TypeCommand(String text, int line, boolean executeInAwt) {
+    super(text, line, executeInAwt);
+  }
 
   protected void type(Robot robot, int code, @JdkConstants.InputEventMask int modifiers) {
     type(robot, KeyStroke.getKeyStroke(code, modifiers));
@@ -101,5 +104,12 @@ public abstract class TypeCommand extends AbstractCommand {
     }
 
     return false;
+  }
+
+  static void inWriteSafeContext(Runnable runnable) {
+    ModalityState modality = ModalityState.current();
+    ApplicationManager.getApplication().invokeLater(
+      () -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(runnable, modality),
+      modality);
   }
 }

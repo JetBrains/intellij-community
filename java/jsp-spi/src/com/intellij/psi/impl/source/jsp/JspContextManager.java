@@ -48,7 +48,7 @@ public abstract class JspContextManager {
   public
   BaseJspFile getRootContextFile(@NotNull BaseJspFile file) {
     BaseJspFile rootContext = file;
-    HashSet<BaseJspFile> recursionPreventer = new HashSet<BaseJspFile>();
+    HashSet<BaseJspFile> recursionPreventer = new HashSet<>();
     do {
       recursionPreventer.add(rootContext);
       BaseJspFile context = getContextFile(rootContext);

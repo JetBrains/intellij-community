@@ -63,14 +63,17 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class AttachSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<AttachSourcesProvider>("com.intellij.attachSourcesProvider");
+    new ExtensionPointName<>("com.intellij.attachSourcesProvider");
 
   private static final Key<EditorNotificationPanel> KEY = Key.create("add sources to class");
 
@@ -78,7 +81,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
-    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
@@ -107,7 +110,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     if (sourceFile == null) {
       final List<LibraryOrderEntry> libraries = findLibraryEntriesForFile(file);
       if (libraries != null) {
-        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<AttachSourcesProvider.AttachSourcesAction>();
+        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
         PsiFile clsFile = PsiManager.getInstance(myProject).findFile(file);
         boolean hasNonLightAction = false;
@@ -231,7 +234,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-      final List<Library.ModifiableModel> modelsToCommit = new ArrayList<Library.ModifiableModel>();
+      final List<Library.ModifiableModel> modelsToCommit = new ArrayList<>();
       for (LibraryOrderEntry orderEntry : orderEntriesContainingFile) {
         final Library library = orderEntry.getLibrary();
         if (library == null) continue;
@@ -296,7 +299,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       VirtualFile[] files = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
       if (files.length == 0) return ActionCallback.REJECTED;
 
-      final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<Library, LibraryOrderEntry>();
+      final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<>();
       for (LibraryOrderEntry library : libraries) {
         librariesToAppendSourcesTo.put(library.getLibrary(), library);
       }

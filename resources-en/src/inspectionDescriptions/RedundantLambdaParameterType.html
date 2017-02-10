@@ -1,0 +1,11 @@
+<html>
+<body>
+This inspection reports lambda formal parameter types which are redundant, because they can be inferred from the context.
+<p>The quick fix removes the parameter types from the lambda.
+<p>Example: <pre><code>Map&lt;String, Integer&gt; map = ...
+map.forEach((String s, Integer i) -> log.info(s + "=" + i));</code></pre>
+<p>The code above can be simplified to the following:
+<pre><code>Map&lt;String, Integer&gt; map = ...
+map.forEach((s, i) -> log.info(s + "=" + i));</code></pre>
+</body>
+</html>

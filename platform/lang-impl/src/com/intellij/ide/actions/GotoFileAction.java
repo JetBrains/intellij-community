@@ -95,7 +95,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     @Override
     @NotNull
     protected List<FileType> getAllFilterValues() {
-      List<FileType> elements = new ArrayList<FileType>();
+      List<FileType> elements = new ArrayList<>();
       ContainerUtil.addAll(elements, FileTypeManager.getInstance().getRegisteredFileTypes());
       Collections.sort(elements, FileTypeComparator.INSTANCE);
       return elements;

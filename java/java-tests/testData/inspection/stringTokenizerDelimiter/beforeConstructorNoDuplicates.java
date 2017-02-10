@@ -5,7 +5,7 @@ class A {
 
   void m() {
 
-    new StringTokenizer("asd", "\\\t\nqwerty!#2@$")
+    new StringTokenizer("asd", "\\\t\nqw<caret>erty!#2@$")
 
   }
 

@@ -101,7 +101,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @NotNull
   protected Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
-    ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+    ArrayList<PsiFileSystemItem> result = new ArrayList<>();
 
     if (contextRef == null) {
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
@@ -140,7 +140,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       return new ResolveResult[]{new PsiElementResolveResult(containingFile)};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
-    final Collection<ResolveResult> result = new THashSet<ResolveResult>();
+    final Collection<ResolveResult> result = new THashSet<>();
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result, caseSensitive);
     }
@@ -167,7 +167,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     else {
       final int separatorIndex = text.indexOf('/');
       if (separatorIndex >= 0) {
-        final List<ResolveResult> resolvedContexts = new ArrayList<ResolveResult>();
+        final List<ResolveResult> resolvedContexts = new ArrayList<>();
         if (separatorIndex == 0 /*starts with slash*/ && "/".equals(context.getName())) {
           resolvedContexts.add(new PsiElementResolveResult(context));
         }
@@ -554,7 +554,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Override
   public LocalQuickFix[] getQuickFixes() {
-    final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
+    final List<LocalQuickFix> result = new ArrayList<>();
     for (final FileReferenceHelper helper : getHelpers()) {
       result.addAll(helper.registerFixes(this));
     }

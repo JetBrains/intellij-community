@@ -80,9 +80,9 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testProgressText_Category() {
     assertEquals("Running: 0 of <...>  ",
-                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<String>(), false));
+                 TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, new HashSet<>(), false));
 
-    final Set<String> category = new LinkedHashSet<String>();
+    final Set<String> category = new LinkedHashSet<>();
 
     category.clear();
     category.add("Scenarios");

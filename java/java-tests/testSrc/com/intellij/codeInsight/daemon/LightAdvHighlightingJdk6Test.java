@@ -31,7 +31,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_6);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
   }
   
   private void doTest(boolean checkWarnings, boolean checkInfos) {
@@ -75,8 +75,27 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testVariableUsedBeforeAssignmentWithParenthesis() {
     doTest(false, false);
   }
+  public void testThisInArgListOfAnonymous() {
+    doTest(false, false);
+  }
 
   public void testEnumConstantWithoutInterfaceImplementation() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testAmbiguityChecksForImplicitSuperConstructorCall() {
+    doTest(false, false);
+  }
+
+  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testStaticOnDemandImportResolvesToClass() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testReachableWhileBodyDueToConstantStringComparison() throws Exception {
     doTest(false, false);
   }
 }

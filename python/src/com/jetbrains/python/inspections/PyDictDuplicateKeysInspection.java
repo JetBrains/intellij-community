@@ -60,7 +60,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
       final PyKeyValueExpression[] elements = node.getElements();
       if (elements.length != 0){
-        final Map<String, PyElement> map = new HashMap<String, PyElement>();
+        final Map<String, PyElement> map = new HashMap<>();
         for (PyExpression exp : elements) {
           final PyExpression key = ((PyKeyValueExpression)exp).getKey();
           if (key instanceof PyNumericLiteralExpression
@@ -78,7 +78,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       if (isDict(node)) {
-        final Map<String, PsiElement> map = new HashMap<String, PsiElement>();
+        final Map<String, PsiElement> map = new HashMap<>();
         final PyArgumentList pyArgumentList = node.getArgumentList();
         if (pyArgumentList == null) return;
         final PyExpression[] arguments = pyArgumentList.getArguments();

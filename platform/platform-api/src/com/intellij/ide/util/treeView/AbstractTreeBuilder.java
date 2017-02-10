@@ -47,10 +47,10 @@ public class AbstractTreeBuilder implements Disposable {
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
   public static final boolean DEFAULT_UPDATE_INACTIVE = true;
   private final TransferToEDTQueue<Runnable>
-    myLaterInvocator = new TransferToEDTQueue<Runnable>("Tree later invocator", runnable -> {
-      runnable.run();
-      return true;
-    }, o -> isDisposed(), 200);
+    myLaterInvocator = new TransferToEDTQueue<>("Tree later invocator", runnable -> {
+    runnable.run();
+    return true;
+  }, o -> isDisposed(), 200);
 
 
   public AbstractTreeBuilder(@NotNull JTree tree,
@@ -78,7 +78,7 @@ public class AbstractTreeBuilder implements Disposable {
                       @Nullable final Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
-    tree.putClientProperty(TREE_BUILDER, new WeakReference<AbstractTreeBuilder>(this));
+    tree.putClientProperty(TREE_BUILDER, new WeakReference<>(this));
 
     myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
@@ -89,6 +89,14 @@ public class AbstractTreeBuilder implements Disposable {
   @NotNull
   protected AbstractTreeUi createUi() {
     return new AbstractTreeUi();
+  }
+
+  public final void scrollTo(Object element) {
+    scrollTo(element, null);
+  }
+
+  public final void scrollTo(Object element, Runnable onDone) {
+    if (!isDisposed()) getUi().userScrollTo(element, onDone == null ? null : new UserRunnable(onDone));
   }
 
   public final void select(final Object element) {
@@ -586,7 +594,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public final <T> Set<T> getSelectedElements(@NotNull Class<T> elementClass) {
-    Set<T> result = new LinkedHashSet<T>();
+    Set<T> result = new LinkedHashSet<>();
     for (Object o : getSelectedElements()) {
       Object each = transformElement(o);
       if (elementClass.isInstance(each)) {
@@ -688,5 +696,10 @@ public class AbstractTreeBuilder implements Disposable {
   public boolean isSelectionBeingAdjusted() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isSelectionBeingAdjusted();
+  }
+
+  public boolean isToBuildChildrenInBackground(Object element) {
+    AbstractTreeUi ui = getUi();
+    return ui != null && ui.isToBuildChildrenInBackground(element);
   }
 }

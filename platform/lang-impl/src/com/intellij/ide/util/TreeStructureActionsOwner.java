@@ -27,7 +27,7 @@ import java.util.Set;
 * @author Konstantin Bulenkov
 */
 class TreeStructureActionsOwner implements TreeActionsOwner {
-  private final Set<TreeAction> myActions = new HashSet<TreeAction>();
+  private final Set<TreeAction> myActions = new HashSet<>();
   private final StructureViewModel myModel;
 
   TreeStructureActionsOwner(StructureViewModel model) {

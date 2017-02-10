@@ -20,109 +20,109 @@ import com.intellij.testFramework.UsefulTestCase
 class LineNumberConvertorTest : UsefulTestCase() {
   fun testEmpty() {
     doTest(
-        {
-        },
-        {
-          checkEmpty(-5, 20)
-          checkEmptyInv(-5, 20)
-        }
+      {
+      },
+      {
+        checkEmpty(-5, 20)
+        checkEmptyInv(-5, 20)
+      }
     )
   }
 
   fun testSingleRange() {
     doTest(
-        {
-          put(2, 3, 2)
-        },
-        {
-          checkMatch(2, 3, 2)
+      {
+        put(2, 3, 2)
+      },
+      {
+        checkMatch(2, 3, 2)
 
-          checkEmpty(-5, 1)
-          checkEmpty(4, 10)
+        checkEmpty(-5, 1)
+        checkEmpty(4, 10)
 
-          checkEmptyInv(-5, 2)
-          checkEmptyInv(5, 10)
-        }
+        checkEmptyInv(-5, 2)
+        checkEmptyInv(5, 10)
+      }
     )
   }
 
   fun testTwoRanges() {
     doTest(
-        {
-          put(2, 3, 2)
-          put(10, 7, 1)
-        },
-        {
-          checkMatch(2, 3, 2)
-          checkMatch(10, 7, 1)
+      {
+        put(2, 3, 2)
+        put(10, 7, 1)
+      },
+      {
+        checkMatch(2, 3, 2)
+        checkMatch(10, 7, 1)
 
-          checkEmpty(-5, 1)
-          checkEmpty(4, 9)
-          checkEmpty(11, 15)
+        checkEmpty(-5, 1)
+        checkEmpty(4, 9)
+        checkEmpty(11, 15)
 
-          checkEmptyInv(-5, 2)
-          checkEmptyInv(5, 6)
-          checkEmptyInv(8, 12)
-        }
+        checkEmptyInv(-5, 2)
+        checkEmptyInv(5, 6)
+        checkEmptyInv(8, 12)
+      }
     )
   }
 
   fun testAdjustmentRanges() {
     doTest(
-        {
-          put(2, 3, 2)
-          put(4, 5, 3)
-        },
-        {
-          checkMatch(2, 3, 5)
+      {
+        put(2, 3, 2)
+        put(4, 5, 3)
+      },
+      {
+        checkMatch(2, 3, 5)
 
-          checkEmpty(-5, 1)
-          checkEmpty(7, 10)
+        checkEmpty(-5, 1)
+        checkEmpty(7, 10)
 
-          checkEmptyInv(-5, 2)
-          checkEmptyInv(8, 10)
-        }
+        checkEmptyInv(-5, 2)
+        checkEmptyInv(8, 10)
+      }
     )
   }
 
   fun testPartiallyAdjustmentRanges() {
     doTest(
-        {
-          put(2, 3, 2)
-          put(4, 10, 3)
-        },
-        {
-          checkMatch(2, 3, 2)
-          checkMatch(4, 10, 3)
+      {
+        put(2, 3, 2)
+        put(4, 10, 3)
+      },
+      {
+        checkMatch(2, 3, 2)
+        checkMatch(4, 10, 3)
 
-          checkEmpty(-5, 1)
-          checkEmpty(7, 10)
+        checkEmpty(-5, 1)
+        checkEmpty(7, 10)
 
-          checkEmptyInv(-5, 2)
-          checkEmptyInv(5, 9)
-          checkEmptyInv(13, 15)
-        }
+        checkEmptyInv(-5, 2)
+        checkEmptyInv(5, 9)
+        checkEmptyInv(13, 15)
+      }
     )
   }
 
   fun testTwoRangesApproximate() {
     doTest(
-        {
-          put(1, 2, 1)
-          put(6, 5, 2)
-        },
-        {
-          assertEquals(0, convertor.convertApproximate1(0))
-          assertEquals(2, convertor.convertApproximate1(1))
-          assertEquals(3, convertor.convertApproximate1(2))
-          assertEquals(3, convertor.convertApproximate1(3))
-          assertEquals(3, convertor.convertApproximate1(4))
-          assertEquals(3, convertor.convertApproximate1(5))
-          assertEquals(5, convertor.convertApproximate1(6))
-          assertEquals(6, convertor.convertApproximate1(7))
-          assertEquals(7, convertor.convertApproximate1(8))
-          assertEquals(7, convertor.convertApproximate1(9))
-        }
+      {
+        put(1, 2, 1)
+        put(6, 5, 2)
+      },
+      {
+        assertEquals(0, convertor.convertApproximate1(0))
+        assertEquals(2, convertor.convertApproximate1(1))
+        assertEquals(3, convertor.convertApproximate1(2))
+        assertEquals(3, convertor.convertApproximate1(3))
+        assertEquals(3, convertor.convertApproximate1(4))
+        assertEquals(3, convertor.convertApproximate1(5))
+        assertEquals(5, convertor.convertApproximate1(6))
+        assertEquals(6, convertor.convertApproximate1(7))
+        assertEquals(7, convertor.convertApproximate1(8))
+        assertEquals(7, convertor.convertApproximate1(9))
+      }
     )
   }
 

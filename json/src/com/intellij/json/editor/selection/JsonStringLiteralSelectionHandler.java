@@ -32,7 +32,7 @@ public class JsonStringLiteralSelectionHandler extends ExtendWordSelectionHandle
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     final IElementType type = e.getNode().getElementType();
     final StringLiteralLexer lexer = new StringLiteralLexer(type == SINGLE_QUOTED_STRING ? '\'' : '"', type, false, "/", false, false);
-    final List<TextRange> result = new ArrayList<TextRange>();
+    final List<TextRange> result = new ArrayList<>();
     SelectWordUtil.addWordHonoringEscapeSequences(editorText, e.getTextRange(), cursorOffset, lexer, result);
 
     final PsiElement parent = e.getParent();

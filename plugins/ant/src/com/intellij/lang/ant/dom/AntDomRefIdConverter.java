@@ -70,7 +70,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         if (invocationElement == null) {
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
-        final Set<String> variants = new LinkedHashSet<String>();
+        final Set<String> variants = new LinkedHashSet<>();
         invocationElement.getContextAntProject().accept(new AntDomRecursiveVisitor() {
           public void visitAntDomElement(AntDomElement element) {
             final String variant = element.getId().getRawText();
@@ -94,7 +94,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     if (id.equals(from.getId().getRawText())) {
       return from;
     }
-    final Ref<AntDomElement> result = new Ref<AntDomElement>(null);
+    final Ref<AntDomElement> result = new Ref<>(null);
     from.accept(new AntDomRecursiveVisitor() {
       public void visitAntDomCustomElement(AntDomCustomElement custom) {
         if (!skipCustomTags) {

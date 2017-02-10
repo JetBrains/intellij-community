@@ -61,8 +61,8 @@ public class PsiPrimitiveType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(false, true);
+  public String getPresentableText(boolean annotated) {
+    return getText(false, annotated);
   }
 
   @NotNull
@@ -74,12 +74,12 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getText(true, true);
+    return getCanonicalText(true);
   }
 
   private String getText(boolean qualified, boolean annotated) {
-    PsiAnnotation[] annotations = getAnnotations();
-    if (!annotated || annotations.length == 0) return myName;
+    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
+    if (annotations.length == 0) return myName;
 
     StringBuilder sb = new StringBuilder();
     PsiNameHelper.appendAnnotations(sb, annotations, qualified);
@@ -126,7 +126,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
 
-    assert type.isValid() : type;
+    PsiUtil.ensureValidType(type);
     LanguageLevel languageLevel = ((PsiClassType)type).getLanguageLevel();
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 

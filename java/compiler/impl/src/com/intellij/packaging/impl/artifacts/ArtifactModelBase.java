@@ -50,7 +50,7 @@ public abstract class ArtifactModelBase implements ArtifactModel {
 
   public Artifact findArtifact(@NotNull String name) {
     if (myArtifactsMap == null) {
-      myArtifactsMap = new HashMap<String, Artifact>();
+      myArtifactsMap = new HashMap<>();
       for (Artifact artifact : getArtifactsList()) {
         myArtifactsMap.put(artifact.getName(), artifact);
       }
@@ -70,7 +70,7 @@ public abstract class ArtifactModelBase implements ArtifactModel {
 
   @NotNull
   public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
-    final List<Artifact> result = new ArrayList<Artifact>();
+    final List<Artifact> result = new ArrayList<>();
     for (Artifact artifact : getArtifacts()) {
       if (artifact.getArtifactType().equals(type)) {
         result.add(artifact);

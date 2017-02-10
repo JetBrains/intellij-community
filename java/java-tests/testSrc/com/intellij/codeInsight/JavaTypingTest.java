@@ -101,7 +101,15 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testInsertPairedBraceForLambdaBody() {
     doTest('{');
   }
-  
+
+  public void testSemicolonInStringLiteral() {
+    doTest(';');
+  }
+
+  public void testSemicolonInComment() {
+    doTest(';');
+  }
+
   private void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
     myFixture.type(c);

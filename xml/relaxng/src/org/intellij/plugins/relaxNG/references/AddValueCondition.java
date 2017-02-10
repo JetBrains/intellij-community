@@ -32,7 +32,7 @@ class AddValueCondition<T> extends PatternCondition<T> {
   }
 
   public static <T> AddValueCondition<T> create(Key<? extends Set<T>> key) {
-    return new AddValueCondition<T>(key);
+    return new AddValueCondition<>(key);
   }
 
   @Override

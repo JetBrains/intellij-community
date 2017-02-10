@@ -87,7 +87,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   protected final SimpleNode[] doGetChildren(final DomElement element) {
     if (!element.isValid()) return NO_CHILDREN;
 
-    List<SimpleNode> children = new ArrayList<SimpleNode>();
+    List<SimpleNode> children = new ArrayList<>();
     final XmlTag tag = element.getXmlTag();
     
     if (tag != null && !(tag.getContainingFile() instanceof XmlFile)) return NO_CHILDREN;
@@ -167,7 +167,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   public List<DomCollectionChildDescription> getConsolidatedChildrenDescriptions() {
     if (!myDomElement.isValid()) return Collections.emptyList();
 
-    final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
+    final List<DomCollectionChildDescription> consolidated = new ArrayList<>();
     for (DomCollectionChildDescription description : myDomElement.getGenericInfo().getCollectionChildrenDescriptions()) {
       if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
         consolidated.add(description);

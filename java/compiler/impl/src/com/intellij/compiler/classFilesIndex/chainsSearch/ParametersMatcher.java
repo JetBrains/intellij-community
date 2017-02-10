@@ -36,7 +36,7 @@ public final class ParametersMatcher {
   public static MatchResult matchParameters(final MethodsChain chain, final ChainCompletionContext context) {
     MatchResult overallResult = EMPTY;
     for (final PsiMethod[] methods : chain.getPath()) {
-      final NavigableSet<MatchResult> matchResults = new TreeSet<MatchResult>();
+      final NavigableSet<MatchResult> matchResults = new TreeSet<>();
       for (final PsiMethod method : methods) {
         matchResults.add(matchParameters(method, context, chain.getExcludedQNames()));
       }

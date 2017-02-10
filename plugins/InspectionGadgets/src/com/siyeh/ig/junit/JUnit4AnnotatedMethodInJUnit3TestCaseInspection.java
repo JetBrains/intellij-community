@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -36,7 +37,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList(3);
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>(3);
     final PsiMethod method = (PsiMethod)infos[1];
     if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
       fixes.add(new RemoveIgnoreAndRename(method));
@@ -91,7 +92,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      deleteAnnotation(descriptor, IGNORE);
+      WriteAction.run(() -> deleteAnnotation(descriptor, IGNORE));
       super.doFix(project, descriptor);
     }
   }
@@ -125,23 +126,23 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
       }
       final PsiMember member = (PsiMember)parent;
       final PsiClass containingClass = member.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final PsiReferenceList extendsList = containingClass.getExtendsList();
-      if (extendsList == null) {
-        return;
-      }
-      final PsiMethod[] methods = containingClass.getMethods();
-      for (PsiMethod method : methods) {
-        @NonNls final String name = method.getName();
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (!PsiType.VOID.equals(returnType)) {
-          continue;
-        }
+      convertJUnit3ClassToJUnit4(containingClass);
+    }
+  }
+
+  public static void convertJUnit3ClassToJUnit4(PsiClass containingClass) {
+    if (containingClass == null) {
+      return;
+    }
+    final PsiReferenceList extendsList = containingClass.getExtendsList();
+    if (extendsList == null) {
+      return;
+    }
+    for (PsiMethod method : containingClass.getMethods()) {
+      @NonNls final String name = method.getName();
+      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+          PsiType.VOID.equals(method.getReturnType()) &&
+          method.getParameterList().getParametersCount() == 0) {
         final PsiModifierList modifierList = method.getModifierList();
         if (name.startsWith("test")) {
           addAnnotationIfNotPresent(modifierList, "org.junit.Test");
@@ -154,92 +155,92 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
           transformSetUpOrTearDownMethod(method);
           addAnnotationIfNotPresent(modifierList, "org.junit.After");
         }
-        method.accept(new MethodCallModifier());
       }
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        referenceElement.delete();
-      }
+      method.accept(new MethodCallModifier());
+    }
+    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+      referenceElement.delete();
+    }
+  }
+
+  private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
+    if (modifierList.findAnnotation(qualifiedAnnotationName) != null) {
+      return;
+    }
+    final PsiAnnotation annotation = modifierList.addAnnotation(qualifiedAnnotationName);
+    final Project project = modifierList.getProject();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    codeStyleManager.shortenClassReferences(annotation);
+  }
+
+  private static void transformSetUpOrTearDownMethod(PsiMethod method) {
+    final PsiModifierList modifierList = method.getModifierList();
+    if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+      modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
+    }
+    if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+      modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+    }
+    final PsiAnnotation overrideAnnotation = modifierList.findAnnotation("java.lang.Override");
+    if (overrideAnnotation != null) {
+      overrideAnnotation.delete();
+    }
+    method.accept(new SuperLifeCycleCallRemover(method.getName()));
+  }
+
+  private static class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
+
+    @NotNull private final String myLifeCycleMethodName;
+
+    private SuperLifeCycleCallRemover(@NotNull String lifeCycleMethodName) {
+      myLifeCycleMethodName = lifeCycleMethodName;
     }
 
-    private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
-      if (modifierList.findAnnotation(qualifiedAnnotationName) != null) {
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!myLifeCycleMethodName.equals(methodName)) {
         return;
       }
-      final PsiAnnotation annotation = modifierList.addAnnotation(qualifiedAnnotationName);
-      final Project project = modifierList.getProject();
+      final PsiExpression target = methodExpression.getQualifierExpression();
+      if (!(target instanceof PsiSuperExpression)) {
+        return;
+      }
+      expression.delete();
+    }
+  }
+
+  private static class MethodCallModifier extends JavaRecursiveElementVisitor {
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      if (methodExpression.getQualifierExpression() != null) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null || !method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String name = aClass.getQualifiedName();
+      if (!"junit.framework.Assert".equals(name) && !"junit.framework.TestCase".equals(name)) {
+        return;
+      }
+      @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();
+      final Project project = expression.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      codeStyleManager.shortenClassReferences(annotation);
-    }
-
-    private static void transformSetUpOrTearDownMethod(PsiMethod method) {
-      final PsiModifierList modifierList = method.getModifierList();
-      if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-        modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
-      }
-      if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-        modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-      }
-      final PsiAnnotation overrideAnnotation = modifierList.findAnnotation("java.lang.Override");
-      if (overrideAnnotation != null) {
-        overrideAnnotation.delete();
-      }
-      method.accept(new SuperLifeCycleCallRemover(method.getName()));
-    }
-
-    private static class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
-
-      @NotNull private final String myLifeCycleMethodName;
-
-      private SuperLifeCycleCallRemover(@NotNull String lifeCycleMethodName) {
-        myLifeCycleMethodName = lifeCycleMethodName;
-      }
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        if (!myLifeCycleMethodName.equals(methodName)) {
-          return;
-        }
-        final PsiExpression target = methodExpression.getQualifierExpression();
-        if (!(target instanceof PsiSuperExpression)) {
-          return;
-        }
-        expression.delete();
-      }
-    }
-
-    private static class MethodCallModifier extends JavaRecursiveElementVisitor {
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if (methodExpression.getQualifierExpression() != null) {
-          return;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass == null) {
-          return;
-        }
-        final String name = aClass.getQualifiedName();
-        if (!"junit.framework.Assert".equals(name)) {
-          return;
-        }
-        @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();
-        final Project project = expression.getProject();
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
-        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-        final PsiElement replacedExpression = expression.replace(newExpression);
-        codeStyleManager.shortenClassReferences(replacedExpression);
-      }
+      final PsiElement replacedExpression = expression.replace(newExpression);
+      codeStyleManager.shortenClassReferences(replacedExpression);
     }
   }
 

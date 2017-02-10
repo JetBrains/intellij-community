@@ -59,7 +59,7 @@ public class DomServiceImpl extends DomService {
     @Override
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
       return CachedValuesManager.getManager(file.getProject()).createCachedValue(
-        () -> new CachedValueProvider.Result<XmlFileHeader>(calcXmlFileHeader(file), file), false);
+        () -> new CachedValueProvider.Result<>(calcXmlFileHeader(file), file), false);
     }
   };
 
@@ -167,7 +167,7 @@ public class DomServiceImpl extends DomService {
   @Override
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
     final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
-    final ArrayList<DomFileElement<T>> result = new ArrayList<DomFileElement<T>>(list.size());
+    final ArrayList<DomFileElement<T>> result = new ArrayList<>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof XmlFile) {

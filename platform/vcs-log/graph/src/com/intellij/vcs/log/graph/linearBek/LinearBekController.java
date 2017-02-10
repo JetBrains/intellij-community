@@ -182,7 +182,7 @@ public class LinearBekController extends CascadeController {
   }
 
   private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
-    SortedSet<Integer> toCollapse = new TreeSet<Integer>(new Comparator<Integer>() {
+    SortedSet<Integer> toCollapse = new TreeSet<>(new Comparator<Integer>() {
       @Override
       public int compare(Integer o1, Integer o2) {
         return o2.compareTo(o1);
@@ -262,7 +262,7 @@ public class LinearBekController extends CascadeController {
     @NotNull
     @Override
     public List<Integer> getHeadNodeIndex() {
-      List<Integer> bekIndexes = new ArrayList<Integer>();
+      List<Integer> bekIndexes = new ArrayList<>();
       for (int head : myGraphLayout.getHeadNodeIndex()) {
         bekIndexes.add(myBekIntMap.getBekIndex(head));
       }

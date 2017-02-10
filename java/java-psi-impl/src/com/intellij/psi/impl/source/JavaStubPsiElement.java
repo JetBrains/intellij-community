@@ -59,11 +59,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
-
-  @Override
   public int getTextOffset() {
     return calcTreeElement().getTextOffset();
   }

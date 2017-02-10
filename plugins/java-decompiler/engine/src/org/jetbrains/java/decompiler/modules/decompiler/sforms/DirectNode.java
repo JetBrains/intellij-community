@@ -40,11 +40,11 @@ public class DirectNode {
 
   public final Statement statement;
 
-  public List<Exprent> exprents = new ArrayList<Exprent>();
+  public List<Exprent> exprents = new ArrayList<>();
 
-  public final List<DirectNode> succs = new ArrayList<DirectNode>();
+  public final List<DirectNode> succs = new ArrayList<>();
 
-  public final List<DirectNode> preds = new ArrayList<DirectNode>();
+  public final List<DirectNode> preds = new ArrayList<>();
 
   public DirectNode(int type, Statement statement, String id) {
     this.type = type;

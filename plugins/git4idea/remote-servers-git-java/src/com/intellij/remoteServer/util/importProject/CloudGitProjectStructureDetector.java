@@ -87,7 +87,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
                                                     @NotNull File[] children,
                                                     @NotNull File base,
                                                     @NotNull List<DetectedProjectRoot> result) {
-    List<DetectedProjectRoot> detectedJavaRoots = new ArrayList<DetectedProjectRoot>();
+    List<DetectedProjectRoot> detectedJavaRoots = new ArrayList<>();
     DirectoryProcessingResult processingResult = myJavaDetector.detectRoots(dir, children, base, detectedJavaRoots);
     for (DetectedProjectRoot detectedJavaRoot : detectedJavaRoots) {
       if (detectedJavaRoot instanceof JavaModuleSourceRoot) {
@@ -101,7 +101,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder,
                                                   ProjectDescriptor projectDescriptor,
                                                   Icon stepIcon) {
-    List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
+    List<ModuleWizardStep> result = new ArrayList<>();
     for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
       result.add(new CloudGitChooseAccountStepImpl(deploymentDetector, this, builder, projectDescriptor));
     }

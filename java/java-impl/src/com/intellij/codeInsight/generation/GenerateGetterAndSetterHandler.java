@@ -45,7 +45,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
   @Override
   public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
+    ArrayList<GenerationInfo> array = new ArrayList<>();
     GenerationInfo[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
     GenerationInfo[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
 

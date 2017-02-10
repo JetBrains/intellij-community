@@ -72,7 +72,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   @Override
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
-    return new FutureTask<Boolean>(() -> {
+    return new FutureTask<>(() -> {
       try {
         Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);

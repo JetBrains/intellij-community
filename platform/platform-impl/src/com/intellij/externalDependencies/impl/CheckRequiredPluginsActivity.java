@@ -57,10 +57,10 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
 
     List<String> customRepositories = UpdateSettings.getInstance().getStoredPluginHosts();
 
-    final List<String> errorMessages = new ArrayList<String>();
-    final List<String> missingCustomRepositories = new ArrayList<String>();
-    final List<IdeaPluginDescriptor> disabled = new ArrayList<IdeaPluginDescriptor>();
-    final List<PluginId> notInstalled = new ArrayList<PluginId>();
+    final List<String> errorMessages = new ArrayList<>();
+    final List<String> missingCustomRepositories = new ArrayList<>();
+    final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
+    final List<PluginId> notInstalled = new ArrayList<>();
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
       String channel = dependency.getChannel();
@@ -119,7 +119,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else if ("install".equals(event.getDescription()) || "addRepositories".equals(event.getDescription())) {
-                                    Set<String> pluginIds = new HashSet<String>();
+                                    Set<String> pluginIds = new HashSet<>();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
                                       pluginIds.add(descriptor.getPluginId().getIdString());
                                     }

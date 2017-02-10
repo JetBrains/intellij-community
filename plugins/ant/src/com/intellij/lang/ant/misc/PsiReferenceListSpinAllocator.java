@@ -28,7 +28,7 @@ public class PsiReferenceListSpinAllocator {
 
   private static class Creator implements SpinAllocator.ICreator<List<PsiReference>> {
     public List<PsiReference> createInstance() {
-      return new ArrayList<PsiReference>();
+      return new ArrayList<>();
     }
   }
 
@@ -39,7 +39,7 @@ public class PsiReferenceListSpinAllocator {
   }
 
   private static final SpinAllocator<List<PsiReference>> myAllocator =
-    new SpinAllocator<List<PsiReference>>(new Creator(), new Disposer());
+    new SpinAllocator<>(new Creator(), new Disposer());
 
   public static List<PsiReference> alloc() {
     return myAllocator.alloc();

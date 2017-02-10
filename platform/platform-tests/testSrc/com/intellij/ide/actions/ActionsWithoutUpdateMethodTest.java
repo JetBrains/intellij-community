@@ -43,7 +43,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
   );
 
   public void testActionsWithShortcuts() throws Exception {
-    Set<String> ids = new HashSet<String>();
+    Set<String> ids = new HashSet<>();
     for (String id : ((ActionManagerImpl)ActionManager.getInstance()).getActionIds()) {
       for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
         if (keymap.getShortcuts(id).length > 0 && !PLATFORM_WIDE_ACTIONS.contains(id)) {
@@ -53,7 +53,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
     }
 
     ActionManager mgr = ActionManager.getInstance();
-    ArrayList<AnAction> failed = new ArrayList<AnAction>();
+    ArrayList<AnAction> failed = new ArrayList<>();
     for (String id : ids) {
       AnAction action = mgr.getAction(id);
       if (action == null) {

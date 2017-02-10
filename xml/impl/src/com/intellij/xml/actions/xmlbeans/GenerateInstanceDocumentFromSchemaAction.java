@@ -74,7 +74,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   private void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    @NonNls List<String> parameters = new LinkedList<String>();
+    @NonNls List<String> parameters = new LinkedList<>();
 
     final String url = dialog.getUrl().getText();
     final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
@@ -114,7 +114,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
       pathToUse = tempDir.getPath() + File.separatorChar + Xsd2InstanceUtils.processAndSaveAllSchemas(
         (XmlFile) file,
-        new THashMap<String, String>(),
+        new THashMap<>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
           @Override
           public void processSchema(String schemaFileName, byte[] schemaContent) {

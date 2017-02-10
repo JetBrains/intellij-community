@@ -125,7 +125,7 @@ class CSVReader {
      */
     public List<String[]> readAll() throws IOException {
 
-        List<String[]> allElements = new ArrayList<String[]>();
+        List<String[]> allElements = new ArrayList<>();
         while (hasNext) {
             String[] nextLineAsTokens = readNext();
             if (nextLineAsTokens != null) {
@@ -186,7 +186,7 @@ class CSVReader {
             return null;
         }
 
-        List<String> tokensOnThisLine = new ArrayList<String>();
+        List<String> tokensOnThisLine = new ArrayList<>();
         StringBuffer sb = new StringBuffer();
         boolean inQuotes = false;
         do {

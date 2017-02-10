@@ -28,7 +28,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
-  public static final Logger LOG = Logger.getInstance("#" + ReplaceReferenceUsageInfo.class.getName());
   private final PsiClass myTargetClass;
   private final String myConflict;
 

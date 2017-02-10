@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
@@ -28,10 +28,6 @@ class EdtTestUtil {
     @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
       runInEdtAndWait { runnable.run() }
     }
-
-    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
-      runInEdtAndWait { runnable.run() }
-    }
   }
 }
 
@@ -39,7 +35,15 @@ class EdtTestUtil {
 fun runInEdtAndWait(runnable: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application is ApplicationImpl) {
-    application.invokeAndWait(runnable, ModalityState.defaultModalityState())
+    var exception: Throwable? = null
+    application.invokeAndWait {
+      try {
+        runnable()
+      } catch (e: Throwable) {
+        exception = e
+      }
+    }
+    ExceptionUtil.rethrowAllAsUnchecked(exception)
     return
   }
 

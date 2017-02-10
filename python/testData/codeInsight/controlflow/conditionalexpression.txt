@@ -8,9 +8,9 @@
 7(8) WRITE ACCESS: c
 8(9) element: PyAssignmentStatement
 9(10) element: PyConditionalExpression
-10(11,12) READ ACCESS: c
-11(13) READ ACCESS: x
-12(13) READ ACCESS: y
-13(14) WRITE ACCESS: z
-14() element: null
-
+10(11,13) READ ACCESS: c
+11(12) ASSERTTYPE ACCESS: c
+12(14) READ ACCESS: x
+13(14) READ ACCESS: y
+14(15) WRITE ACCESS: z
+15() element: null

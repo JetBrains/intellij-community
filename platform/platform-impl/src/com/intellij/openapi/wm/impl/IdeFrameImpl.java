@@ -90,7 +90,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private Project myProject;
 
   private IdeRootPane myRootPane;
-  private final BalloonLayout myBalloonLayout;
+  private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private PropertyChangeListener myWindowsBorderUpdater = null;
   private boolean myRestoreFullScreen;
@@ -143,7 +143,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       };
       Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
       if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
-        final Ref<Dimension> myDimensionRef = new Ref<Dimension>(new Dimension());
+        final Ref<Dimension> myDimensionRef = new Ref<>(new Dimension());
         final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
         final Runnable runnable = new Runnable() {
           @Override
@@ -464,6 +464,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
     MouseGestureManager.getInstance().remove(this);
 
+    if (myBalloonLayout != null) {
+      ((BalloonLayoutImpl)myBalloonLayout).dispose();
+      myBalloonLayout = null;
+    }
+
     // clear both our and swing hard refs
     if (myRootPane != null) {
       Disposer.dispose(myRootPane);
@@ -595,10 +600,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           return true;
         }
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchFieldException | IllegalAccessException e) {
         LOG.error(e);
       }
     }

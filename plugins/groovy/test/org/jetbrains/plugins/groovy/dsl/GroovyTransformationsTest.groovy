@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
   static def descriptor = new DefaultLightProjectDescriptor() {
-    @Override def void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
+    @Override
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17)
     }
   }
 
@@ -38,39 +39,37 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     TestUtils.getTestDataPath() + "groovy/dsl/transform"
   }
 
-  public void doPlainTest(String type = "") throws Throwable {
+  void doPlainTest(String type = "") throws Throwable {
     myFixture.testCompletionTyping(getTestName(false) + ".groovy", type, getTestName(false) + "_after.groovy")
   }
 
-  public void doVariantsTest(String ... variants) throws Throwable {
+  void doVariantsTest(String... variants) throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", variants)
   }
 
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
+    return descriptor
   }
 
-  public void testDelegateAnnotation() throws Throwable { doPlainTest() }
+  void testDelegateAnnotation() throws Throwable { doPlainTest() }
 
-  public void testSingletonTransform() throws Throwable { doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance') }
+  void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
 
-  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
+  void testMixinTransform() throws Throwable { doPlainTest() }
 
-  public void testMixinTransform() throws Throwable { doPlainTest() }
+  void testBindableTransform() throws Throwable { doPlainTest() }
 
-  public void testBindableTransform() throws Throwable { doPlainTest() }
+  void testVetoableTransform() throws Throwable { doPlainTest() }
 
-  public void testVetoableTransform() throws Throwable { doPlainTest() }
-
-  public void testNewifyTransform1() throws Throwable {
+  void testNewifyTransform1() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings.containsAll(['newInstance', 'new', 'new', 'newInstance'])
   }
 
-  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
+  void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
 
-  public void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
+  void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
 
 }

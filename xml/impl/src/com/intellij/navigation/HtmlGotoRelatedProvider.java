@@ -58,14 +58,14 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
   }
 
   private static List<? extends GotoRelatedItem> getRelatedFiles(@NotNull PsiFile file) {
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
+    List<GotoRelatedItem> items = new ArrayList<>();
 
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       if (psiFile instanceof XmlFile) {
         final XmlFile xmlFile = (XmlFile)psiFile;
 
         for (RelatedToHtmlFilesContributor contributor : RelatedToHtmlFilesContributor.EP_NAME.getExtensions()) {
-          HashSet<PsiFile> resultSet = new HashSet<PsiFile>();
+          HashSet<PsiFile> resultSet = new HashSet<>();
           contributor.fillRelatedFiles(xmlFile, resultSet);
           for (PsiFile f: resultSet) {
             items.add(new GotoRelatedItem(f, contributor.getGroupName()));

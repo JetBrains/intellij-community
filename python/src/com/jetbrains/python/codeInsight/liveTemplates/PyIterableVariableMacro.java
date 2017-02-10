@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,18 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyImplicitImportNameDefiner;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 /**
  * @author vlan
@@ -67,7 +68,7 @@ public class PyIterableVariableMacro extends Macro {
   @Nullable
   @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    final List<LookupElement> results = new ArrayList<LookupElement>();
+    final List<LookupElement> results = new ArrayList<>();
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {
       for (PsiNamedElement iterableElement : getIterableElements(element)) {
@@ -88,7 +89,7 @@ public class PyIterableVariableMacro extends Macro {
   @NotNull
   protected List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    final List<PsiNamedElement> components = new ArrayList<PsiNamedElement>();
+    final List<PsiNamedElement> components = new ArrayList<>();
     for (PsiNamedElement namedElement : getVisibleNamedElements(element)) {
       if (namedElement instanceof PyTypedElement) {
         final PyType type = typeEvalContext.getType((PyTypedElement)namedElement);
@@ -102,17 +103,17 @@ public class PyIterableVariableMacro extends Macro {
 
   @NotNull
   private static List<PsiNamedElement> getVisibleNamedElements(@NotNull PsiElement anchor) {
-    final List<PsiNamedElement> results = new ArrayList<PsiNamedElement>();
+    final List<PsiNamedElement> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
       final Scope scope = ControlFlowCache.getScope(owner);
       results.addAll(scope.getNamedElements());
-      for (PyImportedNameDefiner importedNameDefiner : scope.getImportedNameDefiners()) {
-        for (PyElement importedElement : importedNameDefiner.iterateNames()) {
-          if (importedElement instanceof PsiNamedElement) {
-            results.add((PsiNamedElement)importedElement);
-          }
-        }
-      }
+
+      StreamEx
+        .of(scope.getImportedNameDefiners())
+        .filter(definer -> !PyImplicitImportNameDefiner.class.isInstance(definer))
+        .flatMap(definer -> StreamSupport.stream(definer.iterateNames().spliterator(), false))
+        .select(PsiNamedElement.class)
+        .forEach(results::add);
     }
     return results;
   }

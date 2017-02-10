@@ -15,39 +15,42 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
-import com.intellij.openapi.options.SchemeDataHolder;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
+public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
+  
+  static final String DEFAULT_SCHEME_NAME = "Default";
 
-  private SchemeDataHolder myDataHolder;
+  private SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
-    myName = name;
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
+    setName(name);
     myDataHolder = dataHolder;
-    myIsDefault = false;
+    myIsDefault = DEFAULT_SCHEME_NAME.equals(name);
     myParentSchemeName = parentSchemeName;
   }
 
-  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme){
-    myName = name;
+  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme) {
+    setName(name);
     myIsDefault = isDefault;
     init(parentScheme, null);
   }
 
-  private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
+  private void init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
     if (parentScheme == null) {
       myCodeStyleSettings = new CodeStyleSettings();
     }
@@ -70,11 +73,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
+  @NotNull
   public CodeStyleSettings getCodeStyleSettings() {
-    if (myDataHolder != null) {
-      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myDataHolder.read());
-      myParentSchemeName = null;
+    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
+    if (dataHolder != null) {
       myDataHolder = null;
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      dataHolder.updateDigest(this);
+      myParentSchemeName = null;
     }
     return myCodeStyleSettings;
   }
@@ -94,8 +100,20 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
+  @Override
+  public void resetToDefaults() {
+    myCodeStyleSettings = new CodeStyleSettings();
+  }
+
+  @Nullable
+  @Override
+  public SchemeState getSchemeState() {
+    return isInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+  }
+
+  @Override
   @NotNull
-  public Element writeScheme() throws WriteExternalException {
+  public Element writeScheme() {
     if (myDataHolder == null) {
       Element newElement = new Element("code_scheme");
       newElement.setAttribute("name", getName());

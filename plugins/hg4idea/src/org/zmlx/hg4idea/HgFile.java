@@ -12,7 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
+import java.util.Objects;
 
 public class HgFile {
 
@@ -91,12 +92,12 @@ public class HgFile {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(vcsRoot, file);
+    return Objects.hash(vcsRoot, file);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(HgFile.class)
+    return MoreObjects.toStringHelper(HgFile.class)
       .add("repo", vcsRoot)
       .add("file", file)
       .add("relativePath", getRelativePath())

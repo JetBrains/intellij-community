@@ -46,7 +46,7 @@ import java.util.TreeMap;
  */
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
-  private final Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
+  private final Set<RenameHandler> myHandlers  = new HashSet<>();
   private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
 
@@ -71,7 +71,7 @@ public class RenameHandlerRegistry {
 
   @Nullable
   public RenameHandler getRenameHandler(DataContext dataContext) {
-    final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) {
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);

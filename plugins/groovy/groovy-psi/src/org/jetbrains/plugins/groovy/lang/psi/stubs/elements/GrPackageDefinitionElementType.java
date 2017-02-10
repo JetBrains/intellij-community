@@ -38,6 +38,7 @@ public class GrPackageDefinitionElementType extends GrStubElementType<GrPackageD
     return new GrPackageDefinitionImpl(stub);
   }
 
+  @NotNull
   @Override
   public GrPackageDefinitionStub createStub(@NotNull GrPackageDefinition psi, StubElement parentStub) {
     return new GrPackageDefinitionStub(parentStub, GroovyElementTypes.PACKAGE_DEFINITION, StringRef.fromString(psi.getPackageName()));

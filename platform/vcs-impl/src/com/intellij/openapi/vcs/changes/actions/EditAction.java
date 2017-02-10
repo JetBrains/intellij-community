@@ -44,7 +44,7 @@ public class EditAction extends AnAction {
   }
 
   public static void editFilesAndShowErrors(Project project, List<VirtualFile> files) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     editFiles(project, files, exceptions);
     if (!exceptions.isEmpty()) {
       AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("edit.errors"));
@@ -52,20 +52,18 @@ public class EditAction extends AnAction {
   }
 
   public static void editFiles(final Project project, final List<VirtualFile> files, final List<VcsException> exceptions) {
-    ChangesUtil.processVirtualFilesByVcs(project, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final EditFileProvider provider = vcs.getEditFileProvider();
-        if (provider != null) {
-          try {
-            provider.editFiles(VfsUtil.toVirtualFileArray(items));
-          }
-          catch (VcsException e1) {
-            exceptions.add(e1);
-          }
-          for(VirtualFile file: items) {
-            VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-            FileStatusManager.getInstance(project).fileStatusChanged(file);
-          }
+    ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, items) -> {
+      final EditFileProvider provider = vcs.getEditFileProvider();
+      if (provider != null) {
+        try {
+          provider.editFiles(VfsUtil.toVirtualFileArray(items));
+        }
+        catch (VcsException e1) {
+          exceptions.add(e1);
+        }
+        for(VirtualFile file: items) {
+          VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+          FileStatusManager.getInstance(project).fileStatusChanged(file);
         }
       }
     });

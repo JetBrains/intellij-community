@@ -99,6 +99,7 @@ interface AbstractDialog extends Disposable {
 
   void show();
 
+  @NotNull
   IdeFocusManager getFocusManager();
 
   FocusTrackback getFocusTrackback();

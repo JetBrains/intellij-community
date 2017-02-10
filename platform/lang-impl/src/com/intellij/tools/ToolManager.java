@@ -17,17 +17,17 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManagerFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class ToolManager extends BaseToolManager<Tool> {
-  public ToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory) {
+  public ToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory) {
     super(actionManagerEx, factory, "tools", ToolsBundle.message("tools.settings"));
   }
 
   @Override
-  protected SchemeProcessor<ToolsGroup<Tool>> createProcessor() {
+  protected SchemeProcessor<ToolsGroup<Tool>, ToolsGroup<Tool>> createProcessor() {
     return new ToolsProcessor<Tool>() {
       @Override
       protected ToolsGroup<Tool> createToolsGroup(String groupName) {

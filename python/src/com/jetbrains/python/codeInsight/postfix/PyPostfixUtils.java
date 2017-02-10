@@ -60,7 +60,7 @@ public class PyPostfixUtils {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int newOffset) {
         PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(context.getContainingFile(), newOffset - 1);
-        final List<PsiElement> expressions = new ArrayList<PsiElement>();
+        final List<PsiElement> expressions = new ArrayList<>();
         while (elementAtCaret != null) {
           if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
             break;

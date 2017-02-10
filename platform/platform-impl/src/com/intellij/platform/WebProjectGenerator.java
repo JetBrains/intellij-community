@@ -18,19 +18,14 @@ package com.intellij.platform;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Extend this class to contribute web project generator to IDEA (available via File -> 'Add Module...' -> 'Web Module')
@@ -98,77 +93,4 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   public interface SettingsStateListener {
     void stateChanged(boolean validSettings);
   }
-
-  private class MyDialogWrapper extends DialogWrapper {
-
-    private final GeneratorPeer myPeer;
-    private final JComponent myCenterComponent;
-    private final JTextPane myDescriptionPane;
-
-    protected MyDialogWrapper(@NotNull GeneratorPeer<T> peer) {
-      super(true);
-      myPeer = peer;
-      myCenterComponent = peer.getComponent();
-      final Integer preferredDescriptionWidth = getPreferredDescriptionWidth();
-      if (preferredDescriptionWidth == null) {
-        myDescriptionPane = new JTextPane();
-      }
-      else {
-        myDescriptionPane = new JTextPane() {
-          @Override
-          public Dimension getPreferredSize() {
-            // This trick makes text component to carry text over to the next line
-            // iff the text line width exceeds parent's width
-            Dimension dimension = super.getPreferredSize();
-            dimension.width = preferredDescriptionWidth;
-            return dimension;
-          }
-        };
-      }
-      myDescriptionPane.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 10, 0));
-      Messages.configureMessagePaneUi(myDescriptionPane, getDescription());
-
-      getOKAction().setEnabled(peer.validate() == null);
-      peer.addSettingsStateListener(new SettingsStateListener() {
-        @Override
-        public void stateChanged(boolean validSettings) {
-          getOKAction().setEnabled(validSettings);
-        }
-      });
-      setTitle(WebProjectGenerator.this.getName());
-      init();
-    }
-
-    @Nullable
-    @Override
-    protected String getHelpId() {
-      return WebProjectGenerator.this.getHelpId();
-    }
-
-    @Override
-    protected boolean postponeValidation() {
-      return false;
-    }
-
-    @Override
-    protected ValidationInfo doValidate() {
-      ValidationInfo validationInfo = myPeer.validate();
-      if (validationInfo != null && myPeer.isBackgroundJobRunning()) {
-        return null;
-      }
-      return validationInfo;
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createNorthPanel() {
-      return myDescriptionPane;
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      return myCenterComponent;
-    }
-  }
-
 }

@@ -30,7 +30,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
   public static final List<WorkingCopyFormat> SUPPORTED_FORMATS;
 
   static {
-    List<WorkingCopyFormat> supportedFormats = new ArrayList<WorkingCopyFormat>();
+    List<WorkingCopyFormat> supportedFormats = new ArrayList<>();
 
     supportedFormats.add(WorkingCopyFormat.ONE_DOT_SEVEN);
     supportedFormats.add(WorkingCopyFormat.ONE_DOT_SIX);

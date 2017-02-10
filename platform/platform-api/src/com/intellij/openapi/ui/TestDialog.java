@@ -28,6 +28,11 @@ public interface TestDialog {
       return 0;
     }
   };
+  TestDialog NO = new TestDialog() {
+    public int show(String message) {
+      return Messages.NO;
+    }
+  };
 
   int show(String message);
 }

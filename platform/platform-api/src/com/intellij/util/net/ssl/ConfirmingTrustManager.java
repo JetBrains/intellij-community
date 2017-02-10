@@ -364,7 +364,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
     public List<X509Certificate> getCertificates() {
       myReadLock.lock();
       try {
-        List<X509Certificate> certificates = new ArrayList<X509Certificate>();
+        List<X509Certificate> certificates = new ArrayList<>();
         for (String alias : Collections.list(myKeyStore.aliases())) {
           certificates.add(getCertificate(alias));
         }

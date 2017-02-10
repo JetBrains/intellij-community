@@ -68,7 +68,7 @@ public class RegExReplacementBuilder {
   private void resetState() {
     myCursor = 0;
     myReplacement = new StringBuilder();
-    myConversionRegions = new ArrayList<CaseConversionRegion>();
+    myConversionRegions = new ArrayList<>();
   }
 
   private void processEscapedChar() {

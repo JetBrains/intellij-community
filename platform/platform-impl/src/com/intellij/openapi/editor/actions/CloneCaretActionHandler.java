@@ -38,7 +38,7 @@ import java.util.Set;
 public class CloneCaretActionHandler extends EditorActionHandler {
   private static final Key<Integer> LEVEL = Key.create("CloneCaretActionHandler.level");
 
-  private static final Set<String> OUR_ACTIONS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> OUR_ACTIONS = new HashSet<>(Arrays.asList(
     IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE,
     IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW,
     IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION,
@@ -46,10 +46,14 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION,
-    IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION
+    IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION
   ));
 
   private final boolean myCloneAbove;
+
+  private boolean myRepeatedInvocation;
 
   public CloneCaretActionHandler(boolean above) {
     myCloneAbove = above;
@@ -71,7 +75,7 @@ public class CloneCaretActionHandler extends EditorActionHandler {
       return;
     }
     int currentLevel = 0;
-    List<Caret> currentCarets = new ArrayList<Caret>();
+    List<Caret> currentCarets = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int level = getLevel(caret);
       if (Math.abs(level) > Math.abs(currentLevel)) {
@@ -107,7 +111,11 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     }
   }
 
-  private static int getLevel(Caret caret) {
+  public void setRepeatedInvocation(boolean value) {
+    myRepeatedInvocation = value;
+  }
+
+  private int getLevel(Caret caret) {
     if (isRepeatedActionInvocation()) {
       Integer value = caret.getUserData(LEVEL);
       return value == null ? 0 : value;
@@ -118,7 +126,8 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     }
   }
 
-  private static boolean isRepeatedActionInvocation() {
+  private boolean isRepeatedActionInvocation() {
+    if (myRepeatedInvocation) return true;
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
     return OUR_ACTIONS.contains(lastActionId);
   }

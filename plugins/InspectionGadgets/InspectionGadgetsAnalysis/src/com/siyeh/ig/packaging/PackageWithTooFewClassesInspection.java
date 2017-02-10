@@ -54,9 +54,6 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
       return null;
     }
     final List<RefEntity> children = refEntity.getChildren();
-    if (children == null) {
-      return null;
-    }
     int numClasses = 0;
     boolean subpackage = false;
     for (RefEntity child : children) {

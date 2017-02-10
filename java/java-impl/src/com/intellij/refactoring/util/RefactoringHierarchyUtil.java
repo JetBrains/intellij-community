@@ -114,7 +114,7 @@ public class RefactoringHierarchyUtil {
    * @return
    */
   public static ArrayList<PsiClass> createBasesList(PsiClass subClass, boolean includeNonProject, boolean sortAlphabetically) {
-    LinkedHashSet<PsiClass> bases = new LinkedHashSet<PsiClass>();
+    LinkedHashSet<PsiClass> bases = new LinkedHashSet<>();
     InheritanceUtil.getSuperClasses(subClass, bases, includeNonProject);
 
     if (!subClass.isInterface()) {
@@ -125,7 +125,7 @@ public class RefactoringHierarchyUtil {
       }
     }
 
-    ArrayList<PsiClass> basesList = new ArrayList<PsiClass>(bases);
+    ArrayList<PsiClass> basesList = new ArrayList<>(bases);
 
     if (sortAlphabetically) {
       Collections.sort(
@@ -170,7 +170,7 @@ public class RefactoringHierarchyUtil {
   }
 
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
-    processSuperTypes(type, visitor, new HashSet<PsiType>());
+    processSuperTypes(type, visitor, new HashSet<>());
   }
   private static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
     if (visited.contains(type)) return;
@@ -193,8 +193,8 @@ public class RefactoringHierarchyUtil {
   }
 
   public static PsiClass[] findImplementingClasses(PsiClass anInterface) {
-    Set<PsiClass> result = new HashSet<PsiClass>();
-    _findImplementingClasses(anInterface, new HashSet<PsiClass>(), result);
+    Set<PsiClass> result = new HashSet<>();
+    _findImplementingClasses(anInterface, new HashSet<>(), result);
     boolean classesRemoved = true;
     while(classesRemoved) {
       classesRemoved = false;
@@ -216,17 +216,16 @@ public class RefactoringHierarchyUtil {
   private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
-    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);
         }
-        else if (!visited.contains(aClass)){
+        else if (!visited.contains(aClass)) {
           _findImplementingClasses(aClass, visited, result);
         }
         return true;
       }
-
     }));
   }
 

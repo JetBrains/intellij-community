@@ -56,7 +56,7 @@ public class BraceMatchingUtil {
     return true;
   }
 
-  private static final Map<FileType, BraceMatcher> BRACE_MATCHERS = new HashMap<FileType, BraceMatcher>();
+  private static final Map<FileType, BraceMatcher> BRACE_MATCHERS = new HashMap<>();
 
   public static void registerBraceMatcher(@NotNull FileType fileType, @NotNull BraceMatcher braceMatcher) {
     BRACE_MATCHERS.put(fileType, braceMatcher);
@@ -87,8 +87,8 @@ public class BraceMatchingUtil {
     @NotNull
     private final BraceMatcher myMatcher;
 
-    private final Stack<IElementType> myBraceStack = new Stack<IElementType>();
-    private final Stack<String> myTagNameStack = new Stack<String>();
+    private final Stack<IElementType> myBraceStack = new Stack<>();
+    private final Stack<String> myTagNameStack = new Stack<>();
 
     MatchBraceContext(@NotNull CharSequence fileText, @NotNull FileType fileType, @NotNull HighlighterIterator iterator, boolean forward) {
       this(fileText, fileType, iterator, forward,isStrictTagMatching(getBraceMatcher(fileType, iterator), fileType, getTokenGroup(iterator.getTokenType(), fileType)));
@@ -196,8 +196,8 @@ public class BraceMatchingUtil {
   }
 
   public static boolean findStructuralLeftBrace(@NotNull FileType fileType, @NotNull HighlighterIterator iterator, @NotNull CharSequence fileText) {
-    final Stack<IElementType> braceStack = new Stack<IElementType>();
-    final Stack<String> tagNameStack = new Stack<String>();
+    final Stack<IElementType> braceStack = new Stack<>();
+    final Stack<String> tagNameStack = new Stack<>();
 
     BraceMatcher matcher = getBraceMatcher(fileType, iterator);
 
@@ -271,7 +271,7 @@ public class BraceMatchingUtil {
                                        FileType fileType) {
     int lastLbraceOffset = -1;
 
-    Stack<IElementType> braceStack = new Stack<IElementType>();
+    Stack<IElementType> braceStack = new Stack<>();
     for (; !iterator.atEnd(); iterator.retreat()) {
       final IElementType tokenType = iterator.getTokenType();
 
@@ -305,7 +305,7 @@ public class BraceMatchingUtil {
                                        FileType fileType) {
     int lastLbraceOffset = -1;
 
-    Stack<IElementType> braceStack = new Stack<IElementType>();
+    Stack<IElementType> braceStack = new Stack<>();
     for (; !iterator.atEnd(); iterator.retreat()) {
       final IElementType tokenType = iterator.getTokenType();
 
@@ -340,7 +340,7 @@ public class BraceMatchingUtil {
                                         FileType fileType) {
     int lastRbraceOffset = -1;
 
-    Stack<IElementType> braceStack = new Stack<IElementType>();
+    Stack<IElementType> braceStack = new Stack<>();
     for (; !iterator.atEnd(); iterator.advance()) {
       final IElementType tokenType = iterator.getTokenType();
 

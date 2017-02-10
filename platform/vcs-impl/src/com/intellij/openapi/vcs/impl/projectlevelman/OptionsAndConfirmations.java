@@ -30,8 +30,8 @@ public class OptionsAndConfirmations {
   private final Map<String, VcsShowConfirmationOptionImpl> myConfirmations;
 
   public OptionsAndConfirmations() {
-    myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
-    myConfirmations = new LinkedHashMap<String, VcsShowConfirmationOptionImpl>();
+    myOptions = new LinkedHashMap<>();
+    myConfirmations = new LinkedHashMap<>();
   }
 
   public void init(final Convertor<String, VcsShowConfirmationOption.Value> initOptions) {
@@ -83,11 +83,11 @@ public class OptionsAndConfirmations {
   }
 
   public List<VcsShowOptionsSettingImpl> getAllOptions() {
-    return new ArrayList<VcsShowOptionsSettingImpl>(myOptions.values());
+    return new ArrayList<>(myOptions.values());
   }
 
   public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
-    return new ArrayList<VcsShowConfirmationOptionImpl>(myConfirmations.values());
+    return new ArrayList<>(myConfirmations.values());
   }
 
   @NotNull

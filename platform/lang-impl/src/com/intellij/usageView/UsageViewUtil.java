@@ -93,7 +93,7 @@ public class UsageViewUtil {
   }
 
   public static UsageInfo[] removeDuplicatedUsages(@NotNull UsageInfo[] usages) {
-    Set<UsageInfo> set = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
+    Set<UsageInfo> set = new LinkedHashSet<>(Arrays.asList(usages));
 
     // Replace duplicates of move rename usage infos in injections from non code usages of master files
     String newTextInNonCodeUsage = null;
@@ -164,7 +164,7 @@ public class UsageViewUtil {
   public static Set<UsageInfo> getNotExcludedUsageInfos(final UsageView usageView) {
     Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
-    Set<UsageInfo> usageInfos = new LinkedHashSet<UsageInfo>();
+    Set<UsageInfo> usageInfos = new LinkedHashSet<>();
     for (Usage usage : usageView.getUsages()) {
       if (usage instanceof UsageInfo2UsageAdapter && !excludedUsages.contains(usage)) {
         UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();

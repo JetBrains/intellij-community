@@ -55,7 +55,7 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
           caret = carets.get(0);
         }
         int selectionStart = caret.getLeadSelectionOffset();
-        if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+        if (editor instanceof EditorImpl) {
           caret.moveToLogicalPosition(editor.offsetToLogicalPosition(endOffset).leanForward(true));
         }
         else {

@@ -65,9 +65,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     if (matchingPattern == null) return true;
 
-    List<MatchResult> namesList = new ArrayList<MatchResult>();
+    List<MatchResult> namesList = new ArrayList<>();
 
-    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
+    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<>(namesList);
     long started;
 
     if (model instanceof ChooseByNameModelEx) {
@@ -98,17 +98,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
     started = System.currentTimeMillis();
     List<MatchResult> results = (List<MatchResult>)collect.getResult();
-    sortNamesList(matchingPattern, results);
+    sortNamesList(namePattern, results);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
     }
     indicator.checkCanceled();
 
-    List<Object> sameNameElements = new SmartList<Object>();
+    List<Object> sameNameElements = new SmartList<>();
     final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
+      @SuppressWarnings("unchecked")
       Comparator<Object> modelComparator = model instanceof Comparator
                                            ? (Comparator<Object>)model
                                            : new PathProximityComparator(myContext == null ? null :myContext.getElement());
@@ -120,7 +121,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       }
     };
 
-    List<Object> qualifierMiddleMatched = new ArrayList<Object>();
+    List<Object> qualifierMiddleMatched = new ArrayList<>();
 
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
@@ -186,8 +187,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return true;
   }
 
-  protected void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
-    Collections.sort(namesList);
+  private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
+    Collections.sort(namesList, (mr1, mr2) -> {
+      boolean exactPrefix1 = namePattern.equalsIgnoreCase(mr1.elementName);
+      boolean exactPrefix2 = namePattern.equalsIgnoreCase(mr2.elementName);
+      if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
+      return mr1.compareTo(mr2);
+    });
   }
 
   @NotNull
@@ -227,7 +233,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
-    List<String> answer = new ArrayList<String>();
+    List<String> answer = new ArrayList<>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
       if (!token.isEmpty()) {
         answer.add(token);
@@ -294,7 +300,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     pattern = convertToMatchingPattern(base, pattern);
     if (pattern == null) return Collections.emptyList();
 
-    final List<String> filtered = new ArrayList<String>();
+    final List<String> filtered = new ArrayList<>();
     processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
       synchronized (filtered) {
         filtered.add(result.elementName);

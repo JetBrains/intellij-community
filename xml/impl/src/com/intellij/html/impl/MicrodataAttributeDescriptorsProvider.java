@@ -45,7 +45,7 @@ public class MicrodataAttributeDescriptorsProvider implements XmlAttributeDescri
       return XmlAttributeDescriptor.EMPTY;
     }
     final String tagName = context.getName();
-    List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    List<XmlAttributeDescriptor> result = new ArrayList<>();
     final boolean goodContextForProps =
       "div".equalsIgnoreCase(tagName) || "span".equalsIgnoreCase(tagName) || "a".equalsIgnoreCase(tagName);
     if (goodContextForProps && hasScopeTag(context)) {
@@ -124,7 +124,7 @@ public class MicrodataAttributeDescriptorsProvider implements XmlAttributeDescri
       if (typeAttribute != null) {
         final XmlAttributeValue valueElement = typeAttribute.getValueElement();
         final PsiReference[] references = valueElement != null ? valueElement.getReferences() : PsiReference.EMPTY_ARRAY;
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (PsiReference reference : references) {
           final PsiElement target = reference != null ? reference.resolve() : null;
           if (target instanceof PsiFile) {

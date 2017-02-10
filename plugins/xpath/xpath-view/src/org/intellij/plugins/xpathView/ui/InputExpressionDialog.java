@@ -203,7 +203,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     }
 
     private Set<String> findUnresolvedPrefixes() {
-        final Set<String> prefixes = new HashSet<String>();
+        final Set<String> prefixes = new HashSet<>();
 
         myXPathFile.accept(new PsiRecursiveElementVisitor(){
             public void visitElement(PsiElement element) {
@@ -334,11 +334,11 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         final Set<Namespace> n;
 
         if (merge) {
-            n = new HashSet<Namespace>(cache);
+            n = new HashSet<>(cache);
             n.removeAll(namespaces);
             n.addAll(namespaces);
         } else {
-            n = new HashSet<Namespace>(namespaces);
+            n = new HashSet<>(namespaces);
             for (Namespace namespace : n) {
                 for (Namespace cached : cache) {
                     if (namespace.getUri().equals(cached.getUri())) {
@@ -454,7 +454,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         private Set<QName> filterDefaultNamespace(Set<QName> _set) {
-            final Set<QName> set = new HashSet<QName>(_set);
+            final Set<QName> set = new HashSet<>(_set);
             for (Iterator<QName> it = set.iterator(); it.hasNext();) {
                 final QName name = it.next();
                 final String prefix = name.getPrefix();
@@ -505,7 +505,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         public void setMap(Map<String, String> map) {
-            myMap = new BidirectionalMap<String, String>();
+            myMap = new BidirectionalMap<>();
             myMap.putAll(map);
         }
 
@@ -547,7 +547,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             final Collection<String> list;
             if (myNamespaceCache == null) {
                 final ExternalResourceManager erm = ExternalResourceManager.getInstance();
-                list = new ArrayList<String>(Arrays.asList(erm.getResourceUrls(null, true)));
+                list = new ArrayList<>(Arrays.asList(erm.getResourceUrls(null, true)));
                 for (String namespace : myMap.values()) {
                     list.remove(namespace);
                 }
@@ -568,7 +568,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 final Collection<Namespace> n;
                 final Collection<Variable> v;
                 if (selectedItem != null) {
-                    n = new HashSet<Namespace>(selectedItem.namespaces);
+                    n = new HashSet<>(selectedItem.namespaces);
                     n.remove(namespace);
                     n.add(namespace);
                     v = selectedItem.variables;

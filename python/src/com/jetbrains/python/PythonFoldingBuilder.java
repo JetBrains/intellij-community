@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
+    if (root instanceof PyFile && ((PyFile)root).getVirtualFile() instanceof LightVirtualFile) return;
     appendDescriptors(root.getNode(), descriptors);
   }
 
@@ -221,7 +223,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
     String stringText = stringLiteralExpression.getText();
-    Pair<String, String> quotes = PythonStringUtil.getQuotes(stringText);
+    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(stringText);
     if (quotes != null) {
       return quotes.second + "..." + quotes.second;
     }
@@ -256,12 +258,12 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   @Override
-  protected boolean isCustomFoldingCandidate(ASTNode node) {
+  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
     return node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT;
   }
 
   @Override
-  protected boolean isCustomFoldingRoot(ASTNode node) {
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     return node.getPsi() instanceof PyFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
   }
 

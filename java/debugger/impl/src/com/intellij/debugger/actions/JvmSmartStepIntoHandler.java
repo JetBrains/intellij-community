@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,24 +60,29 @@ public abstract class JvmSmartStepIntoHandler {
    * @return false to continue for another handler or for default action (step into)
    */
   public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
-    final List<SmartStepTarget> targets = findSmartStepTargets(position);
+    return handleTargets(position, session, fileEditor, findSmartStepTargets(position));
+  }
+
+  protected final boolean handleTargets(SourcePosition position,
+                                        DebuggerSession session,
+                                        TextEditor fileEditor,
+                                        List<SmartStepTarget> targets) {
     if (!targets.isEmpty()) {
-      final SmartStepTarget firstTarget = targets.get(0);
+      SmartStepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
-        session.sessionResumed();
-        session.stepInto(true, createMethodFilter(firstTarget));
+        doStepInto(session, Registry.is("debugger.single.smart.step.force"), firstTarget);
       }
       else {
-        final Editor editor = fileEditor.getEditor();
-        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(editor, targets, new PsiMethodListPopupStep.OnChooseRunnable() {
-          public void execute(SmartStepTarget chosenTarget) {
-            session.sessionResumed();
-            session.stepInto(true, createMethodFilter(chosenTarget));
-          }
-        });
+        Editor editor = fileEditor.getEditor();
+        PsiMethodListPopupStep popupStep =
+          new PsiMethodListPopupStep(editor, targets, chosenTarget -> doStepInto(session, true, chosenTarget));
         ListPopupImpl popup = new ListPopupImpl(popupStep);
         DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
         popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
+
+        UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
+                            "selectNextRow",
+                            KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
 
         popup.addListSelectionListener(new ListSelectionListener() {
           public void valueChanged(ListSelectionEvent e) {
@@ -93,6 +101,10 @@ public abstract class JvmSmartStepIntoHandler {
       return true;
     }
     return false;
+  }
+
+  protected void doStepInto(DebuggerSession session, boolean force, SmartStepTarget target) {
+    JvmSmartStepIntoActionHandler.doStepInto(session, force, createMethodFilter(target));
   }
 
   private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target) {

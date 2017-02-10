@@ -73,7 +73,7 @@ public class LightCacheKey<T> {
   }
 
   public static <T> LightCacheKey<T> create() {
-    return new LightCacheKey<T>();
+    return new LightCacheKey<>();
   }
 
   public static <T> LightCacheKey<T> createByJavaModificationCount() {

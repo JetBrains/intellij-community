@@ -124,7 +124,7 @@ public class XPathCompletionContributor extends CompletionContributor {
     result = result.withPrefixMatcher(findPrefixStatic(position, offset));
 
     for (Lookup lookup : collection) {
-      final LookupItem<Lookup> item = new LookupItem<Lookup>(lookup, lookup.toString());
+      final LookupItem<Lookup> item = new LookupItem<>(lookup, lookup.toString());
       item.setInsertHandler(INSERT_HANDLER);
       if (lookup.isKeyword()) {
         item.setBold();

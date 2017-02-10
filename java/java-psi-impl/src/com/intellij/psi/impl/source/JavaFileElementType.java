@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 25;
+  public static final int STUB_VERSION = 39;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -56,6 +56,10 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public boolean shouldBuildStubFor(final VirtualFile file) {
+    return isInSourceContent(file);
+  }
+
+  public static boolean isInSourceContent(@NotNull VirtualFile file) {
     final VirtualFile dir = file.getParent();
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }
@@ -92,26 +96,23 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void serialize(@NotNull final PsiJavaFileStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiJavaFileStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
+    LanguageLevel level = stub.getLanguageLevel();
+    dataStream.writeByte(level != null ? level.ordinal() : -1);
     dataStream.writeName(stub.getPackageName());
   }
 
   @NotNull
   @Override
-  public PsiJavaFileStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiJavaFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
-    StringRef packName = dataStream.readName();
-    return new PsiJavaFileStubImpl(null, packName, compiled);
+    int level = dataStream.readByte();
+    StringRef packageName = dataStream.readName();
+    return new PsiJavaFileStubImpl(null, StringRef.toString(packageName), level >= 0 ? LanguageLevel.values()[level] : null, compiled);
   }
 
   @Override
-  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
-    //Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-    //if (fileId == null) return;
-    //IndexTree.Unit unit = JavaStubIndexer.translate(fileId, stub);
-    //if (unit != null) {
-    //  sink.occurrence(JavaStubIndexKeys.UNITS, unit);
-    //}
-  }
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) { }
 }

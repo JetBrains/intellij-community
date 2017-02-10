@@ -70,6 +70,7 @@ public interface JavaElementType {
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
   IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
   IElementType NAME_VALUE_PAIR = JavaStubElementTypes.NAME_VALUE_PAIR;
+  IElementType LITERAL_EXPRESSION = JavaStubElementTypes.LITERAL_EXPRESSION;
   IElementType ANNOTATION_PARAMETER_LIST = JavaStubElementTypes.ANNOTATION_PARAMETER_LIST;
   IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
   IElementType IMPLEMENTS_LIST = JavaStubElementTypes.IMPLEMENTS_LIST;
@@ -82,7 +83,11 @@ public interface JavaElementType {
   IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
-  IElementType LITERAL_EXPRESSION = JavaStubElementTypes.LITERAL_EXPRESSION;
+  IElementType LAMBDA_EXPRESSION = JavaStubElementTypes.LAMBDA_EXPRESSION;
+  IElementType METHOD_REF_EXPRESSION = JavaStubElementTypes.METHOD_REFERENCE;
+  IElementType MODULE = JavaStubElementTypes.MODULE;
+  IElementType REQUIRES_STATEMENT = JavaStubElementTypes.REQUIRES_STATEMENT;
+  IElementType EXPORTS_STATEMENT = JavaStubElementTypes.EXPORTS_STATEMENT;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);
@@ -109,8 +114,6 @@ public interface JavaElementType {
   IElementType INSTANCE_OF_EXPRESSION = new JavaCompositeElementType("INSTANCE_OF_EXPRESSION", PsiInstanceOfExpressionImpl.class);
   IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new JavaCompositeElementType("CLASS_OBJECT_ACCESS_EXPRESSION", PsiClassObjectAccessExpressionImpl.class);
   IElementType EMPTY_EXPRESSION = new JavaCompositeElementType("EMPTY_EXPRESSION", PsiEmptyExpressionImpl.class, true);
-  IElementType METHOD_REF_EXPRESSION = new JavaCompositeElementType("METHOD_REF_EXPRESSION", PsiMethodReferenceExpressionImpl.class);
-  IElementType LAMBDA_EXPRESSION = new JavaCompositeElementType("LAMBDA_EXPRESSION", PsiLambdaExpressionImpl.class);
   IElementType EXPRESSION_LIST = new JavaCompositeElementType("EXPRESSION_LIST", PsiExpressionListImpl.class, true);
   IElementType EMPTY_STATEMENT = new JavaCompositeElementType("EMPTY_STATEMENT", PsiEmptyStatementImpl.class);
   IElementType BLOCK_STATEMENT = new JavaCompositeElementType("BLOCK_STATEMENT", PsiBlockStatementImpl.class);
@@ -138,6 +141,9 @@ public interface JavaElementType {
   IElementType ASSERT_STATEMENT = new JavaCompositeElementType("ASSERT_STATEMENT", PsiAssertStatementImpl.class);
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl.class);
+  IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", PsiJavaModuleReferenceElementImpl.class);
+  IElementType USES_STATEMENT = new JavaCompositeElementType("USES_STATEMENT", PsiUsesStatementImpl.class);
+  IElementType PROVIDES_STATEMENT = new JavaCompositeElementType("PROVIDES_STATEMENT", PsiProvidesStatementImpl.class);
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {

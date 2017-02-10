@@ -35,7 +35,7 @@ public abstract class PyInjectorBase implements MultiHostInjector {
 
   @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public List<Class<? extends PsiElement>> elementsToInjectIn() {
     return PyInjectionUtil.ELEMENTS_TO_INJECT_IN;
   }
 

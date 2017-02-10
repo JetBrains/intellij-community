@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.FormHighlightingPass;
@@ -43,14 +43,14 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class UIFormEditor extends UserDataHolderBase implements /*Navigatable*/FileEditor {
+public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
   public UIFormEditor(@NotNull final Project project, @NotNull final VirtualFile file){
     final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
-    final Module module = ModuleUtil.findModuleForFile(vf, project);
+    final Module module = ModuleUtilCore.findModuleForFile(vf, project);
     if (module == null) {
       throw new IllegalArgumentException("No module for file " + file + " in project " + project);
     }
@@ -157,6 +157,11 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     return null;
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return false;
+  }
+
   /*
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
     if (navigatable instanceof ComponentNavigatable) {
@@ -173,7 +178,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   }
   */
 
-  private class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
+  private static class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
     private final HighlightingPass[] myPasses;
 
     public MyBackgroundEditorHighlighter(final GuiEditor editor) {
@@ -182,7 +187,6 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
 
     @NotNull
     public HighlightingPass[] createPassesForEditor() {
-      PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
       return myPasses;
     }
 

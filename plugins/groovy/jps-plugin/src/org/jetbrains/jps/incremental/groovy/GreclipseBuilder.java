@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,12 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
    * All Groovy-Eclipse stuff is contained in a separate classLoader to avoid clashes with ecj.jar being in the classpath of the builder process
    */
   private ClassLoader myGreclipseLoader;
+  private final CompilingGroovycRunner myHelper = new CompilingGroovycRunner(true) {
+    @Override
+    protected boolean acceptsFileType(String path) {
+      return super.acceptsFileType(path) || path.endsWith(".java");
+    }
+  };
 
   protected GreclipseBuilder() {
     super(BuilderCategory.TRANSLATOR);
@@ -110,7 +117,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     if (!useGreclipse(context)) return ModuleLevelBuilder.ExitCode.NOTHING_DONE;
 
     try {
-      final List<File> toCompile = GroovyBuilder.collectChangedFiles(context, dirtyFilesHolder, false, true, Ref.create(false));
+      final List<File> toCompile = myHelper.collectChangedFiles(context, dirtyFilesHolder, false, true, Ref.create(false));
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -183,8 +190,8 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
                                                            FileUtil.toSystemIndependentName(src)));
         }
       }
-      Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>> successfullyCompiled =
-        GroovyBuilder.processCompiledFiles(context, chunk, outputDirs, mainOutputDir, items);
+      MultiMap<ModuleBuildTarget, GroovycOutputParser.OutputItem> successfullyCompiled =
+        myHelper.processCompiledFiles(context, chunk, outputDirs, mainOutputDir, items);
 
       EclipseOutputParser parser = new EclipseOutputParser(getPresentableName(), chunk);
       List<CompilerMessage> messages = ContainerUtil.concat(parser.parseMessages(out.toString()), parser.parseMessages(err.toString()));
@@ -200,7 +207,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "Compilation failed"));
       }
 
-      GroovyBuilder.updateDependencies(context, toCompile, successfullyCompiled, outputConsumer, this);
+      myHelper.updateDependencies(context, toCompile, successfullyCompiled, new DefaultOutputConsumer(outputConsumer), this);
       return ExitCode.OK;
 
     }
@@ -251,7 +258,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     args.add("-d");
     args.add(mainOutputDir);
 
-    //todo AjCompilerSettings exact duplicate, JavaBuilder.loadCommonJavacOptions inexact duplicate 
+    //todo AjCompilerSettings exact duplicate, JavaBuilder.loadCommonJavacOptions inexact duplicate
     List<String> params = ParametersListUtil.parse(settings.cmdLineParams);
     for (Iterator<String> iterator = params.iterator(); iterator.hasNext(); ) {
       String option = iterator.next();

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
 
-  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<ChangesViewContentEP>("com.intellij.changesViewContent");
+  public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<>("com.intellij.changesViewContent");
 
   @Attribute("tabName")
   public String tabName;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ParameterizedTypeImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.impl.DomTestCase;
@@ -172,7 +170,7 @@ public class DomExtensionsTest extends DomTestCase {
   }
 
   public static List<DomElement> getCustomChildren(final DomElement element) {
-    final List<DomElement> children = new ArrayList<DomElement>();
+    final List<DomElement> children = new ArrayList<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(final DomElement element) {
@@ -192,7 +190,7 @@ public class DomExtensionsTest extends DomTestCase {
     final DomExtenderEP extenderEP = new DomExtenderEP();
     extenderEP.domClassName = domClass.getName();
     extenderEP.extenderClassName = extenderClass.getName();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, extenderEP, myTestRootDisposable);
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, extenderEP, getTestRootDisposable());
   }
 
 

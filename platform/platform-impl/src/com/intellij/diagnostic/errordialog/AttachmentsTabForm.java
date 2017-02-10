@@ -114,7 +114,7 @@ public class AttachmentsTabForm {
   }
 
   public void setAttachments(List<Attachment> attachments) {
-    myTable.setModelAndUpdateColumns(new ListTableModel<Attachment>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
+    myTable.setModelAndUpdateColumns(new ListTableModel<>(new ColumnInfo[]{ENABLED_COLUMN, PATH_COLUMN}, attachments, 1));
     myTable.setBorder(IdeBorderFactory.createBorder());
     myTable.setSelection(Collections.singletonList(attachments.get(0)));
   }

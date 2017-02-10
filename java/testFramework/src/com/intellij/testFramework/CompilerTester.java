@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -39,7 +38,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -104,14 +102,10 @@ public class CompilerTester {
   }
 
   public void deleteClassFile(final String className) throws IOException {
-    AccessToken token = WriteAction.start();
-    try {
-        //noinspection ConstantConditions
-        touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> {
+      //noinspection ConstantConditions
+      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
+    });
   }
 
   @Nullable
@@ -175,30 +169,27 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
+  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        refreshVfs(getProject().getProjectFilePath());
-        for (Module module : myModules) {
-          refreshVfs(module.getModuleFilePath());
-        }
-
-        PlatformTestUtil.saveProject(getProject());
-        CompilerTestUtil.saveApplicationSettings();
-        for (Module module : myModules) {
-          File ioFile = new File(module.getModuleFilePath());
-          if (!ioFile.exists()) {
-            getProject().save();
-            assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
-          }
-        }
-        runnable.consume(callback);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      refreshVfs(getProject().getProjectFilePath());
+      for (Module module : myModules) {
+        refreshVfs(module.getModuleFilePath());
       }
+
+      PlatformTestUtil.saveProject(getProject());
+      CompilerTestUtil.saveApplicationSettings();
+      for (Module module : myModules) {
+        File ioFile = new File(module.getModuleFilePath());
+        if (!ioFile.exists()) {
+          getProject().save();
+          assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
+        }
+      }
+      runnable.consume(callback);
     });
 
     //tests run in awt
@@ -223,7 +214,7 @@ public class CompilerTester {
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
-    private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
+    private final List<CompilerMessage> myMessages = new ArrayList<>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
@@ -238,7 +229,7 @@ public class CompilerTester {
             final String text = message.getMessage();
             if (category != CompilerMessageCategory.INFORMATION ||
                 !(text.contains("Compilation completed successfully") ||
-                  text.startsWith("Using javac") ||
+                  text.contains("used to compile") ||
                   text.startsWith("Using Groovy-Eclipse"))) {
               myMessages.add(message);
             }

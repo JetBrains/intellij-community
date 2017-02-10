@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,10 @@ public class DomElementsToggleAction extends ToggleAction {
 
     myText = TypePresentationService.getService().getTypePresentableName(myClass);
 
-    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(AbstractDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
+    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(AbstractDomElementNode.TREE_NODES_HIDERS_KEY,
+                                                                                     new HashMap<>());
 
-    if(getHiders().get(myClass) == null) getHiders().put(myClass, true);
+    getHiders().putIfAbsent(myClass, true);
   }
 
   @Override

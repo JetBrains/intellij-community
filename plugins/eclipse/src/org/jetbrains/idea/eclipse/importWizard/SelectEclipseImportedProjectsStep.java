@@ -57,8 +57,8 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
 
   private void calcDuplicates() {
     if (duplicateNames == null) {
-      duplicateNames = new HashSet<String>();
-      Set<String> usedNames = new HashSet<String>();
+      duplicateNames = new HashSet<>();
+      Set<String> usedNames = new HashSet<>();
       for (String model : fileChooser.getMarkedElements()) {
         final String projectName = EclipseProjectFinder.findProjectName(model);
         if (!usedNames.add(projectName)) {

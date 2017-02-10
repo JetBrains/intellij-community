@@ -53,7 +53,7 @@ public class ParamsGroup implements Cloneable {
     myGroupParams.addAt(index, parameter);
   }
 
-  public void addParameters(final String... parameters) {
+  public void addParameters(@NotNull final String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
     }

@@ -235,7 +235,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
   }
 
   class CachedNode extends Node {
-    private final ArrayList<CachedNode> myChildren = new ArrayList<CachedNode>();
+    private final ArrayList<CachedNode> myChildren = new ArrayList<>();
 
     CachedNode(final String id) {
       super(id, null);

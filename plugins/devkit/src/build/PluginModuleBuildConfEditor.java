@@ -42,7 +42,7 @@ import java.io.File;
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private final JPanel myWholePanel = new JPanel(new GridBagLayout());
-  @NonNls private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", " META-INF" + File.separator + "plugin.xml:"));
+  @NonNls private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", "META-INF" + File.separator + "plugin.xml:"));
   private final TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
   private final TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();

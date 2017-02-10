@@ -61,10 +61,10 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   @NotNull
   @Override
   public Object[] getVariants() {
-    final List<LookupElement> result = new ArrayList<LookupElement>();
+    final List<LookupElement> result = new ArrayList<>();
     PyFile containingFile = (PyFile) getElement().getContainingFile().getOriginalFile();
     final List<String> dunderAll = containingFile.getDunderAll();
-    final Set<String> seenNames = new HashSet<String>();
+    final Set<String> seenNames = new HashSet<>();
     if (dunderAll != null) {
       seenNames.addAll(dunderAll);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 /**
  * @author Max Medvedev
  */
-public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
+class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() { GroovyLightProjectDescriptor.GROOVY_2_2 }
 

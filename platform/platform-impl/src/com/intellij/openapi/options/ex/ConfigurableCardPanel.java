@@ -50,6 +50,11 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     return key;
   }
 
+  @Override
+  protected JComponent create(Configurable configurable) {
+    return createConfigurableComponent(configurable);
+  }
+
   /**
    * Creates UI component for the specified configurable.
    * If a component is created successfully the configurable will be reset.
@@ -60,8 +65,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * If the configurable does not implement {@link Configurable.NoScroll},
    * this method adds a scroll bars for created component.
    */
-  @Override
-  protected JComponent create(final Configurable configurable) {
+  public static JComponent createConfigurableComponent(Configurable configurable) {
     return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
@@ -91,7 +95,6 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
               scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
-              scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
               component = scroll;
             }
           }

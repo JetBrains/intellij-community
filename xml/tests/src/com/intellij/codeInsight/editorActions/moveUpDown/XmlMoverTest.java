@@ -53,6 +53,9 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
 
   public void test1() throws Exception { doTest("html"); }
 
+  public void testHtmlScript() throws Exception { doTest("html"); }
+  public void testHtmlStyle() throws Exception { doTest("html"); }
+  public void testHtmlUnclosed() throws Exception { doTest("html"); }
 
   private void doTest(String ext) throws Exception {
     final String baseName = getBasePath() + '/' + getTestName(true);

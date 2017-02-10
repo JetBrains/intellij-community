@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.psi.util.ClassUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class GrClassUtilTest extends LightCodeInsightFixtureTestCase {
-  public void testFindClassByName() {
+  void testFindClassByName() {
     myFixture.configureByText("a.groovy", '''\
       public class InnerClasses {
         static class Bar { }

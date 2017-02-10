@@ -75,7 +75,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void showText(String unscramble) {
-    RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", getProject(), unscramble);
+    RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", null, getProject(), unscramble);
     assertNotNull(descriptor);
     Disposer.register(getTestRootDisposable(), descriptor);
     myContent = descriptor;

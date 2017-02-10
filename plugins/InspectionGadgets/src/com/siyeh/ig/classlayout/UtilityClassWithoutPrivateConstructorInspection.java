@@ -54,7 +54,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
     if (constructor == null) {
@@ -75,14 +75,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
     @Override
@@ -119,15 +113,10 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
   }
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 

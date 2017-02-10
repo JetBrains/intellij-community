@@ -3,14 +3,14 @@ from time import sleep
 
 
 def fun1(n):
-    for i in range(1000):
+    while True:
         sleep(0.01)
     print("finished fun1()", n)
 
 
 def fun2(m):
     sleep(2)
-    for i in range(1000):
+    while True:
         sleep(0.01) #breakpoint
     print("finished fun2()", m)
 

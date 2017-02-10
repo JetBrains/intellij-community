@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
+class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   @NotNull private final RangeHighlighter myHighlighter;
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
@@ -101,10 +101,10 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
       if (!myResolved) {
         g2.setColor(ignoredBackgroundColor ? myDiffType.getIgnoredColor(editor) : color);
         g2.fillRect(x1, y1, x2 - x1, y2 - y1);
+      } else {
+        DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1, color, false, myResolved);
+        DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y2 - 1, color, false, myResolved);
       }
-
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1 - 1, color, false, myResolved);
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y2 - 1, color, false, myResolved);
     }
     else {
       // range is empty - insertion or deletion

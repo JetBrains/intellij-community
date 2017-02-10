@@ -128,7 +128,7 @@ public class MavenSelectProjectPopup {
           }
         });
 
-        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
+        final Ref<JBPopup> popupRef = new Ref<>();
 
         final Runnable clickCallBack = () -> {
           TreePath path = projectTree.getSelectionPath();
@@ -171,7 +171,7 @@ public class MavenSelectProjectPopup {
         MavenProject[] projects = projectList.toArray(new MavenProject[projectList.size()]);
         Arrays.sort(projects, new MavenProjectNamer.MavenProjectComparator());
 
-        Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<MavenProject, DefaultMutableTreeNode>();
+        Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<>();
         for (MavenProject mavenProject : projects) {
           projectsToNode.put(mavenProject, new DefaultMutableTreeNode(mavenProject));
         }

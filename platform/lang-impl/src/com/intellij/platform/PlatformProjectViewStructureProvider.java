@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
       if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();
-        Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        Collection<AbstractTreeNode> result = new ArrayList<>();
         for (AbstractTreeNode moduleChild : moduleChildren) {
           if (moduleChild instanceof PsiDirectoryNode) {
             final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();
@@ -63,10 +63,5 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
       }
     }
     return children;
-  }
-
-  @Override
-  public Object getData(final Collection<AbstractTreeNode> selected, final String dataName) {
-    return null;
   }
 }

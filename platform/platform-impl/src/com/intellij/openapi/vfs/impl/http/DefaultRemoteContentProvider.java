@@ -28,7 +28,6 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
-import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
 
@@ -65,7 +64,6 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       addRequestTuner(url, HttpRequests.request(url.toExternalForm()))
         .connectTimeout(60 * 1000)
         .productNameAsUserAgent()
-        .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {

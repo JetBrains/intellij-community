@@ -17,7 +17,6 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaTestFrameworkDebuggerRunner;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class JUnitDebuggerRunner extends JavaTestFrameworkDebuggerRunner {
   @Override
   protected boolean validForProfile(@NotNull RunProfile profile) {
-    return profile instanceof JUnitConfiguration || 
-           profile instanceof JUnitTestDiscoveryConfiguration;
+    return profile instanceof JUnitConfiguration;
   }
 
   @NotNull

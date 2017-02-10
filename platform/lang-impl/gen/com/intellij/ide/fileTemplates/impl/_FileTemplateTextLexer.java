@@ -52,7 +52,8 @@ class _FileTemplateTextLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 256 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\43\0\1\6\1\3\13\0\12\2\7\0\32\1\4\0\1\1\1\0\32\1\1\4\1\0\1\5\202\0");
+    "\43\0\1\6\1\3\13\0\12\2\7\0\32\1\1\10\1\7\1\11\1\0\1\1\1\0\32\1\1\4\1\0\1"+
+    "\5\202\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -60,10 +61,11 @@ class _FileTemplateTextLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\1\0\3\1\1\2\1\0\1\3\1\0\1\2";
+    "\1\0\5\1\1\2\1\0\1\3\1\0\1\4\1\0"+
+    "\1\2\1\0";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[9];
+    int [] result = new int[14];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -88,11 +90,11 @@ class _FileTemplateTextLexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\7\0\16\0\25\0\34\0\43\0\25\0\52"+
-    "\0\7";
+    "\0\0\0\12\0\24\0\36\0\50\0\62\0\74\0\106"+
+    "\0\120\0\132\0\12\0\144\0\12\0\156";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[9];
+    int [] result = new int[14];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -115,12 +117,14 @@ class _FileTemplateTextLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\3\2\1\3\2\2\1\4\10\0\2\5\1\0\1\6"+
-    "\3\0\1\7\6\0\2\5\5\0\2\10\5\0\2\10"+
-    "\2\0\1\11\1\0";
+    "\3\2\1\3\2\2\1\4\1\5\1\2\1\6\13\0"+
+    "\2\7\1\0\1\10\6\0\1\11\6\0\1\12\4\0"+
+    "\1\13\2\0\1\13\14\0\1\14\1\0\2\7\1\15"+
+    "\7\0\2\16\10\0\1\11\20\0\1\13\7\0\1\13"+
+    "\4\0\2\16\2\0\1\15\4\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[49];
+    int [] result = new int[120];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -158,10 +162,11 @@ class _FileTemplateTextLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\1\0\1\11\3\1\1\0\1\1\1\0\1\11";
+    "\1\0\1\11\5\1\1\0\1\1\1\0\1\11\1\0"+
+    "\1\11\1\0";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[9];
+    int [] result = new int[14];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -469,15 +474,19 @@ class _FileTemplateTextLexer implements FlexLexer {
           case 1: 
             { return FileTemplateTokenType.TEXT;
             }
-          case 4: break;
+          case 5: break;
           case 2: 
             { return FileTemplateTokenType.MACRO;
             }
-          case 5: break;
+          case 6: break;
           case 3: 
             { return FileTemplateTokenType.DIRECTIVE;
             }
-          case 6: break;
+          case 7: break;
+          case 4: 
+            { return FileTemplateTokenType.ESCAPE;
+            }
+          case 8: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

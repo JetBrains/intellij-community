@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -136,7 +137,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @NotNull
   public String getName() {
     final String name;
-    final PsiMethodStub stub = getStub();
+    final PsiMethodStub stub = getGreenStub();
     if (stub != null) {
       name = stub.getName();
     }
@@ -241,7 +242,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public boolean isDeprecated() {
-    final PsiMethodStub stub = getStub();
+    final PsiMethodStub stub = getGreenStub();
     if (stub != null) {
       return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
     }
@@ -251,7 +252,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public PsiDocComment getDocComment() {
-    final PsiMethodStub stub = getStub();
+    final PsiMethodStub stub = getGreenStub();
     if (stub != null && !stub.hasDocComment()) return null;
 
     return (PsiDocComment)getNode().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
@@ -259,7 +260,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public boolean isConstructor() {
-    final PsiMethodStub stub = getStub();
+    final PsiMethodStub stub = getGreenStub();
     if (stub != null) {
       return stub.isConstructor();
     }
@@ -269,7 +270,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public boolean isVarArgs() {
-    final PsiMethodStub stub = getStub();
+    final PsiMethodStub stub = getGreenStub();
     if (stub != null) {
       return stub.isVarArgs();
     }

@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports unused default parameters.
+<!-- tooltip end -->
+<pre>
+  def foo(a, b = 2) {}
+</pre>
+If all <code>foo</code> calls will explicitly include argument for <code>b</code>
+then initializer for <code>b</code> will be highlighted as unused with option to remove it.
+<p>
+  <span style="font-size: small;">New in 2016.3</span>
+</p>
+</body>
+</html>

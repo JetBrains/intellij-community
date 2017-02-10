@@ -66,7 +66,7 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
     }
 
     @Override
-    public void coloredTextAvailable(String text, Key attributes) {
+    public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
       addToOutput(text, attributes);
     }
   }

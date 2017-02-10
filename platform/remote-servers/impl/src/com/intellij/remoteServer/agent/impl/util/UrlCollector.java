@@ -33,7 +33,7 @@ public class UrlCollector {
   }
 
   public List<File> collectFiles(Collection<File> libraries) {
-    myFiles = new ArrayList<File>();
+    myFiles = new ArrayList<>();
     for (File library : libraries) {
       if (library.exists()) {
         addFile(library);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -47,7 +45,6 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.PyBundle;
@@ -83,7 +80,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       return sdk.getSdkModificator();
     }
   };
-  private Set<SdkModificator> myModifiedModificators = new HashSet<SdkModificator>();
+  private Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
   private boolean myShowOtherProjectVirtualenvs = true;
@@ -253,7 +250,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
     }
     //noinspection unchecked
-    mySdkList.setModel(new CollectionListModel<Sdk>(pythonSdks));
+    mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
     if (projectSdk != null) {
@@ -389,7 +386,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
       final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> SdkConfigurationUtil.removeSdk(sdk));
+      SdkConfigurationUtil.removeSdk(sdk);
 
       myProjectSdksModel.removeSdk(sdk);
       myProjectSdksModel.removeSdk(currentSdk);
@@ -551,7 +548,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
 
         vFiles = adjustAddedFileSet(myPanel, vFiles);
-        List<VirtualFile> added = new ArrayList<VirtualFile>(vFiles.length);
+        List<VirtualFile> added = new ArrayList<>(vFiles.length);
         for (VirtualFile vFile : vFiles) {
           if (addElement(vFile)) {
             added.add(vFile);
@@ -562,7 +559,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       catch (Exception e) {
         LOG.error(e);
       }
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override

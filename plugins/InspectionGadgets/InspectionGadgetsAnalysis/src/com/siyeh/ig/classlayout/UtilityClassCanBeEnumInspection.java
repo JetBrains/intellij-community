@@ -59,14 +59,8 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.quickfix");
     }
 
     @Override

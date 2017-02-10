@@ -46,8 +46,8 @@ public abstract class UnwrapDescriptorBase implements UnwrapDescriptor {
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
     PsiElement e = findTargetElement(editor, file);
 
-     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
-     Set<PsiElement> ignored = new HashSet<PsiElement>();
+     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<>();
+     Set<PsiElement> ignored = new HashSet<>();
      while (e != null) {
        for (Unwrapper u : getUnwrappers()) {
          if (u.isApplicableTo(e) && !ignored.contains(e)) {

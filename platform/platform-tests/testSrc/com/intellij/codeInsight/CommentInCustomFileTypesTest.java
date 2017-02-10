@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction;
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +48,11 @@ public class CommentInCustomFileTypesTest extends LightPlatformCodeInsightTestCa
     checkResultByFile("/codeInsight/commentInCustomFileType/line2_after.cs");
   }
 
-  private void performBlockCommentAction() {
-    CommentByBlockCommentAction action = new CommentByBlockCommentAction();
-    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
+  private static void performBlockCommentAction() {
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_BLOCK);
   }
 
-  private void performLineCommentAction() {
-    CommentByLineCommentAction action = new CommentByLineCommentAction();
-    action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
+  private static void performLineCommentAction() {
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
   }
 }

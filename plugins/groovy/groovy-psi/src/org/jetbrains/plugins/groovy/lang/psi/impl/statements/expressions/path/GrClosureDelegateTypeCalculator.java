@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt;
 
 public class GrClosureDelegateTypeCalculator extends GrExpressionTypeCalculator {
 
@@ -53,7 +54,7 @@ public class GrClosureDelegateTypeCalculator extends GrExpressionTypeCalculator 
     );
     if (closureClass == null || !closureClass.equals(method.getContainingClass())) return null;
 
-    final GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(expression, closure);
+    final DelegatesToInfo info = GrDelegatesToUtilKt.getDelegatesToInfo(closure);
     if (info == null) return null;
 
     return info.getTypeToDelegate();

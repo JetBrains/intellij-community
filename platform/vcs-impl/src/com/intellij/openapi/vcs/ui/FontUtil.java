@@ -24,7 +24,7 @@ import java.awt.*;
 public class FontUtil {
   @NotNull
   public static Font getFontAbleToDisplay(char c, int size, int style, @NotNull String family) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family).getFont();
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family, null).getFont();
   }
 
   @NotNull
@@ -39,7 +39,7 @@ public class FontUtil {
     if (start == -1) return input;
 
     Font font = null;
-    StringBuilder result = new StringBuilder();
+    StringBuilder result = new StringBuilder(input.substring(0, start));
     for (int i = start; i < input.length(); i++) {
       char c = input.charAt(i);
       if (baseFont.canDisplay(c)) {

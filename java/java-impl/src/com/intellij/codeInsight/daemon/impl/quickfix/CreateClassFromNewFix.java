@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +135,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       }
     }
     else {
-      positionCursor(project, aClass.getContainingFile(), aClass);
+      positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
 

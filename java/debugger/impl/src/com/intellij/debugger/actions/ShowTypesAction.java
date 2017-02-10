@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.RegistryToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class ShowTypesAction extends RegistryToggleAction {
   public void doWhenDone(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      if (e.getData(XDebugSessionTab.TAB_KEY) == null) {
+      if (DebuggerUIUtil.isInDetachedTree(e)) {
         XDebuggerTree tree = XDebuggerTree.getTree(e);
         if (tree != null) {
           tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));

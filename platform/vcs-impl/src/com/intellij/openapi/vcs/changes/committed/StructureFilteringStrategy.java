@@ -42,7 +42,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,7 +53,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private MyUI myUI;
   private final Project myProject;
-  private final List<FilePath> mySelection = new ArrayList<FilePath>();
+  private final List<FilePath> mySelection = new ArrayList<>();
 
   public StructureFilteringStrategy(final Project project) {
     myProject = project;
@@ -107,7 +106,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     if (mySelection.size() == 0) {
       return changeLists;
     }
-    final ArrayList<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final ArrayList<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList list : changeLists) {
       if (listMatchesSelection(list)) {
         result.add(list);
@@ -132,7 +131,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     private final JComponent myScrollPane;
     private final Tree myStructureTree;
     private boolean myRendererInitialized;
-    private final TreeModelBuilder myBuilder;
+    private final Set<FilePath> myFilePaths = new HashSet<>();
     private TreeState myState;
 
     public MyUI() {
@@ -141,7 +140,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myStructureTree.setShowsRootHandles(true);
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(final TreeSelectionEvent e) {
-          final List<FilePath> filePaths = new ArrayList<FilePath>(mySelection);
+          final List<FilePath> filePaths = new ArrayList<>(mySelection);
 
           mySelection.clear();
           final TreePath[] selectionPaths = myStructureTree.getSelectionPaths();
@@ -159,7 +158,6 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         }
       });
       myScrollPane = ScrollPaneFactory.createScrollPane(myStructureTree);
-      myBuilder = new TreeModelBuilder(myProject, false);
     }
 
     @NotNull
@@ -191,27 +189,26 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     public void reset() {
+      myFilePaths.clear();
       myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
-      myStructureTree.setModel(myBuilder.clearAndGetModel());
+      myStructureTree.setModel(TreeModelBuilder.buildEmpty(myProject));
     }
 
     public void append(final List<CommittedChangeList> changeLists) {
-      final TreeState localState = (myState != null) && myBuilder.isEmpty()
+      final TreeState localState = myState != null && myFilePaths.isEmpty()
                                    ? myState
                                    : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
 
-      final Set<FilePath> filePaths = new HashSet<FilePath>();
       for (CommittedChangeList changeList : changeLists) {
         for (Change change : changeList.getChanges()) {
           final FilePath path = ChangesUtil.getFilePath(change);
           if (path.getParentPath() != null) {
-            filePaths.add(path.getParentPath());
+            myFilePaths.add(path.getParentPath());
           }
         }
       }
 
-      final DefaultTreeModel model = myBuilder.buildModelFromFilePaths(filePaths);
-      myStructureTree.setModel(model);
+      myStructureTree.setModel(TreeModelBuilder.buildFromFilePaths(myProject, false, myFilePaths));
       localState.applyTo(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();

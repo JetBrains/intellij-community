@@ -27,7 +27,7 @@ class StatisticsUnit {
 
   private final int myNumber;
 
-  private final THashMap<String, LinkedList<String>> myDataMap = new THashMap<String, LinkedList<String>>();
+  private final THashMap<String, LinkedList<String>> myDataMap = new THashMap<>();
 
   public StatisticsUnit(int number) {
     myNumber = number;
@@ -55,7 +55,7 @@ class StatisticsUnit {
   public void incData(String key1, String key2) {
     LinkedList<String> list = myDataMap.get(key1);
     if (list == null) {
-      myDataMap.put(key1, list = new LinkedList<String>());
+      myDataMap.put(key1, list = new LinkedList<>());
     }
     list.addFirst(key2);
     if (list.size() > StatisticsManager.OBLIVION_THRESHOLD) {
@@ -67,7 +67,7 @@ class StatisticsUnit {
     final List<String> list = myDataMap.get(key1);
     if (list == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    return ArrayUtil.toStringArray(new LinkedHashSet<String>(list));
+    return ArrayUtil.toStringArray(new LinkedHashSet<>(list));
   }
 
   public int getNumber() {
@@ -103,7 +103,7 @@ class StatisticsUnit {
     for(int i = 0; i < size; i++){
       String context = dataIn.readUTF();
       int len = dataIn.readInt();
-      LinkedList<String> list = new LinkedList<String>();
+      LinkedList<String> list = new LinkedList<>();
       for (int j = 0; j < len; j++) {
         list.add(dataIn.readUTF());
       }

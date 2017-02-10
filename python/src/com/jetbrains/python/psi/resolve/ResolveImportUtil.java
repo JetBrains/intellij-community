@@ -58,7 +58,7 @@ public class ResolveImportUtil {
   private static final ThreadLocal<Set<String>> ourBeingImported = new ThreadLocal<Set<String>>() {
     @Override
     protected Set<String> initialValue() {
-      return new HashSet<String>();
+      return new HashSet<>();
     }
   };
 
@@ -140,7 +140,7 @@ public class ResolveImportUtil {
     String name = qName.getComponents().get(0);
 
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
-    List<PsiElement> resultList = new ArrayList<PsiElement>();
+    List<PsiElement> resultList = new ArrayList<>();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
         throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());

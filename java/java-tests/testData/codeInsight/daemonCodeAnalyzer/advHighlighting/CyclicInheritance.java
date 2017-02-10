@@ -1,6 +1,6 @@
 // cyclic inhertiance
 import java.io.*;
-import java.net.*;
+
 
 <error descr="Cyclic inheritance involving 'Foo'">class Foo extends Foo</error> {
 }

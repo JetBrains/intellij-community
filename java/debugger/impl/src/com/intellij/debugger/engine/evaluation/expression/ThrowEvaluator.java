@@ -39,9 +39,4 @@ public class ThrowEvaluator implements Evaluator {
     ex.setTargetException(exception);
     throw ex;
   }
-
-  @Override
-  public Modifier getModifier() {
-    return null;
-  }
 }

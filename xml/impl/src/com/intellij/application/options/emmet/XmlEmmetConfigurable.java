@@ -188,10 +188,4 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   public String getId() {
     return "reference.idesettings.emmet.xml";
   }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

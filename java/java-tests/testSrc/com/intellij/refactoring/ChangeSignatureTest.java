@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,30 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testWarnAboutContract() {
     try {
       doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testDelegateWithoutChangesWarnAboutSameMethodInClass() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[0], true);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testDuplicatedSignatureInInheritor() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "i", PsiType.INT)}, true);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testConflictForUsedParametersInMethodBody() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[0], true);
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
@@ -224,7 +248,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testRemoveVarargParameter() {
-    doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
   }
 
   public void testEnumConstructor() {
@@ -323,6 +353,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       new ParameterInfoImpl(1, "l", myFactory.createTypeFromText("List<T>[]", method.getParameterList()), "null", false),
       new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("String", method.getParameterList()))
     }, false);
+  }
+
+  public void testReplaceOldStyleArrayWithVarargs() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(0, "a", new PsiEllipsisType(PsiType.INT))}, false);
   }
 
   public void testReorderParamsOfFunctionalInterface() {

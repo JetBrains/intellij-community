@@ -38,7 +38,7 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
   };
 
   /**
-   * Adds initializer to the field declaration or, if <code>initializer</code> parameter is null,
+   * Adds initializer to the field declaration or, if {@code initializer} parameter is null,
    * removes the initializer from the field declaration.
    *
    * @param initializer the initializer to add.

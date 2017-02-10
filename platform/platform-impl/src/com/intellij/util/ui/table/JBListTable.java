@@ -28,6 +28,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -222,7 +223,7 @@ public abstract class JBListTable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<RowAnimationState>();
+    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
     private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
@@ -472,7 +473,7 @@ public abstract class JBListTable {
         editor.setFocusCycleRoot(true);
 
         editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
-        MouseSuppressor.install(editor);
+        editor.addMouseListener(MouseEventHandler.CONSUMER);
 
         myCellEditor = new MyCellEditor(editor);
         return myCellEditor;

@@ -15,18 +15,15 @@
  */
 package com.intellij.codeInspection.localCanBeFinal;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +36,6 @@ import java.util.*;
  * @author max
  */
 public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal");
-
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;
@@ -79,7 +74,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       final List<ProblemDescriptor> problems = checkCodeBlock(initializer.getBody(), manager, isOnTheFly);
       if (problems != null) {
         if (allProblems == null) {
-          allProblems = new ArrayList<ProblemDescriptor>(1);
+          allProblems = new ArrayList<>(1);
         }
         allProblems.addAll(problems);
       }
@@ -131,8 +126,8 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, false);
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final HashSet<PsiVariable> result = new HashSet<PsiVariable>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
+    final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
@@ -194,7 +189,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
 
       private HashSet<PsiElement> getDeclaredVariables(PsiCodeBlock block) {
-        final HashSet<PsiElement> result = new HashSet<PsiElement>();
+        final HashSet<PsiElement> result = new HashSet<>();
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new JavaElementVisitor() {
@@ -325,30 +320,18 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   private static class AcceptSuggested implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(problem.getPsiElement())) return;
       PsiElement nameIdentifier = problem.getPsiElement();
       if (nameIdentifier == null) return;
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
-      try {
-        psiVariable.normalizeDeclaration();
-        PsiUtil.setModifierProperty(psiVariable, PsiModifier.FINAL, true);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
+      psiVariable.normalizeDeclaration();
+      PsiUtil.setModifierProperty(psiVariable, PsiModifier.FINAL, true);
     }
   }
 

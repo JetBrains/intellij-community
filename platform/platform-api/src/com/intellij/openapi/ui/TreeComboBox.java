@@ -198,7 +198,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final TreeModel myTreeModel;
     private Object mySelectedItem;
     private final boolean myShowRootNode;
-    private final List<TreeNode> myTreeModelAsList = new ArrayList<TreeNode>();
+    private final List<TreeNode> myTreeModelAsList = new ArrayList<>();
 
     private TreeModelWrapper(@NotNull final TreeModel treeModel, final boolean showRootNode) {
       myTreeModel = treeModel;
@@ -229,7 +229,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
 
     private TreePath getPathForRow(final int row) {
       TreeNode node = myTreeModelAsList.get(row);
-      final List<TreeNode> path = new ArrayList<TreeNode>();
+      final List<TreeNode> path = new ArrayList<>();
       while (node != null) {
         path.add(0, node);
         node = node.getParent();
@@ -290,7 +290,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
 
     public PreorderEnumeration(@NotNull final TreeModel treeModel) {
       myTreeModel = treeModel;
-      myStack = new Stack<Enumeration>();
+      myStack = new Stack<>();
       myStack.push(Collections.enumeration(Collections.singleton(treeModel.getRoot())));
     }
 

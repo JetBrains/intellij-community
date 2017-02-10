@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
@@ -57,7 +56,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
       GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
       DialogManager.show(dialog);
       exitCode.set(dialog.getExitCode());
-    }, ModalityState.defaultModalityState());
+    });
     return exitCode.get();
   }
 

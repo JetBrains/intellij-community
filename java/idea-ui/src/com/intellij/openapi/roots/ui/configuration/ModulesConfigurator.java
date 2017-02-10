@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -57,6 +55,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private final Project myProject;
 
-  private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<Module, ModuleEditor>((o1, o2) -> {
+  private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<>((o1, o2) -> {
     String n1 = o1.getName();
     String n2 = o2.getName();
     int result = n1.compareToIgnoreCase(n2);
@@ -89,7 +88,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
   private StructureConfigurableContext myContext;
-  private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
+  private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
 
   public ModulesConfigurator(Project project) {
     myProject = project;
@@ -213,8 +212,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void apply() throws ConfigurationException {
     // validate content and source roots 
-    final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<VirtualFile, String>();
-    final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<VirtualFile, VirtualFile>();
+    final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
+    final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
       final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
       final ContentEntry[] contents = rootModel.getContentEntries();
@@ -275,12 +274,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
 
-    final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
       moduleEditor.canApply();
     }
     
-    final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<Sdk, Sdk>();
+    final Map<Sdk, Sdk> modifiedToOriginalMap = new THashMap<>();
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
@@ -288,6 +286,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     final Ref<ConfigurationException> exceptionRef = Ref.create();
     ApplicationManager.getApplication().runWriteAction(() -> {
+      final List<ModifiableRootModel> models = new ArrayList<>(myModuleEditors.size());
       try {
         for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
           final ModifiableRootModel model = moduleEditor.apply();
@@ -313,8 +312,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
 
       try {
-        final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-        ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+        ModifiableModelCommitter.multiCommit(models, myModuleModel);
         myModuleModelCommitted = true;
         myFacetsConfigurator.commitFacets();
 
@@ -352,8 +350,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public List<Module> deleteModules(final Collection<Module> modules) {
-    List<Module> deleted = new ArrayList<Module>();
-    List<ModuleEditor> moduleEditors = new ArrayList<ModuleEditor>();
+    List<Module> deleted = new ArrayList<>();
+    List<ModuleEditor> moduleEditors = new ArrayList<>();
     for (Module module : modules) {
       ModuleEditor moduleEditor = getModuleEditor(module);
       if (moduleEditor != null) {
@@ -373,25 +371,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (myProject.isDefault()) return null;
     final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
-      final List<Module> modules = new ArrayList<Module>();
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-        final List<Module> committedModules;
-        if (builder instanceof ProjectImportBuilder<?>) {
-          final ModifiableArtifactModel artifactModel =
-            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-          committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, ModulesConfigurator.this, artifactModel);
+      final List<Module> modules = new ArrayList<>();
+      final List<Module> committedModules;
+      if (builder instanceof ProjectImportBuilder<?>) {
+        final ModifiableArtifactModel artifactModel =
+          ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+        committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      }
+      else {
+        committedModules = builder.commit(myProject, myModuleModel, this);
+      }
+      if (committedModules != null) {
+        modules.addAll(committedModules);
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (Module module : modules) {
+          getOrCreateModuleEditor(module);
         }
-        else {
-          committedModules = builder.commit(myProject, myModuleModel, ModulesConfigurator.this);
-        }
-        if (committedModules != null) {
-          modules.addAll(committedModules);
-        }
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          for (Module module : modules) {
-            getOrCreateModuleEditor(module);
-          }
-        });
       });
       return modules;
     }
@@ -482,7 +478,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
       final Module moduleToRemove = editor.getModule();
       // remove all dependencies on the module which is about to be removed
-      List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
+      List<ModifiableRootModel> modifiableRootModels = new ArrayList<>();
       for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
         final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
         ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);

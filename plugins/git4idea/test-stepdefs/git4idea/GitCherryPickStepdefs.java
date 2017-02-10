@@ -241,10 +241,10 @@ public class GitCherryPickStepdefs {
 
   private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {
     String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    List<String> params = new ArrayList<String>();
+    List<String> params = new ArrayList<>();
     params.add(noWalk);
     params.addAll(hashes);
-    return new ArrayList<VcsFullCommitDetails>(GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params)));
+    return new ArrayList<>(GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params)));
   }
 
   private static void cherryPick(String... virtualHashes) throws VcsException {

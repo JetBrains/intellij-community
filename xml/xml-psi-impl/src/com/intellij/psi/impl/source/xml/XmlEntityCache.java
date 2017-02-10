@@ -41,9 +41,9 @@ public class XmlEntityCache {
         name, CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
           PsiElement declElement = declPointer.getElement();
           if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
-            return new CachedValueProvider.Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
+            return new CachedValueProvider.Result<>((XmlEntityDecl)declElement, declElement);
           cachingMap.put(name,null);
-          return new CachedValueProvider.Result<XmlEntityDecl>(null, ModificationTracker.NEVER_CHANGED);
+          return new CachedValueProvider.Result<>(null, ModificationTracker.NEVER_CHANGED);
         },
                                                                                   false
       ));
@@ -53,7 +53,7 @@ public class XmlEntityCache {
   static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
     Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
     if (map == null){
-      map = new HashMap<String,CachedValue<XmlEntityDecl>>();
+      map = new HashMap<>();
       targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
     }
     return map;

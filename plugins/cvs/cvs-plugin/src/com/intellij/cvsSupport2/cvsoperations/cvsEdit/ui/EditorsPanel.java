@@ -46,8 +46,8 @@ import java.util.List;
  */
 public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
 
-  private final ListTableModel<EditorInfo> myModel = new ListTableModel<EditorInfo>(COLUMNS);
-  private final TableView<EditorInfo> myTable = new TableView<EditorInfo>(myModel);
+  private final ListTableModel<EditorInfo> myModel = new ListTableModel<>(COLUMNS);
+  private final TableView<EditorInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<EditorInfo, String> USER = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.user.column.name")){
     public String valueOf(EditorInfo object) {

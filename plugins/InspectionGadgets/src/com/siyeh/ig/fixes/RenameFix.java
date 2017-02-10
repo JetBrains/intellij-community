@@ -16,22 +16,17 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.refactoring.rename.RenameHandler;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
-import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameFix extends InspectionGadgetsFix {
+public class RenameFix extends RefactoringInspectionGadgetsFix {
 
   private final String m_targetName;
   private boolean m_searchInStrings = true;
@@ -73,38 +68,24 @@ public class RenameFix extends InspectionGadgetsFix {
     return m_targetName;
   }
 
+  @NotNull
   @Override
-  public void doFix(final Project project, final ProblemDescriptor descriptor) {
-    final PsiElement nameIdentifier = descriptor.getPsiElement();
-    final PsiElement elementToRename = nameIdentifier.getParent();
+  public RefactoringActionHandler getHandler() {
+    return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
+  }
+
+  @Override
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     if (m_targetName == null) {
-      final AsyncResult<DataContext> contextFromFocus = DataManager.getInstance().getDataContextFromFocus();
-      contextFromFocus.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext context) {
-          final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
-          if (renameHandler == null) {
-            return;
-          }
-          renameHandler.invoke(project, new PsiElement[]{elementToRename}, context);
-        }
-      });
+      super.doFix(project, descriptor);
     }
     else {
+      final PsiElement nameIdentifier = descriptor.getPsiElement();
+      final PsiElement elementToRename = nameIdentifier.getParent();
       final RefactoringFactory factory = RefactoringFactory.getInstance(project);
       final RenameRefactoring renameRefactoring =
         factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
       renameRefactoring.run();
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  protected boolean prepareForWriting() {
-    return false;
   }
 }

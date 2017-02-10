@@ -784,7 +784,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         application.executeOnPooledThread(() -> {
           final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
           final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
-            new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
+            new CacheOneStepIterator<>(changedLinesIterator);
           final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
           int line = checker.contextMatchCheck();
           if (line < 0) {
@@ -792,7 +792,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
             // just try to find target line  -> +-
             final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
             final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
-              new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
+              new CacheOneStepIterator<>(changedLinesIterator2);
             final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
             line = checker2.contextMatchCheck();
           }
@@ -826,7 +826,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       myFragmentsIterator = fragmentsIterator;
       myDocument = document;
       myIgnoreFragmentsType = ignoreFragmentsType;
-      myBuffer = new LinkedList<Pair<Integer, String>>();
+      myBuffer = new LinkedList<>();
     }
 
     @Override
@@ -862,7 +862,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
           }
           if (lineStartOffset > lineEndOffset) continue;
           String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
-          myBuffer.add(new Pair<Integer, String>(i, text));
+          myBuffer.add(new Pair<>(i, text));
         }
       });
       if (myBuffer.isEmpty()) return null;

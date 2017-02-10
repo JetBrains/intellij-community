@@ -27,11 +27,14 @@ import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -50,7 +53,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -94,6 +100,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
           if (startFindUsages(editor, element)) {
             return;
+          }
+
+          //disable 'no declaration found' notification for keywords
+          final PsiElement elementAtCaret = file.findElementAt(offset);
+          if (elementAtCaret != null) {
+            final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
+            if (namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project)) {
+              return;
+            }
           }
         }
         chooseAmbiguousTarget(editor, offset, elements, file);
@@ -144,13 +159,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }, progressTitle, true, project);
   }
 
-  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
-    PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
-    if (elementAt instanceof PsiNameIdentifierOwner) {
-      LOG.assertTrue(elementAt.isValid(), elementAt);
-      return (PsiNameIdentifierOwner)elementAt;
-    }
-    return null;
+  public static PsiElement findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
+    return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
@@ -165,7 +175,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
     if (element.getContainingFile() == currentFile) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
@@ -173,11 +183,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       // there are fake elements with custom navigation (e.g. opening URL in browser) that override getContainingFile for various reasons
       if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
         Project project = element.getProject();
-        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-        new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-        return;
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
+        }, "", null);
+        return true;
       }
     }
+    return false;
+  }
+
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+    if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
     if (navigatable != null && navigatable.canNavigate()) {

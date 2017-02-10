@@ -124,6 +124,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().getSoftWrapModel();
   }
 
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    return getEditor().getInlayModel();
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,75 +204,85 @@ public class FileSystemUtil {
 
 
   private static class Nio2MediatorImpl extends Mediator {
-    private final Object myDefaultFileSystem;
     private final Method myGetPath;
-    private final Method myIsSymbolicLink;
     private final Object myLinkOptions;
     private final Object myNoFollowLinkOptions;
     private final Method myReadAttributes;
     private final Method mySetAttribute;
+    private final Method myToRealPath;
     private final Method myToMillis;
-    private final String mySchema;
+    private final Class<?> mySchema;
+    private final Method myIsSymbolicLink;
+    private final Method myIsDirectory;
+    private final Method myIsOther;
+    private final Method mySize;
+    private final Method myLastModifiedTime;
+    private final Method myIsHidden;
+    private final Method myIsReadOnly;
 
     private Nio2MediatorImpl() throws Exception {
-      //noinspection ConstantConditions
       assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
 
-      myDefaultFileSystem = Class.forName("java.nio.file.FileSystems").getMethod("getDefault").invoke(null);
-
-      final Class<?> fsClass = Class.forName("java.nio.file.FileSystem");
-      myGetPath = fsClass.getMethod("getPath", String.class, String[].class);
-      myGetPath.setAccessible(true);
-
-      final Class<?> pathClass = Class.forName("java.nio.file.Path");
-      final Class<?> filesClass = Class.forName("java.nio.file.Files");
-      myIsSymbolicLink = filesClass.getMethod("isSymbolicLink", pathClass);
-      myIsSymbolicLink.setAccessible(true);
-
-      final Class<?> linkOptClass = Class.forName("java.nio.file.LinkOption");
+      myGetPath = accessible(Class.forName("java.nio.file.Paths").getMethod("get", String.class, String[].class));
+      Class<?> pathClass = Class.forName("java.nio.file.Path");
+      Class<?> filesClass = Class.forName("java.nio.file.Files");
+      Class<?> linkOptClass = Class.forName("java.nio.file.LinkOption");
       myLinkOptions = Array.newInstance(linkOptClass, 0);
       myNoFollowLinkOptions = Array.newInstance(linkOptClass, 1);
       Array.set(myNoFollowLinkOptions, 0, linkOptClass.getField("NOFOLLOW_LINKS").get(null));
+      Class<?> linkOptArrayClass = myLinkOptions.getClass();
+      myReadAttributes = accessible(filesClass.getMethod("readAttributes", pathClass, Class.class, linkOptArrayClass));
+      mySetAttribute = accessible(filesClass.getMethod("setAttribute", pathClass, String.class, Object.class, linkOptArrayClass));
+      myToRealPath = accessible(pathClass.getMethod("toRealPath", linkOptArrayClass));
+      myToMillis = accessible(Class.forName("java.nio.file.attribute.FileTime").getMethod("toMillis"));
 
-      final Class<?> linkOptArrClass = myLinkOptions.getClass();
-      myReadAttributes = filesClass.getMethod("readAttributes", pathClass, String.class, linkOptArrClass);
-      myReadAttributes.setAccessible(true);
-      mySetAttribute = filesClass.getMethod("setAttribute", pathClass, String.class, Object.class, linkOptArrClass);
-      mySetAttribute.setAccessible(true);
+      mySchema = Class.forName("java.nio.file.attribute." + (SystemInfo.isWindows ? "DosFileAttributes" : "PosixFileAttributes"));
+      myIsSymbolicLink = accessible(mySchema.getMethod("isSymbolicLink"));
+      myIsDirectory = accessible(mySchema.getMethod("isDirectory"));
+      myIsOther = accessible(mySchema.getMethod("isOther"));
+      mySize = accessible(mySchema.getMethod("size"));
+      myLastModifiedTime = accessible(mySchema.getMethod("lastModifiedTime"));
+      if (SystemInfo.isWindows) {
+        myIsHidden = accessible(mySchema.getMethod("isHidden"));
+        myIsReadOnly = accessible(mySchema.getMethod("isReadOnly"));
+      }
+      else {
+        myIsHidden = myIsReadOnly = null;
+      }
+    }
 
-      final Class<?> fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
-      myToMillis = fileTimeClass.getMethod("toMillis");
-      myToMillis.setAccessible(true);
-
-      mySchema = SystemInfo.isWindows ? "dos:*" : "posix:*";
+    private static Method accessible(Method method) {
+      method.setAccessible(true);
+      return method;
     }
 
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       try {
-        Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object pathObj = myGetPath.invoke(null, path, ArrayUtil.EMPTY_STRING_ARRAY);
 
-        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
-        boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
+        Object attributes = myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
+        boolean isSymbolicLink = (Boolean)myIsSymbolicLink.invoke(attributes) ||
+                                 SystemInfo.isWindows && (Boolean)myIsOther.invoke(attributes) && (Boolean)myIsDirectory.invoke(attributes);
         if (isSymbolicLink) {
           try {
-            attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
+            attributes = myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
           }
           catch (InvocationTargetException e) {
-            final Throwable cause = e.getCause();
+            Throwable cause = e.getCause();
             if (cause != null && "java.nio.file.NoSuchFileException".equals(cause.getClass().getName())) {
               return FileAttributes.BROKEN_SYMLINK;
             }
           }
         }
 
-        boolean isDirectory = (Boolean)attributes.get("isDirectory");
-        boolean isOther = (Boolean)attributes.get("isOther");
-        long size = (Long)attributes.get("size");
-        long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
+        boolean isDirectory = (Boolean)myIsDirectory.invoke(attributes);
+        boolean isOther = (Boolean)myIsOther.invoke(attributes);
+        long size = (Long)mySize.invoke(attributes);
+        long lastModified = (Long)myToMillis.invoke(myLastModifiedTime.invoke(attributes));
         if (SystemInfo.isWindows) {
-          boolean isHidden = new File(path).getParent() == null ? false : (Boolean)attributes.get("hidden");
-          boolean isWritable = isDirectory || !(Boolean)attributes.get("readonly");
+          boolean isHidden = new File(path).getParent() == null ? false : (Boolean)myIsHidden.invoke(attributes);
+          boolean isWritable = isDirectory || !(Boolean)myIsReadOnly.invoke(attributes);
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
         else {
@@ -281,7 +291,7 @@ public class FileSystemUtil {
         }
       }
       catch (InvocationTargetException e) {
-        final Throwable cause = e.getCause();
+        Throwable cause = e.getCause();
         if (cause instanceof IOException || cause != null && "java.nio.file.InvalidPathException".equals(cause.getClass().getName())) {
           LOG.debug(cause);
           return null;
@@ -291,19 +301,23 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected String resolveSymLink(@NotNull final String path) throws Exception {
-      if (!new File(path).exists()) return null;
-      final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
-      final Method toRealPath = pathObj.getClass().getMethod("toRealPath", myLinkOptions.getClass());
-      toRealPath.setAccessible(true);
-      return toRealPath.invoke(pathObj, myLinkOptions).toString();
+    protected String resolveSymLink(@NotNull String path) throws Exception {
+      Object pathObj = myGetPath.invoke(null, path, ArrayUtil.EMPTY_STRING_ARRAY);
+      try {
+        return myToRealPath.invoke(pathObj, myLinkOptions).toString();
+      }
+      catch (InvocationTargetException e) {
+        Throwable cause = e.getCause();
+        if (cause != null && "java.nio.file.NoSuchFileException".equals(cause.getClass().getName())) return null;
+        throw e;
+      }
     }
 
     @Override
     protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
       if (SystemInfo.isUnix) {
-        Object sourcePath = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
-        Object targetPath = myGetPath.invoke(myDefaultFileSystem, target, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object sourcePath = myGetPath.invoke(null, source, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object targetPath = myGetPath.invoke(null, target, ArrayUtil.EMPTY_STRING_ARRAY);
         Collection sourcePermissions = getPermissions(sourcePath);
         Collection targetPermissions = getPermissions(targetPath);
         if (sourcePermissions != null && targetPermissions != null) {

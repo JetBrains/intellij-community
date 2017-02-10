@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -37,28 +35,38 @@ import javax.swing.*;
  */
 public abstract class NodeRendererImpl implements NodeRenderer{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.NodeRendererImpl");
-  protected BasicRendererProperties myProperties = new BasicRendererProperties();
+  protected BasicRendererProperties myProperties;
 
   protected NodeRendererImpl() {
     this("unnamed");
   }
 
   protected NodeRendererImpl(@NotNull String presentableName) {
-    myProperties.setName(presentableName);
+    this(presentableName, false);
   }
 
+  protected NodeRendererImpl(@NotNull String presentableName, boolean enabledDefaultValue) {
+    myProperties = new BasicRendererProperties(enabledDefaultValue);
+    myProperties.setName(presentableName);
+    myProperties.setEnabled(enabledDefaultValue);
+  }
+
+  @Override
   public String getName() {
     return myProperties.getName();
   }
 
+  @Override
   public void setName(String name) {
     myProperties.setName(name);
   }
 
+  @Override
   public boolean isEnabled() {
     return myProperties.isEnabled();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myProperties.setEnabled(enabled);
   }
@@ -71,10 +79,12 @@ public abstract class NodeRendererImpl implements NodeRenderer{
     myProperties.setShowType(showType);
   }
 
+  @Override
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return null;
   }
 
+  @Override
   public NodeRendererImpl clone() {
     try {
       final NodeRendererImpl cloned = (NodeRendererImpl)super.clone();
@@ -87,11 +97,13 @@ public abstract class NodeRendererImpl implements NodeRenderer{
     return null;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  @Override
+  public void readExternal(Element element) {
     myProperties.readExternal(element);
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  @Override
+  public void writeExternal(Element element) {
     myProperties.writeExternal(element);
   }
 

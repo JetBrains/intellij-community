@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -67,5 +68,11 @@ public class GrInspectionUtil {
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
     return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
+  }
+
+  public static void replaceExpression(GrExpression expression, String newExpression) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
+    final GrExpression newCall = factory.createExpressionFromText(newExpression);
+    expression.replaceWithExpression(newCall, true);
   }
 }

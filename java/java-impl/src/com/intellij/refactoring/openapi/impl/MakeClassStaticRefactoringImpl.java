@@ -56,7 +56,7 @@ public class MakeClassStaticRefactoringImpl extends RefactoringImpl<MakeClassSta
 
   public List<PsiField> getFields() {
     final Settings settings = myProcessor.getSettings();
-    List<PsiField> result = new ArrayList<PsiField>();
+    List<PsiField> result = new ArrayList<>();
     final List<Settings.FieldParameter> parameterOrderList = settings.getParameterOrderList();
     for (final Settings.FieldParameter fieldParameter : parameterOrderList) {
       result.add(fieldParameter.field);

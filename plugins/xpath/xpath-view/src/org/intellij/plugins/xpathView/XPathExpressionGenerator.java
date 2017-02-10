@@ -76,7 +76,7 @@ public class XPathExpressionGenerator {
 
     private static class PathVisitor extends XmlElementVisitor {
         private final XmlTag context;
-        private final Map<String, String> usedPrefixes = new HashMap<String, String>();
+        private final Map<String, String> usedPrefixes = new HashMap<>();
         private String uniquePath;
         private String path;
 

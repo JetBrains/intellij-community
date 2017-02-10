@@ -118,8 +118,11 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     }
 
-    return new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
-                                  propagateParametersMethods, propagateExceptionsMethods);
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setCheckUnusedParameter();
+    return javaChangeInfo;
   }
 
   @NotNull
@@ -142,15 +145,16 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
     }
-    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<>();
     collectConflictsFromExtensions(refUsages, conflictDescriptions, myChangeInfo);
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    Set<UsageInfo> usagesSet = new HashSet<>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ConflictsInTestsException.isTestIgnore()) return true;
         throw new ConflictsInTestsException(conflictDescriptions.values());
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {
@@ -173,7 +177,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
     if (PsiUtil.isLanguageLevel5OrHigher(myChangeInfo.getMethod())) {
-      List<UsageInfo> covariantOverriderInfos = new ArrayList<UsageInfo>();
+      List<UsageInfo> covariantOverriderInfos = new ArrayList<>();
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;
@@ -189,7 +193,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
             return;
           }
           final PsiType overriderType = overrider.getReturnType();
-          if (overriderType != null && type.isAssignableFrom(overriderType)) {
+          if (overriderType != null && !type.equals(overriderType) && type.isAssignableFrom(overriderType)) {
             covariantOverriderInfos.add(usageInfo);
           }
         }

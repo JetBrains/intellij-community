@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -48,9 +49,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final AnalysisScope scope = new AnalysisScope(psiFile);
     final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
     inspectionContext.setCurrentScope(scope);
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    inspectionContext.setExternalProfile(inspectionProfile);
+    inspectionContext.setExternalProfile(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     inspectionContext.doInspections(scope);
   }
 

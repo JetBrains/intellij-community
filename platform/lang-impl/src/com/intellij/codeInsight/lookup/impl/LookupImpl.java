@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
@@ -107,6 +108,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private PrefixChangeListener myPrefixChangeListener = new PrefixChangeListener.Adapter() {};
+  private final LookupPreview myPreview = new LookupPreview(this);
+  // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
+  private final FontPreferences myFontPreferences = new FontPreferences();
 
   private long myStampShown = 0;
   private boolean myShown = false;
@@ -139,6 +143,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
+    myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
@@ -292,7 +297,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
-    final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
+    final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<>();
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(element, this, consumer);
     }
@@ -869,6 +874,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         listener.currentItemChanged(event);
       }
     }
+    myPreview.updatePreview(currentItem);
   }
 
   public boolean fillInCommonPrefix(boolean explicitlyInvoked) {
@@ -1185,6 +1191,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @SuppressWarnings("unused")
   public void setPrefixChangeListener(PrefixChangeListener listener) {
     myPrefixChangeListener = listener;
+  }
+
+  FontPreferences getFontPreferences() {
+    return myFontPreferences;
   }
 
   public enum FocusDegree { FOCUSED, SEMI_FOCUSED, UNFOCUSED }

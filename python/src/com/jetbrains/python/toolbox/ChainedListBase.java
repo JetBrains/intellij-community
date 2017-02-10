@@ -40,7 +40,7 @@ public /*abstract */class ChainedListBase<TPayload> {
     else {
       ChainedListBase<TPayload> farthest = this;
       while (farthest.myNext != null) farthest = farthest.myNext;
-      farthest.myNext = /*createInstance*/new ChainedListBase<TPayload>(another);
+      farthest.myNext = /*createInstance*/new ChainedListBase<>(another);
     }
     return this;
   }

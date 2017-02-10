@@ -158,7 +158,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   }
 
   private static void enableVersions(@NotNull Project project, @NotNull PsiElement file, @NotNull List<LanguageLevel> versions) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final String shortName = getCompatibilityInspectionShortName();
     final InspectionToolWrapper tool = profile.getInspectionTool(shortName, project);
     if (tool != null) {
@@ -166,7 +166,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
         final PyCompatibilityInspection inspection = (PyCompatibilityInspection)model.getUnwrappedTool(shortName, file);
         inspection.ourVersions.addAll(ContainerUtil.map(versions, LanguageLevel::toString));
       });
-      EditInspectionToolsSettingsAction.editToolSettings(project, profile, true, shortName);
+      EditInspectionToolsSettingsAction.editToolSettings(project, profile, shortName);
     }
   }
 
@@ -225,29 +225,23 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   }
 
   private static boolean isCompatibilityInspectionEnabled(@NotNull PsiElement anchor) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(anchor.getProject()).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(anchor.getProject()).getCurrentProfile();
     final InspectionToolWrapper tool = profile.getInspectionTool(getCompatibilityInspectionShortName(), anchor.getProject());
     return tool != null && profile.isToolEnabled(HighlightDisplayKey.findById(tool.getID()), anchor);
   }
 
   private static void enableCompatibilityInspection(@NotNull Project project) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper tool = profile.getInspectionTool(getCompatibilityInspectionShortName(), project);
     if (tool != null) {
-      // Partially copied from JSLinterInspection 
-      final InspectionProfileImpl inspectionProfileImpl = as(profile, InspectionProfileImpl.class);
-      if (inspectionProfileImpl != null) {
-        final ScopeToolState state = inspectionProfileImpl.getToolDefaultState(tool.getShortName(), project);
-        state.setEnabled(true);
-      }
-      profile.modifyProfile(model -> model.enableTool(tool.getShortName(), null, project));
-      EditInspectionToolsSettingsAction.editToolSettings(project, profile, true, getCompatibilityInspectionShortName());
+      profile.modifyProfile(model -> model.enableTool(tool.getShortName(), project));
+      EditInspectionToolsSettingsAction.editToolSettings(project, profile, getCompatibilityInspectionShortName());
     }
   }
   
   @Nullable
   private static LanguageLevel getLatestConfiguredCompatiblePythonVersion(@NotNull PsiElement anchor) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(anchor.getProject()).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(anchor.getProject()).getCurrentProfile();
     final PyCompatibilityInspection inspection = (PyCompatibilityInspection)profile.getUnwrappedTool(getCompatibilityInspectionShortName(), anchor);
     final JDOMExternalizableStringList versions = inspection.ourVersions;
     if (versions.isEmpty()) {

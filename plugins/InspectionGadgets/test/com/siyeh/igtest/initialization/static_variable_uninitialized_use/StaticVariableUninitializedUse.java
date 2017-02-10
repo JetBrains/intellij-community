@@ -34,4 +34,11 @@ public class StaticVariableUninitializedUse {
     static int foo() {
         return <warning descr="Static field 'i' used before initialization">i</warning>;
     }
+
+    private static String T;
+    static {
+        System.out.println((T) != (null));
+        (T) = "null";
+        System.out.println((T));
+    }
 }

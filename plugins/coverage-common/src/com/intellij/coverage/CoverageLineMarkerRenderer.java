@@ -70,7 +70,7 @@ import java.util.TreeMap;
 /**
  * @author ven
  */
-public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveGutterRenderer {
+public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
   private final String myClassName;
@@ -347,7 +347,7 @@ public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveG
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<Integer>(myLines.keySet());
+      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
       Collections.sort(list);
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

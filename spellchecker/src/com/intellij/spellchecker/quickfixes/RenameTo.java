@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return SpellCheckerBundle.message("rename.to");
-  }
-
-  @NotNull
   public String getFamilyName() {
     return SpellCheckerBundle.message("rename.to");
   }
@@ -83,7 +78,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
 
     Editor editor = getEditorFromFocus();
-    HashMap<String, Object> map = new HashMap<String, Object>();
+    HashMap<String, Object> map = new HashMap<>();
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return;
     PsiFile containingFile = psiElement.getContainingFile();

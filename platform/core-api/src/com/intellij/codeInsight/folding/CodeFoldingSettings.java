@@ -19,10 +19,10 @@ import com.intellij.openapi.components.ServiceManager;
 
 public class CodeFoldingSettings {
   public boolean COLLAPSE_IMPORTS = true;
-  public boolean COLLAPSE_METHODS = false;
+  public boolean COLLAPSE_METHODS;
   public boolean COLLAPSE_FILE_HEADER = true;
-  public boolean COLLAPSE_DOC_COMMENTS = false;
-  public boolean COLLAPSE_CUSTOM_FOLDING_REGIONS = false;
+  public boolean COLLAPSE_DOC_COMMENTS;
+  public boolean COLLAPSE_CUSTOM_FOLDING_REGIONS;
 
   public static CodeFoldingSettings getInstance() {
     return ServiceManager.getService(CodeFoldingSettings.class);

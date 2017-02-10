@@ -37,8 +37,8 @@ import java.util.*;
  */
 public class ArrangementStandardSettingsManager {
 
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWidths  = new TObjectIntHashMap<ArrangementSettingsToken>();
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWeights = new TObjectIntHashMap<ArrangementSettingsToken>();
+  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWidths  = new TObjectIntHashMap<>();
+  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWeights = new TObjectIntHashMap<>();
 
   @NotNull private final Comparator<ArrangementSettingsToken> myComparator = (t1, t2) -> {
     if (myWeights.containsKey(t1)) {

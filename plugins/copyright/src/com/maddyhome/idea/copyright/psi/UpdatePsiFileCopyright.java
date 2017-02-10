@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.psi;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -31,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
@@ -94,7 +94,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected abstract void scanFile();
 
   protected void checkComments(PsiElement first, PsiElement last, boolean commentHere) {
-    List<PsiComment> comments = new ArrayList<PsiComment>();
+    List<PsiComment> comments = new ArrayList<>();
     collectComments(first, last, comments);
     checkComments(last, commentHere, comments);
   }
@@ -118,10 +118,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
       final String keyword = myOptions.getKeyword();
-      final LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
+      final LinkedHashSet<CommentRange> found = new LinkedHashSet<>();
       Document doc = null;
       if (!StringUtil.isEmpty(keyword)) {
-        Pattern pattern = Pattern.compile(StringUtil.escapeToRegexp(keyword), Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile(keyword, Pattern.CASE_INSENSITIVE);
         doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
         for (int i = 0; i < comments.size(); i++) {
           PsiComment comment = comments.get(i);
@@ -150,21 +150,30 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           resetCommentText();
           String oldComment = doc.getCharsSequence()
             .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
-          if (!StringUtil.isEmptyOrSpaces(myOptions.getAllowReplaceKeyword()) &&
-              !oldComment.contains(myOptions.getAllowReplaceKeyword())) {
-            return;
+          final String replaceRegexp = myOptions.getAllowReplaceRegexp();
+          if (!StringUtil.isEmptyOrSpaces(replaceRegexp)) {
+            final Pattern pattern = Pattern.compile(replaceRegexp);
+            final Matcher matcher = pattern.matcher(oldComment);
+            if (!matcher.find()) {
+              return;
+            }
           }
           if (newComment.trim().equals(oldComment)) {
             if (!getLanguageOptions().isAddBlankAfter()) {
               // TODO - do we need option to remove blank line after?
               return; // Nothing to do since the comment is the same
             }
+            int totalNewline = 0;
             PsiElement next = getNextSibling(range.getLast());
-            if (next != null) {
+            while (next != null && totalNewline <= 1) {
               final String text = next.getText();
-              if (StringUtil.isEmptyOrSpaces(text) && countNewline(text) > 1) {
-                return;
+              if (!StringUtil.isEmptyOrSpaces(text)) {
+                break;
               }
+              totalNewline += countNewline(text); 
+            }
+            if (totalNewline > 1) {
+              return;
             }
             point = range.getFirst();
           }
@@ -457,7 +466,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   private final PsiFile file;
   private final LanguageOptions langOpts;
-  private final TreeSet<CommentAction> actions = new TreeSet<CommentAction>();
+  private final TreeSet<CommentAction> actions = new TreeSet<>();
 
   private static final Logger logger = Logger.getInstance(UpdatePsiFileCopyright.class.getName());
 }

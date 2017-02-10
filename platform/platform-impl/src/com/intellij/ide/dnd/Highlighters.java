@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Highlighters implements DnDEvent.DropTargetHighlightingType {
-  private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<DropTargetHighlighter>();
+  private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<>();
 
-  private static final ArrayList<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
+  private static final ArrayList<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<>();
 
   static {
     ourHightlighters.add(new RectangleHighlighter());
@@ -43,7 +43,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-    List<DropTargetHighlighter> toShow = new ArrayList<DropTargetHighlighter>();
+    List<DropTargetHighlighter> toShow = new ArrayList<>();
     for (DropTargetHighlighter ourHightlighter : ourHightlighters) {
       DropTargetHighlighter each = (DropTargetHighlighter)ourHightlighter;
       if ((each.getMask() & aType) != 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
@@ -41,7 +41,7 @@ public class FileTypeUtil {
 
   public FileTypeUtil(MessageBus bus) {
     createMappings();
-    bus.connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
+    bus.connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
         types = null;
@@ -142,7 +142,7 @@ public class FileTypeUtil {
       preview.append(open).append('\n');
     }
 
-    if (template.length() > 0) {
+    if (!template.isEmpty()) {
       String[] lines = template.split("\n", -1);
       for (String line : lines) {
         if (options.isTrim()) {
@@ -152,7 +152,7 @@ public class FileTypeUtil {
         line = StringUtil.trimEnd(line, close);
         preview.append(leader).append(pre);
         int len = 0;
-        if (pre.length() > 0 && line.length() > 0) {
+        if (pre.length() > 0 && !line.isEmpty()) {
           preview.append(' ');
           len++;
         }
@@ -204,7 +204,7 @@ public class FileTypeUtil {
       return false;
     }
 
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(file)) return false;
     FileType type = file.getFileType();
 
     return getMap().get(type.getName()) != null;
@@ -216,12 +216,12 @@ public class FileTypeUtil {
     }
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
     return isSupportedType(virtualFile.getFileType());
   }
 
   public FileType[] getSupportedTypes() {
-    HashSet<FileType> set = new HashSet<FileType>(getMap().values());
+    Set<FileType> set = new HashSet<>(getMap().values());
     return set.toArray(new FileType[set.size()]);
   }
 
@@ -269,19 +269,19 @@ public class FileTypeUtil {
   }
 
   private void createMappings() {
-    Set<FileType> maps = new HashSet<FileType>();
+    Set<FileType> maps = new HashSet<>();
     maps.add(StdFileTypes.DTD);
     maps.add(StdFileTypes.XML);
 
     mappings.put(StdFileTypes.XML, maps);
 
-    maps = new HashSet<FileType>();
+    maps = new HashSet<>();
     maps.add(StdFileTypes.HTML);
     maps.add(StdFileTypes.XHTML);
 
     mappings.put(StdFileTypes.HTML, maps);
 
-    maps = new HashSet<FileType>();
+    maps = new HashSet<>();
     maps.add(StdFileTypes.JSP);
 
     mappings.put(StdFileTypes.JSP, maps);
@@ -293,7 +293,7 @@ public class FileTypeUtil {
   }
 
   private static boolean isSupportedType(FileType type) {
-    if (type.isBinary() || type.getName().indexOf("IDEA") >= 0 || "GUI_DESIGNER_FORM".equals(type.getName())) {
+    if (type.isBinary() || type.getName().contains("IDEA") || "GUI_DESIGNER_FORM".equals(type.getName())) {
       return false;
     }
     else {
@@ -315,22 +315,19 @@ public class FileTypeUtil {
       if (type.equals(StdFileTypes.PROPERTIES)) {
         return true;
       }
-      if ("JavaScript".equals(type.getName())) {
-        return true;
-      }
       return CopyrightUpdaters.INSTANCE.forFileType(type) != null;
     }
   }
 
   private void loadFileTypes() {
-    logger.debug("loadFileTypes");
-    Map<String, FileType> map = new HashMap<String, FileType>();
+    LOG.debug("loadFileTypes");
+    Map<String, FileType> map = new HashMap<>();
     for (FileType ftype : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       // Ignore binary files
       // Ignore IDEA specific file types (PROJECT, MODULE, WORKSPACE)
       // Ignore GUI Designer files
       if (isSupportedType(ftype)) {
-        logger.debug("adding " + ftype.getName());
+        LOG.debug("adding " + ftype.getName());
         Iterator<FileType> iter = mappings.keySet().iterator();
         FileType type = ftype;
         while (iter.hasNext()) {
@@ -344,7 +341,7 @@ public class FileTypeUtil {
         map.put(ftype.getName(), type);
       }
       else {
-        logger.debug("ignoring " + ftype.getName());
+        LOG.debug("ignoring " + ftype.getName());
       }
     }
     types = map;
@@ -368,8 +365,8 @@ public class FileTypeUtil {
   }
 
   private Map<String, FileType> types;
-  private final Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
-  private final Set<FileType> noSeparators = new HashSet<FileType>();
+  private final Map<FileType, Set<FileType>> mappings = new HashMap<>();
+  private final Set<FileType> noSeparators = new HashSet<>();
 
-  private static final Logger logger = Logger.getInstance(FileTypeUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(FileTypeUtil.class.getName());
 }

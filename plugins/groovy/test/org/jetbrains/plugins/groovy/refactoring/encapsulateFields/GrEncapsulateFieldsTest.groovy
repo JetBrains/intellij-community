@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,16 +250,16 @@ public class A {
     }
   }
 
-  public static EncapsulateFieldsDescriptor createMockDescriptor(PsiClass aClass,
-                                                                 PsiField field,
-                                                                 boolean generateGetters,
-                                                                 boolean generateSetters,
-                                                                 String getterName,
-                                                                 String setterName,
-                                                                 boolean toUseAccessorsWhenAccessible) {
+  static EncapsulateFieldsDescriptor createMockDescriptor(PsiClass aClass,
+                                                          PsiField field,
+                                                          boolean generateGetters,
+                                                          boolean generateSetters,
+                                                          String getterName,
+                                                          String setterName,
+                                                          boolean toUseAccessorsWhenAccessible) {
     return new EncapsulateFieldsDescriptor() {
       @Override
-      public FieldDescriptor[] getSelectedFields() {
+      FieldDescriptor[] getSelectedFields() {
         final FieldDescriptorImpl descriptor = new FieldDescriptorImpl(
           field,
           getterName,
@@ -272,37 +272,37 @@ public class A {
       }
 
       @Override
-      public boolean isToEncapsulateGet() {
+      boolean isToEncapsulateGet() {
         generateGetters
       }
 
       @Override
-      public boolean isToEncapsulateSet() {
+      boolean isToEncapsulateSet() {
         generateSetters
       }
 
       @Override
-      public boolean isToUseAccessorsWhenAccessible() {
+      boolean isToUseAccessorsWhenAccessible() {
         toUseAccessorsWhenAccessible
       }
 
       @Override
-      public String getFieldsVisibility() {
+      String getFieldsVisibility() {
         toUseAccessorsWhenAccessible ? null : PsiModifier.PROTECTED
       }
 
       @Override
-      public String getAccessorsVisibility() {
+      String getAccessorsVisibility() {
         PsiModifier.PUBLIC
       }
 
       @Override
-      public int getJavadocPolicy() {
+      int getJavadocPolicy() {
         DocCommentPolicy.MOVE
       }
 
       @Override
-      public PsiClass getTargetClass() {
+      PsiClass getTargetClass() {
         aClass
       }
     }

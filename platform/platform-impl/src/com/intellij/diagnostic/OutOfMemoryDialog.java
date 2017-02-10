@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Arrays;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   private final MemoryKind myMemoryKind;
@@ -77,6 +78,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
       myPermGenSizeField.setEnabled(false);
       myCodeCacheSizeField.setEnabled(false);
     }
+
+    Arrays.asList(myPermGenSizeLabel, myPermGenSizeField, myPermGenUnitsLabel, myPermGenCurrentValueLabel).forEach(c -> c.setVisible(false));
 
     myContinueAction = new DialogWrapperAction(DiagnosticBundle.message("diagnostic.out.of.memory.continue")) {
       @Override
@@ -134,19 +137,13 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private void save() {
     try {
       int heapSize = Integer.parseInt(myHeapSizeField.getText());
-      VMOptions.writeXmx(heapSize);
-    }
-    catch (NumberFormatException ignored) { }
-
-    try {
-      int permGenSize = Integer.parseInt(myPermGenSizeField.getText());
-      VMOptions.writeMaxPermGen(permGenSize);
+      VMOptions.writeOption(MemoryKind.HEAP, heapSize);
     }
     catch (NumberFormatException ignored) { }
 
     try {
       int codeCacheSize = Integer.parseInt(myCodeCacheSizeField.getText());
-      VMOptions.writeCodeCache(codeCacheSize);
+      VMOptions.writeOption(MemoryKind.CODE_CACHE, codeCacheSize);
     }
     catch (NumberFormatException ignored) { }
   }

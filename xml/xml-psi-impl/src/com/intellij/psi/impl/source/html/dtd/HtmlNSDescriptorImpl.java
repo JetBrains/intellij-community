@@ -88,7 +88,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
 
   // Read-only calculation
   private HashMap<String, XmlElementDescriptor> doBuildCachedMap() {
-    HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
+    HashMap<String, XmlElementDescriptor> decls = new HashMap<>();
     XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
 
     for (XmlElementDescriptor element : elements) {

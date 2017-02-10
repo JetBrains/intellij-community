@@ -15,14 +15,12 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.options.LazySchemeProcessor;
-import com.intellij.openapi.options.SchemeDataHolder;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.configurationStore.LazySchemeProcessor;
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,40 +28,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
-  protected static final String DEFAULT_SCHEME_NAME = "Default";
 
   @NonNls
   static final String CODE_STYLES_DIR_PATH = "codestyles";
 
-  protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemeManager;
+  protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
-  public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleSchemeImpl>() {
+  public CodeStyleSchemesImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
       @NotNull
       @Override
-      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
+      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
+                                              @NotNull String name,
+                                              @NotNull Function<String, String> attributeProvider,
+                                              boolean isBundled) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
-      }
-
-      @Override
-      public Element writeScheme(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-        return scheme.writeScheme();
-      }
-
-      @NotNull
-      @Override
-      public State getState(@NotNull CodeStyleSchemeImpl scheme) {
-        if (scheme.isDefault()) {
-          return State.NON_PERSISTENT;
-        }
-        else {
-          return scheme.isInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
-        }
       }
     });
 
     mySchemeManager.loadSchemes();
-    addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
     setCurrentScheme(getDefaultScheme());
   }
 
@@ -105,12 +88,13 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
-  public void deleteScheme(CodeStyleScheme scheme) {
+  public void deleteScheme(@NotNull CodeStyleScheme scheme) {
     if (scheme.isDefault()) {
       throw new IllegalArgumentException("Unable to delete default scheme!");
     }
-    CodeStyleSchemeImpl currScheme = (CodeStyleSchemeImpl)getCurrentScheme();
-    if (currScheme == scheme) {
+
+    CodeStyleSchemeImpl currentScheme = (CodeStyleSchemeImpl)getCurrentScheme();
+    if (currentScheme == scheme) {
       CodeStyleScheme newCurrentScheme = getDefaultScheme();
       if (newCurrentScheme == null) {
         throw new IllegalStateException("Unable to load default scheme!");
@@ -122,7 +106,12 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
   @Override
   public CodeStyleScheme getDefaultScheme() {
-    return mySchemeManager.findSchemeByName(DEFAULT_SCHEME_NAME);
+    CodeStyleScheme defaultScheme = mySchemeManager.findSchemeByName(CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME);
+    if (defaultScheme == null) {
+      defaultScheme = new CodeStyleSchemeImpl(CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME, true, null);
+      addScheme(defaultScheme);
+    }
+    return defaultScheme;
   }
 
   @Nullable
@@ -137,7 +126,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @NotNull
-  public static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemeManager() {
+  public static SchemeManager<CodeStyleScheme> getSchemeManager() {
     return ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).mySchemeManager;
   }
 }

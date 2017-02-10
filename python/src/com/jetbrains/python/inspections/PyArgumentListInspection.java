@@ -173,8 +173,8 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   private static Set<String> getDuplicateKeywordArguments(@NotNull PyArgumentList node) {
-    final Set<String> keywordArgumentNames = new HashSet<String>();
-    final Set<String> results = new HashSet<String>();
+    final Set<String> keywordArgumentNames = new HashSet<>();
+    final Set<String> results = new HashSet<>();
     for (PyExpression argument : node.getArguments()) {
       if (argument instanceof PyKeywordArgument) {
         final String keyword = ((PyKeywordArgument)argument).getKeyword();

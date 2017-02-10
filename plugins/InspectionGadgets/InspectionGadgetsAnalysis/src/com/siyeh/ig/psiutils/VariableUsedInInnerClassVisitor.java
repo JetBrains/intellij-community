@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementWalkingVisitor
   @Override
   public void visitJavaToken(PsiJavaToken token) {
     super.visitJavaToken(token);
-    PsiElement parent = token.getParent();
+    final PsiElement parent = token.getParent();
     if (parent instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)parent;
+      final PsiClass aClass = (PsiClass)parent;
       // have to be that complex because anonymous class argument list should not be treated as insideInner
       if (token.getTokenType() == JavaTokenType.LBRACE && aClass.getLBrace() == token) {
         inInnerClassCount++;
@@ -47,6 +47,20 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementWalkingVisitor
       if (token.getTokenType() == JavaTokenType.RBRACE && aClass.getRBrace() == token) {
         inInnerClassCount--;
       }
+    }
+  }
+
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    super.visitLambdaExpression(expression);
+    inInnerClassCount++;
+  }
+
+  @Override
+  protected void elementFinished(@NotNull PsiElement element) {
+    super.elementFinished(element);
+    if (element instanceof PsiLambdaExpression) {
+      inInnerClassCount--;
     }
   }
 

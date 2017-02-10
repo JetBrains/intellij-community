@@ -65,12 +65,12 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<>();
     collectConflictsFromExtensions(refUsages, conflictDescriptions, myChangeInfo);
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    Set<UsageInfo> usagesSet = new HashSet<>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

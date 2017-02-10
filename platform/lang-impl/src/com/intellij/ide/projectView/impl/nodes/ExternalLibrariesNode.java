@@ -59,11 +59,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    Set<Library> processedLibraries = new THashSet<Library>();
-    Set<Sdk> processedSdk = new THashSet<Sdk>();
+    Set<Library> processedLibraries = new THashSet<>();
+    Set<Sdk> processedSdk = new THashSet<>();
 
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

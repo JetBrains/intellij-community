@@ -22,16 +22,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
@@ -39,18 +39,28 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
 
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.unused.assignment.display.name");
-  @NonNls public static final String SHORT_NAME = "UnusedAssignment";
+  public static final String SHORT_NAME = "UnusedAssignment";
 
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
+      @Override
+      public void visitMethod(PsiMethod method) {
         checkCodeBlock(method.getBody(), holder, isOnTheFly);
       }
 
-      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override
+      public void visitClassInitializer(PsiClassInitializer initializer) {
         checkCodeBlock(initializer.getBody(), holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        PsiElement body = expression.getBody();
+        if (body instanceof PsiCodeBlock) {
+          checkCodeBlock((PsiCodeBlock)body, holder, isOnTheFly);
+        }
       }
     };
   }
@@ -59,7 +69,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
                               final ProblemsHolder holder,
                               final boolean isOnTheFly) {
     if (body == null) return;
-    final Set<PsiVariable> usedVariables = new THashSet<PsiVariable>();
+    final Set<PsiVariable> usedVariables = new THashSet<>();
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
@@ -78,24 +88,15 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         PsiVariable psiVariable = info.getVariable();
 
         if (context instanceof PsiDeclarationStatement || context instanceof PsiResourceVariable) {
-          if (!info.isRead()) {
-            if (!isOnTheFly) {
-              holder.registerProblem(ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable),
-                                     InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>#ref</code> #loc"),
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-            }
-          }
-          else {
-            if (REPORT_REDUNDANT_INITIALIZER) {
-              List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-                isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? createRemoveInitializerFix() : null);
-              holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
-                                     InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
-                                                               "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     fixes.toArray(new LocalQuickFix[fixes.size()])
-              );
-            }
+          if (info.isRead() && REPORT_REDUNDANT_INITIALIZER) {
+            List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
+              isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? createRemoveInitializerFix() : null);
+            holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
+                                   InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
+                                                             "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                   fixes.toArray(new LocalQuickFix[fixes.size()])
+            );
           }
         }
         else if (context instanceof PsiAssignmentExpression) {
@@ -117,24 +118,12 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
     }
-
-    body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(PsiClass aClass) { }
-
-      @Override public void visitLocalVariable(PsiLocalVariable variable) {
-        if (!usedVariables.contains(variable) && variable.getInitializer() == null && !isOnTheFly) {
-          holder.registerProblem(ObjectUtils.notNull(variable.getNameIdentifier(), variable),
-                                 InspectionsBundle.message("inspection.unused.assignment.problem.descriptor5", "<code>#ref</code> #loc"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        }
-      }
-    });
   }
 
   private static boolean isOnTheFlyOrNoSideEffects(boolean isOnTheFly,
                                                    PsiVariable psiVariable,
                                                    PsiExpression initializer) {
-    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<PsiElement>());
+    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<>());
   }
 
   protected LocalQuickFix createRemoveInitializerFix() {
@@ -166,43 +155,26 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       myReportInitializer = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option2"));
       myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
-      myReportInitializer.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected();
-        }
-      });
-      gc.insets = new Insets(0, 0, 15, 0);
+      myReportInitializer.getModel().addChangeListener(e -> REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected());
+      gc.insets = JBUI.insetsBottom(15);
       gc.gridy = 0;
       add(myReportInitializer, gc);
 
       myReportPrefix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option"));
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
-      myReportPrefix.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected();
-        }
-      });
-      gc.insets = new Insets(0, 0, 0, 0);
+      myReportPrefix.getModel().addChangeListener(e -> REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected());
+      gc.insets = JBUI.emptyInsets();
       gc.gridy++;
       add(myReportPrefix, gc);
 
       myReportPostfix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option1"));
       myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
-      myReportPostfix.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected();
-        }
-      });
-
+      myReportPostfix.getModel().addChangeListener(e -> REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected());
       gc.weighty = 1;
       gc.gridy++;
       add(myReportPostfix, gc);
     }
   }
-
 
   @Override
   @NotNull

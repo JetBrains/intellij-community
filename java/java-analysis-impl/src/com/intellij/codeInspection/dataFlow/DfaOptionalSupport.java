@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,13 +96,6 @@ public class DfaOptionalSupport {
     public ReplaceOptionalCallFix(final String targetMethodName, boolean clearArguments) {
       myTargetMethodName = targetMethodName;
       myClearArguments = clearArguments;
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
     }
 
     @NotNull

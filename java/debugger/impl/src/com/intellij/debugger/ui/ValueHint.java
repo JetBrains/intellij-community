@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
@@ -97,7 +96,6 @@ public class ValueHint extends AbstractValueHint {
     TextWithImportsImpl textWithImports = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(textWithImports, myCurrentExpression);
     JavaCodeFragment codeFragment = factory.createCodeFragment(textWithImports, myCurrentExpression.getContext(), getProject());
-    codeFragment.forceResolveScope(GlobalSearchScope.allScope(getProject()));
     return factory.getEvaluatorBuilder().build(codeFragment, debuggerContext.getSourcePosition());
   }
 

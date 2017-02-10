@@ -17,6 +17,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -43,13 +44,7 @@ public class ModuleGroupUrl extends AbstractUrl {
     if (element instanceof ModuleGroup) {
       ModuleGroup group = (ModuleGroup)element;
       final String[] groupPath = group.getGroupPath();
-      StringBuffer sb = new StringBuffer();
-      for (int i = 0; i < groupPath.length; i++) {
-        String s = groupPath[i];
-        sb.append(s);
-        sb.append(";");
-      }
-      return new ModuleGroupUrl(sb.toString());
+      return new ModuleGroupUrl(StringUtil.join(groupPath, ";"));
     }
     return null;
   }

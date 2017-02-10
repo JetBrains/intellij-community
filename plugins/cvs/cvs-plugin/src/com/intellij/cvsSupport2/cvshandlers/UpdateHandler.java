@@ -43,11 +43,11 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final FilePath[] myFiles;
 
   private final Project myProject;
-  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
+  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<>();
   private final UpdatedFiles myUpdatedFiles;
   private final UpdateSettings myUpdateSettings;
 
-  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, @NotNull Project project, @NotNull UpdatedFiles updatedFiles) {
+  UpdateHandler(FilePath[] files, UpdateSettings updateSettings, @NotNull Project project, @NotNull UpdatedFiles updatedFiles) {
     super(CvsBundle.message("operation.name.update"), new UpdateOperation(files, updateSettings, project),
           FileSetToBeUpdated.selectedFiles(files));
     myFiles = files;
@@ -56,10 +56,12 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
     myUpdateSettings = updateSettings;
   }
 
+  @Override
   public void registerCorruptedProjectOrModuleFile(MergedWithConflictProjectOrModuleFile mergedWithConflictProjectOrModuleFile) {
     myCorruptedFiles.add(mergedWithConflictProjectOrModuleFile);
   }
 
+  @Override
   protected void onOperationFinished(ModalityContext modalityContext) {
     if (myUpdateSettings.getPruneEmptyDirectories()) {
       final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(ProgressManager.getInstance().getProgressIndicator());
@@ -93,6 +95,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
     }
   }
 
+  @Override
   protected PostCvsActivity getPostActivityHandler() {
     return this;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
@@ -102,11 +102,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   private boolean fileInRoots(VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
-  }
-
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 
   @Override
@@ -169,7 +164,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     @Override
     public Collection<AbstractTreeNode> getChildrenImpl() {
       final ViewSettings settings = getSettings();
-      final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final ArrayList<AbstractTreeNode> result = new ArrayList<>();
       for (PsiClass aClass : ((PsiClassOwner)getValue()).getClasses()) {
         if (!(aClass instanceof SyntheticElement)) {
           result.add(new ClassTreeNode(myProject, aClass, settings));

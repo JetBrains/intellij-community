@@ -21,15 +21,12 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -56,9 +53,6 @@ import java.util.List;
  * @see ProjectLevelVcsManager
  */
 public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
-  // true is default
-  private static final String USE_ANNOTATION_CACHE = "vcs.use.annotation.cache";
-
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
@@ -71,15 +65,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
-  private static boolean ourUseAnnotationCache;
-
-  static {
-    final String property = System.getProperty(USE_ANNOTATION_CACHE);
-    ourUseAnnotationCache = true;
-    if (property != null) {
-      ourUseAnnotationCache = Boolean.valueOf(property);
-    }
-  }
 
   public AbstractVcs(@NotNull Project project, final String name) {
     super(project);
@@ -417,7 +402,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * This method is used for VCS autodetection during initial project creation and VCS configuration.
    *
    * @param dir the directory to check.
-   * @return <code>true</code> if directory is managed by this VCS
+   * @return {@code true} if directory is managed by this VCS
    */
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
@@ -425,7 +410,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   /**
    * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
-   * it should return <code>false</code>. Otherwise return <code>true</code>
+   * it should return {@code false}. Otherwise return {@code true}
    */
   public boolean supportsVersionedStateDetection() {
     return true;
@@ -471,11 +456,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
   public boolean allowsNestedRoots() {
     return false;
   }
@@ -510,11 +490,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public VcsType getType() {
     return VcsType.centralized;
-  }
-
-  // todo ?
-  public boolean checkImmediateParentsBeforeCommit() {
-    return false;
   }
 
   @Nullable
@@ -583,6 +558,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     setRollbackEnvironment(createRollbackEnvironment());
   }
 
+  /**
+   * @Deprecated to delete in 2017.3
+   */
+  @Deprecated
   public boolean reportsIgnoredDirectories() {
     return true;
   }
@@ -601,15 +580,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
-  }
-
-  @Nullable
-  public AnnotationProvider getCachingAnnotationProvider() {
-    final AnnotationProvider ap = getAnnotationProvider();
-    if (ourUseAnnotationCache && ap instanceof VcsCacheableAnnotationProvider) {
-      return new VcsAnnotationCachedProxy(this, ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache());
-    }
-    return ap;
   }
 
   @Override

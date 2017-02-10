@@ -46,7 +46,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     super.setUp()
 
     myGitSettings = GitVcsSettings.getInstance(myProject)
-    myGitSettings.appSettings.pathToGit = GitExecutor.PathHolder.GIT_EXECUTABLE
+    myGitSettings.appSettings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE)
 
     myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
@@ -67,6 +67,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
       if (wasInit { myDialogManager }) { myDialogManager.cleanup() }
       if (wasInit { myVcsNotifier }) { myVcsNotifier.cleanup() }
       myGit.reset()
+      myGitSettings.appSettings.setPathToGit(null)
     }
     finally {
       super.tearDown()
@@ -113,12 +114,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
-  protected fun assertSuccessfulNotification(title: String, message: String) {
-    GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
+    return GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
   }
 
-  protected fun assertSuccessfulNotification(message: String) {
-    assertSuccessfulNotification("Rebase Successful", message)
+  protected fun assertSuccessfulNotification(message: String) : Notification {
+    return assertSuccessfulNotification("", message)
   }
 
   protected fun assertWarningNotification(title: String, message: String) {

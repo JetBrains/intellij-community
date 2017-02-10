@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.PlusMinusModify;
+import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,9 +40,9 @@ public class ChangesDelta {
       return true;  //+-
     }
 
-    final Set<BaseRevision> toRemove = new HashSet<BaseRevision>();
-    final Set<BaseRevision> toAdd = new HashSet<BaseRevision>();
-    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<BeforeAfter<BaseRevision>>();
+    final Set<BaseRevision> toRemove = new HashSet<>();
+    final Set<BaseRevision> toAdd = new HashSet<>();
+    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
     was.getDelta(became, toRemove, toAdd, toModify);
 
     for (BaseRevision pair : toRemove) {

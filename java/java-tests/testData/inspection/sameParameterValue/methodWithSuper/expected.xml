@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>4</line>
+    <module>testMethodWithSuper</module>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Actual method parameter is the same constant</problem_class>
+    <description>Actual value of parameter '&lt;code&gt;i&lt;/code&gt;' is always '&lt;code&gt;10&lt;/code&gt;'</description>
+  </problem>
+
+</problems>
+

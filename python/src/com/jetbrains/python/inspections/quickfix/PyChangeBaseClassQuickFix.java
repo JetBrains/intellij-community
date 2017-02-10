@@ -35,14 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyChangeBaseClassQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.change.base.class");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.change.base.class");
   }
 
   @Override

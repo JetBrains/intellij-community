@@ -21,6 +21,8 @@ import java.util.List;
 public class MavenConstants {
   public static final String POM_EXTENSION = "pom";
   public static final String POM_XML = "pom.xml";
+  public static final String[] POM_NAMES = new String[]{POM_XML, "pom.scala", "pom.groovy", "pom.atom", "pom.rb", "pom.yml", "pom.clj"};
+
   public static final String SUPER_POM_XML = "pom-4.0.0.xml";
   public static final String PROFILES_XML = "profiles.xml";
   public static final String SETTINGS_XML = "settings.xml";

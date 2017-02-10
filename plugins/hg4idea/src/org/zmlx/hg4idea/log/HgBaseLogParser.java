@@ -105,7 +105,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
 
   @NotNull
   public static List<String> constructDefaultTemplate(HgVersion currentVersion) {
-    List<String> templates = new ArrayList<String>();
+    List<String> templates = new ArrayList<>();
     templates.add("{rev}");
     templates.add("{node}");
     if (currentVersion.isParentRevisionTemplateSupported()) {
@@ -120,7 +120,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
 
   @NotNull
   public static String[] constructFullTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
-    List<String> templates = new ArrayList<String>();
+    List<String> templates = new ArrayList<>();
     templates.add("{rev}");
     templates.add("{node}");
     if (currentVersion.isParentRevisionTemplateSupported()) {
@@ -146,7 +146,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
 
   @NotNull
   protected static SmartList<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
-    SmartList<HgRevisionNumber> parents = new SmartList<HgRevisionNumber>();
+    SmartList<HgRevisionNumber> parents = new SmartList<>();
     if (StringUtil.isEmptyOrSpaces(parentsString)) {
       // parents shouldn't be empty  only if not supported
       Long revision = Long.valueOf(currentRevisionString);

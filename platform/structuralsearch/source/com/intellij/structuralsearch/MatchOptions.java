@@ -43,7 +43,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   public void addVariableConstraint(MatchVariableConstraint constraint) {
     if (variableConstraints==null) {
-      variableConstraints = new LinkedHashMap<String,MatchVariableConstraint>();
+      variableConstraints = new LinkedHashMap<>();
     }
     variableConstraints.put( constraint.getName(), constraint );
   }
@@ -60,7 +60,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (variableConstraints == null || variableConstraints.isEmpty()) {
       return;
     }
-    final THashSet<String> nameSet = new THashSet<String>(names);
+    final THashSet<String> nameSet = new THashSet<>(names);
     for (final Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
       final String key = iterator.next();
       if (!nameSet.contains(key)) {

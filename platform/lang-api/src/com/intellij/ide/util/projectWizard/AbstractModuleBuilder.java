@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,10 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
   @Nullable
   public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     return null;
+  }
+
+  public boolean validateModuleName(@NotNull String moduleName) throws ConfigurationException {
+    return true;
   }
 
   public abstract void setName(String name);

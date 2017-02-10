@@ -22,7 +22,6 @@ import com.intellij.diff.tools.util.ThreeDiffSplitter;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

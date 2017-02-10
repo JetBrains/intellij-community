@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -30,25 +29,14 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiForStatement forStatement =
-      (PsiForStatement)element.getParent();
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiForStatement forStatement = (PsiForStatement)element.getParent();
     if (forStatement == null) {
       return;
     }
-    final PsiStatement initialization = forStatement.getInitialization();
-    if (initialization != null &&
-        !(initialization instanceof PsiEmptyStatement)) {
-      final PsiElement parent = forStatement.getParent();
-      parent.addBefore(initialization, forStatement);
-    }
-    final JavaPsiFacade psiFacade =
-      JavaPsiFacade.getInstance(element.getProject());
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiWhileStatement whileStatement =
-      (PsiWhileStatement)factory.createStatementFromText(
-        "while(true) {}", element);
+    PsiStatement initialization = forStatement.getInitialization();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    final PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
     final PsiExpression forCondition = forStatement.getCondition();
     final PsiExpression whileCondition = whileStatement.getCondition();
     final PsiStatement body = forStatement.getBody();
@@ -56,15 +44,13 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
       assert whileCondition != null;
       whileCondition.replace(forCondition);
     }
-    final PsiBlockStatement blockStatement =
-      (PsiBlockStatement)whileStatement.getBody();
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)whileStatement.getBody();
     if (blockStatement == null) {
       return;
     }
     final PsiElement newBody;
     if (body instanceof PsiBlockStatement) {
-      final PsiBlockStatement newWhileBody =
-        (PsiBlockStatement)blockStatement.replace(body);
+      final PsiBlockStatement newWhileBody = (PsiBlockStatement)blockStatement.replace(body);
       newBody = newWhileBody.getCodeBlock();
     }
     else {
@@ -78,26 +64,18 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
     if (update != null) {
       final PsiStatement[] updateStatements;
       if (update instanceof PsiExpressionListStatement) {
-        final PsiExpressionListStatement expressionListStatement =
-          (PsiExpressionListStatement)update;
-        final PsiExpressionList expressionList =
-          expressionListStatement.getExpressionList();
-        final PsiExpression[] expressions =
-          expressionList.getExpressions();
+        final PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)update;
+        final PsiExpressionList expressionList = expressionListStatement.getExpressionList();
+        final PsiExpression[] expressions = expressionList.getExpressions();
         updateStatements = new PsiStatement[expressions.length];
-        for (int i = 0, expressionsLength = expressions.length;
-             i < expressionsLength; i++) {
+        for (int i = 0, expressionsLength = expressions.length; i < expressionsLength; i++) {
           final PsiExpression expression = expressions[i];
-          final PsiStatement updateStatement =
-            factory.createStatementFromText(
-              expression.getText() + ';', element);
+          final PsiStatement updateStatement = factory.createStatementFromText(expression.getText() + ';', element);
           updateStatements[i] = updateStatement;
         }
       }
       else {
-        final PsiStatement updateStatement =
-          factory.createStatementFromText(
-            update.getText() + ';', element);
+        final PsiStatement updateStatement = factory.createStatementFromText(update.getText() + ';', element);
         updateStatements = new PsiStatement[]{updateStatement};
       }
       newBody.accept(new UpdateInserter(whileStatement, updateStatements));
@@ -105,25 +83,41 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
         newBody.addBefore(updateStatement, newBody.getLastChild());
       }
     }
-    forStatement.replace(whileStatement);
+    if (initialization == null || initialization instanceof PsiEmptyStatement) {
+      return;
+    }
+    initialization = (PsiStatement)initialization.copy();
+    PsiElement newElement = forStatement.replace(whileStatement);
+    PsiElement parent = newElement.getParent();
+    while (parent instanceof PsiLabeledStatement) {
+      newElement = parent;
+      parent = newElement.getParent();
+    }
+    if (parent instanceof PsiCodeBlock) {
+      parent.addBefore(initialization, newElement);
+    }
+    else {
+      final PsiStatement newBlockStatement = factory.createStatementFromText("{}", newElement);
+      final PsiElement codeBlock = newBlockStatement.getFirstChild();
+      codeBlock.add(initialization);
+      codeBlock.add(newElement);
+      newElement.replace(newBlockStatement);
+    }
   }
 
-  private static class UpdateInserter
-    extends JavaRecursiveElementWalkingVisitor {
+  private static class UpdateInserter extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiWhileStatement whileStatement;
     private final PsiStatement[] updateStatements;
 
-    private UpdateInserter(PsiWhileStatement whileStatement,
-                           PsiStatement[] updateStatements) {
+    private UpdateInserter(PsiWhileStatement whileStatement, PsiStatement[] updateStatements) {
       this.whileStatement = whileStatement;
       this.updateStatements = updateStatements;
     }
 
     @Override
     public void visitContinueStatement(PsiContinueStatement statement) {
-      final PsiStatement continuedStatement =
-        statement.findContinuedStatement();
+      final PsiStatement continuedStatement = statement.findContinuedStatement();
       if (!whileStatement.equals(continuedStatement)) {
         return;
       }

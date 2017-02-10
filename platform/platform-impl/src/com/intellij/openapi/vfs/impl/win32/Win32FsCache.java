@@ -46,8 +46,8 @@ class Win32FsCache {
   private TIntObjectHashMap<THashMap<String, FileAttributes>> getMap() {
     TIntObjectHashMap<THashMap<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
-      map = new TIntObjectHashMap<THashMap<String, FileAttributes>>();
-      myCache = new SoftReference<TIntObjectHashMap<THashMap<String, FileAttributes>>>(map);
+      map = new TIntObjectHashMap<>();
+      myCache = new SoftReference<>(map);
     }
     return map;
   }
@@ -65,7 +65,7 @@ class Win32FsCache {
     int parentId = ((VirtualFileWithId)file).getId();
     THashMap<String, FileAttributes> nestedMap = map.get(parentId);
     if (nestedMap == null) {
-      nestedMap = new THashMap<String, FileAttributes>(fileInfo.length, FileUtil.PATH_HASHING_STRATEGY);
+      nestedMap = new THashMap<>(fileInfo.length, FileUtil.PATH_HASHING_STRATEGY);
       map.put(parentId, nestedMap);
     }
     for (int i = 0, length = fileInfo.length; i < length; i++) {

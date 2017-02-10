@@ -32,7 +32,7 @@ import java.util.ArrayList;
  */
 public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter {
   final PsiElement[] myElements;
-  final List<PsiElement> myMembersToMakeWritable = new ArrayList<PsiElement>();
+  final List<PsiElement> myMembersToMakeWritable = new ArrayList<>();
 
   public ExtractSuperClassViewDescriptor(
     PsiDirectory targetDirectory,

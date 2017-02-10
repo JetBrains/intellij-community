@@ -31,4 +31,11 @@ public class FlipCommaIntentionTest extends IPPTestCase {
            "    int b, a;\n" +
            "}");
   }
+
+  public void testUnavailableForDangling() throws Exception {
+    myFixture.configureByText("a.java", "class C {\n" +
+                                        "    int a[] = new int[]{1,2,<caret>};" +
+                                        "}");
+    assertEmpty(myFixture.filterAvailableIntentions("Flip"));
+  }
 }

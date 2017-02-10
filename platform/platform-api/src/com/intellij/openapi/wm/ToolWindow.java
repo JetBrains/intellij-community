@@ -29,7 +29,7 @@ import java.awt.event.InputEvent;
 
 public interface ToolWindow extends BusyObject {
 
-  Key<Boolean> SHOW_CONTENT_ICON = new Key<Boolean>("ContentIcon");
+  Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -74,7 +74,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
+  void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -104,7 +104,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setType(ToolWindowType type, @Nullable Runnable runnable);
+  void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable);
 
   /**
    * @return window icon. Returns <code>null</code> if window has no icon.

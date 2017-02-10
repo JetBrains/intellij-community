@@ -11,7 +11,7 @@ class TestAmbiguousCall {
       IllegalArgumentException iae = new IllegalArgumentException();// 8
       this.m1((RuntimeException)iae, "RE");// 9
       this.m1(iae, "IAE");// 10
-      IllegalArgumentException re = new IllegalArgumentException();// 12
+      RuntimeException re = new IllegalArgumentException();// 12
       this.m1((RuntimeException)re, "RE");// 13
       this.m1((IllegalArgumentException)re, "IAE");// 14
    }// 15

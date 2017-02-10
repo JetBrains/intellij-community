@@ -45,7 +45,7 @@ public class DeleteUtil {
         return 0;
       }
     };
-    Map<String, String> pluralToSingular = new HashMap<String, String>();
+    Map<String, String> pluralToSingular = new HashMap<>();
     int directoryCount = 0;
     String containerType = null;
 

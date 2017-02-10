@@ -170,7 +170,7 @@ public abstract class BaseAnalysisAction extends AnAction {
           return new AnalysisScope(psiDirectory);
         }
       }
-      Set<VirtualFile> files = new HashSet<VirtualFile>();
+      Set<VirtualFile> files = new HashSet<>();
       for (VirtualFile vFile : virtualFiles) {
         if (fileIndex.isInContent(vFile)) {
           files.add(vFile);

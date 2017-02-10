@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -70,8 +69,6 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     assert field != null;
     final PsiClass aClass = field.getContainingClass();
@@ -99,7 +96,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @NotNull
   private static List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<PsiMethod> methods) {
-    final List<PsiExpressionStatement> assignments = new ArrayList<PsiExpressionStatement>();
+    final List<PsiExpressionStatement> assignments = new ArrayList<>();
     for (PsiMethod method : methods) {
       assignments.add(addAssignment(getOrCreateMethodBody(method), field));
     }
@@ -159,7 +156,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   private static boolean containsReference(final @NotNull PsiElement element,
                                            final @NotNull PsiField field) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

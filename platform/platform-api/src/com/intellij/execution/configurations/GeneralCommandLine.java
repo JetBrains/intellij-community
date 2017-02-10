@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
@@ -179,14 +180,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return myParentEnvironmentType != ParentEnvironmentType.NONE;
   }
 
-  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
-    return withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
-  }
-
-  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2018.*) */
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
@@ -203,7 +197,8 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Returns an environment that will be passed to a child process.
+   * Returns an environment that will be inherited by a child process.
+   * @see #getEffectiveEnvironment()
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
@@ -215,6 +210,17 @@ public class GeneralCommandLine implements UserDataHolder {
       default:
         return Collections.emptyMap();
     }
+  }
+
+  /**
+   * Returns an environment as seen by a child process,
+   * that is the {@link #getEnvironment() environment} merged with the {@link #getParentEnvironment() parent} one.
+   */
+  @NotNull
+  public Map<String, String> getEffectiveEnvironment() {
+    MyTHashMap env = new MyTHashMap();
+    setupEnvironment(env);
+    return env;
   }
 
   public void addParameters(@NotNull String... parameters) {
@@ -300,7 +306,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<String>();
+    List<String> commands = new ArrayList<>();
     if (exeName != null) {
       commands.add(exeName);
     }
@@ -387,9 +393,16 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
+    if (SystemInfo.isUnix) {
+      File workDirectory = getWorkDirectory();
+      if (workDirectory != null) {
+        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+      }
+    }
+
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
-        THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+        THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();
@@ -418,6 +431,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath + " " + myProgramParams;
   }
 
+  @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData != null) {
@@ -430,6 +444,7 @@ public class GeneralCommandLine implements UserDataHolder {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) {
+      if (value == null) return;
       myUserData = ContainerUtil.newHashMap();
     }
     myUserData.put(key, value);

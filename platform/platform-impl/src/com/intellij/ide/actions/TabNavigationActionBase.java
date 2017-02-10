@@ -39,7 +39,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return;
     }
 
@@ -60,7 +60,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(false);
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return;
     }
     final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);

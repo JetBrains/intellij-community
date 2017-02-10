@@ -34,7 +34,7 @@ public class DuplicatesUtil {
       List<GrMethod> duplicateMethods = map.get(method);
 
       if (duplicateMethods != null && duplicateMethods.size() > 1) {
-        HashMap<PsiType, GrMethod> duplicateMethodsToReturnTypeMap = new HashMap<PsiType, GrMethod>();
+        HashMap<PsiType, GrMethod> duplicateMethodsToReturnTypeMap = new HashMap<>();
 
         for (GrMethod duplicateMethod : duplicateMethods) {
           GrTypeElement typeElement = duplicateMethod.getReturnTypeElementGroovy();
@@ -65,12 +65,12 @@ public class DuplicatesUtil {
   public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, TObjectHashingStrategy<D> strategy) {
     if (elements == null || elements.length == 0) return Collections.emptyMap();
 
-    THashMap<D, List<D>> map = new THashMap<D, List<D>>(strategy);
+    THashMap<D, List<D>> map = new THashMap<>(strategy);
 
     for (D element : elements) {
       List<D> list = map.get(element);
       if (list == null) {
-        list = new ArrayList<D>();
+        list = new ArrayList<>();
       }
       list.add(element);
       map.put(element, list);

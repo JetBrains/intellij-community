@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,47 +27,74 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
+class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
     return TestUtils.testDataPath + "groovy/refactoring/introduceVariable/"
   }
 
-  public void testAbs()       { doTest() }
-  public void testCall1()     { doTest() }
-  public void testCall2()     { doTest() }
-  public void testCall3()     { doTest() }
-  public void testClos1()     { doTest() }
-  public void testClos2()     { doTest() }
-  public void testClos3()     { doTest() }
-  public void testClos4()     { doTest() }
-  public void testF2()        { doTest() }
-  public void testField1()    { doTest() }
-  public void testFirst()     { doTest() }
-  public void testIf1()       { doTest() }
-  public void testIf2()       { doTest() }
-  public void testLocal1()    { doTest() }
-  public void testLoop1()     { doTest() }
-  public void testLoop2()     { doTest() }
-  public void testLoop3()     { doTest() }
-  public void testLoop4()     { doTest() }
-  public void testLoop5()     { doTest() }
-  public void testLoop6()     { doTest() }
-  public void testLoop7()     { doTest() }
-  public void testLoop8()     { doTest() }
-  public void testInCase()    { doTest() }
-  public void testCaseLabel() { doTest() }
-  public void testLabel1()    { doTest() }
-  public void testLabel2()    { doTest() }
-  public void testLabel3()    { doTest() }
+  void testAbs() { doTest() }
 
-  public void testDuplicatesInsideIf() { doTest() }
-  public void testFromGString() { doTest() }
+  void testCall1() { doTest() }
 
-  public void testCharArray() {doTest(true) }
+  void testCall2() { doTest() }
 
-  public void testCallableProperty() {doTest() }
+  void testCall3() { doTest() }
+
+  void testClos1() { doTest() }
+
+  void testClos2() { doTest() }
+
+  void testClos3() { doTest() }
+
+  void testClos4() { doTest() }
+
+  void testF2() { doTest() }
+
+  void testField1() { doTest() }
+
+  void testFirst() { doTest() }
+
+  void testIf1() { doTest() }
+
+  void testIf2() { doTest() }
+
+  void testLocal1() { doTest() }
+
+  void testLoop1() { doTest() }
+
+  void testLoop2() { doTest() }
+
+  void testLoop3() { doTest() }
+
+  void testLoop4() { doTest() }
+
+  void testLoop5() { doTest() }
+
+  void testLoop6() { doTest() }
+
+  void testLoop7() { doTest() }
+
+  void testLoop8() { doTest() }
+
+  void testInCase() { doTest() }
+
+  void testCaseLabel() { doTest() }
+
+  void testLabel1() { doTest() }
+
+  void testLabel2() { doTest() }
+
+  void testLabel3() { doTest() }
+
+  void testDuplicatesInsideIf() { doTest() }
+
+  void testFromGString() { doTest() }
+
+  void testCharArray() { doTest(true) }
+
+  void testCallableProperty() { doTest() }
 
   void testFqn() {
     myFixture.addClass('''\
@@ -179,12 +206,12 @@ print($/a/$ + preved + $/c/$)
     return null
   }
 
-  public void doTest(boolean explicitType = false) {
+  void doTest(boolean explicitType = false) {
     def (String before, String after) = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test")
     doTest(before, after, explicitType)
   }
 
-  public void doTest(String before, String after, boolean explicitType = false) {
+  void doTest(String before, String after, boolean explicitType = false) {
     processFile(before, explicitType)
     myFixture.checkResult(after, true)
   }

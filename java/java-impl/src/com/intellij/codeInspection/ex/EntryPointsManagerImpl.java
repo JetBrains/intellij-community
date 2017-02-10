@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 27, 2002
- * Time: 2:57:13 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -31,13 +24,21 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @State(name = "EntryPointsManager")
 public class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
@@ -47,8 +48,15 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
   @Override
   public void configureAnnotations() {
-    final List<String> list = new ArrayList<String>(ADDITIONAL_ANNOTATIONS);
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Do not check if annotated by", true);
+    final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
+    final List<String> writeList = new ArrayList<>(myWriteAnnotations);
+
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
+    Condition<PsiClass> applicableToField = psiClass -> {
+      Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
+      return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
+    };
+    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly written if annotated by", false, applicableToField);
     new DialogWrapper(myProject) {
       {
         init();
@@ -57,13 +65,20 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
       @Override
       protected JComponent createCenterPanel() {
-        return listPanel;
+        final JPanel panel = new JPanel(new VerticalFlowLayout());
+        panel.add(listPanel);
+        panel.add(writtenAnnotationsPanel);
+        return panel;
       }
 
       @Override
       protected void doOKAction() {
         ADDITIONAL_ANNOTATIONS.clear();
         ADDITIONAL_ANNOTATIONS.addAll(list);
+
+        myWriteAnnotations.clear();
+        myWriteAnnotations.addAll(writeList);
+
         DaemonCodeAnalyzer.getInstance(myProject).restart();
         super.doOKAction();
       }
@@ -76,7 +91,8 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton("Configure annotations...");
+    final JButton configureAnnotations = new JButton("Annotations...");
+    configureAnnotations.setHorizontalAlignment(SwingConstants.LEFT);
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -84,5 +100,50 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       }
     });
     return configureAnnotations;
+  }
+
+  public static JButton createConfigureClassPatternsButton() {
+    final JButton configureClassPatterns = new JButton("Code patterns...");
+    configureClassPatterns.setHorizontalAlignment(SwingConstants.LEFT);
+    configureClassPatterns.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Project project = ProjectUtil.guessCurrentProject(configureClassPatterns);
+        final EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
+        final ArrayList<ClassPattern> list = new ArrayList<>();
+        for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
+          list.add(new ClassPattern(pattern));
+        }
+        final ClassPatternsPanel panel = new ClassPatternsPanel(list);
+        new DialogWrapper(entryPointsManagerBase.myProject) {
+
+          {
+            init();
+            setTitle("Configure Code Patterns");
+          }
+
+          @Nullable
+          @Override
+          protected JComponent createCenterPanel() {
+            return panel;
+          }
+
+          @Override
+          protected void doOKAction() {
+            final String error = panel.getValidationError(project);
+            if (error != null) {
+              Messages.showErrorDialog(panel, error);
+              return;
+            }
+            final LinkedHashSet<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
+            patterns.clear();
+            patterns.addAll(list);
+            DaemonCodeAnalyzer.getInstance(entryPointsManagerBase.myProject).restart();
+            super.doOKAction();
+          }
+        }.show();
+      }
+    });
+    return configureClassPatterns;
   }
 }

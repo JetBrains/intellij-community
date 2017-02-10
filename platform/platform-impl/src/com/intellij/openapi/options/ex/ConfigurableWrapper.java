@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       return null;
     }
     if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
-      return !ep.dynamic && ep.children == null && ep.childrenEPName == null
-             ? (T)new ConfigurableWrapper(ep)
-             : (T)new CompositeWrapper(ep);
+      //noinspection unchecked
+      return (T)(!ep.dynamic && ep.children == null && ep.childrenEPName == null ? new ConfigurableWrapper(ep) : new CompositeWrapper(ep));
     }
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
@@ -62,16 +61,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(name.getExtensions(), new NullableFunction<ConfigurableEP<T>, T>() {
-      @Override
-      public T fun(ConfigurableEP<T> ep) {
-        return wrapConfigurable(ep);
-      }
-    });
-  }
-
-  public static boolean isNoScroll(Configurable configurable) {
-    return cast(NoScroll.class, configurable) != null;
+    return ContainerUtil.mapNotNull(name.getExtensions(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
@@ -80,6 +70,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   public static boolean isNonDefaultProject(Configurable configurable) {
+    //noinspection deprecation
     return configurable instanceof NonDefaultProjectConfigurable ||
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
@@ -95,7 +86,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        else if (type == Configurable.Assistant.class || type == OptionalConfigurable.class) {
+        else if (type == OptionalConfigurable.class) {
           return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
         }
       }
@@ -149,10 +140,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       }
     }
     return myEp.getDisplayName();
-  }
-
-  public String getInstanceClass() {
-    return myEp.instanceClass;
   }
 
   public String getProviderClass() {
@@ -251,7 +238,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     @Override
     public Configurable[] getConfigurables() {
       if (!isInitialized) {
-        ArrayList<Configurable> list = new ArrayList<Configurable>();
+        ArrayList<Configurable> list = new ArrayList<>();
         if (super.myEp.dynamic) {
           Composite composite = cast(Composite.class, this);
           if (composite != null) {

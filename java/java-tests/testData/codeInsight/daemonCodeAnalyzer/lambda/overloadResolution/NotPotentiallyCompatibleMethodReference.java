@@ -8,6 +8,6 @@ class Main {
   }
 
   public static boolean checkForJdk(String <warning descr="Parameter 'homePath' is never used">homePath</warning>) {return false;}
-  public static boolean checkForJdk(File homePath) {return false;}
+  public static boolean checkForJdk(File <warning descr="Parameter 'homePath' is never used">homePath</warning>) {return false;}
 
 }

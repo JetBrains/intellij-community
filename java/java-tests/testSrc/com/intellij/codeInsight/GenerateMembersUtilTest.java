@@ -63,7 +63,7 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     PsiMethod method = factory.createMethod("foo", PsiType.VOID);
     int offset = getEditor().getCaretModel().getOffset();
-    List<GenerationInfo> list = Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<PsiMethod>(method));
+    List<GenerationInfo> list = Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members = ApplicationManager.getApplication().runWriteAction(new Computable<List<GenerationInfo>>() {
       @Override
       public List<GenerationInfo> compute() {

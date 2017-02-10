@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine {
@@ -39,7 +38,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public void clear() {
     myParams = null;
   }
-  
+
   @Override
   @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {
@@ -53,8 +52,11 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    final Project project = getEnvironment().getProject();
-    return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), project, true);
+    SimpleJavaParameters javaParameters = getJavaParameters();
+    if (!javaParameters.isDynamicClasspath()) {
+      javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
+    }
+    return javaParameters.toCommandLine();
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {

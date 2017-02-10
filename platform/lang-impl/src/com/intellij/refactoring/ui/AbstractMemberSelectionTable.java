@@ -65,28 +65,28 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   public AbstractMemberSelectionTable(Collection<M> memberInfos, @Nullable MemberInfoModel<T, M> memberInfoModel, @Nullable String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
-    myTableModel = new MyTableModel<T, M>(this);
+    myTableModel = new MyTableModel<>(this);
 
-    myMemberInfos = new ArrayList<M>(memberInfos);
+    myMemberInfos = new ArrayList<>(memberInfos);
     if (memberInfoModel != null) {
       myMemberInfoModel = memberInfoModel;
     }
     else {
-      myMemberInfoModel = new DefaultMemberInfoModel<T, M>();
+      myMemberInfoModel = new DefaultMemberInfoModel<>();
     }
 
     setModel(myTableModel);
 
     TableColumnModel model = getColumnModel();
-    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<T, M>(this));
+    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<>(this));
     TableColumn checkBoxColumn = model.getColumn(CHECKED_COLUMN);
     TableUtil.setupCheckboxColumn(checkBoxColumn);
-    checkBoxColumn.setCellRenderer(new MyBooleanRenderer<T, M>(this));
+    checkBoxColumn.setCellRenderer(new MyBooleanRenderer<>(this));
     if (myAbstractEnabled) {
       int width = (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0, myAbstractColumnHeader.length()));
       model.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);
       model.getColumn(ABSTRACT_COLUMN).setPreferredWidth(width);
-      model.getColumn(ABSTRACT_COLUMN).setCellRenderer(new MyBooleanRenderer<T, M>(this));
+      model.getColumn(ABSTRACT_COLUMN).setCellRenderer(new MyBooleanRenderer<>(this));
     }
 
     setPreferredScrollableViewportSize(new Dimension(400, getRowHeight() * 12));
@@ -99,7 +99,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   public Collection<M> getSelectedMemberInfos() {
-    ArrayList<M> list = new ArrayList<M>(myMemberInfos.size());
+    ArrayList<M> list = new ArrayList<>(myMemberInfos.size());
     for (M info : myMemberInfos) {
       if (isMemberInfoSelected(info)) {
 //      if (info.isChecked() || (!myMemberInfoModel.isMemberEnabled(info) && myMemberInfoModel.isCheckedWhenDisabled(info))) {
@@ -135,7 +135,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   public void setMemberInfos(Collection<M> memberInfos) {
-    myMemberInfos = new ArrayList<M>(memberInfos);
+    myMemberInfos = new ArrayList<>(memberInfos);
     fireMemberInfoChange(memberInfos);
     myTableModel.fireTableDataChanged();
   }
@@ -147,7 +147,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected void fireMemberInfoChange(Collection<M> changedMembers) {
     Object[] list = listenerList.getListenerList();
 
-    MemberInfoChange<T, M> event = new MemberInfoChange<T, M>(changedMembers);
+    MemberInfoChange<T, M> event = new MemberInfoChange<>(changedMembers);
     for (Object element : list) {
       if (element instanceof MemberInfoChangeListener) {
         @SuppressWarnings("unchecked") final MemberInfoChangeListener<T, M> changeListener = (MemberInfoChangeListener<T, M>)element;
@@ -340,7 +340,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
     @Override
     protected void applyValue(int[] rows, boolean valueToBeSet) {
-      List<M> changedInfo = new ArrayList<M>();
+      List<M> changedInfo = new ArrayList<>();
       for (int row : rows) {
         final M memberInfo = myMemberInfos.get(row);
         memberInfo.setChecked(valueToBeSet);

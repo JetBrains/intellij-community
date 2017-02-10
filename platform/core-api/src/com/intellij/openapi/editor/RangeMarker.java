@@ -81,15 +81,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    */
   void setGreedyToRight(boolean greedy);
 
-  Comparator<RangeMarker> BY_START_OFFSET = new Comparator<RangeMarker>() {
-    @Override
-    public int compare(RangeMarker r1, RangeMarker r2) {
-      int result = r1.getStartOffset() - r2.getStartOffset();
-      if (result == 0) result = r1.getEndOffset() - r2.getEndOffset();
-      return result;
-    }
-  };
-
+  Comparator<? super RangeMarker> BY_START_OFFSET = BY_START_OFFSET_THEN_END_OFFSET;
 
   boolean isGreedyToRight();
   boolean isGreedyToLeft();

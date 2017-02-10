@@ -32,7 +32,7 @@ import java.util.List;
 public abstract class DocStringUpdater<T extends DocStringLineParser> {
   protected final T myOriginalDocString;
   private final StringBuilder myBuilder;
-  private final List<Modification> myUpdates = new ArrayList<Modification>();
+  private final List<Modification> myUpdates = new ArrayList<>();
   protected final String myMinContentIndent;
 
   public DocStringUpdater(@NotNull T docString, @NotNull String minContentIndent) {

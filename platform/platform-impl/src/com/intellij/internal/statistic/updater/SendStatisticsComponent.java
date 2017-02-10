@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,37 @@
  */
 package com.intellij.internal.statistic.updater;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.connect.StatisticsServiceEP;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Window;
-import java.util.Arrays;
+import java.awt.*;
+import java.util.concurrent.TimeUnit;
 
-public class SendStatisticsComponent implements ApplicationComponent {
+public class SendStatisticsComponent implements ApplicationComponentAdapter {
 
   private static final Logger LOG = Logger.getInstance(SendStatisticsComponent.class);
 
   private static final int DELAY_IN_MIN = 10;
 
-  private final Alarm myAlarm;
-
   private final FrameStateManager myFrameStateManager;
 
   public SendStatisticsComponent(@NotNull FrameStateManager frameStateManager) {
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-
     // Ensure that the notification manager (also an application component) is registered first;
     // otherwise this component's initComponent() call will fire a notification event bus
     // to show the opt-in dialog, but the notification component may not yet have been initialized
@@ -97,8 +91,8 @@ public class SendStatisticsComponent implements ApplicationComponent {
     }
   }
 
-  private void runWithDelay(final @NotNull StatisticsService statisticsService) {
-    myAlarm.addRequest(() -> statisticsService.send(), Time.MINUTE * DELAY_IN_MIN);
+  private static void runWithDelay(@NotNull final StatisticsService statisticsService) {
+    JobScheduler.getScheduler().schedule(statisticsService::send, DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 
   @Override
@@ -106,15 +100,5 @@ public class SendStatisticsComponent implements ApplicationComponent {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     runStatisticsService();
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return SendStatisticsComponent.class.getName();
   }
 }

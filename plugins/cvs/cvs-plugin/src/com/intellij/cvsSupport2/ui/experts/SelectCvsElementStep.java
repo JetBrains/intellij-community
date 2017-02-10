@@ -48,7 +48,7 @@ public class SelectCvsElementStep extends WizardStep {
   @JdkConstants.TreeSelectionMode private final int mySelectionMode;
   private final boolean myAllowRootSelection;
   private final boolean myShowModules;
-  private final Ref<Boolean> myErrors = new Ref<Boolean>();
+  private final Ref<Boolean> myErrors = new Ref<>();
 
   public SelectCvsElementStep(String title, CvsWizard wizard,
                               Project project,

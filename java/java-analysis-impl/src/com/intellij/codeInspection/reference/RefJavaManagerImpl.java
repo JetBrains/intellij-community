@@ -23,14 +23,16 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullableFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -111,7 +113,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Override
   public RefPackage getPackage(String packageName) {
     if (myPackages == null) {
-      myPackages = new THashMap<String, RefPackage>();
+      myPackages = new THashMap<>();
     }
 
     RefPackage refPackage = myPackages.get(packageName);
@@ -131,10 +133,19 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return refPackage;
   }
 
-
   public boolean isEntryPoint(final RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
-    return tool != null && tool.isEntryPoint(element);
+    return tool != null && tool.isEntryPoint(element) && isTestSource(tool, element);
+  }
+
+  private static boolean isTestSource(UnusedDeclarationInspectionBase tool, RefElement refElement) {
+    if (tool.isTestEntryPoints()) return true;
+    final PsiElement element = refElement.getElement();
+    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file != null) {
+      return !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
+    }
+    return false;
   }
 
   @Nullable
@@ -319,6 +330,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     else if (elem instanceof PsiJavaFile) {
       return new RefJavaFileImpl((PsiJavaFile)elem, myRefManager);
     }
+    else if (elem instanceof PsiJavaModule) {
+      return new RefJavaModuleImpl(((PsiJavaModule)elem), myRefManager);
+    }
     return null;
   }
 
@@ -366,6 +380,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
     }
     else if (ref instanceof RefPackage) {
       return PACKAGE;
+    }
+    else if (ref instanceof RefJavaModule) {
+      return JAVA_MODULE;
     }
     return null;
   }
@@ -419,7 +436,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
 
-    if (psiElement instanceof PsiClass) {
+    /*if (psiElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)psiElement;
 
       EntryPointsManager entryPointsManager = getEntryPointsManager();
@@ -432,12 +449,12 @@ public class RefJavaManagerImpl extends RefJavaManager {
       else if (psiClass.isEnum()) {
         entryPointsManager.addEntryPoint(refElement, false);
       }
-    }
+    }*/
   }
 
   private static void appendPackageElement(final Element element, final String packageName) {
     final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.export.results.default") : packageName);
+    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
     element.addContent(packageElement);
   }
 
@@ -608,6 +625,24 @@ public class RefJavaManagerImpl extends RefJavaManager {
             refClass.addInstanceReference(ownerClass);
           }
         }
+      }
+    }
+
+    @Override
+    public void visitModule(PsiJavaModule javaModule) {
+      super.visitModule(javaModule);
+      RefElement refElement = myRefManager.getReference(javaModule);
+      if (refElement != null) {
+        ((RefJavaModuleImpl)refElement).buildReferences();
+      }
+    }
+
+    @Override
+    public void visitJavaFile(PsiJavaFile file) {
+      super.visitJavaFile(file);
+      RefElement refElement = myRefManager.getReference(file);
+      if (refElement != null) {
+        ((RefJavaFileImpl)refElement).buildReferences();
       }
     }
   }

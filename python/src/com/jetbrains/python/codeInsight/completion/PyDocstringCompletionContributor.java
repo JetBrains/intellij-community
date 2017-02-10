@@ -28,10 +28,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
+import com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 public class PyDocstringCompletionContributor extends CompletionContributor {
   public PyDocstringCompletionContributor() {
     extend(CompletionType.BASIC,
-           or(psiElement().inside(PyStringLiteralExpression.class), psiComment()),
+           or(psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN), psiComment()),
            new IdentifierCompletionProvider());
   }
 

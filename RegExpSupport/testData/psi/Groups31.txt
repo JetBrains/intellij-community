@@ -1,0 +1,10 @@
+REGEXP_FILE
+  RegExpPatternImpl: <>
+    RegExpBranchImpl: <>
+      <empty list>
+  PsiErrorElement:Unmatched closing ')'
+    <empty list>
+  PsiElement(GROUP_END)(')')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(GROUP_BEGIN)('(')

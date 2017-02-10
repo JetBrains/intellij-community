@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -68,11 +67,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
-  private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
+  private volatile SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
   private final PsiModificationTracker myModificationTracker;
 
   private class ExportedNameCache {
-    private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
+    private final List<String> myNameDefinerNegativeCache = new ArrayList<>();
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;
     private final Map<String, List<PsiNamedElement>> myNamedElements = Maps.newHashMap();
@@ -200,7 +199,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public PyFileImpl(FileViewProvider viewProvider, Language language) {
     super(viewProvider, language);
-    myFutureFeatures = new HashMap<FutureFeature, Boolean>();
+    myFutureFeatures = new HashMap<>();
     myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
   }
 
@@ -215,22 +214,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public PyFunction findTopLevelFunction(String name) {
+  public PyFunction findTopLevelFunction(@NotNull String name) {
     return findByName(name, getTopLevelFunctions());
   }
 
   @Override
-  public PyClass findTopLevelClass(String name) {
+  public PyClass findTopLevelClass(@NotNull String name) {
     return findByName(name, getTopLevelClasses());
   }
 
   @Override
-  public PyTargetExpression findTopLevelAttribute(String name) {
+  public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
     return findByName(name, getTopLevelAttributes());
   }
 
   @Nullable
-  private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+  private static <T extends PsiNamedElement> T findByName(@NotNull String name, @NotNull List<T> namedElements) {
     for (T namedElement : namedElements) {
       if (name.equals(namedElement.getName())) {
         return namedElement;
@@ -292,7 +291,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     final List<String> dunderAll = getDunderAll();
-    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
+    final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<>(dunderAll);
     PsiScopeProcessor wrapper = new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -316,7 +315,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     Set<PyFile> pyFiles = resolveState.get(PROCESSED_FILES);
     if (pyFiles == null) {
-      pyFiles = new HashSet<PyFile>();
+      pyFiles = new HashSet<>();
       resolveState = resolveState.put(PROCESSED_FILES, pyFiles);
     }
     if (pyFiles.contains(this)) return true;
@@ -357,7 +356,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public List<PyStatement> getStatements() {
-    List<PyStatement> stmts = new ArrayList<PyStatement>();
+    List<PyStatement> stmts = new ArrayList<>();
     for (PsiElement child : getChildren()) {
       if (child instanceof PyStatement) {
         PyStatement statement = (PyStatement)child;
@@ -368,19 +367,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
+  @NotNull
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.CLASS_DECLARATION);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FUNCTION_DECLARATION);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.TARGET_EXPRESSION);
   }
 
   @Override
@@ -436,7 +436,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     if (cache == null) {
       cache = new ExportedNameCache(modificationStamp);
-      myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
+      myExportedNameCache = new SoftReference<>(cache);
     }
     return cache;
   }
@@ -457,7 +457,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    final List<PyElement> result = new ArrayList<PyElement>();
+    final List<PyElement> result = new ArrayList<>();
     VariantsProcessor processor = new VariantsProcessor(this) {
       @Override
       protected void addElement(String name, PsiElement element) {
@@ -475,9 +475,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyImportElement> getImportTargets() {
-    List<PyImportElement> ret = new ArrayList<PyImportElement>();
-    List<PyImportStatement> imports =
-      PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    final List<PyImportElement> ret = new ArrayList<>();
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.IMPORT_STATEMENT);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -487,7 +486,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   @Override
@@ -512,12 +511,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   private static class DunderAllBuilder extends PyRecursiveElementVisitor {
-    private List<String> myResult = null;
+    @Nullable private List<String> myResult = null;
     private boolean myDynamic = false;
     private boolean myFoundDunderAll = false;
 
     // hashlib builds __all__ by concatenating multiple lists of strings, and we want to understand this
-    private final Map<String, List<String>> myDunderLike = new HashMap<String, List<String>>();
+    private final Map<String, List<String>> myDunderLike = new HashMap<>();
 
     @Override
     public void visitPyFile(PyFile node) {
@@ -537,7 +536,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             List<String> lhs = getStringListFromValue(binaryExpression.getLeftExpression());
             List<String> rhs = getStringListFromValue(binaryExpression.getRightExpression());
             if (lhs != null && rhs != null) {
-              myResult = new ArrayList<String>(lhs);
+              myResult = new ArrayList<>(lhs);
               myResult.addAll(rhs);
             }
           }
@@ -575,7 +574,30 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (callee instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
         if (qualifier != null && PyNames.ALL.equals(qualifier.getText())) {
-          // TODO handle append and extend with constant arguments here
+          final String calleeName = callee.getName();
+          if ("append".equals(calleeName)) {
+            final PyStringLiteralExpression argument = node.getArgument(0, PyStringLiteralExpression.class);
+            if (argument != null) {
+              if (myResult == null) {
+                myResult = new ArrayList<>();
+              }
+              myResult.add(argument.getStringValue());
+              return;
+            }
+          }
+          else if ("extend".equals(calleeName)) {
+            final PyExpression argument = node.getArgument(0, PyExpression.class);
+            if (argument != null) {
+              final List<String> results = PyUtil.strListValue(argument);
+              if (results != null) {
+                if (myResult == null) {
+                  myResult = new ArrayList<>();
+                }
+                myResult.addAll(results);
+                return;
+              }
+            }
+          }
           myDynamic = true;
         }
       }
@@ -726,7 +748,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
     @Override
     protected List<String> initialValue() {
-      return new ArrayList<String>();
+      return new ArrayList<>();
     }
   }
 

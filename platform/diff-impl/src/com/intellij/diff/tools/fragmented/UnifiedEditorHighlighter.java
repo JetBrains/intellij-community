@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 class UnifiedEditorHighlighter implements EditorHighlighter {
-  public static final Logger LOG = UnifiedDiffViewer.LOG;
+  private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
 
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;

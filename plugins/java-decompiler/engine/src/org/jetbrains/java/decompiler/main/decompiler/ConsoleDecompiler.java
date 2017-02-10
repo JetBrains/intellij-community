@@ -41,9 +41,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       return;
     }
 
-    Map<String, Object> mapOptions = new HashMap<String, Object>();
-    List<File> lstSources = new ArrayList<File>();
-    List<File> lstLibraries = new ArrayList<File>();
+    Map<String, Object> mapOptions = new HashMap<>();
+    List<File> lstSources = new ArrayList<>();
+    List<File> lstLibraries = new ArrayList<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -113,8 +113,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   private final File root;
   private final Fernflower fernflower;
-  private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
-  private final Map<String, Set<String>> mapArchiveEntries = new HashMap<String, Set<String>>();
+  private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
+  private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public ConsoleDecompiler(File destination, Map<String, Object> options) {
@@ -266,7 +266,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   private boolean checkEntry(String entryName, String file) {
     Set<String> set = mapArchiveEntries.get(file);
     if (set == null) {
-      mapArchiveEntries.put(file, set = new HashSet<String>());
+      mapArchiveEntries.put(file, set = new HashSet<>());
     }
 
     boolean added = set.add(entryName);

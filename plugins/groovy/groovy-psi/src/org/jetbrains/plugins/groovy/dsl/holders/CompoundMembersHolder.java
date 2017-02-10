@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class CompoundMembersHolder implements CustomMembersHolder {
 
-  private final List<CustomMembersHolder> myHolders = new ArrayList<CustomMembersHolder>();
+  private final List<CustomMembersHolder> myHolders = new ArrayList<>();
 
   @Override
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,11 @@ import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -35,7 +32,6 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -69,7 +64,6 @@ import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteMana
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -137,20 +131,16 @@ public class RepositoryAttachHandler {
                                          @Nullable final String copyTo,
                                          List<MavenRepositoryInfo> repositories,
                                          ProgressIndicator indicator) {
-    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
+    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<>();
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
     final Ref<List<OrderRoot>> result = Ref.create(null);
     doResolveInner(project, getMavenId(coord), extraTypes, repositories, artifacts -> {
       if (!artifacts.isEmpty()) {
-        AccessToken accessToken = WriteAction.start();
-        try {
+        WriteAction.run(() -> {
           final List<OrderRoot> roots = createRoots(artifacts, copyTo);
           result.set(roots);
-        }
-        finally {
-          accessToken.finish();
-        }
+        });
       }
       return true;
     }, indicator);
@@ -173,7 +163,7 @@ public class RepositoryAttachHandler {
   }
 
   public static List<OrderRoot> createRoots(@NotNull Collection<MavenArtifact> artifacts, @Nullable String copyTo) {
-    final List<OrderRoot> result = new ArrayList<OrderRoot>();
+    final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (MavenArtifact each : artifacts) {
       try {
@@ -203,9 +193,6 @@ public class RepositoryAttachHandler {
           result.add(new OrderRoot(file, rootType));
         }
       }
-      catch (MalformedURLException e) {
-        MavenLog.LOG.warn(e);
-      }
       catch (IOException e) {
         MavenLog.LOG.warn(e);
       }
@@ -232,7 +219,7 @@ public class RepositoryAttachHandler {
 
         for (int i = 0, length = urls.length; i < length; i++) {
           if (!proceedFlag.get()) break;
-          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<>();
           try {
             String serviceUrl = urls[i];
             final List<MavenArtifactInfo> artifacts;
@@ -243,7 +230,7 @@ public class RepositoryAttachHandler {
               }
 
               List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
-              Map<String, MavenRepositoryInfo> map = new THashMap<String, MavenRepositoryInfo>();
+              Map<String, MavenRepositoryInfo> map = new THashMap<>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
               }
@@ -283,7 +270,7 @@ public class RepositoryAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<MavenRepositoryInfo>> result = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         try {
-          final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<MavenRepositoryInfo>();
+          final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<>();
           for (String nexusUrl : nexusUrls) {
             final List<MavenRepositoryInfo> repositories;
             try {
@@ -314,9 +301,9 @@ public class RepositoryAttachHandler {
                                     @Nullable final Processor<List<MavenArtifact>> resultProcessor,
                                     ProgressIndicator indicator) {
     boolean cancelled = false;
-    final Collection<MavenArtifact> result = new LinkedHashSet<MavenArtifact>();
+    final Collection<MavenArtifact> result = new LinkedHashSet<>();
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
-    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, null, null);
     try {
       final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
       embedder.customizeForResolve(
@@ -337,7 +324,7 @@ public class RepositoryAttachHandler {
         List<MavenArtifactInfo> resolve = JBIterable.from(extraTypes).transform(
           extraType -> new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier())).toList();
         // skip sources/javadoc for dependencies
-        for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories)) {
+        for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<>(resolve), remoteRepositories)) {
           if (!artifact.isResolved() || MavenConstants.SCOPE_TEST.equals(artifact.getScope()) || !allowedClassifiers.contains(artifact.getClassifier())) {
             continue;
           }
@@ -351,14 +338,13 @@ public class RepositoryAttachHandler {
     finally {
       manager.release(embedder);
       if (!cancelled && resultProcessor != null) {
-        ApplicationManager.getApplication().invokeAndWait(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                                                                    () -> resultProcessor.process(new ArrayList<MavenArtifact>(result))), indicator.getModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> resultProcessor.process(new ArrayList<>(result)));
       }
     }
   }
 
   private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
+    List<MavenRemoteRepository> result = new ArrayList<>(infos.size());
     for (MavenRepositoryInfo each : infos) {
       if (each.getUrl() != null) {
         result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));

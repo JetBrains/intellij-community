@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.application;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,6 +48,8 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Map<ModalityState, Boolean> myWriteSafeModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+  private boolean myErrorReported;
+  private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
@@ -151,13 +152,15 @@ public class TransactionGuardImpl extends TransactionGuard {
         if (!isWriteSafeModality(ModalityState.current())) {
           message += "\nUnsafe modality: " + ModalityState.current();
         }
-        LOG.info(message);
+        LOG.error(message);
       }
       runSyncTransaction(transaction);
       return;
     }
 
-    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
+    if (app.isReadAccessAllowed()) {
+      throw new IllegalStateException("submitTransactionAndWait should not be invoked from a read action");
+    }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
@@ -208,6 +211,7 @@ public class TransactionGuardImpl extends TransactionGuard {
    */
   @NotNull
   public AccessToken startActivity(boolean userActivity) {
+    myErrorReported = false;
     boolean allowWriting = userActivity && isWriteSafeModality(ModalityState.current());
     if (myWritingAllowed == allowWriting) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
@@ -224,31 +228,52 @@ public class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
-  private boolean isWriteSafeModality(ModalityState state) {
+  public boolean isWriteSafeModality(ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
 
   public void assertWriteActionAllowed() {
-    if (Registry.is("ide.require.transaction.for.model.changes", false) && !myWritingAllowed) {
-      String message = "Write access is allowed from model transactions only, see TransactionGuard documentation for details";
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        message += "; current modality=" + ModalityState.current() + "; known modalities=" + myWriteSafeModalities;
-      }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (areAssertionsEnabled() && !myWritingAllowed && !myErrorReported) {
+      String message = "Write access is allowed from write-safe contexts only. " +
+                       "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
+                       "See TransactionGuard documentation for details." +
+                       "\n  current modality=" + ModalityState.current() +
+                       "\n  known modalities=" + myWriteSafeModalities;
       // please assign exceptions here to Peter
-      LOG.info(message);
+      LOG.error(message);
+      myErrorReported = true;
     }
+  }
+
+  private static boolean areAssertionsEnabled() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() && !ourTestingTransactions) {
+      return false;
+    }
+    if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
+      return false;
+    }
+    return Registry.is("ide.require.transaction.for.model.changes", false);
   }
 
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     final TransactionIdImpl id = getContextTransaction();
-    Runnable runnable = new Runnable() {
+    final ModalityState startModality = ModalityState.defaultModalityState();
+    invokeLater(new Runnable() {
       @Override
       public void run() {
-        submitTransaction(parentDisposable, id, transaction);
+        boolean allowWriting = ModalityState.current() == startModality;
+        AccessToken token = startActivity(allowWriting);
+        try {
+          submitTransaction(parentDisposable, id, transaction);
+        }
+        finally {
+          token.finish();
+        }
       }
-    };
-    invokeLater(runnable);
+    });
   }
 
   private static void invokeLater(Runnable runnable) {
@@ -258,8 +283,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myModality2Transaction.get(indicator.getModalityState()) : null;
+      return myModality2Transaction.get(ModalityState.defaultModalityState());
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;
@@ -293,6 +317,11 @@ public class TransactionGuardImpl extends TransactionGuard {
             myWritingAllowed = prev;
           }
         }
+
+        @Override
+        public String toString() {
+          return runnable.toString();
+        }
       };
     }
 
@@ -301,10 +330,14 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
       .toString();
+  }
+
+  public static void setTestingTransactions(boolean testingTransactions) {
+    ourTestingTransactions = testingTransactions;
   }
 
   private static class Transaction {

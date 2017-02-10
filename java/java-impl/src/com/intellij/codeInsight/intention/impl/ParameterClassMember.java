@@ -31,6 +31,7 @@ import javax.swing.*;
 * Date: 8/2/12
 */
 public class ParameterClassMember implements ClassMember {
+  public static final ParameterClassMember[] EMPTY_ARRAY = new ParameterClassMember[0];
   private final PsiParameter myParameter;
 
   public ParameterClassMember(PsiParameter parameter) {

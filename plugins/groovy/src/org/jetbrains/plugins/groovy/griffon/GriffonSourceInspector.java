@@ -40,7 +40,7 @@ import java.util.*;
 public class GriffonSourceInspector {
   public static List<GriffonSource> processModuleMetadata(final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      List<GriffonSource> sources = new ArrayList<GriffonSource>();
+      List<GriffonSource> sources = new ArrayList<>();
       List<Object> dependencies = ContainerUtil.newArrayList();
       dependencies.add(ProjectRootManager.getInstance(module.getProject()));
       ContainerUtil.addIfNotNull(dependencies, GriffonFramework.getInstance().getApplicationPropertiesFile(module));
@@ -197,7 +197,7 @@ public class GriffonSourceInspector {
 
   private static String getNaturalName(String name) {
     name = getShortName(name);
-    List<String> words = new ArrayList<String>();
+    List<String> words = new ArrayList<>();
     int i = 0;
     char[] chars = name.toCharArray();
     for (int j = 0; j < chars.length; j++) {

@@ -25,6 +25,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +37,13 @@ import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeysEx extends DiffUserDataKeys {
+  //
+  // DiffContent
+  //
+
+  Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
+  Key<String> FILE_NAME = Key.create("Diff.FileName");
+
   //
   // DiffRequest
   //

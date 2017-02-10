@@ -37,7 +37,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
     final PyFunction func = queryParameters.getDerivedMethod();
     final String name = func.getName();
     final PyClass containingClass = func.getContainingClass();
-    final Set<PyClass> foundMethodContainingClasses = new HashSet<PyClass>();
+    final Set<PyClass> foundMethodContainingClasses = new HashSet<>();
     final TypeEvalContext context = queryParameters.getContext();
     if (name != null && containingClass != null) {
       for (PyClass superClass : containingClass.getAncestorClasses(context)) {

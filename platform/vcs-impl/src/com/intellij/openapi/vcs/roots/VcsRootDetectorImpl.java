@@ -73,7 +73,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInContentRoots() {
-    Set<VcsRoot> vcsRoots = new HashSet<VcsRoot>();
+    Set<VcsRoot> vcsRoots = new HashSet<>();
     if (myProject.isDisposed()) return vcsRoots;
 
     VirtualFile[] roots = myProjectManager.getContentRoots();
@@ -97,7 +97,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
-    final Set<VcsRoot> roots = new HashSet<VcsRoot>();
+    final Set<VcsRoot> roots = new HashSet<>();
     if (depth > MAXIMUM_SCAN_DEPTH) {
       // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
       return roots;
@@ -123,7 +123,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private List<VcsRoot> scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
-    List<VcsRoot> roots = new ArrayList<VcsRoot>();
+    List<VcsRoot> roots = new ArrayList<>();
     if (myProject.isDisposed()) {
       return roots;
     }
@@ -144,7 +144,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private List<AbstractVcs> getVcsListFor(@NotNull VirtualFile dir) {
-    List<AbstractVcs> vcsList = new ArrayList<AbstractVcs>();
+    List<AbstractVcs> vcsList = new ArrayList<>();
     for (VcsRootChecker checker : myCheckers) {
       if (checker.isRoot(dir.getPath())) {
         vcsList.add(myVcsManager.findVcsByName(checker.getSupportedVcs().getName()));

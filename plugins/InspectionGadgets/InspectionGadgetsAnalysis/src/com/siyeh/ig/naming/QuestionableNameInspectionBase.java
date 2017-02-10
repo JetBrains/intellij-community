@@ -44,7 +44,7 @@ public class QuestionableNameInspectionBase extends BaseInspection {
                                      "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
                                      "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
                                      "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
-                                     "then,three,whi1e,var";List<String> nameList = new ArrayList<String>(32);
+                                     "then,three,whi1e,var";List<String> nameList = new ArrayList<>(32);
 
   @Override
   @NotNull

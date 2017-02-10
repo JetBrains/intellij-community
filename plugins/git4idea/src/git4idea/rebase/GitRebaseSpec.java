@@ -73,7 +73,7 @@ public class GitRebaseSpec {
     GitUtil.updateRepositories(repositories);
     Map<GitRepository, String> initialHeadPositions = findInitialHeadPositions(repositories, params.getBranch());
     Map<GitRepository, String> initialBranchNames = findInitialBranchNames(repositories);
-    Map<GitRepository, GitRebaseStatus> initialStatusMap = new TreeMap<GitRepository, GitRebaseStatus>(DvcsUtil.REPOSITORY_COMPARATOR);
+    Map<GitRepository, GitRebaseStatus> initialStatusMap = new TreeMap<>(DvcsUtil.REPOSITORY_COMPARATOR);
     for (GitRepository repository : repositories) {
       initialStatusMap.put(repository, GitRebaseStatus.notStarted());
     }

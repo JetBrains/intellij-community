@@ -44,7 +44,7 @@ public class ThreadDumpParser {
   }
 
   public static List<ThreadState> parse(String threadDump) {
-    List<ThreadState> result = new ArrayList<ThreadState>();
+    List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
     ThreadState lastThreadState = null;
     boolean expectingThreadState = false;

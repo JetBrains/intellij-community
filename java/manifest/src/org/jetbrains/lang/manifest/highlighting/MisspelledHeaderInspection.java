@@ -24,11 +24,13 @@
  */
 package org.jetbrains.lang.manifest.highlighting;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -59,7 +61,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int TYPO_DISTANCE = 2;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "header")
-  public final Set<String> CUSTOM_HEADERS = new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  public final Set<String> CUSTOM_HEADERS = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
 
   private final HeaderParserRepository myRepository;
 
@@ -77,7 +79,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
           Header header = (Header)element;
           String headerName = header.getName();
 
-          SortedSet<Suggestion> matches = new TreeSet<Suggestion>();
+          SortedSet<Suggestion> matches = new TreeSet<>();
           addMatches(headerName, CUSTOM_HEADERS, matches);
           addMatches(headerName, myRepository.getAllHeaderNames(), matches);
 
@@ -86,7 +88,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
             return;
           }
 
-          List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+          List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
             fixes.add(new HeaderRenameQuickFix(header, match.getWord()));
             if (fixes.size() == MAX_SUGGESTIONS) break;
@@ -126,7 +128,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
       final JTextArea area = new JTextArea("");
       add(area, BorderLayout.CENTER);
       if (!headers.isEmpty()) {
-        area.setText(StringUtil.join(new TreeSet<String>(headers), "\n"));
+        area.setText(StringUtil.join(new TreeSet<>(headers), "\n"));
       }
 
       area.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -184,8 +186,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       myHeaders.add(myHeaderName);
 
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      InspectionProfileManager.getInstance().fireProfileChanged(profile);
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
   }
 }

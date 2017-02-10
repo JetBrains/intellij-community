@@ -145,7 +145,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
         return;
       }
 
-      List<PsiElement> queue = new ArrayList<PsiElement>();
+      List<PsiElement> queue = new ArrayList<>();
       collectAllElements(statementAtCaret, queue, true);
       queue.add(statementAtCaret);
 

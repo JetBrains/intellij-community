@@ -80,7 +80,7 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
             return getDefaultUseScope();
         }
         final XmlFile file = (XmlFile)tag.getContainingFile();
-        if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<XmlFile>())) {
+        if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<>())) {
             // processor found something
             return getDefaultUseScope();
         }

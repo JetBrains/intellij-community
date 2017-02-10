@@ -87,7 +87,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     fieldsConstructor.setNavigationElement(typeDefinition);
     fieldsConstructor.setContainingClass(typeDefinition);
 
-    Set<String> excludes = new HashSet<String>();
+    Set<String> excludes = new HashSet<>();
     if (tupleConstructor != null) {
       for (String s : PsiUtil.getAnnoAttributeValue(tupleConstructor, "excludes", "").split(",")) {
         final String name = s.trim();
@@ -102,7 +102,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
-        addParametersForSuper(typeDefinition, fieldsConstructor, superFields, superProperties, new HashSet<PsiClass>(), excludes);
+        addParametersForSuper(typeDefinition, fieldsConstructor, superFields, superProperties, new HashSet<>(), excludes);
       }
     }
 

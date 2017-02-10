@@ -70,7 +70,7 @@ public class DeleteChange extends StructuralChange {
 
   @Override
   public List<Content> getContentsToPurge() {
-    List<Content> result = new ArrayList<Content>();
+    List<Content> result = new ArrayList<>();
     collectContentsRecursively(myDeletedEntry, result);
     return result;
   }

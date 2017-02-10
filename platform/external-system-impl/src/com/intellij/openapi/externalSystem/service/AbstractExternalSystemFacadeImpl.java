@@ -26,9 +26,10 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   private final ConcurrentMap<Class<?>, RemoteExternalSystemService<S>> myRemotes = ContainerUtil.newConcurrentMap();
 
-  private final AtomicReference<S> mySettings              = new AtomicReference<S>();
+  private final AtomicReference<S> mySettings              = new AtomicReference<>();
   private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<ExternalSystemTaskNotificationListener>(new ExternalSystemTaskNotificationListenerAdapter() {});
+    new AtomicReference<>(new ExternalSystemTaskNotificationListenerAdapter() {
+    });
 
   @NotNull private final RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
   @NotNull private final RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
@@ -37,8 +38,8 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
                                           @NotNull Class<ExternalSystemTaskManager<S>> buildManagerClass)
     throws IllegalAccessException, InstantiationException
   {
-    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<S>(projectResolverClass.newInstance());
-    myTaskManager = new RemoteExternalSystemTaskManagerImpl<S>(buildManagerClass.newInstance());
+    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.newInstance());
+    myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.newInstance());
   }
 
   protected void init() throws RemoteException {
@@ -155,12 +156,12 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
         continue;
       }
       if (result == null) {
-        result = new HashMap<ExternalSystemTaskType, Set<ExternalSystemTaskId>>();
+        result = new HashMap<>();
       }
       for (Map.Entry<ExternalSystemTaskType, Set<ExternalSystemTaskId>> entry : tasks.entrySet()) {
         Set<ExternalSystemTaskId> ids = result.get(entry.getKey());
         if (ids == null) {
-          result.put(entry.getKey(), ids = new HashSet<ExternalSystemTaskId>());
+          result.put(entry.getKey(), ids = new HashSet<>());
         }
         ids.addAll(entry.getValue());
       }

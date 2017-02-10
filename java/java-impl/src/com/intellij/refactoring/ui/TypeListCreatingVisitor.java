@@ -29,7 +29,7 @@ class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisit
   public TypeListCreatingVisitor(ArrayList<PsiType> result, PsiElementFactory factory) {
     myList = result;
     myFactory = factory;
-    mySet = new HashSet<PsiType>();
+    mySet = new HashSet<>();
   }
 
   public void visitType(PsiType aType) {

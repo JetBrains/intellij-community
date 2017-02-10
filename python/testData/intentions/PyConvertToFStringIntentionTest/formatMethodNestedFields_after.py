@@ -1,0 +1,1 @@
+f'{(42).attr["item"]:{func()["item"]:5} {MyClass(1, 2).attr:{baz} {quux}}}'

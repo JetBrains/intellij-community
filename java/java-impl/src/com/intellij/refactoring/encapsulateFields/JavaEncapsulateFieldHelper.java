@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -180,7 +177,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
           }
         }
       }
-      else if (RefactoringUtil.isPlusPlusOrMinusMinus(parent)){
+      else if (PsiUtil.isIncrementDecrementOperation(parent)){
         IElementType sign;
         if (parent instanceof PsiPrefixExpression){
           sign = ((PsiPrefixExpression)parent).getOperationTokenType();

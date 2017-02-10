@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ class Test {
 }
 ''',
       rules: [rule(FIELD), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
-    );
+    )
   }
 
   void "test getter is matched by method rule"() {
@@ -176,7 +176,7 @@ class Test {
 }
 ''',
       rules: [rule(FIELD), rule(METHOD)]
-    );
+    )
   }
 
   void "test getter is not matched by private method"() {
@@ -243,7 +243,7 @@ class Test {
 }
 ''',
       rules: [rule(FIELD), rule(GETTER), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)]
-    );
+    )
   }
 
   void "test setter is matched by public method rule"() {
@@ -311,7 +311,7 @@ class Test {
 }
 ''',
       rules: [rule(FIELD), rule(METHOD)]
-    );
+    )
   }
 
   void "test setter is not matched by private method"() {

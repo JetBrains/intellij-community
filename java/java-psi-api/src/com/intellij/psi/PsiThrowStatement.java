@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>throw</code> statement.
+ * Represents a Java {@code throw} statement.
  */
 public interface PsiThrowStatement extends PsiStatement {
   /**

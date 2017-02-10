@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private void checkErrors() {
-    List<String> errors = new ArrayList<String>();
+    List<String> errors = new ArrayList<>();
     if (myCurrentMethodRadioButton.isSelected() && myDeclareFinalCheckBox.isSelected() && !isInvokedInAlwaysInvokedConstructor) {
       errors.add(GroovyRefactoringBundle.message("final.field.cant.be.initialized.in.cur.method"));
     }
@@ -298,7 +298,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final GrVariable var = myContext.getVar();
     final StringPartInfo stringPart = myContext.getStringPart();
 
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     if (var != null) {
       list.add(var.getName());
     }
@@ -431,7 +431,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression refExpr) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
       super.visitReferenceExpression(refExpr);
       final PsiElement resolved = refExpr.resolve();
       if (!(resolved instanceof GrVariable)) return;

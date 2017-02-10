@@ -72,7 +72,7 @@ public class SvnRecursiveStatusWalker {
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myReceiver = receiver;
     myProgress = progress;
-    myQueue = new LinkedList<MyItem>();
+    myQueue = new LinkedList<>();
     myHandler = new MyHandler();
   }
 
@@ -203,7 +203,7 @@ public class SvnRecursiveStatusWalker {
     final File ioFile = new File(vFile.getPath());
     final Processor<File> processor;
     final Processor<File> directoryFilter;
-    final Ref<File> lastIgnored = new Ref<File>();
+    final Ref<File> lastIgnored = new Ref<>();
     final Processor<File> checkDirProcessor = new Processor<File>() {
       @Override
       public boolean process(File file) {

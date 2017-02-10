@@ -95,6 +95,11 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
     myState = pos.getOldState();
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "[" + getDelegate() + "]";
+  }
+
   @NotNull
   @Override
   public LexerPosition getCurrentPosition() {

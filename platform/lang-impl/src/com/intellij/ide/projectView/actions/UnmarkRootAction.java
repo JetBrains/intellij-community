@@ -70,7 +70,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
   @NotNull
   private static Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
-    Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = new HashSet<ModuleSourceRootEditHandler<?>>();
+    Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = new HashSet<>();
     for (SourceFolder root : selection.mySelectedRoots) {
       ContainerUtil.addIfNotNull(selectedRootHandlers, ModuleSourceRootEditHandler.getEditHandler(root.getRootType()));
     }

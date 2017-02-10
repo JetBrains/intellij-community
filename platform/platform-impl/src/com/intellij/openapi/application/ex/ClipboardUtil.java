@@ -15,12 +15,46 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
+import java.util.function.Supplier;
 
 public class ClipboardUtil {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
+
+  public static <E> E handleClipboardSafely(final Supplier<E> supplier, final Supplier<E> onFail) {
+      try {
+        return useLegacyMergeSort(supplier);
+      }
+      catch (IllegalStateException e) {
+        if (SystemInfo.isWindows) {
+          LOG.debug("Clipboard is busy");
+        }
+        else {
+          LOG.warn(e);
+        }
+        return onFail.get();
+      }
+  }
+
+  private static final String USE_LEGACY_MERGE_SORT_PROPERTY_NAME = "java.util.Arrays.useLegacyMergeSort";
+
+  public static <T> T useLegacyMergeSort(Supplier<T> supplier) {
+    String originalValue = System.getProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME);
+    System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, "true");
+    try {
+      return supplier.get();
+    } finally {
+      if (originalValue != null) {
+        System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
+      }
+    }
+  }
 
   @Nullable
   public static String getTextInClipboard() {

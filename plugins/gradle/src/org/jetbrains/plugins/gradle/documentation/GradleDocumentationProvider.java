@@ -28,9 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +46,22 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    PsiFile file = element.getContainingFile();
+    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
+    if (element instanceof GrLightVariable) {
+      PsiElement navigationElement = element.getNavigationElement();
+      if (navigationElement != null) {
+        String doc = navigationElement.getUserData(NonCodeMembersHolder.DOCUMENTATION);
+        if (doc != null) return doc;
+      }
+    }
     return null;
   }
 
   @Nullable
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     return result.isEmpty() ? null : result;
   }
 

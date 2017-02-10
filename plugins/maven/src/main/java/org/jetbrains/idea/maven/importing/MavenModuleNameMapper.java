@@ -53,7 +53,7 @@ public class MavenModuleNameMapper {
 
     Arrays.sort(names);
 
-    Map<String, Integer> nameCounters = new HashMap<String, Integer>();
+    Map<String, Integer> nameCounters = new HashMap<>();
 
     for ( i = 0; i < names.length; i++) {
       if (names[i].hasDuplicatedGroup) continue;
@@ -70,7 +70,7 @@ public class MavenModuleNameMapper {
       }
     }
 
-    Set<String> existingNames = new HashSet<String>();
+    Set<String> existingNames = new HashSet<>();
 
     for (NameItem name : names) {
       if (name.module != null) {

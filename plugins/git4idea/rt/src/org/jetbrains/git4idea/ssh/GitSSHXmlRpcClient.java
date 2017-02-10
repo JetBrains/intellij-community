@@ -75,10 +75,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return ((Boolean)myClient.execute(methodName("verifyServerHostKey"), parameters)).booleanValue();
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -115,10 +112,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassphrase"), parameters)));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -151,10 +145,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return adjustNull((Vector<String>)myClient.execute(methodName("replyToChallenge"), parameters));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -176,10 +167,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassword"), parameters)));
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -198,10 +186,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return (String)myClient.execute(methodName("setLastSuccessful"), parameters);
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -221,11 +206,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     try {
       return (String)myClient.execute(methodName("getLastSuccessful"), parameters);
     }
-    catch (XmlRpcException e) {
-      log("getLastSuccessful failed. token: " + token + ", userName: " + userName + ", client: " + myClient.getURL());
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       log("getLastSuccessful failed. token: " + token + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }

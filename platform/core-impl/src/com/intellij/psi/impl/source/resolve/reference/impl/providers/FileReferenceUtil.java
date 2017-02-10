@@ -43,7 +43,7 @@ public class FileReferenceUtil {
 
   /**
    * Iterates all references starting from the end and looking for FileReference,
-   * when returns <code>resolve()</code> on it.
+   * when returns {@code resolve()} on it.
    *
    * @param references references, typically from PsiElement.getReferences()
    * @return PsiFile if the last FileReference resolves into a real file.

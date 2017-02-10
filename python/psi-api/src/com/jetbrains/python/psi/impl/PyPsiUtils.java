@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -300,7 +303,7 @@ public class PyPsiUtils {
     final ASTNode parentNode = node1.getTreeParent();
 
     boolean insideRange = false;
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (ASTNode node : parentNode.getChildren(null)) {
       // start
       if (node1 == node) {
@@ -423,10 +426,10 @@ public class PyPsiUtils {
   }
 
   @NotNull
-  static <T, U extends PsiElement> List<T> collectStubChildren(U e,
-                                                               final StubElement<U> stub, final IElementType elementType,
-                                                               final Class<T> itemClass) {
-    final List<T> result = new ArrayList<T>();
+  static <T, U extends PsiElement> List<T> collectStubChildren(@NotNull U e,
+                                                               @Nullable StubElement<U> stub,
+                                                               @NotNull IElementType elementType) {
+    final List<T> result = new ArrayList<>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
@@ -451,7 +454,7 @@ public class PyPsiUtils {
   }
 
   static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement stub) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
@@ -584,7 +587,7 @@ public class PyPsiUtils {
 
   @NotNull
   private static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
-    final List<PyExpression> path = new LinkedList<PyExpression>();
+    final List<PyExpression> path = new LinkedList<>();
     PyQualifiedExpression e = expr;
     while (e != null) {
       path.add(0, e);
@@ -596,7 +599,7 @@ public class PyPsiUtils {
 
   @Nullable
   private static QualifiedName fromReferenceChain(@NotNull List<PyExpression> components) {
-    final List<String> componentNames = new ArrayList<String>(components.size());
+    final List<String> componentNames = new ArrayList<>(components.size());
     for (PyExpression component : components) {
       final String refName = (component instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)component).getReferencedName() : null;
       if (refName == null) {
@@ -629,6 +632,21 @@ public class PyPsiUtils {
     return element.getContainingFile();
   }
 
+  @Nullable
+  public static String getContainingFilePath(@NotNull PsiElement element) {
+    final VirtualFile file;
+    if (element instanceof PsiFileSystemItem) {
+      file = ((PsiFileSystemItem)element).getVirtualFile();
+    }
+    else {
+      file = element.getContainingFile().getVirtualFile();
+    }
+    if (file != null) {
+      return FileUtil.toSystemDependentName(file.getPath());
+    }
+    return null;
+  }
+
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
@@ -644,5 +662,23 @@ public class PyPsiUtils {
     }
 
     protected abstract void checkAddElement(PsiElement node);
+  }
+
+  /**
+   * Returns text of the given PSI element. Unlike obvious {@link PsiElement#getText()} this method unescapes text of the element if latter
+   * belongs to injected code fragment using {@link InjectedLanguageManager#getUnescapedText(PsiElement)}.
+   *
+   * @param element PSI element which text is needed
+   * @return text of the element with any host escaping removed
+   */
+  @NotNull
+  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
+    if (manager.isInjectedFragment(element.getContainingFile())) {
+      return manager.getUnescapedText(element);
+    }
+    else {
+      return element.getText();
+    }
   }
 }

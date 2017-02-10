@@ -17,13 +17,14 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,6 @@ import java.awt.*;
 import java.util.List;
 
 public class SyncScrollSupport {
-  private static final Logger LOG = Logger.getInstance(SyncScrollSupport.class);
-
   public interface SyncScrollable {
     @CalledInAwt
     boolean isSyncScrollEnabled();
@@ -286,9 +285,7 @@ public class SyncScrollSupport {
 
             doScrollVertically(editor, offsets[i], animateSlaves);
 
-            editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-              exitDisableScrollSection();
-            });
+            editor.getScrollingModel().runActionOnScrollingFinished(this::exitDisableScrollSection);
           }
         }
       });
@@ -334,6 +331,8 @@ public class SyncScrollSupport {
 
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
+      if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
+
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();
       if (oldRectangle == null) return;
@@ -456,10 +455,10 @@ public class SyncScrollSupport {
       topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], shift) : gapLines[i];
     }
 
-    int topShift = min(topShifts);
+    int topShift = ArrayUtil.min(topShifts);
 
     // check if we're at the top of file
-    topShift = Math.min(topShift, min(topOffsets));
+    topShift = Math.min(topShift, ArrayUtil.min(topOffsets));
 
     int[] offsets = new int[count];
     boolean haveEnoughSpace = true;
@@ -485,14 +484,6 @@ public class SyncScrollSupport {
     }
 
     return offsets;
-  }
-
-  private static int min(int[] values) {
-    int min = Integer.MAX_VALUE;
-    for (int value : values) {
-      if (value < min) min = value;
-    }
-    return min;
   }
 
   private static class Anchor {

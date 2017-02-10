@@ -58,7 +58,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public static final int UNKNOWN_COUNT = -1;
 
-  protected final List<VcsException> myErrors = new ArrayList<VcsException>();
+  protected final List<VcsException> myErrors = new ArrayList<>();
   protected final CvsCompositeListener myCompositeListener = new CvsCompositeListener();
   protected ErrorMessagesProcessor myErrorMessageProcessor = new ErrorMessagesProcessor(myErrors);
   private int myFilesToProcess = -1;
@@ -94,7 +94,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   }
 
   public List<VcsException> getErrorsExceptAborted() {
-    final List<VcsException> result = new ArrayList<VcsException>();
+    final List<VcsException> result = new ArrayList<>();
     for(VcsException ex: myErrorMessageProcessor.getErrors()) {
       if (!(ex.getCause() instanceof CommandAbortedException)) {
         result.add(ex);

@@ -41,13 +41,17 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -66,7 +70,9 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +148,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myProject = project;
     myEditor = editor;
     if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression
                    ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
@@ -175,7 +181,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RBRACE) {
       resultLast--;
     }
-    final ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> result = new ArrayList<>();
     for (int i = resultStart; i < resultLast; i++) {
       PsiElement element = codeBlockChildren[i];
       if (!(element instanceof PsiWhiteSpace)) {
@@ -229,7 +235,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
 
     try {
-      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements);
+      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
       if (myControlFlowWrapper.isGenerateConditionalExit()) {
         myGenerateConditionalExit = true;
       } else {
@@ -347,7 +353,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiVariable getArtificialOutputVariable() {
     if (myOutputVariables.length == 0 && myExitStatements.isEmpty()) {
       if (myCanBeChainedConstructor) {
-        final Set<PsiField> fields = new HashSet<PsiField>();
+        final Set<PsiField> fields = new HashSet<>();
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
@@ -444,7 +450,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
-    final List<PsiClass> localClasses = new ArrayList<PsiClass>();
+    final List<PsiClass> localClasses = new ArrayList<>();
     container.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitClass(final PsiClass aClass) {
         localClasses.add(aClass);
@@ -578,7 +584,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
         super.checkMethodConflicts(conflicts);
         final VariableData[] parameters = getChosenParameters();
-        final Map<String, PsiLocalVariable> vars = new HashMap<String, PsiLocalVariable>();
+        final Map<String, PsiLocalVariable> vars = new HashMap<>();
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
@@ -640,7 +646,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected String[] suggestInitialMethodName() {
     if (StringUtil.isEmpty(myInitialMethodName)) {
-      final Set<String> initialMethodNames = new LinkedHashSet<String>();
+      final Set<String> initialMethodNames = new LinkedHashSet<>();
       final JavaCodeStyleManagerImpl codeStyleManager = (JavaCodeStyleManagerImpl)JavaCodeStyleManager.getInstance(myProject);
       if (myExpression != null || !(myReturnType instanceof PsiPrimitiveType)) {
         final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
@@ -660,7 +666,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       final String nameByComment = getNameByComment();
       final PsiField field = JavaPsiFacade.getElementFactory(myProject).createField("fieldNameToReplace", myReturnType instanceof PsiEllipsisType ? ((PsiEllipsisType)myReturnType).toArrayType() : myReturnType);
-      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, propertyName -> {
+      final List<String> getters = new ArrayList<>(ContainerUtil.map(initialMethodNames, propertyName -> {
         if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
           LOG.info(propertyName + "; " + myExpression);
           return null;
@@ -668,7 +674,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         field.setName(propertyName);
         return GenerateMembersUtil.suggestGetterName(field);
       }));
-      ContainerUtil.addIfNotNull(nameByComment, getters);
+      ContainerUtil.addIfNotNull(getters, nameByComment);
       return ArrayUtil.toStringArray(getters);
     }
     return new String[] {myInitialMethodName};
@@ -774,7 +780,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         new LocalSearchScope(myTargetClass) :
                                         GlobalSearchScope.projectScope(myProject);
 
-    final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<PsiMethodCallExpression, PsiMethod>();
+    final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<>();
     final Runnable collectOverloads = () -> ApplicationManager.getApplication().runReadAction(() -> {
       Map<PsiMethodCallExpression, PsiMethod> overloads =
         ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
@@ -803,7 +809,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Nullable
   private DuplicatesFinder initDuplicates() {
-    List<PsiElement> elements = new ArrayList<PsiElement>();
+    List<PsiElement> elements = new ArrayList<>();
     for (PsiElement element : myElements) {
       if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
         elements.add(element);
@@ -812,7 +818,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     if (myExpression != null) {
       DuplicatesFinder finder = new DuplicatesFinder(PsiUtilCore.toPsiElementArray(elements), myInputVariables.copy(),
-                                                new ArrayList<PsiVariable>());
+                                                     new ArrayList<>());
       myDuplicates = finder.findDuplicates(myTargetClass);
       return finder;
     }
@@ -823,7 +829,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
       return myDuplicatesFinder;
     } else {
-      myDuplicates = new ArrayList<Match>();
+      myDuplicates = new ArrayList<>();
     }
     return null;
   }
@@ -1092,13 +1098,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean hasNormalExit() {
-    boolean hasNormalExit = false;
-    PsiElement lastElement = myElements[myElements.length - 1];
-    if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
-          lastElement instanceof PsiContinueStatement)) {
-      hasNormalExit = true;
+    try {
+      PsiCodeBlock block = JavaPsiFacade.getElementFactory(myProject).createCodeBlock();
+      block.addRange(myElements[0], myElements[myElements.length - 1]);
+      ControlFlow flow = ControlFlowFactory.getInstance(myProject).getControlFlow(block, new LocalsControlFlowPolicy(block), false, false);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
     }
-    return hasNormalExit;
+    catch (AnalysisCanceledException e) {
+      //check incomplete code as simple as possible
+      PsiElement lastElement = myElements[myElements.length - 1];
+      if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
+            lastElement instanceof PsiContinueStatement)) {
+        return true;
+      }
+      return false;
+    }
   }
 
   protected boolean isNeedToChangeCallContext() {
@@ -1155,7 +1169,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         });
       }
-      else {
+      else if (!PsiUtil.isLanguageLevel8OrHigher(method)){
         method.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
@@ -1189,7 +1203,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
-    List<Match> result = new ArrayList<Match>();
+    List<Match> result = new ArrayList<>();
     for(Match duplicate: duplicates) {
       final PsiElement matchStart = duplicate.getMatchStart();
       final PsiMethod method = PsiTreeUtil.getParentOfType(matchStart, PsiMethod.class);
@@ -1217,7 +1231,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
 
-    ArrayList<VariableData> datas = new ArrayList<VariableData>();
+    ArrayList<VariableData> datas = new ArrayList<>();
     for (final VariableData variableData : myVariableDatum) {
       if (variableData.passAsParameter) {
         datas.add(variableData);
@@ -1453,9 +1467,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     myTargetClass = myCodeFragmentMember instanceof PsiMember
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
                     : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
+    if (myTargetClass == null) {
+      LOG.error(myElements[0].getContainingFile());
+    }
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
-      final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<PsiClass, List<PsiVariable>>();
+      final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<>();
       final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass selectedClass) {
@@ -1491,7 +1508,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         if (target instanceof PsiFile) break;
         if (target instanceof PsiClass) {
           boolean success = true;
-          final List<PsiVariable> array = new ArrayList<PsiVariable>();
+          final List<PsiVariable> array = new ArrayList<>();
           for (PsiElement el : myElements) {
             if (!ControlFlowUtil.collectOuterLocals(array, el, myCodeFragmentMember, targetMember)) {
               success = false;
@@ -1601,7 +1618,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean applyChosenClassAndExtract(List<PsiVariable> inputVariables, @Nullable Pass<ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
-    final Set<PsiField> fields = new LinkedHashSet<PsiField>();
+    final Set<PsiField> fields = new LinkedHashSet<>();
     if (!PsiUtil.isLocalOrAnonymousClass(myTargetClass) && (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC))) {
       boolean canBeStatic = true;
       if (myTargetClass.isInterface()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +53,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   @Override
   public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     ModuleRootModificationUtil.addDependency(from, to, scope, false);
-    return Promise.DONE;
+    return Promises.resolvedPromise(null);
   }
 
   @Override
@@ -68,7 +69,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       String libraryName = classesRoots.size() > 1 ? descriptor.getPresentableName() : null;
       final List<String> urls = OrderEntryFix.refreshAndConvertToUrls(classesRoots);
       if (modules.size() == 1) {
-        ModuleRootModificationUtil.addModuleLibrary(firstModule, libraryName, urls, Collections.<String>emptyList(), scope);
+        ModuleRootModificationUtil.addModuleLibrary(firstModule, libraryName, urls, Collections.emptyList(), scope);
       }
       else {
         new WriteAction() {
@@ -87,13 +88,13 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
         }.execute();
       }
     }
-    return Promise.DONE;
+    return Promises.resolvedPromise(null);
   }
 
   @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     OrderEntryUtil.addLibraryToRoots(from, library);
-    return Promise.DONE;
+    return Promises.resolvedPromise(null);
   }
 
   @Override
@@ -108,6 +109,6 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(level);
       ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
     }
-    return Promise.DONE;
+    return Promises.resolvedPromise(null);
   }
 }

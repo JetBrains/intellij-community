@@ -80,7 +80,7 @@ public class ControlFlowBuilderUtil {
   }
 
   public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
-    List<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
+    List<ReadWriteVariableInstruction> result = new ArrayList<>();
     TObjectIntHashMap<String> namesIndex = buildNamesIndex(flow);
 
     TIntHashSet[] definitelyAssigned = new TIntHashSet[flow.length];
@@ -103,7 +103,7 @@ public class ControlFlowBuilderUtil {
   }
 
   private static TObjectIntHashMap<String> buildNamesIndex(Instruction[] flow) {
-    TObjectIntHashMap<String> namesIndex = new TObjectIntHashMap<String>();
+    TObjectIntHashMap<String> namesIndex = new TObjectIntHashMap<>();
     int idx = 0;
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction) {

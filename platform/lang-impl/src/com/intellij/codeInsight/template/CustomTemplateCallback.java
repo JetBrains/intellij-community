@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -84,7 +85,8 @@ public class CustomTemplateCallback {
   }
 
   public static int getOffset(@NotNull Editor editor) {
-    return Math.max(editor.getSelectionModel().getSelectionStart() - 1, 0);
+    SelectionModel selectionModel = editor.getSelectionModel();
+    return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : Math.max(editor.getCaretModel().getOffset() - 1, 0);
   }
 
   @Nullable
@@ -94,7 +96,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
-    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
         result.add(candidate);
@@ -120,7 +122,7 @@ public class CustomTemplateCallback {
   @NotNull
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
-    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
       if (!template.isDeactivated()) {
         candidates.add(template);

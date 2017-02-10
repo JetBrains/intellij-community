@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class HighlightUsagesHandlerFactoryBase implements HighlightUsagesHandlerFactory {
   @Nullable
   @Override
-  public final HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file) {
+  public final HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement target = file.findElementAt(offset);
     if (target == null) return null;

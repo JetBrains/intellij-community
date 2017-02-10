@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class MissingPackageInfoInspection extends MissingPackageInfoInspectionBa
     return new LocalMissingPackageInfoInspection(this);
   }
 
-  private class LocalMissingPackageInfoInspection extends LocalMissingPackageInfoInspectionBase {
+  private static class LocalMissingPackageInfoInspection extends LocalMissingPackageInfoInspectionBase {
 
     public LocalMissingPackageInfoInspection(MissingPackageInfoInspectionBase settingsDelegate) {
       super(settingsDelegate);
@@ -52,18 +52,12 @@ public class MissingPackageInfoInspection extends MissingPackageInfoInspectionBa
       return new InspectionGadgetsFix() {
         @NotNull
         @Override
-        public String getName() {
+        public String getFamilyName() {
           return "Create 'package-info.java'";
         }
 
-        @NotNull
         @Override
-        public String getFamilyName() {
-          return getName();
-        }
-
-        @Override
-        protected boolean prepareForWriting() {
+        public boolean startInWriteAction() {
           return false;
         }
 

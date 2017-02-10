@@ -59,6 +59,23 @@ public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase 
     assertEquals(toCheckFile.getText(), "new_key=value");
   }
 
+  public void testDifferentPropertiesDontCombinedToResourceBundle() {
+    final PsiFile xmlFile = myFixture.addFileToProject("p.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                             "<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n" +
+                                                             "<properties>\n" +
+                                                             "</properties>");
+    final PsiFile propFile = myFixture.addFileToProject("p.properties", "");
+
+    final PropertiesFile xmlPropFile = PropertiesImplUtil.getPropertiesFile(xmlFile);
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(propFile);
+
+    assertNotNull(xmlPropFile);
+    assertNotNull(propertiesFile);
+
+    assertEquals(xmlPropFile, assertOneElement(xmlPropFile.getResourceBundle().getPropertiesFiles()));
+    assertEquals(propertiesFile, assertOneElement(propertiesFile.getResourceBundle().getPropertiesFiles()));
+  }
+
   private void doTestRenameResourceBundleEntryFile(String fileNameToRenameBefore,
                                                    String fileNameToCheckBefore,
                                                    String fileNameToRenameAfter,

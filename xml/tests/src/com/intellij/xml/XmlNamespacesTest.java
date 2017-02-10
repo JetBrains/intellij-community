@@ -245,6 +245,15 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("fixAll_after.xml");
   }
 
+  public void testImplicitPrefixes() throws Exception {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" \n" +
+                                                    "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
+                                                    "        <warning descr=\"Namespace declaration is never used\">xmlns:y=\"http://www.w3.org/2001/XMLSchema\"</warning>>\n" +
+                                                    "    <element name=\"a\" default=\"x:y\"/>\n" +
+                                                    "</schema>");
+    myFixture.testHighlighting();
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }

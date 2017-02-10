@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,14 +66,14 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
     }
 
     if (expressions.size() == 1) {
-      expandForChooseExpression(expressions.get(0), editor);
+      prepareAndExpandForChooseExpression(expressions.get(0), editor);
       return;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement item = ContainerUtil.getLastItem(expressions);
       assert item != null;
-      expandForChooseExpression(item, editor);
+      prepareAndExpandForChooseExpression(item, editor);
       return;
     }
 
@@ -81,12 +81,23 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
       editor, expressions,
       new Pass<PsiElement>() {
         public void pass(@NotNull final PsiElement e) {
-          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(e.getProject(), () -> expandForChooseExpression(e, editor), "Expand postfix template", PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
+          prepareAndExpandForChooseExpression(e, editor);
         }
       },
       mySelector.getRenderer(),
       "Expressions", 0, ScopeHighlighter.NATURAL_RANGER
     );
+  }
+
+  protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
+      .executeCommand(expression.getProject(), () -> expandForChooseExpression(expression, editor), "Expand postfix template",
+                      PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   protected abstract void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor);

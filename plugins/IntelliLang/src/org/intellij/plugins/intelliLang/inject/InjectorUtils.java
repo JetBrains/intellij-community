@@ -138,7 +138,7 @@ public class InjectorUtils {
 
   private static final Map<String, LanguageInjectionSupport> ourSupports;
   static {
-    ourSupports = new LinkedHashMap<String, LanguageInjectionSupport>();
+    ourSupports = new LinkedHashMap<>();
     for (LanguageInjectionSupport support : Arrays.asList(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME))) {
       ourSupports.put(support.getId(), support);
     }
@@ -303,7 +303,7 @@ public class InjectorUtils {
 
   @NotNull
   protected static TreeMap<TextRange, BaseInjection> calcInjections(PsiFile file) {
-    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<TextRange, BaseInjection>(RANGE_COMPARATOR);
+    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
     TIntArrayList ints = new TIntArrayList();
     StringSearcher searcher = new StringSearcher("language=", true, true, false);
@@ -331,7 +331,7 @@ public class InjectorUtils {
   public static Map<String, String> decodeMap(CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
     final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
-    final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> map = new LinkedHashMap<>();
     while (matcher.find()) {
       map.put(StringUtil.unescapeStringCharacters(matcher.group(1)),
               StringUtil.unescapeStringCharacters(StringUtil.unquoteString(matcher.group(2))));

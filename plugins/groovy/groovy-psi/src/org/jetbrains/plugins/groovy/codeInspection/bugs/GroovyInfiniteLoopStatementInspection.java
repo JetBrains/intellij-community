@@ -60,7 +60,7 @@ public class GroovyInfiniteLoopStatementInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitWhileStatement(GrWhileStatement whileStatement) {
+    public void visitWhileStatement(@NotNull GrWhileStatement whileStatement) {
       super.visitWhileStatement(whileStatement);
       if (ControlFlowUtils.statementMayCompleteNormally(whileStatement)) {
         return;

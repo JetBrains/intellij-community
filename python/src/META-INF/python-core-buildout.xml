@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <!-- Components and extensions declared in this file work both in PyCharm and Python plugin (but not in CLion).
        Both Community and Professional editions. -->
 

@@ -70,7 +70,7 @@ public abstract class NonCodeMembersContributor {
   private static void ensureInit() {
     if (ourClassSpecifiedContributors != null) return;
 
-    MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<String, NonCodeMembersContributor>();
+    MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
 
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
       contributorMap.putValue(contributor.getParentClassName(), contributor);

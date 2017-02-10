@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -59,36 +60,37 @@ import java.util.List;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
-public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
+public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
-  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
+  private final List<Bookmark> myBookmarks = new ArrayList<>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
-    new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
+    new HashMap<>();
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
 
   private final MessageBus myBus;
+  private final Project myProject;
 
   private boolean mySortedState;
 
   public static BookmarkManager getInstance(Project project) {
-    return project.getComponent(BookmarkManager.class);
+    return ServiceManager.getService(project, BookmarkManager.class);
   }
 
   public BookmarkManager(Project project,
-                         MessageBus bus,
                          PsiDocumentManager documentManager,
                          EditorColorsManager colorsManager,
                          EditorFactory editorFactory) {
-    super(project);
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+    myProject = project;
+    myBus = project.getMessageBus();
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorsChanged();
       }
-    }, project);
-    myBus = bus;
+    });
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
@@ -114,15 +116,15 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       }
     });
     mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
-          mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
+      public void uiSettingsChanged(UISettings uiSettings) {
+        if (mySortedState != uiSettings.SORT_BOOKMARKS) {
+          mySortedState = uiSettings.SORT_BOOKMARKS;
           EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
-    }, project);
+    });
   }
 
   private static void map(Document document, Bookmark bookmark) {
@@ -130,7 +132,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list == null) {
-      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<Bookmark>());
+      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<>());
     }
     list.add(bookmark);
   }
@@ -162,12 +164,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     if (description != null) {
       setDescription(bookmark, description);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "BookmarkManager";
   }
 
   public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
@@ -218,7 +214,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   @NotNull
   public List<Bookmark> getValidBookmarks() {
-    List<Bookmark> answer = new ArrayList<Bookmark>();
+    List<Bookmark> answer = new ArrayList<>();
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
@@ -337,7 +333,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   private void writeExternal(Element element) {
-    List<Bookmark> reversed = new ArrayList<Bookmark>(myBookmarks);
+    List<Bookmark> reversed = new ArrayList<>(myBookmarks);
     Collections.reverse(reversed);
 
     for (Bookmark bookmark : reversed) {
@@ -470,7 +466,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (bookmark.getLine() == -1) continue;
         List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(doc);
         if (list == null) {
-          myBeforeChangeData.put(doc, list = new ArrayList<Trinity<Bookmark, Integer, String>>());
+          myBeforeChangeData.put(doc, list = new ArrayList<>());
         }
         list.add(new Trinity<>(bookmark,
                                bookmark.getLine(),
@@ -512,7 +508,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       for (Bookmark bookmark : myBookmarks) {
         if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {
           if (bookmarksToRemove == null) {
-            bookmarksToRemove = new ArrayList<Bookmark>();
+            bookmarksToRemove = new ArrayList<>();
           }
           bookmarksToRemove.add(bookmark);
         }

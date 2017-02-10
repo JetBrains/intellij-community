@@ -24,12 +24,9 @@ import com.intellij.openapi.editor.Editor;
  * @author max
  * @see RangeHighlighter#setEditorFilter(MarkupEditorFilter)
  */
+@FunctionalInterface
 public interface MarkupEditorFilter {
-  MarkupEditorFilter EMPTY = new MarkupEditorFilter() {
-    public boolean avaliableIn(Editor editor) {
-      return true;
-    }
-  };
+  MarkupEditorFilter EMPTY = editor -> true;
 
   /**
    * Checks if the highlighter is active in the specified editor.

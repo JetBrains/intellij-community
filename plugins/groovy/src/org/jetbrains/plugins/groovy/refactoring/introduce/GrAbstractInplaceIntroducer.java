@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +73,9 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   }
 
   @Override
-  public GrExpression restoreExpression(PsiFile containingFile, GrVariable variable, RangeMarker marker, String exprText) {
+  public GrExpression restoreExpression(@NotNull PsiFile containingFile, @NotNull GrVariable variable, @NotNull RangeMarker marker, String exprText) {
     if (exprText == null) return null;
-    if (variable == null || !variable.isValid()) return null;
+    if (!variable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
     GrExpression expression =
@@ -181,7 +180,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   @Nullable
   @Override
-  protected GrVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {
+  protected GrVariable createFieldToStartTemplateOn(boolean replaceAll, @NotNull String[] names) {
 
     final Settings settings = getInitialSettingsForInplace(myContext, myReplaceChoice, names);
     if (settings == null) return null;

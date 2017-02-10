@@ -17,72 +17,72 @@ package com.intellij.diff.comparison
 
 class WordComparisonUtilTest : ComparisonUtilTestBase() {
   fun testSimpleCases() {
-    words {
+    lines_inner {
       ("x z" - "y z")
       ("-  " - "-  ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x z" - "y z")
       ("-  " - "-  ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       (" x z" - "y z")
       ("--  " - "-  ").default()
       (" -  " - "-  ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x z " - "y z")
       ("-  -" - "-  ").default()
       ("-   " - "-  ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x z " - "y z")
       ("-  -" - "-  ").default()
       ("-   " - "-  ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x z" - " y z ")
       ("-  " - "--  -").default()
       ("-  " - " -   ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x y" - "x z ")
       ("  -" - "  --").default()
       ("  -" - "  - ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x,y" - "x")
       (" --" - " ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x,y" - "y")
       ("-- " - " ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       (".x=" - ".!=")
       (" - " - " - ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("X xyz1 Z" - "X xyz2 Z")
       ("  ----  " - "  ----  ").default()
       testAll()
@@ -90,52 +90,52 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testPunctuation() {
-    words {
+    lines_inner {
       (" x.z.x " - "x..x")
       ("-  -  -" - "    ").default()
       ("   -   " - "    ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x..x" - " x.z.x ")
       ("    " - "-  -  -").default()
       ("    " - "   -   ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x ... z" - "y ... z")
       ("-      " - "-      ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x ... z" - "x ... y")
       ("      -" - "      -").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x ,... z" - "x ... y")
       ("  -    -" - "      -").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x . , .. z" - "x ... y")
       ("   ---   -" - "      -").default()
       ("    -    -" - "      -").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x==y==z" - "x====z")
       ("   -   " - "      ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x====z" - "x==t==z")
       ("      " - "   -   ").default()
       testAll()
@@ -143,13 +143,13 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testOldDiffBug() {
-    words {
+    lines_inner {
       ("x'y'>" - "x'>")
       ("  -- " - "   ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x'>" - "x'y'>")
       ("   " - "  -- ").default()
       testAll()
@@ -157,14 +157,14 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testWhitespaceOnlyChanges() {
-    words {
+    lines_inner {
       ("x  =z" - "x=  z")
       (" --  " - "  -- ").default()
       testDefault()
       testTrim()
     }
 
-    words {
+    lines_inner {
       ("x  =" - "x=  z")
       (" -- " - "  ---").default()
       ("    " - "    -").ignore()
@@ -173,7 +173,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testNewlines() {
-    words {
+    lines_inner {
       (" x _ y _ z " - "x z")
       ("- ------  -" - "   ").default()
       ("     -     " - "   ").trim()
@@ -181,17 +181,48 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x z" - " x _ y _ z ")
       ("   " - "- ------  -").default()
       ("   " - "     -     ").trim()
       ("   " - "     -     ").ignore()
       testAll()
     }
+
+    words {
+      ("_i" - "i_")
+      ("- " - " -").default()
+      ("  " - "  ").trim()
+      testAll()
+    }
+
+    words {
+      ("i_" - "_i")
+      ("- " - " -").default() // TODO
+      testAll()
+    }
+
+    words {
+      ("x_y" - "xy")
+      ("   " - "  ").ignore()
+      testIgnore()
+    }
+
+    words {
+      ("A x_y B" - "a xy b")
+      ("-------" - "------").ignore()
+      testIgnore()
+    }
+
+    words {
+      ("A xy B" - "a xy b")
+      ("-    -" - "-    -").ignore()
+      testIgnore()
+    }
   }
 
   fun testFixedBugs() {
-    words {
+    lines_inner {
       (".! " - ".  y!")
       ("  -" - " --- ").default()
       ("   " - " --- ").trim()
@@ -199,7 +230,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words {
+    lines_inner {
       (" x n" - " y_  x m")
       ("   -" - "----   -").default()
       ("   -" - " -     -").trim()
@@ -207,7 +238,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x_" - "x!  ")
       (" -" - " ---").default()
       ("  " - " -  ").trim()
@@ -217,35 +248,35 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testInnerWhitespaces() {
-    words {
+    lines_inner {
       ("<< x >>" - "<.<>.>")
       ("  ---  " - " -  - ").default()
       ("   -   " - " -  - ").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("<< x >>" - "y<<x>>y")
       ("  - -  " - "-     -").default()
       ("       " - "-     -").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x .. z" - "x y .. z")
-      ("      " - " --     ").default() // TODO: looks wrong
+      ("      " - " --     ").default()
       ("      " - "  -     ").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("  x..z" - "x..y  ")
       ("--   -" - "   ---").default()
       ("     -" - "   -  ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       (" x y x _ x z x " - "x x_x x")
       ("- --  - - --  -" - "       ").default()
       ("  --      --   " - "       ").trim()
@@ -256,28 +287,28 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
 
   fun testAlgorithmSpecific() {
     // prefer words over punctuation
-    words {
+    lines_inner {
       ("...x" - "x...")
       ("--- " - " ---").default()
       testAll()
     }
 
     // prefer longer words sequences
-    words {
+    lines_inner {
       ("x x y" - "x y")
       ("--   " - "   ").default()
       ("-    " - "   ").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("y x x" - "y x")
       ("   --" - "   ").default()
       ("    -" - "   ").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("A X A B" - "A B")
       ("----   " - "   ").default()
       ("---    " - "   ").ignore()
@@ -285,14 +316,14 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
 
     // prefer less modified 'sentences'
-    words {
+    lines_inner {
       ("A.X A.Z" - "A.X A.Y A.Z")
       ("       " - "   ----    ").default()
       ("       " - "    ---    ").ignore()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("X.A Z.A" - "X.A Y.A Z.A")
       ("       " - "   ----    ").default()
       ("       " - "    ---    ").ignore()
@@ -300,7 +331,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
 
     // prefer punctuation over whitespaces
-    words {
+    lines_inner {
       (".   " - "   .")
       (" ---" - "--- ").default()
       testDefault()
@@ -308,26 +339,26 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test legacy cases from ByWordTest`() {
-    words {
+    lines_inner {
       ("abc def, 123" - "ab def, 12")
       ("---      ---" - "--      --").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       (" a[xy]+1" - ",a[]+1")
       ("-  --   " - "-     ").default()
       ("   --   " - "-     ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("0987_  a.g();_" - "yyyy_")
       ("------------- " - "---- ").default()
       testAll()
     }
 
-    words {
+    lines_inner {
       ("  abc_2222_" - "    x = abc_zzzz_")
     //("      ---- " - "--  ----    ---- ").legacy()
       ("      ---- " - " ------     ---- ").default()
@@ -335,7 +366,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words { // Idea58505
+    lines_inner { // Idea58505
       ("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {" -
        "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {")
     //("                            -                                      " -
@@ -347,7 +378,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words { // Idea56428
+    lines_inner { // Idea56428
       ("messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?)\");" -
        "messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, CREATION_TIMESTAMP, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?, ?)\");").plainSource()
     //("                                                     .                                                                                                     .   " -
@@ -359,14 +390,14 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words {
+    lines_inner {
       ("f(a, b);" - "f(a,_  b);")
       ("        " - "    --    ").default()
       ("        " - "          ").trim()
       testAll()
     }
 
-    words {
+    lines_inner {
       (" o.f(a)" - "o. f( b)")
       ("-    - " - "  -  -- ").default()
       ("     - " - "  -  -- ").trim()
@@ -374,7 +405,7 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    words {
+    lines_inner {
       (" 123 " - "xyz")
       (" --- " - "---").trim()
       testTrim()
@@ -382,14 +413,14 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun testEmptyRangePositions() {
-    words {
+    lines_inner {
       ("x? y" - "x y")
       (" -  " - "   ").default()
       default(del(1, 1, 1))
       testAll()
     }
 
-    words {
+    lines_inner {
       ("x ?y" - "x y")
       ("  - " - "   ").default()
       default(del(2, 2, 1))

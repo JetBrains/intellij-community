@@ -30,7 +30,7 @@ class NonUndoableAction implements UndoableAction {
     myGlobal = isGlobal;
     myRefs = new DocumentReference[]{ref};
     if (LOG.isDebugEnabled()) {
-      LOG.debug("global=" + isGlobal + "; doc=" + ref, new Throwable());
+      LOG.debug("global=" + isGlobal + "; doc=" + ref);
     }
   }
 

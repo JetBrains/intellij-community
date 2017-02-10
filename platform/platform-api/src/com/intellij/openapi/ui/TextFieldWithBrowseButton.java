@@ -70,7 +70,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void addBrowseFolderListener(@NotNull TextBrowseFolderListener listener) {
     listener.setOwnerComponent(this);
-    addBrowseFolderListener(null, listener, true);
+    addActionListener(listener);
     installPathCompletion(listener.getFileChooserDescriptor());
   }
 
@@ -98,7 +98,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   @Override
-  public void setText(final String text){
+  public void setText(@Nullable String text){
     getTextField().setText(text);
   }
 

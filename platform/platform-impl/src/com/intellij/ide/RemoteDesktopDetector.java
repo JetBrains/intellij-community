@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentSettings;
 import com.sun.jna.platform.win32.User32;
 
 public class RemoteDesktopDetector {
@@ -56,6 +57,7 @@ public class RemoteDesktopDetector {
         LOG.debug("Detected remote desktop: ", newValue);
         if (newValue != myRemoteDesktopConnected) {
           myRemoteDesktopConnected = newValue;
+          ComponentSettings.getInstance().setRemoteDesktopConnected(newValue);
           if (myRemoteDesktopConnected) {
             // We postpone notification to avoid recursive initialization of RemoteDesktopDetector 
             // (in case it's initialized by request from com.intellij.notification.EventLog)

@@ -23,25 +23,25 @@ import java.lang.annotation.*;
  * or does not contain such strings. This annotation is intended to be used by localization tools for
  * detecting strings which should not be reported as requiring localization.
  * <ul>
- * <li>If a method parameter is annotated with <code>NonNls</code>, the strings passed
+ * <li>If a method parameter is annotated with {@code NonNls}, the strings passed
  * as values of this parameter are not reported as requiring localization.
- * Also, if the parameter of a property setter method is annotated with <code>NonNls</code>, values
+ * Also, if the parameter of a property setter method is annotated with {@code NonNls}, values
  * of that property in UI Designer forms are never highlighted as hard-coded strings.</li>
- * <li>If a field is annotated with <code>NonNls</code>, all string literals found in the
+ * <li>If a field is annotated with {@code NonNls}, all string literals found in the
  * initializer of the field are not reported as requiring localization.</li>
- * <li>If a method is called on a field, parameter or local variable annotated with <code>NonNls</code>,
+ * <li>If a method is called on a field, parameter or local variable annotated with {@code NonNls},
  * string literals passed as parameters to the method are not reported as requiring localization.
- * <li>If a field, parameter or local variable annotated with <code>NonNls</code> is passed as a
- * parameter to the <code>equals()</code> method invoked on a string literal, the literal is not
+ * <li>If a field, parameter or local variable annotated with {@code NonNls} is passed as a
+ * parameter to the {@code equals()} method invoked on a string literal, the literal is not
  * reported as requiring localization.</li>
- * <li>If a field, parameter or local variable annotated with <code>NonNls</code> is found at
+ * <li>If a field, parameter or local variable annotated with {@code NonNls} is found at
  * the left side of an assignment expression, all string literals in the right side
  * of the expression are not reported as requiring localization.</li>
- * <li>If a method is annotated with <code>NonNls</code>, string literals returned from the method
+ * <li>If a method is annotated with {@code NonNls}, string literals returned from the method
  * are not reported as requiring localization.</li>
- * <li>If a class is annotated with <code>NonNls</code>, all string literals in
+ * <li>If a class is annotated with {@code NonNls}, all string literals in
  * the class and all its subclasses are not reported as requiring localization.</li>
- * <li>If a package is annotated with <code>NonNls</code>, all string literals in
+ * <li>If a package is annotated with {@code NonNls}, all string literals in
  * the package and all its subpackages are not reported as requiring localization.</li>
  * </ul>
  *

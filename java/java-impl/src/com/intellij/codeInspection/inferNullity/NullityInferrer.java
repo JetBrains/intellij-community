@@ -17,7 +17,6 @@ package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -42,8 +41,8 @@ public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
   private int numAnnotationsAdded;
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 
@@ -182,7 +181,7 @@ public class NullityInferrer {
   private static void invoke(final Project project,
                              final PsiModifierListOwner element,
                              final String fqn, final String toRemove) {
-    WriteCommandAction.runWriteCommandAction(project, () -> new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile()));
+    new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
   }
 
   public int getCount() {

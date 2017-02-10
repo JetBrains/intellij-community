@@ -55,7 +55,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     setTitle(PyBundle.message("sdk.create.venv.conda.dialog.title"));
     final List<String> pythonVersions = UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS;
     Collections.reverse(pythonVersions);
-    mySdkCombo.setModel(new CollectionComboBoxModel<String>(pythonVersions));
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(pythonVersions));
     mySdkCombo.setSelectedItem("3.5");
     checkValid();
   }

@@ -33,7 +33,7 @@ public abstract class Filter<T extends AbstractTestProxy> {
   public abstract boolean shouldAccept(T test);
 
   public List<T> select(final List<? extends T> tests) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (final T test : tests) {
       if (shouldAccept(test)) result.add(test);
     }

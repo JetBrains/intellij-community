@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyAnnotationImpl;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     this("ANNOTATION");
   }
 
-  public PyAnnotationElementType(String debugName) {
+  public PyAnnotationElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
@@ -46,10 +47,12 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     return new PyAnnotationImpl(stub);
   }
 
+  @NotNull
   public PyAnnotationStub createStub(@NotNull final PyAnnotation psi, final StubElement parentStub) {
     return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyAnnotationImpl(node);
   }

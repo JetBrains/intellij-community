@@ -35,6 +35,7 @@ import com.intellij.lang.documentation.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,8 +64,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -77,7 +76,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -167,9 +165,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   /**
-   * @return    <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
+   * @return    {@code true} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
    *            the user presses a key);
-   *            <code>false</code> otherwise
+   *            {@code false} otherwise
    */
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
@@ -191,7 +189,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
-          if (action instanceof ScrollingUtil.ListScrollAction) return;
+          if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
@@ -209,11 +207,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();
         }
-      }
-
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     };
     myActionManager.addAnActionListener(actionListener, project);
@@ -265,7 +258,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    * @param element        target element which documentation should be shown
    * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
    *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                       declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
+   *                       declaration but {@code 'element'} argument is a {@code Runnable} descriptor
    * @param closeCallback  callback to be notified on target hint close (if any)
    * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
    *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
@@ -282,9 +275,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myCloseOnSneeze = closeOnSneeze;
     showJavaDocInfo(element, original, closeCallback);
   }
-  
+
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
+                              @Nullable Runnable closeCallback) {
+    showJavaDocInfo(element, original, false, closeCallback);
+  }
+
+  public void showJavaDocInfo(@NotNull final PsiElement element,
+                              final PsiElement original,
+                              final boolean requestFocus,
                               @Nullable Runnable closeCallback) {
     if (!element.isValid()) {
       return;
@@ -294,12 +294,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, false, this, original, null);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null);
         }
       }
     };
 
-    doShowJavaDocInfo(element, false, updateProcessor, original, closeCallback);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, original, closeCallback);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
@@ -533,7 +533,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     fetchDocInfo(getDefaultCollector(element, originalElement), component);
 
-    myDocInfoHintRef = new WeakReference<JBPopup>(hint);
+    myDocInfoHintRef = new WeakReference<>(hint);
 
     if (fromQuickSearch() && myPreviouslyFocused != null) {
       ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
@@ -704,6 +704,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
 
+    ModalityState modality = ModalityState.defaultModalityState();
+
     myUpdateDocAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       LOG.debug("Started fetching documentation...");
@@ -770,7 +772,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         // Set panel name so that it is announced by readers when it gets the focus
         AccessibleContextUtil.setName(component, getTitle(element, false));
         callback.setDone();
-      });
+      }, modality);
     }, 10);
     return callback;
   }
@@ -795,7 +797,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     PsiFile containingFile =
       originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
-    Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
+    Set<DocumentationProvider> result = new LinkedHashSet<>();
 
     final Language containingFileLanguage = containingFile != null ? containingFile.getLanguage() : null;
     DocumentationProvider originalProvider =
@@ -815,7 +817,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (element instanceof PsiDirectory) {
-      final Set<Language> langs = new HashSet<Language>();
+      final Set<Language> langs = new HashSet<>();
 
       for (PsiFile file : ((PsiDirectory)element).getFiles()) {
         final Language baseLanguage = file.getViewProvider().getBaseLanguage();
@@ -1136,7 +1138,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
-      final Ref<String> result = new Ref<String>();
+      final Ref<String> result = new Ref<>();
       QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
         String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);

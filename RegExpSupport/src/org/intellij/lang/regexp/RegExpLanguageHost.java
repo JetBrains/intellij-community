@@ -32,8 +32,43 @@ public interface RegExpLanguageHost {
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
 
+  default boolean isValidGroupName(String name, @NotNull PsiElement context) {
+    for (int i = 0, length = name.length(); i < length; i++) {
+      final char c = name.charAt(i);
+      if (!AsciiUtil.isLetterOrDigit(c) && c != '_') {
+        return false;
+      }
+    }
+    return true;
+  }
+
   default boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
     return true;
+  }
+
+  default boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return false;
+  }
+
+  default boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    return supportsNamedCharacters(namedCharacter);
+  }
+
+  default boolean supportsBoundary(RegExpBoundary boundary) {
+    switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME:
+        return false;
+      case LINE_START:
+      case LINE_END:
+      case WORD:
+      case NON_WORD:
+      case BEGIN:
+      case END:
+      case END_NO_LINE_TERM:
+      case PREVIOUS_MATCH:
+      default:
+        return true;
+    }
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {
@@ -51,4 +86,13 @@ public interface RegExpLanguageHost {
   String getPropertyDescription(@Nullable final String name);
   @NotNull
   String[][] getKnownCharacterClasses();
+
+  /**
+   * @param number  the number element to extract the value from
+   * @return the value, or null when the value is out of range
+   */
+  @Nullable
+  default Number getQuantifierValue(@NotNull RegExpNumber number) {
+    return Double.parseDouble(number.getText());
+  }
 }

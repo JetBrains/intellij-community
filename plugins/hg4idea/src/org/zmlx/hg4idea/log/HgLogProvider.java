@@ -31,15 +31,20 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
+import com.intellij.vcs.log.util.UserNameRegex;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -66,9 +71,9 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
-                                                   @NotNull Requirements requirements) throws VcsException {
+                                        @NotNull Requirements requirements) throws VcsException {
     List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                                                           Collections.<String>emptyList());
+                                                                 Collections.<String>emptyList());
     return new LogDataImpl(readAllRefs(root), commits);
   }
 
@@ -76,12 +81,36 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
-    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<VcsUser>(userRegistry),
+    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<>(userRegistry),
                                                                Collections.<String>emptyList());
     for (TimedVcsCommit commit : commits) {
       commitConsumer.consume(commit);
     }
     return new LogDataImpl(readAllRefs(root), userRegistry);
+  }
+
+  @Override
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    readFullDetails(root, ContainerUtil.newArrayList(), commitConsumer);
+  }
+
+  @Override
+  public void readFullDetails(@NotNull VirtualFile root,
+                              @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+    throws VcsException {
+    // this method currently is very slow and time consuming
+    // so indexing is not to be used for mercurial for now
+    HgVcs hgvcs = HgVcs.getInstance(myProject);
+    assert hgvcs != null;
+    final HgVersion version = hgvcs.getVersion();
+    final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+
+    HgCommandResult logResult = HgHistoryUtil.getLogResult(myProject, root, version, -1,
+                                                           HgHistoryUtil.prepareHashes(hashes), HgChangesetUtil.makeTemplate(templates));
+    if (logResult == null) return;
+    if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
+    HgHistoryUtil.createFullCommitsFromResult(myProject, root, logResult, version, false).forEach(commitConsumer::consume);
   }
 
   @NotNull
@@ -116,7 +145,7 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
     Collection<HgNameWithHashInfo> mqAppliedPatches = repository.getMQAppliedPatches();
 
-    Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
+    Set<VcsRef> refs = new HashSet<>(branches.size() + bookmarks.size());
 
     for (Map.Entry<String, LinkedHashSet<Hash>> entry : branches.entrySet()) {
       String branchName = entry.getKey();
@@ -128,7 +157,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
       refs.add(myVcsObjectsFactory.createRef(bookmarkInfo.getHash(), bookmarkInfo.getName(),
-                         HgRefManager.BOOKMARK, root));
+                                             HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
@@ -143,7 +172,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
     for (HgNameWithHashInfo localTagInfo : localTags) {
       refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
-                              HgRefManager.LOCAL_TAG, root));
+                                             HgRefManager.LOCAL_TAG, root));
     }
     for (HgNameWithHashInfo mqPatchRef : mqAppliedPatches) {
       refs.add(myVcsObjectsFactory.createRef(mqPatchRef.getHash(), mqPatchRef.getName(),
@@ -222,7 +251,8 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       filterParameters.add("-r");
       String authorFilter =
-        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.EXTENDED_INSTANCE), "|");
+        StringUtil.join(ContainerUtil.map(ContainerUtil.map(filterCollection.getUserFilter().getUsers(root), VcsUserUtil::toExactString),
+                                          UserNameRegex.EXTENDED_INSTANCE), "|");
       filterParameters.add("user('re:" + authorFilter + "')");
     }
 
@@ -248,7 +278,17 @@ public class HgLogProvider implements VcsLogProvider {
 
     if (filterCollection.getTextFilter() != null) {
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      if (filterCollection.getTextFilter().isRegex()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + textFilter + "')");
+      }
+      else if (filterCollection.getTextFilter().matchesCase()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + StringUtil.escapeChars(textFilter, UserNameRegex.EXTENDED_REGEX_CHARS) + "')");
+      }
+      else {
+        filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      }
     }
 
     if (filterCollection.getStructureFilter() != null) {
@@ -298,6 +338,9 @@ public class HgLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    if (property == VcsLogProperties.CASE_INSENSITIVE_REGEX) {
+      return (T)Boolean.FALSE;
+    }
     return null;
   }
 }

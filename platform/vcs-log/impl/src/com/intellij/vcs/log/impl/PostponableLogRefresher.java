@@ -104,7 +104,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   protected void refreshPostponedRoots() {
-    Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
+    Set<VirtualFile> toRefresh = new HashSet<>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
     myLogData.refresh(toRefresh);
   }

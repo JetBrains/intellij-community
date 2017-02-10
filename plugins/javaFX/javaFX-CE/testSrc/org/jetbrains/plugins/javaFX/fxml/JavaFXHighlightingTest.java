@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
@@ -133,7 +135,16 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   public void testInjectedController() throws Exception {
     myFixture.copyFileToProject("injected/MyController.java");
     myFixture.copyFileToProject("injected/FooVBox.java");
-    doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
+
+    final RegistryValue registryValue = Registry.get("javafx.fxml.controller.from.loader");
+    final boolean injectionAllowed = registryValue.asBoolean();
+    try {
+      registryValue.setValue(true);
+      doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
+    }
+    finally {
+      registryValue.setValue(injectionAllowed);
+    }
   }
 
   public void testControllerInExpression() throws Exception{
@@ -374,6 +385,14 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testNullObjectValue() throws Exception {
+    doTest();
+  }
+
+  public void testNullPrimitiveValue() throws Exception {
+    doTest();
+  }
+
   public void testFactoryMethod() throws Exception {
     doTest();
   }
@@ -471,7 +490,22 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, true, true, superclass + ".java");
   }
 
-  private void doTest() throws Exception {
+  public void testResourceKeyInAttribute() throws Exception {
+    myFixture.addFileToProject("messages.properties", "string.key=My text\n" +
+                                                      "double.key=123.456\n");
+    doTest();
+  }
+
+  public void testFxIdUsedInSameNode() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doTest();
+  }
+
+  public void testConstructorNamedArg() {
+    doTest();
+  }
+
+  private void doTest() {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 

@@ -41,7 +41,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
     final Presentation presentation = e.getPresentation();
     if (!items.isEmpty()) {
       enabled = true;
-      Set<String> paths = new HashSet<String>();
+      Set<String> paths = new HashSet<>();
       for (PackagingSourceItem item : items) {
         final String path = getDefaultPath(item);
         if (path == null) {

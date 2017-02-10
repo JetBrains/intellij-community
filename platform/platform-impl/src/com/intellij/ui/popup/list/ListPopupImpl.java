@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -530,20 +529,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBListWithHintProvider implements DataProvider {
+  private class MyList extends JBList implements DataProvider {
     public MyList() {
       super(myListModel);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      return selectedValue instanceof PsiElement ? (PsiElement)selectedValue : null;
+      HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
       Dimension result = super.getPreferredScrollableViewportSize();
-      result.width += JBUI.scale(14); // support possible scroll bar
       int rowCount = getVisibleRowCount();
       int size = getModel().getSize();
       if (rowCount < size) {
@@ -580,6 +574,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
          return myList.getSelectedValues();
+      }
+      if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
+        if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
+          return mySpeedSearchPatternField;
+        }
       }
       return null;
     }

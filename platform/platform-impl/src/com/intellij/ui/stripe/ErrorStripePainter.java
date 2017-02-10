@@ -309,7 +309,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
     @Override
     boolean add(ErrorStripe stripe) {
       if (stripe == null) return false;
-      if (mySet == null) mySet = new TreeSet<ErrorStripe>();
+      if (mySet == null) mySet = new TreeSet<>();
       mySet.add(stripe);
       myModified = true;
       return true;

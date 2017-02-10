@@ -15,6 +15,8 @@
  */
 package com.jetbrains.javascript.debugger;
 
+import com.intellij.javascript.debugger.ExpressionInfoFactory;
+import com.intellij.javascript.debugger.NameMapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;

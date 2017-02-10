@@ -21,6 +21,7 @@ import com.jetbrains.python.debugger.PositionConverterProvider;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
@@ -56,7 +57,7 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
 
     processHandler.addColoredTextListener(new AnsiEscapeDecoder.ColoredTextAcceptor() {
       @Override
-      public void coloredTextAvailable(String text, Key attributes) {
+      public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
         PyConsoleDebugProcessHandler.this.notifyTextAvailable(text, attributes);
       }
     });

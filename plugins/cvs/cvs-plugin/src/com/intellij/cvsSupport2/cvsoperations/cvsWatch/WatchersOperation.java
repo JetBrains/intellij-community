@@ -29,7 +29,7 @@ import java.util.List;
  * author: lesya
  */
 public class WatchersOperation extends CvsOperationOnFiles{
-  private final List<WatcherInfo> myWatchers = new ArrayList<WatcherInfo>();
+  private final List<WatcherInfo> myWatchers = new ArrayList<>();
   public WatchersOperation(VirtualFile[] files){
     for (int i = 0; i < files.length; i++) {
       addFile(files[i]);

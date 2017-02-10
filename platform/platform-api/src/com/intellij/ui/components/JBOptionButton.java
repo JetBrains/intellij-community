@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private String myOptionTooltipText;
 
-  private Set<OptionInfo> myOptionInfos = new HashSet<OptionInfo>();
+  private Set<OptionInfo> myOptionInfos = new HashSet<>();
   private boolean myOkToProcessDefaultMnemonics = true;
 
   private IdeGlassPane myGlassPane;
@@ -193,7 +193,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     final JPopupMenu popup = above ? myAbovePopup : myUnderPopup;
 
-    final Ref<PopupMenuListener> listener = new Ref<PopupMenuListener>();
+    final Ref<PopupMenuListener> listener = new Ref<>();
     listener.set(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -367,7 +367,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     boolean dark = UIUtil.isUnderDarcula();
     int off = dark ? 6 : 0;
-    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
+    Icon icon = AllIcons.General.ArrowDown;
+    if (UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderWin10LookAndFeel()) {
+      icon = AllIcons.General.ArrowDown_white;
+    }
+    icon.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
     if (dark) return;
 
     final Insets insets = getInsets();

@@ -1,0 +1,11 @@
+Backward Hierarchy:
+java.lang.Object -> Foo
+
+Backward References:
+Foo in Foo
+Foo.<init>(0) in Foo
+Foo.m(0) in Foo
+java.lang.Object.<init>(0) in Foo
+
+Class Definitions:
+Foo in Foo

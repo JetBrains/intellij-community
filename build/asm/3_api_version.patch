@@ -1,0 +1,13 @@
+Index: org/objectweb/asm/Opcodes.java
+===================================================================
+--- org/objectweb/asm/Opcodes.java
++++ org/objectweb/asm/Opcodes.java
+@@ -49,6 +49,8 @@
+     int ASM5 = 5 << 16 | 0 << 8 | 0;
+     int ASM6 = 6 << 16 | 0 << 8 | 0;
+ 
++    int API_VERSION = ASM6;  //[JB: convenience constant]
++
+     // versions
+ 
+     int V1_1 = 3 << 16 | 45;

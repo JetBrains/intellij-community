@@ -100,7 +100,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     /**
      * @param text        action's text.
      * @param description action's description.
-     * @param filter      filter to be applied. <code>null</code> value means "empty" filter.
+     * @param filter      filter to be applied. {@code null} value means "empty" filter.
      * @param settings
      * @param todoFilterConsumer
      */

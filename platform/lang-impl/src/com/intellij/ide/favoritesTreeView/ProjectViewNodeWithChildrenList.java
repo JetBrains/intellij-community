@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode
 
   protected ProjectViewNodeWithChildrenList(Project project, T t, ViewSettings viewSettings) {
     super(project, t, viewSettings);
-    myChildren = new ArrayList<AbstractTreeNode>();
+    myChildren = new ArrayList<>();
   }
 
   @NotNull
@@ -48,23 +48,5 @@ public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode
   public void addChild(final AbstractTreeNode node) {
     myChildren.add(node);
     node.setParent(this);
-  }
-
-  public void addChildBefore(final AbstractTreeNode newNode, final AbstractTreeNode existingNode) {
-    int idx = -1;
-    for (int i = 0; i < myChildren.size(); i++) {
-      AbstractTreeNode node = myChildren.get(i);
-      // exactly the same node!
-      if (node == existingNode) {
-        idx = i;
-        break;
-      }
-    }
-    if (idx == -1) {
-      addChild(newNode);
-    }
-    else {
-      myChildren.add(idx, newNode);
-    }
   }
 }

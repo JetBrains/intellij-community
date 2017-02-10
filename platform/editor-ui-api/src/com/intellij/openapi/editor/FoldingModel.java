@@ -27,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 public interface FoldingModel {
   /**
    * Adds a fold region for the specified range of the document. This method must be called
-   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   * from the {@code Runnable} passed to {@link #runBatchFoldingOperation(Runnable)}.
    * The region is initially not folded.
    *
    * @param startOffset     the start offset of the region to fold.
    * @param endOffset       the end offset of the region to fold.
    * @param placeholderText the text to display instead of the region contents when the region is folded.
-   * @return the fold region, or <code>null</code> if folding is currently disabled or corresponding region cannot be added (e.g. if it
+   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g. if it
    * intersects with another existing region)
    */
   @Nullable
@@ -41,16 +41,16 @@ public interface FoldingModel {
 
   /**
    * Tries to add given region to the folding model. This method must be called
-   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   * from the {@code Runnable} passed to {@link #runBatchFoldingOperation(Runnable)}.
    *
-   * @return <code>true</code>, if region was added successfully, <code>false</code> if the region cannot be added, e.g. if it
+   * @return {@code true}, if region was added successfully, {@code false} if the region cannot be added, e.g. if it
    * intersects with another existing region
    */
   boolean addFoldRegion(@NotNull FoldRegion region);
 
   /**
    * Removes the specified fold region. This method must be called
-   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   * from the {@code Runnable} passed to {@link #runBatchFoldingOperation(Runnable)}.
    *
    * @param region the region to remove.
    */
@@ -79,7 +79,7 @@ public interface FoldingModel {
   boolean isOffsetCollapsed(int offset);
 
   /**
-   * Returns collapsed folded region at a given offset or <code>null</code> if there's no such region. Returned region will satisfy the
+   * Returns collapsed folded region at a given offset or {@code null} if there's no such region. Returned region will satisfy the
    * following condition: region.getStartOffset() <= offset < region.getEndOffset()
    * <br>
    * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
@@ -90,7 +90,7 @@ public interface FoldingModel {
   FoldRegion getCollapsedRegionAtOffset(int offset);
 
   /**
-   * Returns fold region with given boundaries, if it exists, or <code>null</code> otherwise. 
+   * Returns fold region with given boundaries, if it exists, or {@code null} otherwise.
    */
   @Nullable
   FoldRegion getFoldRegion(int startOffset, int endOffset);

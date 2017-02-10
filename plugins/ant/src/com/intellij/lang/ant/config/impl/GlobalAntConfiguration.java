@@ -59,7 +59,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     }
   };
 
-  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<GlobalAntConfiguration>(
+  public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<>(
     "$GlobalAntConfiguration.INSTANCE", null);
   @NonNls public static final String ANT_FILE = "ant";
   @NonNls public static final String LIB_DIR = "lib";
@@ -152,7 +152,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
       return null;
     }
     final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(project);
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       if (vFile.equals(buildFile.getVirtualFile())) {
         final AntBuildTarget target = buildFile.getModel().findTarget(targetName);
         if (target != null) {

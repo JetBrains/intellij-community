@@ -162,7 +162,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
               AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
             for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew, JAVA_CLASS_INSERT_HANDLER, condition)) {
               element.setLookupString(prefix + element.getLookupString());
-              consumer.consume(element);
+              JavaConstructorCallElement.wrap(element, insertedElement).forEach(consumer::consume);
             }
           }
         } else {
@@ -232,7 +232,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
                                                                           Condition<PsiClass> condition) {
-    List<JavaPsiClassReferenceElement> result = new SmartList<JavaPsiClassReferenceElement>();
+    List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
     }

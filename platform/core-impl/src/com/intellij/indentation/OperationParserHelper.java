@@ -137,14 +137,14 @@ public class OperationParserHelper {
     void advance();
 
     /**
-     * See what token type is in <code>step</code> ahead / benind (including whitespaces)
+     * See what token type is in {@code step} ahead / benind (including whitespaces)
      * @param step 0 is current token, -1 is previous, 1 is next and so on
      * @return IElementType of the required element
      */
     IElementType rawLookup(int step);
 
     /**
-     * See what token type is in <code>step</code> ahead (not including whitespaces)
+     * See what token type is in {@code step} ahead (not including whitespaces)
      * @param step 0 is current token, 1 is next and so on
      * @return IElementType of the required element
      */

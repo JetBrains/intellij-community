@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.rt.execution.junit;
 
 import junit.framework.ComparisonFailure;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,26 +73,25 @@ public class ComparisonFailureData {
   public static void registerSMAttributes(ComparisonFailureData notification,
                                           String trace,
                                           String failureMessage,
-                                          Map attrs, 
+                                          Map attrs,
                                           Throwable throwable) {
+    registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ", "expected:<");
+  }
+
+  public static void registerSMAttributes(ComparisonFailureData notification, String trace,
+                                          String failureMessage,
+                                          Map attrs,
+                                          Throwable throwable,
+                                          String comparisonFailurePrefix,
+                                          final String expectedPrefix) {
 
     final int failureIdx = failureMessage != null ? trace.indexOf(failureMessage) : -1;
     final int failureMessageLength = failureMessage != null ? failureMessage.length() : 0;
-    attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace);
+    String details = failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace;
+    attrs.put("details", details);
  
     if (notification != null) {
-      attrs.put("expected", notification.getExpected());
-      attrs.put("actual", notification.getActual());
-
-      final String filePath = notification.getFilePath();
-      if (filePath != null) {
-        attrs.put("expectedFile", filePath);
-      }
-      final String actualFilePath = notification.getActualFilePath();
-      if (actualFilePath != null) {
-        attrs.put("actualFile", actualFilePath);
-      }
-      final int expectedIdx = trace.indexOf("expected:<");
+      final int expectedIdx = trace.indexOf(expectedPrefix);
       final String comparisonFailureMessage;
       if (expectedIdx > 0) {
         comparisonFailureMessage = trace.substring(0, expectedIdx);
@@ -98,9 +100,32 @@ public class ComparisonFailureData {
         comparisonFailureMessage = trace.substring(0, failureIdx + failureMessageLength);
       }
       else {
-        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + "Comparison Failure: ";
+        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + comparisonFailurePrefix;
       }
       attrs.put("message", comparisonFailureMessage);
+
+      final String filePath = notification.getFilePath();
+      final String actualFilePath = notification.getActualFilePath();
+      final String expected = notification.getExpected();
+      final String actual = notification.getActual();
+
+      int fullLength = (filePath == null && expected != null ? expected.length() : 0) +
+                       (actualFilePath == null && actual != null ? actual.length() : 0) +
+                       details.length() +
+                       comparisonFailureMessage.length() + 100;
+      if (filePath != null) {
+        attrs.put("expectedFile", filePath);
+      }
+      else {
+        writeDiffSide(attrs, "expected", expected, fullLength);
+      }
+
+      if (actualFilePath != null) {
+        attrs.put("actualFile", actualFilePath);
+      }
+      else {
+        writeDiffSide(attrs, "actual", actual, fullLength);
+      }
     }
     else {
       Throwable throwableCause = null;
@@ -112,9 +137,40 @@ public class ComparisonFailureData {
       if (!isAssertionError(throwable.getClass()) && !isAssertionError(throwableCause != null ? throwableCause.getClass() : null)) {
         attrs.put("error", "true");
       }
-      attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength) 
+      attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength)
                                            : failureMessage != null ? failureMessage : "");
     }
+  }
+
+  private static void writeDiffSide(Map attrs, final String expectedOrActualPrefix, final String text, int fullLength) {
+    String property = System.getProperty("idea.test.cyclic.buffer.size");
+
+    int threshold;
+    try {
+      threshold = Integer.parseInt(property);
+    }
+    catch (NumberFormatException ignored) {
+      threshold = -1;
+    }
+
+    if (threshold > 0 && fullLength > threshold) {
+      try {
+        //noinspection SSBasedInspection
+        File tempFile = File.createTempFile(expectedOrActualPrefix, "");
+        OutputStream stream = new FileOutputStream(tempFile);
+        try {
+          stream.write(text.getBytes("UTF-8"), 0, text.length());
+        }
+        finally {
+          stream.close();
+        }
+        attrs.put(expectedOrActualPrefix + "File", tempFile.getAbsolutePath());
+        attrs.put(expectedOrActualPrefix + "IsTempFile", "true");
+        return;
+      }
+      catch (Throwable ignored) {}
+    }
+    attrs.put(expectedOrActualPrefix, text);
   }
 
   public static boolean isAssertionError(Class throwableClass) {
@@ -143,7 +199,7 @@ public class ComparisonFailureData {
   public static ComparisonFailureData create(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
-      return new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(), 
+      return new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(),
                                        comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
     }
     try {
@@ -157,11 +213,11 @@ public class ComparisonFailureData {
   public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
      return get(assertion, ACTUAL, "fActual");
    }
- 
+
    public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
      return get(assertion, EXPECTED, "fExpected");
    }
- 
+
    private static String get(final Throwable assertion, final Map staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
      String actual;
      if (assertion instanceof ComparisonFailure) {

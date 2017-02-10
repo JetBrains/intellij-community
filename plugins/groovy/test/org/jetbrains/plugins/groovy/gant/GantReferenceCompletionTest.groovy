@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
+class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
   static def descriptor = new GantProjectDescriptor()
 
   final LightProjectDescriptor projectDescriptor = descriptor
@@ -47,7 +47,7 @@ public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase
     assert myFixture.lookupElementStrings.containsAll(items as List)
   }
 
-  public void testDep() {
+  void testDep() {
     checkVariants """
 target(aaa: "") {
     dep<caret>
@@ -55,25 +55,25 @@ target(aaa: "") {
 """, "depends", "dependset"
   }
 
-  public void testAntBuilderJavac() {
+  void testAntBuilderJavac() {
     checkVariants """
 target(aaa: "") {
     ant.jav<caret>
 }""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
-  public void testAntJavacTarget() {
+  void testAntJavacTarget() {
     checkVariants """
 target(aaa: "") {
     jav<caret>
 }""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
-  public void testInclude() {
+  void testInclude() {
     checkVariants "inc<caret>", "include", "includeTool", "includeTargets"
   }
 
-  public void testMutual() {
+  void testMutual() {
     checkVariants """
 target(genga: "") { }
 target(aaa: "") {
@@ -81,18 +81,18 @@ target(aaa: "") {
 }""", 'genga'
   }
 
-  public void testUnknownQualifier() {
+  void testUnknownQualifier() {
     complete """
 target(aaa: "") {
     foo.jav<caret>
 }"""
   }
 
-  public void testTopLevelNoAnt() {
+  void testTopLevelNoAnt() {
     complete "jav<caret>"
   }
 
-  public void testInMethodNoAnt() {
+  void testInMethodNoAnt() {
     complete """
 target(aaa: "") {
   foo()
@@ -104,11 +104,11 @@ def foo() {
 """
   }
 
-  public void testPatternset() throws Exception {
+  void testPatternset() throws Exception {
     checkVariants "ant.patt<caret>t", "patternset"
   }
 
-  public void testTagsInsideTags() throws Exception {
+  void testTagsInsideTags() throws Exception {
     myFixture.configureByText "a.groovy", """
 AntBuilder ant
 ant.zip {
@@ -119,8 +119,8 @@ ant.zip {
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "include", "includesfile"
   }
-  
-  public void testTagsInsideTagsInGantTarget() throws Exception {
+
+  void testTagsInsideTagsInGantTarget() throws Exception {
     checkVariants """
 target(aaa: "") {
   zip {
@@ -131,7 +131,7 @@ target(aaa: "") {
 }""", "include", "includesfile", "includeTargets", "includeTool"
   }
 
-  public void testUntypedTargets() throws Exception {
+  void testUntypedTargets() throws Exception {
     myFixture.enableInspections(new GroovyUntypedAccessInspection())
 
     myFixture.configureByText "a.gant", """
@@ -144,7 +144,7 @@ target (default : '') {
 
   }
 
-  public void testStringTargets() throws Exception {
+  void testStringTargets() throws Exception {
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
 
     myFixture.configureByText "a.gant", """
@@ -162,15 +162,15 @@ target (default : '') {
 }
 
 class GantProjectDescriptor extends DefaultLightProjectDescriptor {
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+  void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel()
 
       def fs = JarFileSystem.instance
-      modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES);
+      modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES)
 
       GantReferenceCompletionTest.GANT_JARS.each {
-        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES);
+        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES)
       }
-      modifiableModel.commit();
+      modifiableModel.commit()
     }
 }

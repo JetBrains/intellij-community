@@ -71,8 +71,4 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   public String getId() {
     return "Mercurial.Project";
   }
-
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

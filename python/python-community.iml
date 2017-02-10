@@ -24,6 +24,8 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="xml-openapi" />
+    <orderEntry type="module" module-name="vcs-api" />
   </component>
 </module>
 

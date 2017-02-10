@@ -58,7 +58,7 @@ public class SmartIntToIntArrayMap {
 
   private void addToMultimap(int key, int value) {
     if (myMultipleValuesMap == null) {
-      myMultipleValuesMap = new TIntObjectHashMap<TIntArrayList>(10, 0.9f);
+      myMultipleValuesMap = new TIntObjectHashMap<>(10, 0.9f);
     }
 
     final TIntObjectHashMap<TIntArrayList> map = myMultipleValuesMap;

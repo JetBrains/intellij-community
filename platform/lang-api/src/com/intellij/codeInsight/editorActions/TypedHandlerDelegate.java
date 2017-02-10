@@ -23,6 +23,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Handler, extending IDE behaviour on typing in editor.
+ *
  * @author yole
  */
 public abstract class TypedHandlerDelegate {
@@ -30,17 +32,22 @@ public abstract class TypedHandlerDelegate {
 
   /**
    * If the specified character triggers auto-popup, schedules the auto-popup appearance. This method is called even
-   * in overwrite mode, when the rest of typed handler delegate methods are not called.
+   * in overwrite mode, when the rest of typed handler delegate methods are not called. It is invoked only for the primary caret.
    */
   public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
     return Result.CONTINUE;
   }
 
   /**
+   * Called before selected text is deleted.
+   * This method is supposed to be overridden by handlers having custom behaviour with respect to selection.
+   */
+  public Result beforeSelectionRemoved(char c, final Project project, final Editor editor, final PsiFile file) {
+    return Result.CONTINUE;
+  }
+
+  /**
    * Called before the specified character typed by the user is inserted in the editor.
-   *
-   * @return true if the typing has been processed (in this case, no further delegates are called and the character is not inserted),
-   *         false otherwise.
    */
   public Result beforeCharTyped(char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     return Result.CONTINUE;

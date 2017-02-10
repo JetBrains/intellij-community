@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 import static java.awt.Cursor.*;
+import static java.awt.event.InputEvent.BUTTON1_MASK;
 
 /**
  * @author Sergey Malenkov
@@ -43,5 +44,24 @@ public class WindowMoveListener extends WindowMouseListener {
   @Override
   public void mouseMoved(MouseEvent event) {
     // ignore cursor updating
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent event) {
+    if (event.isConsumed()) return;
+    if (BUTTON1_MASK == (BUTTON1_MASK & event.getModifiers()) && 1 < event.getClickCount()) {
+      Component view = getView(getContent(event));
+      if (view instanceof Frame) {
+        Frame frame = (Frame)view;
+        int state = frame.getExtendedState();
+        if (!isStateSet(Frame.ICONIFIED, state) && frame.isResizable()) {
+          event.consume();
+          frame.setExtendedState(isStateSet(Frame.MAXIMIZED_BOTH, state)
+                                 ? (state & ~Frame.MAXIMIZED_BOTH)
+                                 : (state | Frame.MAXIMIZED_BOTH));
+        }
+      }
+    }
+    super.mouseClicked(event);
   }
 }

@@ -10,9 +10,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface IpnbConnectionListener {
   void onOpen(@NotNull IpnbConnection connection);
+
   void onOutput(@NotNull IpnbConnection connection,
                 @NotNull String parentMessageId);
 
   void onPayload(@Nullable final String payload,
                  @NotNull String parentMessageId);
+
+  void onFinished(@NotNull IpnbConnection connection,
+                  @NotNull String parentMessageId);
 }

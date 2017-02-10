@@ -23,14 +23,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     this("NAMED_PARAMETER");
   }
 
-  public PyNamedParameterElementType(String debugName) {
+  public PyNamedParameterElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
@@ -52,11 +53,13 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     return new PyNamedParameterImpl(stub);
   }
 
+  @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
                                         psi.getTypeCommentAnnotation(), parentStub, getStubElementType());
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyNamedParameterImpl(node);
   }

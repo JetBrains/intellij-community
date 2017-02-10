@@ -16,7 +16,7 @@
 package com.intellij.openapi.components;
 
 /**
- * Project-level component's implementation class should implement the <code>ProjectComponent</code> interface.
+ * Project-level component's implementation class should implement the {@code ProjectComponent} interface.
  * It should have constructor with a single parameter of {@link com.intellij.openapi.project.Project}
  * type or with no parameters.
  * <p>

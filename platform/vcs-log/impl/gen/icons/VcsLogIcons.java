@@ -18,6 +18,7 @@ public class VcsLogIcons {
   public static final Icon CollapseMerges = load("/icons/CollapseMerges.png"); // 16x16
   public static final Icon ExpandBranches = load("/icons/ExpandBranches.png"); // 16x16
   public static final Icon ExpandMerges = load("/icons/ExpandMerges.png"); // 16x16
+  public static final Icon GearWithDropDown = load("/icons/GearWithDropDown.png"); // 21x21
   public static final Icon IntelliSort = load("/icons/IntelliSort.png"); // 16x16
   
   public static class Process {

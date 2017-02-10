@@ -38,7 +38,7 @@ public class FileReferenceContextUtil {
   }
 
   public static Map<String, PsiFileSystemItem> encodeFileReferences(PsiElement element) {
-    final Map<String,PsiFileSystemItem> map = new HashMap<String, PsiFileSystemItem>();
+    final Map<String,PsiFileSystemItem> map = new HashMap<>();
     if (element == null || element instanceof PsiCompiledElement || isBinary(element)) return map;
     element.accept(new PsiRecursiveElementWalkingVisitor(true) {
       @Override public void visitElement(PsiElement element) {

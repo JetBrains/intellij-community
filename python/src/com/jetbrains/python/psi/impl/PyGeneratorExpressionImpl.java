@@ -59,10 +59,10 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
     // extract whatever names are defined in "for" components
-    List<ComprhForComponent> fors = getForComponents();
+    List<PyComprehensionForComponent> fors = getForComponents();
     PyExpression[] for_targets = new PyExpression[fors.size()];
     int i = 0;
-    for (ComprhForComponent for_comp : fors) {
+    for (PyComprehensionForComponent for_comp : fors) {
       for_targets[i] = for_comp.getIteratorVariable();
       i += 1;
     }

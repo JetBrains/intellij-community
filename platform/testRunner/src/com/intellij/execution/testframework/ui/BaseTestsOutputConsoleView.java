@@ -35,7 +35,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   private ConsoleView myConsole;
   private TestsOutputConsolePrinter myPrinter;
   protected TestConsoleProperties myProperties;
-  protected TestResultsPanel myTestResultsPanel;
+  private TestResultsPanel myTestResultsPanel;
 
   public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
@@ -65,13 +65,8 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
-    printNew(new Printable() {
-      @Override
-      public void printOn(final Printer printer) {
-        printer.print(s, contentType);
-      }
-    });
+  public void print(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
+    printNew(printer -> printer.print(text, contentType));
   }
 
   @Override
@@ -107,22 +102,22 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void performWhenNoDeferredOutput(final Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull final Runnable runnable) {
     myConsole.performWhenNoDeferredOutput(runnable);
   }
 
   @Override
-  public void setHelpId(final String helpId) {
+  public void setHelpId(@NotNull final String helpId) {
     myConsole.setHelpId(helpId);
   }
 
   @Override
-  public void addMessageFilter(final Filter filter) {
+  public void addMessageFilter(@NotNull final Filter filter) {
     myConsole.addMessageFilter(filter);
   }
 
   @Override
-  public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
+  public void printHyperlink(@NotNull final String hyperlinkText, final HyperlinkInfo info) {
     printNew(new HyperLink(hyperlinkText, info));
   }
 

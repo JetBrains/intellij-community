@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions.strings;
+package org.jetbrains.plugins.groovy.intentions.strings
 
 
 import com.intellij.openapi.module.Module
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
+class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   ConvertConcatenationToGstringTest() {
     super("Convert to GString")
   }
@@ -41,37 +41,37 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   @NotNull
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
   
   final String basePath = TestUtils.testDataPath + 'intentions/convertConcatenationToGstring/'
 
-  public void testSimpleCase() {
-    doTest(true);
+  void testSimpleCase() {
+    doTest(true)
   }
 
-  public void testVeryComplicatedCase() {
-    doTest(true);
+  void testVeryComplicatedCase() {
+    doTest(true)
   }
 
-  public void testQuotes() {
-    doTest(true);
+  void testQuotes() {
+    doTest(true)
   }
 
-  public void testQuotes2() {
-    doTest(true);
+  void testQuotes2() {
+    doTest(true)
   }
 
-  public void testQuotesInMultilineString() {
-    doTest(true);
+  void testQuotesInMultilineString() {
+    doTest(true)
   }
 
-  public void testDot() {
-    doTest(true);
+  void testDot() {
+    doTest(true)
   }
 }

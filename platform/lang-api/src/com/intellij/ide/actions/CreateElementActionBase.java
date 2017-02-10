@@ -19,6 +19,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,7 @@ import javax.swing.*;
  *
  * @since 5.1
  */
-public abstract class CreateElementActionBase extends CreateInDirectoryActionBase {
+public abstract class CreateElementActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
 
   protected CreateElementActionBase() {
   }
@@ -107,6 +108,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     @Override
     public PsiElement[] create(String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return CreateElementActionBase.this.startInWriteAction();
     }
 
     @Override

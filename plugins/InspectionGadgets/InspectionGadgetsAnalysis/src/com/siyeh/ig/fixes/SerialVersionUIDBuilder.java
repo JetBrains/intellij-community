@@ -48,7 +48,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   private final Set<MemberSignature> nonPrivateFields;
   private final List<MemberSignature> staticInitializers;
   private boolean assertStatement = false;
-  private final Map<PsiElement, String> memberMap = new HashMap<PsiElement, String>();
+  private final Map<PsiElement, String> memberMap = new HashMap<>();
 
   private static final Comparator<PsiClass> INTERFACE_COMPARATOR =
     (object1, object2) -> {
@@ -77,7 +77,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
 
   private SerialVersionUIDBuilder(PsiClass clazz) {
     this.clazz = clazz;
-    nonPrivateMethods = new HashSet<MemberSignature>();
+    nonPrivateMethods = new HashSet<>();
     final PsiMethod[] methods = clazz.getMethods();
     for (final PsiMethod method : methods) {
       if (!method.isConstructor() && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -91,7 +91,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         });
       }
     }
-    nonPrivateFields = new HashSet<MemberSignature>();
+    nonPrivateFields = new HashSet<>();
     final PsiField[] fields = clazz.getFields();
     for (final PsiField field : fields) {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
@@ -103,7 +103,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       }
     }
 
-    staticInitializers = new ArrayList<MemberSignature>(1);
+    staticInitializers = new ArrayList<>(1);
     final PsiClassInitializer[] initializers = clazz.getInitializers();
     if (initializers.length > 0) {
       for (final PsiClassInitializer initializer : initializers) {
@@ -131,7 +131,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     }
 
     final PsiMethod[] constructors = clazz.getConstructors();
-    nonPrivateConstructors = new HashSet<MemberSignature>(constructors.length);
+    nonPrivateConstructors = new HashSet<>(constructors.length);
     if (constructors.length == 0 && !clazz.isInterface()) {
       // generated empty constructor if no constructor is defined in the source
       final MemberSignature constructorSignature;

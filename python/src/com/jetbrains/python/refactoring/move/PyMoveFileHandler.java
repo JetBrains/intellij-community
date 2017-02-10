@@ -225,7 +225,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
 
   @Override
   public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
-    final Set<PsiFile> updatedFiles = new HashSet<PsiFile>();
+    final Set<PsiFile> updatedFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement != null) {

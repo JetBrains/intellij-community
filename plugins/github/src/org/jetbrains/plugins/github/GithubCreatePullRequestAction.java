@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
-
 /**
  * @author Aleksey Pivovarov
  */
@@ -42,22 +40,22 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override

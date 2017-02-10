@@ -120,7 +120,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
     if (currentSuite != null) {
       final AbstractTestProxy test = myModel.getTreeView().getSelectedTest();
-      List<String> testMethods = new ArrayList<String>();
+      List<String> testMethods = new ArrayList<>();
       if (test != null && !test.isInProgress()) {
         final List<? extends AbstractTestProxy> list = test.getAllTests();
         for (AbstractTestProxy proxy : list) {

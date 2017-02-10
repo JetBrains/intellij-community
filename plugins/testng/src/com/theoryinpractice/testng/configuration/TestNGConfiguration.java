@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,11 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -47,6 +45,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryRunnableState;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestNGTestObject;
@@ -128,6 +127,10 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    final TestData data = getPersistantData();
+    if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
+      return new TestNGTestDiscoveryRunnableState(env, this);
+    }
     return new TestNGRunnableState(env, this);
   }
 
@@ -247,7 +250,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     } else {
       suffix = "";
     }
-    LinkedHashSet<String> patterns = new LinkedHashSet<String>();
+    LinkedHashSet<String> patterns = new LinkedHashSet<>();
     for (PsiClass pattern : classes) {
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
@@ -266,11 +269,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
 
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
+    SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    new TestNGConfigurationEditor<TestNGConfiguration>(getProject()));
+                    new TestNGConfigurationEditor<>(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<TestNGConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -287,8 +290,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  public void readExternal(Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     readModule(element);
@@ -317,7 +319,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     }
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final LinkedHashSet<String> tests = new LinkedHashSet<String>();
+      final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
@@ -438,5 +440,10 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
       .filter(StringUtil::isNotEmpty)
       .collect(Collectors.toSet());
     return groups.isEmpty() ? null : groups;
+  }
+
+  public void beFromSourcePosition(PsiLocation<PsiMethod> position) {
+    setMethodConfiguration(position);
+    getPersistantData().TEST_OBJECT = TestType.SOURCE.getType();
   }
 }

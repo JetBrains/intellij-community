@@ -38,7 +38,7 @@ public class ModuleGroupUtil {
                                            final Map<ModuleGroup, T> map,
                                            final Consumer<ParentChildRelation<T>> insertNode,
                                            final Function<ModuleGroup, T> createNewNode) {
-    final ArrayList<String> path = new ArrayList<String>();
+    final ArrayList<String> path = new ArrayList<>();
     final String[] groupPath = group.getGroupPath();
     for (String pathElement : groupPath) {
       path.add(pathElement);
@@ -47,7 +47,7 @@ public class ModuleGroupUtil {
       if (moduleGroupNode == null) {
         moduleGroupNode = createNewNode.fun(moduleGroup);
         map.put(moduleGroup, moduleGroupNode);
-        insertNode.consume(new ParentChildRelation<T>(parentNode, moduleGroupNode));
+        insertNode.consume(new ParentChildRelation<>(parentNode, moduleGroupNode));
       }
       parentNode = moduleGroupNode;
     }
@@ -59,7 +59,7 @@ public class ModuleGroupUtil {
                                             final Function<ModuleGroup, T> needToCreateNode,
                                             final Consumer<ParentChildRelation<T>> insertNode,
                                             final Function<ModuleGroup, T> createNewNode) {
-    final ArrayList<String> path = new ArrayList<String>();
+    final ArrayList<String> path = new ArrayList<>();
     final String[] groupPath = group.getGroupPath();
     for (String pathElement : groupPath) {
       path.add(pathElement);
@@ -67,7 +67,7 @@ public class ModuleGroupUtil {
       T moduleGroupNode = needToCreateNode.fun(moduleGroup);
       if (moduleGroupNode == null) {
         moduleGroupNode = createNewNode.fun(moduleGroup);
-        insertNode.consume(new ParentChildRelation<T>(parentNode, moduleGroupNode));
+        insertNode.consume(new ParentChildRelation<>(parentNode, moduleGroupNode));
       }
       parentNode = moduleGroupNode;
     }

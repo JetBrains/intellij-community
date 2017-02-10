@@ -71,6 +71,8 @@ interface ProtocolMetaModel {
     val description: String?
 
     val hidden: Boolean
+    
+    val experimental: Boolean
   }
 
   interface Command {

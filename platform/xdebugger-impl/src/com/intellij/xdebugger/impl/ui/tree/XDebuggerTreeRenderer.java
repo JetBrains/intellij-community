@@ -18,9 +18,9 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
@@ -85,7 +85,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
           Point treeRightSideOnScreen = new Point(visibleRectRightX, 0);
           SwingUtilities.convertPointToScreen(treeRightSideOnScreen, tree);
-          Rectangle screen = AbstractExpandableItemsHandler.getScreenRectangle(treeRightSideOnScreen);
+          Rectangle screen = ScreenUtil.getScreenRectangle(treeRightSideOnScreen);
           // text may fit the screen in ExpandableItemsHandler
           if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
             myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());

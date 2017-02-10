@@ -40,7 +40,7 @@ public class ConstructorJavadocUsageInfo extends FixableUsageInfo {
   public void fixUsage() throws IncorrectOperationException {
     final PsiDocComment docComment = myMethod.getDocComment();
     if (docComment != null) {
-      final List<PsiDocTag> mergedTags = new ArrayList<PsiDocTag>();
+      final List<PsiDocTag> mergedTags = new ArrayList<>();
       final PsiDocTag[] paramTags = docComment.findTagsByName("param");
       for (PsiDocTag paramTag : paramTags) {
         final PsiElement[] dataElements = paramTag.getDataElements();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
     super('Replace with ?:')
   }
 
-  public void testReturn() throws Exception {
+  void testReturn() throws Exception {
     doTextTest('''\
 def foo() {
     i<caret>f (cond()) {
@@ -38,7 +38,7 @@ def foo() {
 ''')
   }
 
-  public void testAssign() throws Exception {
+  void testAssign() throws Exception {
     doTextTest('''\
 def a
 
@@ -55,7 +55,7 @@ a = cond() ? 'a' : 'b'
 ''')
   }
 
-  public void testAntiAssign() throws Exception {
+  void testAntiAssign() throws Exception {
     doAntiTest('''\
 def a
 def b

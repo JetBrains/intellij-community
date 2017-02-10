@@ -1,17 +1,4 @@
 <component>
-  <option name="TRACING_FILTERS_ENABLED" value="true" />
-  <option name="TOSTRING_CLASSES_ENABLED" value="false" />
-  <option name="VALUE_LOOKUP_DELAY" value="700" />
-  <option name="DEBUGGER_TRANSPORT" value="0" />
-  <option name="FORCE_CLASSIC_VM" value="true" />
-  <option name="DISABLE_JIT" value="false" />
-  <option name="HIDE_DEBUGGER_ON_PROCESS_TERMINATION" value="false" />
-  <option name="SKIP_SYNTHETIC_METHODS" value="true" />
-  <option name="SKIP_CLASSLOADERS" value="true" />
-  <option name="SKIP_CONSTRUCTORS" value="false" />
-  <option name="STEP_THREAD_SUSPEND_POLICY" value="SuspendThread" />
-  <option name="RUN_HOTSWAP_AFTER_COMPILE" value="RunHotswapAsk" />
-  <option name="COMPILE_BEFORE_HOTSWAP" value="true" />
   <default_breakpoint_settings>
     <option name="ENABLED" value="true" />
     <option name="SUSPEND_VM" value="true" />

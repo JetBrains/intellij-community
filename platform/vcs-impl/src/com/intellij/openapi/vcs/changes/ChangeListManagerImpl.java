@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -39,8 +38,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -51,12 +50,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -65,10 +62,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author max
- */
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
+import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
+
+@State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
   private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
@@ -78,8 +75,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<Future>();
-  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(1);
+  private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<>();
+  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool",1);
 
   private final Modifier myModifier;
 
@@ -93,13 +90,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final Object myDataLock = new Object();
 
-  private final List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
+  private final List<CommitExecutor> myExecutors = new ArrayList<>();
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private boolean myExcludedConvertedToIgnored;
   @NotNull private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
 
-  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
+  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<>(
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private boolean myShowLocalChangesInvalidated;
@@ -118,7 +115,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private VcsDirtyScopeManager myDirtyScopeManager;
 
   private boolean myModalNotificationsBlocked;
-  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<LocalChangeList>();
+  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
@@ -131,7 +128,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myConfig = config;
-    myFreezeName = new AtomicReference<String>(null);
+    myFreezeName = new AtomicReference<>(null);
     myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
@@ -161,20 +158,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
     if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
 
-    invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        LocalChangeList actualList = getChangeList(oldList.getId());
-        if (actualList == null) {
-          return; // removed already  
-        }
+    invokeAfterUpdate(() -> {
+      LocalChangeList actualList = getChangeList(oldList.getId());
+      if (actualList == null) {
+        return; // removed already
+      }
 
-        if (myModalNotificationsBlocked &&
-            config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-          myListsToBeDeleted.add(oldList);
-        } else {
-          deleteEmptyChangeLists(Collections.singletonList(actualList));
-        }
+      if (myModalNotificationsBlocked &&
+          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+        myListsToBeDeleted.add(oldList);
+      } else {
+        deleteEmptyChangeLists(Collections.singletonList(actualList));
       }
     }, InvokeAfterUpdateMode.SILENT, null, null);
   }
@@ -210,12 +204,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     else {
       question = String.format("<html>Empty changelists<br/>%s are no longer active.<br>Do you want to remove them?</html>",
-                               StringUtil.join(lists, new Function<LocalChangeList, String>() {
-                                 @Override
-                                 public String fun(LocalChangeList list) {
-                                   return StringUtil.first(list.getName(), 30, true);
-                                 }
-                               }, "<br/>"));
+                               StringUtil.join(lists, (Function<LocalChangeList, String>)list -> StringUtil.first(list.getName(), 30, true), "<br/>"));
     }
 
     VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, "Remove Empty Changelist", "Remove", "Cancel", new VcsShowConfirmationOption() {
@@ -258,17 +247,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
-      vcsManager.addVcsListener(myVcsListener);
+      myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
     }
     else {
       ((ProjectLevelVcsManagerImpl)vcsManager).addInitializationRequest(
-        VcsInitObject.CHANGE_LIST_MANAGER, new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            myUpdater.initialized();
-            broadcastStateAfterLoad();
-            vcsManager.addVcsListener(myVcsListener);
-          }
+        VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+          myUpdater.initialized();
+          broadcastStateAfterLoad();
+          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
         });
 
       myConflictTracker.startTracking();
@@ -286,36 +272,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void initializeForNewProject() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myDataLock) {
-          if (myWorker.isEmpty()) {
-            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changelist.name"), null, null);
-            setDefaultChangeList(list);
-
-            if (myIgnoredIdeaLevel.isEmpty()) {
-              for (String path : predefinedIgnorePaths()) {
-                myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(path, myProject));
-              }
-            }
-          }
-          if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
-            convertExcludedToIgnored();
-            myExcludedConvertedToIgnored = true;
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        if (myWorker.isEmpty()) {
+          setDefaultChangeList(myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null));
+        }
+        if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
+          convertExcludedToIgnored();
+          myExcludedConvertedToIgnored = true;
         }
       }
     });
-  }
-
-  @NotNull
-  List<String> predefinedIgnorePaths() {
-    List<String> myIgnoredIdeaLevel = new ArrayList<String>();
-    myIgnoredIdeaLevel.add(myProject.getName() + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
-    myIgnoredIdeaLevel.add(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml");
-
-    return myIgnoredIdeaLevel;
   }
 
   void convertExcludedToIgnored() {
@@ -341,8 +308,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void projectClosed() {
-    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
-
     synchronized (myDataLock) {
       myUpdateChangesProgressIndicator.cancel();
     }
@@ -405,28 +370,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @Deprecated
-  @Override
-  public void freeze(final ContinuationPause context, final String reason) {
-    myUpdater.setIgnoreBackgroundOperation(true);
-    // this update is nessesary for git, to refresh local changes before
-    invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        freezeImmediately(reason);
-        context.ping();
-      }
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
-    context.suspend();
-  }
-
-  @Override
-  public void freezeImmediately(@Nullable String reason) {
-    myUpdater.setIgnoreBackgroundOperation(false);
-    myUpdater.pause();
-    myFreezeName.set(reason);
-  }
-
   @Override
   public void letGo() {
     myUpdater.go();
@@ -456,10 +399,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
-    final Set<VirtualFile> refreshFiles = new HashSet<VirtualFile>();
+    final Set<VirtualFile> refreshFiles = new HashSet<>();
     try {
       synchronized (myDataLock) {
-        final IgnoredFilesHolder fileHolder = (IgnoredFilesHolder)myComposite.get(FileHolder.HolderType.IGNORED);
+        final IgnoredFilesCompositeHolder fileHolder = myComposite.getIgnoredFileHolder();
 
         for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
           final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
@@ -495,10 +438,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     for (VirtualFile file : refreshFiles) {
@@ -537,25 +477,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myUpdateChangesProgressIndicator = indicator;
       }
       if (LOG.isDebugEnabled()) {
-        String scopeInString = StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
-          @Override
-          public String fun(VcsDirtyScope scope) {
-            return scope.toString();
-          }
-        }, "->\n");
+        String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
         LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
                   "\ncurrent changes: " + myWorker);
       }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        @Override
-        public void run() {
-          iterateScopes(dataHolder, scopes, wasEverythingDirty);
-        }
-
-      }, indicator);
+      ProgressManager.getInstance().runProcess(() -> iterateScopes(dataHolder, scopes, wasEverythingDirty), indicator);
 
       final boolean takeChanges = myUpdateException == null;
       if (takeChanges) {
@@ -565,47 +494,41 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       clearCurrentRevisionsCache(invalidated);
       // for the case of project being closed we need a read action here -> to be more consistent
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) {
-            return;
-          }
-          synchronized (myDataLock) {
-            // do same modifications to change lists as was done during update + do delayed notifications
-            dataHolder.notifyEnd();
-            // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
-            myModifier.finishUpdate(dataHolder.getChangeListWorker());
-            // update member from copy
-            if (takeChanges) {
-              final ChangeListWorker oldWorker = myWorker;
-              myWorker = dataHolder.getChangeListWorker();
-              myWorker.onAfterWorkerSwitch(oldWorker);
-              myModifier.setWorker(myWorker);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("refresh procedure finished, unversioned size: " +
-                          dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
-              }
-              final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
-              myComposite = dataHolder.getComposite();
-              if (statusChanged) {
-                myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
-              }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) {
+          return;
+        }
+        synchronized (myDataLock) {
+          // do same modifications to change lists as was done during update + do delayed notifications
+          dataHolder.notifyEnd();
+          // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
+          myModifier.finishUpdate(dataHolder.getChangeListWorker());
+          // update member from copy
+          if (takeChanges) {
+            final ChangeListWorker oldWorker = myWorker;
+            myWorker = dataHolder.getChangeListWorker();
+            myWorker.onAfterWorkerSwitch(oldWorker);
+            myModifier.setWorker(myWorker);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("refresh procedure finished, unversioned size: " +
+                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() + "\nchanges: " + myWorker);
             }
-            myShowLocalChangesInvalidated = false;
+            final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
+            myComposite = dataHolder.getComposite();
+            if (statusChanged) {
+              myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
+            }
           }
+          myShowLocalChangesInvalidated = false;
         }
       });
 
       for (VcsDirtyScope scope : scopes) {
         AbstractVcs vcs = scope.getVcs();
         if (vcs != null && vcs.isTrackingUnchangedContent()) {
-          scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
-            @Override
-            public boolean process(VirtualFile file) {
-              LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
-              return true;
-            }
+          scope.iterateExistingInsideScope(file -> {
+            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
+            return true;
           });
         }
       }
@@ -613,16 +536,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myChangesViewManager.scheduleRefresh();
     }
-    catch (DisposedException e) {
+    catch (DisposedException | ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
     }
-    catch (ProcessCanceledException e) {
-      // OK, we're finishing all the stuff now.
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     finally {
@@ -659,14 +576,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes, boolean wasEverythingDirty) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
-    Getter<Boolean> disposedGetter = new Getter<Boolean>() {
-      @Override
-      public Boolean get() {
-        return myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
-      }
-    };
+    Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-                                                                            dataHolder.getComposite(), disposedGetter, myIgnoredIdeaLevel,
+                                                                            dataHolder.getComposite(), disposedGetter, this,
                                                                             gate);
 
     for (final VcsDirtyScope scope : scopes) {
@@ -790,12 +702,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     LOG.info(e);
 
     if (e instanceof VcsConnectionProblem) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ((VcsConnectionProblem)e).attemptQuickFix(false);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> ((VcsConnectionProblem)e).attemptQuickFix(false));
     }
 
     if (myUpdateException == null) {
@@ -870,14 +777,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @NotNull
-  public Couple<Integer> getUnversionedFilesSize() {
-    synchronized (myDataLock) {
-      final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      return Couple.of(holder.getSize(), holder.getNumDirs());
-    }
-  }
-
   @Override
   public List<VirtualFile> getModifiedWithoutEditing() {
     synchronized (myDataLock) {
@@ -888,10 +787,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   /**
    * @return only roots for ignored folders, and ignored files
    */
-  List<VirtualFile> getIgnoredFiles() {
+  @NotNull
+  public List<VirtualFile> getIgnoredFiles() {
     synchronized (myDataLock) {
-      return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().values());
+      return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
     }
+  }
+
+  boolean isIgnoredInUpdateMode() {
+    return myComposite.getIgnoredFileHolder().isInUpdatingMode();
   }
 
   public List<VirtualFile> getLockedFolders() {
@@ -902,7 +806,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
     synchronized (myDataLock) {
-      return new HashMap<VirtualFile, LogicalLock>(
+      return new HashMap<>(
         ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap());
     }
   }
@@ -979,14 +883,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
-      @Override
-      public LocalChangeList compute() {
-        synchronized (myDataLock) {
-          final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
-          myChangesViewManager.scheduleRefresh();
-          return changeList;
-        }
+    return ApplicationManager.getApplication().runReadAction((Computable<LocalChangeList>)() -> {
+      synchronized (myDataLock) {
+        final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
+        myChangesViewManager.scheduleRefresh();
+        return changeList;
       }
     });
   }
@@ -994,13 +895,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void removeChangeList(final String name) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myDataLock) {
-          myModifier.removeChangeList(name);
-          myChangesViewManager.scheduleRefresh();
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        myModifier.removeChangeList(name);
+        myChangesViewManager.scheduleRefresh();
       }
     });
   }
@@ -1016,51 +914,42 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Runnable prepareForChangeDeletion(final Collection<Change> changes) {
-    final Map<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
+    final Map<String, LocalChangeList> lists = new HashMap<>();
     final Map<String, List<Change>> map;
     synchronized (myDataLock) {
       map = myWorker.listsForChanges(changes, lists);
     }
-    return new Runnable() {
-      @Override
-      public void run() {
-        final ChangeListListener multicaster = myDelayedNotificator.getProxyDispatcher();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (myDataLock) {
-              for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
-                final List<Change> changes = entry.getValue();
-                for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext(); ) {
-                  final Change change = iterator.next();
-                  if (getChangeList(change) != null) {
-                    // was not actually rolled back
-                    iterator.remove();
-                  }
-                }
-                multicaster.changesRemoved(changes, lists.get(entry.getKey()));
-              }
-              for (String listName : map.keySet()) {
-                final LocalChangeList byName = myWorker.getCopyByName(listName);
-                if (byName != null && !byName.isDefault()) {
-                  scheduleAutomaticChangeListDeletionIfEmpty(byName, myConfig);
-                }
+    return () -> {
+      final ChangeListListener multicaster = myDelayedNotificator.getProxyDispatcher();
+      ApplicationManager.getApplication().runReadAction(() -> {
+        synchronized (myDataLock) {
+          for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
+            final List<Change> changes1 = entry.getValue();
+            for (Iterator<Change> iterator = changes1.iterator(); iterator.hasNext(); ) {
+              final Change change = iterator.next();
+              if (getChangeList(change) != null) {
+                // was not actually rolled back
+                iterator.remove();
               }
             }
+            multicaster.changesRemoved(changes1, lists.get(entry.getKey()));
           }
-        });
-      }
+          for (String listName : map.keySet()) {
+            final LocalChangeList byName = myWorker.getCopyByName(listName);
+            if (byName != null && !byName.isDefault()) {
+              scheduleAutomaticChangeListDeletionIfEmpty(byName, myConfig);
+            }
+          }
+        }
+      });
     };
   }
 
   @Override
   public void setDefaultChangeList(@NotNull final LocalChangeList list) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myDataLock) {
-          myModifier.setDefault(list.getName());
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        myModifier.setDefault(list.getName());
       }
     });
     myChangesViewManager.scheduleRefresh();
@@ -1209,12 +1098,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void moveChangesTo(final LocalChangeList list, final Change... changes) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myDataLock) {
-          myModifier.moveChangesTo(list.getName(), changes);
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myDataLock) {
+        myModifier.moveChangesTo(list.getName(), changes);
       }
     });
     myChangesViewManager.scheduleRefresh();
@@ -1233,35 +1119,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                                 @NotNull final List<VirtualFile> files,
                                                 @NotNull final Condition<FileStatus> statusChecker,
                                                 @Nullable Consumer<List<Change>> changesConsumer) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
-    final Set<VirtualFile> allProcessedFiles = new HashSet<VirtualFile>();
-    ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-      @Override
-      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-        if (environment != null) {
-          final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-          Set<VirtualFile> parents =
-            vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
+    final List<VcsException> exceptions = new ArrayList<>();
+    final Set<VirtualFile> allProcessedFiles = new HashSet<>();
+    ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
+      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+      if (environment != null) {
+        final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+        Set<VirtualFile> parents =
+          vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
 
-          // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-          // (inside the method) - so common add logic just needs to refresh statuses of parents
-          final List<VcsException> result = ContainerUtil.newArrayList();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              indicator.setIndeterminate(true);
-              List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
-              if (exs != null) {
-                ContainerUtil.addAll(result, exs);
-              }
+        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+        // (inside the method) - so common add logic just needs to refresh statuses of parents
+        final List<VcsException> result = ContainerUtil.newArrayList();
+        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+            if (exs != null) {
+              ContainerUtil.addAll(result, exs);
             }
-          });
+          }
+        });
 
-          allProcessedFiles.addAll(descendants);
-          allProcessedFiles.addAll(parents);
-          exceptions.addAll(result);
-        }
+        allProcessedFiles.addAll(descendants);
+        allProcessedFiles.addAll(parents);
+        exceptions.addAll(result);
       }
     });
 
@@ -1285,27 +1168,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (moveRequired || syncUpdateRequired) {
       // find the changes for the added files and move them to the necessary changelist
       InvokeAfterUpdateMode updateMode =
-        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT;
+        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
-      invokeAfterUpdate(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              synchronized (myDataLock) {
-                List<Change> newChanges = findChanges(allProcessedFiles);
-                foundChanges.set(newChanges);
+      invokeAfterUpdate(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          synchronized (myDataLock) {
+            List<Change> newChanges = findChanges(allProcessedFiles);
+            foundChanges.set(newChanges);
 
-                if (moveRequired && !newChanges.isEmpty()) {
-                  moveChangesTo(list, newChanges.toArray(new Change[newChanges.size()]));
-                }
-              }
+            if (moveRequired && !newChanges.isEmpty()) {
+              moveChangesTo(list, newChanges.toArray(new Change[newChanges.size()]));
             }
-          });
+          }
+        });
 
-          myChangesViewManager.scheduleRefresh();
-        }
+        myChangesViewManager.scheduleRefresh();
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
 
       if (changesConsumer != null) {
@@ -1338,26 +1215,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   public static Condition<FileStatus> getDefaultUnversionedFileCondition() {
-    return new Condition<FileStatus>() {
-      @Override
-      public boolean value(FileStatus status) {
-        return status == FileStatus.UNKNOWN;
-      }
-    };
+    return status -> status == FileStatus.UNKNOWN;
   }
 
   @NotNull
   private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<VirtualFile> items,
                                                                 @NotNull final Condition<FileStatus> condition) {
     final Set<VirtualFile> result = ContainerUtil.newHashSet();
-    Processor<VirtualFile> addToResultProcessor = new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        if (condition.value(getStatus(file))) {
-          result.add(file);
-        }
-        return true;
+    Processor<VirtualFile> addToResultProcessor = file -> {
+      if (condition.value(getStatus(file))) {
+        result.add(file);
       }
+      return true;
     };
 
     for (VirtualFile item : items) {
@@ -1413,7 +1282,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     FileDocumentManager.getInstance().saveAllDocuments();
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
                             StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(),
-                            new ArrayList<CheckinHandler>(), false, synchronously, FunctionUtil.nullConstant(), null).doCommit();
+                            new ArrayList<>(), false, synchronously, FunctionUtil.nullConstant(), null).doCommit();
   }
 
   @Override
@@ -1427,36 +1296,42 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public void readExternal(Element element) throws InvalidDataException {
-    if (!myProject.isDefault()) {
-      synchronized (myDataLock) {
-        myIgnoredIdeaLevel.clear();
-        new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
-        if (!myWorker.isEmpty() && getDefaultChangeList() == null) {
-          setDefaultChangeList(myWorker.getListsCopy().get(0));
-        }
-      }
-      myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
-      myConflictTracker.loadState(element);
+  public void loadState(Element element) {
+    if (myProject.isDefault()) {
+      return;
     }
+
+    synchronized (myDataLock) {
+      myIgnoredIdeaLevel.clear();
+      new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
+      if (!myWorker.isEmpty() && getDefaultChangeList() == null) {
+        setDefaultChangeList(myWorker.getListsCopy().get(0));
+      }
+    }
+    myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
+    myConflictTracker.loadState(element);
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (!myProject.isDefault()) {
-      final IgnoredFilesComponent ignoredFilesComponent;
-      final ChangeListWorker worker;
-      synchronized (myDataLock) {
-        ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
-        worker = myWorker.copy();
-      }
-      new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
-      if (myExcludedConvertedToIgnored) {
-        JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
-      }
-      myConflictTracker.saveState(element);
+  public Element getState() {
+    Element element = new Element("state");
+    if (myProject.isDefault()) {
+      return element;
     }
+
+    final IgnoredFilesComponent ignoredFilesComponent;
+    final ChangeListWorker worker;
+    synchronized (myDataLock) {
+      ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
+      worker = myWorker.copy();
+    }
+    ChangeListManagerSerialization.writeExternal(element, ignoredFilesComponent, worker);
+    if (myExcludedConvertedToIgnored) {
+      JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
+    }
+    myConflictTracker.saveState(element);
+    return element;
   }
 
   // used in TeamCity
@@ -1480,8 +1355,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class MyDirtyFilesScheduler {
     private static final int ourPiecesLimit = 100;
-    private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
-    private final List<VirtualFile> myDirs = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> myFiles = new ArrayList<>();
+    private final List<VirtualFile> myDirs = new ArrayList<>();
     private boolean myEveryThing;
     private int myCnt;
     private final Project myProject;
@@ -1528,6 +1403,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
     myIgnoredIdeaLevel.addIgnoredDirectoryImplicitly(path, myProject);
+  }
+
+  @Override
+  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
+    myIgnoredIdeaLevel.removeImplicitlyIgnoredDirectory(path, myProject);
   }
 
   public IgnoredFilesComponent getIgnoredFilesComponent() {
@@ -1580,7 +1460,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    return myIgnoredIdeaLevel.isIgnoredFile(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
+    return ContainerUtil.exists(IgnoredFileProvider.IGNORE_FILE.getExtensions(), it -> it.isIgnoredFile(myProject, filePath));
+  }
+
+  private static class DefaultIgnoredFileProvider implements IgnoredFileProvider {
+    @Override
+    public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
+      return ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).myIgnoredIdeaLevel.isIgnoredFile(filePath);
+    }
   }
 
   @Override
@@ -1599,7 +1487,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private static VirtualFile[] collectFiles(final List<FilePath> paths) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
     for (FilePath path : paths) {
       if (path.getVirtualFile() != null) {
         result.add(path.getVirtualFile());
@@ -1611,42 +1499,33 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean setReadOnly(final String name, final boolean value) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        synchronized (myDataLock) {
-          final boolean result = myModifier.setReadOnly(name, value);
-          myChangesViewManager.scheduleRefresh();
-          return result;
-        }
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.setReadOnly(name, value);
+        myChangesViewManager.scheduleRefresh();
+        return result;
       }
     });
   }
 
   @Override
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        synchronized (myDataLock) {
-          final boolean result = myModifier.editName(fromName, toName);
-          myChangesViewManager.scheduleRefresh();
-          return result;
-        }
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.editName(fromName, toName);
+        myChangesViewManager.scheduleRefresh();
+        return result;
       }
     });
   }
 
   @Override
   public String editComment(@NotNull final String fromName, final String newComment) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        synchronized (myDataLock) {
-          final String oldComment = myModifier.editComment(fromName, newComment);
-          myChangesViewManager.scheduleRefresh();
-          return oldComment;
-        }
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      synchronized (myDataLock) {
+        final String oldComment = myModifier.editComment(fromName, newComment);
+        myChangesViewManager.scheduleRefresh();
+        return oldComment;
       }
     });
   }
@@ -1662,12 +1541,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void waitUpdateAlarm() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    myScheduledExecutorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        semaphore.up();
-      }
-    });
+    myScheduledExecutorService.execute(() -> semaphore.up());
     semaphore.waitFor();
   }
 
@@ -1694,10 +1568,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         future.get(10, TimeUnit.MILLISECONDS);
         break;
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
       catch (TimeoutException ignore) {
@@ -1765,44 +1636,35 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @Override
     public void modify(final BaseRevision was, final BaseRevision become) {
-      myFuture.set(myService.submit(new Runnable() {
-        @Override
-        public void run() {
-          final AbstractVcs vcs = getVcs(was);
-          if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(was.getPath().getPath(), vcs));
-          }
-          // maybe define modify method?
-          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
+      myFuture.set(myService.submit(() -> {
+        final AbstractVcs vcs = getVcs(was);
+        if (vcs != null) {
+          myRevisionsCache.plus(Pair.create(was.getPath().getPath(), vcs));
         }
+        // maybe define modify method?
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       }));
     }
 
     @Override
     public void plus(final BaseRevision baseRevision) {
-      myFuture.set(myService.submit(new Runnable() {
-        @Override
-        public void run() {
-          final AbstractVcs vcs = getVcs(baseRevision);
-          if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(baseRevision.getPath().getPath(), vcs));
-          }
-          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
+      myFuture.set(myService.submit(() -> {
+        final AbstractVcs vcs = getVcs(baseRevision);
+        if (vcs != null) {
+          myRevisionsCache.plus(Pair.create(baseRevision.getPath().getPath(), vcs));
         }
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
       }));
     }
 
     @Override
     public void minus(final BaseRevision baseRevision) {
-      myFuture.set(myService.submit(new Runnable() {
-        @Override
-        public void run() {
-          final AbstractVcs vcs = getVcs(baseRevision);
-          if (vcs != null) {
-            myRevisionsCache.minus(Pair.create(baseRevision.getPath().getPath(), vcs));
-          }
-          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
+      myFuture.set(myService.submit(() -> {
+        final AbstractVcs vcs = getVcs(baseRevision);
+        if (vcs != null) {
+          myRevisionsCache.minus(Pair.create(baseRevision.getPath().getPath(), vcs));
         }
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
       }));
     }
 

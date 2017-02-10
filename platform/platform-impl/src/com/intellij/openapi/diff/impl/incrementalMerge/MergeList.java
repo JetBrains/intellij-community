@@ -104,8 +104,8 @@ public class MergeList implements UserDataHolder {
       mergeList = new MergeList(project, left, base, right, e.getMessage());
     }
 
-    ArrayList<Change> leftChanges = new ArrayList<Change>();
-    ArrayList<Change> rightChanges = new ArrayList<Change>();
+    ArrayList<Change> leftChanges = new ArrayList<>();
+    ArrayList<Change> rightChanges = new ArrayList<>();
     for (MergeFragment mergeFragment : fragmentList) {
       TextRange baseRange = mergeFragment.getBase();
       TextRange leftRange = mergeFragment.getLeft();

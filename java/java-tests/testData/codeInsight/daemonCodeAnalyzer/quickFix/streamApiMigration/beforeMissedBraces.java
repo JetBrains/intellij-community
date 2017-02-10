@@ -6,8 +6,10 @@ class Sample {
   List<String> foo = new ArrayList<>();
   String foo(){
     for (String s : fo<caret>o) {
-      if (s == null) int i = 0;
+      if (s == null) bar();
     }
     return null;
   }
+
+  bar() {}
 }

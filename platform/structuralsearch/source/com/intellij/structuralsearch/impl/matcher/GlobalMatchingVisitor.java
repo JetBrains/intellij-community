@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -30,7 +45,7 @@ import java.util.Map;
 @SuppressWarnings({"RefusedBequest"})
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
-  public static final Key<List<PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
+  public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
   // the pattern element for visitor check
   private PsiElement myElement;
@@ -41,7 +56,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   // context of matching
   private MatchContext matchContext;
 
-  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
+  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<>(1);
 
   public PsiElement getElement() {
     return myElement;
@@ -98,6 +113,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param el2 the tree element for matching
    * @return true if equal and false otherwise
    */
+  @Override
   public boolean match(final PsiElement el1, final PsiElement el2) {
     if (el1 == el2) return true;
     if (el1 == null) {
@@ -159,28 +175,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @param nodes2 the tree element for matching
    * @return if they are equal and false otherwise
    */
+  @Override
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
     if (!nodes.hasNext()) {
       return !nodes2.hasNext();
     }
 
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
-      nodes,
-      nodes2,
-      matchContext
-    );
-  }
-
-  public static boolean continueMatchingSequentially(final NodeIterator nodes, final NodeIterator nodes2, MatchContext matchContext) {
-    if (!nodes.hasNext()) {
-      return !nodes2.hasNext();
-    }
-
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
-      nodes,
-      nodes2,
-      matchContext
-    );
+    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(nodes, nodes2, matchContext);
   }
 
   /**
@@ -297,12 +298,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  protected boolean isLeftLooseMatching() {
+  public boolean isLeftLooseMatching() {
     return matchContext.getOptions().isLooseMatching();
   }
 
   @Override
-  protected boolean isRightLooseMatching() {
+  public boolean isRightLooseMatching() {
     return false;
   }
 

@@ -141,7 +141,7 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   }
 
   private static List<VirtualFile> findTestDirs(VirtualFile baseDir, String... relativePaths) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     for (String path : relativePaths) {
       VirtualFile child = baseDir.findFileByRelativePath(path);
       if (child != null) {

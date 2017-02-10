@@ -32,7 +32,7 @@ public class ShowAnnotationColorsAction extends ActionGroup {
   public ShowAnnotationColorsAction(EditorGutterComponentEx gutter) {
     super("Colors", true);
 
-    final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
+    final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ColorMode type : ColorMode.values()) {
       kids.add(new SetColorModeAction(type, gutter));
     }

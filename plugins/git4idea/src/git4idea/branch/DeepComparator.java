@@ -139,9 +139,14 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       return;
     }
 
+    String comparedBranch = myTask.myComparedBranch;
+    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
+    if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
+      stopAndUnhighlight();
+      return;
+    }
+
     if (refreshHappened) {
-      // collect data
-      String comparedBranch = myTask.myComparedBranch;
       Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
       VcsLogDataProvider provider = myTask.myProvider;
 
@@ -149,14 +154,12 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
       // highlight again
       Map<GitRepository, GitBranch> repositories = getRepositories(dataPack.getLogProviders(), comparedBranch);
-      if (repositories.equals(repositoriesWithCurrentBranches)) { // but not if current branch changed
+      if (repositories.equals(repositoriesWithCurrentBranches)) {
+        // but not if current branch changed
         highlightInBackground(comparedBranch, provider);
       }
-    }
-    else {
-      VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-      if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
-        stopAndUnhighlight();
+      else {
+        removeHighlighting();
       }
     }
   }
@@ -278,6 +281,5 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       handler.runInCurrentThread(null);
       return pickedCommits;
     }
-
   }
 }

@@ -30,7 +30,7 @@ import java.util.Set;
 public class AntResourcesClassLoader extends UrlClassLoader {
   static { registerAsParallelCapable(); }
 
-  private final Set<String> myMisses = new THashSet<String>();
+  private final Set<String> myMisses = new THashSet<>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
     super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());

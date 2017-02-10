@@ -113,7 +113,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 0, 0), 0, 0);
     appendMigrationTypeEditor(panel, gc);
-    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
+    LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
     scopeChooserComponent.setText("Choose scope where change signature may occur");
     panel.add(scopeChooserComponent, gc);
@@ -170,6 +170,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
+      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -192,6 +193,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
+      if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
     }
 
     @Override
@@ -213,7 +215,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
       }
 
-      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+      final List<PsiExpression> expressions = new ArrayList<>();
       for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
         final PsiElement element = reference.getElement();
         final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
@@ -233,11 +235,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           return history;
         }
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }
@@ -266,11 +264,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       try {
         return myTypeCodeFragment.getType();
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }
@@ -311,6 +305,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
 
       return element.toString();
     }
+
+    private boolean isVoidVariableMigration() {
+      if (!PsiType.VOID.equals(getMigrationType())) return false;
+      for (PsiElement root : myRoots) {
+        if (root instanceof PsiVariable) return true;
+      }
+      return false;
+    }
+
     private static boolean checkType(final PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;

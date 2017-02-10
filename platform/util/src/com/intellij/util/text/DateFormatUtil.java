@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,10 +74,6 @@ public class DateFormatUtil {
   private static final Period[] PERIODS = {Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private DateFormatUtil() { }
-
-  /** @deprecated use {@link #getIso8601Format()} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
-  public static final SyncDateFormat ISO8601_DATE_FORMAT = ISO8601_FORMAT;
 
   public static long getDifferenceInDays(@NotNull Date startDate, @NotNull Date endDate) {
     return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
@@ -342,7 +338,7 @@ public class DateFormatUtil {
       }
     }
     catch (Throwable t) {
-      LOG.error(t);
+      LOG.info(t);
     }
 
     if (!loaded) {

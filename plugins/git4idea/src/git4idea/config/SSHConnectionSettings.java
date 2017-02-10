@@ -34,7 +34,7 @@ public class SSHConnectionSettings implements PersistentStateComponent<SSHConnec
   /**
    * The last successful hosts, the entries are sorted to save on efforts on sorting during saving and loading
    */
-  THashMap<String, String> myLastSuccessful = new THashMap<String, String>();
+  THashMap<String, String> myLastSuccessful = new THashMap<>();
 
   /**
    * {@inheritDoc}
@@ -42,7 +42,7 @@ public class SSHConnectionSettings implements PersistentStateComponent<SSHConnec
   @Override
   public State getState() {
     State s = new State();
-    s.setLastSuccessful(new TreeMap<String, String>(myLastSuccessful));
+    s.setLastSuccessful(new TreeMap<>(myLastSuccessful));
     return s;
   }
 
@@ -94,7 +94,7 @@ public class SSHConnectionSettings implements PersistentStateComponent<SSHConnec
     /**
      * The last successful authentications
      */
-    private Map<String, String> myLastSuccessful = new TreeMap<String, String>();
+    private Map<String, String> myLastSuccessful = new TreeMap<>();
 
     /**
      * @return the last successful authentications

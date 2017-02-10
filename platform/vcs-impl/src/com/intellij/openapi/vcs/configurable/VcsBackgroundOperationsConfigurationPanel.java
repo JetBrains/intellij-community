@@ -36,7 +36,7 @@ public class VcsBackgroundOperationsConfigurationPanel {
   private JPanel myPanel;
 
   private final Project myProject;
-  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<VcsShowOptionsSettingImpl, JCheckBox>();
+  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<>();
   private JCheckBox myCbUpdateInBackground;
   private JCheckBox myCbCommitInBackground;
   private JCheckBox myCbEditInBackground;

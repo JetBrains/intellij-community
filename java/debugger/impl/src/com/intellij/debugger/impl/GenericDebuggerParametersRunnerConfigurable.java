@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   @Override
-  public void resetEditorFrom(GenericDebuggerRunnerSettings runnerSettings) {
+  public void resetEditorFrom(@NotNull GenericDebuggerRunnerSettings runnerSettings) {
     setIsLocal(runnerSettings.LOCAL);
     setTransport(runnerSettings.getTransport());
     setPort(StringUtil.notNullize(runnerSettings.getDebugPort()));
@@ -182,7 +182,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   @Override
-  public void applyEditorTo(GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
+  public void applyEditorTo(@NotNull GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
     runnerSettings.LOCAL = myIsLocal;
     checkPort();
     runnerSettings.setDebugPort(getPort());

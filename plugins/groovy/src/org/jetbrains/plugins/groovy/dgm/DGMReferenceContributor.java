@@ -47,7 +47,7 @@ public class DGMReferenceContributor extends PsiReferenceContributor {
           return PsiReference.EMPTY_ARRAY;
         }
 
-        ArrayList<PsiReference> result = new ArrayList<PsiReference>();
+        ArrayList<PsiReference> result = new ArrayList<>();
 
         String text = element.getText();
 

@@ -24,16 +24,14 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -57,7 +55,8 @@ import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -66,16 +65,18 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class CompilerManagerImpl extends CompilerManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
+
   private final Project myProject;
 
-  private final List<Compiler> myCompilers = new ArrayList<Compiler>();
+  private final List<Compiler> myCompilers = new ArrayList<>();
 
-  private final List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
-  private final List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
-  private final Set<FileType> myCompilableTypes = new HashSet<FileType>();
+  private final List<CompileTask> myBeforeTasks = new ArrayList<>();
+  private final List<CompileTask> myAfterTasks = new ArrayList<>();
+  private final Set<FileType> myCompilableTypes = new HashSet<>();
   private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
-  private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<ModuleType>();
+  private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<>();
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
   private volatile ExternalJavacManager myExternalJavacManager;
 
@@ -161,7 +162,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @NotNull
   public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
-    final List<T> compilers = new ArrayList<T>(myCompilers.size());
+    final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
         compilers.add((T)item);
@@ -197,7 +198,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   private CompileTask[] getCompileTasks(List<CompileTask> taskList, CompileTaskBean.CompileTaskExecutionPhase phase) {
-    List<CompileTask> beforeTasks = new ArrayList<CompileTask>(taskList);
+    List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
         beforeTasks.add(extension.getTaskInstance());
@@ -258,7 +259,7 @@ public class CompilerManagerImpl extends CompilerManager {
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }
 
-  private final Map<CompilationStatusListener, MessageBusConnection> myListenerAdapters = new HashMap<CompilationStatusListener, MessageBusConnection>();
+  private final Map<CompilationStatusListener, MessageBusConnection> myListenerAdapters = new HashMap<>();
 
   public void addCompilationStatusListener(@NotNull final CompilationStatusListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
@@ -339,17 +340,27 @@ public class CompilerManagerImpl extends CompilerManager {
   public Collection<ClassObject> compileJavaCode(List<String> options,
                                                  Collection<File> platformCp,
                                                  Collection<File> classpath,
+                                                 Collection<File> modulePath,
                                                  Collection<File> sourcePath,
                                                  Collection<File> files,
                                                  File outputDir) throws IOException, CompilationException {
 
-    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myProject);
+    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
-    String javaHome = null;
     final Sdk sdk = runtime.getFirst();
     final SdkTypeId type = sdk.getSdkType();
+    String javaHome = null;
     if (type instanceof JavaSdkType) {
       javaHome = sdk.getHomePath();
+      if (!isJdkOrJre(javaHome)) {
+        // this can be a java-dependent SDK, implementing JavaSdkType
+        // hack, because there is no direct way to obtain the java sdk, this sdk depends on
+        final String binPath = ((JavaSdkType)type).getBinPath(sdk);
+        javaHome = binPath != null? new File(binPath).getParent() : null;
+        if (!isJdkOrJre(javaHome)) {
+          javaHome = null;
+        }
+      }
     }
     if (javaHome == null) {
       throw new IOException("Was not able to determine JDK for project " + myProject.getName());
@@ -358,7 +369,7 @@ public class CompilerManagerImpl extends CompilerManager {
     final OutputCollector outputCollector = new OutputCollector();
     DiagnosticCollector diagnostic = new DiagnosticCollector();
 
-    final Set<File> sourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> sourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     if (!sourcePath.isEmpty()) {
       for (File file : sourcePath) {
         sourceRoots.add(file);
@@ -376,12 +387,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final ExternalJavacManager javacManager = getJavacManager();
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.<String>emptyList(), options, platformCp, classpath, sourcePath, files, outs, diagnostic, outputCollector,
+      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
       new JavacCompilerTool(), CanceledStatus.NULL
     );
 
     if (!compiledOk) {
-      final List<CompilationException.Message> messages = new SmartList<CompilationException.Message>();
+      final List<CompilationException.Message> messages = new SmartList<>();
       for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
         final JavaFileObject source = d.getSource();
         final URI uri = source != null ? source.toUri() : null;
@@ -392,12 +403,16 @@ public class CompilerManagerImpl extends CompilerManager {
       throw new CompilationException("Compilation failed", messages);
     }
 
-    final List<ClassObject> result = new ArrayList<ClassObject>();
+    final List<ClassObject> result = new ArrayList<>();
     for (OutputFileObject fileObject : outputCollector.getCompiledClasses()) {
       final BinaryContent content = fileObject.getContent();
       result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
     }
     return result;
+  }
+
+  private static boolean isJdkOrJre(@Nullable String path) {
+    return path != null && (JdkUtil.checkForJre(path) || JdkUtil.checkForJdk(path));
   }
 
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
@@ -491,10 +506,13 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   private static class DiagnosticCollector implements DiagnosticOutputConsumer {
-    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
+    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<>();
     public void outputLineAvailable(String line) {
       // for debugging purposes uncomment this line
       //System.out.println(line);
+      if (line != null && line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
+        LOG.info(line.trim());
+      }
     }
 
     public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
@@ -503,6 +521,9 @@ public class CompilerManagerImpl extends CompilerManager {
 
     public void javaFileLoaded(File file) {
       // ignore
+    }
+
+    public void customOutputData(String pluginId, String dataName, byte[] data) {
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
@@ -516,7 +537,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
 
   private static class OutputCollector implements OutputFileConsumer {
-    private List<OutputFileObject> myClasses = new ArrayList<OutputFileObject>();
+    private List<OutputFileObject> myClasses = new ArrayList<>();
 
     public void save(@NotNull OutputFileObject fileObject) {
       myClasses.add(fileObject);

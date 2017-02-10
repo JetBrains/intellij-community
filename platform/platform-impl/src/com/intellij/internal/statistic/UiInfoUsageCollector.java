@@ -34,7 +34,7 @@ class UiInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    Set<UsageDescriptor> set = new THashSet<UsageDescriptor>();
+    Set<UsageDescriptor> set = new THashSet<>();
 
     add(set, "Nav Bar visible", navbar() ? 1 : 0);
     add(set, "Nav Bar floating", navbar() ? 0 : 1);

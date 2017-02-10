@@ -6,7 +6,7 @@ import junit.framework.AssertionFailedError;
 import java.util.ArrayList;
 
 public class MultiCheck {
-  private final ArrayList<FailedCondition> myFailedConditions = new ArrayList<FailedCondition> ();
+  private final ArrayList<FailedCondition> myFailedConditions = new ArrayList<>();
 
   public void assertEquals(int expected, int actual) {
     if (expected != actual)

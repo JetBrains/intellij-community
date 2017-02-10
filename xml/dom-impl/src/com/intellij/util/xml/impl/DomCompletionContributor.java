@@ -69,7 +69,7 @@ public class DomCompletionContributor extends CompletionContributor{
   public static boolean isSchemaEnumerated(final PsiElement element) {
     if (element instanceof XmlTag) {
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
-      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
+      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<>())) {
         return true;
       }                  
     }
@@ -82,7 +82,7 @@ public class DomCompletionContributor extends CompletionContributor{
         }
 
         String[] enumeratedValues = XmlAttributeValueGetter.getEnumeratedValues((XmlAttribute)parent);
-        if (enumeratedValues != null && enumeratedValues.length > 0) {
+        if (enumeratedValues.length > 0) {
           String value = descriptor == null ? null : descriptor.getDefaultValue();
           if (value == null || enumeratedValues.length != 1 || !value.equals(enumeratedValues[0])) {
             return true;

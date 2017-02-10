@@ -50,7 +50,7 @@ public class JavaMethodNode extends MethodNodeBase<PsiMethod> {
     final PsiReference[] refs =
       MethodReferencesSearch.search(myMethod, GlobalSearchScope.allScope(myProject), true).toArray(PsiReference.EMPTY_ARRAY);
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> result = new ArrayList<>();
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       if (!(element instanceof PsiReferenceExpression) ||

@@ -177,7 +177,7 @@ public class Options implements Cloneable {
   @Override
   public Options clone() throws CloneNotSupportedException {
     Options res = (Options)super.clone();
-    res.options = new TreeMap<String, LanguageOptions>();
+    res.options = new TreeMap<>();
     for (String lang : options.keySet()) {
       LanguageOptions opts = options.get(lang);
       res.options.put(lang, opts.clone());
@@ -186,7 +186,7 @@ public class Options implements Cloneable {
     return res;
   }
 
-  private Map<String, LanguageOptions> options = new TreeMap<String, LanguageOptions>();
+  private Map<String, LanguageOptions> options = new TreeMap<>();
   private static final String LANG_TEMPLATE = "__TEMPLATE__";
 
   private static final Logger logger = Logger.getInstance(Options.class.getName());

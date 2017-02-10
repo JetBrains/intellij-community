@@ -23,7 +23,6 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.TransferableFileEditorStateSupport;
 import com.intellij.diff.tools.util.side.OnesideDiffViewer;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,6 @@ import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 import static java.util.Collections.singletonList;
 
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(OnesideBinaryDiffViewer.class);
-
   @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public OnesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {

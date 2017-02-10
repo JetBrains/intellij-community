@@ -83,7 +83,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
                                final ConvertContext context) {
     if (super.isReferenceTo(element, stringValue, resolveResult, context)) return true;
 
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     processMethods(context, method -> {
       if (method.equals(element)) {
         result.set(Boolean.TRUE);
@@ -110,7 +110,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @NotNull
   public Collection<? extends PsiMethod> getVariants(final ConvertContext context) {
-    Set<PsiMethod> methodList = new LinkedHashSet<PsiMethod>();
+    Set<PsiMethod> methodList = new LinkedHashSet<>();
     Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, s -> {
       final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), object -> acceptMethod(object, context));
@@ -139,7 +139,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   public PsiMethod fromString(final String methodName, final ConvertContext context) {
-    final CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<PsiMethod>();
+    final CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<>();
     processMethods(context, processor, s -> {
       final PsiMethod method = findMethod(s, methodName, getMethodParams(getParent(context)));
       if (method != null && acceptMethod(method, context)) {

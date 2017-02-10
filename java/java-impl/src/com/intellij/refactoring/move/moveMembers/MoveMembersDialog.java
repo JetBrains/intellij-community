@@ -102,7 +102,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     PsiField[] fields = mySourceClass.getFields();
     PsiMethod[] methods = mySourceClass.getMethods();
     PsiClass[] innerClasses = mySourceClass.getInnerClasses();
-    ArrayList<MemberInfo> memberList = new ArrayList<MemberInfo>(fields.length + methods.length);
+    ArrayList<MemberInfo> memberList = new ArrayList<>(fields.length + methods.length);
 
     for (PsiClass innerClass : innerClasses) {
       if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) continue;
@@ -197,7 +197,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     final MemberSelectionPanel selectionPanel = new MemberSelectionPanel(title, myMemberInfos, null);
     myTable = selectionPanel.getTable();
     myMemberInfoModel = new MyMemberInfoModel();
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<>(myMemberInfos));
     selectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
     selectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
     panel.add(selectionPanel, BorderLayout.CENTER);
@@ -216,7 +216,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
   public PsiMember[] getSelectedMembers() {
     final Collection<MemberInfo> selectedMemberInfos = myTable.getSelectedMemberInfos();
-    ArrayList<PsiMember> list = new ArrayList<PsiMember>();
+    ArrayList<PsiMember> list = new ArrayList<>();
     for (MemberInfo selectedMemberInfo : selectedMemberInfos) {
       list.add(selectedMemberInfo.getMember());
     }
@@ -358,7 +358,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
             Messages.getQuestionIcon()
     );
     if (answer != Messages.YES) return null;
-    final Ref<IncorrectOperationException> eRef = new Ref<IncorrectOperationException>();
+    final Ref<IncorrectOperationException> eRef = new Ref<>();
     final PsiClass newClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
           public PsiClass compute() {
             try {

@@ -46,7 +46,7 @@ public abstract class Client extends UserDataHolderBase {
       return null;
     }
 
-    ChannelFutureAwarePromise<T> promise = new ChannelFutureAwarePromise<T>(messageId, messageCallbackMap);
+    ChannelFutureAwarePromise<T> promise = new ChannelFutureAwarePromise<>(messageId, messageCallbackMap);
     channelFuture.addListener(promise);
     //noinspection unchecked
     messageCallbackMap.put(messageId, (AsyncPromise<Object>)promise);

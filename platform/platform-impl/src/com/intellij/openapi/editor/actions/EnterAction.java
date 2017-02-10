@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class EnterAction extends EditorAction {
   }
 
   public static void insertNewLineAtCaret(Editor editor) {
-    MacUIUtil.hideCursor();
+    EditorUIUtil.hideCursorInEditor(editor);
     Document document = editor.getDocument();
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if(!editor.isInsertMode()) {

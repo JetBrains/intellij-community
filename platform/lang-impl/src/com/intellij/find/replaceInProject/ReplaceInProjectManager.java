@@ -24,7 +24,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,14 +31,12 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -134,9 +131,7 @@ public class ReplaceInProjectManager {
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     findModel.setOpenInNewTab(toOpenInNewTab);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
-
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    FindUtil.initStringToFindWithSelection(findModel, editor);
+    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
 
     findManager.showFindDialog(findModel, () -> {
       if (!findModel.isProjectScope() &&
@@ -483,7 +478,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    final List<Usage> usages = new ArrayList<Usage>(usagesSet);
+    final List<Usage> usages = new ArrayList<>(usagesSet);
     Collections.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
@@ -505,7 +500,7 @@ public class ReplaceInProjectManager {
       final VirtualFile file = ((UsageInFile)usage).getFile();
 
       if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
+        if (readOnlyFiles == null) readOnlyFiles = new HashSet<>();
         readOnlyFiles.add(file);
       }
     }
@@ -565,7 +560,7 @@ public class ReplaceInProjectManager {
             myIsFindInProgress = true;
 
             FindInProjectUtil.findUsages(myFindModelCopy, myProject,
-                                         new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                         new AdapterProcessor<>(processor, UsageInfo2UsageAdapter.CONVERTER),
                                          myProcessPresentation);
           }
           finally {

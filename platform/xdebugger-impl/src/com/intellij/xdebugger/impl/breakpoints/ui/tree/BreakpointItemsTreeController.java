@@ -193,13 +193,11 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     for (TreePath selectionPath : selectionPaths) {
       TreeNode startNode = (TreeNode)selectionPath.getLastPathComponent();
       if (traverse) {
-        TreeUtil.traverseDepth(startNode, new TreeUtil.Traverse() {
-          public boolean accept(final Object node) {
-            if (node instanceof BreakpointItemNode) {
-              list.add(((BreakpointItemNode)node).getBreakpointItem());
-            }
-            return true;
+        TreeUtil.traverseDepth(startNode, node -> {
+          if (node instanceof BreakpointItemNode) {
+            list.add(((BreakpointItemNode)node).getBreakpointItem());
           }
+          return true;
         });
       }
       else {

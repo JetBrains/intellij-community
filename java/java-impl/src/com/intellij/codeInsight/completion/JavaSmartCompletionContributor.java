@@ -164,8 +164,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         Consumer<LookupElement> noTypeCheck = decorateWithoutTypeCheck(result, _infos);
 
-        THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
-        List<Runnable> chainedEtc = new ArrayList<Runnable>();
+        THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
+        List<Runnable> chainedEtc = new ArrayList<>();
         for (final ExpectedTypeInfo info : mergedInfos) {
           Runnable slowContinuation =
             ReferenceExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), noTypeCheck);
@@ -258,7 +258,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
-      final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
+      final List<ExpectedTypeInfo> result = new SmartList<>();
       result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
       final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
       if (method != null) {

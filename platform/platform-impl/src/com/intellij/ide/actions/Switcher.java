@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -32,12 +33,15 @@ import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -67,13 +71,16 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
+import static javax.swing.KeyStroke.getKeyStroke;
 
 /**
  * @author Konstantin Bulenkov
@@ -201,7 +208,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider {
     final JBPopup myPopup;
     final JBList toolWindows;
     final JBList files;
@@ -215,6 +222,24 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        final List list = getSelectedList().getSelectedValuesList();
+        if (!list.isEmpty()) {
+          final List<VirtualFile> vFiles = new ArrayList<>();
+          for (Object o : list) {
+            if (o instanceof FileInfo) {
+              vFiles.add(((FileInfo)o).first);
+            }
+          }
+          return vFiles.isEmpty() ? null : vFiles.toArray(VirtualFile.EMPTY_ARRAY);
+        }
+      }
+      return null;
+    }
 
 
     private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
@@ -312,7 +337,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+      descriptions.setBorder(JBUI.Borders.empty(1, 4));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
@@ -339,7 +364,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                                                                 || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
-      toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
         @NotNull
@@ -384,8 +409,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
-      final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
+      final ArrayList<FileInfo> filesData = new ArrayList<>();
+      final ArrayList<FileInfo> editors = new ArrayList<>();
       if (!pinned) {
         if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
           for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
@@ -403,7 +428,9 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = 0; i < len; i++) {
-          if (isPinnedMode() && selectedFiles.contains(recentFiles[i])) {
+          if (isPinnedMode()
+              && selectedFiles.contains(recentFiles[i])
+              && UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
             continue;
           }
 
@@ -420,8 +447,10 @@ public class Switcher extends AnAction implements DumbAware {
           if (add) {
             filesData.add(info);
             if (!firstRecentMarked) {
-              firstRecentMarked = true;
               selectionIndex = filesData.size() - 1;
+              if (selectionIndex != 0 || UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE || !isPinnedMode()) {
+                firstRecentMarked = true;
+              }
             }
           }
         }
@@ -542,7 +571,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(filesRenderer);
-      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+      files.setBorder(JBUI.Borders.empty(5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);
@@ -571,6 +600,11 @@ public class Switcher extends AnAction implements DumbAware {
       CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
       files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
+      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
@@ -583,6 +617,8 @@ public class Switcher extends AnAction implements DumbAware {
         .setMovable(pinned)
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
+          Container popupFocusAncestor = getPopupFocusAncestor();
+          if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
           SWITCHER = null;
           return true;
         }).createPopup();
@@ -614,8 +650,7 @@ public class Switcher extends AnAction implements DumbAware {
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       myPopup.showInCenterOf(window);
 
-      Container popupFocusAncestor = myPopup.getContent().getFocusCycleRootAncestor();
-
+      Container popupFocusAncestor = getPopupFocusAncestor();
       popupFocusAncestor.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
@@ -625,11 +660,16 @@ public class Switcher extends AnAction implements DumbAware {
 
     }
 
+    private Container getPopupFocusAncestor() {
+      JComponent content = myPopup.getContent();
+      return content == null ? null : content.getFocusCycleRootAncestor();
+    }
+
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
       Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
 
-      Set<AWTKeyStroke> set = new HashSet<AWTKeyStroke>(focusTraversalKeySet);
-      set.add(KeyStroke.getKeyStroke(keyStroke));
+      Set<AWTKeyStroke> set = new HashSet<>(focusTraversalKeySet);
+      set.add(getKeyStroke(keyStroke));
       focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
 
@@ -640,8 +680,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
-      final Map<String, ToolWindow> keymap = new HashMap<String, ToolWindow>(windows.size());
-      final List<ToolWindow> otherTW = new ArrayList<ToolWindow>();
+      final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
+      final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
         int index = ActivateToolWindowAction.getMnemonicForToolWindow(((ToolWindowImpl)window).getId());
         if (index >= '0' && index <= '9') {
@@ -653,6 +693,12 @@ public class Switcher extends AnAction implements DumbAware {
       }
       int i = 0;
       for (ToolWindow window : otherTW) {
+        String bestShortcut = getSmartShortcut(window, keymap);
+        if (bestShortcut != null) {
+          keymap.put(bestShortcut, window);
+          continue;
+        }
+
         while (keymap.get(getIndexShortcut(i)) != null) {
           i++;
         }
@@ -660,6 +706,22 @@ public class Switcher extends AnAction implements DumbAware {
         i++;
       }
       return keymap;
+    }
+
+    @Nullable
+    private static String getSmartShortcut(ToolWindow window, Map<String, ToolWindow> keymap) {
+      String title = window.getStripeTitle();
+      if (StringUtil.isEmpty(title))
+        return null;
+      for (int i = 0; i < title.length(); i++) {
+        char c = title.charAt(i);
+        if (Character.isUpperCase(c)) {
+          String shortcut = String.valueOf(c);
+          if (keymap.get(shortcut) == null)
+            return shortcut;
+        }
+      }
+      return null;
     }
 
     private static String getIndexShortcut(int index) {
@@ -854,7 +916,8 @@ public class Switcher extends AnAction implements DumbAware {
       }
       else if (values[0] instanceof ToolWindow) {
         final ToolWindow toolWindow = (ToolWindow)values[0];
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true));
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
+                                                                    ModalityState.current());
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
@@ -884,7 +947,7 @@ public class Switcher extends AnAction implements DumbAware {
               }
             }
           }
-        });
+        }, ModalityState.current());
       }
     }
 

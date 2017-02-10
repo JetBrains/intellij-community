@@ -1,117 +1,82 @@
 package com.intellij.vcs.log.data;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RefsModel implements VcsLogRefs {
-  @NotNull private final Collection<VcsRef> myBranches;
-  @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
-  @NotNull private final VcsLogHashMap myHashMap;
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHashes;
-  @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
+  private static final Logger LOG = Logger.getInstance(RefsModel.class);
 
-  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot,
-                   @NotNull final Set<Integer> heads,
-                   @NotNull final VcsLogHashMap hashMap) {
-    myRefs = refsByRoot;
+  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
+  @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
+  @NotNull private final TIntObjectHashMap<VirtualFile> myRootForHead;
+
+  public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
+                   @NotNull Set<Integer> heads,
+                   @NotNull VcsLogStorage hashMap,
+                   @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    myRefs = refs;
     myHashMap = hashMap;
 
-    Iterable<VcsRef> allRefs = Iterables.concat(refsByRoot.values());
-
-    myBranches = ContainerUtil.newSmartList();
-    for (VcsRef ref : allRefs) {
-      if (ref.getType().isBranch()) {
-        myBranches.add(ref);
-      }
-    }
-
-    myRefsToHashes = prepareRefsToIndicesMap(allRefs, hashMap);
-    myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
-  }
-
-  @NotNull
-  private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
-    TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
-    for (Integer head : heads) {
-      CommitId commitId = hashMap.getCommitId(head);
+    myBestRefForHead = new TIntObjectHashMap<>();
+    myRootForHead = new TIntObjectHashMap<>();
+    for (int head : heads) {
+      CommitId commitId = myHashMap.getCommitId(head);
       if (commitId != null) {
-        map.put(head, commitId.getRoot());
+        VirtualFile root = commitId.getRoot();
+        myRootForHead.put(head, root);
+        Optional<VcsRef> bestRef =
+          myRefs.get(root).refsToCommit(head).stream().min(providers.get(root).getReferenceManager().getBranchLayoutComparator());
+        if (bestRef.isPresent()) {
+          myBestRefForHead.put(head, bestRef.get());
+        }
+        else {
+          LOG.warn("No references at head " + commitId);
+        }
       }
     }
-    return map;
   }
 
-  @NotNull
-  private static TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Iterable<VcsRef> refs,
-                                                                              @NotNull VcsLogHashMap hashMap) {
-    TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
-    for (VcsRef ref : refs) {
-      int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-      SmartList<VcsRef> list = map.get(index);
-      if (list == null) map.put(index, list = new SmartList<VcsRef>());
-      list.add(ref);
-    }
-    return map;
-  }
-
-  @NotNull
-  public Collection<VcsRef> branchesToCommit(int index) {
-    Collection<VcsRef> refs = refsToCommit(index);
-    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
+  @Nullable
+  public VcsRef bestRefToHead(int headIndex) {
+    return myBestRefForHead.get(headIndex);
   }
 
   @NotNull
   public VirtualFile rootAtHead(int headIndex) {
-    return myRootsToHeadIndices.get(headIndex);
+    return myRootForHead.get(headIndex);
   }
 
   @NotNull
-  public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
+  public Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
     return myRefs;
   }
 
-  @NotNull
-  @Override
-  public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    return refsToCommit(myHashMap.getCommitIndex(hash, root));
-  }
-
   public Collection<VcsRef> refsToCommit(int index) {
-    if (myRefsToHashes.containsKey(index)) {
-      return myRefsToHashes.get(index);
-    }
-    return Collections.emptyList();
+    CommitId id = myHashMap.getCommitId(index);
+    if (id == null) return Collections.emptyList();
+    VirtualFile root = id.getRoot();
+    return myRefs.get(root).refsToCommit(index);
   }
 
   @Override
   @NotNull
   public Collection<VcsRef> getBranches() {
-    return myBranches;
+    return myRefs.values().stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList());
   }
 
   @NotNull
-  @Override
-  public Collection<VcsRef> getAllRefs() {
-    return new AbstractCollection<VcsRef>() {
-      @Override
-      public Iterator<VcsRef> iterator() {
-        List<Iterator<VcsRef>> iterators = myRefs.values().stream().map(Set::iterator).collect(Collectors.toList());
-        return Iterators.concat(iterators.iterator());
-      }
-
-      @Override
-      public int size() {
-        return myRefs.values().stream().mapToInt(Set::size).sum();
-      }
-    };
+  public Stream<VcsRef> stream() {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
 }

@@ -40,10 +40,6 @@ public class XPathConfigurable implements SearchableConfigurable {
     return getHelpTopic();
   }
 
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   public JComponent createComponent() {
         configUI = new ConfigUI(XPathAppComponent.getInstance().getConfig());
 

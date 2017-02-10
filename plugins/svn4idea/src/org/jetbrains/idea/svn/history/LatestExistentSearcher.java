@@ -69,7 +69,7 @@ public class LatestExistentSearcher {
   public long getDeletionRevision() {
     if (! detectStartRevision()) return -1;
 
-    final Ref<Long> latest = new Ref<Long>(myStartNumber);
+    final Ref<Long> latest = new Ref<>(myStartNumber);
     try {
       if (myEndNumber == -1) {
         myEndNumber = getLatestRevision();

@@ -37,7 +37,7 @@ public class VariableInitializationChecker {
   private static final LightCacheKey<Map<GroovyPsiElement, Boolean>> KEY = LightCacheKey.createByFileModificationCount();
 
   public static boolean isVariableDefinitelyInitialized(@NotNull String varName, @NotNull Instruction[] controlFlow) {
-    DFAEngine<Data> engine = new DFAEngine<Data>(controlFlow, new MyDfaInstance(varName), new MySemilattice());
+    DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(varName), new MySemilattice());
     final ArrayList<Data> result = engine.performDFAWithTimeout();
     if (result == null) return false;
 

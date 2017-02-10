@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
@@ -50,7 +49,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
         FileType fileType = file.getFileType();
         return fileType == PythonFileType.INSTANCE;
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
     final PsiElement result;
     if (ref instanceof PsiPolyVariantReference) {
       final ResolveResult[] resolveResults = ((PsiPolyVariantReference)ref).multiResolve(false);
@@ -59,7 +58,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     else {
       result = ref.resolve();
     }
-    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     return result;
   }
 
@@ -94,7 +93,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     final PsiFile psiFile = prepareFile();
     final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
     if (ref instanceof PsiPolyVariantReference) {
-      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), result -> result.getElement());
+      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), ResolveResult::getElement);
     }
     return Collections.singletonList(ref.resolve());
   }

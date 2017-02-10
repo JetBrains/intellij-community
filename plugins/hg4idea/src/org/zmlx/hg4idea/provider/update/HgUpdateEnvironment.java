@@ -50,7 +50,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     UpdatedFiles updatedFiles, ProgressIndicator indicator,
     @NotNull Ref<SequentialUpdatesContext> context) {
     
-    List<VcsException> exceptions = new LinkedList<VcsException>();
+    List<VcsException> exceptions = new LinkedList<>();
 
     boolean result = true;
     for (FilePath contentRoot : contentRoots) {

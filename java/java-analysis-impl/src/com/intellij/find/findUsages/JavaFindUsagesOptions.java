@@ -67,7 +67,7 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
   @Override
   public final String generateUsagesString() {
     String separator = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
-    LinkedHashSet<String> strings = new LinkedHashSet<String>();
+    LinkedHashSet<String> strings = new LinkedHashSet<>();
     addUsageTypes(strings);
     if (strings.isEmpty()) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));

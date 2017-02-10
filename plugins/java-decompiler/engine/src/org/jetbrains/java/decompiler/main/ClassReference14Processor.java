@@ -74,12 +74,12 @@ public class ClassReference14Processor {
 
   public static void processClassReferences(ClassNode node) {
     // find the synthetic method Class class$(String) if present
-    HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<ClassWrapper, MethodWrapper>();
+    HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<>();
     mapClassMethods(node, mapClassMeths);
     if (mapClassMeths.isEmpty()) {
       return;
     }
-    HashSet<ClassWrapper> setFound = new HashSet<ClassWrapper>();
+    HashSet<ClassWrapper> setFound = new HashSet<>();
     processClassRec(node, mapClassMeths, setFound);
 
     if (!setFound.isEmpty()) {

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -204,23 +203,21 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
       @NotNull
       @Override
-      public String getName() {
+      public String getFamilyName() {
         return "Attach annotations";
       }
 
-      @NotNull
+      @Nullable
       @Override
-      public String getFamilyName() {
-        return getName();
+      public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+        return null;
       }
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          SdkModificator modificator = finalJdk.getSdkModificator();
-          JavaSdkImpl.attachJdkAnnotations(modificator);
-          modificator.commitChanges();
-        });
+        SdkModificator modificator = finalJdk.getSdkModificator();
+        JavaSdkImpl.attachJdkAnnotations(modificator);
+        modificator.commitChanges();
       }
     });
   }
@@ -415,19 +412,15 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element,
-                                              () -> CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
-                                                                                      PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(element, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+                                        PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
     PsiFile containingFile = owner.getContainingFile();
-    if (containingFile != null) {
-      GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
-      if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
-        // optimisation: do not parse library sources if there are no "beaninfo" text in the file
-        return null;
-      }
+    if (containingFile != null && !containsBeanInfoText((PsiFile)containingFile.getNavigationElement())) {
+      return null;
     }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {
@@ -500,6 +493,15 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (values.isEmpty()) return null;
     PsiAnnotationMemberValue[] array = values.toArray(new PsiAnnotationMemberValue[values.size()]);
     return new AllowedValues(array, false);
+  }
+
+  private static boolean containsBeanInfoText(@NotNull PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> {
+      Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME,
+                                                                                      new IdIndexEntry("beaninfo", true),
+                                                                                      GlobalSearchScope.fileScope(file));
+      return CachedValueProvider.Result.create(!files.isEmpty(), file);
+    });
   }
 
   private static PsiType getType(@NotNull PsiModifierListOwner element) {

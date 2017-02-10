@@ -65,7 +65,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   private static StdArrangementMatchRule rule(boolean byName, @NotNull ArrangementSettingsToken... tokens) {
-    final List<ArrangementAtomMatchCondition> conditions = new ArrayList<ArrangementAtomMatchCondition>();
+    final List<ArrangementAtomMatchCondition> conditions = new ArrayList<>();
     for (ArrangementSettingsToken token : tokens) {
       conditions.add(new ArrangementAtomMatchCondition(token));
     }
@@ -101,7 +101,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   private static StdArrangementRuleAliasToken visibilityToken() {
-    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<>();
     rules.add(rule(false, PUBLIC));
     rules.add(rule(false, PROTECTED));
     rules.add(rule(false, PRIVATE));
@@ -109,7 +109,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   private static StdArrangementRuleAliasToken modifiersToken() {
-    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<>();
     rules.add(rule(false, PUBLIC, STATIC));
     rules.add(rule(false, PROTECTED, STATIC));
     rules.add(rule(false, PRIVATE, STATIC));

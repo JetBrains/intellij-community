@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ class GrRedundantElseTest extends GrIntentionTestCase {
     super(GrRedundantElseIntention.HINT)
   }
 
-  public void testBlock() {
+  void testBlock() {
     doTextTest('''\
 def foo() {
     if (cond) {
@@ -49,7 +49,7 @@ def foo() {
 ''')
   }
 
-  public void testSingleStatement() throws Exception {
+  void testSingleStatement() throws Exception {
     doTextTest('''\
 def foo() {
     if (cond) {
@@ -69,7 +69,7 @@ def foo() {
 ''')
   }
 
-  public void testInsideIf() throws Exception {
+  void testInsideIf() throws Exception {
     doTextTest('''\
 def foo() {
     if (abc)
@@ -93,7 +93,7 @@ def foo() {
   }
 
 
-  public void testInsideFor() throws Exception {
+  void testInsideFor() throws Exception {
     doTextTest('''\
 def foo() {
     for (i in 1..2) {
@@ -120,7 +120,7 @@ def foo() {
   }
 
 
-  public void testInsideFor2() throws Exception {
+  void testInsideFor2() throws Exception {
     doTextTest('''\
 def foo() {
     for (i in 1..2) {
@@ -156,7 +156,7 @@ def foo() {
 ''')
   }
 
-  public void testInsideFor3() throws Exception {
+  void testInsideFor3() throws Exception {
     doAntiTest('''\
 def foo() {
     for (i in 1..2) {
@@ -171,7 +171,7 @@ def foo() {
 ''')
   }
 
-  public void testInsideFor4() throws Exception {
+  void testInsideFor4() throws Exception {
     doTextTest('''\
 def foo() {
     for (i in 1..2) {

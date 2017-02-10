@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 public class ManifestFileConfiguration {
   private final boolean myWritable;
-  private List<String> myClasspath = new ArrayList<String>();
+  private List<String> myClasspath = new ArrayList<>();
   private String myMainClass;
   private String myManifestFilePath;
 

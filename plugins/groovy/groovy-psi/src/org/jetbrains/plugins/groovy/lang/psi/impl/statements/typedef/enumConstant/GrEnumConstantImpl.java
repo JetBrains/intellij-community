@@ -273,4 +273,10 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
       return false;
     }
   }
+
+  @Nullable
+  @Override
+  public Object computeConstantValue() {
+    return this;
+  }
 }

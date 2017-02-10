@@ -19,13 +19,15 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -33,23 +35,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static java.util.Collections.singletonList;
+
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    return groupByRoot(refs, ref -> ref.getRoot());
-  }
-
-  @NotNull
-  public static <T extends VcsShortCommitDetails> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> commits) {
-    return groupByRoot(commits, commit -> commit.getRoot());
+    return groupByRoot(refs, VcsRef::getRoot);
   }
 
   @NotNull
   private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map =
-      new TreeMap<VirtualFile, Set<T>>((o1, o2) -> o1.getPresentableUrl().compareTo(o2.getPresentableUrl()));
+    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
       Set<T> set = map.get(root);
@@ -83,9 +83,9 @@ public class VcsLogUtil {
 
   @NotNull
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
-    Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
+    Set<VirtualFile> selectedRoots = new HashSet<>();
 
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, (root1, root2) -> root1.getPath().compareTo(root2.getPath()));
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
     for (FilePath filePath : files) {
       VirtualFile virtualFile = filePath.getVirtualFile();
@@ -126,7 +126,7 @@ public class VcsLogUtil {
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
                                                     @Nullable VcsLogRootFilter rootFilter,
                                                     @Nullable VcsLogStructureFilter structureFilter) {
-    if (rootFilter == null && structureFilter == null) return new HashSet<VirtualFile>(roots);
+    if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
 
     Collection<VirtualFile> fromRootFilter;
     if (rootFilter != null) {
@@ -138,13 +138,13 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<>(roots));
     }
     else {
       fromStructureFilter = roots;
     }
 
-    return new HashSet<VirtualFile>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
+    return new HashSet<>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
   // for given root returns files that are selected in it
@@ -156,38 +156,15 @@ public class VcsLogUtil {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
     Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    return new HashSet<FilePath>(ContainerUtil.filter(files, filePath -> {
+    return new HashSet<>(ContainerUtil.filter(files, filePath -> {
       VirtualFile virtualFile = filePath.getVirtualFile();
       return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
     }));
   }
 
-  // If this method stumbles on LoadingDetails instance it returns empty list
-  @NotNull
-  public static List<VcsFullCommitDetails> collectFirstPackOfLoadedSelectedDetails(@NotNull VcsLog log) {
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
-
-    for (VcsFullCommitDetails next : log.getSelectedDetails()) {
-      if (next instanceof LoadingDetails) {
-        return Collections.emptyList();
-      }
-      else {
-        result.add(next);
-        if (result.size() >= MAX_SELECTED_COMMITS) break;
-      }
-    }
-
-    return result;
-  }
-
   @NotNull
   public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
     return list.subList(0, Math.min(list.size(), max));
-  }
-
-  @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
-    return ContainerUtil.filter(log.getAllReferences(), ref -> visibleRoots.contains(ref.getRoot()));
   }
 
   @NotNull
@@ -227,5 +204,24 @@ public class VcsLogUtil {
 
   public static void triggerUsage(@NotNull String text) {
     UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
+  }
+
+  public static boolean maybeRegexp(@NotNull String text) {
+    return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
+  }
+
+  @NotNull
+  public static VcsFullCommitDetails getDetails(@NotNull VcsLogData data, @NotNull VirtualFile root, @NotNull Hash hash)
+    throws VcsException {
+    return notNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
+  }
+
+  @NotNull
+  public static List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
+                                                                @NotNull VirtualFile root,
+                                                                @NotNull List<String> hashes) throws VcsException {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    logProvider.readFullDetails(root, hashes, result::add);
+    return result;
   }
 }

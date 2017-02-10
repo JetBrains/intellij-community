@@ -149,7 +149,7 @@ public class DetailsComponent {
   }
 
   public void update() {
-    ArrayList<String> strings = new ArrayList<String>();
+    ArrayList<String> strings = new ArrayList<>();
     if (myPrefix != null) {
       ContainerUtil.addAll(strings, myPrefix);
     }

@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -57,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,9 +68,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -90,8 +87,12 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   @NotNull
-  protected final Disposable myTestRootDisposable = new Disposable() {
+  private final Disposable myTestRootDisposable = new Disposable() {
     @Override
     public void dispose() { }
 
@@ -142,7 +143,7 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(myTestRootDisposable);
+      Disposer.dispose(getTestRootDisposable());
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
@@ -227,7 +228,7 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected void checkForSettingsDamage(@NotNull List<Throwable> exceptions) {
+  protected void checkForSettingsDamage() {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
       return;
@@ -242,7 +243,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeInsightSettings = null;
 
-    checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance(), exceptions);
+    checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance());
 
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     if (oldCodeStyleSettings == null) {
@@ -251,54 +252,51 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeStyleSettings = null;
 
-    checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
+    checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
   }
 
-  public static void checkForInsightSettingsDamage(@NotNull CodeInsightSettings oldCodeInsightSettings, @NotNull CodeInsightSettings currentCodeInsightSettings, @NotNull List<Throwable> exceptions) {
-    try {
-      Assert.assertEquals("Code insight settings damaged",
-                          JDOMUtil.writeElement(oldCodeInsightSettings.getState(), "\n"),
-                          JDOMUtil.writeElement(currentCodeInsightSettings.getState(), "\n"));
-    }
-    catch (AssertionError error) {
-      exceptions.add(error);
-    } finally {
-      for (Field field : oldCodeInsightSettings.getClass().getFields()) {
+  public static void checkForInsightSettingsDamage(@NotNull CodeInsightSettings oldCodeInsightSettings,
+                                                   @NotNull CodeInsightSettings currentCodeInsightSettings) {
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    new RunAll()
+      .append(() -> {
         try {
-          ReflectionUtil.copyFieldValue(oldCodeInsightSettings, currentCodeInsightSettings, field);
+          Element newS = new Element("temp");
+          settings.writeExternal(newS);
+          Assert.assertEquals("Code insight settings damaged",
+                              JDOMUtil.writeElement(oldCodeInsightSettings.getState(), "\n"),
+                              JDOMUtil.writeElement(currentCodeInsightSettings.getState(), "\n"));
         }
-        catch (Exception ignored) {
+        catch (AssertionError error) {
+          for (Field field : oldCodeInsightSettings.getClass().getFields()) {
+            try {
+              ReflectionUtil.copyFieldValue(oldCodeInsightSettings, settings, field);
+            }
+            catch (Exception ignored) {
+            }
+          }
+          throw error;
         }
-      }
-    }
+      })
+      .run();
   }
 
   public static void checkForStyleSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                                 @NotNull CodeStyleSettings currentCodeStyleSettings,
-                                                 @NotNull List<Throwable> exceptions) {
-    currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    try {
-      checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-    finally {
-      currentCodeStyleSettings.clearCodeStyleSettings();
-    }
-
-    try {
-      InplaceRefactoring.checkCleared();
-    }
-    catch (AssertionError e) {
-      exceptions.add(e);
-    }
-    try {
-      StartMarkAction.checkCleared();
-    }
-    catch (AssertionError e) {
-      exceptions.add(e);
-    }
+                                                 @NotNull CodeStyleSettings currentCodeStyleSettings) {
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    new RunAll()
+      .append(() -> {
+        currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+        try {
+          checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
+        }
+        finally {
+          currentCodeStyleSettings.clearCodeStyleSettings();
+        }
+      })
+      .append(() -> InplaceRefactoring.checkCleared())
+      .append(() -> StartMarkAction.checkCleared())
+      .run();
   }
 
   void storeSettings() {
@@ -326,17 +324,21 @@ public abstract class UsefulTestCase extends TestCase {
 
     Runnable runnable = () -> {
       try {
-        UsefulTestCase.super.runTest();
+        super.runTest();
+        TestLoggerFactory.onTestFinished(true);
       }
       catch (InvocationTargetException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e.getTargetException();
       }
       catch (IllegalAccessException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e;
       }
       catch (Throwable e) {
+        TestLoggerFactory.onTestFinished(false);
         throwables[0] = e;
       }
     };
@@ -352,12 +354,11 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(@NotNull Runnable r) {
-    EdtTestUtil.runInEdtAndWait(r);
-  }
-
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    EdtTestUtil.runInEdtAndWait(runnable);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -423,7 +424,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (runInDispatchThread()) {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
     }
     else {
       defaultRunBare();
@@ -573,12 +574,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @NotNull
   public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.map2List(collection, new Function<Object, String>() {
-      @Override
-      public String fun(final Object o) {
-        return String.valueOf(o);
-      }
-    });
+    List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
@@ -727,7 +723,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
-    Disposer.register(myTestRootDisposable, disposable);
+    Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
 
@@ -753,18 +749,6 @@ public abstract class UsefulTestCase extends TestCase {
   @NotNull
   public static String getTestName(String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
-  }
-
-  /** @deprecated use {@link PlatformTestUtil#lowercaseFirstLetter(String, boolean)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
-    return PlatformTestUtil.lowercaseFirstLetter(name, lowercaseFirstLetter);
-  }
-
-  /** @deprecated use {@link PlatformTestUtil#isAllUppercaseName(String)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static boolean isAllUppercaseName(String name) {
-    return PlatformTestUtil.isAllUppercaseName(name);
   }
 
   protected String getTestDirectoryName() {
@@ -845,28 +829,6 @@ public abstract class UsefulTestCase extends TestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     });
-  }
-
-  static void checkJavaSwingTimersAreDisposed(@NotNull List<Throwable> exceptions) {
-    try {
-      Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
-      Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
-
-      Object timerQueue = sharedInstance.invoke(null);
-      DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueClass, timerQueue, DelayQueue.class, "queue");
-      Delayed timer = delayQueue.peek();
-      if (timer != null) {
-        long delay = timer.getDelay(TimeUnit.MILLISECONDS);
-        String text = "(delayed for " + delay + "ms)";
-        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
-        Timer swingTimer = (Timer)getTimer.invoke(timer);
-        text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
-        exceptions.add(new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue));
-      }
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
   }
 
   /**

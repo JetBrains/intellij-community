@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,14 +47,14 @@ public class CacheJdbcConnection {
     myDbFile = dbFile;
     myInitDbScript = initDbScript;
     myLock = new Object();
-    myPreparedStatementsMap = new HashMap<String, PreparedStatement>();
+    myPreparedStatementsMap = new HashMap<>();
   }
 
   public void closeConnection() {
     final HashMap<String, PreparedStatement> copyMap;
     final Connection connection;
     synchronized (myLock) {
-      copyMap = new HashMap<String, PreparedStatement>(myPreparedStatementsMap);
+      copyMap = new HashMap<>(myPreparedStatementsMap);
       connection = myConnection;
       myConnection = null;
       myPreparedStatementsMap.clear();
@@ -118,10 +118,7 @@ public class CacheJdbcConnection {
       connection.setAutoCommit(false);
       return connection;
     }
-    catch (final ClassNotFoundException e) {
-      throw new VcsException(e);
-    }
-    catch (SQLException e) {
+    catch (final ClassNotFoundException | SQLException e) {
       throw new VcsException(e);
     }
   }

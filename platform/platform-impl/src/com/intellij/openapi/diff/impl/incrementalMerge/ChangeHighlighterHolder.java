@@ -40,7 +40,7 @@ class ChangeHighlighterHolder {
   static final int APPLIED_CHANGE_TRANSPARENCY = 30;
 
   private Editor myEditor;
-  private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(3);
+  private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<>(3);
   private RangeHighlighter myMainHighlighter = null;
   private AnAction[] myActions;
   private RangeHighlighter[] myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;

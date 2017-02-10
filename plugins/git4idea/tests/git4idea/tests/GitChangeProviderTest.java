@@ -193,7 +193,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     List<Change> changes = builder.getChanges();
 
     // get changes for files
-    final Map<FilePath, Change> result = new HashMap<FilePath, Change>();
+    final Map<FilePath, Change> result = new HashMap<>();
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
       FilePath filePath = null;

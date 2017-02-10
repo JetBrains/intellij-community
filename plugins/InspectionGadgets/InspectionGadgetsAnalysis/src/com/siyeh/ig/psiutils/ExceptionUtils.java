@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +50,7 @@ public class ExceptionUtils {
     if (element instanceof PsiResourceList) {
       final PsiResourceList resourceList = (PsiResourceList)element;
       for (PsiResourceListElement resource : resourceList) {
-        final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-        collectExceptionsThrown(method, PsiSubstitutor.EMPTY, out);
+        out.addAll(ExceptionUtil.getCloserExceptions(resource));
       }
     }
     final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor(out);
@@ -202,26 +203,6 @@ public class ExceptionUtils {
     return false;
   }
 
-  private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull PsiSubstitutor substitutor,
-                                              @NotNull Set<PsiClassType> out) {
-    if (method == null) {
-      return;
-    }
-    for (PsiClassType type : method.getThrowsList().getReferencedTypes()) {
-      final PsiType substitute = substitutor.substitute(type);
-      if (substitute instanceof PsiClassType) {
-        out.add((PsiClassType)substitute);
-      }
-      else if (substitute instanceof PsiCapturedWildcardType) {
-        final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitute;
-        final PsiType upperBound = capturedWildcardType.getUpperBound();
-        if (upperBound instanceof PsiClassType) {
-          out.add((PsiClassType)upperBound);
-        }
-      }
-    }
-  }
-
   public static Set<PsiType> getExceptionTypesHandled(PsiTryStatement statement) {
     final Set<PsiType> out = new HashSet<>(5);
     for (PsiParameter parameter : statement.getCatchBlockParameters()) {
@@ -234,6 +215,24 @@ public class ExceptionUtils {
       }
     }
     return out;
+  }
+
+  public static boolean isExceptionArgument(@NotNull PsiExpression expression) {
+    final PsiNewExpression newExpression =
+      PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class, PsiClass.class);
+    if (newExpression != null) {
+      final PsiType newExpressionType = newExpression.getType();
+      if (com.intellij.psi.util.InheritanceUtil.isInheritor(newExpressionType, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return true;
+      }
+    } else {
+      final PsiMethodCallExpression methodCallExpression =
+        PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
+      if (RefactoringChangeUtil.isSuperOrThisMethodCall(methodCallExpression)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -258,7 +257,8 @@ public class ExceptionUtils {
       if (!(target instanceof PsiMethod)) {
         return;
       }
-      collectExceptionsThrown((PsiMethod)target, resolveResult.getSubstitutor(), m_exceptionsThrown);
+      final PsiClassType[] referencedTypes = ((PsiMethod)target).getThrowsList().getReferencedTypes();
+      m_exceptionsThrown.addAll(ExceptionUtil.collectSubstituted(resolveResult.getSubstitutor(), referencedTypes, callExpression.getResolveScope()));
     }
 
     @Override

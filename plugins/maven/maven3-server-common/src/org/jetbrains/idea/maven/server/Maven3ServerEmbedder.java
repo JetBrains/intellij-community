@@ -32,11 +32,14 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.project.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
@@ -57,9 +60,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
+  protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
-    initLog4J(settings);
+    myServerSettings = settings;
+    initLog4J(myServerSettings);
   }
 
   private static void initLog4J(MavenServerSettings settings) {
@@ -163,16 +168,77 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return buildingResults;
   }
 
-  private static void buildSinglePom(ProjectBuilder builder,
-                                     List<ProjectBuildingResult> buildingResults,
-                                     ProjectBuildingRequest projectBuildingRequest,
-                                     File pomFile) {
+  private void buildSinglePom(ProjectBuilder builder,
+                              List<ProjectBuildingResult> buildingResults,
+                              ProjectBuildingRequest projectBuildingRequest,
+                              File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {
-      buildingResults.addAll(e.getResults());
+      handleProjectBuildingException(buildingResults, e);
+    }
+  }
+
+  protected void handleProjectBuildingException(List<ProjectBuildingResult> buildingResults, ProjectBuildingException e) {
+    List<ProjectBuildingResult> results = e.getResults();
+    if (results != null && !results.isEmpty()) {
+      buildingResults.addAll(results);
+    }
+    else {
+      Throwable cause = e.getCause();
+      List<ModelProblem> problems = null;
+      if (cause instanceof ModelBuildingException) {
+        problems = ((ModelBuildingException)cause).getProblems();
+      }
+      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
+    }
+  }
+
+  private static class MyProjectBuildingResult implements ProjectBuildingResult {
+
+    private final String myProjectId;
+    private final File myPomFile;
+    private final MavenProject myMavenProject;
+    private final List<ModelProblem> myProblems;
+    private final DependencyResolutionResult myDependencyResolutionResult;
+
+    public MyProjectBuildingResult(String projectId,
+                                   File pomFile,
+                                   MavenProject mavenProject,
+                                   List<ModelProblem> problems,
+                                   DependencyResolutionResult dependencyResolutionResult) {
+      myProjectId = projectId;
+      myPomFile = pomFile;
+      myMavenProject = mavenProject;
+      myProblems = problems;
+      myDependencyResolutionResult = dependencyResolutionResult;
+    }
+
+    @Override
+    public String getProjectId() {
+      return myProjectId;
+    }
+
+    @Override
+    public File getPomFile() {
+      return myPomFile;
+    }
+
+    @Override
+    public MavenProject getProject() {
+      return myMavenProject;
+    }
+
+    @Override
+    public List<ModelProblem> getProblems() {
+      return myProblems;
+    }
+
+    @Override
+    public DependencyResolutionResult getDependencyResolutionResult() {
+      return myDependencyResolutionResult;
     }
   }
 
@@ -197,6 +263,12 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     project.setArtifacts(result.getArtifacts());
     executionResults.add(new MavenExecutionResult(project, exceptions));
+  }
+
+  @Override
+  @Nullable
+  public MavenModel readModel(File file) throws RemoteException {
+    return null;
   }
 
   @NotNull

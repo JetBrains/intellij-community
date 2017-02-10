@@ -150,18 +150,26 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 # but assertions do not have trace there (due to Behave internals)
                 # do, we collect it manually
                 error_message = element.error_message
+                fetch_log = not error_message  # If no error_message provided, need to fetch log manually
                 trace = ""
                 if isinstance(element.exception, AssertionError):
-                    trace = u"".join([utils.to_unicode(l) for l in traceback.format_tb(element.exc_traceback)])
+                    trace = self._collect_trace(element, utils)
 
                 # May be empty https://github.com/behave/behave/issues/468 for some exceptions
                 if not trace and not error_message:
-                    error_message = traceback.format_exc()
+                    try:
+                        error_message = traceback.format_exc()
+                    except AttributeError:
+                        # Exception may have empty stracktrace, and traceback.format_exc() throws
+                        # AttributeError in this case
+                        trace = self._collect_trace(element, utils)
                 if not error_message:
                     # Format exception as last resort
                     error_message = element.exception
-
-                self._test_failed(step_name, utils.to_unicode(error_message), trace, duration=duration_ms)
+                message_as_string = utils.to_unicode(error_message)
+                if fetch_log and self.__real_runner.config.log_capture:
+                    message_as_string += u"\n" + utils.to_unicode(self.__real_runner.log_capture.getvalue())
+                self._test_failed(step_name, message_as_string, trace, duration=duration_ms)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
             else:
@@ -177,6 +185,9 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             self._feature_or_scenario(is_started, str(element.examples), element.location)
         else:
             self._feature_or_scenario(is_started, element.name, element.location)
+
+    def _collect_trace(self, element, utils):
+        return u"".join([utils.to_unicode(l) for l in traceback.format_tb(element.exc_traceback)])
 
     def __init__(self, config, base_dir):
         """

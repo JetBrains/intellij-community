@@ -28,9 +28,9 @@ import java.util.Map;
 
 public class StandardVariableNamesInspectionBase extends BaseInspection {
   @NonNls static final Map<String, String> s_expectedTypes =
-    new HashMap<String, String>(13);
+    new HashMap<>(13);
   @NonNls static final Map<String, String> s_boxingClasses =
-    new HashMap<String, String>(8);
+    new HashMap<>(8);
   @SuppressWarnings("PublicField")
   public boolean ignoreParameterNameSameAsSuper = false;
   static {

@@ -49,8 +49,8 @@ public class Util {
       if (initialMethodReturnType == null) {
         return null;
       }
-      final List<PsiMethod> normalized = new SmartList<PsiMethod>();
-      final Queue<PsiMethod> queue = new Queue<PsiMethod>(1);
+      final List<PsiMethod> normalized = new SmartList<>();
+      final Queue<PsiMethod> queue = new Queue<>(1);
       queue.addLast(method);
       while (!queue.isEmpty()) {
         final PsiMethod currentMethod = queue.pullFirst();

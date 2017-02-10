@@ -67,7 +67,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   }
 
   private String[] getEnumeratedValues(boolean forCompletion) {
-    final List<String> list = new SmartList<String>();
+    final List<String> list = new SmartList<>();
     processEnumeration(null, (element, s) -> {
       list.add(s);
       return true;
@@ -116,7 +116,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     }
 
     else {
-      final Ref<Boolean> found = new Ref<Boolean>(Boolean.FALSE);
+      final Ref<Boolean> found = new Ref<>(Boolean.FALSE);
       myExhaustiveEnum = XmlUtil.processEnumerationValues(declaration, tag -> {
         found.set(Boolean.TRUE);
         XmlAttribute name1 = tag.getAttribute("value");
@@ -143,7 +143,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, final String value) {
-    final Ref<PsiElement> result = new Ref<PsiElement>();
+    final Ref<PsiElement> result = new Ref<>();
     processEnumeration(getDeclaration(), (element, s) -> {
       if (value.equals(s)) {
         result.set(element);

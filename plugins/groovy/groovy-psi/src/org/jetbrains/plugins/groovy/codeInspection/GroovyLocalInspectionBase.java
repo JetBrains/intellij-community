@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,12 @@ public abstract class GroovyLocalInspectionBase extends GroovySuppressableInspec
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean isOnTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
         check(closure, problemsHolder);
       }
 
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
           check(block, problemsHolder);
@@ -56,12 +56,12 @@ public abstract class GroovyLocalInspectionBase extends GroovySuppressableInspec
       }
 
       @Override
-      public void visitFile(GroovyFileBase file) {
+      public void visitFile(@NotNull GroovyFileBase file) {
         check(file, problemsHolder);
       }
 
       @Override
-      public void visitClassInitializer(GrClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
         check(initializer.getBlock(), problemsHolder);
       }
     });

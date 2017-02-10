@@ -65,7 +65,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       GridChangeUtil.splitColumn(parent, containerConstraints.getColumn());
     }
 
-    ArrayList<RadComponent> contents = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> contents = new ArrayList<>();
     for(int i=container.getComponentCount()-1; i >= 0; i--) {
       contents.add(0, container.getComponent(i));
       container.removeComponent(container.getComponent(i));

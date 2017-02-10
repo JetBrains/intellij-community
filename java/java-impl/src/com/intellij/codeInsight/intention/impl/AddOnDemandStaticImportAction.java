@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -52,7 +50,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
    * Allows to check if static import may be performed for the given element.
    *
    * @param element     element to check
-   * @return            target class that may be statically imported if any; <code>null</code> otherwise
+   * @return            target class that may be statically imported if any; {@code null} otherwise
    */
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
@@ -72,6 +70,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
+    if (PsiUtil.isFromDefaultPackage(psiClass) ||
+        psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+        psiClass.getQualifiedName() == null) return null;
+
     final PsiElement ggParent = gParent.getParent();
     if (ggParent instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression call = (PsiMethodCallExpression)ggParent.copy();
@@ -90,7 +92,6 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
     }
 
-    if (Comparing.strEqual(psiClass.getName(), psiClass.getQualifiedName()) || psiClass.hasModifierProperty(PsiModifier.PRIVATE)) return null;
     PsiFile file = refExpr.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
@@ -110,8 +111,6 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {

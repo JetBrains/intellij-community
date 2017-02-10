@@ -46,7 +46,7 @@ public class RollbackDeletionAction extends AbstractMissingFilesAction {
     if (indicator != null) {
       indicator.setText(vcs.getDisplayName() + ": performing rollback...");
     }
-    final List<VcsException> result = new ArrayList<VcsException>(0);
+    final List<VcsException> result = new ArrayList<>(0);
     try {
       environment.rollbackMissingFileDeletion(files, result, new RollbackProgressModifier(files.size(), indicator));
     }

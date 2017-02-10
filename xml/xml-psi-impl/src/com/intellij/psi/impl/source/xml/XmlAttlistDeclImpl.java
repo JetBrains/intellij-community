@@ -57,7 +57,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
 
   @Override
   public XmlAttributeDecl[] getAttributeDecls() {
-    final List<XmlAttributeDecl> result = new ArrayList<XmlAttributeDecl>();
+    final List<XmlAttributeDecl> result = new ArrayList<>();
     processElements(new FilterElementProcessor(new ClassFilter(XmlAttributeDecl.class), result) {
       @Override
       public boolean execute(@NotNull final PsiElement element) {

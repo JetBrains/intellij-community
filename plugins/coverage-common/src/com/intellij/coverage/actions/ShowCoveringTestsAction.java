@@ -78,7 +78,7 @@ public class ShowCoveringTestsAction extends AnAction {
 
     final File[] traceFiles = getTraceFiles(project);
 
-    final Set<String> tests = new HashSet<String>();
+    final Set<String> tests = new HashSet<>();
     Runnable runnable = () -> {
       for (File traceFile : traceFiles) {
         DataInputStream in = null;
@@ -175,7 +175,7 @@ public class ShowCoveringTestsAction extends AnAction {
   private static File[] getTraceFiles(Project project) {
     final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
     if (currentSuite == null) return null;
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
 
       final String filePath = coverageSuite.getCoverageDataFileName();

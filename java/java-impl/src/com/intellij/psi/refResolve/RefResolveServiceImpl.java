@@ -35,8 +35,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -81,7 +79,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final AtomicLong bytesSize = new AtomicLong();
   private final AtomicLong refCount = new AtomicLong();
   private final PersistentIntList storage;
-  private final Deque<VirtualFile> filesToResolve = new ArrayDeque<VirtualFile>(); // guarded by filesToResolve
+  private final Deque<VirtualFile> filesToResolve = new ArrayDeque<>(); // guarded by filesToResolve
   private final ConcurrentBitSet fileIsInQueue = new ConcurrentBitSet();
   private final ConcurrentBitSet fileIsResolved;
   private final ApplicationEx myApplication;
@@ -150,7 +148,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private static List<VirtualFile> toVf(@NotNull int[] ids) {
-    List<VirtualFile> res = new ArrayList<VirtualFile>();
+    List<VirtualFile> res = new ArrayList<>();
     for (int id : ids) {
       VirtualFile file = PersistentFS.getInstance().findFileById(id);
       if (file != null) {
@@ -168,7 +166,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
-    List<VirtualFile> sub = new ArrayList<VirtualFile>(list).subList(0, Math.min(list.size(), 100));
+    List<VirtualFile> sub = new ArrayList<>(list).subList(0, Math.min(list.size(), 100));
     return list.size() + " files: " + StringUtil.join(sub, file -> file.getName(), ", ") + (list.size() == sub.size() ? "" : "...");
   }
 
@@ -251,7 +249,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     }, this);
-    HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
+    HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
       }
@@ -260,7 +258,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       public void processFinished() {
         wakeUp();
       }
-    });
+    }, this);
   }
 
   // return true if file was added to queue
@@ -289,8 +287,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
     if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
-    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
-    if ("groovy".equals(virtualFile.getExtension())) return true;
+    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
+    final String extension = virtualFile.getExtension();
+    if ("groovy".equals(extension) || "kt".equals(extension)) return true;
     return false;
   }
 
@@ -333,7 +332,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     synchronized (filesToResolve) {
       if (!(file instanceof VirtualFileWithId)) return false;
       int fileId = getAbsId(file);
-      countAndMarkUnresolved(file, new LinkedHashSet<VirtualFile>(), true);
+      countAndMarkUnresolved(file, new LinkedHashSet<>(), true);
       boolean alreadyAdded = fileIsInQueue.set(fileId);
       if (!alreadyAdded) {
         filesToResolve.add(file);
@@ -398,7 +397,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     log("list.size = " + storage.getSize());
   }
 
-  private volatile Future<?> resolveProcess = new FutureTask<Object>(EmptyRunnable.getInstance(), null); // write from EDT only
+  private volatile Future<?> resolveProcess = new FutureTask<>(EmptyRunnable.getInstance(), null); // write from EDT only
 
   @Override
   public void run() {
@@ -511,7 +510,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private boolean processFilesConcurrently(@NotNull Set<VirtualFile> files,
                                            @NotNull final ProgressIndicator indicator,
                                            @NotNull final Processor<VirtualFile> processor) {
-    final List<VirtualFile> fileList = new ArrayList<VirtualFile>(files);
+    final List<VirtualFile> fileList = new ArrayList<>(files);
     // fine but grabs all CPUs
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
 
@@ -558,7 +557,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     Set<VirtualFile> set;
     synchronized (filesToResolve) {
       int queuedSize = filesToResolve.size();
-      set = new LinkedHashSet<VirtualFile>(queuedSize);
+      set = new LinkedHashSet<>(queuedSize);
       // someone might have cleared this bit to mark file as processed
       for (VirtualFile file : filesToResolve) {
         if (fileIsInQueue.clear(getAbsId(file))) {
@@ -576,7 +575,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private Set<VirtualFile> countAndMarkUnresolved(@NotNull Collection<VirtualFile> files, boolean inDbOnly) {
-    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<>();
     for (VirtualFile file : files) {
       countAndMarkUnresolved(file, result, inDbOnly);
     }
@@ -637,10 +636,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     try {
       forward = calcForwardRefs(file, indicator);
     }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    catch (ApplicationUtil.CannotRunReadActionException e) {
+    catch (IndexNotReadyException | ApplicationUtil.CannotRunReadActionException e) {
       return null;
     }
     catch (ProcessCanceledException e) {
@@ -664,7 +660,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private void storeIds(@NotNull ConcurrentIntObjectMap<int[]> fileToForwardIds) {
     int forwardSize = 0;
     int backwardSize = 0;
-    final TIntObjectHashMap<TIntArrayList> fileToBackwardIds = new TIntObjectHashMap<TIntArrayList>(fileToForwardIds.size());
+    final TIntObjectHashMap<TIntArrayList> fileToBackwardIds = new TIntObjectHashMap<>(fileToForwardIds.size());
     for (ConcurrentIntObjectMap.IntEntry<int[]> entry : fileToForwardIds.entries()) {
       int fileId = entry.getKey();
       int[] forwardIds = entry.getValue();
@@ -724,7 +720,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     final int fileId = getAbsId(virtualFile);
     if (psiFile != null) {
       bytesSize.addAndGet(virtualFile.getLength());
-      final Set<PsiElement> resolved = new THashSet<PsiElement>();
+      final Set<PsiElement> resolved = new THashSet<>();
       ApplicationUtil.tryRunReadAction(new Runnable() {
         @Override
         public void run() {
@@ -847,7 +843,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       return false;
     }
     boolean queued = false;
-    List<VirtualFile> added = new ArrayList<VirtualFile>(files.size());
+    List<VirtualFile> added = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       boolean wasAdded = queueIfNeeded(file, myProject);
       if (wasAdded) {

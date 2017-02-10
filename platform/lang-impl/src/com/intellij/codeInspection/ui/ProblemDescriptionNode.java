@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
 
-import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
@@ -66,7 +65,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
+    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile
                 .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
@@ -102,8 +101,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount() {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor) ? 0 : 1;
+  public int getProblemCount(boolean allowSuppressed) {
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
   }
 
   @Override
@@ -116,7 +115,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   @Override
   protected boolean calculateIsValid() {
     if (myDescriptor == null) return false;
-    if (myElement instanceof RefElement && !myElement.isValid()) return false;
+    if (myElement == null || !myElement.isValid()) return false;
     if (myDescriptor instanceof ProblemDescriptor) {
       final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
@@ -168,10 +167,10 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
-                                                                                  APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
+    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END));
   }
 
+  @Override
   public boolean isQuickFixAppliedFromView() {
     return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
   }

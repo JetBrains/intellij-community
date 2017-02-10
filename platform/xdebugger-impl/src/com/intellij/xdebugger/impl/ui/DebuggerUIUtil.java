@@ -16,10 +16,10 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -65,10 +65,7 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebuggerUIUtil {
@@ -275,7 +272,7 @@ public class DebuggerUIUtil {
       }
     });
 
-    final ComponentAdapter moveListener = new ComponentAdapter() {
+    ComponentAdapter moveListener = new ComponentAdapter() {
       @Override
       public void componentMoved(ComponentEvent e) {
         balloon.hide();
@@ -283,6 +280,15 @@ public class DebuggerUIUtil {
     };
     component.addComponentListener(moveListener);
     Disposer.register(balloon, () -> component.removeComponentListener(moveListener));
+
+    HierarchyBoundsListener hierarchyBoundsListener = new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorMoved(HierarchyEvent e) {
+        balloon.hide();
+      }
+    };
+    component.addHierarchyBoundsListener(hierarchyBoundsListener);
+    Disposer.register(balloon, () -> component.removeHierarchyBoundsListener(hierarchyBoundsListener));
 
     if (whereToShow == null) {
       balloon.showInCenterOf(component);
@@ -423,7 +429,7 @@ public class DebuggerUIUtil {
     modifier.setValue(text, new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
-        if (isDetachedTree(tree)) {
+        if (tree.isDetached()) {
           AppUIUtil.invokeOnEdt(() -> tree.rebuildAndRestore(treeState));
         }
         XDebuggerUtilImpl.rebuildAllSessionsViews(project);
@@ -437,10 +443,10 @@ public class DebuggerUIUtil {
         });
         XDebuggerUtilImpl.rebuildAllSessionsViews(project);
       }
-
-      boolean isDetachedTree(XDebuggerTree tree) {
-        return XDebugSessionTab.TAB_KEY.getData(DataManager.getInstance().getDataContext(tree)) == null;
-      }
     });
+  }
+
+  public static boolean isInDetachedTree(AnActionEvent event) {
+    return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 }

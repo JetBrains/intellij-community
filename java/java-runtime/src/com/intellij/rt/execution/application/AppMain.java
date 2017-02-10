@@ -17,12 +17,10 @@ package com.intellij.rt.execution.application;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Locale;
 
@@ -31,89 +29,87 @@ import java.util.Locale;
  * @noinspection UseOfSystemOutOrSystemErr
  */
 public class AppMain {
-  private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  private static final String PROPERTY_BIN_PATH = "idea.launcher.bin.path";
+  public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
+  public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
+
   private static final String JAVAFX_LAUNCHER = "com.sun.javafx.application.LauncherImpl";
   private static final String LAUNCH_APPLICATION_METHOD_NAME = "launchApplication";
 
   private static native void triggerControlBreak();
 
-  private static boolean ourHasSecurityProblem = false;
-  static {
-    try {
-      String binPath = System.getProperty(PROPERTY_BIN_PATH) + File.separator;
-      String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static boolean loadHelper(String binPath) {
+    String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+    if (osName.startsWith("windows")) {
       String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
-      String libPath = null;
-      if (osName.startsWith("windows")) {
-        libPath = binPath + (arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
-      }
-      else if (osName.startsWith("linux")) {
-        libPath = binPath + (arch.equals("amd64") ? "libbreakgen64.so" : "libbreakgen.so");
-      }
-      else if (osName.startsWith("mac")) {
-        libPath = binPath + (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
-      }
-      if (libPath != null) {
-        System.load(libPath);
+      File libFile = new File(binPath, arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
+      if (libFile.isFile()) {
+        System.load(libFile.getAbsolutePath());
+        return true;
       }
     }
-    catch (UnsatisfiedLinkError e) {
-      //Do nothing, unknown os or some other error => no ctrl-break is available
+
+    return false;
+  }
+
+  private static void startMonitor(final int portNumber, final boolean helperLibLoaded) {
+    Thread t = new Thread("Monitor Ctrl-Break") {
+      public void run() {
+        try {
+          Socket client = new Socket("127.0.0.1", portNumber);
+          try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
+            try {
+              while (true) {
+                String msg = reader.readLine();
+                if ("TERM".equals(msg)) {
+                  return;
+                }
+                else if ("BREAK".equals(msg)) {
+                  if (helperLibLoaded) {
+                    triggerControlBreak();
+                  }
+                }
+                else if ("STOP".equals(msg)) {
+                  System.exit(1);
+                }
+              }
+            }
+            finally {
+              reader.close();
+            }
+          }
+          finally {
+            client.close();
+          }
+        }
+        catch (Exception ignored) { }
+      }
+    };
+    t.setDaemon(true);
+    t.start();
+  }
+
+  public static void premain(String args) {
+    try {
+      int p = args.indexOf(':');
+      if (p < 0) throw new IllegalArgumentException("incorrect parameter: " + args);
+      boolean helperLibLoaded = loadHelper(args.substring(p + 1));
+      int portNumber = Integer.parseInt(args.substring(0, p));
+      startMonitor(portNumber, helperLibLoaded);
     }
-    catch (SecurityException e) {
-      ourHasSecurityProblem = true;
-      System.out.println("break in console is not supported due to security permissions: " + e.getMessage());
+    catch (Throwable t) {
+      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
     }
   }
 
   public static void main(String[] args) throws Throwable {
-    if (!ourHasSecurityProblem) {
-      final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
-      Thread t = new Thread(
-        new Runnable() {
-          public void run() {
-            try {
-              ServerSocket socket = new ServerSocket(portNumber);
-              try {
-                Socket client = socket.accept();
-                try {
-                  BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                  try {
-                    while (true) {
-                      String msg = reader.readLine();
-                      if ("TERM".equals(msg)) {
-                        return;
-                      }
-                      else if ("BREAK".equals(msg)) {
-                        triggerControlBreak();
-                      }
-                      else if ("STOP".equals(msg)) {
-                        System.exit(1);
-                      }
-                    }
-                  }
-                  finally {
-                    reader.close();
-                  }
-                }
-                finally {
-                  client.close();
-                }
-              }
-              finally {
-                socket.close();
-              }
-            }
-            catch (IOException ignored) { }
-            catch (IllegalArgumentException ignored) { }
-            catch (SecurityException ignored) { }
-          }
-        }, "Monitor Ctrl-Break");
-      try {
-        t.setDaemon(true);
-        t.start();
-      } catch (Exception ignored) { }
+    try {
+      boolean helperLibLoaded = loadHelper(System.getProperty(LAUNCHER_BIN_PATH));
+      int portNumber = Integer.parseInt(System.getProperty(LAUNCHER_PORT_NUMBER));
+      startMonitor(portNumber, helperLibLoaded);
+    }
+    catch (Throwable t) {
+      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
     }
 
     String mainClass = args[0];

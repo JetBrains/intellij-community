@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class SyncCompletion implements CompletionThreading {
   public Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable) {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator);
 
-    FutureResult<Object> result = new FutureResult<Object>();
+    FutureResult<Object> result = new FutureResult<>();
     result.set(true);
     return result;
   }
@@ -96,7 +96,7 @@ class AsyncCompletion implements CompletionThreading {
 
   @Override
   public WeighingDelegate delegateWeighing(final CompletionProgressIndicator indicator) {
-    final LinkedBlockingQueue<Computable<Boolean>> queue = new LinkedBlockingQueue<Computable<Boolean>>();
+    final LinkedBlockingQueue<Computable<Boolean>> queue = new LinkedBlockingQueue<>();
 
     class WeighItems implements Runnable {
       @Override
@@ -121,14 +121,11 @@ class AsyncCompletion implements CompletionThreading {
     return new WeighingDelegate() {
       @Override
       public void waitFor() {
-        queue.offer(new Computable.PredefinedValueComputable<Boolean>(false));
+        queue.offer(new Computable.PredefinedValueComputable<>(false));
         try {
           future.get();
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (ExecutionException e) {
+        catch (InterruptedException | ExecutionException e) {
           LOG.error(e);
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
@@ -25,8 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,17 +34,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @State(
   name = "StatisticsApplicationUsages",
   storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
 )
-public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
-  implements ApplicationComponent, PersistentStateComponent<Element> {
+public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements ApplicationComponentAdapter, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
-
-  private final Alarm myAlarm;
-  private final long PERSIST_PERIOD = 24*60*60*1000; //1 day
 
   private static final String TOKENIZER = ",";
 
@@ -63,10 +59,6 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String VALUES_ATTR = "values";
 
-  public ApplicationStatisticsPersistenceComponent() {
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  }
-
   public static ApplicationStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
   }
@@ -80,7 +72,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
         String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new THashSet<UsageDescriptor>();
+          Set<UsageDescriptor> frameworkDescriptors = new THashSet<>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
             UsageDescriptor descriptor = getUsageDescriptor(key);
             if (descriptor != null) {
@@ -164,15 +156,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ApplicationStatisticsPersistenceComponent";
-  }
-
-  @Override
   public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         persistOpenedProjects();
@@ -192,21 +177,13 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     persistPeriodically();
   }
 
-  private void persistPeriodically() {
-    myAlarm.addRequest(() -> {
-      persistOpenedProjects();
-      persistPeriodically();
-    }, PERSIST_PERIOD);
+  private static void persistPeriodically() {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(ApplicationStatisticsPersistenceComponent::persistOpenedProjects, 1, 1, TimeUnit.DAYS);
   }
 
   private static void persistOpenedProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       UsagesCollector.doPersistProjectUsages(project);
     }
-  }
-
-
-  @Override
-  public void disposeComponent() {
   }
 }

@@ -248,7 +248,7 @@ public class BuildFilePropertiesPanel {
             }
             BuildFileProperty item = new BuildFileProperty();
             ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
-            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
             items.add(item);
             model.setItems(items);
             int newIndex = model.indexOf(item);
@@ -411,7 +411,7 @@ public class BuildFilePropertiesPanel {
           if (application == null) {
             return Collections.singletonList((Sdk)null).iterator();
           }
-          ArrayList<Sdk> allJdks = new ArrayList<Sdk>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
+          ArrayList<Sdk> allJdks = new ArrayList<>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
           allJdks.add(0, null);
           return allJdks.iterator();
         }

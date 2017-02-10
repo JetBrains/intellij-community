@@ -15,44 +15,11 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+public class VcsLogQuickSettingsActions extends VcsLogGearActionGroup {
 
-public class VcsLogQuickSettingsActions extends DumbAwareAction {
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    DefaultActionGroup group = new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.SETTINGS_ACTION_GROUP));
-
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
-                              ToolWindowContentUi.POPUP_PLACE);
-    Component component = e.getInputEvent().getComponent();
-    if (component instanceof ActionButtonComponent) {
-      popup.showUnderneathOf(component);
-    }
-    else {
-      popup.showInCenterOf(component);
-    }
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(project != null && logUi != null);
+  public VcsLogQuickSettingsActions() {
+    super(VcsLogActionPlaces.SETTINGS_ACTION_GROUP);
   }
 }

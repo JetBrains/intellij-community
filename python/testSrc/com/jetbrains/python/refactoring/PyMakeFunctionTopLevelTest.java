@@ -15,17 +15,25 @@
  */
 package com.jetbrains.python.refactoring;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,49 +44,87 @@ import java.io.IOException;
  */
 public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
-  public void doTest(boolean enabled, @Nullable String message) {
+  public void doTest(@Nullable String errorMessage) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
-    // Similar to com.intellij.testFramework.fixtures.CodeInsightTestFixture.testAction()
-    final TestActionEvent event = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(event);
-    assertEquals(enabled, event.getPresentation().isEnabledAndVisible());
-    if (enabled) {
-      try {
-        action.actionPerformed(event);
-        myFixture.checkResultByFile(getTestName(true) + ".after.py");
-      }
-      catch (IncorrectOperationException e) {
-        if (message == null) {
-          fail("Refactoring failed unexpectedly with message: " + e.getMessage());
-        }
-        assertEquals(message, e.getMessage());
-      }
+    runRefactoring(null, errorMessage);
+    if (errorMessage == null) {
+      myFixture.checkResultByFile(getTestName(true) + ".after.py");
     }
   }
 
-  private void doMultiFileTest() throws IOException {
+  private void doTestSuccess() {
+    doTest(null);
+  }
+
+  private void doTestFailure(@NotNull String message) {
+    doTest(message);
+  }
+
+  private void runRefactoring(@Nullable String destination, @Nullable String errorMessage) {
+    final PyFunction function = assertInstanceOf(myFixture.getElementAtCaret(), PyFunction.class);
+    if (destination == null) {
+      destination = PyPsiUtils.getContainingFilePath(function);
+    }
+    else {
+      final VirtualFile srcRoot = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0];
+      destination = FileUtil.join(srcRoot.getPath(), destination);
+    }
+    assertNotNull(destination);
+    final String finalDestination = destination;
+    try {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        if (function.getContainingClass() != null) {
+          new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
+        }
+        else {
+          new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
+        }
+      });
+    }
+    catch (IncorrectOperationException e) {
+      if (errorMessage == null) {
+        fail("Refactoring failed unexpectedly with message: " + e.getMessage());
+      }
+      assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  private void doMultiFileTest(@Nullable String destination, @Nullable String errorMessage) throws IOException {
     final String rootBeforePath = getTestName(true) + "/before";
     final String rootAfterPath = getTestName(true) + "/after";
     final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
     myFixture.configureByFile("main.py");
-    myFixture.testAction(new PyMakeFunctionTopLevelRefactoring());
-    PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+    runRefactoring(destination, errorMessage);
+    if (errorMessage == null) {
+      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+    }
   }
 
-  private void doTestSuccess() {
-    doTest(true, null);
-  }
+  private boolean isActionEnabled() {
+    final int offset = myFixture.getCaretOffset();
+    PsiElement element = myFixture.getFile().findElementAt(offset);
 
-  private void doTestFailure(@NotNull String message) {
-    doTest(true, message);
-  }
-
-  private static boolean isActionEnabled() {
-    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
-    final TestActionEvent event = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(event);
-    return event.getPresentation().isEnabled();
+    // Duplicates the logic of MoveHandler#invoke(), since it doesn't allow to check
+    // whether MoveHandlerDelegate#tryMove() returns true or false without actually
+    // invoking it.
+    while (element != null) {
+      if (PyMoveSymbolDelegate.isMovableLocalFunctionOrMethod(element)) {
+        return true;
+      }
+      final TextRange range = element.getTextRange();
+      if (range != null) {
+        final int relative = offset - range.getStartOffset();
+        final PsiReference reference = element.findReferenceAt(relative);
+        if (reference != null) {
+          final PsiElement refElement = reference.resolve();
+          if (refElement != null && PyMoveSymbolDelegate.isMovableLocalFunctionOrMethod(myFixture.getElementAtCaret())) {
+            return true;
+          }
+        }
+      }
+      element = element.getParent();
+    }
+    return false;
   }
 
   // PY-6637
@@ -100,7 +146,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
     final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
     assertNotNull(tokenAtCaret);
-    assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
+    assertEquals(PyTokenTypes.DEF_KEYWORD, tokenAtCaret.getNode().getElementType());
     assertTrue(isActionEnabled());
 
     moveByText("method");
@@ -133,7 +179,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   // PY-6637
   public void testLocalFunctionNonlocalReferencesInInnerFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestSuccess());
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestSuccess);
   }
 
   // PY-6637
@@ -183,7 +229,15 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   public void testMethodImportUpdates() throws IOException {
-    doMultiFileTest();
+    doMultiFileTest(null, null);
+  }
+
+  public void testMethodMoveToOtherFile() throws IOException {
+    doMultiFileTest("util.py", null);
+  }
+
+  public void testLocalFunctionMoveToOtherFile() throws IOException {
+    doMultiFileTest("util.py", null);
   }
 
   public void testMethodCalledViaClass() {
@@ -208,6 +262,26 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   public void testMethodNoNewParams() {
     doTestSuccess();
+  }
+
+  public void testMethodNotImportableDestinationFile() throws IOException {
+    doMultiFileTest("not-importable.py", PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", "not-importable.py"));
+  }
+
+  public void testLocalFunctionNameCollision() {
+    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", "nested"));
+  }
+
+  public void testMethodInsertionPositionSameFileClassAndUsageNotTopLevel() {
+    doTestSuccess();
+  }
+
+  public void testMethodInsertionPositionUsageInAnotherFile() throws IOException {
+    doMultiFileTest("other.py", null);
+  }
+
+  public void testMethodInsertionPositionNoUsageInAnotherFile() throws IOException {
+    doMultiFileTest("other.py", null);    
   }
 
   @Override

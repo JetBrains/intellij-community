@@ -90,7 +90,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static void renameAll(PsiElement originalElement, UsageInfo[] infos, String newName,
                                 String originalName) throws IncorrectOperationException {
     if (newName.equals(originalName)) return;
-    Queue<PsiReference> queue = new Queue<PsiReference>(infos.length);
+    Queue<PsiReference> queue = new Queue<>(infos.length);
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
       PsiReference ref = info.getReference();

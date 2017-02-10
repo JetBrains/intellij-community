@@ -142,7 +142,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       myTfTargetClassName.setText(myContainingClass.getQualifiedName());
     }
     else {
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       PsiElement parent = myContainingClass;
       while (parent instanceof PsiClass) {
         list.add(((PsiClass)parent).getQualifiedName());

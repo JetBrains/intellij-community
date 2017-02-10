@@ -15,11 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -42,5 +48,14 @@ public class GrFileIndexUtil {
       }
     }
     return false;
+  }
+
+  public static boolean hasNameInFile(@NotNull PsiFile file, @NotNull String name) {
+    if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
+      return StringUtil.contains(file.getViewProvider().getContents(), name);
+    }
+
+    GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
+    return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry(name, true), scope).isEmpty();
   }
 }

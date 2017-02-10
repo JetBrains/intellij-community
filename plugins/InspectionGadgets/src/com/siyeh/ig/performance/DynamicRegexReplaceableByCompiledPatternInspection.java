@@ -33,15 +33,10 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
   }
 
   private static class DynamicRegexReplaceableByCompiledPatternFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "dynamic.regex.replaceable.by.compiled.pattern.quickfix");
     }

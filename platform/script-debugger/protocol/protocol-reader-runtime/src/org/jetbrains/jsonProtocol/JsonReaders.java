@@ -27,7 +27,7 @@ public final class JsonReaders {
   }
 
   public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
-    return new MapFactory<T>(valueFactory);
+    return new MapFactory<>(valueFactory);
   }
 
   private static void checkIsNull(JsonReaderEx reader, String fieldName) {
@@ -103,7 +103,7 @@ public final class JsonReaders {
       return Collections.emptyList();
     }
 
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     do {
       result.add(factory.read(reader));
     }
@@ -124,7 +124,7 @@ public final class JsonReaders {
       return Collections.emptyMap();
     }
 
-    Map<String, T> map = new THashMap<String, T>();
+    Map<String, T> map = new THashMap<>();
     while (reader.hasNext()) {
       if (factory == null) {
         //noinspection unchecked
@@ -165,7 +165,7 @@ public final class JsonReaders {
   }
 
   public static Map<String, Object> nextObject(JsonReaderEx reader) {
-    Map<String, Object> map = new THashMap<String, Object>();
+    Map<String, Object> map = new THashMap<>();
     while (reader.hasNext()) {
       map.put(reader.nextName(), read(reader));
     }
@@ -180,7 +180,7 @@ public final class JsonReaders {
       return Collections.emptyList();
     }
 
-    List<T> list = new ArrayList<T>();
+    List<T> list = new ArrayList<>();
     do {
       //noinspection unchecked
       list.add((T)read(reader));
@@ -197,7 +197,7 @@ public final class JsonReaders {
       return Collections.emptyList();
     }
 
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     do {
       //noinspection unchecked
       list.add(reader.nextString(true));
@@ -266,7 +266,7 @@ public final class JsonReaders {
       return Collections.emptyList();
     }
 
-    List<StringIntPair> result = new ArrayList<StringIntPair>();
+    List<StringIntPair> result = new ArrayList<>();
     do {
       reader.beginArray();
       result.add(new StringIntPair(reader.nextInt(), reader.nextString()));

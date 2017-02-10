@@ -40,7 +40,6 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,10 +62,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
-    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
-    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
+    List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
+    List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<>();
 
-    List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
+    List<PsiElement> occurrencesToCheckForConflict = new ArrayList<>();
     // rename all references
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -165,7 +164,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
 
     if (getters != null) {
-      List<PsiMethod> validGetters = new ArrayList<PsiMethod>();
+      List<PsiMethod> validGetters = new ArrayList<>();
       for (PsiMethod getter : getters) {
         String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
         String getterId = null;
@@ -254,19 +253,17 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                                                   @NotNull final String oldParameterName,
                                                   @NotNull final JavaCodeStyleManager manager,
                                                   @NotNull final Map<PsiElement, String> allRenames) {
-    addGetterOrSetterWithParameter(methodPrototype, newName, newPropertyName, oldParameterName, manager, allRenames);
     PsiMethod[] methods = methodPrototype.findDeepestSuperMethods();
     if (methods.length == 0) {
       methods = new PsiMethod[] {methodPrototype};
     }
     for (PsiMethod method : methods) {
+      addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
       OverridingMethodsSearch.search(method).forEach(psiMethod -> {
         RenameProcessor.assertNonCompileElement(psiMethod);
         addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
         return true;
       });
-      
-      addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
     }
   }
 
@@ -382,7 +379,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       else { //local class
         final PsiMember member = PsiTreeUtil.getParentOfType(inheritor, PsiMember.class);
         if (member != null) {
-          final ArrayList<PsiVariable> variables = new ArrayList<PsiVariable>();
+          final ArrayList<PsiVariable> variables = new ArrayList<>();
           ControlFlowUtil.collectOuterLocals(variables, inheritor, inheritor, member);
           for (PsiVariable variable : variables) {
             if (newName.equals(variable.getName())) {

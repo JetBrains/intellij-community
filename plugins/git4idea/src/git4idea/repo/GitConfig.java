@@ -152,7 +152,7 @@ public class GitConfig {
 
   @NotNull
   private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini, @NotNull ClassLoader classLoader) {
-    Collection<BranchConfig> configs = new ArrayList<BranchConfig>();
+    Collection<BranchConfig> configs = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
@@ -241,8 +241,8 @@ public class GitConfig {
 
   @NotNull
   private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini, @NotNull ClassLoader classLoader) {
-    Collection<Remote> remotes = new ArrayList<Remote>();
-    Collection<Url> urls = new ArrayList<Url>();
+    Collection<Remote> remotes = new ArrayList<>();
+    Collection<Url> urls = new ArrayList<>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
@@ -289,8 +289,8 @@ public class GitConfig {
    */
   @NotNull
   private static UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
-    List<String> urls = new ArrayList<String>(remote.getUrls().size());
-    Collection<String> pushUrls = new ArrayList<String>();
+    List<String> urls = new ArrayList<>(remote.getUrls().size());
+    Collection<String> pushUrls = new ArrayList<>();
 
     // urls are substituted by insteadOf
     // if there are no pushUrls, we create a pushUrl for pushInsteadOf substitutions
@@ -338,7 +338,7 @@ public class GitConfig {
 
     // if no pushUrls are explicitly defined yet via pushUrl or url.<base>.pushInsteadOf, they are the same as urls.
     if (pushUrls.isEmpty()) {
-      pushUrls = new ArrayList<String>(urls);
+      pushUrls = new ArrayList<>(urls);
     }
 
     return new UrlsAndPushUrls(urls, pushUrls);
@@ -485,7 +485,7 @@ public class GitConfig {
 
   @NotNull
   private static Collection<String> nonNullCollection(@Nullable String[] array) {
-    return array == null ? Collections.<String>emptyList() : new ArrayList<String>(Arrays.asList(array));
+    return array == null ? Collections.<String>emptyList() : new ArrayList<>(Arrays.asList(array));
   }
 
 }

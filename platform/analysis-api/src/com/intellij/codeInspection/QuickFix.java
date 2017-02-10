@@ -37,7 +37,9 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
-  String getName();
+  default String getName() {
+    return getFamilyName();
+  }
 
   /**
    * @return text to appear in "Apply Fix" popup when multiple Quick Fixes exist (in the results of batch code inspection). For example,

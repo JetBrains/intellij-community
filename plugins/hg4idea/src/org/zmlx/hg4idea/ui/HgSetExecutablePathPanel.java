@@ -18,7 +18,7 @@ import java.util.Set;
  */
 class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
 
-  private final Set<ActionListener> myOkListeners = new HashSet<ActionListener>();
+  private final Set<ActionListener> myOkListeners = new HashSet<>();
 
   HgSetExecutablePathPanel(final HgProjectSettings projectSettings) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +37,10 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
@@ -82,7 +83,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     EnvironmentVariablesData oldData = myData;
     myData = data;
     setText(stringifyEnvs(data.getEnvs()));
-    if (oldData.isPassParentEnvs() != data.isPassParentEnvs()) {
+    if (!oldData.equals(data)) {
       fireStateChanged();
     }
   }
@@ -128,7 +129,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
 
   public static void showParentEnvironmentDialog(@NotNull Component parent) {
     EnvVariablesTable table = new EnvVariablesTable();
-    table.setValues(convertToVariables(new TreeMap<String, String>(new GeneralCommandLine().getParentEnvironment()), true));
+    table.setValues(convertToVariables(new TreeMap<>(new GeneralCommandLine().getParentEnvironment()), true));
     table.getActionsPanel().setVisible(false);
     DialogBuilder builder = new DialogBuilder(parent);
     builder.setTitle(ExecutionBundle.message("environment.variables.system.dialog.title"));
@@ -185,7 +186,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     @Override
     protected void doOKAction() {
       myEnvVariablesTable.stopEditing();
-      final Map<String, String> envs = new LinkedHashMap<String, String>();
+      final Map<String, String> envs = new LinkedHashMap<>();
       for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
         envs.put(variable.getName(), variable.getValue());
       }

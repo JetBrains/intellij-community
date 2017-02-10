@@ -86,13 +86,13 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
 
   /**
    * Calculates the maximum number of '}' that can be inserted by handler.
-   * Can return <code>0</code> or less in custom implementation to skip '}' insertion in the <code>preprocessEnter</code> call
+   * Can return {@code 0} or less in custom implementation to skip '}' insertion in the {@code preprocessEnter} call
    * and switch to default implementation.
    *
    * @param file        target PSI file
    * @param editor      target editor
    * @param caretOffset target caret offset
-   * @return maximum number of '}' that can be inserted by handler, <code>0</code> or less to switch to default implementation
+   * @return maximum number of '}' that can be inserted by handler, {@code 0} or less to switch to default implementation
    */
   protected int getMaxRBraceCount(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
     if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER) {
@@ -145,7 +145,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param file        target PSI file
    * @param editor      target editor
    * @param caretOffset target caret offset
-   * @return the position between <code>caretOffset</code> and the end of file
+   * @return the position between {@code caretOffset} and the end of file
    */
   protected int getRBraceOffset(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
     CharSequence text = editor.getDocument().getCharsSequence();
@@ -159,7 +159,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   }
 
   /**
-   * Inserts the <code>generatedRBraces</code> at the <code>rBracesInsertOffset</code> position and formats the code block.
+   * Inserts the {@code generatedRBraces} at the {@code rBracesInsertOffset} position and formats the code block.
    * @param file                target PSI file
    * @param editor              target editor
    * @param caretOffset         target caret offset
@@ -177,7 +177,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   }
 
   /**
-   * Inserts the <code>rBracesCount</code> of '}' at the <code>rBracesInsertOffset</code> position.
+   * Inserts the {@code rBracesCount} of '}' at the {@code rBracesInsertOffset} position.
    *
    * @param document            target document
    * @param caretOffset         target caret offset

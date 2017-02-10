@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,7 +33,7 @@ import java.util.*;
  * Date: 19-Apr-2008
  */
 public class ClassTypeArgumentMigrationProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + ClassTypeArgumentMigrationProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(ClassTypeArgumentMigrationProcessor.class);
 
   private final TypeMigrationLabeler myLabeler;
 
@@ -52,11 +51,11 @@ public class ClassTypeArgumentMigrationProcessor {
     myLabeler.getTypeEvaluator().setType(new TypeMigrationUsageInfo(superClass), migrationType);
 
 
-    final Map<PsiElement, Pair<PsiReference[], PsiType>> roots = new HashMap<PsiElement, Pair<PsiReference[], PsiType>>();
+    final Map<PsiElement, Pair<PsiReference[], PsiType>> roots = new HashMap<>();
 
     markTypeParameterUsages(psiClass, migrationType, referenceParameterList, roots);
 
-    final Set<PsiElement> processed = new HashSet<PsiElement>();
+    final Set<PsiElement> processed = new HashSet<>();
     for (Map.Entry<PsiElement, Pair<PsiReference[], PsiType>> entry : roots.entrySet()) {
       final PsiElement member = entry.getKey();
       final PsiType type = entry.getValue().second;
@@ -88,9 +87,9 @@ public class ClassTypeArgumentMigrationProcessor {
       }
     });
 
-    final PsiClass resolvedClass = (PsiClass)((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();;
+    final PsiClass resolvedClass = (PsiClass)((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();
     LOG.assertTrue(resolvedClass != null);
-    final Set<PsiClass> superClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> superClasses = new HashSet<>();
     superClasses.add(resolvedClass);
     InheritanceUtil.getSuperClasses(resolvedClass, superClasses, true);
     for (PsiClass superSuperClass : superClasses) {
@@ -155,7 +154,7 @@ public class ClassTypeArgumentMigrationProcessor {
   }
 
   private static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
-    private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
+    private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 
     private TypeParameterSearcher(final PsiTypeParameter[] set) {
       ContainerUtil.addAll(myTypeParams, set);

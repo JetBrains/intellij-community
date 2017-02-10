@@ -45,7 +45,7 @@ import java.security.cert.X509Certificate;
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
   private final Project myProject;
-  private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
+  private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<>();
   private final SvnAuthenticationManager myManager;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {

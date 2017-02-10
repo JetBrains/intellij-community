@@ -102,8 +102,8 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     }
 
     final Module[] modules = ModuleManager.getInstance(module.getProject()).getModules();
-    final List<Module> candidates = new ArrayList<Module>(modules.length);
-    final Set<Module> deps = new HashSet<Module>(modules.length);
+    final List<Module> candidates = new ArrayList<>(modules.length);
+    final Set<Module> deps = new HashSet<>(modules.length);
     for (Module m : modules) {
       if (get(m) == getInstance()) {
         deps.clear();

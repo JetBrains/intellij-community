@@ -187,7 +187,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+    List<GroovyResolveResult> result = new ArrayList<>();
     for (GroovyResolveResult classResult : referenceElement.multiResolve(false)) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {

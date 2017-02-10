@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class GrRefactoringConflictsUtil {
                                        @Nullable PsiClass targetClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
-    final Set<PsiMember> moving = new HashSet<PsiMember>(membersToMove);
+    final Set<PsiMember> moving = new HashSet<>(membersToMove);
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
@@ -152,7 +152,7 @@ public class GrRefactoringConflictsUtil {
 
 
     List<GroovyPsiElement> groovyScopes =
-      ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<GroovyPsiElement>(GroovyPsiElement.class));
+      ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<>(GroovyPsiElement.class));
     analyzeModuleConflicts(project, groovyScopes, usages, vFile, conflicts);
     scopes.removeAll(groovyScopes);
     RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
@@ -171,17 +171,17 @@ public class GrRefactoringConflictsUtil {
     final Module targetModule = ModuleUtilCore.findModuleForFile(vFile, project);
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
-    final HashSet<PsiElement> reported = new HashSet<PsiElement>();
+    final HashSet<PsiElement> reported = new HashSet<>();
     for (final GroovyPsiElement scope : scopes) {
       scope.accept(new GroovyRecursiveElementVisitor() {
         @Override
-        public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
           super.visitCodeReferenceElement(refElement);
           visit(refElement);
         }
 
         @Override
-        public void visitReferenceExpression(GrReferenceExpression reference) {
+        public void visitReferenceExpression(@NotNull GrReferenceExpression reference) {
           super.visitReferenceExpression(reference);
           visit(reference);
         }

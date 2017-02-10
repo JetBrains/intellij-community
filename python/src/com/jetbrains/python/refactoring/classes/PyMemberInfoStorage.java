@@ -33,7 +33,7 @@ import java.util.ArrayList;
 public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, PyClass, PyMemberInfo<PyElement>> {
 
   public PyMemberInfoStorage(PyClass aClass) {
-    this(aClass, new MemberInfoBase.EmptyFilter<PyElement>());
+    this(aClass, new MemberInfoBase.EmptyFilter<>());
   }
 
   public PyMemberInfoStorage(PyClass aClass, MemberInfoBase.Filter<PyElement> memberInfoFilter) {
@@ -47,7 +47,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
 
   @Override
   protected void buildSubClassesMap(PyClass aClass) {
-    buildSubClassesMapImpl(aClass, new HashSet<PyClass>());
+    buildSubClassesMapImpl(aClass, new HashSet<>());
   }
 
   private void buildSubClassesMapImpl(PyClass aClass, HashSet<PyClass> visited) {

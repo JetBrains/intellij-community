@@ -148,7 +148,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
       return Collections.emptyList();
     }
 
-    final List<T> items = new ArrayList<T>(myVariants);
+    final List<T> items = new ArrayList<>(myVariants);
 
     Collections.sort(items, this);
     return items;

@@ -8,7 +8,6 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +33,7 @@ public class WebSocketConnectionTest extends TestCase {
         assertTrue(connection.getKernelId().length() > 0);
         connection.shutdown();
       }
-    });
+    }, null);
     connection.close();
   }
 
@@ -52,17 +51,16 @@ public class WebSocketConnectionTest extends TestCase {
       public void onOutput(@NotNull IpnbConnection connection,
                            @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
-          final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
-          assertEquals(1, outputs.size());
-          assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
-          final List<String> text = outputs.get(0).getText();
+          final IpnbOutputCell output = connection.getOutput();
+          assertEquals(output.getClass(), IpnbOutOutputCell.class);
+          final List<String> text = output.getText();
           assertNotNull(text);
           assertEquals("4", text.get(0));
           evaluated.set(true);
           connection.shutdown();
         }
       }
-    });
+    }, null);
     connection.close();
     assertTrue(evaluated.get());
   }
@@ -87,17 +85,16 @@ public class WebSocketConnectionTest extends TestCase {
       public void onOutput(@NotNull IpnbConnection connection,
                            @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
-          final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
-          assertEquals(1, outputs.size());
-          assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
-          final List<String> text = outputs.get(0).getText();
+          final IpnbOutputCell output = connection.getOutput();
+          assertEquals(output.getClass(), IpnbOutOutputCell.class);
+          final List<String> text = output.getText();
           assertNotNull(text);
           assertEquals("7", text.get(0));
           evaluated.set(true);
           connection.shutdown();
         }
       }
-    });
+    }, null);
     connection.close();
     assertTrue(evaluated.get());
   }

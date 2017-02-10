@@ -182,7 +182,7 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
         @Override
         public void pass(PsiElement substitutedElement) {
           final MemberInplaceRenamer renamer = new MemberInplaceRenamer(elementToRename, substitutedElement, editor);
-          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>(Arrays.asList(suggestedNames));
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(Arrays.asList(suggestedNames));
           renamer.performInplaceRefactoring(nameSuggestions);
         }
       });
@@ -200,14 +200,8 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
     }
   }
 }

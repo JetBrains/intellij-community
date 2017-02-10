@@ -30,13 +30,13 @@ import java.util.Map;
  */
 public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
   public static final ExtensionPointName<PatternClassBean> PATTERN_CLASS_EP =
-    new ExtensionPointName<PatternClassBean>("com.intellij.patterns.patternClass");
+    new ExtensionPointName<>("com.intellij.patterns.patternClass");
 
 
   private final Map<String, Class[]> myClasses = new ConcurrentFactoryMap<String, Class[]>() {
     @Override
     protected Class[] create(String key) {
-      final ArrayList<Class> result = new ArrayList<Class>(1);
+      final ArrayList<Class> result = new ArrayList<>(1);
       final List<String> typeList = key == null? null : Arrays.asList(key.split(",|\\s"));
       for (PatternClassBean bean : PATTERN_CLASS_EP.getExtensions()) {
         if (typeList == null || typeList.contains(bean.getAlias())) result.add(bean.getPatternClass());

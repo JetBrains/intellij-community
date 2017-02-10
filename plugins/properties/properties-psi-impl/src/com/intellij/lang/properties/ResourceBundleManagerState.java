@@ -31,11 +31,11 @@ public class ResourceBundleManagerState {
 
   @Property(surroundWithTag = false)
   @AbstractCollection(elementValueAttribute = "url", elementTag = "file", surroundWithTag = false)
-  public Set<String> myDissociatedFiles = new HashSet<String>();
+  public Set<String> myDissociatedFiles = new HashSet<>();
 
   @Property(surroundWithTag = false)
   @AbstractCollection(elementTag = "custom-rb", surroundWithTag = false)
-  public List<CustomResourceBundleState> myCustomResourceBundles = new ArrayList<CustomResourceBundleState>();
+  public List<CustomResourceBundleState> myCustomResourceBundles = new ArrayList<>();
 
   public Set<String> getDissociatedFiles() {
     return myDissociatedFiles;

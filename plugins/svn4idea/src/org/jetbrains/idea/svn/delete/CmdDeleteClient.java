@@ -27,7 +27,7 @@ public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
     // TODO: no actual support for dryRun in 'svn delete', SvnKit performs certain validation on file status and svn:externals property
     // TODO: probably add some widespread checks for dryRun delete - but most likely this should be placed upper - in merge logic
     if (!dryRun) {
-      List<String> parameters = new ArrayList<String>();
+      List<String> parameters = new ArrayList<>();
 
       CommandUtil.put(parameters, path);
       CommandUtil.put(parameters, force, "--force");

@@ -103,7 +103,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   private static String buildPropertyName(PsiElement e, boolean property) {
     if (property) return DescriptiveNameUtil.getDescriptiveName(e);
 
-    List<String> path = new ArrayList<String>();
+    List<String> path = new ArrayList<>();
     do {
       path.add(DescriptiveNameUtil.getDescriptiveName(e));
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -52,7 +53,8 @@ public class VcsPushDialog extends DialogWrapper {
   public VcsPushDialog(@NotNull Project project,
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
-    super(project);
+    super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
+
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
@@ -127,7 +129,7 @@ public class VcsPushDialog extends DialogWrapper {
   @Override
   @NotNull
   protected Action[] createActions() {
-    final List<Action> actions = new ArrayList<Action>();
+    final List<Action> actions = new ArrayList<>();
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
     myForcePushAction.putValue(Action.NAME, "&Force Push");

@@ -16,9 +16,11 @@
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -57,6 +59,17 @@ public class ExtractClassUtil {
         processor.setPreviewUsages(isPreviewUsages);
         processor.run();
       }
+    }
+  }
+
+  public static void suggestToTurnRefsToSuper(Project project, PsiClass superClassOrInterface, PsiClass sourceClass) {
+    if (superClassOrInterface != null) {
+      final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager
+        .getInstance(project).createSmartPsiElementPointer(sourceClass);
+      final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(
+        project).createSmartPsiElementPointer(superClassOrInterface);
+      final Runnable turnRefsToSuperRunnable = () -> askAndTurnRefsToSuper(project, classPointer, interfacePointer);
+      TransactionGuard.getInstance().submitTransactionLater(project, turnRefsToSuperRunnable);
     }
   }
 }

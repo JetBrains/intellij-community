@@ -30,7 +30,6 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,9 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 
@@ -97,7 +98,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                                                   final ArtifactAntGenerationContext generationContext, 
                                                                   ArtifactType artifactType,
                                                                   List<PackagingElement<?>> children) {
-      final List<Generator> generators = new ArrayList<Generator>();
+      final List<Generator> generators = new ArrayList<>();
       for (PackagingElement<?> child : children) {
         generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext, artifactType));
       }
@@ -114,7 +115,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
 
-    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> children = new ArrayList<>();
     String artifactFileName = rootElement.getName();
     for (PackagingElement<?> child : rootElement.getChildren()) {
       if (child instanceof ArchivePackagingElement) {
@@ -167,10 +168,10 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       final String keystore = selfSigning ? tempDirPath + File.separator + "jb-key.jks" : properties.getKeystore();
       generator.add(new Property(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName), keystore));
 
-      final String storepass = selfSigning ? "storepass" : Base64Converter.decode(properties.getStorepass());
+      final String storepass = selfSigning ? "storepass" : new String(Base64.getDecoder().decode(properties.getStorepass()), StandardCharsets.UTF_8);
       generator.add(new Property(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName), storepass));
 
-      final String keypass = selfSigning ? "keypass" : Base64Converter.decode(properties.getKeypass());
+      final String keypass = selfSigning ? "keypass" : new String(Base64.getDecoder().decode(properties.getKeypass()), StandardCharsets.UTF_8);
       generator.add(new Property(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName), keypass));
       
       final Pair[] keysDescriptions = createKeysDescriptions(artifactName);

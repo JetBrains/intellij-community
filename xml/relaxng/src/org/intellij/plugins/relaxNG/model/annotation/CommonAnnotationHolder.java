@@ -26,11 +26,11 @@ import org.jetbrains.annotations.NotNull;
 
 abstract class CommonAnnotationHolder<C> {
   public static <T extends DomElement> CommonAnnotationHolder<T> create(DomElementAnnotationHolder holder) {
-    return new DomHolderAdapter<T>(holder);
+    return new DomHolderAdapter<>(holder);
   }
 
   public static <T extends PsiElement> CommonAnnotationHolder<T> create(AnnotationHolder holder) {
-    return new HolderAdapter<T>(holder);
+    return new HolderAdapter<>(holder);
   }
 
   public abstract Annotation createAnnotation(C element, @NotNull HighlightSeverity severity, String message);

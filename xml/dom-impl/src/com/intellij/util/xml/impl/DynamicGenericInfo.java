@@ -101,7 +101,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     final List<DomExtensionImpl> collections = registrar.getCollections();
     final List<DomExtensionImpl> attributes = registrar.getAttributes();
     if (!attributes.isEmpty()) {
-      ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> newAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
+      ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> newAttributes =
+        new ChildrenDescriptionsHolder<>(myStaticGenericInfo.getAttributes());
       for (final DomExtensionImpl extension : attributes) {
         newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
       }
@@ -109,7 +110,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     }
 
     if (!fixeds.isEmpty()) {
-      ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
+      ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<>(myStaticGenericInfo.getFixed());
       for (final DomExtensionImpl extension : fixeds) {
         //noinspection unchecked
         newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
@@ -117,7 +118,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       myFixeds = internChildrenHolder(file, newFixeds);
     }
     if (!collections.isEmpty()) {
-      ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
+      ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections =
+        new ChildrenDescriptionsHolder<>(myStaticGenericInfo.getCollections());
       for (final DomExtensionImpl extension : collections) {
         newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(),
                                                                                                   Collections.<JavaMethod>emptyList()
@@ -134,8 +136,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     SoftReference<WeakInterner<ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
     WeakInterner<ChildrenDescriptionsHolder> cache = SoftReference.dereference(ref);
     if (cache == null) {
-      cache = new WeakInterner<ChildrenDescriptionsHolder>();
-      file.putUserData(HOLDERS_CACHE, new SoftReference<WeakInterner<ChildrenDescriptionsHolder>>(cache));
+      cache = new WeakInterner<>();
+      file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
     }
     //noinspection unchecked
     return cache.intern(holder);
@@ -193,7 +195,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @NotNull
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
-    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<AbstractDomChildDescriptionImpl>();
+    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
     myFixeds.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
@@ -266,7 +268,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   @Override
   public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
-    final Set<AttributeChildDescriptionImpl> visited = new THashSet<AttributeChildDescriptionImpl>();
+    final Set<AttributeChildDescriptionImpl> visited = new THashSet<>();
     if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
       visited.add(attributeChildDescription);
       return processor.process(attributeChildDescription);

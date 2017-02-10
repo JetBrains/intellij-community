@@ -72,10 +72,10 @@ import java.util.List;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
-  public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
-  public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
+  public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
+  public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
   public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
-    new Topic<HgHideableWidget>("hg4idea.incomingcheck", HgHideableWidget.class);
+    new Topic<>("hg4idea.incomingcheck", HgHideableWidget.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -219,7 +219,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
+    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);

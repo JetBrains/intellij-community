@@ -85,7 +85,7 @@ public class IntroduceParameterUtil {
   public static void processUsages(UsageInfo[] usages, IntroduceParameterData data) {
     PsiManager manager = PsiManager.getInstance(data.getProject());
 
-    List<UsageInfo> methodUsages = new ArrayList<UsageInfo>();
+    List<UsageInfo> methodUsages = new ArrayList<>();
 
     for (UsageInfo usage : usages) {
       if (usage instanceof InternalUsageInfo) continue;

@@ -51,7 +51,7 @@ class InstanceFieldsManager extends FieldsManager {
                                                   @NotNull final PyClass... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
-    final List<PyElement> result = new ArrayList<PyElement>();
+    final List<PyElement> result = new ArrayList<>();
     for (final PyClass destClass : to) {
       result.addAll(copyInstanceFields(statements, destClass));
     }

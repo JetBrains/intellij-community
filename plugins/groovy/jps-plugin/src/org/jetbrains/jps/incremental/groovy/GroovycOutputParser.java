@@ -158,6 +158,11 @@ public class GroovycOutputParser {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
+        if (StringUtil.isEmpty(url) || "null".equals(url)) {
+          url = null;
+          message = "While compiling " + myChunk.getPresentableShortName() + ": " + message;
+        }
+
         CompilerMessage compilerMessage = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Message: " + compilerMessage);
@@ -198,23 +203,12 @@ public class GroovycOutputParser {
   }
 
   public boolean shouldRetry() {
-    if (myExitCode != 0) {
-      LOG.debug("Non-zero exit code");
-      return true;
-    }
     for (CompilerMessage message : compilerMessages) {
-      if (message.getKind() == BuildMessage.Kind.ERROR) {
-        LOG.debug("Error message: " + message);
+      String text = message.getMessageText();
+      if (text.contains("java.lang.NoClassDefFoundError") || text.contains("java.lang.TypeNotPresentException") || text.contains("unable to resolve class")) {
+        LOG.debug("Resolve issue: " + message);
         return true;
       }
-      if (message.getMessageText().contains(GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED)) {
-        LOG.debug("Stub failed message: " + message);
-        return true;
-      }
-    }
-    if (getStdErr().length() > 0) {
-      LOG.debug("Non-empty stderr: '" + getStdErr() + "'");
-      return true;
     }
     return false;
   }
@@ -227,7 +221,7 @@ public class GroovycOutputParser {
       if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
         messages.add(reportNoGroovy());
       } else {
-        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, msg));
+        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, "While compiling " + myChunk.getPresentableShortName() + ":" + msg));
       }
 
     }

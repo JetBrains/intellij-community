@@ -16,6 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -154,9 +155,8 @@ def set_debug_hook(debug_hook):
     _ProcessExecQueueHelper._debug_hook = debug_hook
 
 
-def process_exec_queue(interpreter):
-
-    from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+def init_mpl_in_console(interpreter):
+    from pydev_ipython.inputhook import set_return_control_callback
 
     def return_control():
         ''' A function that the inputhooks can call (via inputhook.stdin_ready()) to find
@@ -185,6 +185,11 @@ def process_exec_queue(interpreter):
     # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
     import_hook_manager.add_module_name("pylab", activate_pylab)
     import_hook_manager.add_module_name("pyplot", activate_pyplot)
+
+
+def process_exec_queue(interpreter):
+    init_mpl_in_console(interpreter)
+    from pydev_ipython.inputhook import get_inputhook
 
     while 1:
         # Running the request may have changed the inputhook in use
@@ -245,6 +250,7 @@ try:
 except:
     IPYTHON = False
     pass
+
 
 #=======================================================================================================================
 # _DoExit
@@ -308,6 +314,7 @@ def start_console_server(host, port, interpreter):
     server.register_function(interpreter.hello)
     server.register_function(interpreter.getArray)
     server.register_function(interpreter.evaluate)
+    server.register_function(interpreter.ShowConsole)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)
@@ -337,7 +344,7 @@ def start_console_server(host, port, interpreter):
                 pass
             if not retry:
                 raise
-            # Otherwise, keep on going
+                # Otherwise, keep on going
     return server
 
 
@@ -353,12 +360,20 @@ def start_server(host, port, client_port):
     process_exec_queue(interpreter)
 
 
+def get_ipython_hidden_vars():
+    if IPYTHON and hasattr(__builtin__, 'interpreter'):
+        interpreter = get_interpreter()
+        return interpreter.get_ipython_hidden_vars_dict()
+
+
 def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
+        sys.stderr.write(interpreterInterface.get_greeting_msg())
+        sys.stderr.flush()
 
     return interpreterInterface
 

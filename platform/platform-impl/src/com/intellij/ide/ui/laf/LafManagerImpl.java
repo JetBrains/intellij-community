@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,17 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,7 +55,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.PlatformScalingUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -74,6 +76,8 @@ import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
@@ -88,7 +92,7 @@ import java.util.List;
     @Storage(value = "options.xml", deprecated = true)
   }
 )
-public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
+public final class LafManagerImpl extends LafManager implements ApplicationComponentAdapter, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
@@ -114,7 +118,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
   private String myLastWarning = null;
-  private PropertyChangeListener myThemeChangeListener = null;
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
 
   static {
@@ -204,12 +207,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "LafManager";
-  }
-
-  @Override
   public void initComponent() {
     if (myCurrentLaf != null) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
@@ -230,7 +227,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     updateUI();
 
     if (SystemInfo.isXWindow) {
-      myThemeChangeListener = new PropertyChangeListener() {
+      PropertyChangeListener themeChangeListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
           //noinspection SSBasedInspection
@@ -240,16 +237,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           });
         }
       };
-      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
+      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
+      Disposer.register(this, new Disposable() {
+        @Override
+        public void dispose() {
+          Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
+        }
+      });
     }
   }
 
   @Override
-  public void disposeComponent() {
-    if (myThemeChangeListener != null) {
-      Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
-      myThemeChangeListener = null;
-    }
+  public void dispose() {
   }
 
   @Override
@@ -301,7 +300,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return myCurrentLaf;
   }
 
-  private UIManager.LookAndFeelInfo getDefaultLaf() {
+  public UIManager.LookAndFeelInfo getDefaultLaf() {
     String wizardLafName = WelcomeWizardUtil.getWizardLAF();
     if (wizardLafName != null) {
       UIManager.LookAndFeelInfo laf = findLaf(wizardLafName);
@@ -432,10 +431,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         }
         return null;
       }
-      catch (InvocationTargetException e1) {
-        return null;
-      }
-      catch (IllegalAccessException e1) {
+      catch (InvocationTargetException | IllegalAccessException e1) {
         return null;
       }
     }
@@ -540,14 +536,26 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
                                            "Tree.rowHeight");
+
+    List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
+                                                 "Slider.verticalSize",
+                                                 "Slider.minimumHorizontalSize",
+                                                 "Slider.minimumVerticalSize");
+
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
-      if (value instanceof Dimension && value instanceof UIResource) {
-        entry.setValue(JBUI.size((Dimension)value).asUIResource());
-      } else if (value instanceof Insets && value instanceof UIResource) {
-        entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
-      } else if (value instanceof Integer) {
+      if (value instanceof Dimension) {
+        if (value instanceof UIResource || myDimensionKeys.contains(key)) {
+          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+        }
+      }
+      else if (value instanceof Insets) {
+        if (value instanceof UIResource) {
+          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+        }
+      }
+      else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
           entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
@@ -725,7 +733,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      PlatformScalingUtil.getInstance().setActiveScaleFactorFromFontSize(uiSettings.FONT_SIZE);
+      JBUI.setUserScaleFactor(uiSettings.FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -741,14 +749,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    PlatformScalingUtil.getInstance().setActiveScaleFactorFromFontSize(JBUI.Fonts.label().getSize());
+    JBUI.setUserScaleFactor(JBUI.Fonts.label().getSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
-      lfDefaults = new HashMap<String, Object>();
+      lfDefaults = new HashMap<>();
       for (String resource : ourPatchableFontResources) {
         lfDefaults.put(resource, defaults.get(resource));
       }
@@ -830,7 +838,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
+  public static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
     FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
     FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
@@ -839,7 +847,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put(fontResource, uiFont);
     }
 
-    defaults.put("PasswordField.font", monoFont);
+    if (!SystemInfo.isMac) {
+      defaults.put("PasswordField.font", monoFont);
+    }
     defaults.put("TextArea.font", monoFont);
     defaults.put("TextPane.font", textFont);
     defaults.put("EditorPane.font", textFont);
@@ -869,7 +879,31 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         PopupUtil.setPopupType(myDelegate, popupType);
       }
 
-      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Window window = UIUtil.getWindow(contents);
+      String cleanupKey = "LafManagerImpl.rootPaneCleanup";
+      if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
+          ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        window.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowOpened(WindowEvent e) {
+            // cleanup will be handled by AbstractPopup wrapper
+            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+              window.removeWindowListener(this);
+              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+            }
+          }
+
+          @Override
+          public void windowClosed(WindowEvent e) {
+            window.removeWindowListener(this);
+            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            DialogWrapper.cleanupWindowListeners(window);
+          }
+        });
+      }
       fixPopupSize(popup, contents);
       return popup;
     }

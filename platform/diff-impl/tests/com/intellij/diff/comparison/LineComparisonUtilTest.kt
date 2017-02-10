@@ -428,4 +428,75 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       testDefault()
     }
   }
+
+  fun `test ignore whitespace policy does not applies two-step correction`() {
+    lines() {
+      ("1_ _  1" - "  1")
+      ("-_-_   " - "   ").default()
+      (" _-_---" - "   ").trim()
+      testAll()
+    }
+
+    lines() {
+      ("  1_ _1" - "  1")
+      ("   _-_-" - "   ").default()
+      testAll()
+    }
+
+    lines() {
+      ("X_ Y_X" - "Y ")
+      ("-_--_-" - "--").default()
+      ("-_  _-" - "  ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step correction should be performed if there are no ambiguous matchings`() {
+    lines {
+      ("}_ }" - " }_}")
+      ("-_--" - "--_-").default()
+      (" _  " - "  _ ").trim()
+      testAll()
+    }
+
+    lines {
+      (" }_}_ }" - "}_}_}")
+      ("--_ _--" - "-_ _-").default()
+      ("  _ _  " - " _ _ ").trim()
+      testAll()
+    }
+
+    lines() {
+      ("X_X __Y" - "X__Z")
+      (" _--__-" - " __-").default()
+      ("-_  __-" - " __-").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step with too many possible matchings`() {
+    lines {
+      (" X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_ X" - "X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X ")
+      ("--_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_-_--" - "-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _--").default()
+      ("  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_--" - " _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step correction should search for matchings in its prefix`() {
+    lines() {
+      ("Z_X_Z_X __Y" - "X__Y")
+      ("-_ _-_--__ " - " __ ").default()
+      ("-_-_-_  __ " - " __ ").trim()
+      testAll()
+    }
+
+    // do not break other IW-matchings during second step
+    lines() {
+      ("Z_X_K_Z_X __Y" - "K _X__Y")
+      ("-_-_-_-_--__ " - "--_-__ ").default()
+      ("-_-_ _-_  __ " - "  _ __ ").trim()
+      testAll()
+    }
+  }
 }

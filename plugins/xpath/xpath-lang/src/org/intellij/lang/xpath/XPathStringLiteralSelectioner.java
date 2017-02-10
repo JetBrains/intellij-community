@@ -40,7 +40,7 @@ public class XPathStringLiteralSelectioner extends ExtendWordSelectionHandlerBas
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     TextRange elem = e.getTextRange();
     if (elem.getLength() > 2) {
-      return new SmartList<TextRange>(
+      return new SmartList<>(
         new TextRange(elem.getStartOffset() + 1, elem.getEndOffset() - 1)
       );
     }

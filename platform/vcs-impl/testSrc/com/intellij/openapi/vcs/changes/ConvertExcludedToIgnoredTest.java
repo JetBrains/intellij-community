@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,18 +102,11 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
   }
 
   public static void assertIgnoredDirectories(@NotNull Project project, @NotNull VirtualFile... expectedIgnoredDirs) {
-    List<String> expectedIgnoredPaths = new ArrayList<String>();
+    List<String> expectedIgnoredPaths = new ArrayList<>();
     for (VirtualFile dir : expectedIgnoredDirs) {
       expectedIgnoredPaths.add(dir.getPath()+"/");
     }
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
-    expectedIgnoredPaths.addAll(changeListManager.predefinedIgnorePaths());
-    List<String> actualIgnoredPaths = ContainerUtil.map2List(changeListManager.getFilesToIgnore(), new Function<IgnoredFileBean, String>() {
-      @Override
-      public String fun(IgnoredFileBean bean) {
-        return bean.getPath();
-      }
-    });
+    List<String> actualIgnoredPaths = ContainerUtil.map2List(ChangeListManagerImpl.getInstanceImpl(project).getFilesToIgnore(), bean -> bean.getPath());
     assertSameElements(actualIgnoredPaths, expectedIgnoredPaths);
   }
 

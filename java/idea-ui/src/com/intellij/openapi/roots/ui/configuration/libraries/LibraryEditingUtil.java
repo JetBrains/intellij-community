@@ -84,7 +84,7 @@ public class LibraryEditingUtil {
 
   public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
-    final Set<Library> result = new HashSet<Library>(orderEntries.length);
+    final Set<Library> result = new HashSet<>(orderEntries.length);
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
         final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
@@ -156,7 +156,7 @@ public class LibraryEditingUtil {
   }
 
   public static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
-    List<LibraryType> suitableTypes = new ArrayList<LibraryType>();
+    List<LibraryType> suitableTypes = new ArrayList<>();
     suitableTypes.add(null);
     final Module module = classpathPanel.getRootModel().getModule();
     for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
@@ -194,7 +194,7 @@ public class LibraryEditingUtil {
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,
                                                 final @Nullable LibraryKind kind, @Nullable Library library) {
-    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<>();
     LibraryType type = kind == null ? null : LibraryType.findByKind(kind);
     for (Module module : rootConfigurable.getModules()) {
       if (type != null && !type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {

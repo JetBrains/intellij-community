@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,10 +190,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       catch (VcsException e1) {
         exception[0] = e1;
       }
-      catch (SVNException e1) {
-        exception[0] = new VcsException(e);
-      }
-      catch (IOException e1) {
+      catch (SVNException | IOException e1) {
         exception[0] = new VcsException(e);
       }
     }
@@ -299,7 +296,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
     if (annotationSourceSwitcher != null) {
       final VcsRareLineAnnotationData merged = new VcsRareLineAnnotationData(size);
-      final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+      final Map<VcsRevisionNumber, VcsFileRevision> addMap = new HashMap<>();
 
       annotationSourceSwitcher.switchTo(AnnotationSource.MERGE);
       for (int i = 0; i < size; i++) {
@@ -382,7 +379,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       myResult = result;
       myUrl = url;
       myCharset = charset;
-      myRevisionPoints = new LinkedList<SVNRevision>();
+      myRevisionPoints = new LinkedList<>();
     }
 
     public void go() throws VcsException {
@@ -449,10 +446,6 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     public LinkedList<SVNRevision> getRevisionPoints() {
       return myRevisionPoints;
     }
-  }
-
-  public boolean isAnnotationValid( VcsFileRevision rev ){
-    return true;
   }
 
   @Nullable

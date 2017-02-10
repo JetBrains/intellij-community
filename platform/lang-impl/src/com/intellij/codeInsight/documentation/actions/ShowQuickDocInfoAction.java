@@ -27,9 +27,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
@@ -67,55 +68,26 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
+    presentation.setEnabled(false);
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
+    if (project == null) return;
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (editor == null && element == null) {
-      presentation.setEnabled(false);
-      return;
-    }
+    if (editor == null && element == null) return;
 
     if (LookupManager.getInstance(project).getActiveLookup() != null) {
-      if (!isValidForLookup()) {
-        presentation.setEnabled(false);
-      }
-      else {
-        presentation.setEnabled(true);
-      }
+      if (isValidForLookup()) presentation.setEnabled(true);
     }
     else {
       if (editor != null) {
-        if (EditorGutter.KEY.getData(event.getDataContext()) != null) {
-          presentation.setEnabled(false);
-          return;
-        }
+        if (EditorGutter.KEY.getData(event.getDataContext()) != null) return;
+
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        if (file == null) {
-          presentation.setEnabled(false);
-        }
-
-        if (element == null && file != null) {
-          try {
-            final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-            if (ref instanceof PsiPolyVariantReference) {
-              element = ref.getElement();
-            }
-          }
-          catch (IndexNotReadyException e) {
-            element = null;
-          }
-        }
+        if (file == null && element == null) return;
       }
-
-      if (element != null) {
-        presentation.setEnabled(true);
-      }
+      presentation.setEnabled(true);
     }
   }
 

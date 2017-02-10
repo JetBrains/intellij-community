@@ -76,13 +76,14 @@ public class UnifiedDiffWriter {
       String path = ObjectUtils.assertNotNull(patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName());
       String pathRelatedToProjectDir =
         project == null ? path : getPathRelatedToDir(ObjectUtils.assertNotNull(project.getBasePath()), basePath, path);
-      final Map<String, CharSequence> additionalMap = new HashMap<String, CharSequence>();
+      final Map<String, CharSequence> additionalMap = new HashMap<>();
       for (PatchEP extension : extensions) {
         final CharSequence charSequence = extension.provideContent(pathRelatedToProjectDir, commitContext);
         if (! StringUtil.isEmpty(charSequence)) {
           additionalMap.put(extension.getName(), charSequence);
         }
       }
+      String fileContentLineSeparator = ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
       writeFileHeading(patch, writer, lineSeparator, additionalMap);
       for(PatchHunk hunk: patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
@@ -107,7 +108,7 @@ public class UnifiedDiffWriter {
             writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);
           }
           else {
-            writer.write(lineSeparator);
+            writer.write(fileContentLineSeparator);
           }
         }
       }

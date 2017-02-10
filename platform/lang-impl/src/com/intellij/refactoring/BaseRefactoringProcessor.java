@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -75,6 +77,7 @@ import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
+  private static boolean PREVIEW_IN_TESTS = true;
 
   @NotNull
   protected final Project myProject;
@@ -152,10 +155,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected void doRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
-    final Ref<Language> refErrorLanguage = new Ref<Language>();
-    final Ref<Boolean> refProcessCanceled = new Ref<Boolean>();
-    final Ref<Boolean> anyException = new Ref<Boolean>();
+    final Ref<UsageInfo[]> refUsages = new Ref<>();
+    final Ref<Language> refErrorLanguage = new Ref<>();
+    final Ref<Boolean> refProcessCanceled = new Ref<>();
+    final Ref<Boolean> anyException = new Ref<>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       @Override
@@ -227,8 +230,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  @TestOnly
+  public static <T extends Throwable> void runWithDisabledPreview(ThrowableRunnable<T> runnable) throws T {
+    PREVIEW_IN_TESTS = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      PREVIEW_IN_TESTS = true;
+    }
+  }
+
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
     }
@@ -269,7 +285,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, @NotNull UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = new THashSet<PsiElement>(ContainerUtil.<PsiElement>identityStrategy()); // protect against poorly implemented equality
+    Set<PsiElement> elements = new THashSet<>(ContainerUtil.<PsiElement>identityStrategy()); // protect against poorly implemented equality
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
       if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
@@ -289,7 +305,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        Collection<UsageInfo> usageInfos = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
+        Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));
         doRefactoring(usageInfos);
         if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
       }
@@ -317,9 +333,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     int codeUsageCount = 0;
     int nonCodeUsageCount = 0;
     int dynamicUsagesCount = 0;
-    Set<PsiFile> codeFiles = new HashSet<PsiFile>();
-    Set<PsiFile> nonCodeFiles = new HashSet<PsiFile>();
-    Set<PsiFile> dynamicUsagesCodeFiles = new HashSet<PsiFile>();
+    Set<PsiFile> codeFiles = new HashSet<>();
+    Set<PsiFile> nonCodeFiles = new HashSet<>();
+    Set<PsiFile> dynamicUsagesCodeFiles = new HashSet<>();
 
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {
@@ -371,7 +387,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
-    final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
+    final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -409,6 +425,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
     addDoRefactoringAction(usageView, refactoringRunnable, canNotMakeString);
+    UIUtil.invokeLaterIfNeeded(((UsageViewImpl)usageView)::expandRoot);
   }
 
   private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
@@ -432,7 +449,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<RefactoringHelper, Object>();
+      final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = new Runnable() {
         @Override
         public void run() {
@@ -478,6 +495,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
           }
         }
       });
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
         //noinspection unchecked
@@ -525,10 +544,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       try {
         GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (InterruptedException | InvocationTargetException e) {
         LOG.error(e);
       }
     }
@@ -539,11 +555,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
-
-      //noinspection TestOnlyProblems
-      UIUtil.dispatchAllInvocationEvents();
-      //noinspection TestOnlyProblems
-      UIUtil.dispatchAllInvocationEvents();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -575,7 +586,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     @NotNull
     public Collection<String> getMessages() {
-        List<String> result = new ArrayList<String>(messages);
+        List<String> result = new ArrayList<>(messages);
         for (int i = 0; i < messages.size(); i++) {
           result.set(i, result.get(i).replaceAll("<[^>]+>", ""));
         }

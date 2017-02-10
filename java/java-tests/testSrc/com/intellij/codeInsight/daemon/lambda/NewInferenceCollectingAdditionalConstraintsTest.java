@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,17 +31,16 @@ public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemon
     doTest();
   }
 
+  public void testDeepLambdaReturnExpressionsWithProperTargetType() throws Exception {
+    doTest();
+  }
+
+  public void testIncompleteResolveDuringNestedChecks() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
-    doTest(true);
-  }
-
-  private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

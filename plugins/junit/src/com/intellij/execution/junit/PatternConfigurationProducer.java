@@ -25,6 +25,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -45,6 +47,12 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
+  protected String getMethodPresentation(PsiMember psiMember) {
+    return psiMember instanceof PsiMethod ? JUnitConfiguration.Data.getMethodPresentation((PsiMethod)psiMember)
+                                          : super.getMethodPresentation(psiMember);
+  }
+
+  @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return !other.isProducedBy(TestMethodConfigurationProducer.class);
   }
@@ -53,7 +61,7 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
       return false;

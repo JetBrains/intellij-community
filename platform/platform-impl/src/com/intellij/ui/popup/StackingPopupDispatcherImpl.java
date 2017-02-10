@@ -30,13 +30,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Stack;
+import java.util.stream.Stream;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
-  private final Stack<JBPopup> myStack = new Stack<JBPopup>();
-  private final List<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
+  private final Stack<JBPopup> myStack = new Stack<>();
+  private final List<JBPopup> myPersistentPopups = new WeakList<>();
 
-  private final List<JBPopup> myAllPopups = new WeakList<JBPopup>();
+  private final List<JBPopup> myAllPopups = new WeakList<>();
 
 
   private StackingPopupDispatcherImpl() {
@@ -176,6 +177,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   @Nullable
   public Component getComponent() {
     return myStack.isEmpty() ? null : myStack.peek().getContent();
+  }
+
+  @Nullable
+  @Override
+  public Stream<JBPopup> getPopupStream() {
+    return myStack.stream();
   }
 
   @Override

@@ -22,6 +22,8 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author ven
  */
@@ -103,5 +105,10 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name);
+  }
+
+  @Override
+  public Object computeConstantValue(Set<PsiVariable> visitedVars) {
+    return this;
   }
 }

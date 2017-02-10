@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/descriptionType")
 public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
@@ -61,11 +62,11 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
   public void testIntentionDescription() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
 
-    final Collection<GutterMark> gutters = myFixture.findAllGutters("MyIntentionActionWithDescription.java");
+    List<GutterMark> gutters = myFixture.findAllGutters("MyIntentionActionWithDescription.java");
     assertSize(2, gutters);
-    final Iterator<GutterMark> it = gutters.iterator();
-    DevKitGutterTargetsChecker.checkGutterTargets(it.next(), "Description", AllIcons.FileTypes.Html, "description.html");
-    DevKitGutterTargetsChecker.checkGutterTargets(it.next(), "Before/After Templates", AllIcons.Actions.Diff,
+    Collections.sort(gutters, Comparator.comparing(GutterMark::getTooltipText));
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", AllIcons.FileTypes.Html, "description.html");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", AllIcons.Actions.Diff,
                                                   "after.java.template", "before.java.template");
   }
 }

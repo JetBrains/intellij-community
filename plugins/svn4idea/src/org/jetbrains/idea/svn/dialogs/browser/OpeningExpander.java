@@ -31,7 +31,7 @@ public class OpeningExpander extends AbstractOpeningExpander {
 
   public OpeningExpander(final TreeNode[] path, final RepositoryBrowserComponent browser, final RepositoryTreeNode selectionPath) {
     super(browser, selectionPath.getURL().toString());
-    pathElements = new LinkedList<String>();
+    pathElements = new LinkedList<>();
 
     for (TreeNode aPath : path) {
       RepositoryTreeNode node = (RepositoryTreeNode)aPath;

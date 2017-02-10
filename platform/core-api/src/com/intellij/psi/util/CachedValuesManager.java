@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,10 +126,10 @@ public abstract class CachedValuesManager {
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
     Key<CachedValue<T>> key = getKeyForClass(provider.getClass(), globalKeyForProvider);
     CachedValue<T> value = psi.getUserData(key);
-    if (value != null) {
-      return value.getValue();
-    }
+    return value == null ? computeAndGet(psi, key, provider) : value.getValue();
+  }
 
+  public static <T> T computeAndGet(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
     return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
       @Nullable
       @Override

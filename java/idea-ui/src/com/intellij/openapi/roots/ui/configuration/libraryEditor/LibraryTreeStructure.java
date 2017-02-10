@@ -60,7 +60,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
   public Object[] getChildElements(Object element) {
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
-      ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
+      ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<>(3);
       for (OrderRootType type : myComponentDescriptor.getRootTypes()) {
         final String[] urls = libraryEditor.getUrls(type);
         if (urls.length > 0) {
@@ -77,7 +77,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     if (element instanceof OrderRootTypeElement) {
       OrderRootTypeElement rootTypeElement = (OrderRootTypeElement)element;
       OrderRootType orderRootType = rootTypeElement.getOrderRootType();
-      ArrayList<ItemElement> items = new ArrayList<ItemElement>();
+      ArrayList<ItemElement> items = new ArrayList<>();
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
       for (String url : urls) {
@@ -88,7 +88,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
 
     if (element instanceof ItemElement) {
       ItemElement itemElement = (ItemElement)element;
-      List<String> excludedUrls = new ArrayList<String>();
+      List<String> excludedUrls = new ArrayList<>();
       for (String excludedUrl : libraryEditor.getExcludedRootUrls()) {
         if (VfsUtilCore.isEqualOrAncestor(itemElement.getUrl(), excludedUrl)) {
           excludedUrls.add(excludedUrl);

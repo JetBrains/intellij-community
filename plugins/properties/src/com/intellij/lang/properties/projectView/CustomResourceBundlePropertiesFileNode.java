@@ -25,8 +25,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.ui.SimpleTextAttributes;
 
 /**
  * @author Dmitry Batkovich

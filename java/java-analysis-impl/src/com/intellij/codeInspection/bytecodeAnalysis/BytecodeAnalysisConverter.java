@@ -95,7 +95,7 @@ public class BytecodeAnalysisConverter {
     } else {
       Effects wrapper = (Effects)rhs;
       Set<EffectQuantum> effects = wrapper.effects;
-      Set<HEffectQuantum> hEffects = new HashSet<HEffectQuantum>();
+      Set<HEffectQuantum> hEffects = new HashSet<>();
       for (EffectQuantum effect : effects) {
         if (effect == EffectQuantum.TopEffectQuantum) {
           hEffects.add(HEffectQuantum.TopEffectQuantum);
@@ -397,7 +397,7 @@ public class BytecodeAnalysisConverter {
   @NotNull
   public static ArrayList<HKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull HKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 2);
+    ArrayList<HKey> keys = new ArrayList<>(parameters.length * 2 + 2);
     keys.add(primaryKey);
     for (int i = 0; i < parameters.length; i++) {
       if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
@@ -417,7 +417,7 @@ public class BytecodeAnalysisConverter {
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
   public static void addMethodAnnotations(@NotNull Map<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
-    List<String> contractClauses = new ArrayList<String>(arity * 2);
+    List<String> contractClauses = new ArrayList<>(arity * 2);
     Set<HKey> notNulls = methodAnnotations.notNulls;
     Set<HKey> pures = methodAnnotations.pures;
     Map<HKey, String> contracts = methodAnnotations.contractsValues;

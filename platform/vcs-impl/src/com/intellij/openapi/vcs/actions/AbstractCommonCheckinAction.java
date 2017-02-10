@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -75,7 +74,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected FilePath[] prepareRootsForCommit(@NotNull FilePath[] roots, @NotNull Project project) {
     ApplicationManager.getApplication().saveAll();
 
-    return filterDescindingFiles(roots, project);
+    return DescindingFilesFilter.filterDescindingFiles(roots, project);
   }
 
   protected String getMnemonicsFreeActionName(@NotNull VcsContext context) {
@@ -127,11 +126,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
       presentation.setVisible(true);
     }
-  }
-
-  @Override
-  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
-    return true;
   }
 
   @NotNull

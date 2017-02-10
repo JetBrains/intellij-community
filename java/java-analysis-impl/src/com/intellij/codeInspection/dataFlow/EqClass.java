@@ -69,7 +69,7 @@ class EqClass extends SortedIntSet {
   }
 
   List<DfaValue> getMemberValues() {
-    final List<DfaValue> result = new ArrayList<DfaValue>(size());
+    final List<DfaValue> result = new ArrayList<>(size());
     forEach(new TIntProcedure() {
       @Override
       public boolean execute(int c1) {

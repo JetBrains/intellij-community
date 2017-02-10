@@ -15,24 +15,20 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public class Executor {
@@ -66,6 +62,12 @@ public class Executor {
   private static void cdAbs(@NotNull String absolutePath) {
     ourCurrentDir = absolutePath;
     debug("# cd " + shortenPath(absolutePath));
+  }
+
+  public static void debug(@NotNull String msg) {
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
+      LOG.info(msg);
+    }
   }
 
   private static void cdRel(@NotNull String relativePath) {
@@ -142,6 +144,14 @@ public class Executor {
     append(child(fileName), content);
   }
 
+  public static void rm(@NotNull String fileName) {
+    rm(child(fileName));
+  }
+
+  public static void rm(@NotNull File file) {
+    FileUtil.delete(file);
+  }
+
   @NotNull
   public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);
@@ -214,7 +224,7 @@ public class Executor {
 
   @NotNull
   public static List<String> splitCommandInParameters(@NotNull String command) {
-    List<String> split = new ArrayList<String>();
+    List<String> split = new ArrayList<>();
 
     boolean insideParam = false;
     StringBuilder currentParam = new StringBuilder();
@@ -254,44 +264,7 @@ public class Executor {
     return split;
   }
 
-  @NotNull
-  protected static String findExecutable(@NotNull String programName,
-                                         @NotNull String unixExec,
-                                         @NotNull String winExec,
-                                         @NotNull Collection<String> envs) {
-    String exec = findEnvValue(programName, envs);
-    if (exec != null) {
-      return exec;
-    }
-    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? winExec : unixExec);
-    if (fileExec != null) {
-      return fileExec.getAbsolutePath();
-    }
-    throw new IllegalStateException(programName + " executable not found. " + (envs.size() > 0 ?
-                                                                               "Please define a valid environment variable " +
-                                                                               envs.iterator().next() +
-                                                                               " pointing to the " +
-                                                                               programName +
-                                                                               " executable." : ""));
-  }
 
-  @Nullable
-  public static String findEnvValue(@NotNull String programNameForLog, @NotNull Collection<String> envs) {
-    for (String env : envs) {
-      String val = System.getenv(env);
-      if (val != null && new File(val).canExecute()) {
-        debug(String.format("Using %s from %s: %s", programNameForLog, env, val));
-        return val;
-      }
-    }
-    return null;
-  }
-
-  public static void debug(@NotNull String msg) {
-    if (!StringUtil.isEmptyOrSpaces(msg)) {
-      LOG.info(msg);
-    }
-  }
 
   @NotNull
   private static String shortenPath(@NotNull String path) {

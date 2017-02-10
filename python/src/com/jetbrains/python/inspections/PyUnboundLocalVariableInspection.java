@@ -60,7 +60,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
-    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<ScopeOwner>());
+    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<>());
     return new Visitor(holder, session);
   }
 

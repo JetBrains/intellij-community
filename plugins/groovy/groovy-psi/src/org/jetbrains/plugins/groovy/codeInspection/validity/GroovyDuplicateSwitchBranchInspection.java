@@ -64,9 +64,9 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitSwitchStatement(GrSwitchStatement grSwitchStatement) {
+    public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
       super.visitSwitchStatement(grSwitchStatement);
-      final Set<GrExpression> duplicateExpressions = new HashSet<GrExpression>();
+      final Set<GrExpression> duplicateExpressions = new HashSet<>();
       final GrCaseLabel[] labels = collectCaseLabels(grSwitchStatement);
       for (int i = 0; i < labels.length; i++) {
         final GrCaseLabel label1 = labels[i];
@@ -87,16 +87,16 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   }
 
   private static GrCaseLabel[] collectCaseLabels(final GrSwitchStatement containingStatelent) {
-    final Set<GrCaseLabel> labels = new HashSet<GrCaseLabel>();
+    final Set<GrCaseLabel> labels = new HashSet<>();
     final GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitCaseLabel(GrCaseLabel grCaseLabel) {
+      public void visitCaseLabel(@NotNull GrCaseLabel grCaseLabel) {
         super.visitCaseLabel(grCaseLabel);
         labels.add(grCaseLabel);
       }
 
       @Override
-      public void visitSwitchStatement(GrSwitchStatement grSwitchStatement) {
+      public void visitSwitchStatement(@NotNull GrSwitchStatement grSwitchStatement) {
         if (containingStatelent.equals(grSwitchStatement)) {
           super.visitSwitchStatement(grSwitchStatement);
         }

@@ -15,137 +15,130 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.FilePathByPathComparator;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.Where;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.util.Conditions.alwaysTrue;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.util.stream.Collectors.toSet;
+import static org.jetbrains.idea.svn.integrate.Intersection.isEmpty;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
+
 public class LocalChangesPromptTask extends BaseMergeTask {
 
-  private final boolean myMergeAll;
-  @Nullable private final List<CommittedChangeList> myChangeListsToMerge;
-  private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  @Nullable private final List<SvnChangeList> myChangeListsToMerge;
+  @NotNull private final Runnable myCallback;
 
-  public LocalChangesPromptTask(@NotNull MergeContext mergeContext,
-                                @NotNull QuickMergeInteraction interaction,
-                                boolean mergeAll,
-                                @Nullable List<CommittedChangeList> changeListsToMerge,
-                                @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
-    super(mergeContext, interaction, "local changes intersection check", Where.AWT);
-
-    myMergeAll = mergeAll;
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
+                                @Nullable List<SvnChangeList> changeListsToMerge,
+                                @NotNull Runnable callback) {
+    super(mergeProcess);
     myChangeListsToMerge = changeListsToMerge;
-    myCopyPoint = copyPoint;
+    myCallback = callback;
   }
 
   @Nullable
   private File getLocalPath(String repositoryRelativePath) {
-    // from source if not inverted
-    final String absolutePath = SVNPathUtil.append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
-    final SvnBranchPointsCalculator.BranchCopyData wrapped = myCopyPoint.getWrapped();
-    final String sourceRelativePath =
-      SVNPathUtil.getRelativePath(myCopyPoint.isInvertedSense() ? wrapped.getSource() : wrapped.getTarget(), absolutePath);
+    String absoluteUrl = append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
+    String sourceRelativePath = getRelativePath(myMergeContext.getSourceUrl(), absoluteUrl);
 
-    return !StringUtil.isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
+    return !isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
   }
 
   @Override
-  public void run(ContinuationContext context) {
+  public void run() {
     List<LocalChangeList> localChangeLists = ChangeListManager.getInstance(myMergeContext.getProject()).getChangeListsCopy();
-    Intersection intersection =
-      myMergeAll
-      ? getAllChangesIntersection(localChangeLists)
-      : getChangesIntersection(localChangeLists, myChangeListsToMerge);
+    Intersection intersection = myChangeListsToMerge != null
+                                ? getChangesIntersection(localChangeLists, myChangeListsToMerge)
+                                : getAllChangesIntersection(localChangeLists);
 
-    if (intersection != null && !intersection.getChangesSubset().isEmpty()) {
-      processIntersection(context, intersection);
+    processIntersection(intersection);
+  }
+
+  private void processIntersection(@Nullable Intersection intersection) {
+    boolean mergeAll = myChangeListsToMerge == null;
+    LocalChangesAction nextAction = !isEmpty(intersection) ? myInteraction.selectLocalChangesAction(mergeAll) : continueMerge;
+
+    switch (nextAction) {
+      case continueMerge:
+        myCallback.run();
+        break;
+      case shelve:
+        myMergeProcess.runInBackground("Shelving local changes before merge", indicator -> {
+          shelveChanges(intersection);
+          myCallback.run();
+        });
+        break;
+      case inspect:
+        List<FilePath> intersectedPaths = sorted(getPaths(intersection.getAllChanges()), FilePathByPathComparator.getInstance());
+        myInteraction.showIntersectedLocalPaths(intersectedPaths);
+        break;
+      case cancel:
+        break;
     }
   }
 
-  private void processIntersection(@NotNull ContinuationContext context, @NotNull Intersection intersection) {
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (myInteraction.selectLocalChangesAction(myMergeAll)) {
-      case shelve:
-        context.next(new ShelveLocalChangesTask(myMergeContext, myInteraction, intersection));
-        break;
-      case cancel:
-        context.cancelEverything();
-        break;
-      case inspect:
-        // here's cast is due to generic's bug
-        @SuppressWarnings("unchecked") Collection<Change> changes = (Collection<Change>)intersection.getChangesSubset().values();
-        myInteraction
-          .showIntersectedLocalPaths(ContainerUtil.sorted(ChangesUtil.getPaths(changes), FilePathByPathComparator.getInstance()));
-        context.cancelEverything();
-        break;
+  private void shelveChanges(@NotNull Intersection intersection) throws VcsException {
+    try {
+      getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+
+      ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
+
+      for (Map.Entry<String, List<Change>> entry : intersection.getChangesByLists().entrySet()) {
+        String shelfName = intersection.getComment(entry.getKey()) + " (auto shelve before merge)";
+
+        shelveManager.shelveChanges(entry.getValue(), shelfName, true, true);
+      }
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
     }
   }
 
   @Nullable
   private Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
-                                              @Nullable List<CommittedChangeList> changeListsToMerge) {
-    Intersection result = null;
+                                              @NotNull List<SvnChangeList> changeListsToMerge) {
+    Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
 
-    if (!ContainerUtil.isEmpty(changeListsToMerge)) {
-      final Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
-
-      result = getChangesIntersection(localChangeLists, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return notNullAndInSet(ChangesUtil.getBeforePath(change), pathsToMerge) ||
-                 notNullAndInSet(ChangesUtil.getAfterPath(change), pathsToMerge);
-        }
-      });
-    }
-
-    return result;
+    return !changeListsToMerge.isEmpty() ? getChangesIntersection(localChangeLists, change -> hasPathToMerge(change, pathsToMerge)) : null;
   }
 
   @NotNull
-  private Set<FilePath> collectPaths(@NotNull List<CommittedChangeList> lists) {
-    Set<FilePath> result = new HashSet<FilePath>();
-
-    for (CommittedChangeList list : lists) {
-      SvnChangeList svnList = (SvnChangeList)list;
-
-      for (String path : svnList.getAffectedPaths()) {
-        File localPath = getLocalPath(path);
-
-        if (localPath != null) {
-          result.add(VcsUtil.getFilePath(localPath, false));
-        }
-      }
-    }
-
-    return result;
+  private Set<FilePath> collectPaths(@NotNull List<SvnChangeList> lists) {
+    return lists.stream()
+      .flatMap(list -> list.getAffectedPaths().stream())
+      .map(this::getLocalPath)
+      .filter(Objects::nonNull)
+      .map(localPath -> VcsUtil.getFilePath(localPath, false))
+      .collect(toSet());
   }
 
   @NotNull
   private static Intersection getAllChangesIntersection(@NotNull List<LocalChangeList> localChangeLists) {
-    return getChangesIntersection(localChangeLists, Conditions.<Change>alwaysTrue());
+    return getChangesIntersection(localChangeLists, alwaysTrue());
   }
 
   @NotNull
@@ -155,7 +148,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     for (LocalChangeList changeList : changeLists) {
       for (Change change : changeList.getChanges()) {
         if (filter.value(change)) {
-          result.add(changeList.getName(), changeList.getComment(), change);
+          result.add(changeList, change);
         }
       }
     }
@@ -163,7 +156,10 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     return result;
   }
 
-  private static boolean notNullAndInSet(@Nullable FilePath path, @NotNull Set<FilePath> items) {
-    return path != null && items.contains(path);
+  private static boolean hasPathToMerge(@NotNull Change change, @NotNull Set<FilePath> pathsToMerge) {
+    FilePath beforePath = getBeforePath(change);
+    FilePath afterPath = getAfterPath(change);
+
+    return beforePath != null && pathsToMerge.contains(beforePath) || afterPath != null && pathsToMerge.contains(afterPath);
   }
 }

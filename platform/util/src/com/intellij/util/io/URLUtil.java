@@ -18,7 +18,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Base64Converter;
+import com.intellij.util.Base64;
+import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -108,6 +110,38 @@ public class URLUtil {
         zipFile.close();
       }
     };
+  }
+
+  /**
+   * Checks whether local resource specified by {@code url} exists. Returns {@link ThreeState#UNSURE} if {@code url} point to a remote resource.
+   */
+  @NotNull
+  public static ThreeState resourceExists(@NotNull URL url) {
+    if (url.getProtocol().equals(FILE_PROTOCOL)) {
+      return ThreeState.fromBoolean(urlToFile(url).exists());
+    }
+    if (url.getProtocol().equals(JAR_PROTOCOL)) {
+      Pair<String, String> paths = splitJarUrl(url.getFile());
+      if (paths == null) {
+        return ThreeState.NO;
+      }
+      if (!new File(paths.first).isFile()) {
+        return ThreeState.NO;
+      }
+      try {
+        ZipFile file = new ZipFile(paths.first);
+        try {
+          return ThreeState.fromBoolean(file.getEntry(paths.second) != null);
+        }
+        finally {
+          file.close();
+        }
+      }
+      catch (IOException e) {
+        return ThreeState.NO;
+      }
+    }
+    return ThreeState.UNSURE;
   }
 
   /**
@@ -227,7 +261,7 @@ public class URLUtil {
       try {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
-               ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET))
+               ? Base64.decode(content)
                : content.getBytes(CharsetToolkit.UTF8_CHARSET);
       }
       catch (IllegalArgumentException e) {
@@ -263,5 +297,34 @@ public class URLUtil {
       }
     }
     return host;
+  }
+
+  @NotNull
+  public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
+    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+  }
+
+  /**
+   * Encodes a URI component by replacing each instance of certain characters by one, two, three,
+   * or four escape sequences representing the UTF-8 encoding of the character.
+   * Behaves similarly to standard JavaScript build-in function <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent">encodeURIComponent</a>.
+   * @param s  a component of a URI
+   * @return a new string representing the provided string encoded as a URI component
+   */
+  @NotNull
+  public static String encodeURIComponent(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s, CharsetToolkit.UTF8)
+        .replaceAll("\\+", "%20")
+        .replaceAll("%21", "!")
+        .replaceAll("%27", "'")
+        .replaceAll("%28", "(")
+        .replaceAll("%29", ")")
+        .replaceAll("%7E", "~");
+    }
+    catch (UnsupportedEncodingException e) {
+      return s;
+    }
   }
 }

@@ -41,7 +41,7 @@ public class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvid
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PyClass pyClass = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);
       if (pyClass != null) {
-        return new PsiNamedElementUsageGroupBase<PyClass>(pyClass);
+        return new PsiNamedElementUsageGroupBase<>(pyClass);
       }
       return null;
     }

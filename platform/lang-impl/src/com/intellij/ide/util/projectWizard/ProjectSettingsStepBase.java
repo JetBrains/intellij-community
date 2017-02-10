@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.BundleBase;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -48,9 +48,11 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
-public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
-  protected final DirectoryProjectGenerator myProjectGenerator;
-  private final NullableConsumer<ProjectSettingsStepBase> myCallback;
+import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
+
+public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware, Disposable {
+  protected DirectoryProjectGenerator myProjectGenerator;
+  protected NullableConsumer<ProjectSettingsStepBase> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
@@ -80,6 +82,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     final JLabel label = createErrorLabel();
     final JButton button = createActionButton();
     button.addActionListener(createCloseActionListener());
+    Disposer.register(this, () -> UIUtil.dispose(button));
     final JPanel scrollPanel = createAndFillContentPanel();
     initGeneratorListeners();
     registerValidators();
@@ -89,6 +92,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.setName(BOTTOM_PANEL);
 
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
@@ -124,8 +128,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                  () -> myCallback.consume(ProjectSettingsStepBase.this));
+          myCallback.consume(ProjectSettingsStepBase.this);
         }
       }
     };
@@ -165,12 +168,14 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected void registerValidators() {
-    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         checkValid();
       }
-    });
+    };
+    myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
+    Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
     final ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -178,6 +183,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
       }
     };
     myLocationField.getTextField().addActionListener(listener);
+    Disposer.register(this, () -> myLocationField.getTextField().removeActionListener(listener));
   }
 
   public boolean checkValid() {
@@ -299,7 +305,11 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"), BorderLayout.WEST);
   }
 
-  private static File findSequentNonExistingUntitled() {
+  @NotNull
+  protected File findSequentNonExistingUntitled() {
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
   }
+
+  @Override
+  public void dispose() {}
 }

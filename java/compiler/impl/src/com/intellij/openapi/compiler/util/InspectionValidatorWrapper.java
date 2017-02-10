@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class InspectionValidatorWrapper implements Validator {
         final CompileScope compileScope = context.getCompileScope();
         if (!myValidator.isAvailableOnScope(compileScope)) return null;
 
-        final ArrayList<ProcessingItem> items1 = new ArrayList<ProcessingItem>();
+        final ArrayList<ProcessingItem> items1 = new ArrayList<>();
 
         final Processor<VirtualFile> processor = file -> {
           if (!file.isValid()) {
@@ -182,8 +182,8 @@ public class InspectionValidatorWrapper implements Validator {
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     context.getProgressIndicator().setText(myValidator.getProgressIndicatorText());
 
-    final List<ProcessingItem> processedItems = new ArrayList<ProcessingItem>();
-    final List<LocalInspectionTool> inspections = new ArrayList<LocalInspectionTool>();
+    final List<ProcessingItem> processedItems = new ArrayList<>();
+    final List<LocalInspectionTool> inspections = new ArrayList<>();
     for (final Class aClass : myValidator.getInspectionToolClasses(context)) {
       try {
         inspections.add((LocalInspectionTool)aClass.newInstance());
@@ -232,7 +232,7 @@ public class InspectionValidatorWrapper implements Validator {
     }
 
 
-    final InspectionProfile inspectionProfile = myProfileManager.getInspectionProfile();
+    final InspectionProfile inspectionProfile = myProfileManager.getCurrentProfile();
     for (final LocalInspectionTool inspectionTool : inspections) {
       if (!checkUnderReadAction(item, context, () -> {
         final PsiFile file = item.getPsiFile();
@@ -298,7 +298,7 @@ public class InspectionValidatorWrapper implements Validator {
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,
                                                                                  final LocalInspectionTool inspectionTool,
                                                                                  final HighlightDisplayLevel level) {
-    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
+    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
       final ProblemHighlightType highlightType = descriptor.getHighlightType();
 
@@ -333,7 +333,7 @@ public class InspectionValidatorWrapper implements Validator {
 
     if (!holder.hasAnnotations()) return Collections.emptyMap();
 
-    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
+    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
     for (final Annotation annotation : holder) {
       final HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
       if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;

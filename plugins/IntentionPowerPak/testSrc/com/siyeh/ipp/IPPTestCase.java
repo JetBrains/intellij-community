@@ -74,7 +74,7 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
 
   protected void assertIntentionNotAvailable(Class<? extends IntentionAction> intentionClass) {
     myFixture.configureByFile(getTestName(false) + ".java");
-    final List<IntentionAction> result = new SmartList<IntentionAction>();
+    final List<IntentionAction> result = new SmartList<>();
     for (final IntentionAction intention : myFixture.getAvailableIntentions()) {
       if (intentionClass.isInstance(intention)) {
         result.add(intention);

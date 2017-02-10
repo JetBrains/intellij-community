@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Helps to specify type by assertion
  */
-public class TypeAssertionIntention implements IntentionAction {
-
-  public TypeAssertionIntention() {
-  }
+public class TypeAssertionIntention extends PyBaseIntentionAction {
 
   @NotNull
   public String getText() {
@@ -79,7 +75,8 @@ public class TypeAssertionIntention implements IntentionAction {
     return type == null;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (problemElement != null) {
@@ -141,9 +138,5 @@ public class TypeAssertionIntention implements IntentionAction {
       Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

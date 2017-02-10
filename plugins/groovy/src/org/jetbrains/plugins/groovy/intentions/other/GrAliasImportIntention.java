@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ import java.util.List;
  */
 public class GrAliasImportIntention extends Intention {
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     GrImportStatement context;
     final PsiMember resolved;
     if (element instanceof GrReferenceExpression) {
@@ -213,28 +213,28 @@ public class GrAliasImportIntention extends Intention {
             if (refName == null) return;
 
             if (memberName.equals(refName)) {
-              ref.handleElementRenameSimple(name);
+              ref.handleElementRename(name);
             }
             else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
               final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
               if (newPropName != null) {
-                ref.handleElementRenameSimple(newPropName);
+                ref.handleElementRename(newPropName);
               }
               else {
-                ref.handleElementRenameSimple(name);
+                ref.handleElementRename(name);
               }
             }
             else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
               final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
             else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
               final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
             else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
               final String getterName = GroovyPropertyUtils.getSetterName(name);
-              ref.handleElementRenameSimple(getterName);
+              ref.handleElementRename(getterName);
             }
           }
         }
@@ -245,7 +245,7 @@ public class GrAliasImportIntention extends Intention {
   private static List<UsageInfo> findUsages(PsiMember member, GroovyFileBase file) {
     LocalSearchScope scope = new LocalSearchScope(file);
 
-    final ArrayList<UsageInfo> infos = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> infos = new ArrayList<>();
     final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
 
     final Processor<PsiReference> consumer = reference -> {
@@ -278,7 +278,7 @@ public class GrAliasImportIntention extends Intention {
   }
 
   public static LinkedHashSet<String> getSuggestedNames(PsiElement psiElement, final PsiElement nameSuggestionContext) {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    final LinkedHashSet<String> result = new LinkedHashSet<>();
     result.add(UsageViewUtil.getShortName(psiElement));
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for (NameSuggestionProvider provider : providers) {

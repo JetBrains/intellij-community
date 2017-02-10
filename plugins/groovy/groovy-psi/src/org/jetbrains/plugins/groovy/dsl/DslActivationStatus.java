@@ -99,11 +99,11 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
     }
 
     public State() {
-      this(new SmartList<Entry>());
+      this(new SmartList<>());
     }
   }
 
-  private final THashMap<VirtualFile, Entry> myStatus = new THashMap<VirtualFile, Entry>();
+  private final THashMap<VirtualFile, Entry> myStatus = new THashMap<>();
 
   @Nullable
   public Entry getGdslFileInfo(@NotNull VirtualFile file) {

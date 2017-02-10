@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 public class UsedByDependencyMemberInfoModel<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> extends DependencyMemberInfoModel<T, M> {
 
   public UsedByDependencyMemberInfoModel(C aClass) {
-    super(new UsedByMemberDependencyGraph<T, C, M>(aClass), ERROR);
+    super(new UsedByMemberDependencyGraph<>(aClass), ERROR);
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
       @Override
       public String getTooltip(M memberInfo) {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,32 +33,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 public abstract class GroovyFix implements LocalQuickFix {
   public static final GroovyFix EMPTY_FIX = new GroovyFix() {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       throw new UnsupportedOperationException();
     }
   };
   public static final GroovyFix[] EMPTY_ARRAY = new GroovyFix[0];
 
-  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return "";
-  }
+
 
   @Override
   public void applyFix(@NotNull Project project,
                        @NotNull ProblemDescriptor descriptor) {
     final PsiElement problemElement = descriptor.getPsiElement();
     if (problemElement == null || !problemElement.isValid()) {
-      return;
-    }
-    if (isQuickFixOnReadOnlyFile(problemElement)) {
       return;
     }
     try {
@@ -72,17 +63,12 @@ public abstract class GroovyFix implements LocalQuickFix {
     }
   }
 
-  protected abstract void doFix(Project project, ProblemDescriptor descriptor)
+  protected abstract void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
       throws IncorrectOperationException;
 
-  protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
-    return !FileModificationService.getInstance().preparePsiElementForWrite(problemElement);
-  }
 
   protected static void replaceExpression(GrExpression expression, String newExpression) {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall = factory.createExpressionFromText(newExpression);
-    expression.replaceWithExpression(newCall, true);
+    GrInspectionUtil.replaceExpression(expression, newExpression);
   }
 
   protected static void replaceStatement(GrStatement statement, String newStatement) {

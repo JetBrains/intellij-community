@@ -27,7 +27,7 @@ public class VcsPathMacroFilter extends PathMacroFilter {
   public boolean skipPathMacros(Attribute attribute) {
     final Element parent = attribute.getParent();
     final String parentName = parent.getName();
-    if (VcsConfiguration.MESSAGE_ELEMENT_NAME.equals(parentName) && VcsConfiguration.VALUE_ATTR.equals(attribute.getName())) {
+    if ("MESSAGE".equals(parentName) && "value".equals(attribute.getName())) {
       return true;
     }
     if ("option".equals(parentName) && "LAST_COMMIT_MESSAGE".equals(parent.getAttributeValue("name"))) {

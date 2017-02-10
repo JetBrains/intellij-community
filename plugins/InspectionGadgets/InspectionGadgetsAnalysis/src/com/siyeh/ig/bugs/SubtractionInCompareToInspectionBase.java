@@ -91,7 +91,7 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
         }
       }
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (method == null || !MethodUtils.isCompareTo(method) && !MethodUtils.isComparatorCompare(method)) {
+      if (!MethodUtils.isCompareTo(method) && !MethodUtils.isComparatorCompare(method)) {
         return;
       }
       registerError(expression);

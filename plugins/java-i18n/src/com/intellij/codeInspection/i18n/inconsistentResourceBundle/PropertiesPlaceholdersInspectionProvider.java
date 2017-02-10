@@ -56,7 +56,7 @@ public class PropertiesPlaceholdersInspectionProvider implements InconsistentRes
                     RefManager refManager,
                     ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
-      final Set<String> filePropertyKeys = new THashSet<String>(propertiesFilesNamesMaps.get(file).keySet());
+      final Set<String> filePropertyKeys = new THashSet<>(propertiesFilesNamesMaps.get(file).keySet());
       PropertiesFile parent = parents.get(file);
       while (parent != null) {
         final Collection<String> commonKeys = ContainerUtil.intersection(propertiesFilesNamesMaps.get(parent).keySet(), filePropertyKeys);

@@ -19,6 +19,7 @@ package com.intellij.formatting;
 import com.intellij.formatting.engine.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,15 @@ public class FormatProcessor {
     final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, settings, defaultIndentOption, myProgressCallback);
     myWrapState = new WrapBlocksState(builder, blockIndentOptions);
     
-    myStateProcessor = new StateProcessor(myWrapState);
+    FormatTextRanges ranges = options.myAffectedRanges;
+    if (ranges != null && options.myReformatContext && Registry.is("smart.reformat.vcs.changes")) {
+      AdjustFormatRangesState adjustRangesState = new AdjustFormatRangesState(block, ranges);
+      myStateProcessor = new StateProcessor(adjustRangesState);
+      myStateProcessor.setNextState(myWrapState);
+    }
+    else {
+      myStateProcessor = new StateProcessor(myWrapState); 
+    }
   }
   
   public BlockRangesMap getBlockRangesMap() {

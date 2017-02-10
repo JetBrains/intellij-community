@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsInspectionBase;
 import org.jetbrains.annotations.Nullable;
 
 public class MisorderedAssertEqualsParametersInspection extends MisorderedAssertEqualsArgumentsInspectionBase {

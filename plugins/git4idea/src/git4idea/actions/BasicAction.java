@@ -70,7 +70,7 @@ public abstract class BasicAction extends DumbAwareAction {
     final String actionName = getActionName();
 
     final VirtualFile[] affectedFiles = collectAffectedFiles(project, vFiles);
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     final boolean background = perform(project, vcs, exceptions, affectedFiles);
     if (!background) {
       GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
@@ -113,7 +113,7 @@ public abstract class BasicAction extends DumbAwareAction {
    */
   @NotNull
   protected VirtualFile[] collectAffectedFiles(@NotNull Project project, @NotNull VirtualFile[] files) {
-    List<VirtualFile> affectedFiles = new ArrayList<VirtualFile>(files.length);
+    List<VirtualFile> affectedFiles = new ArrayList<>(files.length);
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
     for (VirtualFile file : files) {
       if (!file.isDirectory() && projectLevelVcsManager.getVcsFor(file) instanceof GitVcs) {

@@ -2,5 +2,6 @@
 import java.util.function.Supplier;
 
 class Test {
-  String s = "";
+    // comment
+    String s = "";
 }

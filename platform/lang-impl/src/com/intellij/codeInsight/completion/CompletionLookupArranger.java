@@ -39,8 +39,10 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
-  private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
+  private final List<LookupElement> myFrozenItems = new ArrayList<>();
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
@@ -80,7 +82,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<CompletionSorterImpl, Classifier<LookupElement>>();
+  private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private int myPrefixChanges;
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
@@ -106,15 +108,16 @@ public class CompletionLookupArranger extends LookupArranger {
   @Override
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
                                                                                boolean hideSingleValued) {
-    final LinkedHashMap<LookupElement, List<Pair<String, Object>>> map = ContainerUtil.newLinkedHashMap();
+    //noinspection unchecked
+    final Map<LookupElement, List<Pair<String, Object>>> map = new com.intellij.util.containers.hash.LinkedHashMap(EqualityPolicy.IDENTITY);
     final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
     int sorterNumber = 0;
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
       sorterNumber++;
       Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
       for (LookupElement element : thisSorterItems) {
-        map.put(element, ContainerUtil.newArrayList(new Pair<String, Object>("frozen", myFrozenItems.contains(element)),
-                                                    new Pair<String, Object>("sorter", sorterNumber)));
+        map.put(element, ContainerUtil.newArrayList(new Pair<>("frozen", myFrozenItems.contains(element)),
+                                                    new Pair<>("sorter", sorterNumber)));
       }
       ProcessingContext context = createContext(false);
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -247,7 +250,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     addDummyItems(items.size() - listModel.size(), listModel);
 
-    return new Pair<List<LookupElement>, Integer>(listModel, toSelect);
+    return new Pair<>(listModel, toSelect);
   }
 
   private static void addDummyItems(int count, List<LookupElement> listModel) {
@@ -263,7 +266,7 @@ public class CompletionLookupArranger extends LookupArranger {
                                                    @Nullable LookupElement relevantSelection) {
     Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
 
-    final LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
+    final LinkedHashSet<LookupElement> model = new LinkedHashSet<>();
 
     addPrefixItems(model);
     addFrozenItems(items, model);
@@ -276,7 +279,7 @@ public class CompletionLookupArranger extends LookupArranger {
     ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
-    return new ArrayList<LookupElement>(model);
+    return new ArrayList<>(model);
   }
 
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
@@ -389,31 +392,40 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     }
 
+    LookupElement exactMatch = getBestExactMatch(lookup, items);
+    return Math.max(0, ContainerUtil.indexOfIdentity(items, exactMatch != null ? exactMatch : mostRelevant));
+  }
+
+  private List<LookupElement> getExactMatches(LookupImpl lookup, List<LookupElement> items) {
     String selectedText = lookup.getTopLevelEditor().getSelectionModel().getSelectedText();
-    int exactMatchIndex = -1;
+    List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
       if (isPrefixItem(item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
         if (item instanceof LiveTemplateLookupElement) {
           // prefer most recent live template lookup item
-          exactMatchIndex = i;
-          break;
+          return Collections.singletonList(item);
         }
-        if (exactMatchIndex == -1) {
-          // prefer most recent item
-          exactMatchIndex = i;
-        }
+        exactMatches.add(item);
       }
       else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), this)) {
-        return 0;
+        return Collections.singletonList(item);
       }
     }
-    if (exactMatchIndex >= 0) {
-      return exactMatchIndex;
+    return exactMatches;
+  }
+
+  @Nullable
+  private LookupElement getBestExactMatch(LookupImpl lookup, List<LookupElement> items) {
+    List<LookupElement> exactMatches = getExactMatches(lookup, items);
+    if (exactMatches.isEmpty()) return null;
+
+    if (exactMatches.size() == 1) {
+      return exactMatches.get(0);
     }
 
-    return Math.max(0, ContainerUtil.indexOfIdentity(items, mostRelevant));
+    return sortByRelevance(groupItemsBySorter(exactMatches)).iterator().next();
   }
 
   @Nullable
@@ -462,6 +474,10 @@ public class CompletionLookupArranger extends LookupArranger {
       return;
     }
 
+    if (!context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET)) {
+      return;
+    }
+    
     final Document document = context.getDocument();
     int startOffset = context.getStartOffset();
     int tailOffset = context.getEditor().getCaretModel().getOffset();
@@ -550,7 +566,9 @@ public class CompletionLookupArranger extends LookupArranger {
 
     public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
-      if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
+      if (context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET) && 
+          context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET) && 
+          context.getTailOffset() >= context.getStartOffset()) {
         textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
       } else {
         textInserted = item.getLookupString();

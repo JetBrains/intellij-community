@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
 
   @Override
   public Insets getInsets() {
-    return new Insets(0,0,0,0);
+    return JBUI.emptyInsets();
   }
 
   @Override
@@ -130,6 +131,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @NotNull
   public SoftWrapModel getSoftWrapModel() {
     return mySoftWrapModel;
+  }
+
+  @NotNull
+  @Override
+  public InlayModel getInlayModel() {
+    return new TextComponentInlayModel();
   }
 
   @Override
@@ -251,7 +258,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
 
   @Override
   public boolean isInsertMode() {
-    throw new UnsupportedOperationException("Not implemented");
+    return true;
   }
 
   @Override

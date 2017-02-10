@@ -62,7 +62,7 @@ public class StringEnumeratorTest extends TestCase {
   }
 
   public void testAddEqualStringsAndMuchGarbage() throws IOException {
-    final Set<String> stringsAded = new HashSet<String>();
+    final Set<String> stringsAded = new HashSet<>();
     final int index = myEnumerator.enumerate("IntelliJ IDEA");
     stringsAded.add("IntelliJ IDEA");
     // clear strings and nodes cache
@@ -74,7 +74,7 @@ public class StringEnumeratorTest extends TestCase {
     }
     
     assertEquals(index, myEnumerator.enumerate("IntelliJ IDEA"));
-    final Set<String> enumerated = new HashSet<String>(myEnumerator.getAllDataObjects(null));
+    final Set<String> enumerated = new HashSet<>(myEnumerator.getAllDataObjects(null));
     assertEquals(stringsAded, enumerated);
   }
 
@@ -85,7 +85,7 @@ public class StringEnumeratorTest extends TestCase {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testCollision1() throws Exception {
@@ -103,7 +103,7 @@ public class StringEnumeratorTest extends TestCase {
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
 
@@ -114,11 +114,11 @@ public class StringEnumeratorTest extends TestCase {
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<String>(Arrays.asList(UTF_1, UTF_2)), new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(new HashSet<>(Arrays.asList(UTF_1, UTF_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testOpeningClosing() throws IOException {
-    ArrayList<String> strings = new ArrayList<String>(2000);
+    ArrayList<String> strings = new ArrayList<>(2000);
     for (int i = 0; i < 2000; ++i) {
       strings.add(createRandomString());
     }
@@ -138,18 +138,18 @@ public class StringEnumeratorTest extends TestCase {
       myEnumerator.close();
       myEnumerator = new PersistentStringEnumerator(myFile);
     }
-    final HashSet<String> allStringsSet = new HashSet<String>(strings);
-    assertEquals(allStringsSet, new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    final HashSet<String> allStringsSet = new HashSet<>(strings);
+    assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
 
     final String additionalString = createRandomString();
     allStringsSet.add(additionalString);
     myEnumerator.enumerate(additionalString);
     assertTrue(myEnumerator.isDirty());
-    assertEquals(allStringsSet, new HashSet<String>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testPerformance() throws IOException {
-    final IntObjectCache<String> stringCache = new IntObjectCache<String>(2000);
+    final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
     final IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
       @Override
       public void objectRemoved(final int key, final Object value) {

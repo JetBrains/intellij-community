@@ -1,5 +1,5 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin version="2">
+<idea-plugin>
     <name>Inspection Gadgets</name>
     <id>InspectionGadgets</id>
     <vendor>InspectionGadgets Software</vendor>

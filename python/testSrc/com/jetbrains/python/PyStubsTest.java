@@ -596,4 +596,17 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file1);
     assertNotParsed(file2);
   }
+
+  public void testVariableAnnotationsInExternalFiles() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile current = getTestFile(getTestName(true) + "/main.py");
+      final PyFile external = getTestFile(getTestName(true) + "/lib.py");
+      final PyTargetExpression attr = current.findTopLevelAttribute("x");
+      assertNotNull(attr);
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), current);
+      // Will turn into concrete type when we start saving annotations in stubs 
+      assertNull(context.getType(attr));
+      assertNotParsed(external);
+    });
+  }
 }

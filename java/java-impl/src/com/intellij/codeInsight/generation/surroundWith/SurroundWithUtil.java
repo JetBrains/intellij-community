@@ -46,7 +46,7 @@ public class SurroundWithUtil {
     try{
       PsiManager psiManager = block.getManager();
       PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-      ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
@@ -152,7 +152,7 @@ public class SurroundWithUtil {
    *   }
    * </pre>
    * The problem is that surround block doesn't contain any indent spaces, hence, the first statement is inserted to the
-   * zero column. But we have a dedicated code style setting <code>'keep comment at first column'</code>, i.e. the comment
+   * zero column. But we have a dedicated code style setting {@code 'keep comment at first column'}, i.e. the comment
    * will not be moved if that setting is checked.
    * <p/>
    * Current method handles that situation.

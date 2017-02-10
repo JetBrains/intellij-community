@@ -50,7 +50,7 @@ public class GrAnnotationStub extends StubBase<GrAnnotation> {
     }
     try {
       annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(myText, getPsi());
-      myPsiRef = new SoftReference<GrAnnotation>(annotation);
+      myPsiRef = new SoftReference<>(annotation);
       return annotation;
     }
     catch (IncorrectOperationException e) {

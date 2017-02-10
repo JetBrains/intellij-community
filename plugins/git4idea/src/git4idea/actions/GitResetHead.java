@@ -18,7 +18,7 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
@@ -29,7 +29,6 @@ import git4idea.ui.GitResetDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * The reset action
@@ -48,15 +47,12 @@ public class GitResetHead extends GitRepositoryAction {
    */
   protected void perform(@NotNull Project project,
                          @NotNull List<VirtualFile> gitRoots,
-                         @NotNull VirtualFile defaultRoot,
-                         Set<VirtualFile> affectedRoots,
-                         List<VcsException> exceptions) throws VcsException {
+                         @NotNull VirtualFile defaultRoot) {
     GitResetDialog d = new GitResetDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
       return;
     }
     GitLineHandler h = d.handler();
-    affectedRoots.add(d.getGitRoot());
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
@@ -66,5 +62,9 @@ public class GitResetHead extends GitRepositoryAction {
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());
+    VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
+    if(!h.errors().isEmpty()) {
+      showErrors(project, getActionName(), h.errors());
+    }
   }
 }

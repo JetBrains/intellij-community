@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -39,12 +40,14 @@ public class SchemeImportUtil {
   public static VirtualFile selectImportSource(@NotNull final String[] sourceExtensions,
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect) {
-    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
+    final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
     FileChooserDialog fileChooser = FileChooserFactory.getInstance()
       .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
         @Override
         public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          return file.isDirectory() || extensions.contains(file.getExtension());
+          return 
+            (file.isDirectory() || extensions.contains(file.getExtension())) && 
+            (showHiddenFiles || !FileElement.isFileHidden(file));
         }
 
         @Override
@@ -58,7 +61,7 @@ public class SchemeImportUtil {
       preselectFiles[0] = preselect;
     }
     else {
-      preselectFiles = new VirtualFile[0];
+      preselectFiles = VirtualFile.EMPTY_ARRAY;
     }
     final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles); 
                                                           //CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());

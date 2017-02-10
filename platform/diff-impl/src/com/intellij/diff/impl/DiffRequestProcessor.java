@@ -40,6 +40,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -261,7 +262,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (myQueuedApplyRequest == null || myDisposed) return;
       doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
       myQueuedApplyRequest = null;
-    });
+    }, ModalityState.current());
   }
 
   @CalledInAwt
@@ -417,7 +418,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     DiffUtil.addActionBlock(myToolbarGroup,
                             new ShowInExternalToolAction(),
-                            new ShowOldDiffAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
   }
 
@@ -439,16 +439,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbar.updateActionsImmediately();
 
-    for (AnAction action : myToolbarGroup.getChildren(null)) {
-      DiffUtil.registerAction(action, myMainPanel);
-    }
+    ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
   protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
-    ShowActionGroupPopupAction action = new ShowActionGroupPopupAction();
-    DiffUtil.registerAction(action, myMainPanel);
+    DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
   }
 
   private void setTitle(@Nullable String title) {

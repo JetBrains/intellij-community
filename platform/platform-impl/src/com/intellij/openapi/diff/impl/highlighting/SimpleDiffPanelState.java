@@ -97,7 +97,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
         line.highlight(fragmentHighlighter);
       }
     });
-    ArrayList<LineFragment> allLineFragments = new ArrayList<LineFragment>();
+    ArrayList<LineFragment> allLineFragments = new ArrayList<>();
     for (LineFragment lineFragment : lines) {
       allLineFragments.add(lineFragment);
       lineFragment.addAllDescendantsTo(allLineFragments);

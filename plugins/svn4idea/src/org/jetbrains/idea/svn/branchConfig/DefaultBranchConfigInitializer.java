@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -67,7 +66,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
         myBunch.reloadBranchesAsync(myRoot, url, InfoReliability.defaultValues);
       }
 
-      myBunch.updateForRoot(myRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.defaultValues), false);
+      myBunch.updateForRoot(myRoot, new InfoStorage<>(configuration, InfoReliability.defaultValues), false);
     }
   }
 
@@ -81,10 +80,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
       try {
         result = getDefaultConfiguration(vcs, rootUrl);
       }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-      catch (VcsException e) {
+      catch (SVNException | VcsException e) {
         LOG.info(e);
       }
     }
@@ -146,7 +142,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
           }
           else {
             result.addBranches(childUrl.toString(),
-                               new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(0), InfoReliability.defaultValues));
+                               new InfoStorage<>(new ArrayList<>(0), InfoReliability.defaultValues));
           }
         }
       }

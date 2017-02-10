@@ -21,7 +21,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -33,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @since 26-Dec-2007
  */
 public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
-  private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
-  private static final String JDK_15_ATTR = "jdk-15";
   private static final String LANGUAGE_LEVEL = "languageLevel";
   private static final String DEFAULT_ATTRIBUTE = "default";
 
@@ -54,27 +51,13 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private void readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
-      myLanguageLevel = Registry.is("saving.state.in.new.format.is.allowed", false) ? null : migrateFromIdea7(element);
+      myLanguageLevel = null;
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
     setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
-  }
-
-  private static LanguageLevel migrateFromIdea7(Element element) {
-    final boolean assertKeyword = Boolean.valueOf(element.getAttributeValue(ASSERT_KEYWORD_ATTR)).booleanValue();
-    final boolean jdk15 = Boolean.valueOf(element.getAttributeValue(JDK_15_ATTR)).booleanValue();
-    if (jdk15) {
-      return LanguageLevel.JDK_1_5;
-    }
-    else if (assertKeyword) {
-      return LanguageLevel.JDK_1_4;
-    }
-    else {
-      return LanguageLevel.JDK_1_3;
-    }
   }
 
   private void writeExternal(final Element element) {
@@ -85,17 +68,6 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     if (aBoolean != null) {
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
-
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false)) {
-      writeAttributesForIdea7(element);
-    }
-  }
-
-  private void writeAttributesForIdea7(Element element) {
-    final boolean is14 = LanguageLevel.JDK_1_4.equals(myLanguageLevel);
-    final boolean is15 = myLanguageLevel != null && myLanguageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
-    element.setAttribute(ASSERT_KEYWORD_ATTR, Boolean.toString(is14 || is15));
-    element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
   }
 
   @Override

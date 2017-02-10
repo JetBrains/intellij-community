@@ -143,6 +143,7 @@ public class JUnit3Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit3 TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit3 Test Method.java");
   }

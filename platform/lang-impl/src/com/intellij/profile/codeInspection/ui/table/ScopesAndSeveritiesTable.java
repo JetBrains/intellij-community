@@ -40,6 +40,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
   public static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
   @SuppressWarnings("UnusedDeclaration")
-  public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, EmptyIcon.create(12));
+  public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, JBUI.scale(EmptyIcon.create(12)));
 
   private final static int SCOPE_ENABLED_COLUMN = 0;
   private final static int SCOPE_NAME_COLUMN = 1;
@@ -117,8 +118,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
                             final InspectionProfileImpl inspectionProfile,
                             final Project project) {
       myNodes = nodes;
-      myKeys = new ArrayList<HighlightDisplayKey>(myNodes.size());
-      myKeyNames = new ArrayList<String>(myNodes.size());
+      myKeys = new ArrayList<>(myNodes.size());
+      myKeyNames = new ArrayList<>(myNodes.size());
       for(final InspectionConfigTreeNode node : nodes) {
         final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
         myKeys.add(key);
@@ -301,8 +302,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     private ExistedScopesStatesAndNonExistNames getScopeToolState(final int rowIndex) {
-      final List<String> nonExistNames = new SmartList<String>();
-      final List<ScopeToolState> existedStates = new SmartList<ScopeToolState>();
+      final List<String> nonExistNames = new SmartList<>();
+      final List<ScopeToolState> existedStates = new SmartList<>();
       for (final String keyName : myKeyNames) {
         final ScopeToolState scopeToolState = getScopeToolState(keyName, rowIndex);
         if (scopeToolState != null) {
@@ -332,7 +333,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     private void refreshAggregatedScopes() {
-      final LinkedHashSet<String> scopesNames = new LinkedHashSet<String>();
+      final LinkedHashSet<String> scopesNames = new LinkedHashSet<>();
       for (final String keyName : myKeyNames) {
         final List<ScopeToolState> nonDefaultTools = myInspectionProfile.getNonDefaultTools(keyName, myProject);
         for (final ScopeToolState tool : nonDefaultTools) {

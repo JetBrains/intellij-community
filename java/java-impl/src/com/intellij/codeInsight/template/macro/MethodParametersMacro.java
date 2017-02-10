@@ -48,7 +48,7 @@ public class MethodParametersMacro extends Macro {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){
       if (place instanceof PsiMethod){
-        List<Result> result = new ArrayList<Result>();
+        List<Result> result = new ArrayList<>();
         for (PsiParameter parameter : ((PsiMethod)place).getParameterList().getParameters()) {
           result.add(new TextResult(parameter.getName()));
         }

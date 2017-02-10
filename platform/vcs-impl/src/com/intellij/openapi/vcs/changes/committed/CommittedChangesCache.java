@@ -81,7 +81,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private State myState = new State();
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
-  private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<CommittedChangeList>();
+  private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
   private final ProjectLevelVcsManager myVcsManager;
 
   private MyRefreshRunnable myRefresnRunnable;
@@ -129,8 +129,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
-  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<CommittedChangesListener>("committed changes updates",
-                                                                                                            CommittedChangesListener.class);
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
+                                                                                    CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, CommittedChangesCache.class);
@@ -205,7 +205,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   @Nullable
   public CommittedChangesProvider getProviderForProject() {
     final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
-    List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
+    List<AbstractVcs> vcsWithProviders = new ArrayList<>();
     for(AbstractVcs vcs: vcss) {
       if (vcs.getCommittedChangesProvider() != null) {
         vcsWithProviders.add(vcs);
@@ -240,8 +240,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     private final Consumer<List<CommittedChangeList>> myConsumer;
     private final Consumer<List<VcsException>> myErrorConsumer;
 
-    private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
-    private final List<VcsException> myExceptions = new ArrayList<VcsException>();
+    private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<>();
+    private final List<VcsException> myExceptions = new ArrayList<>();
     private boolean myDisposed = false;
 
     private MyProjectChangesLoader(ChangeBrowserSettings settings, int maxCount, boolean cacheOnly,
@@ -307,7 +307,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             myErrorConsumer.consume(myExceptions);
           }
           else if (!myDisposed) {
-            myConsumer.consume(new ArrayList<CommittedChangeList>(myResult));
+            myConsumer.consume(new ArrayList<>(myResult));
           }
         }
       }, ModalityState.NON_MODAL);
@@ -389,7 +389,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(new Runnable() {
       @Override
       public void run() {
-        final Ref<Boolean> success = new Ref<Boolean>();
+        final Ref<Boolean> success = new Ref<>();
         try {
           success.set(hasCachesWithEmptiness(false));
         }
@@ -416,7 +416,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private boolean hasCachesWithEmptiness(final boolean emptiness) {
-    final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> resultRef = new Ref<>(Boolean.FALSE);
     myCachesHolder.iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {
       @Override
       @NotNull
@@ -539,7 +539,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
-    final List<CommittedChangeList> newLists = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> newLists = new ArrayList<>();
 
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
@@ -597,7 +597,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     for(CommittedChangeList changeList: newChanges) {
       changeList.getChanges();
     }
-    final Ref<IOException> ref = new Ref<IOException>();
+    final Ref<IOException> ref = new Ref<>();
     final List<CommittedChangeList> savedChanges = ApplicationManager.getApplication().runReadAction(new Computable<List<CommittedChangeList>>() {
       @Override
       public List<CommittedChangeList> compute() {
@@ -626,11 +626,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public List<CommittedChangeList> loadIncomingChanges(boolean inBackground) {
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final List<CommittedChangeList> result = new ArrayList<>();
     final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
 
     final MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>> byVcs =
-      new MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>>();
+      new MultiMap<>();
 
     for(ChangesCacheFile cache: caches) {
       try {
@@ -690,7 +690,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final CommittedChangeList victim = ReceivedChangeList.unwrap(lists.get(0));
       final ReceivedChangeList result = new ReceivedChangeList(victim);
       result.setForcePartial(false);
-      final Set<Change> baseChanges = new HashSet<Change>();
+      final Set<Change> baseChanges = new HashSet<>();
 
       for (CommittedChangeList list : lists) {
         baseChanges.addAll(ReceivedChangeList.unwrap(list).getChanges());
@@ -741,7 +741,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       public void run() {
         final List<CommittedChangeList> list = loadIncomingChanges(inBackground);
         if (consumer != null) {
-          consumer.consume(new ArrayList<CommittedChangeList>(list));
+          consumer.consume(new ArrayList<>(list));
         }
       }
     };
@@ -863,7 +863,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
       @Override
       public void consume(CommittedChangesListener listener) {
-        listener.incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+        listener.incomingChangesUpdated(new ArrayList<>(lists));
       }
     });
   }
@@ -886,7 +886,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
       return;
     }
-    final ArrayList<CommittedChangeList> listCopy = new ArrayList<CommittedChangeList>(changes);
+    final ArrayList<CommittedChangeList> listCopy = new ArrayList<>(changes);
     fireIncomingChangesUpdated(listCopy);
   }
 
@@ -1120,7 +1120,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void submitExternallyLoaded(final RepositoryLocation location, final long myLastCl, final List<CommittedChangeList> lists) {
-    myExternallyLoadedChangeLists.put(location.getKey(), new Pair<Long, List<CommittedChangeList>>(myLastCl, lists));
+    myExternallyLoadedChangeLists.put(location.getKey(), new Pair<>(myLastCl, lists));
   }
 
   private interface RefreshResultConsumer {

@@ -97,7 +97,7 @@ public class GroovyMarkerTypes {
       if (!(parent instanceof GrField)) return;
       final GrField field = (GrField)parent;
       final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
-      final ArrayList<PsiMethod> superMethods = new ArrayList<PsiMethod>();
+      final ArrayList<PsiMethod> superMethods = new ArrayList<>();
       for (GrAccessorMethod method : accessors) {
         Collections.addAll(superMethods, method.findSuperMethods(false));
       }
@@ -115,10 +115,10 @@ public class GroovyMarkerTypes {
     if (!(parent instanceof GrField)) return null;
     final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors((GrField)parent);
 
-    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
 
     for (GrAccessorMethod method : accessors) {
-      OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+      OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<>(processor));
     }
     if (processor.isOverflow()) {
       return DaemonBundle.message("method.is.overridden.too.many");
@@ -210,7 +210,8 @@ public class GroovyMarkerTypes {
                                                                         if (!(parent instanceof GrMethod)) return null;
                                                                         GrMethod method = (GrMethod)parent;
 
-                                                                        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+                                                                        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor =
+                                                                          new PsiElementProcessor.CollectElementsWithLimit<>(5);
 
                                                                         for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
                                                                           OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
@@ -253,7 +254,7 @@ public class GroovyMarkerTypes {
         //collect all overrings (including fields with implicit accessors and method with default parameters)
         final GrMethod method = (GrMethod)parent;
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
-          new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
+          new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
           for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
             OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
@@ -287,7 +288,7 @@ public class GroovyMarkerTypes {
   }
 
   private static Set<PsiMethod> collectSuperMethods(GrMethod method) {
-    Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    Set<PsiMethod> superMethods = new HashSet<>();
     for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
       for (PsiMethod superMethod : m.findSuperMethods(false)) {
         if (superMethod instanceof GrReflectedMethod) {
@@ -301,7 +302,7 @@ public class GroovyMarkerTypes {
   }
 
   private static StringBuilder composeText(@NotNull PsiElement[] elements, final String pattern, StringBuilder result) {
-    Set<String> names = new LinkedHashSet<String>();
+    Set<String> names = new LinkedHashSet<>();
     for (PsiElement element : elements) {
       String methodName = ((PsiMethod)element).getName();
       PsiClass aClass = ((PsiMethod)element).getContainingClass();

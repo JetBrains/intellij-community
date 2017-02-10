@@ -91,7 +91,7 @@ public class InspectionTreeState {
     }
 
     private TreePath restorePath(InspectionTree tree, boolean treeNodeMightChange) {
-      ArrayList<Object> newPath = new ArrayList<Object>();
+      ArrayList<Object> newPath = new ArrayList<>();
 
       newPath.add(tree.getModel().getRoot());
       restorePath(newPath, 1, treeNodeMightChange);

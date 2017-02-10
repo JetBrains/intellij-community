@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -25,17 +27,17 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +57,7 @@ import java.util.Arrays;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase implements ModuleRunConfiguration {
+  private static final String IDEA_LOG = "idea.log";
   private Module myModule;
   private String myModuleName;
 
@@ -70,12 +73,32 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
+    addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+  }
+
+  @Nullable
+  @Override
+  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+    if (IDEA_LOG.equals(predefinedLogFile.getId())) {
+      final Module module = getModule();
+      final Sdk ideaJdk = module != null ? IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getSdk()) : null;
+      if (ideaJdk != null) {
+        final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
+        if (sandboxHome != null) {
+          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled(), true, false);
+        }
+      }
+    }
+    return super.getOptionsForPredefinedLogFile(predefinedLogFile);
   }
 
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PluginRunConfigurationEditor(this);
+    SettingsEditorGroup<PluginRunConfiguration> group = new SettingsEditorGroup<>();
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new PluginRunConfigurationEditor(this));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
+    return group;
   }
 
   @Override
@@ -96,7 +119,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     }
     String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
 
-    if (sandboxHome == null){
+    if (sandboxHome == null) {
       throw new ExecutionException(DevKitBundle.message("sandbox.no.configured"));
     }
 
@@ -142,8 +165,11 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();
         boolean fromIdeaProject = IdeaJdk.isFromIDEAProject(ideaJdkHome);
-        String bootPath = !fromIdeaProject ? "/lib/boot.jar" : IdeaJdk.OUT_CLASSES + "/boot";
-        vm.add("-Xbootclasspath/a:" + ideaJdkHome + toSystemDependentName(bootPath));
+
+        if (!fromIdeaProject) {
+          String bootPath = "/lib/boot.jar";
+          vm.add("-Xbootclasspath/a:" + ideaJdkHome + toSystemDependentName(bootPath));
+        }
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
         vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
@@ -160,6 +186,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
+          vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
         if (SystemInfo.isXWindow) {
@@ -184,9 +211,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.setJdk(usedIdeaJdk);
 
         if (fromIdeaProject) {
-          for (String url : usedIdeaJdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-            String s = StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR);
-            params.getClassPath().add(toSystemDependentName(s));
+          OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+          for (VirtualFile file : enumerator.getAllLibrariesAndSdkClassesRoots()) {
+            params.getClassPath().add(file);
           }
         }
         else {
@@ -244,7 +271,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         return getModule().getName();
       }
     });
-    if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null){
+    if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
@@ -279,6 +306,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       ALTERNATIVE_JRE_PATH_ENABLED = enabledAttr != null && Boolean.parseBoolean(enabledAttr);
     }
     super.readExternal(element);
+    if (getPredefinedLogFiles().isEmpty() && getLogFiles().isEmpty()) {
+      addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+    }
   }
 
   @Override
@@ -305,7 +335,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   @Nullable
   public Module getModule() {
-    if (myModule == null && myModuleName != null){
+    if (myModule == null && myModuleName != null && !getProject().isDisposed()) {
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
     }
     if (myModule != null && myModule.isDisposed()) {

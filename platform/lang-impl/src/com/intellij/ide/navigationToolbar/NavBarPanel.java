@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.dnd.DnDActionInfo;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
@@ -64,7 +63,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -73,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -92,7 +91,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private final NavBarPresentation myPresentation;
   private final Project myProject;
 
-  private final ArrayList<NavBarItem> myList = new ArrayList<NavBarItem>();
+  private final ArrayList<NavBarItem> myList = new ArrayList<>();
 
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final IdeView myIdeView;
@@ -327,6 +326,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         wrapperPanel.repaint();
       }
     }
+  }
+
+  void resetSelection() {
+    int size = myModel.size();
+    if (size > 0) myModel.setSelectedIndex(size - 1);
   }
 
   public void rebuildAndSelectTail(final boolean requestFocus) {
@@ -614,6 +618,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, group);
     final NavBarItem item = getItem(index);
     if (item != null) {
+      popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent event) {
+          resetSelection(); // select last item if popup cancelled
+        }
+      });
       popupMenu.getComponent().show(this, item.getX(), item.getY() + item.getHeight());
     }
   }
@@ -682,7 +692,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = getSelectedElements(PsiElement.class);
       if (elements == null || elements.isEmpty()) return null;
-      List<PsiElement> result = new ArrayList<PsiElement>();
+      List<PsiElement> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element != null && element.isValid()) {
           result.add(element);
@@ -694,7 +704,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
-      Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+      Set<VirtualFile> files = new LinkedHashSet<>();
       for (PsiElement element : psiElements) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
@@ -765,7 +775,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final T selectedElement = getSelectedElement(klass);
       return selectedElement == null ? null : Arrays.asList(selectedElement);
     } else {
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<>();
       for (Object value : values) {
         if (value != null && klass.isAssignableFrom(value.getClass())) {
           result.add((T)value);
@@ -864,7 +874,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {
-    final AsyncResult<RelativePoint> result = new AsyncResult<RelativePoint>();
+    final AsyncResult<RelativePoint> result = new AsyncResult<>();
     if (myLocationCache == null) {
       if (myHintContainer != null) {
         final Point p = AbstractPopup.getCenterOf(myHintContainer, this);

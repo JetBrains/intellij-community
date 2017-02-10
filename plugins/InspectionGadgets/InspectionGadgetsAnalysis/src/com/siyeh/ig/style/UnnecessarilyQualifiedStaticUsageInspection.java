@@ -90,14 +90,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
     }
 
     @Override

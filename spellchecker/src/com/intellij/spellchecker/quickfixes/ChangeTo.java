@@ -41,11 +41,6 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
 
   @NotNull
-  public String getName() {
-    return SpellCheckerBundle.message("change.to");
-  }
-
-  @NotNull
   public String getFamilyName() {
     return SpellCheckerBundle.message("change.to");
   }
@@ -74,7 +69,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
       return;
     }
 
-    List<LookupElement> lookupItems = new ArrayList<LookupElement>();
+    List<LookupElement> lookupItems = new ArrayList<>();
     for (String variant : getSuggestions(project)) {
       lookupItems.add(LookupElementBuilder.create(variant));
     }

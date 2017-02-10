@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -82,7 +83,7 @@ public abstract class AbstractTestMethodConfigurationProducer extends JUnitConfi
   }
 
   @Override
-  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
+  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, @NotNull final Runnable performRunnable) {
     final PsiMethod psiMethod = (PsiMethod)fromContext.getSourceElement();
     final PsiClass containingClass = psiMethod.getContainingClass();
     final InheritorChooser inheritorChooser = new InheritorChooser() {

@@ -229,7 +229,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   @NotNull
   public List<MavenId> getResult() {
-    List<MavenId> result = new ArrayList<MavenId>();
+    List<MavenId> result = new ArrayList<>();
 
     for (TreePath each : myResultList.getSelectionPaths()) {
       Object sel = each.getLastPathComponent();

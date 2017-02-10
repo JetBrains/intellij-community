@@ -21,12 +21,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.xerces.util.SecurityManager;
 import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
@@ -193,7 +195,7 @@ public class PathManager {
   }
 
   public static void ensureConfigFolderExists() {
-    checkAndCreate(getConfigPath(), true);
+    FileUtil.createDirectory(new File(getConfigPath()));
   }
 
   @NotNull
@@ -204,11 +206,6 @@ public class PathManager {
   @NotNull
   public static File getOptionsFile(@NotNull String fileName) {
     return new File(getOptionsPath(), fileName + ".xml");
-  }
-
-  @NotNull
-  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
-    return getOptionsFile(externalizable.getExternalFileName());
   }
 
   @NotNull
@@ -255,7 +252,7 @@ public class PathManager {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
     }
 
-    checkAndCreate(ourSystemPath, true);
+    FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
   }
 
@@ -266,9 +263,9 @@ public class PathManager {
 
   @NotNull
   public static File getIndexRoot() {
-    String indexRoot = System.getProperty("index_root_path", getSystemPath() + "/index");
-    checkAndCreate(indexRoot, true);
-    return new File(indexRoot);
+    File indexRoot = new File(System.getProperty("index_root_path", getSystemPath() + "/index"));
+    FileUtil.createDirectory(indexRoot);
+    return indexRoot;
   }
 
   @NotNull
@@ -386,6 +383,24 @@ public class PathManager {
     }
   }
 
+  /**
+   * Provides a way to tweak system properties as early as possible.
+   */
+  public static void patchProperties() {
+    /* Setting swing.bufferPerWindow = false disables true double buffering (by definition),
+       by forcing BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF in RepaintManager's static initializer.
+
+       At the same time, https://youtrack.jetbrains.com/issue/IDEA-35883 seems to be now fixed.
+
+       This matters only if we use the default RepaintManager and don't invoke JComponent.getGraphics() directly.
+
+       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+       frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      System.setProperty("swing.bufferPerWindow", "true");
+    }
+  }
+
   private static String getCustomPropertiesFile() {
     String configPath = getCustomOptionsDirectory();
     return configPath != null ? configPath + File.separator + PROPERTIES_FILE_NAME : null;
@@ -456,8 +471,9 @@ public class PathManager {
       THashSet.class,               // trove4j
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
-      PatternMatcher.class,          // OROMatcher
-      Snappy.class                   // Snappy
+      PatternMatcher.class,         // OROMatcher
+      Snappy.class,                 // Snappy
+      SecurityManager.class         // xercesImpl
     };
 
     final Set<String> classPath = new HashSet<String>();
@@ -493,7 +509,7 @@ public class PathManager {
     System.err.println(x);
   }
 
-  private static String getAbsolutePath(String path) {
+  public static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
     return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }
@@ -512,6 +528,7 @@ public class PathManager {
     return platformPath(selector, macPart, null, null, null, fallback);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static String platformPath(@NotNull String selector,
                                      @Nullable String macPart,
                                      @Nullable String winVar,
@@ -538,13 +555,10 @@ public class PathManager {
     return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
-  private static boolean checkAndCreate(String path, boolean createIfNotExists) {
-    if (createIfNotExists) {
-      File file = new File(path);
-      if (!file.exists()) {
-        return file.mkdirs();
-      }
-    }
-    return false;
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #getOptionsFile(String)} (to be removed in IDEA 2018) */
+  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
+    return getOptionsFile(externalizable.getExternalFileName());
   }
+  //</editor-fold>
 }

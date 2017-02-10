@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public class XmlUtil {
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
   public static final List<String> ourSchemaUrisList = Arrays.asList(SCHEMA_URIS);
-  public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
+  public static final Key<Boolean> ANT_FILE_SIGN = new Key<>("FORCED ANT FILE");
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
@@ -162,7 +162,7 @@ public class XmlUtil {
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
-  private final static Set<String> doNotVisitTags = new HashSet<String>(Arrays.asList("annotation", "element", "attribute"));
+  private final static Set<String> doNotVisitTags = new HashSet<>(Arrays.asList("annotation", "element", "attribute"));
 
   private XmlUtil() {
   }
@@ -214,7 +214,7 @@ public class XmlUtil {
     XmlAttribute[] attributes = tag.getAttributes();
 
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     for (XmlAttribute attribute : attributes) {
       if (attribute.getName().startsWith("xmlns:") && attribute.getValue().equals(uri)) {
@@ -729,7 +729,7 @@ public class XmlUtil {
     if (file != null) {
 
       final Language language = file.getLanguage();
-      if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
+      if (language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
       }
     }
@@ -806,7 +806,7 @@ public class XmlUtil {
 
     List<MyAttributeInfo> list = attributesMap.get(tagName);
     if (list == null) {
-      list = new ArrayList<MyAttributeInfo>();
+      list = new ArrayList<>();
       final XmlAttribute[] attributes = tag.getAttributes();
       for (final XmlAttribute attribute : attributes) {
         list.add(new MyAttributeInfo(attribute.getName()));
@@ -815,10 +815,10 @@ public class XmlUtil {
     else {
       final XmlAttribute[] attributes = tag.getAttributes();
       ContainerUtil.sort(list);
-      Arrays.sort(attributes, (attr1, attr2) -> attr1.getName().compareTo(attr2.getName()));
+      Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();
-      list = new ArrayList<MyAttributeInfo>();
+      list = new ArrayList<>();
       int index = 0;
       while (iter.hasNext()) {
         final MyAttributeInfo info = iter.next();
@@ -850,7 +850,7 @@ public class XmlUtil {
       }
     }
     attributesMap.put(tagName, list);
-    final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<String>();
+    final List<String> tags = tagsMap.get(tagName) != null ? tagsMap.get(tagName) : new ArrayList<>();
     tagsMap.put(tagName, tags);
     PsiFile file = tag.isValid() ? tag.getContainingFile() : null;
     processXmlElements(tag, new FilterElementProcessor(XmlTagFilter.INSTANCE) {
@@ -1146,8 +1146,8 @@ public class XmlUtil {
   }
 
   public static String generateDocumentDTD(XmlDocument doc, boolean full) {
-    final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
-    final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
+    final Map<String, List<String>> tags = new LinkedHashMap<>();
+    final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<>();
 
     try {
       XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);
@@ -1405,6 +1405,18 @@ public class XmlUtil {
       caseSensitive ? StandardPatterns.string().oneOf(names) : StandardPatterns.string().oneOfIgnoreCase(names);
     registrar.registerReferenceProvider(XmlPatterns.xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
+  }
+
+  public static XmlFile findDescriptorFile(@NotNull XmlTag tag, @NotNull XmlFile containingFile) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
+    XmlFile descriptorFile = nsDescriptor != null
+                             ? nsDescriptor.getDescriptorFile()
+                             : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
+    if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
+      descriptorFile = containingFile;
+    }
+    return descriptorFile;
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

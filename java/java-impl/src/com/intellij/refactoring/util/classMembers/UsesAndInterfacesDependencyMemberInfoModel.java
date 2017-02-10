@@ -42,19 +42,19 @@ public class UsesAndInterfacesDependencyMemberInfoModel<T extends PsiMember, M e
 
   public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, @Nullable PsiClass superClass, boolean recursive,
                                                     @NotNull final InterfaceContainmentVerifier interfaceContainmentVerifier) {
-    super(new ANDCombinedMemberInfoModel<T, M>(
-            new UsesDependencyMemberInfoModel<T, PsiClass, M>(aClass, superClass, recursive) {
-              public int checkForProblems(@NotNull M memberInfo) {
-                final int problem = super.checkForProblems(memberInfo);
-                if (problem == OK) return OK;
-                final PsiMember member = memberInfo.getMember();
-                if (member instanceof PsiMethod) {
-                  if (interfaceContainmentVerifier.checkedInterfacesContain((PsiMethod)member)) return OK;
-                }
-                return problem;
-              }
-            },
-            new InterfaceDependencyMemberInfoModel<T, M>(aClass))
+    super(new ANDCombinedMemberInfoModel<>(
+      new UsesDependencyMemberInfoModel<T, PsiClass, M>(aClass, superClass, recursive) {
+        public int checkForProblems(@NotNull M memberInfo) {
+          final int problem = super.checkForProblems(memberInfo);
+          if (problem == OK) return OK;
+          final PsiMember member = memberInfo.getMember();
+          if (member instanceof PsiMethod) {
+            if (interfaceContainmentVerifier.checkedInterfacesContain((PsiMethod)member)) return OK;
+          }
+          return problem;
+        }
+      },
+      new InterfaceDependencyMemberInfoModel<>(aClass))
     );
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +61,7 @@ public class TypeConversionUtil {
   private static final int BOOL_RANK = 10;
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;
-  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
+  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL) {
     @Override
     public boolean isValid() {
       return true;
@@ -70,8 +69,7 @@ public class TypeConversionUtil {
 
     @NotNull
     @Override
-    @NonNls
-    public String getPresentableText() {
+    public String getPresentableText(boolean annotated) {
       return "FAKE TYPE";
     }
   };
@@ -713,8 +711,8 @@ public class TypeConversionUtil {
    *
    * @param left  type to assign to
    * @param right type of value
-   * @return true if value of type <code>right</code> can be assigned to an l-value of
-   *         type <code>left</code>
+   * @return true if value of type {@code right} can be assigned to an l-value of
+   *         type {@code left}
    */
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right) {
     return isAssignable(left, right, true);
@@ -945,7 +943,7 @@ public class TypeConversionUtil {
             InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
               @Override
               public boolean process(PsiClass psiClass) {
-                ContainerUtil.addIfNotNull(psiClass.getQualifiedName(), set);
+                ContainerUtil.addIfNotNull(set, psiClass.getQualifiedName());
                 return true;
               }
             });
@@ -1086,13 +1084,13 @@ public class TypeConversionUtil {
   private static final Set<String> ourReportedSuperClassSubstitutorExceptions = ContainerUtil.newConcurrentSet();
 
   /**
-   * Calculates substitutor that binds type parameters in <code>superClass</code> with
-   * values that they have in <code>derivedClass</code>, given that type parameters in
-   * <code>derivedClass</code> are bound by <code>derivedSubstitutor</code>.
-   * <code>superClass</code> must be a super class/interface of <code>derivedClass</code> (as in
-   * <code>InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true)</code>
+   * Calculates substitutor that binds type parameters in {@code superClass} with
+   * values that they have in {@code derivedClass}, given that type parameters in
+   * {@code derivedClass} are bound by {@code derivedSubstitutor}.
+   * {@code superClass} must be a super class/interface of {@code derivedClass} (as in
+   * {@code InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true)}
    *
-   * @return substitutor (never returns <code>null</code>)
+   * @return substitutor (never returns {@code null})
    * @see PsiClass#isInheritor(PsiClass, boolean)
    * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
@@ -1464,14 +1462,7 @@ public class TypeConversionUtil {
       if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       return lType;
     }
-    if (sign == JavaTokenType.EQEQ ||
-        sign == JavaTokenType.NE ||
-        sign == JavaTokenType.LT ||
-        sign == JavaTokenType.GT ||
-        sign == JavaTokenType.LE ||
-        sign == JavaTokenType.GE ||
-        sign == JavaTokenType.OROR ||
-        sign == JavaTokenType.ANDAND) {
+    if (PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS.contains(sign)) {
       return PsiType.BOOLEAN;
     }
     if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {

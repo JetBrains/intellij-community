@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -74,11 +73,13 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     List<String> actual = getCompletionVariants(myProjectPom);
 
     try {
-      assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
+      assertUnorderedElementsAreEqual(actual, "maven-jar-plugin", "maven-clean-plugin", "maven-install-plugin", "maven-compiler-plugin",
+                                      "maven-resources-plugin", "maven-site-plugin", "maven-surefire-plugin", "maven-war-plugin",
+                                      "maven-eclipse-plugin", "maven-deploy-plugin");
     }
     catch (Throwable t) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
-      System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
+      System.out.println("GetArtifacts: " + new HashSet<>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
 
       for (MavenIndex index : instance.getIndices()) {
@@ -105,11 +106,17 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "</build>");
 
     assertCompletionVariants(myProjectPom,
-                             "maven-compiler-plugin",
+                             "maven-site-plugin",
+                             "maven-eclipse-plugin",
                              "maven-war-plugin",
+                             "maven-resources-plugin",
                              "maven-surefire-plugin",
+                             "maven-jar-plugin",
                              "build-helper-maven-plugin",
-                             "maven-eclipse-plugin");
+                             "maven-clean-plugin",
+                             "maven-install-plugin",
+                             "maven-compiler-plugin",
+                             "maven-deploy-plugin");
   }
 
   public void testResolving() throws Exception {

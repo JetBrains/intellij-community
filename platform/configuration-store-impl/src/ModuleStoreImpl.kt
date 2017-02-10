@@ -17,9 +17,10 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
-import java.io.File
+import com.intellij.util.io.exists
+import java.nio.file.Paths
 
-private val MODULE_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
+private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
 private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ModuleStoreBase() {
   override val project = module.project
@@ -34,7 +35,7 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
     override fun setPath(path: String) {
       super.setPath(path)
 
-      if (File(path).exists()) {
+      if (Paths.get(path).exists()) {
         moduleComponentLoadPolicy = StateLoadPolicy.LOAD
       }
     }
@@ -50,17 +51,17 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
 
   override final fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     val storages = stateSpec.storages
-    if (storages.isEmpty()) {
-      return arrayOf(MODULE_FILE_STORAGE_ANNOTATION)
+    return if (storages.isEmpty()) {
+      arrayOf(MODULE_FILE_STORAGE_ANNOTATION)
     }
     else {
-      return super.getStorageSpecs(component, stateSpec, operation)
+      super.getStorageSpecs(component, stateSpec, operation)
     }
   }
 
   override fun setPath(path: String) {
     if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
-      storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, File(path))
+      storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, Paths.get(path))
     }
   }
 }

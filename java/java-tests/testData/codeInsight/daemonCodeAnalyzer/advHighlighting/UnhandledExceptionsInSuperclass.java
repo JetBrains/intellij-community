@@ -1,6 +1,6 @@
 // unhandled exceptions from superclases/etc
 import java.io.*;
-import java.net.*;
+
 class a  {
  a(int i) {}
 }

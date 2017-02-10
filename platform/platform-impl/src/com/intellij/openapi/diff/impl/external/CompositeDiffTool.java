@@ -37,7 +37,7 @@ class CompositeDiffTool implements DiffTool {
   private final List<DiffTool> myTools;
 
   public CompositeDiffTool(@NotNull List<DiffTool> tools) {
-    myTools = new ArrayList<DiffTool>(tools);
+    myTools = new ArrayList<>(tools);
   }
 
   public CompositeDiffTool(@NotNull DiffTool[] tools) {

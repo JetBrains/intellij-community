@@ -63,7 +63,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   }
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    final Set<String> processed = new THashSet<String>();
+    final Set<String> processed = new THashSet<>();
 
     final String[] readerFormatNames = ImageIO.getReaderFormatNames();
     for (String format : readerFormatNames) {

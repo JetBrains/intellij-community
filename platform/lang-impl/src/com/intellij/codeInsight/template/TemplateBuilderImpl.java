@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -45,12 +44,12 @@ import java.util.TreeSet;
  */
 public class TemplateBuilderImpl implements TemplateBuilder {
   private final RangeMarker myContainerElement;
-  private final Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
-  private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
-  private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
-  private final Map<RangeMarker, Boolean> mySkipOnStartMap = new HashMap<RangeMarker, Boolean>();
-  private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
-  private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(RangeMarker.BY_START_OFFSET);
+  private final Map<RangeMarker,Expression> myExpressions = new HashMap<>();
+  private final Map<RangeMarker,String> myVariableExpressions = new HashMap<>();
+  private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<>();
+  private final Map<RangeMarker, Boolean> mySkipOnStartMap = new HashMap<>();
+  private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<>();
+  private final Set<RangeMarker> myElements = new TreeSet<>(RangeMarker.BY_START_OFFSET);
 
   private RangeMarker myEndElement;
   private RangeMarker mySelection;
@@ -316,7 +315,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     final RangeMarker key = wrapElement(element);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);
-    mySkipOnStartMap.put(key, Boolean.valueOf(skipOnStart));
+    mySkipOnStartMap.put(key, skipOnStart);
     replaceElement(key, expression);
   }
 

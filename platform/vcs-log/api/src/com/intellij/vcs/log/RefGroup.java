@@ -31,8 +31,8 @@ public interface RefGroup {
   List<VcsRef> getRefs();
 
   /**
-   * Returns the background color of this ref group, which will be used to paint it on the Branches panel.
+   * Returns the colors of this ref group, which will be used to paint it in the table.
    */
   @NotNull
-  Color getBgColor();
+  List<Color> getColors();
 }

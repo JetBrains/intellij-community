@@ -82,9 +82,9 @@ public class DependencyConfigurable extends BaseConfigurable {
     myAllowRulesModel = new MyTableModel(myProject, new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
     myAllowRulesModel.setSortable(false);
 
-    myDenyTable = new TableView<DependencyRule>(myDenyRulesModel);
+    myDenyTable = new TableView<>(myDenyRulesModel);
     myDenyPanel.add(createRulesPanel(myDenyRulesModel, myDenyTable), BorderLayout.CENTER);
-    myAllowTable = new TableView<DependencyRule>(myAllowRulesModel);
+    myAllowTable = new TableView<>(myAllowRulesModel);
     myAllowPanel.add(createRulesPanel(myAllowRulesModel, myAllowTable), BorderLayout.CENTER);
     return myWholePanel;
   }
@@ -108,8 +108,8 @@ public class DependencyConfigurable extends BaseConfigurable {
     stopTableEditing();
     DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     validationManager.removeAllRules();
-    final HashMap<String, PackageSet> unUsed = new HashMap<String, PackageSet>(validationManager.getUnnamedScopes());
-    List<DependencyRule> modelItems = new ArrayList<DependencyRule>();
+    final HashMap<String, PackageSet> unUsed = new HashMap<>(validationManager.getUnnamedScopes());
+    List<DependencyRule> modelItems = new ArrayList<>();
     modelItems.addAll(myDenyRulesModel.getItems());
     modelItems.addAll(myAllowRulesModel.getItems());
     for (DependencyRule rule : modelItems) {
@@ -145,8 +145,8 @@ public class DependencyConfigurable extends BaseConfigurable {
   public void reset() {
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     DependencyRule[] rules = validationManager.getAllRules();
-    final ArrayList<DependencyRule> denyList = new ArrayList<DependencyRule>();
-    final ArrayList<DependencyRule> allowList = new ArrayList<DependencyRule>();
+    final ArrayList<DependencyRule> denyList = new ArrayList<>();
+    final ArrayList<DependencyRule> allowList = new ArrayList<>();
     for (DependencyRule rule : rules) {
       if (rule.isDenyRule()) {
         denyList.add(rule.createCopy());
@@ -164,7 +164,7 @@ public class DependencyConfigurable extends BaseConfigurable {
   public boolean isModified() {
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     if (validationManager.skipImportStatements() != mySkipImports.isSelected()) return true;
-    final List<DependencyRule> rules = new ArrayList<DependencyRule>();
+    final List<DependencyRule> rules = new ArrayList<>();
     rules.addAll(myDenyRulesModel.getItems());
     rules.addAll(myAllowRulesModel.getItems());
     return !Arrays.asList(validationManager.getAllRules()).equals(rules);
@@ -217,7 +217,7 @@ public class DependencyConfigurable extends BaseConfigurable {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
-          return new CellEditorComponentWithBrowseButton<JComponent>(myCombo, this);
+          return new CellEditorComponentWithBrowseButton<>(myCombo, this);
         }
       };
     }
@@ -271,7 +271,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
     @Override
     public void addRow() {
-      ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
+      ArrayList<DependencyRule> newList = new ArrayList<>(getItems());
       final NamedScope scope = DefaultScopesProvider.getAllScope();
       newList.add(new DependencyRule(scope, scope, myDenyRule));
       setItems(newList);
@@ -279,7 +279,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
     @Override
     public void exchangeRows(int index1, int index2) {
-      ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
+      ArrayList<DependencyRule> newList = new ArrayList<>(getItems());
       DependencyRule r1 = newList.get(index1);
       DependencyRule r2 = newList.get(index2);
       newList.set(index1, r2);

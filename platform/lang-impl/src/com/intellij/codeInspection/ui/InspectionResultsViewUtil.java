@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -59,21 +58,12 @@ public class InspectionResultsViewUtil {
     final int lineNumber = node.getLineNumber();
     if (lineNumber != -1) {
       final PsiFile containingFile = containingElement.getContainingFile();
-
-      // If an inspection result points to a file that has been deleted (a binary file that is such as
-      // an icon), the above code will walk up to the surrounding directly, and calling getContainingFile
-      // on a PsiDirectory yields null.
-      if (containingFile == null) {
-        return null;
-      }
-
-      final VirtualFile file = containingFile.getVirtualFile();
-      PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments();
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null && document.getLineCount() > lineNumber - 1) {
-        return new OpenFileDescriptor(containingElement.getProject(),
-                                      file,
-                                      document.getLineStartOffset(lineNumber - 1));
+      if (containingFile != null) {
+        final VirtualFile file = containingFile.getVirtualFile();
+        final Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null && document.getLineCount() > lineNumber) {
+          return new OpenFileDescriptor(containingElement.getProject(), file, lineNumber, 0);
+        }
       }
     }
     return (Navigatable)containingElement;

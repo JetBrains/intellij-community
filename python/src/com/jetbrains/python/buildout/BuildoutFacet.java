@@ -117,7 +117,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
 
   @NotNull
   public static List<VirtualFile> getExtraPathForAllOpenModules() {
-    final List<VirtualFile> results = new ArrayList<VirtualFile>();
+    final List<VirtualFile> results = new ArrayList<>();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         final BuildoutFacet buildoutFacet = getInstance(module);
@@ -138,7 +138,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
   }
 
   /**
-   * Generates a <code>sys.path[0:0] = [...]</code> with paths that buildout script wants.
+   * Generates a {@code sys.path[0:0] = [...]} with paths that buildout script wants.
    *
    * @param additionalPythonPath
    * @param module to get a buildout facet from
@@ -227,7 +227,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
         String value = scanner.group(2);
         if (value != null) {
           if (ret == null) {
-            ret = new ArrayList<String>();
+            ret = new ArrayList<>();
           }
           ret.add(value);
           pos = scanner.end();
@@ -247,7 +247,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
    * @return extracted paths
    */
   public static List<String> extractFromSitePy(VirtualFile vFile) throws IOException {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     String text = VfsUtil.loadText(vFile);
     String[] lines = LineTokenizer.tokenize(text, false);
     int index = 0;

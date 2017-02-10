@@ -49,7 +49,7 @@ public class PlainTextTodoIndexer extends VersionedTodoIndexer {
         }
       }
     }
-    Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+    Map<TodoIndexEntry, Integer> map = new HashMap<>();
     for (IndexPattern indexPattern : indexPatterns) {
       final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
       if (count > 0) {

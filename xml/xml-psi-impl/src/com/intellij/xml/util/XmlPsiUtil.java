@@ -27,6 +27,9 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class XmlPsiUtil {
   private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
   @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
@@ -72,6 +75,7 @@ public class XmlPsiUtil {
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
     private final PsiFile targetFile;
+    private final Set<String> visitedEntities = new HashSet<>();
 
     XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {
       processor = _processor;
@@ -85,7 +89,7 @@ public class XmlPsiUtil {
 
       if (element instanceof XmlEntityRef) {
         XmlEntityRef ref = (XmlEntityRef)element;
-
+        if (!visitedEntities.add(ref.getText())) return true;
         PsiElement newElement = parseEntityRef(targetFile, ref);
 
         while (newElement != null) {
@@ -218,9 +222,9 @@ public class XmlPsiUtil {
     if (value == null) {
       value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
         final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-        if (res == null) return new CachedValueProvider.Result<PsiElement>(res, targetFile);
+        if (res == null) return new CachedValueProvider.Result<>(res, targetFile);
         if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
-        return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
+        return new CachedValueProvider.Result<>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
       }, false);
       value = ((XmlEntityRefImpl)entityRef).putUserDataIfAbsent(PARSED_DECL_KEY, value);
     }

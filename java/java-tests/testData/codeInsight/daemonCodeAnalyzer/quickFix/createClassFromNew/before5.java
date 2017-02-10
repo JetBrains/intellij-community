@@ -1,4 +1,4 @@
-// "Do not try to create class Inner" "false"
+// "Create class 'Inner'" "false"
 public class Test {
     public static void main() {
         new Inner<caret>();

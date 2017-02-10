@@ -15,24 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
-
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import static java.lang.String.format;
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 
-class GetAtTransformation extends Transformation {
-  public GetAtTransformation() {
-    super(null);
-  }
-
+class GetAtTransformation extends BinaryTransformation {
   @Override
-  @Nullable
-  public String getReplacement(MethodCallData methodInfo, OptionsData optionsData) {
-    String argument = methodInfo.getArgument(0);
-    if (argument == null) return null;
-
-    return format("%s[%s]",
-                  methodInfo.getBase(), argument);
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull ChangeToOperatorInspection.Options options) {
+    String result = format("%s[%s]", getLhs(methodCall).getText(), getRhs(methodCall).getText());
+    replaceExpression(methodCall, result);
   }
 }

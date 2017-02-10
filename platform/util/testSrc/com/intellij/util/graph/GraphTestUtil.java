@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,21 @@
  */
 package com.intellij.util.graph;
 
-import junit.framework.Assert;
-
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.junit.Assert.*;
+
 /**
- *  @author dsl
+ * @author dsl
  */
 public class GraphTestUtil {
   static <E> void assertIteratorsEqual(Iterator<E> expected, Iterator<E> found) {
-    for (; expected.hasNext(); ) {
-      Assert.assertTrue(found.hasNext());
-      Assert.assertEquals(expected.next(), found.next());
+    while (expected.hasNext()) {
+      assertTrue(found.hasNext());
+      assertEquals(expected.next(), found.next());
     }
-    Assert.assertFalse(found.hasNext());
+    assertFalse(found.hasNext());
   }
 
   public static Iterator<TestNode> iteratorOfArray(TestNode[] array) {

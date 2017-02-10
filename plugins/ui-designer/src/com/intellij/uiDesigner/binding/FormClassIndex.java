@@ -113,7 +113,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
           return Collections.emptyList();
         }
         if (files.isEmpty()) return Collections.emptyList();
-        List<PsiFile> result = new ArrayList<PsiFile>();
+        List<PsiFile> result = new ArrayList<>();
         for(VirtualFile file: files) {
           if (!file.isValid()) continue;
           PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

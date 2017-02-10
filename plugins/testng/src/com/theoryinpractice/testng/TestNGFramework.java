@@ -191,6 +191,7 @@ public class TestNGFramework extends JavaTestFramework {
     return new FileTemplateDescriptor("TestNG TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");
   }

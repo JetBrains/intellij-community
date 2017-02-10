@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,10 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     return true;
   }
 
+  @Nullable
   @Override
-  public Object[] getParametersForLookup(@NotNull LookupElement item, @NotNull ParameterInfoContext context) {
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+    if (item == null || context == null) return null;
     Object o = item.getObject();
 
     if (o instanceof GroovyResolveResult) {
@@ -116,8 +118,9 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     return PsiAnnotationMethod.EMPTY_ARRAY;
   }
 
+  @Nullable
   @Override
-  public Object[] getParametersForDocumentation(@NotNull PsiAnnotationMethod method, @NotNull ParameterInfoContext context) {
+  public Object[] getParametersForDocumentation(PsiAnnotationMethod method, ParameterInfoContext context) {
     return new PsiAnnotationMethod[]{method};
   }
 

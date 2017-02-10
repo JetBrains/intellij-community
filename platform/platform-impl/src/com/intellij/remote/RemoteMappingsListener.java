@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RemoteMappingsListener {
   Topic<RemoteMappingsListener> REMOTE_MAPPINGS_CHANGED =
-    new Topic<RemoteMappingsListener>("remotesdk.RemoteMappingsListener", RemoteMappingsListener.class);
+    new Topic<>("remotesdk.RemoteMappingsListener", RemoteMappingsListener.class);
 
   void mappingsChanged(@NotNull String prefix, @NotNull String serverId);
   void mappingsChanged();

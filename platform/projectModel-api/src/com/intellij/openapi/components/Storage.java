@@ -69,4 +69,7 @@ public @interface Storage {
    */
   @Deprecated
   String id() default "default";
+
+  // internal use only
+  boolean exclusive() default false;
 }

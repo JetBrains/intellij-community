@@ -133,8 +133,8 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
                              "delivered".equals(element.getChildText("state")) ||
                              "finished".equals(element.getChildText("state"));
     final String description = element.getChildText("description");
-    final Ref<Date> updated = new Ref<Date>();
-    final Ref<Date> created = new Ref<Date>();
+    final Ref<Date> updated = new Ref<>();
+    final Ref<Date> created = new Ref<>();
     try {
       updated.set(parseDate(element, "updated_at"));
       created.set(parseDate(element, "created_at"));
@@ -223,12 +223,12 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   private static Comment[] parseComments(Element notes) {
     if (notes == null) return Comment.EMPTY_ARRAY;
-    final List<Comment> result = new ArrayList<Comment>();
+    final List<Comment> result = new ArrayList<>();
     //noinspection unchecked
     for (Element note : (List<Element>)notes.getChildren("note")) {
       final String text = note.getChildText("text");
       if (text == null) continue;
-      final Ref<Date> date = new Ref<Date>();
+      final Ref<Date> date = new Ref<>();
       try {
         date.set(parseDate(note, "noted_at"));
       } catch (ParseException e) {

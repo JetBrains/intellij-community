@@ -27,7 +27,7 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
   @Override
   protected AnswerPlaceholder getTargetPlaceholder(@NotNull final TaskFile taskFile, int offset) {
     final AnswerPlaceholder selectedAnswerPlaceholder = taskFile.getAnswerPlaceholder(offset);
-    final List<AnswerPlaceholder> placeholders = taskFile.getAnswerPlaceholders();
+    final List<AnswerPlaceholder> placeholders = taskFile.getActivePlaceholders();
     if (selectedAnswerPlaceholder == null) {
       for (int i = placeholders.size() - 1; i >= 0; i--) {
         final AnswerPlaceholder placeholder = placeholders.get(i);

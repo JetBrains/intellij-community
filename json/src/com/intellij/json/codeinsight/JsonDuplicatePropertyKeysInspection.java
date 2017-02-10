@@ -47,7 +47,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
     return new JsonElementVisitor() {
       @Override
       public void visitObject(@NotNull JsonObject o) {
-        final MultiMap<String, PsiElement> keys = new MultiMap<String, PsiElement>();
+        final MultiMap<String, PsiElement> keys = new MultiMap<>();
         for (JsonProperty property : o.getPropertyList()) {
           keys.putValue(property.getName(), property.getNameElement());
         }

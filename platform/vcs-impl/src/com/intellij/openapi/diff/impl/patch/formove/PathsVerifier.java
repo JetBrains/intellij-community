@@ -76,22 +76,22 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     myPatches = patches;
     myBaseMapper = baseMapper;
 
-    myMovedFiles = new HashMap<VirtualFile, MovedFileData>();
-    myBeforePaths = new ArrayList<FilePath>();
-    myCreatedDirectories = new ArrayList<VirtualFile>();
-    myTextPatches = new ArrayList<Pair<VirtualFile, ApplyTextFilePatch>>();
-    myBinaryPatches = new ArrayList<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>>();
-    myWritableFiles = new ArrayList<VirtualFile>();
+    myMovedFiles = new HashMap<>();
+    myBeforePaths = new ArrayList<>();
+    myCreatedDirectories = new ArrayList<>();
+    myTextPatches = new ArrayList<>();
+    myBinaryPatches = new ArrayList<>();
+    myWritableFiles = new ArrayList<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    mySkipped = new ArrayList<FilePatch>();
+    mySkipped = new ArrayList<>();
 
-    myAddedPaths = new ArrayList<FilePath>();
-    myDeletedPaths = new ArrayList<FilePath>();
+    myAddedPaths = new ArrayList<>();
+    myDeletedPaths = new ArrayList<>();
   }
 
   // those to be moved to CL: target + created dirs
   public List<FilePath> getDirectlyAffected() {
-    final List<FilePath> affected = new ArrayList<FilePath>();
+    final List<FilePath> affected = new ArrayList<>();
     addAllFilePath(myCreatedDirectories, affected);
     addAllFilePath(myWritableFiles, affected);
     affected.addAll(myBeforePaths);
@@ -100,7 +100,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
   // old parents of moved files
   public List<VirtualFile> getAllAffected() {
-    final List<VirtualFile> affected = new ArrayList<VirtualFile>();
+    final List<VirtualFile> affected = new ArrayList<>();
     affected.addAll(myCreatedDirectories);
     affected.addAll(myWritableFiles);
 
@@ -222,13 +222,12 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       fileType = FileTypeChooser.associateFileType(file.getName());
       if (fileType == null) {
         PatchApplier
-          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.",
-                     true);
+          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.");
         return false;
       }
     }
     if (fileType.isBinary()) {
-      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.", true);
+      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.");
       return false;
     }
     return true;
@@ -420,7 +419,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   private void revert(final String errorMessage) {
-    PatchApplier.showError(myProject, errorMessage, true);
+    PatchApplier.showError(myProject, errorMessage);
 
     // move back
     /*for (MovedFileData movedFile : myMovedFiles) {
@@ -628,9 +627,9 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     private DelayedPrecheckContext(final Project project) {
       myProject = project;
-      myOverrideExisting = new HashMap<FilePath, FilePatch>();
-      mySkipDeleted = new HashMap<FilePath, FilePatch>();
-      myOverridenPaths = new LinkedList<FilePath>();
+      myOverrideExisting = new HashMap<>();
+      mySkipDeleted = new HashMap<>();
+      myOverridenPaths = new LinkedList<>();
     }
 
     public void addSkip(final FilePath path, final FilePatch filePatch) {
@@ -645,11 +644,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
-      final List<FilePatch> result = new LinkedList<FilePatch>();
+      final List<FilePatch> result = new LinkedList<>();
       if (! myOverrideExisting.isEmpty()) {
         final String title = "Overwrite Existing Files";
         final Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          new ArrayList<FilePath>(myOverrideExisting.keySet()), title,
+          new ArrayList<>(myOverrideExisting.keySet()), title,
           "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
           "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
           VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);

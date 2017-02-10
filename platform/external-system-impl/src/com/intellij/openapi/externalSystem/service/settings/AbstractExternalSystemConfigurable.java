@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -86,12 +86,6 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Nls
@@ -180,7 +174,7 @@ public abstract class AbstractExternalSystemConfigurable<
   
   private void addTitle(@NotNull String title) {
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(title, false, new Insets(ExternalSystemUiUtil.INSETS, 0, 0, 0)));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(title, false, JBUI.emptyInsets()));
     myComponent.add(panel, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 

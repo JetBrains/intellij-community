@@ -58,7 +58,7 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
     if (cachedType != null) return myCachedType;
 
     final GrTypeElement[] typeElements = getTypeElements();
-    final ArrayList<PsiType> types = new ArrayList<PsiType>();
+    final ArrayList<PsiType> types = new ArrayList<>();
     for (GrTypeElement typeElement : typeElements) {
       types.add(typeElement.getType());
     }

@@ -55,7 +55,7 @@ public class GroovyBreakInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitBreakStatement(GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
 
       super.visitBreakStatement(breakStatement);
       final GrStatement target = breakStatement.findTargetStatement();

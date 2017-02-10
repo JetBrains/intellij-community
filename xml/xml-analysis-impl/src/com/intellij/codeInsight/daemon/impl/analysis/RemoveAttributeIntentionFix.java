@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -55,7 +54,6 @@ public class RemoveAttributeIntentionFix extends LocalQuickFixAndIntentionAction
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiElement next = findNextAttribute((XmlAttribute)startElement);
     startElement.delete();
 

@@ -69,6 +69,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
 
+  private boolean myCheckUnusedParameter = false;
+
   /**
    * @param newExceptions null if not changed
    */
@@ -201,6 +203,15 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
   }
 
+  @Override
+  public boolean checkUnusedParameter() {
+    return myCheckUnusedParameter;
+  }
+
+  public void setCheckUnusedParameter() {
+    myCheckUnusedParameter = true;
+  }
+
   protected void fillOldParams(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     oldParameterNames = new String[parameters.length];
@@ -297,7 +308,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   public ParameterInfoImpl[] getCreatedParmsInfoWithoutVarargs() {
-    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    List<ParameterInfoImpl> result = new ArrayList<>();
     for (ParameterInfoImpl newParm : newParms) {
       if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
         result.add(newParm);

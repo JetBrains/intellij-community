@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.CalledInAwt;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 public abstract class HgProcessStateAction extends HgAbstractGlobalSingleRepoAction {
@@ -26,6 +27,7 @@ public abstract class HgProcessStateAction extends HgAbstractGlobalSingleRepoAct
     myState = state;
   }
 
+  @CalledInAwt
   protected boolean isRebasing(AnActionEvent e) {
     HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
     return repository != null && repository.getState() == myState;

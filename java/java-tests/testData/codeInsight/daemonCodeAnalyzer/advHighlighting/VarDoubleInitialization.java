@@ -1,6 +1,6 @@
 // vars double initialization
 import java.io.*;
-import java.net.*;
+
 public class a21  {
 
   void f1(int i) {

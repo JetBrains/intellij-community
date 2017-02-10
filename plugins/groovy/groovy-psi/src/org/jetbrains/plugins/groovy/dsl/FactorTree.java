@@ -45,7 +45,7 @@ public class FactorTree extends UserDataHolderBase {
 
   public FactorTree(final Project project, GroovyDslExecutor executor) {
     myExecutor = executor;
-    myProvider = () -> new CachedValueProvider.Result<Map>(ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
+    myProvider = () -> new CachedValueProvider.Result<>(ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     myTopLevelCache = CachedValuesManager.getManager(project).createCachedValue(myProvider, false);
   }
 

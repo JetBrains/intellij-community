@@ -52,7 +52,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
                       boolean singleFileMode){
     super(project,file,ViewSettings.DEFAULT);
     myBuilder=treeBuilder;
-    myHighlightedRegions=new ArrayList<HighlightedRegion>(2);
+    myHighlightedRegions= new ArrayList<>(2);
     mySingleFileMode=singleFileMode;
   }
 
@@ -79,7 +79,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   private Collection<AbstractTreeNode> createListForSingleFile() {
     PsiFile psiFile = getValue();
     TodoItem[] items= findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
-    ArrayList<AbstractTreeNode> children=new ArrayList<AbstractTreeNode>(items.length);
+    ArrayList<AbstractTreeNode> children= new ArrayList<>(items.length);
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document != null) {
       for (TodoItem todoItem : items) {
@@ -102,7 +102,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   public static TodoItem[] findAllTodos(final PsiFile psiFile, final PsiTodoSearchHelper helper) {
-    final List<TodoItem> todoItems = new ArrayList<TodoItem>(Arrays.asList(helper.findTodoItems(psiFile)));
+    final List<TodoItem> todoItems = new ArrayList<>(Arrays.asList(helper.findTodoItems(psiFile)));
 
     psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -129,7 +129,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   private Collection<AbstractTreeNode> createGeneralList() {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
 
     PsiFile psiFile = getValue();
     final TodoItem[] items = findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());

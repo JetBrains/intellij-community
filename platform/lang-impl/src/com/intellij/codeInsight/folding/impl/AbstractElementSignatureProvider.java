@@ -32,8 +32,8 @@ import java.util.StringTokenizer;
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
 
-  protected static final String ELEMENTS_SEPARATOR = ";";
-  protected static final String ELEMENT_TOKENS_SEPARATOR = "#";
+  static final String ELEMENTS_SEPARATOR = ";";
+  static final String ELEMENT_TOKENS_SEPARATOR = "#";
 
   private static final String ESCAPE_CHAR = "\\";
   private static final String[] ESCAPE_FROM = {ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR};
@@ -103,10 +103,10 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   }
 
   @Nullable
-  protected static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
-                                                                        String name,
-                                                                        int index,
-                                                                        @NotNull Class<T> hisClass)
+  static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
+                                                              String name,
+                                                              int index,
+                                                              @NotNull Class<T> hisClass)
   {
     PsiElement[] children = parent.getChildren();
 

@@ -46,7 +46,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final Namer<T> myNamer;
     private final Factory<T> myFactory;
     private final Cloner<T> myCloner;
-    private final List<T> myItems = new ArrayList<T>();
+    private final List<T> myItems = new ArrayList<>();
     private final Equality<T> myComparer;
     private List<T> myResultItems;
     private final List<T> myOriginalItems;
@@ -133,7 +133,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     @Override
     @Nullable
     protected ArrayList<AnAction> createActions(boolean fromPopup) {
-        ArrayList<AnAction> result = new ArrayList<AnAction>();
+        ArrayList<AnAction> result = new ArrayList<>();
         result.add(new AddAction());
 
         result.add(new MyDeleteAction(forAll(o -> canDelete((T) ((MyNode) o).getConfigurable().getEditableObject()))));
@@ -170,19 +170,16 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Nullable
     protected UnnamedConfigurable getItemConfigurable(final T item) {
-      final Ref<UnnamedConfigurable> result = new Ref<UnnamedConfigurable>();
-      TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
-          if (configurable.getEditableObject() == item) {
-            //noinspection unchecked
-            result.set(((ItemConfigurable)configurable).myConfigurable);
-            return false;
-          }
-          else {
-            return true;
-          }
+      final Ref<UnnamedConfigurable> result = new Ref<>();
+      TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
+        final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
+        if (configurable.getEditableObject() == item) {
+          //noinspection unchecked
+          result.set(((ItemConfigurable)configurable).myConfigurable);
+          return false;
+        }
+        else {
+          return true;
         }
       });
       return result.get();

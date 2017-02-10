@@ -81,7 +81,9 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    PsiType type = myCalculatedTypes.get(expr);
+    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck();
+    final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
+    PsiType type = isOverloadCheck && polyExpression ? null : myCalculatedTypes.get(expr);
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       type = f.fun(expr);
@@ -90,8 +92,7 @@ public class JavaResolveCache {
       }
 
       //cache standalone expression types as they do not depend on the context
-      final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck()  || LambdaUtil.isLambdaParameterCheck();
-      if (isOverloadCheck && PsiPolyExpressionUtil.isPolyExpression(expr)) {
+      if (isOverloadCheck && polyExpression) {
         return type;
       }
 

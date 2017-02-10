@@ -164,7 +164,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     @Nullable
     @Override
     public Icon getIcon() {
-      return null;
+      return AllIcons.Debugger.MultipleBreakpoints;
     }
 
     @Nullable

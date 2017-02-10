@@ -22,11 +22,13 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +133,6 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     DumbService.getInstance(getProject()).runWhenSmart(() -> {
       onFound();
       finish();
-      startListening();
     });
   }
 
@@ -163,6 +164,4 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
     }
   }
-
-  protected void startListening() {}
 }

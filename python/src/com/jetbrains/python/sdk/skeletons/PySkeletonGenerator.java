@@ -48,7 +48,7 @@ public class PySkeletonGenerator {
 
   // Some flavors need current folder to be passed as param. Here are they.
   private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
-    new HashMap<Class<? extends PythonSdkFlavor>, String>();
+    new HashMap<>();
 
   static {
     ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
@@ -143,7 +143,7 @@ public class PySkeletonGenerator {
                                              String binaryPath, String extraSyspath)
     throws InvalidSdkException {
     final String parent_dir = new File(binaryPath).getParent();
-    List<String> commandLine = new ArrayList<String>();
+    List<String> commandLine = new ArrayList<>();
     commandLine.add(binaryPath);
     commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
     commandLine.add("-d");
@@ -172,7 +172,7 @@ public class PySkeletonGenerator {
 
   protected ProcessOutput getProcessOutput(String homePath, String[] commandLine, Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
-    final Map<String, String> env = extraEnv != null ? new HashMap<String, String>(extraEnv) : new HashMap<String, String>();
+    final Map<String, String> env = extraEnv != null ? new HashMap<>(extraEnv) : new HashMap<>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
     return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
   }
@@ -205,7 +205,7 @@ public class PySkeletonGenerator {
     if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
     final String parentDir = new File(homePath).getParent();
 
-    List<String> cmd = new ArrayList<String>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"));
+    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"));
     if (!StringUtil.isEmpty(extraSysPath)) {
       cmd.add("-s");
       cmd.add(extraSysPath);

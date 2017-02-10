@@ -48,7 +48,7 @@ public class ShowNonRetinaImagesActions extends DumbAwareAction {
       boolean retina_dark;
 
     }
-    HashMap<String, ImageInfo> info = new HashMap<String, ImageInfo>();
+    HashMap<String, ImageInfo> info = new HashMap<>();
     final Collection<VirtualFile> images = FilenameIndex.getAllFilesByExt(project, "png", GlobalSearchScope.projectScope(project));
     for (VirtualFile image : images) {
       final String path = image.getPath();
@@ -69,7 +69,7 @@ public class ShowNonRetinaImagesActions extends DumbAwareAction {
       }
     }
 
-    final ArrayList<String> retinaMissed = new ArrayList<String>();
+    final ArrayList<String> retinaMissed = new ArrayList<>();
     for (String key : info.keySet()) {
       if (!info.get(key).retina && info.get(key).normal) {
         retinaMissed.add(key);

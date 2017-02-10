@@ -52,4 +52,6 @@ public interface Url {
   Url trimParameters();
 
   int hashCodeCaseInsensitive();
+
+  Url resolve(@NotNull String subPath);
 }

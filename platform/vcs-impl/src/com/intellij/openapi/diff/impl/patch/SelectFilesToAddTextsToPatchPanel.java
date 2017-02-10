@@ -34,7 +34,7 @@ public class SelectFilesToAddTextsToPatchPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel");
 
   public static Set<Change> getBig(List<Change> changes) {
-    final Set<Change> exclude = new HashSet<Change>();
+    final Set<Change> exclude = new HashSet<>();
     for (Change change : changes) {
       // try to estimate size via VF: we assume that base content hasn't been changed much
       VirtualFile virtualFile = getVfFromChange(change);

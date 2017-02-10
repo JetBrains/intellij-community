@@ -31,7 +31,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -104,7 +104,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
 
   private void updateChangesForDocument(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (DaemonListeners.isUnderIgnoredAction(null) || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
       // The document has been changed, but psi hasn't
@@ -266,7 +266,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
-    return ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) ||
+    return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
            ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
   }
 

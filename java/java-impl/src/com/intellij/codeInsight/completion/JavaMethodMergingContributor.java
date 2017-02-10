@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +38,14 @@ public class JavaMethodMergingContributor extends CompletionContributor {
       return null;
     }
 
+    if (Registry.is("java.completion.argument.live.template")) {
+      return null;
+    }
+
     final LookupElement[] items = context.getItems();
     if (items.length > 1) {
       String commonName = null;
-      final ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+      final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
         if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {

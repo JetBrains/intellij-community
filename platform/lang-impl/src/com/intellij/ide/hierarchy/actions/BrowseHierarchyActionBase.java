@@ -17,6 +17,7 @@
 package com.intellij.ide.hierarchy.actions;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
+import com.intellij.ide.hierarchy.HierarchyBrowserBase;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.lang.LanguageExtension;
@@ -66,12 +67,15 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     createAndAddToPanel(project, provider, target);
   }
 
-  public static HierarchyBrowser createAndAddToPanel(@NotNull Project project, @NotNull final HierarchyProvider provider, @NotNull PsiElement target) {
-    final HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
+  @NotNull
+  public static HierarchyBrowser createAndAddToPanel(@NotNull Project project,
+                                                     @NotNull final HierarchyProvider provider,
+                                                     @NotNull PsiElement target) {
+    HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
     final Content content;
 
-    final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
+    HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
 
     final ContentManager contentManager = hierarchyBrowserManager.getContentManager();
     final Content selectedContent = contentManager.getSelectedContent();
@@ -90,7 +94,12 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     contentManager.setSelectedContent(content);
     hierarchyBrowser.setContent(content);
 
-    final Runnable runnable = () -> provider.browserActivated(hierarchyBrowser);
+    final Runnable runnable = () -> {
+      if (hierarchyBrowser instanceof HierarchyBrowserBase && ((HierarchyBrowserBase)hierarchyBrowser).isDisposed()) {
+        return;
+      }
+      provider.browserActivated(hierarchyBrowser);
+    };
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);
     return hierarchyBrowser;
   }

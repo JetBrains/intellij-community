@@ -77,4 +77,9 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
       }
     }) != null;
   }
+
+  @Override
+  public String toString() {
+    return "files:" + myFiles;
+  }
 }

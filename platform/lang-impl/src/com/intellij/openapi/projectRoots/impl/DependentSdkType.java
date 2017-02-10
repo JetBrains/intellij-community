@@ -78,7 +78,7 @@ public abstract class DependentSdkType extends SdkType {
   protected static Sdk createSdkOfType(final SdkModel sdkModel,
                                   final SdkType sdkType,
                                   final Consumer<Sdk> sdkCreatedCallback) {
-    final Ref<Sdk> result = new Ref<Sdk>(null);
+    final Ref<Sdk> result = new Ref<>(null);
     SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
       String newSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkType, home, Arrays.asList(sdkModel.getSdks()));
       final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, sdkType);

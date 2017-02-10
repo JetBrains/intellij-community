@@ -112,7 +112,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
       return false;
     }
 
-    final Ref<Boolean> result = new Ref<Boolean>();
+    final Ref<Boolean> result = new Ref<>();
 
     scope.accept(
       new JavaRecursiveElementWalkingVisitor() {

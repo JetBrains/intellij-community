@@ -24,9 +24,9 @@ import com.intellij.testFramework.VfsTestUtil;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
-import git4idea.test.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
+import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +172,7 @@ public abstract class GithubTest extends GitPlatformTest {
     myAuth = GithubAuthData.createBasicAuth(host, login1, password);
 
     myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setAuthData(myAuth, false);
+    myGitHubSettings.setAuthData(myAuth, true);
 
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
@@ -208,7 +208,7 @@ public abstract class GithubTest extends GitPlatformTest {
   }
 
   @Override
-  protected boolean isRunInEdt() {
+  protected boolean runInDispatchThread() {
     return true;
   }
 }

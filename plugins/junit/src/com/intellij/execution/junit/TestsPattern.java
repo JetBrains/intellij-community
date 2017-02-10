@@ -60,7 +60,7 @@ public class TestsPattern extends TestPackage {
   public SearchForTestsTask createSearchingForTestsTask() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
-    final Set<String> classNames = new LinkedHashSet<String>();
+    final Set<String> classNames = new LinkedHashSet<>();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = getTestClass(project, className);
       if (psiClass != null&& JUnitUtil.isTestClass(psiClass)) {
@@ -117,7 +117,7 @@ public class TestsPattern extends TestPackage {
             private String myOldName = testClass.getQualifiedName();
             @Override
             public void setName(String qualifiedName) {
-              final Set<String> replaced = new LinkedHashSet<String>();
+              final Set<String> replaced = new LinkedHashSet<>();
               for (String currentPattern : patterns) {
                 if (myOldName.equals(currentPattern)) {
                   replaced.add(qualifiedName);

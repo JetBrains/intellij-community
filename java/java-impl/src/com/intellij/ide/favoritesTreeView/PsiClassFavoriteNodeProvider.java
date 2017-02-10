@@ -59,7 +59,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
       }
     }
     if (elements != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiClass && checkClassUnderSources(element, project)) {
           result.add(new ClassSmartPointerNode(project, element, viewSettings));

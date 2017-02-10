@@ -50,8 +50,8 @@ public class DetectedFrameworksTree extends CheckboxTree {
   }
 
   private void createNodesGroupedByDirectory(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
-    Map<VirtualFile, FrameworkDirectoryNode> nodes = new HashMap<VirtualFile, FrameworkDirectoryNode>();
-    List<DetectedFrameworkNode> externalNodes = new ArrayList<DetectedFrameworkNode>();
+    Map<VirtualFile, FrameworkDirectoryNode> nodes = new HashMap<>();
+    List<DetectedFrameworkNode> externalNodes = new ArrayList<>();
     for (DetectedFrameworkDescription framework : frameworks) {
       VirtualFile parent = VfsUtil.getCommonAncestor(framework.getRelatedFiles());
       if (parent != null && !parent.isDirectory()) {
@@ -66,7 +66,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
         externalNodes.add(frameworkNode);
       }
     }
-    List<FrameworkDirectoryNode> rootDirs = new ArrayList<FrameworkDirectoryNode>();
+    List<FrameworkDirectoryNode> rootDirs = new ArrayList<>();
     for (FrameworkDirectoryNode directoryNode : nodes.values()) {
       if (directoryNode.getParent() == null) {
         rootDirs.add(directoryNode);
@@ -81,17 +81,14 @@ public class DetectedFrameworksTree extends CheckboxTree {
   }
 
   public void processUncheckedNodes(@NotNull final Consumer<DetectedFrameworkTreeNodeBase> consumer) {
-    TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof DetectedFrameworkTreeNodeBase) {
-          final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
-          if (!frameworkNode.isChecked()) {
-            consumer.consume(frameworkNode);
-          }
+    TreeUtil.traverse(getRoot(), node -> {
+      if (node instanceof DetectedFrameworkTreeNodeBase) {
+        final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
+        if (!frameworkNode.isChecked()) {
+          consumer.consume(frameworkNode);
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -144,7 +141,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
   }
 
   private void createNodesGroupedByType(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
-    Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<FrameworkType, FrameworkTypeNode>();
+    Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<>();
     for (DetectedFrameworkDescription framework : frameworks) {
       final FrameworkType type = framework.getDetector().getFrameworkType();
       FrameworkTypeNode group = groupNodes.get(type);

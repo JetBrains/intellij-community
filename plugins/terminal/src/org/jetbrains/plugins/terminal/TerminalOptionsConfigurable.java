@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,20 +34,17 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
 
   private TerminalSettingsPanel myPanel;
   private final TerminalOptionsProvider myOptionsProvider;
+  private final TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  public TerminalOptionsConfigurable() {
-    myOptionsProvider = TerminalOptionsProvider.getInstance();
+  public TerminalOptionsConfigurable(@NotNull Project project) {
+    myOptionsProvider = TerminalOptionsProvider.Companion.getInstance();
+    myProjectOptionsProvider = TerminalProjectOptionsProvider.Companion.getInstance(project);
   }
 
   @NotNull
   @Override
   public String getId() {
     return "terminal";
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   @Nls
@@ -63,7 +61,7 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   @Override
   public JComponent createComponent() {
     myPanel = new TerminalSettingsPanel();
-    return myPanel.createPanel(myOptionsProvider);
+    return myPanel.createPanel(myOptionsProvider, myProjectOptionsProvider);
   }
 
   @Override

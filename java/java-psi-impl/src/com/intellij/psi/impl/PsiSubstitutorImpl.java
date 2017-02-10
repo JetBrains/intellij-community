@@ -117,22 +117,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (glb instanceof PsiWildcardType) {
         return glb;
       }
-      if (glb != null ) {
-        return glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
-                                                      : PsiWildcardType.createExtends(typeParameter.getManager(), glb);
+      if (glb instanceof PsiCapturedWildcardType) {
+        PsiWildcardType wildcard = ((PsiCapturedWildcardType)glb).getWildcard();
+        if (!wildcard.isSuper()) return wildcard;
       }
 
-      /*
-       if (glb instanceof PsiCapturedWildcardType) {
-       PsiWildcardType wildcard = ((PsiCapturedWildcardType)glb).getWildcard();
-       if (!wildcard.isSuper()) return wildcard;
-       }
-
-       if (glb != null ) {
-       return PsiWildcardType.createExtends(typeParameter.getManager(), glb);
-       }
-       */
-
+      if (glb != null) {
+        return PsiWildcardType.createExtends(typeParameter.getManager(), glb);
+      }
     }
     return substituted;
   }

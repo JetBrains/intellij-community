@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -123,7 +124,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false));
+        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }
@@ -157,23 +158,29 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     try {
       final Set<PsiElement> ignoredElements = new HashSet<>();
-
-      final String templatePresentationText = getTemplatePresentation().getText();
-      assert templatePresentationText != null;
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-        final SequentialModalProgressTask progressTask =
-          new SequentialModalProgressTask(project, templatePresentationText, true);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
-        ProgressManager.getInstance().run(progressTask);
-      }, templatePresentationText, null);
+      performFixesInBatch(project, descriptors, context, ignoredElements);
 
       refreshViews(project, ignoredElements, myToolWrapper);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
     }
+  }
+
+  protected void performFixesInBatch(@NotNull Project project,
+                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull GlobalInspectionContextImpl context,
+                                     Set<PsiElement> ignoredElements) {
+    final String templatePresentationText = getTemplatePresentation().getText();
+    assert templatePresentationText != null;
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      final SequentialModalProgressTask progressTask =
+        new SequentialModalProgressTask(project, templatePresentationText, true);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
+      ProgressManager.getInstance().run(progressTask);
+    }, templatePresentationText, null);
   }
 
   private void doApplyFix(@NotNull final RefEntity[] refElements, @NotNull InspectionResultsView view) {
@@ -270,7 +277,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
-  private static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
+  protected static void refreshViews(@NotNull Project project, @NotNull RefEntity[] refElements, @NotNull InspectionToolWrapper toolWrapper) {
     final Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : refElements) {
       final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getElement() : null;
@@ -350,6 +357,9 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
       try {
         QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         LOG.error(e);

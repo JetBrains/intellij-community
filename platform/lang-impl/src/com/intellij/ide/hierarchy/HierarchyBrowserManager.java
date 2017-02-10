@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
 @State(name = "HierarchyBrowserManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class HierarchyBrowserManager implements PersistentStateComponent<HierarchyBrowserManager.State> {
@@ -37,7 +37,6 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   }
 
   private State myState = new State();
-
   private final ContentManager myContentManager;
 
   public HierarchyBrowserManager(final Project project) {
@@ -63,7 +62,12 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
     myState = state;
   }
 
-  public static HierarchyBrowserManager getInstance(final Project project) {
+  public static HierarchyBrowserManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, HierarchyBrowserManager.class);
+  }
+
+  public static State getSettings(@NotNull Project project) {
+    State state = getInstance(project).getState();
+    return state != null ? state : new State();
   }
 }

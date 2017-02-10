@@ -131,7 +131,7 @@ public class SvnPropertyService {
         myExtensionOk = false;
         return;
       }
-      final Set<String> ignorePatterns = new HashSet<String>();
+      final Set<String> ignorePatterns = new HashSet<>();
       final StringTokenizer st = new StringTokenizer(PropertyValue.toString(propertyValue), "\r\n ");
       while (st.hasMoreElements()) {
         final String ignorePattern = (String)st.nextElement();
@@ -169,7 +169,7 @@ public class SvnPropertyService {
 
     private IgnorePropertyAddRemoveTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
       super(activeVcs, project, useCommonExtension, false);
-      exceptions = new ArrayList<String>();
+      exceptions = new ArrayList<>();
       dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     }
 

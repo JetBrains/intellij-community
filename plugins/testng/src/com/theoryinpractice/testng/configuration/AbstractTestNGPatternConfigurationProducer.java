@@ -55,7 +55,7 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
       return false;

@@ -43,14 +43,14 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
-  private final List<IntOption> myOptions = new ArrayList<IntOption>();
-  private final Set<String> myAllowedOptions = new HashSet<String>();
+  private final List<IntOption> myOptions = new ArrayList<>();
+  private final Set<String> myAllowedOptions = new HashSet<>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
 
   private final MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions
-    = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
+    = new MultiMap<>();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -90,7 +90,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     optionsPanel.setBorder(JBUI.Borders.empty(0, 10));
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel, true);
-    scroll.getVerticalScrollBar().setUnitIncrement(10);
     scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
     scroll.setPreferredSize(scroll.getMinimumSize());
 

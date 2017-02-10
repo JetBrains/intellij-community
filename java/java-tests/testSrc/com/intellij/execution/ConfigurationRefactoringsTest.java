@@ -44,7 +44,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
                                                  "}";
   private static final String TEST_CODE = "import junit.framework.TestCase;" +
                                           "public class ATest extends TestCase {" +
-                                          "public static void test() {}" +
+                                          "public void test() {}" +
                                           "private void otherMethod() {}" +
                                           "}";
   private TestSources mySource;
@@ -128,7 +128,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     psiClass = configuration.getConfigurationModule().findClass(configuration.getPersistentData().getMainClassName());
 
     PsiClass otherTest = mySource.createClass("ATest", TEST_CODE);
-    HashSet<PsiMember> members = new HashSet<PsiMember>();
+    HashSet<PsiMember> members = new HashSet<>();
     assertNotNull(psiClass);
     members.add(psiClass.findMethodsByName("test1", false)[0]);
     moveMembers(otherTest, members);

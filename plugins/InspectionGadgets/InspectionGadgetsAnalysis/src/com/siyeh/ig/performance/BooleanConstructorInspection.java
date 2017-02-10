@@ -72,14 +72,8 @@ public class BooleanConstructorInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
     }
 
     @Override

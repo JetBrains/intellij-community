@@ -90,7 +90,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+         isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(),
          null, null, false, true, true, true, null);
 
@@ -291,6 +291,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return new MyContainer(resizable, border, isToDrawMacCorner);
   }
 
+  protected boolean isResizable() {
+    return false;
+  }
+
   private class MyContainer extends MyContentPanel {
     private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
       super(resizable, border, drawMacCorner);
@@ -338,7 +342,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   public final boolean dispatch(KeyEvent event) {
     if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
-      return false;
+      // do not dispatch these events to Swing
+      event.consume();
+      return true;
     }
 
     if (event.getID() == KeyEvent.KEY_PRESSED) {

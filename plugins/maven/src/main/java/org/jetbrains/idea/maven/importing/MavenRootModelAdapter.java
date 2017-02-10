@@ -60,7 +60,7 @@ public class MavenRootModelAdapter {
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
-  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<String>();
+  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<>();
 
   public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;

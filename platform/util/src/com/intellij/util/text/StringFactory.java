@@ -29,7 +29,7 @@ public class StringFactory {
       constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
       constructor.setAccessible(true);
     }
-    catch (Exception ignored) { }
+    catch (Throwable ignored) { }
     ourConstructor = constructor;
   }
 

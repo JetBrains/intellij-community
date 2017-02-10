@@ -79,7 +79,7 @@ public class VariantsCompletionAction extends AnAction {
 
   private static String[] calcWords(final String prefix, Editor editor) {
     final Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
-    final Set<String> words = new HashSet<String>();
+    final Set<String> words = new HashSet<>();
     CharSequence chars = editor.getDocument().getCharsSequence();
 
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
@@ -93,7 +93,7 @@ public class VariantsCompletionAction extends AnAction {
       }, chars, 0, chars.length());
 
 
-    ArrayList<String> sortedWords = new ArrayList<String>(words);
+    ArrayList<String> sortedWords = new ArrayList<>(words);
     Collections.sort(sortedWords);
 
     return ArrayUtil.toStringArray(sortedWords);

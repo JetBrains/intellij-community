@@ -87,6 +87,9 @@ public interface ProcessDebugger {
 
   List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix);
 
+  String getDescription(String threadId, String frameId, String cmd);
+
+
   void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);

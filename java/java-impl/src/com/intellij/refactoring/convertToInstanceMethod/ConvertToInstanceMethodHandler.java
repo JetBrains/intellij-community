@@ -71,7 +71,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    List<PsiParameter> suitableParameters = new ArrayList<PsiParameter>();
+    List<PsiParameter> suitableParameters = new ArrayList<>();
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     boolean classesInProjectFound = false;

@@ -279,10 +279,27 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return module;
   }
 
+  protected void rebuildAllModules() {
+    doBuild(CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
+  }
+
+  /**
+   * Invoked forced rebuild for all targets in the project. May lead to unpredictable results if some plugins add targets your test doesn't expect.
+   * @deprecated use {@link #rebuildAllModules()} instead or directly add required target types to the scope via {@link CompileScopeTestBuilder#targetTypes}
+   */
   protected void rebuildAll() {
     doBuild(CompileScopeTestBuilder.rebuild().all()).assertSuccessful();
   }
 
+  protected BuildResult buildAllModules() {
+    return doBuild(make().allModules());
+  }
+
+  /**
+   * Invoked incremental build for all targets in the project. May lead to unpredictable results if some plugins add targets your test doesn't expect.
+   *
+   * @deprecated use {@link #buildAllModules()} instead or directly add required target types to the scope via {@link CompileScopeTestBuilder#targetTypes}
+   */
   protected BuildResult makeAll() {
     return doBuild(make().all());
   }
@@ -412,7 +429,16 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
-    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
+    return addModule(moduleName, srcPaths, getAbsolutePath(getModuleOutputRelativePath(moduleName)), null, myJdk);
+  }
+
+  @NotNull
+  protected String getModuleOutputRelativePath(JpsModule module) {
+    return getModuleOutputRelativePath(module.getName());
+  }
+  @NotNull
+  protected String getModuleOutputRelativePath(String moduleName) {
+    return "out/production/" + moduleName;
   }
 
   protected void checkMappingsAreSameAfterRebuild(BuildResult makeResult) {

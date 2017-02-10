@@ -56,7 +56,7 @@ import java.util.List;
  */
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
-  protected final List<Sdk> mySdks = new ArrayList<Sdk>();
+  protected final List<Sdk> mySdks = new ArrayList<>();
   protected T myWizard;
   @Nullable
   private Project myCreatedProject;

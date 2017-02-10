@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
+import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
 
 /**
  * @author nik
@@ -111,6 +113,14 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected void buildArtifacts(JpsArtifact... artifacts) {
     doBuild(CompileScopeTestBuilder.make().allModules().artifacts(artifacts)).assertSuccessful();
+  }
+
+  protected void rebuildAllModulesAndArtifacts() {
+    doBuild(CompileScopeTestBuilder.rebuild().allModules().allArtifacts()).assertSuccessful();
+  }
+
+  protected BuildResult buildAllModulesAndArtifacts() {
+    return doBuild(make().allModules().allArtifacts());
   }
 
   protected static String getJUnitJarPath() {

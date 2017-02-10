@@ -20,8 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -45,19 +43,11 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiField) {
       final PsiField field = (PsiField)elementToSearch;
-      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          return field.getContainingClass();
-        }
-      });
+      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(
+        (Computable<PsiClass>)() -> field.getContainingClass());
       if (containingClass != null) {
-        final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return containingClass.getQualifiedName(); 
-          }
-        });
+        final String qualifiedName = ApplicationManager.getApplication().runReadAction(
+          (Computable<String>)() -> containingClass.getQualifiedName());
         if (qualifiedName != null) {
           Project project = PsiUtilCore.getProjectInReadAction(containingClass);
           final List<PsiFile> fxmlWithController =
@@ -68,9 +58,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
               if (fieldName == null) return;
               final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
               final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-              boolean contains = searchScope instanceof LocalSearchScope ? ((LocalSearchScope)searchScope).isInScope(virtualFile) :
-                                 ((GlobalSearchScope)searchScope).contains(virtualFile);
-              if (contains) {
+              if (searchScope.contains(virtualFile)) {
                 file.accept(new XmlRecursiveElementVisitor() {
                   @Override
                   public void visitXmlAttributeValue(final XmlAttributeValue value) {

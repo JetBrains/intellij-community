@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -24,7 +25,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class ServersToolWindowFactory implements ToolWindowFactory, Condition<Project> {
+public class ServersToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
 
   private final RemoteServersViewContribution myContribution;
 

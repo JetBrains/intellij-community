@@ -155,7 +155,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     popup.addListener(this);
     popup.setRequestFocus(false);
 
-    myPopupRef = new WeakReference<ListPopup>(popup);
+    myPopupRef = new WeakReference<>(popup);
     popup.showUnderneathOf(this);
   }
 

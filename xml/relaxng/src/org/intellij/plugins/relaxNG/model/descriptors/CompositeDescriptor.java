@@ -40,7 +40,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   @Override
   protected XmlElementDescriptor findElementDescriptor(XmlTag childTag) {
-    final List<DElementPattern> patterns = new ArrayList<DElementPattern>();
+    final List<DElementPattern> patterns = new ArrayList<>();
     for (DElementPattern pattern : myPatterns) {
       patterns.addAll(ChildElementFinder.find(2, pattern));
     }
@@ -61,7 +61,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>(Arrays.asList(super.getElementsDescriptors(context)));
+    final List<XmlElementDescriptor> descriptors = new ArrayList<>(Arrays.asList(super.getElementsDescriptors(context)));
     for (DElementPattern pattern : myPatterns) {
       final List<DElementPattern> list = ChildElementFinder.find(2, pattern);
       descriptors.addAll(Arrays.asList(myNsDescriptor.convertElementDescriptors(list)));

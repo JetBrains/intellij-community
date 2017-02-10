@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyTrueMetaData.class, myTestRootDisposable);
+    }, MyTrueMetaData.class, getTestRootDisposable());
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -55,7 +55,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyFalseMetaData.class, myTestRootDisposable);
+    }, MyFalseMetaData.class, getTestRootDisposable());
 
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);

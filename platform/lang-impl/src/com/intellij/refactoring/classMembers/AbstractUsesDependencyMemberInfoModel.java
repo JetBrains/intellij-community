@@ -28,7 +28,7 @@ public abstract class AbstractUsesDependencyMemberInfoModel<T extends Navigatabl
   protected final C myClass;
 
   public AbstractUsesDependencyMemberInfoModel(C aClass, @Nullable C superClass, boolean recursive) {
-    super(new UsesMemberDependencyGraph<T, C, M>(aClass, superClass, recursive), ERROR);
+    super(new UsesMemberDependencyGraph<>(aClass, superClass, recursive), ERROR);
     myClass = aClass;
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
       @Override
@@ -47,7 +47,7 @@ public abstract class AbstractUsesDependencyMemberInfoModel<T extends Navigatabl
   protected abstract int doCheck(@NotNull M memberInfo, int problem);
 
   public void setSuperClass(C superClass) {
-    setMemberDependencyGraph(new UsesMemberDependencyGraph<T, C, M>(myClass, superClass, false));
+    setMemberDependencyGraph(new UsesMemberDependencyGraph<>(myClass, superClass, false));
   }
 
   @Override

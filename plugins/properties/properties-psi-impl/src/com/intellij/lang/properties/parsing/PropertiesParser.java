@@ -37,7 +37,7 @@ public class PropertiesParser implements PsiParser {
                 CharSequence oldNameStr = oldName.getChars();
                 CharSequence newNameStr = findKeyCharacters(newNode, structure);
 
-                if (oldNameStr != null && !Comparing.equal(oldNameStr, newNameStr)) {
+                if (!Comparing.equal(oldNameStr, newNameStr)) {
                   return ThreeState.NO;
                 }
               }
@@ -52,9 +52,10 @@ public class PropertiesParser implements PsiParser {
     LighterASTNode[] children = childrenRef.get();
 
     try {
-      for (int i = 0; i < children.length; ++i) {
-        if (children[i].getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS)
-          return ((LighterASTTokenNode) children[i]).getText();
+      for (LighterASTNode aChildren : children) {
+        if (aChildren.getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS) {
+          return ((LighterASTTokenNode)aChildren).getText();
+        }
       }
       return null;
     }
@@ -65,7 +66,7 @@ public class PropertiesParser implements PsiParser {
 
 
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     doParse(root, builder);
     return builder.getTreeBuilt();
   }

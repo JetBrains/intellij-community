@@ -30,14 +30,15 @@ import org.jetbrains.annotations.NotNull;
 public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
   private final MemberInfoModel<T, M> myModel1;
   private final MemberInfoModel<T, M> myModel2;
-  private final MemberInfoTooltipManager<T, M> myTooltipManager = new MemberInfoTooltipManager<T, M>(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
-    @Override
-    public String getTooltip(M memberInfo) {
-      final String tooltipText1 = myModel1.getTooltipText(memberInfo);
-      if (tooltipText1 != null) return tooltipText1;
-      return myModel2.getTooltipText(memberInfo);
-    }
-  });
+  private final MemberInfoTooltipManager<T, M> myTooltipManager =
+    new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+      @Override
+      public String getTooltip(M memberInfo) {
+        final String tooltipText1 = myModel1.getTooltipText(memberInfo);
+        if (tooltipText1 != null) return tooltipText1;
+        return myModel2.getTooltipText(memberInfo);
+      }
+    });
 
 
   public ANDCombinedMemberInfoModel(MemberInfoModel<T, M> model1, MemberInfoModel<T, M> model2) {

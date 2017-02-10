@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Shortcut Promoter</name>
   <id>com.intellij.promoter</id>
   <version>1.0</version>

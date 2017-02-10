@@ -45,7 +45,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   private JPanel myVersionControlConfigurationsPanel;
   private static final String NONE = VcsBundle.message("none.vcs.presentation");
 
-  private final Map<String, UnnamedConfigurable> myVcsNameToConfigurableMap = new HashMap<String, UnnamedConfigurable>();
+  private final Map<String, UnnamedConfigurable> myVcsNameToConfigurableMap = new HashMap<>();
   private static final ColoredListCellRenderer VCS_LIST_RENDERER = new ColoredListCellRenderer() {
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String name = value == null ? NONE : ((VcsDescriptor) value).getDisplayName();

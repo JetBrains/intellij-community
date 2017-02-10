@@ -49,7 +49,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
     Map<String, Pair<PsiType, PsiElement>> typeMap = null;
     if (!forCompletion) {
-      typeMap = new HashMap<String, Pair<PsiType, PsiElement>>();
+      typeMap = new HashMap<>();
     }
 
     PsiManager manager = aClass.getManager();
@@ -75,14 +75,14 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
           Pair<PsiType, PsiElement> oldPair = typeMap.get(propertyName);
           if (oldPair == null) {
-            typeMap.put(propertyName, new Pair<PsiType, PsiElement>(newType, method));
+            typeMap.put(propertyName, new Pair<>(newType, method));
           }
           else {
             PsiType type = TypesUtil.getLeastUpperBound(oldPair.first, newType, manager);
             if (type == null) {
               type = PsiType.getJavaLangObject(manager, aClass.getResolveScope());
             }
-            typeMap.put(propertyName, new Pair<PsiType, PsiElement>(newType, null));
+            typeMap.put(propertyName, new Pair<>(newType, null));
           }
         }
       }

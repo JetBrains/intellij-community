@@ -136,7 +136,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   }
 
   @Override
-  public void positionCaret(Editor editor, boolean toEditMethodBody) {
+  public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
     final T firstMember = getPsiMember();
     LOG.assertTrue(firstMember.isValid());
 

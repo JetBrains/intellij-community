@@ -26,8 +26,8 @@ public class IntObjectHashMapTest {
   @Test
   public void test() {
     IntObjectHashMap map = new IntObjectHashMap();
-    TIntObjectHashMap<Object> checkMap = new TIntObjectHashMap<Object>();
-    TIntObjectHashMap<Object> dupesMap = new TIntObjectHashMap<Object>();
+    TIntObjectHashMap<Object> checkMap = new TIntObjectHashMap<>();
+    TIntObjectHashMap<Object> dupesMap = new TIntObjectHashMap<>();
     Random random = new Random();
     for(int i = 0; i < 1000000; ++i) {
       int key = random.nextInt();

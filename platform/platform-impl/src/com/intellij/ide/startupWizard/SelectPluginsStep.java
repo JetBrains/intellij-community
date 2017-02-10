@@ -23,7 +23,6 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -47,13 +45,13 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private JTextPane myDescriptionArea;
   private JButton myEnableAllButton;
   private JButton myDisableAllButton;
-  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<IdeaPluginDescriptor>();
+  private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<>();
   private final StartupWizardModel myModel;
   private final String myRequirePlugin;
 
   private static final String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
 
-  public SelectPluginsStep(final String title, final StartupWizardModel model, final String requirePlugin) {
+  public SelectPluginsStep(@NotNull String title, @NotNull StartupWizardModel model, @Nullable String requirePlugin) {
     super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to " +
                  ShowSettingsUtil.getSettingsMenuName() + " | Plugins.",
           null);
@@ -228,6 +226,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     myPluginsList.setSelectedIndex(0);
   }
 
+  @Nullable
   public String getRequirePlugin() {
     return myRequirePlugin;
   }

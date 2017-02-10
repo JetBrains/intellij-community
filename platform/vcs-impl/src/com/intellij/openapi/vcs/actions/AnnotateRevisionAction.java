@@ -21,10 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware, UpToDateLineNumberListener {
-  @NotNull private final FileAnnotation myAnnotation;
+  @NotNull protected final FileAnnotation myAnnotation;
   @NotNull private final AbstractVcs myVcs;
 
   private int currentLine;
@@ -48,17 +47,12 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
       return;
     }
 
-    if (getRevisions() == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
     e.getPresentation().setVisible(true);
-
     super.update(e);
   }
 
   @Nullable
-  protected abstract List<VcsFileRevision> getRevisions();
+  protected abstract VcsFileRevision getRevision(int lineNumber);
 
   @Nullable
   protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
@@ -89,11 +83,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Nullable
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    List<VcsFileRevision> revisions = getRevisions();
-    assert revisions != null;
-
-    if (currentLine < 0 || currentLine >= revisions.size()) return null;
-    return revisions.get(currentLine);
+    return getRevision(currentLine);
   }
 
   @Override
@@ -111,9 +101,5 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Override
   public void consume(Integer integer) {
     currentLine = integer;
-  }
-
-  public int getCurrentLine() {
-    return currentLine;
   }
 }

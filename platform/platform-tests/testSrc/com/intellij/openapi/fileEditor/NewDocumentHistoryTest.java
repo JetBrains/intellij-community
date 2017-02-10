@@ -41,6 +41,18 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     myHistory.projectOpened();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myHistory.projectClosed();
+      myHistory.disposeComponent();
+      myHistory = null;
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   public void testBackNavigationBetweenEditors() throws Exception {
     PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new FileEditorManagerTest.MyFileEditorProvider(), getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");

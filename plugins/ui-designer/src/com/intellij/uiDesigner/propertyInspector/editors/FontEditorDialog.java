@@ -143,7 +143,7 @@ public class FontEditorDialog extends DialogWrapper {
   }
 
   private static FontDescriptor[] collectSwingFontDescriptors() {
-    ArrayList<FontDescriptor> result = new ArrayList<FontDescriptor>();
+    ArrayList<FontDescriptor> result = new ArrayList<>();
     UIDefaults defaults = UIManager.getDefaults();
     Enumeration e = defaults.keys ();
     while(e.hasMoreElements()) {

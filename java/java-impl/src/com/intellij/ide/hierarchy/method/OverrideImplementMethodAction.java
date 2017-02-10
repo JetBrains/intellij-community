@@ -52,7 +52,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
       try{
         final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
         if (selectedDescriptors.length > 0) {
-          final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
+          final List<VirtualFile> files = new ArrayList<>(selectedDescriptors.length);
           for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
             final PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
             if (containingFile != null) {

@@ -14,4 +14,14 @@ public interface JsonSchemaFileProvider {
   VirtualFile getSchemaFile();
 
   SchemaType getSchemaType();
+
+  int getOrder();
+
+  interface Orders {
+    int CORE = -1000;
+    int EMBEDDED_BASE = 1;
+    int PACKAGE_JSON = 2;
+    int TEST = 10;
+    int USER = 1000;
+  }
 }

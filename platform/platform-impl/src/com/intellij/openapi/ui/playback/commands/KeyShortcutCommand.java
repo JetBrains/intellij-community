@@ -24,7 +24,7 @@ public class KeyShortcutCommand extends TypeCommand {
   public static final String POSTFIX = "]";
 
   public KeyShortcutCommand(String text, int line) {
-    super(text, line);
+    super(text, line, false);
   }
 
   public ActionCallback _execute(PlaybackContext context) {

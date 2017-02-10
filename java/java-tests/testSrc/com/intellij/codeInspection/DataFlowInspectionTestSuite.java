@@ -31,6 +31,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
+    suite.addTestSuite(HardcodedContractsTest.class);
 
     suite.addTestSuite(ContractInferenceFromSourceTest.class);
     suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
@@ -49,6 +50,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(AddAssertStatementFixTest.class);
     suite.addTestSuite(SurroundWithIfFixTest.class);
     suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
+    suite.addTestSuite(ReplaceWithObjectsEqualsTest.class);
     suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);

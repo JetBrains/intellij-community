@@ -62,7 +62,7 @@ public class UpdateJspxFileCopyright extends UpdateJspFileCopyright {
     int location = getLanguageOptions().getFileLocation();
 
     if (docTypeStart != null) {
-      final ArrayList<PsiComment> comments = new ArrayList<PsiComment>();
+      final ArrayList<PsiComment> comments = new ArrayList<>();
       collectComments(doc.getFirstChild(), xmlProlog, comments);
       collectComments(first, docTypeStart, comments);
       checkComments(first, location == XmlOptions.LOCATION_BEFORE_DOCTYPE, comments);
@@ -72,7 +72,7 @@ public class UpdateJspxFileCopyright extends UpdateJspFileCopyright {
     else if (location == XmlOptions.LOCATION_BEFORE_DOCTYPE) {
       location = XmlOptions.LOCATION_BEFORE_ROOTTAG;
     }
-    final ArrayList<PsiComment> comments = new ArrayList<PsiComment>();
+    final ArrayList<PsiComment> comments = new ArrayList<>();
     collectComments(doc.getFirstChild(), xmlProlog, comments);
     collectComments(first, doc.getRootTag(), comments);
     checkComments(doc.getRootTag(), location == XmlOptions.LOCATION_BEFORE_ROOTTAG, comments);

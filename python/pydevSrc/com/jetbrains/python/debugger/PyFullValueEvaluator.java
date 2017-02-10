@@ -15,6 +15,13 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
    * @param debugProcess
    * @param expression
    */
+  protected PyFullValueEvaluator(String linkText, PyFrameAccessor debugProcess, String expression) {
+    super(linkText);
+    myDebugProcess = debugProcess;
+    myExpression = expression;
+  }
+
+
   protected PyFullValueEvaluator(PyFrameAccessor debugProcess, String expression) {
     myDebugProcess = debugProcess;
     myExpression = expression;
@@ -32,9 +39,14 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
     try {
       final PyDebugValue value = myDebugProcess.evaluate(expression, false, false);
       callback.evaluated(value.getValue());
+      showCustomPopup(myDebugProcess, value);
     }
     catch (PyDebuggerException e) {
       callback.errorOccurred(e.getTracebackError());
     }
+  }
+
+  protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {
+
   }
 }

@@ -67,7 +67,7 @@ public class AppEngineUtil {
   }
 
   public static List<Artifact> collectAppEngineArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
-    final List<Artifact> artifacts = new ArrayList<Artifact>();
+    final List<Artifact> artifacts = new ArrayList<>();
     if (project.isDefault()) return artifacts;
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactTypes().contains(artifact.getArtifactType()) &&
@@ -96,7 +96,7 @@ public class AppEngineUtil {
   }
 
   public static List<String> getDefaultSourceRootsToEnhance(ModuleRootModel rootModel) {
-    List<String> paths = new ArrayList<String>();
+    List<String> paths = new ArrayList<>();
     for (String url : rootModel.getSourceRootUrls(false)) {
       paths.add(VfsUtil.urlToPath(url));
     }

@@ -44,9 +44,9 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
     promise
       .done(node) {
         context.memberFilter
-          .thenAsyncAccept(node) { memberFilter ->
-            if (memberFilter.hasNameMappings()) {
-              memberFilter.sourceNameToRaw(RECEIVER_NAME)?.let {
+          .thenAsyncAccept(node) {
+            if (it.hasNameMappings()) {
+              it.sourceNameToRaw(RECEIVER_NAME)?.let {
                 return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
                   .done(node) {
                     VariableImpl(RECEIVER_NAME, it.value, null)

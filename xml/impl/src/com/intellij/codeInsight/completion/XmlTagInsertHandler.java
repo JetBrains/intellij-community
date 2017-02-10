@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,13 +205,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getCurrentProfile();
       XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(
         XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME, tag);
 
       if (inspection != null) {
         StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries());
-        notRequiredAttributes = new HashSet<String>();
+        notRequiredAttributes = new HashSet<>();
 
         while(tokenizer.hasMoreElements()) notRequiredAttributes.add(tokenizer.nextToken());
       }

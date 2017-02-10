@@ -106,7 +106,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final Project project = psi.getProject();
       final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
-      final PyParser parser = new PyConsoleParser(consoleData);
+      final PyParser parser = new PyConsoleParser(consoleData, getLanguageLevel(psi));
 
       return parser.parse(this, builder).getFirstChildNode();
     }
@@ -204,7 +204,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     List<String> names = null;
     if (hasNames) {
       int size = dataStream.readVarInt();
-      names = new ArrayList<String>(size);
+      names = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
         names.add(dataStream.readName().getString());
       }

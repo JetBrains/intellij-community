@@ -85,11 +85,11 @@ class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     addModule("m", createDir("src"))
     val testActions = BuildTestActions()
     testActions.actions()
-    rebuildAll()
+    rebuildAllModules()
     var result: BuildResult? = null
     testActions.modifyActions.forEach { action ->
       action()
-      result = makeAll()
+      result = buildAllModules()
       result!!.assertSuccessful()
     }
     checkLog()

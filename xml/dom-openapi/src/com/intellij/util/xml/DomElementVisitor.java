@@ -22,14 +22,14 @@ package com.intellij.util.xml;
  * taking this visitor as a parameter. 
  * <p>
  * DomElementVisitor has only one method: {@link #visitDomElement(DomElement)}.
- * Where is the Visitor pattern? Where are all those methods with names like <code>visitT(T)</code> that
- * are usually found in it? There are no such methods, because the actual interfaces (<code>T</code>'s)
+ * Where is the Visitor pattern? Where are all those methods with names like {@code visitT(T)} that
+ * are usually found in it? There are no such methods, because the actual interfaces ({@code T}'s)
  * aren't known to anyone except you. But when you instantiate the DomElementVisitor
- * interface, you may add your own <code>visitT()</code> methods and they will be called! You may
- * even name them just <code>visit()</code>, specify the type of the parameter and everything will be
+ * interface, you may add your own {@code visitT()} methods and they will be called! You may
+ * even name them just {@code visit()}, specify the type of the parameter and everything will be
  * fine. 
  * <p>
- * For example, if you have two DOM element classes - <code>Foo</code> and <code>Bar</code>- your visitor
+ * For example, if you have two DOM element classes - {@code Foo} and {@code Bar}- your visitor
  * may look like this:
  * <pre>
  *  class MyVisitor implements DomElementVisitor {

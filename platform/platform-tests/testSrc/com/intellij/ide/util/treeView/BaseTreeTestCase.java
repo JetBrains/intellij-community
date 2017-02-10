@@ -48,12 +48,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   private final boolean myYieldingUiBuild;
   private final boolean myBgStructureBuilding;
-  protected Set<Object> myForegroundLoadingNodes = new HashSet<Object>();
+  protected Set<Object> myForegroundLoadingNodes = new HashSet<>();
 
   private boolean myPassThroughMode;
 
-  final Set<StructureElement> myAutoExpand = new HashSet<StructureElement>();
-  final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
+  final Set<StructureElement> myAutoExpand = new HashSet<>();
+  final Set<StructureElement> myAlwaysShowPlus = new HashSet<>();
   boolean mySmartExpand;
   protected Validator myValidator;
 

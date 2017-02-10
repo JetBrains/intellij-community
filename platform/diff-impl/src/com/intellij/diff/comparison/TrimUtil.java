@@ -384,4 +384,40 @@ public class TrimUtil {
   public static Range expandIW(@NotNull CharSequence text1, @NotNull CharSequence text2) {
     return expandIW(text1, text2, 0, 0, text1.length(), text2.length());
   }
+
+  //
+  // Equality
+  //
+
+  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2,
+                                 @NotNull Range range) {
+    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
+    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
+    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.DEFAULT);
+  }
+
+  public static boolean isEqualsIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
+                                   @NotNull Range range) {
+    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
+    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
+    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES);
+  }
+
+  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                 @NotNull MergeRange range) {
+    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
+    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
+    CharSequence sequence3 = text3.subSequence(range.start3, range.end3);
+    return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.DEFAULT) &&
+           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.DEFAULT);
+  }
+
+  public static boolean isEqualsIW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                   @NotNull MergeRange range) {
+    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
+    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
+    CharSequence sequence3 = text3.subSequence(range.start3, range.end3);
+    return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.IGNORE_WHITESPACES) &&
+           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES);
+  }
 }

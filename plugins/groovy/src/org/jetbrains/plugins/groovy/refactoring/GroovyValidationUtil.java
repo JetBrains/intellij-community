@@ -140,11 +140,11 @@ public class GroovyValidationUtil {
     public String generateName() {
       String name = myName;
       int i = 1;
-      MultiMap<PsiElement, String> confl = new MultiMap<PsiElement, String>();
+      MultiMap<PsiElement, String> confl = new MultiMap<>();
       while (!validateNewParameterName(myParameter, confl, name)) {
         name = myName + i;
         i++;
-        confl = new MultiMap<PsiElement, String>();
+        confl = new MultiMap<>();
       }
       return name;
     }

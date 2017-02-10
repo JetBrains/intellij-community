@@ -85,7 +85,7 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       LOG.warn("Tests location provider: line number should be >= 1. Path: " + path);
     }
 
-    final List<Location> locations = new ArrayList<Location>(2);
+    final List<Location> locations = new ArrayList<>(2);
     for (VirtualFile file : virtualFiles) {
       locations.add(createLocationFor(project, file, lineNumber < 1 ? 1 : lineNumber));
     }

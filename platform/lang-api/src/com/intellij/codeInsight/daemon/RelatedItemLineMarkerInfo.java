@@ -70,7 +70,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   @Override
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new RelatedItemLineMarkerGutterIconRenderer<T>(this);
+    return new RelatedItemLineMarkerGutterIconRenderer<>(this);
   }
 
   @Override
@@ -87,7 +87,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   @Override
   public Function<? super PsiElement, String> getCommonTooltip(@NotNull final List<MergeableLineMarkerInfo> infos) {
     return (Function<PsiElement, String>)element -> {
-      Set<String> tooltips = new HashSet<String>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
+      Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
       StringBuilder tooltip = new StringBuilder();
       for (String info : tooltips) {
         if (tooltip.length() > 0) {

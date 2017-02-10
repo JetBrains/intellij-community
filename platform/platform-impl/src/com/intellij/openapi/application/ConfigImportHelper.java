@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -84,6 +85,12 @@ public class ConfigImportHelper {
       doImport(newConfigDir, oldConfigDir, settings, installationHome);
       settings.importFinished(newConfigPath);
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+
+      CloudConfigProvider provider = CloudConfigProvider.getProvider();
+      if (provider != null) {
+        provider.importFinished(newConfigDir);
+      }
+
       break;
     }
   }
@@ -112,8 +119,7 @@ public class ConfigImportHelper {
         return ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (ClassNotFoundException ignored) { }
-    catch (RuntimeException ignored) { }
+    catch (ClassNotFoundException | RuntimeException ignored) { }
     return new ConfigImportSettings();
   }
 
@@ -310,9 +316,9 @@ public class ConfigImportHelper {
 
   private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
     if (plugins.exists()) {
-      List<IdeaPluginDescriptorImpl> descriptors = new SmartList<IdeaPluginDescriptorImpl>();
+      List<IdeaPluginDescriptorImpl> descriptors = new SmartList<>();
       PluginManagerCore.loadDescriptors(plugins, descriptors, null, 0);
-      List<String> oldPlugins = new SmartList<String>();
+      List<String> oldPlugins = new SmartList<>();
       for (IdeaPluginDescriptorImpl descriptor : descriptors) {
         // check isBundled also - probably plugin is bundled in new IDE version
         if (descriptor.isEnabled() && !descriptor.isBundled()) {
@@ -328,7 +334,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
+  public static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
     if (oldInstallHome == null) {
       return null;
     }
@@ -384,7 +390,7 @@ public class ConfigImportHelper {
 
   private static List<File> getLaunchFilesCandidates(@NotNull File instHome, @NotNull ConfigImportSettings settings) {
     final File bin = new File(instHome, BIN_FOLDER);
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     if (SystemInfo.isMac) {
       // Info.plist
       files.add(new File(new File(instHome, "Contents"), "Info.plist"));

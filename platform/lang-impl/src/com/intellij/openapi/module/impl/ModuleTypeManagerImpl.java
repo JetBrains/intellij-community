@@ -26,7 +26,7 @@ import java.util.List;
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
 
-  private final LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<ModuleType, Boolean>();
+  private final LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<>();
 
   public ModuleTypeManagerImpl() {
     registerModuleType(getDefaultModuleType(), true);
@@ -51,7 +51,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   @Override
   public ModuleType[] getRegisteredTypes() {
-    List<ModuleType> result = new ArrayList<ModuleType>();
+    List<ModuleType> result = new ArrayList<>();
     result.addAll(myModuleTypes.keySet());
     for (ModuleTypeEP moduleTypeEP : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       result.add(moduleTypeEP.getModuleType());

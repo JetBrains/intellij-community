@@ -37,7 +37,7 @@ public class GroupList extends JPanel
     public GroupList(PsiClass[] classes)
     {
         super(new BorderLayout());
-        SortedListModel<String> model = new SortedListModel<String>((s1, s2) -> s1.compareTo(s2));
+        SortedListModel<String> model = new SortedListModel<>((s1, s2) -> s1.compareTo(s2));
         list = new JBList(model);
         Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
       String[] array = ArrayUtil.toStringArray(groups);

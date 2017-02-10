@@ -30,10 +30,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -70,6 +67,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,22 +177,58 @@ public class FindManagerImpl extends FindManager {
       myFindDialog.setOkHandler(handler);
       return;
     }
+    registerAction("ReplaceInPath");
+    registerAction("FindInPath");
+
     myFindDialog.show();
+  }
+
+  private void registerAction(String aciotnName) {
+    AnAction action = ActionManager.getInstance().getAction(aciotnName);
+    JRootPane findDialogRootComponent = ((JDialog)myFindDialog.getWindow()).getRootPane();
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        DataContextWrapper newDataContext = prepareDataContextForFind(e); // DataContext should be prepared before dialog invalidation
+        myFindDialog.doCancelAction();
+        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, newDataContext));
+      }
+
+      @NotNull
+      private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
+        DataContext dataContext = e.getDataContext();
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+
+        return new DataContextWrapper(dataContext) {
+          @Nullable
+          @Override
+          public Object getData(@NonNls String dataId) {
+            if (CommonDataKeys.PROJECT.is(dataId)) return project;
+            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
+            return super.getData(dataId);
+          }
+        };
+      }
+    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
   }
 
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+
     if (!StringUtil.isEmpty(stringToFind)) {
-      FindSettings.getInstance().addStringToFind(stringToFind);
+      findInProjectSettings.addStringToFind(stringToFind);
     }
     if (!findModel.isMultipleFiles()) {
       setFindWasPerformed();
     }
     if (findModel.isReplaceState()) {
-      FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
+      findInProjectSettings.addStringToReplace(findModel.getStringToReplace());
     }
     if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
-      FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
+      findInProjectSettings.addDirectory(findModel.getDirectoryName());
       myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
     }
     FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
@@ -321,7 +355,7 @@ public class FindManagerImpl extends FindManager {
       myFindModel = model.clone();
       myText = ImmutableCharSequence.asImmutable(text);
 
-      TreeMap<Integer, Integer> result = new TreeMap<Integer, Integer>();
+      TreeMap<Integer, Integer> result = new TreeMap<>();
 
       if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
         addRanges(file, model, text, result, FindModel.SearchContext.IN_COMMENTS);
@@ -387,6 +421,7 @@ public class FindManagerImpl extends FindManager {
       if (data == null || !data.isAcceptableFor(model, file, text)) {
         model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
       }
+
       return data;
     }
   }
@@ -562,7 +597,7 @@ public class FindManagerImpl extends FindManager {
           relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
             @Override
             public Set<Language> compute() {
-              THashSet<Language> result = new THashSet<Language>();
+              THashSet<Language> result = new THashSet<>();
 
               FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
               if (viewProvider != null) {
@@ -668,7 +703,7 @@ public class FindManagerImpl extends FindManager {
                 }
               }
             }
-            else {
+            else if (start <= end) {
               data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(start, end)));
               if (data.matcher.find()) {
                 final int matchEnd = start + data.matcher.end();
@@ -677,7 +712,11 @@ public class FindManagerImpl extends FindManager {
                   findResult = new FindResultImpl(matchStart, matchEnd);
                 }
                 else {
-                  start = matchEnd;
+                  int diff = 0;
+                  if (start == end) {
+                    diff = scanningForward ? 1 : -1;
+                  }
+                  start = matchEnd + diff;
                   continue;
                 }
               }
@@ -1090,7 +1129,7 @@ public class FindManagerImpl extends FindManager {
     if (i >= regions.length) {
       return;
     }
-    final List<FoldRegion> toExpand = new ArrayList<FoldRegion>();
+    final List<FoldRegion> toExpand = new ArrayList<>();
     for (; i < regions.length; i++) {
       final FoldRegion region = regions[i];
       if (region.getStartOffset() >= endOffset) {

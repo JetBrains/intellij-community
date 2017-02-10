@@ -99,7 +99,6 @@ public class ClassUtil {
     return indices.get(psiClass);
   }
 
-  @SuppressWarnings("unused")
   public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull PsiClass containingClass) {
     return findNonQualifiedClassByIndex(indexName, containingClass, false);
   }

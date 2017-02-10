@@ -48,13 +48,14 @@ public class GrFieldNameSuggester {
     final StringPartInfo stringPart = myContext.getStringPart();
 
     if (expression != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator, myForStatic)));
+      return new LinkedHashSet<>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator, myForStatic)));
     }
     else if (stringPart != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), myValidator, myForStatic)));
+      return new LinkedHashSet<>(
+        Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), myValidator, myForStatic)));
     }
     else {
       assert var != null;
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), myValidator)));
+      return new LinkedHashSet<>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), myValidator)));
     }
   }}

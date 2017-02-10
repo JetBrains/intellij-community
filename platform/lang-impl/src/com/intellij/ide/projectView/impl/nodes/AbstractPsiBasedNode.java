@@ -79,7 +79,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   public final Collection<AbstractTreeNode> getChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
-      return new ArrayList<AbstractTreeNode>();
+      return new ArrayList<>();
     }
     final boolean valid = psiElement.isValid();
     if (!LOG.assertTrue(valid)) {
@@ -164,7 +164,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
 
       for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
-        decorator.decorate(AbstractPsiBasedNode.this, data);
+        decorator.decorate(this, data);
       }
     });
   }

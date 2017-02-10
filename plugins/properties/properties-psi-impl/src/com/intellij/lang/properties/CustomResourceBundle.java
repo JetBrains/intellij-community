@@ -21,14 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -42,7 +40,7 @@ public class CustomResourceBundle extends ResourceBundle {
 
   private CustomResourceBundle(final List<PropertiesFile> files, final @NotNull String baseName) {
     LOG.assertTrue(!files.isEmpty());
-    myFiles = new ArrayList<PropertiesFile>(files);
+    myFiles = new ArrayList<>(files);
     Collections.sort(myFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
     myBaseName = baseName;
   }
@@ -92,7 +90,7 @@ public class CustomResourceBundle extends ResourceBundle {
     if (o == null || getClass() != o.getClass()) return false;
 
     final CustomResourceBundle resourceBundle = (CustomResourceBundle)o;
-    return resourceBundle.getPropertiesFiles().equals(resourceBundle.getPropertiesFiles()) &&
+    return resourceBundle.getPropertiesFiles().equals(getPropertiesFiles()) &&
            resourceBundle.getBaseName().equals(getBaseName());
   }
 

@@ -191,7 +191,7 @@ public class NavigationGutterIconBuilder<T> {
     final String tooltip = renderer.getTooltipText();
     NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider,
                                                                                                  evaluateAndForget(myTargets));
-    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDDEN_MARKERS,
+    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS,
                                                      tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
                                                      renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
                                                      gotoTargets);

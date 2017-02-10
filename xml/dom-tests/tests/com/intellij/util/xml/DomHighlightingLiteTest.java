@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   public void testMockAnnotatingDomInspection() throws Throwable {
-    myElement.setFileDescription(new DomFileDescription<DomElement>(DomElement.class, "a"));
+    myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     assertInstanceOf(myAnnotationsManager.getMockInspection(myElement), MockAnnotatingDomInspection.class);
   }
 
@@ -192,7 +192,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     final StringBuilder s = new StringBuilder();
-    final ArrayList<Annotation> toFill = new ArrayList<Annotation>();
+    final ArrayList<Annotation> toFill = new ArrayList<>();
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
@@ -219,21 +219,21 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
   public void testHighlightStatus_MockAnnotatingDomInspection() throws Throwable {
-    myElement.setFileDescription(new DomFileDescription<DomElement>(DomElement.class, "a"));
+    myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
   }
 
   public void testHighlightStatus_OtherInspections() throws Throwable {
-    myElement.setFileDescription(new DomFileDescription<DomElement>(DomElement.class, "a"));
+    myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
       public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager,
                                            final boolean isOnTheFly) {
         myAnnotationsManager.appendProblems(myElement, createHolder(), this.getClass());
-        return new ProblemDescriptor[0];
+        return ProblemDescriptor.EMPTY_ARRAY;
       }
 
       @Override
@@ -259,14 +259,14 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   public void testHighlightStatus_OtherInspections2() throws Throwable {
-    myElement.setFileDescription(new DomFileDescription<DomElement>(DomElement.class, "a"));
+    myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
       public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager,
                                            final boolean isOnTheFly) {
         myAnnotationsManager.appendProblems(myElement, createHolder(), this.getClass());
-        return new ProblemDescriptor[0];
+        return ProblemDescriptor.EMPTY_ARRAY;
       }
 
       @Override

@@ -48,7 +48,7 @@ public class MvcProjectNode extends AbstractProjectNode {
 
     modules = myDescriptor.getFramework().reorderModulesForMvcView(modules);
     
-    final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+    final ArrayList<AbstractTreeNode> nodes = new ArrayList<>();
     for (Module module : modules) {
       nodes.add(new MvcModuleNode(module, getSettings(), myDescriptor));
     }

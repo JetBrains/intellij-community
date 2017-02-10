@@ -134,7 +134,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return CLASS_OR_PACKAGE_NAME_KIND; // incomplete code
       }
     }
-    if (i == JavaElementType.PACKAGE_STATEMENT) {
+    if (i == JavaElementType.PACKAGE_STATEMENT || i == JavaElementType.EXPORTS_STATEMENT) {
       return PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
@@ -175,6 +175,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
+    if (i == JavaElementType.USES_STATEMENT || i == JavaElementType.PROVIDES_STATEMENT) {
+      return CLASS_FQ_NAME_KIND;
+    }
 
     diagnoseUnknownParent();
     return CLASS_NAME_KIND;
@@ -205,9 +208,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
 
-      List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
-      setAnnotations(annotations);
-
+      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
+      if (modifierList != null) {
+        ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
+        assert ref != null : this;
+        PsiElement lastChild = ref.getPsi().getPrevSibling();
+        if (lastChild != null) {
+          modifierList.addRange(getFirstChild(), lastChild);
+          deleteChildRange(getFirstChild(), lastChild);
+        }
+      }
       return;
     }
 
@@ -461,6 +471,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {
         int classKind = kind == CLASS_OR_PACKAGE_NAME_KIND ? CLASS_NAME_KIND : CLASS_FQ_NAME_KIND;
+
+        //A single-type-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
+        //any top level type named n declared in another compilation unit of p
+        if (PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) != null) {
+          JavaResolveResult[] result = resolve(PACKAGE_NAME_KIND, containingFile);
+          return result.length == 0 ? resolve(classKind, containingFile) : result;
+        }
+
         JavaResolveResult[] result = resolve(classKind, containingFile);
 
         if (result.length == 1 && !result[0].isAccessible()) {
@@ -603,31 +621,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return annotations;
   }
 
-  private void setAnnotations(List<PsiAnnotation> annotations) {
-    if (annotations.isEmpty()) return;
-
-    PsiElement newParent = this;
-    PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(findChildByType(JavaTokenType.DOT));
-    if (anchor == null) {
-      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
-      if (modifierList != null) {
-        newParent = modifierList;
-      }
-    }
-
-    for (PsiAnnotation annotation : annotations) {
-      if (annotation.getParent() != newParent) {
-        if (anchor != null) {
-          newParent.addAfter(annotation, anchor);
-        }
-        else {
-          newParent.add(annotation);
-        }
-        annotation.delete();
-      }
-    }
-  }
-
   private boolean isFullyQualified(@NotNull PsiFile containingFile) {
     int kind = getKind(containingFile);
     switch (kind) {
@@ -711,7 +704,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         if (element instanceof PsiClass) {
           final String qName = ((PsiClass)element).getQualifiedName();
-          return qName != null && qName.equals(getCanonicalText(false, null, containingFile));
+          if (qName != null && qName.equals(getCanonicalText(false, null, containingFile))) {
+            return !PsiUtil.isFromDefaultPackage((PsiClass)element) ||
+                   PsiTreeUtil.getParentOfType(this, PsiImportStatementBase.class) == null;
+          }
         }
         if (element instanceof PsiPackage) {
           final String qName = ((PsiPackage)element).getQualifiedName();

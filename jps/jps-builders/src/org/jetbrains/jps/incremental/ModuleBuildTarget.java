@@ -52,6 +52,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Describes step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module. These
+ * targets are built by {@link ModuleLevelBuilder} and they are the only targets which can have circular dependencies on each other.
+ *
  * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
@@ -134,13 +137,11 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
-    final Set<File> moduleExcludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    moduleExcludes.addAll(index.getModuleExcludes(myModule));
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myModule.getProject());
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
-      if (JpsPathUtil.isUnder(moduleExcludes, sourceRoot.getFile())) {
+      if (index.isExcludedFromModule(sourceRoot.getFile(), myModule)) {
         continue;
       }
       for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {

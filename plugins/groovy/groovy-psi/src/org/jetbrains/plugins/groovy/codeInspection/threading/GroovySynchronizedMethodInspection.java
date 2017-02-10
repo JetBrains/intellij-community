@@ -54,7 +54,7 @@ public class GroovySynchronizedMethodInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethod(GrMethod grMethod) {
+    public void visitMethod(@NotNull GrMethod grMethod) {
       super.visitMethod(grMethod);
       if (!grMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
         return;

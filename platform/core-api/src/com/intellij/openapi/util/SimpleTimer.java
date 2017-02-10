@@ -29,7 +29,7 @@ public class SimpleTimer {
   private static final SimpleTimer ourInstance = newInstance("Shared");
 
   // restrict threads running tasks to one since same-delay-tasks must be executed sequentially
-  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(1);
+  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("SimpleTimer pool",1);
   @NotNull private final String myName;
 
   private SimpleTimer(@NotNull String name) {

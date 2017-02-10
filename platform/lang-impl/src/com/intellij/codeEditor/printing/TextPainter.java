@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -97,8 +96,7 @@ class TextPainter extends BasePainter {
                      String fullFileName,
                      String shortFileName,
                      @NotNull PsiFile psiFile,
-                     FileType fileType,
-                     Editor editor) {
+                     FileType fileType) {
     this(editorDocument, highlighter, fullFileName, shortFileName, psiFile.getProject(), fileType,
          FileSeparatorProvider.getFileSeparators(psiFile, editorDocument));
   }
@@ -235,8 +233,8 @@ class TextPainter extends BasePainter {
 
   private boolean calculateNumberOfPages(final Graphics2D g2d, final PageFormat pageFormat) {
     myNumberOfPages = 0;
-    final Ref<Boolean> firstPage = new Ref<Boolean>(Boolean.TRUE);
-    final Ref<RangeMarker> tmpMarker = new Ref<RangeMarker>();
+    final Ref<Boolean> firstPage = new Ref<>(Boolean.TRUE);
+    final Ref<RangeMarker> tmpMarker = new Ref<>();
     while (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {

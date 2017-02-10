@@ -28,9 +28,12 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -46,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -87,6 +89,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private final JPanel myPanel = new JPanel(new MyLayout());
   private final JScrollBar myScrollBar = new JBScrollBar(Adjustable.HORIZONTAL);
+  private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
+    @Override
+    public void documentChanged(DocumentEvent event) {
+      myPanel.revalidate();
+    }
+  };
 
   @Nullable
   private String myPrompt = "> ";
@@ -100,7 +108,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     public void focusGained(Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-        FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
+        TransactionGuard.submitTransaction(LanguageConsoleImpl.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
     }
 
@@ -123,12 +131,14 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     EditorFactory editorFactory = EditorFactory.getInstance();
     myEditorDocument = helper.getDocument();
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, getProject());
+    myConsoleEditor.getDocument().addDocumentListener(myDocumentAdapter);
     myConsoleEditor.getScrollPane().getHorizontalScrollBar().setEnabled(false);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
     myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject());
+    myHistoryViewer.getDocument().addDocumentListener(myDocumentAdapter);
 
     myScrollBar.setOpaque(false);
     myScrollBar.setModel(new MyModel(myScrollBar, myHistoryViewer, myConsoleEditor));
@@ -139,6 +149,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
   }
 
+  @NotNull
   @Override
   protected final EditorEx doCreateConsoleEditor() {
     return myHistoryViewer;
@@ -148,8 +159,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   protected final void disposeEditor() {
   }
 
+  @NotNull
   @Override
-  protected final JComponent createCenterComponent() {
+  protected JComponent createCenterComponent() {
     initComponents();
     return myPanel;
   }
@@ -186,18 +198,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private void setHistoryScrollBarVisible(boolean visible) {
     JScrollBar prev = myHistoryViewer.getScrollPane().getHorizontalScrollBar();
-    if (Registry.is("ide.scroll.new.layout")) {
-      prev.setEnabled(visible);
-      return;
-    }
-    JScrollBar next;
-    if (visible) {
-      next = ((EmptyScrollBar)prev).original;
-    }
-    else {
-      next = new EmptyScrollBar(prev);
-    }
-    myHistoryViewer.getScrollPane().setHorizontalScrollBar(next);
+    prev.setEnabled(visible);
   }
 
   private void setupComponents() {
@@ -419,6 +420,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     // double dispose via RunContentDescriptor and ContentImpl
     if (myHistoryViewer.isDisposed()) return;
 
+    myConsoleEditor.getDocument().removeDocumentListener(myDocumentAdapter);
+    myHistoryViewer.getDocument().removeDocumentListener(myDocumentAdapter);
+
     myBusConnection.deliverImmediately();
     Disposer.dispose(myBusConnection);
 
@@ -441,7 +445,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void installEditorFactoryListener() {
-    FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
+    FileEditorManagerListener fileEditorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (myConsoleEditor == null || !Comparing.equal(file, getVirtualFile())) {

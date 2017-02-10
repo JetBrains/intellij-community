@@ -106,7 +106,7 @@ public class HTMLControls {
     @Nullable
     @Override
     public Set<String> fromString(@NotNull String value) {
-      final THashSet<String> result = new THashSet<String>();
+      final THashSet<String> result = new THashSet<>();
       for (String closingTag : StringUtil.split(value, ",")) {
         result.add(closingTag.trim().toLowerCase(Locale.US));
       }

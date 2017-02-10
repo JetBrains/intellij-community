@@ -28,7 +28,7 @@ import java.util.LinkedHashSet;
  * Created by Max Medvedev on 10/4/13
  */
 public interface PullUpHelper<T extends MemberInfoBase<? extends PsiMember>> {
-  LanguageExtension<PullUpHelperFactory> INSTANCE = new LanguageExtension<PullUpHelperFactory>("com.intellij.refactoring.pullUpHelperFactory");
+  LanguageExtension<PullUpHelperFactory> INSTANCE = new LanguageExtension<>("com.intellij.refactoring.pullUpHelperFactory");
 
   void encodeContextInfo(T info);
 

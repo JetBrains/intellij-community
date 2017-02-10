@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.maddyhome.idea.copyright.options;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class ExternalOptionHelper {
   @Nullable
   public static List<CopyrightProfile> loadOptions(File file) {
     try {
-      List<CopyrightProfile> profiles = new ArrayList<CopyrightProfile>();
+      List<CopyrightProfile> profiles = new ArrayList<>();
       Element root = JDOMUtil.load(file);
       if (root.getName().equals("component")) {
         final Element copyrightElement = root.getChild("copyright");
@@ -93,6 +94,12 @@ public class ExternalOptionHelper {
       profile.setKeyword(el.getAttributeValue("value"));
     } else if (el.getAttributeValue("name").equals("myName")) {
       profile.setName(el.getAttributeValue("value"));
+    }
+    else if (el.getAttributeValue("name").equals("allowReplaceKeyword")) {
+      profile.setAllowReplaceRegexp(StringUtil.escapeToRegexp(el.getAttributeValue("value")));
+    }
+    else if (el.getAttributeValue("name").equals("allowReplaceRegexp")) {
+      profile.setAllowReplaceRegexp(el.getAttributeValue("value"));
     }
     return false;
   }

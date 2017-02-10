@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ public class PythonNoseTestRunConfigurationEditor extends SettingsEditor<PythonN
     myForm = new PythonNoseTestRunConfigurationForm(project, configuration);
   }
 
-  protected void resetEditorFrom(final PythonNoseTestRunConfiguration config) {
+  protected void resetEditorFrom(@NotNull final PythonNoseTestRunConfiguration config) {
     PythonNoseTestRunConfiguration.copyParams(config, myForm);
   }
 
-  protected void applyEditorTo(final PythonNoseTestRunConfiguration config) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull final PythonNoseTestRunConfiguration config) throws ConfigurationException {
     PythonNoseTestRunConfiguration.copyParams(myForm, config);
   }
 

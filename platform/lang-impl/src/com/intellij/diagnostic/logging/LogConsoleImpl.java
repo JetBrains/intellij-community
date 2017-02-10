@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * User: anna
@@ -35,19 +36,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
   private final File myFile;
   @NotNull
   private final Charset myCharset;
-  private long myOldLength = 0;
-
-  /**
-   * @deprecated use {@link #LogConsoleImpl(com.intellij.openapi.project.Project, java.io.File, java.nio.charset.Charset, long, String, boolean, com.intellij.psi.search.GlobalSearchScope)}
-   */
-  public LogConsoleImpl(Project project,
-                        @NotNull File file,
-                        @NotNull Charset charset,
-                        long skippedContents,
-                        @NotNull String title,
-                        final boolean buildInActions) {
-    this(project, file, charset, skippedContents, title, buildInActions, GlobalSearchScope.allScope(project));
-  }
+  private FileSnapshot myOldSnapshot;
 
   public LogConsoleImpl(Project project,
                         @NotNull File file,
@@ -61,6 +50,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     myPath = file.getAbsolutePath();
     myFile = file;
     myCharset = charset;
+    myOldSnapshot = new FileSnapshot();
   }
 
   @Nullable
@@ -107,13 +97,35 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       return null;
     }
 
-    long length = myFile.length();
-    if (length < myOldLength) {
+    FileSnapshot snapshot = new FileSnapshot();
+    if (myOldSnapshot.rolloverDetected(snapshot)) {
       reader.close();
       //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
     }
-    myOldLength = length;
+    myOldSnapshot = snapshot;
     return reader;
+  }
+
+  private class FileSnapshot {
+    final long length;
+    final byte[] firstBytes;
+
+    FileSnapshot() {
+      this.length = myFile.length();
+
+      byte[] bytes = new byte[20];
+      try (FileInputStream stream = new FileInputStream(myFile)) {
+        //noinspection ResultOfMethodCallIgnored
+        stream.read(bytes);
+      }
+      catch (IOException ignore) {
+      }
+      this.firstBytes = bytes;
+    }
+
+    boolean rolloverDetected(FileSnapshot current) {
+      return current.length < length || !Arrays.equals(firstBytes, current.firstBytes);
+    }
   }
 }

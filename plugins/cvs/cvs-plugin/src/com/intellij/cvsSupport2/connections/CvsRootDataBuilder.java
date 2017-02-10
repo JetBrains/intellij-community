@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.connections.pserver.PServerLoginProvider;
 public class CvsRootDataBuilder implements CvsRootSettingsBuilder<CvsRootData>{
 
   public static CvsRootData createSettingsOn(String cvsRoot, boolean check) {
-    return new RootFormatter<CvsRootData>(new CvsRootDataBuilder()).createConfiguration(cvsRoot, check);
+    return new RootFormatter<>(new CvsRootDataBuilder()).createConfiguration(cvsRoot, check);
   }
 
 

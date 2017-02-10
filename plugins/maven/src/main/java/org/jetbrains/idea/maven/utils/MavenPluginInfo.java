@@ -44,7 +44,7 @@ public class MavenPluginInfo {
   }
 
   private Map<String, Mojo> readMojos(Element plugin) {
-    Map<String, Mojo> result = new LinkedHashMap<String, Mojo>();
+    Map<String, Mojo> result = new LinkedHashMap<>();
     for (Element each : MavenJDOMUtil.findChildrenByPath(plugin, "mojos", "mojo")) {
       String goal = MavenJDOMUtil.findChildValueByPath(each, "goal", "unknown");
       result.put(goal, new Mojo(goal));

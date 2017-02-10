@@ -36,6 +36,10 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
 
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    if (!PsiModificationTrackerImpl.canAffectPsi(event)) {
+      return;
+    }
+
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {

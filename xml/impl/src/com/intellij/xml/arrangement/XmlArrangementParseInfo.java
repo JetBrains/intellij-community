@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class XmlArrangementParseInfo {
 
-  private final List<XmlElementArrangementEntry> myEntries = new ArrayList<XmlElementArrangementEntry>();
+  private final List<XmlElementArrangementEntry> myEntries = new ArrayList<>();
 
   @NotNull
   public List<XmlElementArrangementEntry> getEntries() {

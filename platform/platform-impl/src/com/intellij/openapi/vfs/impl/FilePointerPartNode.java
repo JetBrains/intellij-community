@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.List;
 // all file pointers we store in the tree with nodes corresponding to the file structure on disk
 class FilePointerPartNode {
   private static final FilePointerPartNode[] EMPTY_ARRAY = new FilePointerPartNode[0];
-  @NotNull private String part; // common prefix of all file pointers beneath
+  @NotNull String part; // common prefix of all file pointers beneath
   @NotNull FilePointerPartNode[] children;
   FilePointerPartNode parent;
   // file pointers for this exact path (e.g. concatenation of all "part" fields down from the root).
@@ -69,8 +69,6 @@ class FilePointerPartNode {
                        boolean separator,
                        @NotNull CharSequence childName,
                        @NotNull FilePointerPartNode[] outNode) {
-    checkConsistency();
-
     int partStart;
     if (parent == null) {
       partStart = 0;
@@ -137,20 +135,30 @@ class FilePointerPartNode {
   private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   void checkConsistency() {
     if (UNIT_TEST && !ApplicationInfoImpl.isInPerformanceTest()) {
-      doCheckConsistency();
+      doCheckConsistency(false);
     }
   }
 
-  private void doCheckConsistency() {
+  private void doCheckConsistency(boolean dotDotOccurred) {
+    dotDotOccurred |= part.contains(".."); // part must not contain ".." (except when the file pointer was created from URL with ".." inside)
     int childSum = 0;
     for (FilePointerPartNode child : children) {
       childSum += child.pointersUnder;
-      child.doCheckConsistency();
+      child.doCheckConsistency(dotDotOccurred);
       assert child.parent == this;
     }
     childSum += leavesNumber();
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
     assert pointersUnder == childSum : "expected: "+pointersUnder+"; actual: "+childSum;
+    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
+    if (fileAndUrl != null && fileAndUrl.second != null) {
+      String url = fileAndUrl.second;
+      assert endsWith(url, part) : "part is: '" + part + "' but url is: '" + url + "'";
+    }
+    boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
+
+    // when the node contains real file its path should be canonical
+    assert !hasFile || !dotDotOccurred : "Path is not canonical: '"+getUrl()+"'; my part: '"+part+"'";
   }
 
   @NotNull
@@ -234,6 +242,10 @@ class FilePointerPartNode {
 
   private int indexOfFirstDifferentChar(@NotNull CharSequence path, int start) {
     return indexOfFirstDifferentChar(path, start, part, 0);
+  }
+
+  private static boolean endsWith(@NotNull String string, @NotNull String end) {
+    return indexOfFirstDifferentChar(string, string.length() - end.length(), end, 0) == string.length();
   }
 
   @NotNull
@@ -329,6 +341,10 @@ class FilePointerPartNode {
   VirtualFilePointerImpl getAnyPointer() {
     Object leaves = this.leaves;
     return leaves == null ? null : leaves instanceof VirtualFilePointerImpl ? (VirtualFilePointerImpl)leaves : ((VirtualFilePointerImpl[])leaves)[0];
+  }
+
+  private String getUrl() {
+    return parent == null ? part : parent.getUrl() + part;
   }
 
   private int leavesNumber() {

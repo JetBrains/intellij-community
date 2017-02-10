@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * Use {@link com.intellij.util.text.UniqueNameGenerator}
  */
-@SuppressWarnings("unused")
 @Deprecated
 public class UniqueFileNamesProvider {
   private final List<String> myExistingNames;

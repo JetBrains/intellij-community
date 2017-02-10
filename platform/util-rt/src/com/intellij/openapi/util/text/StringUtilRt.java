@@ -79,7 +79,7 @@ public class StringUtilRt {
   }
 
   /**
-   * Converts line separators to <code>"\n"</code>
+   * Converts line separators to {@code "\n"}
    */
   @NotNull
   @Contract(pure = true)
@@ -300,14 +300,14 @@ public class StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
+   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
    * @param start start offset of the target text (inclusive)
    * @param end   end offset of the target text (exclusive)
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
-   * <code>-1</code> otherwise
+   * {@code -1} otherwise
    */
   @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {

@@ -57,11 +57,11 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
   }
 
   public void testMethods() throws Exception {
-    doTest(new PsiFilter<PsiMethod>(PsiMethod.class));
+    doTest(new PsiFilter<>(PsiMethod.class));
   }
 
   public void testFields() throws Exception {
-    doTest(new PsiFilter<PsiField>(PsiField.class));
+    doTest(new PsiFilter<>(PsiField.class));
   }
 
   private <T extends PsiElement> void doTest(PsiFilter<T> filter) throws IOException {
@@ -72,7 +72,7 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
   }
 
   private static <T extends PsiElement> Map<String, String> convert(Map<T, FileStatus> map) {
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = new HashMap<>();
     for (T key : map.keySet()) {
       final String newKey;
       if (key instanceof PsiMember) {
@@ -92,7 +92,7 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
     final VirtualFile result = resultsDir.findChild(resultFileName);
     assert result != null : "File not found " + resultsDir.getPath() +  "/" + resultFileName;
     String res = LoadTextUtil.loadText(result).toString();
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
     for (String s : res.replace("\r\n", "\n").split("\n")) {
       if (!StringUtil.isEmptyOrSpaces(s)) {
         final String[] strings = s.split(":");

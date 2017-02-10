@@ -181,7 +181,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
 
     JLabel mnemonicLabel = new JLabel();
-    mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
+    mnemonicLabel.setFont(Bookmark.getBookmarkFont());
     mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
     mnemonicLabel.setOpaque(false);
     return mnemonicLabel;
@@ -268,7 +268,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   static List<Bookmark> getSelectedBookmarks(JList list) {
-    List<Bookmark> answer = new ArrayList<Bookmark>();
+    List<Bookmark> answer = new ArrayList<>();
 
     //noinspection deprecation
     for (Object value : list.getSelectedValues()) {

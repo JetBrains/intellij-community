@@ -159,7 +159,7 @@ public class ExtractSuperClassUtil {
   }
 
   private static PsiMethod[] getCalledBaseConstructors(final PsiClass subclass) {
-    Set<PsiMethod> baseConstructors = new HashSet<PsiMethod>();
+    Set<PsiMethod> baseConstructors = new HashSet<>();
     PsiMethod[] constructors = subclass.getConstructors();
     for (PsiMethod constructor : constructors) {
       PsiCodeBlock body = constructor.getBody();
@@ -204,7 +204,7 @@ public class ExtractSuperClassUtil {
                                                                       final PsiClass derivedClass,
                                                                       final MemberInfo[] selectedMembers) throws IncorrectOperationException {
     final PsiManager manager = derivedClass.getManager();
-    Set<PsiElement> movedElements = new com.intellij.util.containers.HashSet<PsiElement>();
+    Set<PsiElement> movedElements = new com.intellij.util.containers.HashSet<>();
     for (final MemberInfo info : selectedMembers) {
       movedElements.add(info.getMember());
     }
@@ -214,7 +214,7 @@ public class ExtractSuperClassUtil {
     assert originalTypeParameterList != null;
     final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+    Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
     for (final PsiTypeParameter parameter : newList.getTypeParameters()) {
       final PsiTypeParameter parameterInDerived = findTypeParameterInDerived(derivedClass, parameter.getName());
       if (parameterInDerived != null) {

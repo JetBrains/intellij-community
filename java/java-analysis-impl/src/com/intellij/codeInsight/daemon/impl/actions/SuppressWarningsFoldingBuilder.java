@@ -45,7 +45,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
     if (!PsiUtil.isLanguageLevel5OrHigher(root)) {
       return FoldingDescriptor.EMPTY;
     }
-    final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
+    final List<FoldingDescriptor> result = new ArrayList<>();
     root.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
       throws IncorrectOperationException {
     final PsiComment selectedComment = (PsiComment) element;
     PsiComment firstComment = selectedComment;
@@ -58,7 +58,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     final JavaPsiFacade manager = JavaPsiFacade.getInstance(selectedComment.getProject());
     final PsiElementFactory factory = manager.getElementFactory();
     String text = getCommentContents(firstComment);
-    final List<PsiElement> commentsToDelete = new ArrayList<PsiElement>();
+    final List<PsiElement> commentsToDelete = new ArrayList<>();
     PsiElement nextComment = firstComment;
     while (true) {
       nextComment = getNextNonWhiteSpace(nextComment);

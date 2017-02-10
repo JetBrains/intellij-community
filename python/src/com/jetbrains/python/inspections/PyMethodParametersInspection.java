@@ -101,7 +101,7 @@ public class PyMethodParametersInspection extends PyInspection {
       PsiElement ret;
       synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
         if (myPossibleZopeRef == null) {
-          myPossibleZopeRef = new Ref<PsiElement>();
+          myPossibleZopeRef = new Ref<>();
           ret = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromComponents("zope.interface.Interface"), foothold);
           myPossibleZopeRef.set(ret); // null is OK
         }
@@ -205,7 +205,9 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
+            else if (flags.isClassMethod() ||
+                     PyNames.NEW.equals(methodName) ||
+                     PyNames.INIT_SUBCLASS.equals(methodName) && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

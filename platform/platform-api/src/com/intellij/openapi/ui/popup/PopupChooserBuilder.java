@@ -49,7 +49,7 @@ public class PopupChooserBuilder {
 
   private JComponent myChooserComponent;
   private String myTitle;
-  private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
+  private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
@@ -70,7 +70,7 @@ public class PopupChooserBuilder {
   private String myAd;
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
-  private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
+  private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<>();
   private Component mySettingsButtons;
   private boolean myAutoselectOnMouseMove = true;
 

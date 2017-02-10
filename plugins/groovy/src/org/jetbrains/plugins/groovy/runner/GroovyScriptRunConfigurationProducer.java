@@ -130,7 +130,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     final PsiFile file = aClass.getContainingFile().getOriginalFile();
     final PsiDirectory dir = file.getContainingDirectory();
     if (dir != null) {
-      configuration.setWorkDir(dir.getVirtualFile().getPath());
+      configuration.setWorkingDirectory(dir.getVirtualFile().getPath());
     }
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return null;

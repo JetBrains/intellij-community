@@ -43,10 +43,10 @@ import java.util.*;
 public class ErrorViewStructure extends AbstractTreeStructure {
   private final ErrorTreeElement myRoot = new MyRootElement();
   
-  private final List<String> myGroupNames = new ArrayList<String>();
-  private final Map<String, GroupingElement> myGroupNameToElementMap = new HashMap<String, GroupingElement>();
-  private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap = new HashMap<String, List<NavigatableMessageElement>>();
-  private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages = new EnumMap<ErrorTreeElementKind, List<ErrorTreeElement>>(ErrorTreeElementKind.class);
+  private final List<String> myGroupNames = new ArrayList<>();
+  private final Map<String, GroupingElement> myGroupNameToElementMap = new HashMap<>();
+  private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap = new HashMap<>();
+  private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages = new EnumMap<>(ErrorTreeElementKind.class);
   private final Object myLock = new Object(); 
 
   private static final ErrorTreeElementKind[] ourMessagesOrder = {
@@ -96,7 +96,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   @Override
   public ErrorTreeElement[] getChildElements(Object element) {
     if (element == myRoot) {
-      final List<ErrorTreeElement> children = new ArrayList<ErrorTreeElement>();
+      final List<ErrorTreeElement> children = new ArrayList<>();
       // simple messages
       synchronized (myLock) {
         for (final ErrorTreeElementKind kind : ourMessagesOrder) {
@@ -128,7 +128,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
         if (children != null && !children.isEmpty()) {
           if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
-            final List<ErrorTreeElement> filtered = new ArrayList<ErrorTreeElement>(children.size());
+            final List<ErrorTreeElement> filtered = new ArrayList<>(children.size());
             for (final NavigatableMessageElement navigatableMessageElement : children) {
               ErrorTreeElementKind kind = navigatableMessageElement.getKind();
               if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
@@ -229,7 +229,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       if (children == null || children.isEmpty()) {
         return Collections.emptyList();
       }
-      final List<Object> result = new ArrayList<Object>();
+      final List<Object> result = new ArrayList<>();
       for (NavigatableMessageElement child : children) {
         final Object data = child.getData();
         if (data != null) {
@@ -254,7 +254,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   private void addGroupPlusElements(String text, GroupingElement group, List<SimpleErrorData> children) {
-    final List<NavigatableMessageElement> elements = new ArrayList<NavigatableMessageElement>();
+    final List<NavigatableMessageElement> elements = new ArrayList<>();
     for (SimpleErrorData child : children) {
       elements.add(new MyNavigatableWithDataElement(
         myProject, child.getKind(), group, child.getMessages(), child.getVf(), NewErrorTreeViewPanel.createExportPrefix(-1), NewErrorTreeViewPanel.createRendererPrefix(-1, -1))
@@ -287,7 +287,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       synchronized (myLock) {
         List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
         if (elements == null) {
-          elements = new ArrayList<NavigatableMessageElement>();
+          elements = new ArrayList<>();
           myGroupNameToMessagesMap.put(groupName, elements);
         }
         elements.add(new NavigatableMessageElement(kind, getGroupingElement(groupName, data, file), message, navigatable, exportText, rendererTextPrefix));
@@ -300,7 +300,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     synchronized (myLock) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) {
-        elements = new ArrayList<NavigatableMessageElement>();
+        elements = new ArrayList<>();
         myGroupNameToMessagesMap.put(groupName, elements);
       }
       if (!myGroupNameToElementMap.containsKey(groupName)) {
@@ -319,7 +319,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     synchronized (myLock) {
       List<ErrorTreeElement> elements = mySimpleMessages.get(element.getKind());
       if (elements == null) {
-        elements = new ArrayList<ErrorTreeElement>();
+        elements = new ArrayList<>();
         mySimpleMessages.put(element.getKind(), elements);
       }
       elements.add(element);

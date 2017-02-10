@@ -22,8 +22,17 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     VirtualFile createdFile = event.getFile();
+    if (createdFile.isDirectory()) {
+      return;
+    }
+    if (createdFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
+      return;
+    }
     Project project = ProjectUtil.guessProjectForFile(createdFile);
     if (project == null) {
+      return;
+    }
+    if (project.getBasePath() !=null && !FileUtil.isAncestor(project.getBasePath(), createdFile.getPath(), true)) {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
@@ -35,7 +44,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
 
-    String name = createdFile.getName();
+    String taskRelativePath = StudyUtils.pathRelativeToTask(createdFile);
 
     CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
     if (manager != null && manager.doNotPackFile(new File(createdFile.getPath()))) {
@@ -43,14 +52,13 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
 
     if (CCUtils.isTestsFile(project, createdFile)
-        || StudyUtils.isTaskDescriptionFile(name)
-        || name.contains(EduNames.WINDOW_POSTFIX)
-        || name.contains(EduNames.WINDOWS_POSTFIX)
-        || name.contains(EduNames.ANSWERS_POSTFIX)) {
+        || StudyUtils.isTaskDescriptionFile(createdFile.getName())
+        || taskRelativePath.contains(EduNames.WINDOW_POSTFIX)
+        || taskRelativePath.contains(EduNames.WINDOWS_POSTFIX)
+        || taskRelativePath.contains(EduNames.ANSWERS_POSTFIX)) {
       return;
     }
-
-    VirtualFile taskVF = createdFile.getParent();
+    VirtualFile taskVF = StudyUtils.getTaskDir(createdFile);
     if (taskVF == null) {
       return;
     }
@@ -61,7 +69,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
 
     CCUtils.createResourceFile(createdFile, course, taskVF);
 
-    task.addTaskFile(name, 1);
+    task.addTaskFile(taskRelativePath, 1);
   }
 
   @Override
@@ -74,6 +82,9 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
 
     Project project = ProjectUtil.guessProjectForFile(removedFile);
     if (project == null) {
+      return;
+    }
+    if (project.getBasePath() !=null && !FileUtil.isAncestor(project.getBasePath(), removedFile.getPath(), true)) {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
@@ -125,7 +136,6 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
-    //TODO: remove from steps as well
-    task.getTaskFiles().remove(removedTaskFile.getName());
+    task.getTaskFiles().remove(StudyUtils.pathRelativeToTask(removedTaskFile));
   }
 }

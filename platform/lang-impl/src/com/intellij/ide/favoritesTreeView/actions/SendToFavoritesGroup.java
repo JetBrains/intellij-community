@@ -47,7 +47,7 @@ public class SendToFavoritesGroup extends ActionGroup implements DumbAware {
       return new AnAction[]{new SendToNewFavoritesListAction()};
     }
 
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
 
     for (String list : availableFavoritesLists) {
       actions.add(new SendToFavoritesAction(list));

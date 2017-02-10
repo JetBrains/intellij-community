@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,13 +31,16 @@ import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
@@ -67,7 +72,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
   @Override
   protected void doOKAction() {
-    final List<UsageInfo> foreignMethodUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> foreignMethodUsages = new ArrayList<>();
     final Runnable runnable = () -> {
       final Set<MethodNodeBase<PsiMethod>> nodes = getSelectedNodes();
       for (MethodNodeBase<PsiMethod> node : nodes) {
@@ -79,8 +84,19 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         ReferencesSearch.search(nodeMethod).forEach(reference -> {
           final PsiElement element = reference.getElement();
           if (element != null) {
-            JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage())
-              .createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
+            JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+            if (safeDeleteDelegate != null) {
+              safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
+            }
+          }
+          return true;
+        });
+
+        ReferencesSearch.search(parameter).forEach(reference -> {
+          PsiElement element = reference.getElement();
+          final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
+          if (docTag != null) {
+            foreignMethodUsages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(docTag, parameter, true));
           }
           return true;
         });
@@ -104,7 +120,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         if (expressions.length > parameterIndex) {
           final PsiExpression expression = PsiUtil.deparenthesizeExpression(expressions[parameterIndex]);
           if (expression != null) {
-            final Set<PsiParameter> paramRefs = new HashSet<PsiParameter>();
+            final Set<PsiParameter> paramRefs = new HashSet<>();
             expression.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -119,9 +135,10 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
             final PsiParameter parameter = ContainerUtil.getFirstItem(paramRefs);
             if (parameter != null && !parameter.isVarArgs()) {
               final PsiElement scope = parameter.getDeclarationScope();
-              if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0) {
+              if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0 &&
+                  OverridingMethodsSearch.search((PsiMethod)scope).findFirst() == null) {
                 final int scopeParamIdx = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
-                final Ref<Boolean> ref = new Ref<Boolean>(false);
+                final Ref<Boolean> ref = new Ref<>(false);
                 if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
                   public boolean process(PsiReference reference) {
@@ -216,7 +233,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       }
 
       //find first method call
-      final Ref<PsiParameter> ref = new Ref<PsiParameter>();
+      final Ref<PsiParameter> ref = new Ref<>();
       ReferencesSearch.search(myMethod, new LocalSearchScope(caller)).forEach(reference -> {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiReferenceExpression) {

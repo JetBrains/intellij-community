@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.util.net.AuthenticationPanel">
-  <grid id="54d96" binding="myMainPanel" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="54d96" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="111" y="126" width="254" height="120"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="111" y="126" width="254" height="131"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="30b8c" class="javax.swing.JLabel" binding="myDescriptionLabel">
         <constraints>
-          <xy x="10" y="13" width="234" height="14"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="##"/>
@@ -20,8 +18,7 @@
       </component>
       <component id="2c164" class="javax.swing.JLabel">
         <constraints>
-          <xy x="10" y="65" width="54" height="14"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="editbox.password"/>
@@ -29,8 +26,7 @@
       </component>
       <component id="5918" class="javax.swing.JPasswordField" binding="myPasswordTextField">
         <constraints>
-          <xy x="74" y="62" width="170" height="20"/>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
@@ -38,8 +34,7 @@
       </component>
       <component id="c345b" class="javax.swing.JTextField" binding="myLoginTextField">
         <constraints>
-          <xy x="74" y="36" width="170" height="20"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
@@ -47,8 +42,7 @@
       </component>
       <component id="537de" class="javax.swing.JLabel">
         <constraints>
-          <xy x="10" y="39" width="33" height="14"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="editbox.login"/>
@@ -56,8 +50,7 @@
       </component>
       <component id="94544" class="javax.swing.JCheckBox" binding="rememberPasswordCheckBox">
         <constraints>
-          <xy x="10" y="88" width="126" height="22"/>
-          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="checkbox.remember.password"/>

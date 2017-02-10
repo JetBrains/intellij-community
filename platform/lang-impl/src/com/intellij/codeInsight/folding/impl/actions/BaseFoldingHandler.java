@@ -43,7 +43,7 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
       caret = editor.getCaretModel().getPrimaryCaret();
     }
     if (caret.hasSelection()) {
-      List<FoldRegion> result = new ArrayList<FoldRegion>();
+      List<FoldRegion> result = new ArrayList<>();
       for (FoldRegion region : allRegions) {
         if (region.getStartOffset() >= caret.getSelectionStart() && region.getEndOffset() <= caret.getSelectionEnd()) {
           result.add(region);
@@ -75,7 +75,7 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
         }
       }
     }
-    List<FoldRegion> result = new ArrayList<FoldRegion>();
+    List<FoldRegion> result = new ArrayList<>();
     if (rootRegion != null) {
       FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
       for (FoldRegion region : allRegions) {

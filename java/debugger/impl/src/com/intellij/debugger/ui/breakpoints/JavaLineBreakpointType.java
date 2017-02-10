@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -121,10 +122,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     }
 
     List<JavaBreakpointVariant> res = new SmartList<>();
-    res.add(new JavaBreakpointVariant(position)); //all
 
     if (!(startMethod instanceof PsiLambdaExpression)) {
-      res.add(new ExactJavaBreakpointVariant(position, startMethod, -1)); // base method
+      res.add(new LineJavaBreakpointVariant(position, startMethod, -1)); // base method
     }
 
     int ordinal = 0;
@@ -132,9 +132,16 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
       XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
       if (elementPosition != null) {
-        res.add(new ExactJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+        if (lambda == startMethod) {
+          res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+        }
+        else {
+          res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+        }
       }
     }
+
+    res.add(new JavaBreakpointVariant(position)); //all
 
     return res;
   }
@@ -178,7 +185,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final PsiElement myElement;
     private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
+    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
       myLambdaOrdinal = lambdaOrdinal;
@@ -186,17 +193,17 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     @Override
     public Icon getIcon() {
-      return myElement.getIcon(0);
+      return myElement != null ? myElement.getIcon(0) : AllIcons.Debugger.Db_set_breakpoint;
     }
 
     @Override
     public String getText() {
-      return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);
+      return myElement != null ? StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0) : "Line";
     }
 
     @Override
     public TextRange getHighlightRange() {
-      return myElement.getTextRange();
+      return myElement != null ? myElement.getTextRange() : null;
     }
 
     @NotNull
@@ -206,6 +213,33 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       assert properties != null;
       properties.setLambdaOrdinal(myLambdaOrdinal);
       return properties;
+    }
+  }
+
+  public class LineJavaBreakpointVariant extends ExactJavaBreakpointVariant {
+    public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer lambdaOrdinal) {
+      super(position, element, lambdaOrdinal);
+    }
+
+    @Override
+    public String getText() {
+      return "Line";
+    }
+
+    @Override
+    public Icon getIcon() {
+      return AllIcons.Debugger.Db_set_breakpoint;
+    }
+  }
+
+  public class LambdaJavaBreakpointVariant extends ExactJavaBreakpointVariant {
+    public LambdaJavaBreakpointVariant(@NotNull XSourcePosition position, @NotNull PsiElement element, Integer lambdaOrdinal) {
+      super(position, element, lambdaOrdinal);
+    }
+
+    @Override
+    public Icon getIcon() {
+      return AllIcons.Debugger.LambdaBreakpoint;
     }
   }
 

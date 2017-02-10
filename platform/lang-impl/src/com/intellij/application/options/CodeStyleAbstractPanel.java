@@ -69,7 +69,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
-  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<TextRange>();
+  private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
@@ -308,8 +308,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    * @param targetPosition    position which belonging to target visual rectangle should be checked
    * @param startPosition     visual position of top-left corner of the target visual rectangle
    * @param endPosition       visual position of bottom-right corner of the target visual rectangle
-   * @return                  <code>true</code> if given visual position belongs to the target visual rectangle;
-   *                          <code>false</code> otherwise
+   * @return                  {@code true} if given visual position belongs to the target visual rectangle;
+   *                          {@code false} otherwise
    */
   private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line

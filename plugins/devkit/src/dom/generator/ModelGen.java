@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class ModelGen {
   private final ModelDesc model = new ModelDesc();
-  private final Map<String, String> schemaLocationMap = new HashMap<String, String>();
+  private final Map<String, String> schemaLocationMap = new HashMap<>();
   private final ModelLoader loader;
   private final Emitter emitter;
   private final FileManager fileManager;
@@ -114,7 +114,7 @@ public class ModelGen {
       final String packageS = nsElement.getAttributeValue("package");
       final String packageEnumS = nsElement.getAttributeValue("enums");
       final String interfaces = nsElement.getAttributeValue("interfaces");
-      final ArrayList<String> list = new ArrayList<String>();
+      final ArrayList<String> list = new ArrayList<>();
       for (Element pkgElement : (List<Element>) nsElement.getChildren("package")) {
         final String pkgName = pkgElement.getAttributeValue("name");
         final String fileName = pkgElement.getAttributeValue("file");
@@ -178,7 +178,7 @@ public class ModelGen {
         return new XMLInputSource(null, esid, null);
       }
     };
-    ArrayList<File> files = new ArrayList<File>();
+    ArrayList<File> files = new ArrayList<>();
     for (File root : modelRoots) {
       ContainerUtil.addAll(files, root.listFiles());
     }

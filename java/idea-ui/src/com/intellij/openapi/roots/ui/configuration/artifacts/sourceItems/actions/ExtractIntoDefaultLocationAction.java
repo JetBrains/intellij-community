@@ -70,7 +70,7 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
   public void actionPerformed(AnActionEvent e) {
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     if (pathForClasses != null) {
-      final List<PackagingElement<?>> extracted = new ArrayList<PackagingElement<?>>();
+      final List<PackagingElement<?>> extracted = new ArrayList<>();
       for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
         final ArtifactEditorContext context = myArtifactEditor.getContext();
         final List<? extends PackagingElement<?>> elements = item.createElements(context);

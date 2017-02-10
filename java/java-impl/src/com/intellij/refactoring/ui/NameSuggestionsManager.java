@@ -31,7 +31,7 @@ public class NameSuggestionsManager {
   private final NameSuggestionsField myNameField;
   private final NameSuggestionsGenerator myGenerator;
 
-  private final HashMap<PsiType, SuggestedNameInfo> myTypesToSuggestions = new HashMap<PsiType, SuggestedNameInfo>();
+  private final HashMap<PsiType, SuggestedNameInfo> myTypesToSuggestions = new HashMap<>();
 
   public NameSuggestionsManager(TypeSelector typeSelector, NameSuggestionsField nameField, NameSuggestionsGenerator generator) {
     myTypeSelector = typeSelector;

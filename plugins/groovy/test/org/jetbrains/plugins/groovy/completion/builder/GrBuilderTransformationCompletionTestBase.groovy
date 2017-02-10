@@ -30,7 +30,7 @@ abstract class GrBuilderTransformationCompletionTestBase extends GroovyCompletio
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_LATEST;
+    return GroovyLightProjectDescriptor.GROOVY_LATEST
   }
 
   void doVariantableTest(String text, String... args) {

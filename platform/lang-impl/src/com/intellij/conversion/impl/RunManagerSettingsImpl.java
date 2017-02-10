@@ -50,7 +50,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
       myProjectFile = context.getOrCreateFile(projectFile);
     }
 
-    mySharedConfigurationFiles = new ArrayList<SettingsXmlFile>();
+    mySharedConfigurationFiles = new ArrayList<>();
     if (sharedConfigurationFiles != null) {
       for (File file : sharedConfigurationFiles) {
         mySharedConfigurationFiles.add(context.getOrCreateFile(file));
@@ -61,7 +61,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
   @Override
   @NotNull
   public Collection<? extends Element> getRunConfigurations() {
-    final List<Element> result = new ArrayList<Element>();
+    final List<Element> result = new ArrayList<>();
     if (myWorkspaceFile != null) {
       result.addAll(JDOMUtil.getChildren(myWorkspaceFile.findComponent(RUN_MANAGER_COMPONENT_NAME), CONFIGURATION_ELEMENT));
     }
@@ -78,7 +78,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
   }
 
   public Collection<File> getAffectedFiles() {
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     if (myWorkspaceFile != null) {
       files.add(myWorkspaceFile.getFile());
     }

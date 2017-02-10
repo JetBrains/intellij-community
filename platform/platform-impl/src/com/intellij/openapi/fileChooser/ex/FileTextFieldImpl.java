@@ -92,13 +92,13 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public FileTextFieldImpl(final JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, final Disposable parent) {
     myPathTextField = field;
-    myMacroMap = new TreeMap<String, String>();
+    myMacroMap = new TreeMap<>();
     myMacroMap.putAll(macroMap);
 
 
     final InputMap listMap = (InputMap)UIManager.getDefaults().get("List.focusInputMap");
     final KeyStroke[] listKeys = listMap.keys();
-    myDisabledTextActions = new HashSet<Action>();
+    myDisabledTextActions = new HashSet<>();
     for (KeyStroke eachListStroke : listKeys) {
       final String listActionID = (String)listMap.get(eachListStroke);
       if ("selectNextRow".equals(listActionID) || "selectPreviousRow".equals(listActionID)) {
@@ -443,9 +443,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   public void processCompletion(final CompletionResult result) {
-    result.myToComplete = new ArrayList<LookupFile>();
-    result.mySiblings = new ArrayList<LookupFile>();
-    result.myKidsAfterSeparator = new ArrayList<LookupFile>();
+    result.myToComplete = new ArrayList<>();
+    result.mySiblings = new ArrayList<>();
+    result.myKidsAfterSeparator = new ArrayList<>();
     final String typed = result.myCompletionBase;
 
     if (typed == null) return;
@@ -571,7 +571,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private void addMacroPaths(final CompletionResult result, final String typedText) {
-    result.myMacros = new ArrayList<LookupFile>();
+    result.myMacros = new ArrayList<>();
 
     MinusculeMatcher matcher = createMatcher(typedText);
 

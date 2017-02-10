@@ -38,17 +38,17 @@ public class KnownRepositoryLocations {
 
   public KnownRepositoryLocations() {
     myMap = MultiMap.createSet();
-    myLocations = new HashMap<Couple<String>, Long>();
-    myLastRevision = new HashMap<Long, RevisionId>();
-    myFirstRevision = new HashMap<Long, RevisionId>();
-    myJustVcs = new HashMap<String, Long>();
-    myAuthors = new HashMap<String, Long>();
+    myLocations = new HashMap<>();
+    myLastRevision = new HashMap<>();
+    myFirstRevision = new HashMap<>();
+    myJustVcs = new HashMap<>();
+    myAuthors = new HashMap<>();
   }
 
   public Map<String, Long> filterKnownAuthors(final Set<String> names) {
     if (names.isEmpty()) return Collections.emptyMap();
     synchronized (myMap) {
-      final Map<String, Long> result = new HashMap<String, Long>();
+      final Map<String, Long> result = new HashMap<>();
       for (Iterator<String> iterator = names.iterator(); iterator.hasNext(); ) {
         final String name = iterator.next();
         final Long pk = myAuthors.get(name);

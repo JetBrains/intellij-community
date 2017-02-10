@@ -26,6 +26,7 @@ public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> im
   public PySmartKeysOptions() {
     super(CodeInsightSettings.getInstance());
     //CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;   //TODO: remove combobox from settings
-    checkBox("INDENT_TO_CARET_ON_PASTE", "Smart indent pasted lines");
+    CodeInsightSettings settings = getInstance();
+    checkBox("Smart indent pasted lines", ()->settings.INDENT_TO_CARET_ON_PASTE, v->settings.INDENT_TO_CARET_ON_PASTE=v);
   }
 }

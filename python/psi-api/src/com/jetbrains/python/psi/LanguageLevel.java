@@ -37,20 +37,10 @@ public enum LanguageLevel {
   PYTHON32(32, true, false, true, true),
   PYTHON33(33, true, false, true, true),
   PYTHON34(34, true, false, true, true),
-  PYTHON35(35, true, false, true, true);
+  PYTHON35(35, true, false, true, true),
+  PYTHON36(36, true, false, true, true);
 
-  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.<LanguageLevel>builder()
-    .add(PYTHON24)
-    .add(PYTHON25)
-    .add(PYTHON26)
-    .add(PYTHON27)
-    .add(PYTHON30)
-    .add(PYTHON31)
-    .add(PYTHON32)
-    .add(PYTHON33)
-    .add(PYTHON34)
-    .add(PYTHON35)
-    .build();
+  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON35;
@@ -143,12 +133,15 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.5")) {
         return PYTHON35;
       }
+      if (pythonVersion.startsWith("3.6")) {
+        return PYTHON36;
+      }
       return DEFAULT3;
     }
     return getDefault();
   }
 
-  public static final Key<LanguageLevel> KEY = new Key<LanguageLevel>("python.language.level");
+  public static final Key<LanguageLevel> KEY = new Key<>("python.language.level");
 
   @NotNull
   public static LanguageLevel forElement(@NotNull PsiElement element) {

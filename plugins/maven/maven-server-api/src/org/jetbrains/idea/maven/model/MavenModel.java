@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,9 +25,15 @@ public class MavenModel extends MavenModelBase {
   private String myPackaging;
   private String myName;
 
-  private List<MavenProfile> myProfiles = Collections.emptyList();
+  private List<MavenProfile> myProfiles;
 
-  private final MavenBuild myBuild = new MavenBuild();
+  private final MavenBuild myBuild;
+
+  public MavenModel() {
+    myMavenId = new MavenId(MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE);
+    myProfiles = Collections.emptyList();
+    myBuild = new MavenBuild();
+  }
 
   public MavenId getMavenId() {
     return myMavenId;
@@ -65,7 +72,7 @@ public class MavenModel extends MavenModelBase {
   }
 
   public void setProfiles(List<MavenProfile> profiles) {
-    myProfiles = profiles;
+    myProfiles = new ArrayList<MavenProfile>(profiles);
   }
 
   public MavenBuild getBuild() {

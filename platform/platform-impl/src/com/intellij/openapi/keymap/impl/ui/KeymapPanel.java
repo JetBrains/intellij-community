@@ -67,7 +67,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +77,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
   // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.
-  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<Keymap>(new ListItemEditor<Keymap>() {
+  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<>(new ListItemEditor<Keymap>() {
     @NotNull
     @Override
     public String getName(@NotNull Keymap item) {
@@ -306,7 +305,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        editSelection(e);
+        editSelection(e, true);
         return true;
       }
     }.installOn(myActionsTree.getTree());
@@ -316,7 +315,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger()) {
-          editSelection(e);
+          editSelection(e, false);
           e.consume();
         }
       }
@@ -324,7 +323,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void mouseReleased(@NotNull MouseEvent e) {
         if (e.isPopupTrigger()) {
-          editSelection(e);
+          editSelection(e, false);
           e.consume();
         }
       }
@@ -374,7 +373,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        editSelection(e.getInputEvent());
+        editSelection(e.getInputEvent(), false);
       }
     });
 
@@ -484,7 +483,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
         keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
-        Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
+        Map<String, List<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             keymap.removeShortcut(id, s);
@@ -586,8 +585,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     }
 
-    KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap();
-    newKeymap.setName(newKeymapName);
+    KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap(newKeymapName);
     newKeymap.setCanModify(true);
 
     int indexOf = myEditor.getModel().getElementIndex(keymap);
@@ -609,7 +607,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
 
-    KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap();
 
     String newKeymapName = KeyMapBundle.message("new.keymap.name", keymap.getPresentableName());
     if (!tryNewKeymapName(newKeymapName)) {
@@ -620,7 +617,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         }
       }
     }
-    newKeymap.setName(newKeymapName);
+    KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap(newKeymapName);
     newKeymap.setCanModify(true);
     myEditor.getModel().add(newKeymap);
     myEditor.getModel().setSelectedItem(newKeymap);
@@ -670,10 +667,18 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
+    Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
     Keymap selectedKeymap = null;
     List<Keymap> list = getManagerKeymaps();
     for (Keymap keymap : list) {
-      if (selectedKeymap == null && keymap == KeymapManagerEx.getInstanceEx().getActiveKeymap()) {
+      if (activeKeymap == keymap) {
+        // select active keymap if it is present
+        selectedKeymap = keymap;
+        break;
+      }
+      if (selectedKeymap == null || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(keymap.getName())) {
+        // select MacOS X keymap if default keymap is filtered out
+        // select first keymap if MacOS X keymap is not present
         selectedKeymap = keymap;
       }
     }
@@ -703,7 +708,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void ensureUniqueKeymapNames() throws ConfigurationException {
-    Set<String> keymapNames = new THashSet<String>();
+    Set<String> keymapNames = new THashSet<>();
     for (Keymap keymap : myEditor.getModel().getItems()) {
       if (!keymapNames.add(keymap.getName())) {
         throw new ConfigurationException(KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message"));
@@ -761,7 +766,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return keymap == null ? null : keymap.getShortcuts(actionId);
   }
 
-  private void editSelection(InputEvent e) {
+  private void editSelection(InputEvent e, boolean isDoubleClick) {
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -774,7 +779,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         .getComponent()
         .show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
     }
-    else {
+    else if (!isDoubleClick || !ActionManager.getInstance().isGroup(actionId)) {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Edit Shortcuts",
                                                                             group,

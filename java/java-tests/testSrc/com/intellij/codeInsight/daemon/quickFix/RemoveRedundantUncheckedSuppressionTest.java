@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParame
 
         private void checkMember(PsiMember member, RedundantSuppressInspection inspection, ProblemsHolder holder) {
           final ProblemDescriptor[] problemDescriptors =
-            (ProblemDescriptor[])inspection.checkElement(member, InspectionManager.getInstance(getProject()), getProject());
+            (ProblemDescriptor[])inspection.checkElement(member, InspectionManager.getInstance(getProject()));
           if (problemDescriptors != null) {
             for (ProblemDescriptor problemDescriptor : problemDescriptors) {
               holder.registerProblem(problemDescriptor);

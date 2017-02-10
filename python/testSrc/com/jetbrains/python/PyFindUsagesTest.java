@@ -94,7 +94,7 @@ public class PyFindUsagesTest extends PyTestCase {
 
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
-    List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);
+    List<UsageInfo> sortedUsages = new ArrayList<>(usages);
     Collections.sort(sortedUsages,
                      (o1, o2) -> o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset());
     for (int i = 0; i < usageTexts.length; i++) {

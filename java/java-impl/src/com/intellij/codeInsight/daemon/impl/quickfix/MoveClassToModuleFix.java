@@ -55,7 +55,7 @@ import java.util.Map;
  * @author cdr
  */
 public class MoveClassToModuleFix implements IntentionAction {
-  private final Map<PsiClass, Module> myModules = new LinkedHashMap<PsiClass, Module>();
+  private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;

@@ -47,11 +47,11 @@ public interface CodeDocumentationProvider extends DocumentationProvider {
    *   }
    * </pre>
    * PSI element at the caret (return element) is an entry point. This method is expected to return PSI method element
-   * and <code>'null'</code> as the existing doc comment then.
+   * and {@code 'null'} as the existing doc comment then.
    * 
    * @param startPoint  start traversal point
    * @return            comment anchor which is a given element or its anchor if the one is found and its doc comment (if existing).
-   *                    This method may return <code>'null'</code> as an indication that no doc comment anchor and existing comment
+   *                    This method may return {@code 'null'} as an indication that no doc comment anchor and existing comment
    *                    is available;
    *                    returned pair must have non-null PSI element and nullable existing comment references then
    */

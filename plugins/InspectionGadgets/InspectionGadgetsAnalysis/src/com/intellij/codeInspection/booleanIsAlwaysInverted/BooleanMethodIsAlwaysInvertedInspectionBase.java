@@ -143,7 +143,7 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
           final PsiElement usagesContainer = refElement.getElement();
           if (usagesContainer == null) return null;
           if (ReferencesSearch.search(psiMethod, new LocalSearchScope(usagesContainer)).forEach(new Processor<PsiReference>() {
-            private final Set<PsiReference> myFoundRefs = new HashSet<PsiReference>();
+            private final Set<PsiReference> myFoundRefs = new HashSet<>();
             @Override
             public boolean process(PsiReference reference) {
               myFoundRefs.add(reference);

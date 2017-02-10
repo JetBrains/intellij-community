@@ -97,7 +97,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert hostElementCopy != null;
-    final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
+    final Ref<FileViewProvider> provider = new Ref<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,7 @@ public class Gens extends ValuesExtractionResultImpl {
     if (averageMutationCount > 0) {
       // with mutation
 
-      int commonMutagen = 0;
-
-      for (Value value : myValues) {
-        commonMutagen += value.getMutagenFactor();
-      }
+      int commonMutagen = myValues.stream().mapToInt(Value::getMutagenFactor).sum();
 
       for (Value value : myValues) {
         if (Utils.getRandomLess(commonMutagen) < value.getMutagenFactor() * averageMutationCount) {
@@ -52,7 +48,6 @@ public class Gens extends ValuesExtractionResultImpl {
   }
 
   public Gens dropToInitial() {
-    final ArrayList<Value> values = new ArrayList<Value>();
     for (Value value : myValues) {
       final Object[] possibleValues = value.getPossibleValues();
       if (possibleValues.length > 0) {
@@ -64,7 +59,7 @@ public class Gens extends ValuesExtractionResultImpl {
 
   @NotNull
   public Gens copy() {
-    final ArrayList<Value> values = new ArrayList<Value>();
+    final ArrayList<Value> values = new ArrayList<>();
     for (Value value : myValues) {
       values.add(new Value(value));
     }
@@ -76,7 +71,7 @@ public class Gens extends ValuesExtractionResultImpl {
     final List<Value> newValues = newGens.getValues();
     final int size = myValues.size();
     assert size == newValues.size();
-    final List<Value> diff = new ArrayList<Value>();
+    final List<Value> diff = new ArrayList<>();
     for (int i = 0; i < size; ++i) {
       final Value value = myValues.get(i);
       final Value newValue = newValues.get(i);
@@ -96,7 +91,7 @@ public class Gens extends ValuesExtractionResultImpl {
     // Crossover!
     final int crossover = size / 2;//FUtils.getRandomLess(size - 6) + 3;
 
-    final List<Value> values = new ArrayList<Value>(size);
+    final List<Value> values = new ArrayList<>(size);
     for (int i = 0; i < size; ++i) {
       final Value value1 = p1.myValues.get(i);
       final Value value2 = p2.myValues.get(i);

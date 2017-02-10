@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -677,7 +676,7 @@ public class Messages {
   public static void showErrorDialog(@NotNull Component component, String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
+        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, UIUtil.getWindow(component));
         return;
       }
     }
@@ -1061,7 +1060,7 @@ public class Messages {
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<String, Boolean>(ourTestInputImplementation.show(message, validator), checked);
+      return new Pair<>(ourTestInputImplementation.show(message, validator), checked);
     }
     else {
       InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
@@ -1495,6 +1494,16 @@ public class Messages {
     }
 
     protected JComponent doCreateCenterPanel() {
+      JPanel panel = createIconPanel();
+      if (myMessage != null) {
+        JTextPane messageComponent = createMessageComponent(myMessage);
+        panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 10), BorderLayout.CENTER);
+      }
+      return panel;
+    }
+
+    @NotNull
+    protected JPanel createIconPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
         JLabel iconLabel = new JLabel(myIcon);
@@ -1503,11 +1512,19 @@ public class Messages {
         container.add(iconLabel, BorderLayout.NORTH);
         panel.add(container, BorderLayout.WEST);
       }
-      if (myMessage != null) {
-        JTextPane messageComponent = createMessageComponent(myMessage);
-        panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 10), BorderLayout.CENTER);
-      }
       return panel;
+    }
+
+    @NotNull
+    protected JPanel createMessagePanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        textLabel.setUI(new MultiLineLabelUI());
+        messagePanel.add(textLabel, BorderLayout.NORTH);
+      }
+      return messagePanel;
     }
 
     protected static JTextPane createMessageComponent(final String message) {
@@ -1568,11 +1585,10 @@ public class Messages {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
-      HTMLEditorKit editorKit = new HTMLEditorKit();
+      HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit();
       Font font = UIUtil.getLabelFont(fixedFontSize);
       editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(font, UIUtil.getLabelForeground()));
       messageComponent.setEditorKit(editorKit);
-      messageComponent.setContentType(UIUtil.HTML_MIME);
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);
@@ -1631,32 +1647,20 @@ public class Messages {
 
     @Override
     protected JComponent createNorthPanel() {
-      JPanel panel = new JPanel(new BorderLayout(15, 0));
-      if (myIcon != null) {
-        JLabel iconLabel = new JLabel(myIcon);
-        Container container = new Container();
-        container.setLayout(new BorderLayout());
-        container.add(iconLabel, BorderLayout.NORTH);
-        panel.add(container, BorderLayout.WEST);
-      }
+      JPanel panel = createIconPanel();
+      JPanel messagePanel = createMessagePanel();
 
-      JPanel messagePanel = new JPanel(new BorderLayout());
-      if (myMessage != null) {
-        JLabel textLabel = new JLabel(myMessage);
-        textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        textLabel.setUI(new MultiLineLabelUI());
-        messagePanel.add(textLabel, BorderLayout.NORTH);
-      }
-
-      final JPanel checkboxPanel = new JPanel();
-      checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.X_AXIS));
-
-      myCheckBox = new JCheckBox(myCheckboxText);
-      myCheckBox.setSelected(myChecked);
-      messagePanel.add(myCheckBox, BorderLayout.SOUTH);
+      messagePanel.add(createCheckComponent(), BorderLayout.SOUTH);
       panel.add(messagePanel, BorderLayout.CENTER);
 
       return panel;
+    }
+
+    @NotNull
+    protected JComponent createCheckComponent() {
+      myCheckBox = new JCheckBox(myCheckboxText);
+      myCheckBox.setSelected(myChecked);
+      return myCheckBox;
     }
 
     @Override
@@ -1788,14 +1792,7 @@ public class Messages {
 
     @Override
     protected JComponent createNorthPanel() {
-      JPanel panel = new JPanel(new BorderLayout(15, 0));
-      if (myIcon != null) {
-        JLabel iconLabel = new JLabel(myIcon);
-        Container container = new Container();
-        container.setLayout(new BorderLayout());
-        container.add(iconLabel, BorderLayout.NORTH);
-        panel.add(container, BorderLayout.WEST);
-      }
+      JPanel panel = createIconPanel();
 
       JPanel messagePanel = createMessagePanel();
       panel.add(messagePanel, BorderLayout.CENTER);
@@ -2016,22 +2013,8 @@ public class Messages {
 
     @Override
     protected JComponent createNorthPanel() {
-      JPanel panel = new JPanel(new BorderLayout(15, 0));
-      if (myIcon != null) {
-        JLabel iconLabel = new JLabel(myIcon);
-        Container container = new Container();
-        container.setLayout(new BorderLayout());
-        container.add(iconLabel, BorderLayout.NORTH);
-        panel.add(container, BorderLayout.WEST);
-      }
-
-      JPanel messagePanel = new JPanel(new BorderLayout());
-      if (myMessage != null) {
-        JLabel textLabel = new JLabel(myMessage);
-        textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        textLabel.setUI(new MultiLineLabelUI());
-        messagePanel.add(textLabel, BorderLayout.NORTH);
-      }
+      JPanel panel = createIconPanel();
+      JPanel messagePanel = createMessagePanel();
 
       myComboBox = new ComboBox(220);
       messagePanel.add(myComboBox, BorderLayout.SOUTH);

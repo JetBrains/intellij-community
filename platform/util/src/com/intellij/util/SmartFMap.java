@@ -30,7 +30,7 @@ import java.util.*;
 public class SmartFMap<K,V> implements Map<K,V> {
   private static final SmartFMap EMPTY = new SmartFMap(ArrayUtil.EMPTY_OBJECT_ARRAY);
   private static final int ARRAY_THRESHOLD = 8;
-  private final Object myMap;
+  private final Object myMap; // Object[] for map sizes up to ARRAY_THRESHOLD or Map
 
   private SmartFMap(Object map) {
     myMap = map;
@@ -41,12 +41,12 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   public SmartFMap<K, V> plus(@NotNull K key, V value) {
-    return new SmartFMap<K, V>(doPlus(myMap, key, value, false));
+    return new SmartFMap<K, V>(doPlus(myMap, key, value));
   }
 
-  private static Object doPlus(Object oldMap, Object key, Object value, boolean inPlace) {
+  private static Object doPlus(Object oldMap, Object key, Object value) {
     if (oldMap instanceof Map) {
-      Map newMap = inPlace ? (Map)oldMap : new THashMap((Map)oldMap);
+      Map newMap = new THashMap((Map)oldMap);
       newMap.put(key, value);
       return newMap;
     }
@@ -54,10 +54,8 @@ public class SmartFMap<K,V> implements Map<K,V> {
     Object[] array = (Object[])oldMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
-        Object[] newArray = inPlace ? array : new Object[array.length];
-        if (!inPlace) {
-          System.arraycopy(array, 0, newArray, 0, array.length);
-        }
+        Object[] newArray = new Object[array.length];
+        System.arraycopy(array, 0, newArray, 0, array.length);
         newArray[i + 1] = value;
         return newArray;
       }

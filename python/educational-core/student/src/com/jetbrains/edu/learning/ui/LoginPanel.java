@@ -5,6 +5,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import com.jetbrains.edu.learning.stepic.LoginDialog;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -47,6 +49,9 @@ public class LoginPanel {
         e.getComponent().setCursor(Cursor.getDefaultCursor());
       }
     });
+    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    myLoginField.setText(user.getEmail());
+    myPasswordField.setText(user.getPassword());
   }
 
   public JPanel getContentPanel() {

@@ -24,11 +24,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -49,8 +56,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
-  private final List<EventListener> myMouseListeners = new ArrayList<EventListener>();
-  private final Set<EventListener> mySortedMouseListeners = new TreeSet<EventListener>((o1, o2) -> {
+  private final List<EventListener> myMouseListeners = new ArrayList<>();
+  private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
     double weight1 = 0;
     double weight2 = 0;
     if (o1 instanceof Weighted) {
@@ -72,11 +79,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   };
 
   private boolean myPreprocessorActive;
-  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
+  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<>();
 
   private Component myLastCursorComponent;
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
+
+  WindowShadowPainter myWindowShadowPainter;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     this(rootPane, false);
@@ -90,6 +99,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     if (installPainters) {
       IdeBackgroundUtil.initFramePainters(this);
       IdeBackgroundUtil.initEditorPainters(this);
+    }
+    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter")) {
+      myWindowShadowPainter = new WindowShadowPainter();
+      getPainters().addPainter(myWindowShadowPainter, null);
     }
   }
 
@@ -283,6 +296,15 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       if (UIUtil.getWindow(this) != UIUtil.getWindow(e.getComponent())) return false;
 
       final MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
+      if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {
+        Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+        Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(c);
+        if (balloon instanceof BalloonImpl) {
+          JComponent component = ((BalloonImpl)balloon).getComponent();
+          component.getToolkit().getSystemClipboard().setContents(
+            new StringSelection(UIUtil.getDebugText(component)), EmptyClipboardOwner.INSTANCE);
+        }
+      }
 
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
         return false;

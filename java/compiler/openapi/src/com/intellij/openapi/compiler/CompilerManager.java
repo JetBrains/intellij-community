@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -40,6 +41,9 @@ import java.util.Set;
 public abstract class CompilerManager {
   @Deprecated
   public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
+  public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
+  public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
+
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 
   /**
@@ -297,6 +301,7 @@ public abstract class CompilerManager {
   public abstract Collection<ClassObject> compileJavaCode(List<String> options,
                                                           Collection<File> platformCp,
                                                           Collection<File> classpath,
+                                                          Collection<File> modulePath,
                                                           Collection<File> sourcePath,
                                                           Collection<File> files,
                                                           File outputDir) throws IOException, CompilationException;

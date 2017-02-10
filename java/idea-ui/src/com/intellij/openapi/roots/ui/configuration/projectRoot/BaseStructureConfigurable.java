@@ -275,7 +275,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     AbstractAddGroup addAction = createAddAction();
     if (addAction != null) {
       result.add(addAction);
@@ -315,7 +315,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
-    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<RemoveConfigurableHandler, MyNode>();
+    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<>();
     for (MyNode node : nodes) {
       final NamedConfigurable<?> configurable = node.getConfigurable();
       if (configurable == null) continue;
@@ -343,7 +343,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       super(new Condition<Object[]>() {
         @Override
         public boolean value(final Object[] objects) {
-          List<MyNode> nodes = new ArrayList<MyNode>();
+          List<MyNode> nodes = new ArrayList<>();
           for (Object object : objects) {
             if (!(object instanceof MyNode)) return false;
             nodes.add((MyNode)object);
@@ -376,7 +376,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       });
       MultiMap<RemoveConfigurableHandler, MyNode> grouped = groupNodes(nodes);
 
-      List<MyNode> removedNodes = new ArrayList<MyNode>();
+      List<MyNode> removedNodes = new ArrayList<>();
       for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : grouped.entrySet()) {
         //noinspection unchecked
         boolean removed = entry.getKey().remove(getEditableObjects(entry.getValue()));
@@ -389,7 +389,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   private static List<?> getEditableObjects(Collection<MyNode> value) {
-    List<Object> objects = new ArrayList<Object>();
+    List<Object> objects = new ArrayList<>();
     for (MyNode node : value) {
       objects.add(node.getConfigurable().getEditableObject());
     }

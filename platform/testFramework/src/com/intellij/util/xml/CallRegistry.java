@@ -25,8 +25,8 @@ import java.util.List;
  */
 public class CallRegistry<T> {
   private int mySize;
-  private final List<String> myExpected = new ArrayList<String>();
-  private final List<String> myActual = new ArrayList<String>();
+  private final List<String> myExpected = new ArrayList<>();
+  private final List<String> myActual = new ArrayList<>();
 
   public void putActual(T o) {
     myActual.add(o.toString());

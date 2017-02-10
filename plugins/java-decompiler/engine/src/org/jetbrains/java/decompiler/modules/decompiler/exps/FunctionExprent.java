@@ -191,7 +191,7 @@ public class FunctionExprent extends Exprent {
     3    // FUNCTION_STR_CONCAT = 49;
   };
 
-  private static final Set<Integer> ASSOCIATIVITY = new HashSet<Integer>(Arrays.asList(
+  private static final Set<Integer> ASSOCIATIVITY = new HashSet<>(Arrays.asList(
     FUNCTION_ADD, FUNCTION_MUL, FUNCTION_AND, FUNCTION_OR, FUNCTION_XOR, FUNCTION_CADD, FUNCTION_COR, FUNCTION_STR_CONCAT));
 
   private int funcType;
@@ -199,7 +199,7 @@ public class FunctionExprent extends Exprent {
   private final List<Exprent> lstOperands;
 
   public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
-    this(funcType, new ArrayList<Exprent>(), bytecodeOffsets);
+    this(funcType, new ArrayList<>(), bytecodeOffsets);
 
     if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
       lstOperands.add(stack.pop());
@@ -223,7 +223,7 @@ public class FunctionExprent extends Exprent {
   }
 
   public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
-    this(funcType, new ArrayList<Exprent>(1), bytecodeOffsets);
+    this(funcType, new ArrayList<>(1), bytecodeOffsets);
     lstOperands.add(operand);
   }
 
@@ -413,14 +413,14 @@ public class FunctionExprent extends Exprent {
 
   @Override
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     lst.addAll(lstOperands);
     return lst;
   }
 
   @Override
   public Exprent copy() {
-    List<Exprent> lst = new ArrayList<Exprent>();
+    List<Exprent> lst = new ArrayList<>();
     for (Exprent expr : lstOperands) {
       lst.add(expr.copy());
     }

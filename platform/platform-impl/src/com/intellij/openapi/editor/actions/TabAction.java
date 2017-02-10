@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -70,7 +71,7 @@ public class TabAction extends EditorAction {
   }
 
   private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, @Nullable Project project) {
-    MacUIUtil.hideCursor();
+    EditorUIUtil.hideCursorInEditor(editor);
     int columnNumber;
     if (caret.hasSelection()) {
       columnNumber = editor.visualToLogicalPosition(caret.getSelectionStartPosition()).column;

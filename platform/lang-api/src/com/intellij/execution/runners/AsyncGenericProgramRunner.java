@@ -31,9 +31,9 @@ import org.jetbrains.concurrency.Promise;
  */
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Override
-  protected final void execute(@NotNull final ExecutionEnvironment environment,
-                               @Nullable final Callback callback,
-                               @NotNull final RunProfileState state) throws ExecutionException {
+  protected final void execute(@NotNull ExecutionEnvironment environment,
+                               @Nullable Callback callback,
+                               @NotNull RunProfileState state) throws ExecutionException {
     prepare(environment, state)
       .done(result -> UIUtil.invokeLaterIfNeeded(() -> {
         if (!environment.getProject().isDisposed()) {

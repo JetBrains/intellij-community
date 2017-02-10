@@ -93,6 +93,13 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = true;
   public boolean OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = false;
 
+  /**
+   * Corresponds to the option of pycodestyle.py "--hang-closing". Basically, it means that the closing brace of a collection literal, 
+   * a comprehension, an argument list, a parameter list or parentheses in "from" import statement should have the same indent as the items 
+   * inside even if there is so called hanging indent (nothing follows the opening bracket on its line).
+   */
+  public boolean HANG_CLOSING_BRACKETS = false;
+
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }

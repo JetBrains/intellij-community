@@ -1,0 +1,5 @@
+{
+  "definitions": {
+    "findMe": <warning descr="Type is not allowed">true</warning>
+  }
+}

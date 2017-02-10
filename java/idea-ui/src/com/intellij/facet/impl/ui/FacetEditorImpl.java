@@ -48,7 +48,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
-  private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
+  private final Set<FacetEditorTab> myVisitedTabs = new HashSet<>();
   private int mySelectedTabIndex = 0;
   private final Disposable myDisposable = Disposer.newDisposable();
 

@@ -18,13 +18,11 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 
 public interface XLocalAttachDebugger {
   @NotNull
   String getDebuggerDisplayName();
 
-  @NotNull
-  XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException;
+  void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException;
 }

@@ -74,7 +74,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     if (myClassReferenceListMap.isEmpty()) {
       return Collections.emptyList();
     }
-    return new ArrayList<PsiMember>(myClassReferenceListMap.keySet());
+    return new ArrayList<>(myClassReferenceListMap.keySet());
   }
 
   @Override
@@ -92,7 +92,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       return;
     }
     Collections.sort(targets, new PsiMemberComparator());
-    final List<Object> model = new ArrayList<Object>();
+    final List<Object> model = new ArrayList<>();
     model.add(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"));
     model.addAll(targets);
     final JList list = new JBList(model);
@@ -146,7 +146,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
 
   static class ReferenceCollector extends JavaRecursiveElementVisitor {
 
-    private final Map<PsiMember, List<PsiElement>> classReferenceListMap = new HashMap<PsiMember, List<PsiElement>>();
+    private final Map<PsiMember, List<PsiElement>> classReferenceListMap = new HashMap<>();
     private final PsiElement[] myImportTargets;
     private final boolean myOnDemand;
     private final boolean myImportStatic;
@@ -263,7 +263,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     private void addReference(PsiMember referencedMember, PsiJavaCodeReferenceElement reference) {
       List<PsiElement> referenceList = classReferenceListMap.get(referencedMember);
       if (referenceList == null) {
-        referenceList = new ArrayList<PsiElement>();
+        referenceList = new ArrayList<>();
         classReferenceListMap.put(referencedMember, referenceList);
       }
       referenceList.add(reference.getReferenceNameElement());

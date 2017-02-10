@@ -59,7 +59,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
 
-    final List<Generator> children = new ArrayList<Generator>();
+    final List<Generator> children = new ArrayList<>();
     final Generator command = creator.createSubFolderCommand(myDirectoryName);
     if (command != null) {
       children.add(command);

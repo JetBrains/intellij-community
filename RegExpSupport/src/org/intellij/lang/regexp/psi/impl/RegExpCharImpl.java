@@ -36,6 +36,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         super(astNode);
     }
 
+    @Override
     @NotNull
     public Type getType() {
         final ASTNode child = getNode().getFirstChildNode();
@@ -54,44 +55,22 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         }
     }
 
+    @Override
     @Nullable
     public Character getValue() {
       final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) {
-        return '\\';
-      }
-      // special case for valid octal escaped sequences (see RUBY-12161)
-      if (s.startsWith("\\") && s.length() > 1) {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType t = child.getElementType();
-        if (t == RegExpTT.OCT_CHAR) {
-          try {
-            return (char) Integer.parseInt(s.substring(1), 8);
-          }
-          catch (NumberFormatException e) {
-            // do nothing
-          }
-        } else {
-          char nextChar = s.charAt(1);
-          if (Character.isDigit(nextChar) && nextChar != '0') {
-            Character character = parseNumber(0, s, 10, s.length() - 1, true);
-            if (character != null) {
-              return character;
-            }
-          }
-        }
-      }
+      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
       return unescapeChar(s);
     }
 
     @Nullable
-    static Character unescapeChar(String s) {
-        assert s.length() > 0;
+    private static Character unescapeChar(String s) {
+        final int length = s.length();
+        assert length > 0;
 
         boolean escaped = false;
-        for (int idx = 0; idx < s.length(); idx++) {
-            char ch = s.charAt(idx);
+        for (int idx = 0; idx < length; idx++) {
+            final char ch = s.charAt(idx);
             if (!escaped) {
                 if (ch == '\\') {
                     escaped = true;
@@ -100,37 +79,52 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 }
             } else {
                 switch (ch) {
-                    case'n':
+                    case 'n':
                         return '\n';
-                    case'r':
+                    case 'r':
                         return '\r';
-                    case't':
+                    case 't':
                         return '\t';
-                    case'a':
+                    case 'a':
                         return '\u0007';
-                    case'e':
+                    case 'e':
                         return '\u001b';
-                    case'f':
+                    case 'f':
                         return '\f';
                     case 'b':
                         return '\b';
-                    case'c':
+                    case 'c':
                         return (char)(ch ^ 64);
-                    case'x':
-                      if (s.length() <= idx + 1) return null;
+                    case 'x':
+                      if (length <= idx + 1) return null;
                       if (s.charAt(idx + 1) == '{') {
-                        final char c = s.charAt(s.length() - 1);
-                        return (c != '}') ? null : parseNumber(idx + 1, s, 16, s.length() - 4, true);
+                        final char c = s.charAt(length - 1);
+                        return (c != '}') ? null : parseNumber(s, idx + 2, 16);
                       }
-                      return s.length() == 4 ? parseNumber(idx, s, 16, 2, true) : null;
-                    case'u':
-                        return parseNumber(idx, s, 16, 4, true);
-                    case'0':
-                        return parseNumber(idx, s, 8, 3, false);
-                    default:
-                        if (Character.isLetter(ch)) {
-                            return null;
+                      if (length == 3) {
+                          return parseNumber(s, idx + 1, 16);
+                      }
+                      return length == 4 ? parseNumber(s, idx + 1, 16) : null;
+                    case 'u':
+                        if (length <= idx + 1) return null;
+                        if (length > idx + 1 && s.charAt(idx + 1) == '{') {
+                            final char c = s.charAt(length - 1);
+                            return (c != '}') ? null : parseNumber(s, idx + 2, 16);
                         }
+                        if (length != 6) {
+                            return ch;
+                        }
+                        return parseNumber(s, idx + 1, 16);
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                        return parseNumber(s, idx, 8);
+                    default:
                         return ch;
                 }
             }
@@ -139,26 +133,24 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         return null;
     }
 
-    static Character parseNumber(int idx, String s, int radix, int len, boolean strict) {
-        final int start = idx + 1;
-        final int end = start + len;
-        try {
-            int sum = 0;
-            int i;
-            for (i = start; i < end && i < s.length(); i++) {
-                sum *= radix;
-                sum += Integer.valueOf(s.substring(i, i + 1), radix);
+    private static Character parseNumber(String s, int offset, int radix) {
+        int sum = 0;
+        int i = offset;
+        for (; i < s.length(); i++) {
+            final int digit = Character.digit(s.charAt(i), radix);
+            if (digit < 0) { // '}' encountered
+                break;
             }
-            if (i-start == 0) return null;
-            if (sum < Character.MIN_CODE_POINT || sum > Character.MAX_CODE_POINT) {
+            sum = sum * radix + digit;
+            if (sum > Character.MAX_CODE_POINT) {
                 return null;
             }
-            return i-start < len && strict ? null : (char)sum;
-        } catch (NumberFormatException e1) {
-            return null;
         }
+        if (i - offset <= 0) return null; // no digits found
+        return (char)sum;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpChar(this);
     }

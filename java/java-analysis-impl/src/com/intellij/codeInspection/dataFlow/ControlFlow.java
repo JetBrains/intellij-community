@@ -36,9 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ControlFlow {
-  private final List<Instruction> myInstructions = new ArrayList<Instruction>();
-  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final List<Instruction> myInstructions = new ArrayList<>();
+  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<>();
+  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<>();
   private final DfaValueFactory myFactory;
 
   public ControlFlow(final DfaValueFactory factory) {
@@ -87,6 +87,11 @@ public class ControlFlow {
       public int getInstructionOffset() {
         return myElementToStartOffsetMap.get(element);
       }
+
+      @Override
+      public String toString() {
+        return String.valueOf(myElementToStartOffsetMap.get(element));
+      }
     };
   }
 
@@ -95,6 +100,11 @@ public class ControlFlow {
       @Override
       public int getInstructionOffset() {
         return myElementToEndOffsetMap.get(element);
+      }
+
+      @Override
+      public String toString() {
+        return String.valueOf(myElementToEndOffsetMap.get(element));
       }
     };
   }

@@ -46,10 +46,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
     try {
       return JDOMUtil.loadDocument(file);
     }
-    catch (JDOMException e) {
-      throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
   }
@@ -115,7 +112,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static List<Element> removeChildren(final Element element, final Condition<Element> filter) {
-    List<Element> toRemove = new ArrayList<Element>();
+    List<Element> toRemove = new ArrayList<>();
     final List<Element> list = element.getChildren();
     for (Element e : list) {
       if (filter.value(e)) {
@@ -147,8 +144,8 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
   }
 
   public static void removeDuplicatedOptions(final Element element) {
-    List<Element> children = new ArrayList<Element>(element.getChildren(OPTION_ELEMENT));
-    Set<String> names = new HashSet<String>();
+    List<Element> children = new ArrayList<>(element.getChildren(OPTION_ELEMENT));
+    Set<String> names = new HashSet<>();
     for (Element child : children) {
       if (!names.add(child.getAttributeValue(NAME_ATTRIBUTE))) {
         element.removeContent(child);

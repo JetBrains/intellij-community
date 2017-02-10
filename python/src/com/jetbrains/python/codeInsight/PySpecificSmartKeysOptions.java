@@ -25,8 +25,9 @@ import com.jetbrains.python.PyBundle;
 public class PySpecificSmartKeysOptions extends BeanConfigurable<PyCodeInsightSettings> implements UnnamedConfigurable {
   public PySpecificSmartKeysOptions() {
     super(PyCodeInsightSettings.getInstance());
-    checkBox("INSERT_BACKSLASH_ON_WRAP", PyBundle.message("smartKeys.insert.backslash.in.statement.on.enter"));
-    checkBox("INSERT_SELF_FOR_METHODS", PyBundle.message("smartKeys.insert.self.in.method"));
-    checkBox("INSERT_TYPE_DOCSTUB", PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"));
+    PyCodeInsightSettings settings = getInstance();
+    checkBox(PyBundle.message("smartKeys.insert.backslash.in.statement.on.enter"), ()->settings.INSERT_BACKSLASH_ON_WRAP, v->settings.INSERT_BACKSLASH_ON_WRAP=v);
+    checkBox(PyBundle.message("smartKeys.insert.self.in.method"), ()->settings.INSERT_SELF_FOR_METHODS, v->settings.INSERT_SELF_FOR_METHODS=v);
+    checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), ()->settings.INSERT_TYPE_DOCSTUB, v->settings.INSERT_TYPE_DOCSTUB=v);
   }
 }

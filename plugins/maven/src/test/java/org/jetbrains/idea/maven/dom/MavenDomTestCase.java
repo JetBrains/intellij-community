@@ -67,7 +67,7 @@ import java.util.Map;
 
 public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected CodeInsightTestFixture myFixture;
-  private final Map<VirtualFile, Long> myConfigTimestamps = new THashMap<VirtualFile, Long>();
+  private final Map<VirtualFile, Long> myConfigTimestamps = new THashMap<>();
   private boolean myOriginalAutoCompletion;
 
   @Override
@@ -262,7 +262,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {
       result.add(each.getLookupString());
     }
@@ -382,7 +382,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
       }
     });
     PsiElement target = ((PsiElement2UsageTargetAdapter)targets[0]).getElement();
-    List<PsiReference> result = new ArrayList<PsiReference>(ReferencesSearch.search(target).findAll());
+    List<PsiReference> result = new ArrayList<>(ReferencesSearch.search(target).findAll());
     return ContainerUtil.map(result, psiReference -> psiReference.getElement());
   }
 
@@ -391,7 +391,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     HighlightUsagesHandler.invoke(myProject, editor, getTestPsiFile(file));
 
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-    List<HighlightInfo> actual = new ArrayList<HighlightInfo>();
+    List<HighlightInfo> actual = new ArrayList<>();
     for (RangeHighlighter each : highlighters) {
       if (!each.isValid()) continue;
       int offset = each.getStartOffset();

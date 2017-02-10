@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,7 +267,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     panel.add(new JLabel(), gc);
 
     Collection<String> urls = SvnApplicationSettings.getInstance().getCheckoutURLs();
-    ArrayList<SVNURL> svnURLs = new ArrayList<SVNURL>();
+    ArrayList<SVNURL> svnURLs = new ArrayList<>();
     for (final String url : urls) {
       try {
         svnURLs.add(SVNURL.parseURIEncoded(url));
@@ -652,7 +652,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
                                                      "'. Are you sure?", SvnBundle.message(myDialogTitleKey), Messages.getWarningIcon());
-            if (Messages.OK == result) return;
+            if (Messages.OK != result) return;
           }
         }
         String message = dialog.getCommitMessage();
@@ -798,7 +798,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     private boolean doDelete(final SVNURL url, final String comment) {
-      final Ref<Exception> exception = new Ref<Exception>();
+      final Ref<Exception> exception = new Ref<>();
       final Project project = myBrowserComponent.getProject();
       Runnable command = new Runnable() {
         public void run() {
@@ -969,7 +969,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected static void doMkdir(final SVNURL url, final String comment, final Project project) {
-    final Ref<Exception> exception = new Ref<Exception>();
+    final Ref<Exception> exception = new Ref<>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -993,7 +993,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
-    final Ref<Exception> exception = new Ref<Exception>();
+    final Ref<Exception> exception = new Ref<>();
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -1095,10 +1095,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
                                                                     SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (VcsException e) {
+    catch (IOException | VcsException e) {
       LOG.info(e);
     }
     finally {

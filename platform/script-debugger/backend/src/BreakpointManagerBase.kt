@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.*
 import java.util.concurrent.ConcurrentMap
 
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
@@ -77,7 +75,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
     if (existed) {
       breakpointDuplicationByTarget.remove(b)
     }
-    return if (!existed || !b.isVmRegistered()) resolvedPromise() else doClearBreakpoint(b)
+    return if (!existed || !b.isVmRegistered()) nullPromise() else doClearBreakpoint(b)
   }
 
   override final fun removeAll(): Promise<*> {
@@ -90,7 +88,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
         promises.add(doClearBreakpoint(b))
       }
     }
-    return Promise.all(promises)
+    return all(promises)
   }
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>
@@ -119,14 +117,14 @@ class DummyBreakpointManager : BreakpointManager {
     throw UnsupportedOperationException()
   }
 
-  override fun remove(breakpoint: Breakpoint) = resolvedPromise()
+  override fun remove(breakpoint: Breakpoint) = nullPromise()
 
   override fun addBreakpointListener(listener: BreakpointListener) {
   }
 
-  override fun removeAll() = resolvedPromise()
+  override fun removeAll() = nullPromise()
 
-  override fun flush(breakpoint: Breakpoint) = resolvedPromise()
+  override fun flush(breakpoint: Breakpoint) = nullPromise()
 
-  override fun enableBreakpoints(enabled: Boolean) = resolvedPromise()
+  override fun enableBreakpoints(enabled: Boolean) = nullPromise()
 }

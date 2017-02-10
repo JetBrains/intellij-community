@@ -40,7 +40,7 @@ import java.util.Set;
 public class PyGotoSymbolContributor implements GotoClassContributor {
   @NotNull
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    Set<String> symbols = new HashSet<String>();
+    Set<String> symbols = new HashSet<>();
     symbols.addAll(PyClassNameIndex.allKeys(project));
     symbols.addAll(PyModuleNameIndex.getAllKeys(project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
@@ -54,7 +54,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
                                     ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);
 
-    List<NavigationItem> symbols = new ArrayList<NavigationItem>();
+    List<NavigationItem> symbols = new ArrayList<>();
     symbols.addAll(PyClassNameIndex.find(name, project, scope));
     symbols.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
     symbols.addAll(PyFunctionNameIndex.find(name, project, scope));

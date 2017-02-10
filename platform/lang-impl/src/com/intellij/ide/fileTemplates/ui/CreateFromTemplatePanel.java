@@ -42,7 +42,7 @@ public class CreateFromTemplatePanel {
   private JPanel myAttrPanel;
   private JTextField myFilenameField;
   private final String[] myUnsetAttributes;
-  private final ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();
+  private final ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<>();
 
   private int myHorizontalMargin = -1;
   private int myVerticalMargin = -1;

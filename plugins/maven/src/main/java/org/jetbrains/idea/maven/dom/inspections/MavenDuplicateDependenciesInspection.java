@@ -63,7 +63,7 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
         Collection<MavenDomDependency> dependencies = allDuplicates.get(id);
         if (dependencies.size() > 1) {
 
-          List<MavenDomDependency> duplicatedDependencies = new ArrayList<MavenDomDependency>();
+          List<MavenDomDependency> duplicatedDependencies = new ArrayList<>();
 
           for (MavenDomDependency d : dependencies) {
             if (d == dependency) continue;
@@ -98,7 +98,7 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
                                  @NotNull Collection<MavenDomDependency> dependencies,
                                  @NotNull DomElementAnnotationHolder holder) {
     StringBuilder sb = new StringBuilder();
-    Set<MavenDomProjectModel> processed = new HashSet<MavenDomProjectModel>();
+    Set<MavenDomProjectModel> processed = new HashSet<>();
     for (MavenDomDependency domDependency : dependencies) {
       if (dependency.equals(domDependency)) continue;
       MavenDomProjectModel model = domDependency.getParentOfType(MavenDomProjectModel.class, false);

@@ -77,7 +77,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
   @NotNull
   public List<ExternalSystemNode<?>> createNodes(final ExternalProjectsView externalProjectsView,
                                                  final MultiMap<Key<?>, DataNode<?>> dataNodes) {
-    final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
+    final List<ExternalSystemNode<?>> result = new SmartList<>();
 
     addModuleNodes(externalProjectsView, dataNodes, result);
     // add tasks

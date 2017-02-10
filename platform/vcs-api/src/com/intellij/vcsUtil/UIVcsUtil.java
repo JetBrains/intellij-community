@@ -27,6 +27,7 @@ public class UIVcsUtil {
   private UIVcsUtil() {
   }
 
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public static JPanel errorPanel(final String text, boolean isError) {
     final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(escapeXmlAndAddBr(text)));
     label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : UIUtil.getInactiveTextColor());

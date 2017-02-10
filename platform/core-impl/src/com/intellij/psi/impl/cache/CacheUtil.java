@@ -26,8 +26,14 @@ public class CacheUtil {
 
   public static boolean isInComments(final IElementType tokenType) {
     final Language language = tokenType.getLanguage();
-    boolean inComments = false;
 
+    for (CommentTokenSetProvider provider : CommentTokenSetProvider.EXTENSION.allForLanguage(language)) {
+      if (provider.isInComments(tokenType)) {
+        return true;
+      }
+    }
+
+    boolean inComments = false;
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 
     if (parserDefinition != null) {

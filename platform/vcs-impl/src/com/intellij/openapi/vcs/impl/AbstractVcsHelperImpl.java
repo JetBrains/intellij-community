@@ -28,9 +28,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -78,6 +76,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -185,7 +184,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (dlg.showAndGet()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
       // return items in the same order as they were passed to us
-      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      final List<VirtualFile> result = new ArrayList<>();
       for (VirtualFile file : files) {
         if (selection.contains(file)) {
           result.add(file);
@@ -263,7 +262,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static String[] getExceptionMessages(VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
-    final List<String> list = new ArrayList<String>();
+    final List<String> list = new ArrayList<>();
     for (String message : messages) {
       list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
     }
@@ -319,7 +318,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             addDirectMessages(vcsErrorViewPanel, entry.getValue());
           } else {
             final List<VcsException> exceptionList = entry.getValue();
-            final List<SimpleErrorData> list = new ArrayList<SimpleErrorData>(exceptionList.size());
+            final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
             for (VcsException exception : exceptionList) {
               final String[] messages = getExceptionMessages(exception);
               list.add(new SimpleErrorData(
@@ -360,7 +359,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    List<VcsException> exceptions = new ArrayList<>();
 
     TransactionProvider transactionProvider = vcs.getTransactionProvider();
     boolean transactionSupported = transactionProvider != null;
@@ -399,8 +398,25 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
-    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    TextEditor textFileEditor;
+    FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+    if (fileEditor instanceof TextEditor) {
+      textFileEditor = ((TextEditor)fileEditor);
+    }
+    else {
+      FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(file);
+      textFileEditor = ContainerUtil.findInstance(editors, TextEditor.class);
+    }
+
+    Editor editor;
+    if (textFileEditor != null) {
+      editor = textFileEditor.getEditor();
+    }
+    else {
+      OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
+      editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    }
+
     if (editor == null) {
       Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
                                  VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
@@ -534,7 +550,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (ok) {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
           (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
-        final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
+        final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
           parent = WindowManager.getInstance().suggestParentWindow(myProject);
@@ -785,7 +801,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myLocation = location;
       mySettings = settings;
       myDlg = dlg;
-      myExceptions = new LinkedList<VcsException>();
+      myExceptions = new LinkedList<>();
     }
 
     public void cancel() {
@@ -794,7 +810,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     public void run(@NotNull final ProgressIndicator indicator) {
       final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
-      final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(10, appender, -1);
+      final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(10, appender, -1);
 
       final Application application = ApplicationManager.getApplication();
       try {

@@ -45,11 +45,12 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
   @NotNull
   public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
-    Collection<PrintElementWithGraphElement> result = new ArrayList<PrintElementWithGraphElement>();
+    Collection<PrintElementWithGraphElement> result = new ArrayList<>();
+
+    Collection<SimpleRowElement> simpleRowElements = getSimpleRowElements(rowIndex);
 
     Map<GraphEdge, SimpleRowElement> arrows = ContainerUtil.newHashMap();
-
-    for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
+    for (SimpleRowElement rowElement : simpleRowElements) {
       if (!rowElement.myType.equals(RowElementType.NODE)) {
         arrows.put((GraphEdge)rowElement.myElement, rowElement);
       }
@@ -84,7 +85,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
                                               myPrintElementManager));
     }
 
-    for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
+    for (SimpleRowElement rowElement : simpleRowElements) {
       if (rowElement.myType.equals(RowElementType.NODE)) {
         result.add(createSimplePrintElement(rowIndex, rowElement));
       }

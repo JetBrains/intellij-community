@@ -10,6 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -17,8 +19,6 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -50,13 +50,15 @@ public class StudySmartChecker {
       if (windowDocument != null) {
         final File resourceFile =
           StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
-        final TaskFile windowTaskFile = new TaskFile();
-        TaskFile.copy(answerTaskFile, windowTaskFile);
+        TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(virtualFile));
+        if (windowTaskFile == null) {
+          return;
+        }
         EduDocumentListener listener = new EduDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = placeholder.getOffset();
         int end = start + placeholder.getRealLength();
-        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(placeholder.getIndex());
+        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getActivePlaceholders().get(placeholder.getIndex());
         int userStart = userAnswerPlaceholder.getOffset();
         int userEnd = userStart + userAnswerPlaceholder.getRealLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));

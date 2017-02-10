@@ -66,4 +66,9 @@ public interface EditorColors {
   ColorKey BORDER_LINES_COLOR = ColorKey.createColorKey("BORDER_LINES_COLOR");
 
   TextAttributesKey INJECTED_LANGUAGE_FRAGMENT = TextAttributesKey.createTextAttributesKey("INJECTED_LANGUAGE_FRAGMENT");
+  
+  TextAttributesKey BREADCRUMBS_DEFAULT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_DEFAULT");
+  TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
+  TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
+  TextAttributesKey BREADCRUMBS_INACTIVE = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_INACTIVE");
 }

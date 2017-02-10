@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,12 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
       }
     }
     if (target != null && !(target instanceof GrAccessorMethod) && target.getUserData(NAVIGATION_ELEMENT_IS_NOT_TARGET) == null) {
-      return target.getNavigationElement();
+      if (target instanceof PsiMirrorElement) {
+        return ((PsiMirrorElement)target).getPrototype();
+      }
+      else {
+        return target.getNavigationElement();
+      }
     }
     return target;
   }

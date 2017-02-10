@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import org.jetbrains.annotations.NotNull;
  * Time: 19:59:57
  */
 public class XsltRunner extends DefaultProgramRunner {
+  @Override
   @NotNull
   public String getRunnerId() {
     return "XsltProgramRunner";
   }
 
+  @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return DefaultRunExecutor.EXECUTOR_ID.equals(executorId) && 
            profile instanceof XsltRunConfiguration &&

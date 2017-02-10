@@ -59,7 +59,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
         final PsiClass resolved = ((PsiClassType)castType).resolve();
         assert resolved != null;
         final PsiTypeParameter typeParameter = resolved.getTypeParameters()[0];
-        final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+        final HashMap<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
         substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
         final PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(cast.getProject()).createSubstitutor(substitutionMap);
         return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);

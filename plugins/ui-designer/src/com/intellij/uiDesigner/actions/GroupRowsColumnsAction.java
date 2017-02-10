@@ -81,7 +81,7 @@ public class GroupRowsColumnsAction extends RowColumnAction {
   }
 
   private static int[] getCellsToGroup(CaptionSelection selection) {
-    ArrayList<Integer> cells = new ArrayList<Integer>();
+    ArrayList<Integer> cells = new ArrayList<>();
     int[] selectedIndices = selection.getSelection();
     for(int i: selectedIndices) {
       if (!selection.getContainer().getGridLayoutManager().isGapCell(selection.getContainer(), selection.isRow(), i)) {

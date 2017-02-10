@@ -40,8 +40,4 @@ public class FieldAccessor<FIELD_TYPE> {
   private static Object getFieldValue(Class c, String fieldName, Object o) {
     return ReflectionUtil.getField(c, o, null, fieldName);
   }
-
-  public static <FIELD_TYPE> FIELD_TYPE get(Class hostClass, Object host, String fieldName) {
-    return (FIELD_TYPE)getFieldValue(hostClass, fieldName, host);
-  }
 }

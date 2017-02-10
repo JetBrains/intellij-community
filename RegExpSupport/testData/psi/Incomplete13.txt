@@ -1,0 +1,9 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a|>
+    RegExpBranchImpl: <a>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+    PsiElement(UNION)('|')
+    PsiErrorElement:Dangling metacharacter
+      <empty list>
+  PsiElement(STAR)('*')

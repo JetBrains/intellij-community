@@ -76,7 +76,7 @@ public class LineBlocks {
    * @param unappliedOnly If true - only unapplied changes will be considered, if false - all changes (both applied and not applied).
    */
   public int[] getBeginnings(FragmentSide side, boolean unappliedOnly) {
-    List<Integer> result = new ArrayList<Integer>(myDiffs.size());
+    List<Integer> result = new ArrayList<>(myDiffs.size());
     int previousBeginning = Integer.MIN_VALUE;
 
     for (Diff diff : myDiffs) {
@@ -166,7 +166,7 @@ public class LineBlocks {
   }
 
   public static LineBlocks fromLineFragments(List<LineFragment> lines) {
-    ArrayList<LineBlock> filtered = new ArrayList<LineBlock>();
+    ArrayList<LineBlock> filtered = new ArrayList<>();
     for (LineFragment fragment : lines) {
       if (fragment.getType() != null) filtered.add(fragment);
     }
@@ -175,7 +175,7 @@ public class LineBlocks {
 
   static LineBlocks createLineBlocks(LineBlock[] blocks) {
     Arrays.sort(blocks, LineBlock.COMPARATOR);
-    List<Diff> diffs = new ArrayList<Diff>(blocks.length);
+    List<Diff> diffs = new ArrayList<>(blocks.length);
     for (LineBlock block : blocks) {
       Interval interval1 = new Interval(block.getStartingLine1(), block.getModifiedLines1());
       Interval interval2 = new Interval(block.getStartingLine2(), block.getModifiedLines2());
@@ -197,7 +197,7 @@ public class LineBlocks {
     // changes may come mixed, need to sort them to get correct intervals
     Collections.sort(changes, ChangeList.CHANGE_ORDER);
 
-    List<Diff> diffs = new ArrayList<Diff>(changes.size());
+    List<Diff> diffs = new ArrayList<>(changes.size());
     for (Change change : changes) {
       if (!change.isValid()) { continue; }
       int start1 = change.getChangeSide(FragmentSide.SIDE1).getStartLine();

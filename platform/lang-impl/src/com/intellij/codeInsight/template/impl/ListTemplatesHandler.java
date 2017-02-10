@@ -96,7 +96,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
     Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
 
-    Map<TemplateImpl, String> matchingTemplates = new TreeMap<TemplateImpl, String>(TemplateListPanel.TEMPLATE_COMPARATOR);
+    Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);
     for (TemplateImpl template : templates) {
       String templateKey = template.getKey();
       if (fullMatch) {
@@ -282,7 +282,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
-      LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
+      LinkedHashSet<LookupElement> result = new LinkedHashSet<>();
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
         if (item.getLookupString().startsWith(lookup.itemPattern(item))) {
@@ -290,9 +290,9 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       result.addAll(items);
-      ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
+      ArrayList<LookupElement> list = new ArrayList<>(result);
       int selected = lookup.isSelectionTouched() ? list.indexOf(lookup.getCurrentItem()) : 0;
-      return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
+      return new Pair<>(list, selected >= 0 ? selected : 0);
     }
 
     @Override

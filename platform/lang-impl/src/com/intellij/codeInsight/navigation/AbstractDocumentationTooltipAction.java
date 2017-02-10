@@ -39,8 +39,8 @@ public abstract class AbstractDocumentationTooltipAction extends AnAction {
   @Nullable private WeakReference<PsiElement> myOriginalElement;
 
   public void setDocInfo(@NotNull PsiElement docAnchor, @NotNull PsiElement originalElement) {
-    myDocAnchor = new PatchedWeakReference<PsiElement>(docAnchor);
-    myOriginalElement = new PatchedWeakReference<PsiElement>(originalElement);
+    myDocAnchor = new PatchedWeakReference<>(docAnchor);
+    myOriginalElement = new PatchedWeakReference<>(originalElement);
   }
   
   @Override

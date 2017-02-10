@@ -27,16 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import java.util.*;
 
 class ExpressionContext implements Cloneable {
-  List<String> myStatements = new ArrayList<String>();
+  List<String> myStatements = new ArrayList<>();
   Set<String> myUsedVarNames;
   LocalVarAnalyzer.Result analyzedVars = LocalVarAnalyzer.initialResult();
   TypeProvider typeProvider;
 
   Project project;
-  private final Map<String, Boolean> myProps = new HashMap<String, Boolean>();
+  private final Map<String, Boolean> myProps = new HashMap<>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
-  private Ref<String> myRefSetterName = new Ref<String>(null);
+  private Ref<String> myRefSetterName = new Ref<>(null);
 
   private final Map<PsiMethod, String> setters;
   private final Set<PsiClass> myClasses;
@@ -49,7 +49,7 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext(Project project, GroovyFile[] filesToConvert) {
-    this(project, new HashSet<String>(), new HashMap<PsiMethod, String>(), new HashSet<PsiClass>());
+    this(project, new HashSet<>(), new HashMap<>(), new HashSet<>());
     typeProvider = new TypeProvider();
     for (GroovyFile groovyFile : filesToConvert) {
       myClasses.addAll(Arrays.asList(groovyFile.getClasses()));
@@ -71,7 +71,7 @@ class ExpressionContext implements Cloneable {
   }
 
   ExpressionContext extend() {
-    final HashSet<String> usedVarNames = new HashSet<String>();
+    final HashSet<String> usedVarNames = new HashSet<>();
     usedVarNames.addAll(myUsedVarNames);
     final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames, setters, myClasses);
     expressionContext.myProps.putAll(myProps);

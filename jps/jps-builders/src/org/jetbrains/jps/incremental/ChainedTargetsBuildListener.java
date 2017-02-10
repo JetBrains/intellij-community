@@ -19,11 +19,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * Notifies targets about changes in their sources made by other builders
@@ -38,32 +40,34 @@ class ChainedTargetsBuildListener implements BuildListener {
   }
 
   @Override
-  public void filesGenerated(Collection<Pair<String, String>> paths) {
-    BuildFSState fsState = myContext.getProjectDescriptor().fsState;
-    BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
-    for (Pair<String, String> pair : paths) {
-      String relativePath = pair.getSecond();
-      File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
-      Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, myContext);
-      for (BuildRootDescriptor descriptor : descriptors) {
-        try {
-          fsState.markDirty(myContext, file, descriptor, myContext.getProjectDescriptor().timestamps.getStorage(), false);
-        }
-        catch (IOException ignored) {
+  public void filesGenerated(FileGeneratedEvent event) {
+    final ProjectDescriptor pd = myContext.getProjectDescriptor();
+    final BuildFSState fsState = pd.fsState;
+    for (Pair<String, String> pair : event.getPaths()) {
+      final String relativePath = pair.getSecond();
+      final File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
+      for (BuildRootDescriptor desc : pd.getBuildRootIndex().findAllParentDescriptors(file, myContext)) {
+        if (!event.getSourceTarget().equals(desc.getTarget())) {
+          // do not mark files belonging to the target that originated the event
+          // It is assumed that those files will be explicitly marked dirty by particular builder, if needed.
+          try {
+            fsState.markDirty(myContext, file, desc, pd.timestamps.getStorage(), false);
+          }
+          catch (IOException ignored) {
+          }
         }
       }
     }
   }
 
   @Override
-  public void filesDeleted(Collection<String> paths) {
-    BuildFSState state = myContext.getProjectDescriptor().fsState;
-    BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
-    for (String path : paths) {
-      File file = new File(FileUtil.toSystemDependentName(path));
-      Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, myContext);
-      for (BuildRootDescriptor descriptor : descriptors) {
-        state.registerDeleted(descriptor.getTarget(), file);
+  public void filesDeleted(FileDeletedEvent event) {
+    final BuildFSState state = myContext.getProjectDescriptor().fsState;
+    final BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
+    for (String path : event.getFilePaths()) {
+      final File file = new File(FileUtil.toSystemDependentName(path));
+      for (BuildRootDescriptor desc : rootsIndex.findAllParentDescriptors(file, myContext)) {
+        state.registerDeleted(myContext, desc.getTarget(), file);
       }
     }
   }

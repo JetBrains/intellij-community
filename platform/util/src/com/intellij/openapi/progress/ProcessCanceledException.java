@@ -23,5 +23,8 @@ public class ProcessCanceledException extends RuntimeException implements Contro
 
   public ProcessCanceledException(@NotNull Throwable cause) {
     super(cause);
+    if (cause instanceof ProcessCanceledException) {
+      throw new IllegalArgumentException("Must not self-wrap ProcessCanceledException: " + cause);
+    }
   }
 }

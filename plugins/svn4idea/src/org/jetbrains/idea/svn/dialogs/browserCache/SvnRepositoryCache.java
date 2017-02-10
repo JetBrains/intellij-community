@@ -33,8 +33,8 @@ public class SvnRepositoryCache {
   }
   
   private SvnRepositoryCache() {
-    myMap = new SoftHashMap<String, List<DirectoryEntry>>();
-    myErrorsMap = new SoftHashMap<String, String>();
+    myMap = new SoftHashMap<>();
+    myErrorsMap = new SoftHashMap<>();
   }
 
   @Nullable

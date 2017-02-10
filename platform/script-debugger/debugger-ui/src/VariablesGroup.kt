@@ -29,6 +29,6 @@ internal class VariablesGroup(private val start: Int, private val end: Int, priv
 }
 
 internal fun createArrayRangeGroup(variables: List<Variable>, start: Int, end: Int, variableContext: VariableContext): VariablesGroup {
-  val name = "[" + variables[start].name + " \u2026 " + variables[end - 1].name + "]"
+  val name = "[${variables[start].name} \u2026 ${variables[end - 1].name}]"
   return VariablesGroup(start, end, variables, variableContext, name)
 }

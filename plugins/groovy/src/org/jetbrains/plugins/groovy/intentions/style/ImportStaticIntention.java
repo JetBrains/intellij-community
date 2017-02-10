@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  * @author Maxim.Medvedev
  */
 public class ImportStaticIntention extends Intention {
-  private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<PsiElement>("TEMP_REFERENT_USER_DATA");
+  private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, final Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
     final PsiElement resolved = resolve(element);
     if (!(resolved instanceof PsiMember)) return;
 
@@ -64,7 +64,7 @@ public class ImportStaticIntention extends Intention {
     final GroovyFile file = (GroovyFile)containingFile;
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (name.equals(expression.getReferenceName())) {
           PsiElement resolved = expression.resolve();
@@ -87,7 +87,7 @@ public class ImportStaticIntention extends Intention {
 
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
         super.visitReferenceExpression(expression);
 
         GrTypeArgumentList typeArgumentList = expression.getTypeArgumentList();

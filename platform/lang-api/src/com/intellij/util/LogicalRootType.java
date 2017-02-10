@@ -36,6 +36,6 @@ public class LogicalRootType<T extends LogicalRoot> {
   }
 
   public static <T extends LogicalRoot> LogicalRootType<T> create(@NonNls String name) {
-    return new LogicalRootType<T>(name);
+    return new LogicalRootType<>(name);
   }
 }

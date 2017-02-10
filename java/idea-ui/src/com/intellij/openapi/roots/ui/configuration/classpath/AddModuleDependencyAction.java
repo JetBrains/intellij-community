@@ -49,11 +49,11 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private List<Module> getNotAddedModules() {
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
-    Set<Module> addedModules = new HashSet<Module>(Arrays.asList(rootModel.getModuleDependencies(true)));
+    Set<Module> addedModules = new HashSet<>(Arrays.asList(rootModel.getModuleDependencies(true)));
     addedModules.add(rootModel.getModule());
 
     final Module[] modules = myClasspathPanel.getModuleConfigurationState().getModulesProvider().getModules();
-    final List<Module> elements = new ArrayList<Module>();
+    final List<Module> elements = new ArrayList<>();
     for (final Module module : modules) {
       if (!addedModules.contains(module)) {
         elements.add(module);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestCase {
@@ -85,7 +87,6 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testSkipSameNamedNonStaticReferences() throws Exception {
-
     myFixture.addClass("package foo;" +
                        "public class Clazz {" +
                        "   public void print(String s) {}" +
@@ -97,6 +98,45 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testAllowSingleStaticImportWhenOnDemandImportOverloadedMethod() throws Exception {
+    myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
+    myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Bar.foo'");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testSingleImportWhenConflictingWithOnDemand() throws Exception {
+    myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
+    myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    int old = settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    try {
+      IntentionAction intention = myFixture.findSingleIntention("Add static import for 'foo.Foo.foo'");
+      assertNotNull(intention);
+      myFixture.launchAction(intention);
+      myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    }
+    finally {
+      settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = old;
+    }
+  }
+
+  public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() throws Exception {
+    myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
+    myFixture.addClass("package foo; class Bar {public static void foo(int i){}}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'foo.Bar.foo'");
+    assertNull(intention);
   }
 
   @Override

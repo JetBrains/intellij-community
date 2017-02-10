@@ -55,18 +55,18 @@ public class GradleProgressEventConverter {
     if (event instanceof StartEvent) {
       final OperationDescriptor descriptor = convert(event.getDescriptor(), event.getEventTime());
       return new ExternalSystemTaskExecutionEvent(
-        id, new ExternalSystemStartEventImpl<OperationDescriptor>(eventId, parentEventId, descriptor));
+        id, new ExternalSystemStartEventImpl<>(eventId, parentEventId, descriptor));
     }
     else if (event instanceof FinishEvent) {
       final OperationDescriptor descriptor = convert(event.getDescriptor(), event.getEventTime());
       return new ExternalSystemTaskExecutionEvent(
-        id, new ExternalSystemFinishEventImpl<OperationDescriptor>(eventId, parentEventId, descriptor,
-                                                                   convert(((FinishEvent)event).getResult())));
+        id, new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor,
+                                                convert(((FinishEvent)event).getResult())));
     }
     else if (event instanceof TaskProgressEvent) {
       final OperationDescriptor descriptor = convert(event.getDescriptor(), event.getEventTime());
       return new ExternalSystemTaskExecutionEvent(
-        id, new BaseExternalSystemProgressEvent<OperationDescriptor>(eventId, parentEventId, descriptor));
+        id, new BaseExternalSystemProgressEvent<>(eventId, parentEventId, descriptor));
     }
     else {
       return new ExternalSystemTaskNotificationEvent(id, description);

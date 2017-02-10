@@ -38,7 +38,7 @@ public class RollbackProgressModifier implements RollbackProgressListener {
   public RollbackProgressModifier(final double total, final ProgressIndicator indicator) {
     myTotal = total;
     myIndicator = indicator;
-    myTakenPaths = new HashSet<String>();
+    myTakenPaths = new HashSet<>();
     myCnt = 0;
   }
 

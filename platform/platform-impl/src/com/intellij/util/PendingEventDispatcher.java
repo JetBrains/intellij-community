@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ public class PendingEventDispatcher <T extends EventListener> {
   private final T myMulticaster;
 
   private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
+  private final Map<T, Boolean> myListenersState = new HashMap<>();
 
-  private final Stack<T> myDispatchingListeners = new Stack<T>();
+  private final Stack<T> myDispatchingListeners = new Stack<>();
 
   private Method myCurrentDispatchMethod = null;
   private Object[] myCurrentDispatchArgs = null;
@@ -50,7 +50,7 @@ public class PendingEventDispatcher <T extends EventListener> {
   }
 
   public static <T extends EventListener> PendingEventDispatcher<T> create(Class<T> listenerClass, boolean assertDispatchThread) {
-    return new PendingEventDispatcher<T>(listenerClass, assertDispatchThread);
+    return new PendingEventDispatcher<>(listenerClass, assertDispatchThread);
   }
 
   public static boolean isDispatchingAnyEvent(){
@@ -208,10 +208,7 @@ public class PendingEventDispatcher <T extends EventListener> {
     catch(AbstractMethodError e) {
       //Do nothing. This listener just does not implement something newly added yet.
     }
-    catch (InvocationTargetException e) {
-      LOG.error(e.getCause());
-    }
-    catch (IllegalAccessException e) {
+    catch (InvocationTargetException | IllegalAccessException e) {
       LOG.error(e.getCause());
     }
     finally {

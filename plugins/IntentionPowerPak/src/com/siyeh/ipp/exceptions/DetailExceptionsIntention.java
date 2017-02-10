@@ -59,14 +59,14 @@ public class DetailExceptionsIntention extends Intention {
     newTryStatement.append(tryBlockText);
     ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
-    final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<PsiType>();
+    final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<>();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     for (PsiCatchSection catchSection : catchSections) {
       final PsiParameter parameter = catchSection.getParameter();
       final PsiCodeBlock block = catchSection.getCatchBlock();
       if (parameter != null && block != null) {
         final PsiType caughtType = parameter.getType();
-        final List<PsiType> exceptionsToExpand = new ArrayList<PsiType>(10);
+        final List<PsiType> exceptionsToExpand = new ArrayList<>(10);
         for (Object aExceptionsThrown : exceptionsThrown) {
           final PsiType thrownType = (PsiType)aExceptionsThrown;
           if (caughtType.isAssignableFrom(thrownType)) {

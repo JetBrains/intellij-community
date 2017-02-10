@@ -28,7 +28,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_101andRc_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_105_CompilerAndPlugin_NoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
@@ -37,7 +37,7 @@ target('default': 'Ensures that build/kotlinc directory contains JARs from Kotli
   // Android Studio: always extract Kotlin zip from our prebuilts
   // If at any point in time, the prebuilt is considered stale, then:
   //     0. Set currentVersion below to null instead
-  def currentVersion = "kotlin-plugin-1.0.1-release-IJ143-46.zip"
+  def currentVersion = "kotlin-plugin-1.0.5-release-139.zip"
   //     1. comment out the following line to extract from prebuilt
   //     2. comment out the line further below that prevents downloading the plugin from the web (teamcity)
   //        (look for the line after the comment containing "we never want to download")
@@ -369,6 +369,6 @@ class TeamCityBuildLocator {
 
   String getDownloadUrl(String buildNumber) {
     String encodedBuildNumber = URLEncoder.encode(buildNumber, "UTF-8")
-    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-${encodedBuildNumber}.zip"
+    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-1.0.5-release-IJ2016.3-3.zip"
   }
 }

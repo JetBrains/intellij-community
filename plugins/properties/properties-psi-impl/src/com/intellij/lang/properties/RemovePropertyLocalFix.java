@@ -33,7 +33,7 @@ public class RemovePropertyLocalFix implements LocalQuickFix {
   public static final RemovePropertyLocalFix INSTANCE = new RemovePropertyLocalFix();
 
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return PropertiesBundle.message("remove.property.quick.fix.name");
   }
 
@@ -47,10 +47,5 @@ public class RemovePropertyLocalFix implements LocalQuickFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  @NotNull
-  public String getFamilyName() {
-    return getName();
   }
 }

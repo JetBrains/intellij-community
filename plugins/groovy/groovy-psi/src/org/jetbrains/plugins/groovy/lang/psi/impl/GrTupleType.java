@@ -65,7 +65,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
   @NotNull
   @Override
   protected String getJavaClassName() {
-    return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+    return CommonClassNames.JAVA_UTIL_LIST;
   }
 
   @Override

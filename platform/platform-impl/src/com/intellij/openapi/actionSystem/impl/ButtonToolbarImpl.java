@@ -38,7 +38,7 @@ public class ButtonToolbarImpl extends JPanel {
   private final DataManager myDataManager;
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;
-  private final ArrayList<ActionJButton> myActions = new ArrayList<ActionJButton>();
+  private final ArrayList<ActionJButton> myActions = new ArrayList<>();
 
   public ButtonToolbarImpl(final String place,
                            @NotNull ActionGroup actionGroup,

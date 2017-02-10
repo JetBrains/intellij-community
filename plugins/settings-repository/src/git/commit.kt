@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import com.intellij.util.SmartList
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.eclipse.jgit.lib.Repository
-import org.jetbrains.jgit.dirCache.AddFile
-import org.jetbrains.jgit.dirCache.PathEdit
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
 
@@ -36,7 +33,7 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (diff.added.isEmpty() && diff.changed.isEmpty() && diff.removed.isEmpty())) {
-    if (diff.modified.isEmpty()) {
+    if (diff.modified.isEmpty() && diff.missing.isEmpty()) {
       LOG.debug("Nothing to commit")
       return false
     }
@@ -50,6 +47,14 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
         edits.add(AddFile(path))
       }
     }
+
+    for (path in diff.missing) {
+      if (edits == null) {
+        edits = SmartList()
+      }
+      edits.add(DeleteFile(path))
+    }
+
     if (edits != null) {
       repository.edit(edits)
     }

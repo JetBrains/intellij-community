@@ -44,7 +44,7 @@ public class ChangeSet {
   public ChangeSet(long id, long timestamp) {
     myId = id;
     myTimestamp = timestamp;
-    myChanges = new ArrayList<Change>();
+    myChanges = new ArrayList<>();
   }
 
   public ChangeSet(DataInput in) throws IOException {
@@ -53,7 +53,7 @@ public class ChangeSet {
     myTimestamp = DataInputOutputUtil.readTIME(in);
 
     int count = DataInputOutputUtil.readINT(in);
-    List<Change> changes = new ArrayList<Change>(count);
+    List<Change> changes = new ArrayList<>(count);
     while (count-- > 0) {
       changes.add(StreamUtil.readChange(in));
     }
@@ -121,7 +121,7 @@ public class ChangeSet {
   public List<Change> getChanges() {
     return accessChanges(() -> {
       if (isLocked) return myChanges;
-      return Collections.unmodifiableList(new ArrayList<Change>(myChanges));
+      return Collections.unmodifiableList(new ArrayList<>(myChanges));
     });
   }
 
@@ -149,7 +149,7 @@ public class ChangeSet {
 
   public List<Content> getContentsToPurge() {
     return accessChanges(() -> {
-      List<Content> result = new ArrayList<Content>();
+      List<Content> result = new ArrayList<>();
       for (Change c : myChanges) {
         result.addAll(c.getContentsToPurge());
       }
@@ -175,7 +175,7 @@ public class ChangeSet {
 
   public List<String> getAffectedPaths() {
     return accessChanges(() -> {
-      List<String> result = new SmartList<String>();
+      List<String> result = new SmartList<>();
       for (Change each : myChanges) {
         if (each instanceof StructuralChange) {
           result.add(((StructuralChange)each).getPath());

@@ -37,7 +37,7 @@ public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
   }
 
   public AnalyzeDependenciesHandler(final Project project, final AnalysisScope scope, final int transitiveBorder) {
-    this(project, Collections.singletonList(scope), transitiveBorder, new HashSet<PsiFile>());
+    this(project, Collections.singletonList(scope), transitiveBorder, new HashSet<>());
   }
 
   @Override

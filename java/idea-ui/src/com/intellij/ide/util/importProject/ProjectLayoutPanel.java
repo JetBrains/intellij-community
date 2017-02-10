@@ -314,7 +314,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract String getElementTypeName();
 
   private boolean isNameAlreadyUsed(String entryName) {
-    final Set<T> itemsToIgnore = new HashSet<T>(myEntriesChooser.getSelectedElements());
+    final Set<T> itemsToIgnore = new HashSet<>(myEntriesChooser.getSelectedElements());
     for (T entry : getEntries()) {
       if (itemsToIgnore.contains(entry)) {
         continue;

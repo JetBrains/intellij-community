@@ -105,7 +105,7 @@ public class ChangeList {
 
   @TestOnly
   public List<ChangeSet> getChangesInTests() {
-    List<ChangeSet> result = new ArrayList<ChangeSet>();
+    List<ChangeSet> result = new ArrayList<>();
     for (ChangeSet each : iterChanges()) {
       result.add(each);
     }

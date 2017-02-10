@@ -47,7 +47,7 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
   public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
 
-    final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+    final Set<PsiClass> containingClasses = new HashSet<>();
     PsiClass parentClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
     while (parentClass != null) {
       if (parentClass.hasModifierProperty(PsiModifier.STATIC)) break;

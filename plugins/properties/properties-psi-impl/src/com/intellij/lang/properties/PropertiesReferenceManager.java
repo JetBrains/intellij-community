@@ -76,7 +76,7 @@ public class PropertiesReferenceManager {
                                                   BundleNameEvaluator bundleNameEvaluator) {
 
 
-    final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
+    final ArrayList<PropertiesFile> result = new ArrayList<>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public boolean process(String baseName, PropertiesFile propertiesFile) {
         if (baseName.equals(bundleName)) {
@@ -123,7 +123,7 @@ public class PropertiesReferenceManager {
   public boolean processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
                                         @NotNull final PropertiesFileProcessor processor,
                                         @NotNull final BundleNameEvaluator evaluator) {
-    for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, PropertiesFileType.INSTANCE, searchScope)) {
+    for(VirtualFile file:FileTypeIndex.getFiles(PropertiesFileType.INSTANCE, searchScope)) {
       if (!processFile(file, evaluator, processor)) return false;
     }
     if (!myDumbService.isDumb()) {

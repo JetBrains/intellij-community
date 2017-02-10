@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
@@ -76,6 +77,9 @@ public class GotItMessage {
   }
 
   public void show(RelativePoint point, Balloon.Position position) {
+    if (myDisposable != null && Disposer.isDisposed(myDisposable)) {
+      return;
+    }
     final GotItPanel panel = new GotItPanel();
     panel.myTitle.setText(myTitle);
 

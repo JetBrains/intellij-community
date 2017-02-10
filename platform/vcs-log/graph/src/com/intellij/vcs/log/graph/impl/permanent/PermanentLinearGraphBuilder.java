@@ -39,7 +39,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
   @NotNull private final int[] myNodeToEdgeIndex;
   @NotNull private final int[] myLongEdges;
   // downCommitId -> List of upNodeIndex
-  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
+  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<>();
 
   private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits,
                                       @NotNull Flags simpleNodes,
@@ -74,7 +74,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
       }
     }
 
-    return new PermanentLinearGraphBuilder<CommitId>(graphCommits, simpleNodes, longEdgesCount);
+    return new PermanentLinearGraphBuilder<>(graphCommits, simpleNodes, longEdgesCount);
   }
 
   @Nullable
@@ -86,7 +86,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
   private void addUnderdoneEdge(int upNodeIndex, CommitId downCommitId) {
     List<Integer> upNodes = upAdjacentNodes.get(downCommitId);
     if (upNodes == null) {
-      upNodes = new SmartList<Integer>();
+      upNodes = new SmartList<>();
       upAdjacentNodes.put(downCommitId, upNodes);
     }
     upNodes.add(upNodeIndex);

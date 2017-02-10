@@ -55,7 +55,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInitialCollection = collection;
     myProject = project;
-    myWorkingCollection = new ArrayList<String>(myInitialCollection);
+    myWorkingCollection = new ArrayList<>(myInitialCollection);
     myListModel = new DefaultListModel();
     myList.setModel(myListModel);
 
@@ -110,7 +110,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
 
   public void reset() {
     myListModel.clear();
-    myWorkingCollection = new ArrayList<String>(myInitialCollection);
+    myWorkingCollection = new ArrayList<>(myInitialCollection);
     for (String path : myWorkingCollection) {
       myListModel.addElement(path);
     }

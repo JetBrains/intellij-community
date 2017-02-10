@@ -6,6 +6,10 @@ import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -40,5 +44,11 @@ public class JpsMavenModelSerializationExtension extends JpsModelSerializerExten
     if (JpsMavenExtensionService.getInstance().isProductionOnTestDependency(dependency)) {
       orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
     }
+  }
+
+  @NotNull
+  @Override
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
+    return Collections.singletonList(JpsMavenRepositoryLibraryType.createPropertiesSerializer());
   }
 }

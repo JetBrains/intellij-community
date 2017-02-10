@@ -34,7 +34,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
   public List<TextRange> getContentRanges() {
     final int myStart = getTextOffset();
     final ASTNode node = getNode();
-    final List<TextRange> result = new ArrayList<TextRange>();
+    final List<TextRange> result = new ArrayList<>();
 
     final int indent = locateIndent();
 

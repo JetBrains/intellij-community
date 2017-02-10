@@ -21,5 +21,5 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 public abstract class DeployToServerRunConfigurationExtension extends RunConfigurationExtensionBase<DeployToServerRunConfiguration> {
 
   public static final ExtensionPointName<DeployToServerRunConfigurationExtension> EP_NAME
-    = new ExtensionPointName<DeployToServerRunConfigurationExtension>("com.intellij.remoteServer.runConfigurationExtension");
+    = new ExtensionPointName<>("com.intellij.remoteServer.runConfigurationExtension");
 }

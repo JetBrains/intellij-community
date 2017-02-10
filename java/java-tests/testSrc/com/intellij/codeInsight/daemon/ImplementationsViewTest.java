@@ -83,14 +83,14 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
   }
 
   private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {
-    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>();
+    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<>();
     ClassImplementationsSearch.processImplementations(psiClass, processor, psiClass.getUseScope());
 
     return processor.getResults();
   }
 
   private static Collection<PsiElement> getMethodImplementations(final PsiMethod psiMethod) {
-    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>();
+    CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<>();
     MethodImplementationsSearch.processImplementations( psiMethod, processor, psiMethod.getUseScope());
 
     return processor.getResults();
@@ -124,7 +124,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiClass != null;
     final Collection<PsiElement> classes = getClassImplementations(psiClass);
-    List<PsiElement> all = new ArrayList<PsiElement>();
+    List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component =
@@ -156,7 +156,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiClass != null;
     final Collection<PsiElement> classes = getClassImplementations(psiClass);
-    List<PsiElement> all = new ArrayList<PsiElement>();
+    List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
@@ -173,7 +173,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiClass != null;
     final Collection<PsiElement> classes = getClassImplementations(psiClass);
-    List<PsiElement> all = new ArrayList<PsiElement>();
+    List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
@@ -194,7 +194,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiMethod != null;
     final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
-    List<PsiElement> all = new ArrayList<PsiElement>();
+    List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
@@ -216,7 +216,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiMethod != null;
     final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
-    List<PsiElement> all = new ArrayList<PsiElement>();
+    List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
@@ -251,7 +251,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     assert psiMethod != null;
     final Collection<PsiMethod> methods = OverridingMethodsSearch.search(psiMethod).findAll();
-    List<PsiMethod> all = new ArrayList<PsiMethod>();
+    List<PsiMethod> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
 

@@ -57,8 +57,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private Splitter mySplitter;
   private JPanel myEmptyPanel;
 
-  private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
-  private final List<TaskRepositoryEditor> myEditors = new ArrayList<TaskRepositoryEditor>();
+  private final List<TaskRepository> myRepositories = new ArrayList<>();
+  private final List<TaskRepositoryEditor> myEditors = new ArrayList<>();
   private final Project myProject;
 
   private final Consumer<TaskRepository> myChangeListener;
@@ -85,7 +85,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
-    final List<AnAction> createActions = new ArrayList<AnAction>();
+    final List<AnAction> createActions = new ArrayList<>();
     for (final TaskRepositoryType repositoryType : groups) {
       for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
         createActions.add(new AddServerAction(subtype) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,21 +125,14 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
     @NotNull
     @Override
-    public String getName() {
-      return "Replace with expression lambda";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Replace with expression lambda";
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
           final PsiElement body = lambdaExpression.getBody();

@@ -45,7 +45,7 @@ public class PlaybackRunner {
   private final String myScript;
   private final StatusCallback myCallback;
 
-  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
+  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
 
@@ -56,13 +56,13 @@ public class PlaybackRunner {
   private boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
-  private HashSet<Class> myFacadeClasses = new HashSet<Class>();
-  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<StageInfo>();
-  private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
+  private HashSet<Class> myFacadeClasses = new HashSet<>();
+  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
+  private ArrayList<StageInfo> myPassedStages = new ArrayList<>();
 
   private long myContextTimestamp;
 
-  private Map<String, String> myRegistryValues = new HashMap<String, String>();
+  private Map<String, String> myRegistryValues = new HashMap<>();
 
   private Disposable myOnStop = Disposer.newDisposable();
 

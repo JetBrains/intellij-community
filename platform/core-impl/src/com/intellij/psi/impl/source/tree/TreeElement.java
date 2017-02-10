@@ -22,13 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
@@ -57,13 +55,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   @Override
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
-    synchronized (PsiLock.LOCK) {
-      clone.myNextSibling = null;
-      clone.myPrevSibling = null;
-      clone.myParent = null;
-      clone.myStartOffsetInParent = -1;
-    }
-
+    clone.myNextSibling = null;
+    clone.myPrevSibling = null;
+    clone.myParent = null;
+    clone.myStartOffsetInParent = -1;
     return clone;
   }
 

@@ -37,8 +37,8 @@ public interface RecentTestRunner {
   }
   
   void setMode(Mode mode);
-  void run(String url);
-  void run(RunnerAndConfigurationSettings configuration);
+  
+  void run(RecentTestsPopupEntry entry);
 }
 
 class RecentTestRunnerImpl implements RecentTestRunner {
@@ -67,14 +67,33 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   }
 
   @Override
-  public void run(RunnerAndConfigurationSettings configuration) {
+  public void run(RecentTestsPopupEntry entry) {
+    entry.accept(new TestEntryVisitor() {
+      @Override
+      public void visitTest(@NotNull SingleTestEntry test) {
+        run(test.getUrl());
+      }
+
+      @Override
+      public void visitSuite(@NotNull SuiteEntry suite) {
+        run(suite.getSuiteUrl());
+      }
+
+      @Override
+      public void visitRunConfiguration(@NotNull RunConfigurationEntry configuration) {
+        run(configuration.getRunSettings());
+      }
+    });
+  }
+
+  private void run(RunnerAndConfigurationSettings configuration) {
     Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance() 
                                                : DefaultDebugExecutor.getDebugExecutorInstance();
     
     ProgramRunnerUtil.executeConfiguration(myProject, configuration, executor);
   }
 
-  public void run(@NotNull String url) {
+  private void run(@NotNull String url) {
     Location location = myTestLocator.getLocation(url);
     if (location == null) {
       return;

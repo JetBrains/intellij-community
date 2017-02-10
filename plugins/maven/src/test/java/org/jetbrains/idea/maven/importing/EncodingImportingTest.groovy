@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase
  */
 class EncodingImportingTest extends MavenImportingTestCase {
 
-  public void testEncodingDefinedByProperty() {
+  void testEncodingDefinedByProperty() {
     byte[] text = [-12, -59, -53, -45, -44] // Russian text in koi8-r encoding.
 
     VirtualFile file = createProjectSubFile("src/main/resources/A.txt")
@@ -44,7 +44,7 @@ class EncodingImportingTest extends MavenImportingTestCase {
     assert loadedText == new String(text, "koi8-r")
   }
 
-  public void testEncodingDefinedByPluginConfig() {
+  void testEncodingDefinedByPluginConfig() {
     byte[] text = [-12, -59, -53, 45, -44] // Russian text in koi8-r encoding.
 
     VirtualFile file = createProjectSubFile("src/main/resources/A.txt")

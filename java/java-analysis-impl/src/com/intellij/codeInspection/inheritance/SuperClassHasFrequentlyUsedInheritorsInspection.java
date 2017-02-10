@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final int MIN_PERCENT_RATIO = 5;
   public static final int MAX_QUICK_FIX_COUNTS = 4;
@@ -62,7 +59,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
       return null;
     }
 
-    final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<LocalQuickFix>(topInheritors.size());
+    final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<>(topInheritors.size());
 
     boolean isFirst = true;
     for (final InheritorsStatisticsSearchResult searchResult : topInheritors) {

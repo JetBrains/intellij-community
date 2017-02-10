@@ -95,7 +95,7 @@ public class ActionUsagePanel extends JPanel implements Disposable {
   }
 
   private void setupSpots(Document document) {
-    List<Segment> markers = new ArrayList<Segment>();
+    List<Segment> markers = new ArrayList<>();
     while (true) {
       String text = document.getText();
       final int spotStart = text.indexOf("<" + SPOT_MARKER + ">");

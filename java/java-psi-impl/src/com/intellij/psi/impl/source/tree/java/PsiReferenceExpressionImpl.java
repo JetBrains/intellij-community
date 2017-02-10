@@ -91,6 +91,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     boolean doImportStatic;
     if (containingFile instanceof PsiJavaFile) {
       importList = ((PsiJavaFile)containingFile).getImportList();
+      assert importList != null : containingFile;
       PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
       doImportStatic = singleImportStatement == null;
       if (singleImportStatement instanceof PsiImportStaticStatement) {
@@ -116,13 +117,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return this;
   }
 
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
+  public static void bindToElementViaStaticImport(PsiClass qualifierClass, String staticName, PsiImportList importList) throws IncorrectOperationException {
+    assert importList != null;
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand()) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass,
-                                                                                                                            staticName));
+    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand() ||
+        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
@@ -285,6 +286,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
+      if (((PsiMethodReferenceExpression)getParent()).isConstructor()) {
+        PsiElement classNameElement = getReferenceNameElement();
+        if (classNameElement == null) {
+          return JavaResolveResult.EMPTY_ARRAY;
+        }
+        return resolveToClass(classNameElement, containingFile);
+      }
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 

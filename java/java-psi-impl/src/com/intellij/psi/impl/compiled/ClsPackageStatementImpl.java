@@ -21,22 +21,18 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
+  static ClsPackageStatementImpl NULL_PACKAGE = new ClsPackageStatementImpl();
+
   private final ClsFileImpl myFile;
   private final String myPackageName;
 
-  public ClsPackageStatementImpl(@NotNull ClsFileImpl file) {
+  private ClsPackageStatementImpl() {
+    myFile = null;
+    myPackageName = null;
+  }
+
+  public ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
     myFile = file;
-    String packageName = null;
-    PsiClass[] psiClasses = file.getClasses();
-    if (psiClasses.length > 0) {
-      String className = psiClasses[0].getQualifiedName();
-      if (className != null) {
-        int index = className.lastIndexOf('.');
-        if (index >= 0) {
-          packageName = className.substring(0, index);
-        }
-      }
-    }
     myPackageName = packageName;
   }
 
@@ -69,7 +65,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   @Override
   public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
     if (myPackageName != null) {
-      buffer.append("package ").append(getPackageName()).append(";");
+      buffer.append("package ").append(getPackageName()).append(';');
     }
   }
 

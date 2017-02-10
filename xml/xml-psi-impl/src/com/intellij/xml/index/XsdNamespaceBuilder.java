@@ -45,7 +45,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     try {
       final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
       NanoXmlUtil.parse(reader, builder);
-      HashSet<String> tags = new HashSet<String>(builder.getTags());
+      HashSet<String> tags = new HashSet<>(builder.getTags());
       tags.removeAll(builder.myReferencedTags);
       builder.getRootTags().addAll(tags);
       return builder;
@@ -69,9 +69,9 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
 
   private String myVersion;
   private final List<String> myTags;
-  private final Set<String> myReferencedTags = new HashSet<String>();
+  private final Set<String> myReferencedTags = new HashSet<>();
   private final List<String> myRootTags;
-  private final List<String> myAttributes = new ArrayList<String>();
+  private final List<String> myAttributes = new ArrayList<>();
 
   @Override
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
@@ -131,8 +131,8 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   }
 
   private XsdNamespaceBuilder() {
-    myTags = new ArrayList<String>();
-    myRootTags = new ArrayList<String>();
+    myTags = new ArrayList<>();
+    myRootTags = new ArrayList<>();
   }
 
   XsdNamespaceBuilder(String namespace, String version, List<String> tags, List<String> rootTags) {

@@ -17,12 +17,15 @@ package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 /**
  * @author Mikhail Golubev
@@ -54,5 +57,13 @@ public class JsonPsiUtilTest extends JsonTestCase {
       JsonPsiUtil.addProperty(jsonObject, new JsonElementGenerator(getProject()).createProperty("foo", "null"), first);
     });
     myFixture.checkResult(after);
+  }
+
+  public void testGetOtherSiblingPropertyNames() throws Exception {
+    myFixture.configureByText(JsonFileType.INSTANCE, "{\"firs<caret>t\" : 1, \"second\" : 2}");
+    PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    JsonProperty property = PsiTreeUtil.getParentOfType(atCaret, JsonProperty.class);
+    assertNotNull(property);
+    assertEquals(Collections.singleton("second"), JsonPsiUtil.getOtherSiblingPropertyNames(property));
   }
 }

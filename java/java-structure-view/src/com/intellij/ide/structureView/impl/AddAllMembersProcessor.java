@@ -32,7 +32,7 @@ import java.util.Map;
 public class AddAllMembersProcessor extends BaseScopeProcessor {
   private final Collection<PsiElement> myAllMembers;
   private final PsiClass myPsiClass;
-  private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
+  private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<>();
 
   public AddAllMembersProcessor(@NotNull Collection<PsiElement> allMembers, @NotNull PsiClass psiClass) {
     for (PsiElement psiElement : allMembers) {

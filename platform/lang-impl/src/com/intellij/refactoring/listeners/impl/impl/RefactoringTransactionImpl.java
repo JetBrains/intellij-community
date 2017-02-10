@@ -38,10 +38,10 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   /**
    * Actions to be performed at commit.
    */
-  private final ArrayList<Runnable> myRunnables = new ArrayList<Runnable>();
+  private final ArrayList<Runnable> myRunnables = new ArrayList<>();
   private final List<RefactoringElementListenerProvider> myListenerProviders;
-  private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<PsiElement,ArrayList<RefactoringElementListener>>();
-  private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<PsiElement,RefactoringElementListener>();
+  private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<>();
+  private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<>();
 
   public RefactoringTransactionImpl(List<RefactoringElementListenerProvider> listenerProviders) {
     myListenerProviders = listenerProviders;
@@ -49,7 +49,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
   private void addAffectedElement(PsiElement oldElement) {
     if(myOldElementToListenerListMap.get(oldElement) != null) return;
-    ArrayList<RefactoringElementListener> listenerList = new ArrayList<RefactoringElementListener>();
+    ArrayList<RefactoringElementListener> listenerList = new ArrayList<>();
     for (RefactoringElementListenerProvider provider : myListenerProviders) {
       try {
         final RefactoringElementListener listener = provider.getListener(oldElement);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,7 @@ public class GrParameterTableModelItem extends ParameterTableModelItemBase<GrPar
       PsiType type = ((PsiTypeCodeFragment)typeCodeFragment).getType();
       return type instanceof PsiArrayType;
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return false;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return false;
     }
   }

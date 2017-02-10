@@ -104,7 +104,7 @@ public class GitVFSListener extends VcsVFSListener {
     catch (VcsException e) {
       throw new RuntimeException("The exception is not expected here", e);
     }
-    final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
@@ -148,7 +148,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
-    performAdding(ObjectsConvertor.vf2fp(new ArrayList<VirtualFile>(addedFiles)));
+    performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
   }
 
   private GitVcs gitVcs() {
@@ -185,7 +185,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   protected void performDeletion(final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      HashSet<File> filesToRefresh = new HashSet<File>();
+      HashSet<File> filesToRefresh = new HashSet<>();
 
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
         final File rootFile = new File(root.getPath());

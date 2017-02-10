@@ -76,7 +76,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<LookupElement> result = new ArrayList<LookupElement>();
+    final List<LookupElement> result = new ArrayList<>();
     final PsiElement resolved = myImportedModule.resolve();
     if (resolved instanceof PyFile) {
       final PyModuleType moduleType = new PyModuleType((PyFile)resolved, myImportedModule);

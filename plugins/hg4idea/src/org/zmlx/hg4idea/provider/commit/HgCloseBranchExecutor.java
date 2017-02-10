@@ -26,7 +26,7 @@ import java.util.Collection;
 public class HgCloseBranchExecutor extends CommitExecutorBase {
 
   @NotNull private final HgCheckinEnvironment myCheckinEnvironment;
-  @NotNull private static final String CLOSE_BRANCH_TITLE = "Commit And &Close" ;
+  @NotNull private static final String CLOSE_BRANCH_TITLE = "Commit And Close";
 
 
   public HgCloseBranchExecutor(@NotNull HgCheckinEnvironment environment) {

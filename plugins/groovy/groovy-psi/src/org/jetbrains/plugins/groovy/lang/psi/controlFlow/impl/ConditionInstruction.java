@@ -15,31 +15,38 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author Max Medvedev
  */
 public class ConditionInstruction extends InstructionImpl implements Instruction {
-  private final Set<ConditionInstruction> myDependent = new HashSet<ConditionInstruction>();
 
-  public ConditionInstruction(@NotNull PsiElement element) {
+  private final Set<ConditionInstruction> myDependent;
+
+  public ConditionInstruction(@NotNull PsiElement element, @NotNull Collection<ConditionInstruction> dependent) {
     super(element);
+    myDependent = new LinkedHashSet<>(dependent);
     myDependent.add(this);
   }
 
   @Override
   protected String getElementPresentation() {
-    return "Condition " + getElement();
-  }
-
-  void addDependent(ConditionInstruction i) {
-    myDependent.add(i);
+    StringBuilder builder = new StringBuilder();
+    builder.append("Condition ").append(getElement());
+    if (myDependent.size() > 1) {
+      builder.append(", dependent: ");
+      builder.append(StringUtil.join(ContainerUtil.filter(myDependent, d -> d != this), i -> String.valueOf(i.num()), ", "));
+    }
+    return builder.toString();
   }
 
   public Set<ConditionInstruction> getDependentConditions() {

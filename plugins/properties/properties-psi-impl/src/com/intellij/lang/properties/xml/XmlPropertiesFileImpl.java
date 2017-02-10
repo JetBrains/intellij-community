@@ -46,6 +46,8 @@ import java.util.*;
  *         Date: 7/26/11
  */
 public class XmlPropertiesFileImpl extends XmlPropertiesFile {
+  public static final String ENTRY_TAG_NAME = "entry";
+
   private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;
 
@@ -58,11 +60,11 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   private void ensurePropertiesLoaded() {
     while (myFileModificationStamp != myFile.getModificationStamp() || myPropertiesMap == null) {
       myFileModificationStamp = myFile.getModificationStamp();
-      MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
+      MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<>();
       XmlTag rootTag = myFile.getRootTag();
-      final List<IProperty> propertiesOrder = new ArrayList<IProperty>();
+      final List<IProperty> propertiesOrder = new ArrayList<>();
       if (rootTag != null) {
-        XmlTag[] entries = rootTag.findSubTags("entry");
+        XmlTag[] entries = rootTag.findSubTags(ENTRY_TAG_NAME);
         for (XmlTag entry : entries) {
           XmlProperty property = new XmlProperty(entry, this);
           propertiesOrder.add(property);
@@ -72,8 +74,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
           }
         }
       }
-      final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(propertiesOrder);
-      myAlphaSorted = isAlphaSorted;
+      myAlphaSorted = PropertiesImplUtil.isAlphaSorted(propertiesOrder);
       myProperties = propertiesOrder;
       myPropertiesMap = propertiesMap;
     }
@@ -215,7 +216,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<String, String>();
+    Map<String, String> result = new THashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }

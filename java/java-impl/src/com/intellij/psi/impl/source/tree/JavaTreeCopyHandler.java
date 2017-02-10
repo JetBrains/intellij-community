@@ -123,8 +123,8 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
     return null;
   }
 
-  private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");
-  private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<Boolean>("ESCAPEMENT_ENGAGED");
+  private static final Key<Boolean> ALREADY_ESCAPED = new Key<>("ALREADY_ESCAPED");
+  private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<>("ESCAPEMENT_ENGAGED");
   private static boolean conversionMayApply(ASTNode element) {
     PsiElement psi = element.getPsi();
     if (psi == null || !psi.isValid()) return false;

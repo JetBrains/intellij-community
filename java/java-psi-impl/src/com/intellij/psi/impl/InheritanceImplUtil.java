@@ -58,7 +58,7 @@ public class InheritanceImplUtil {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
       if (baseCandidateClass != null) {
         if (!checkDeep) {
-          return baseCandidateClass.equals(baseClass);
+          return manager.areElementsEquivalent(baseCandidateClass, baseClass);
         }
         return InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, true);
       }

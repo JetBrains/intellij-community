@@ -47,7 +47,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   private final List<PipelineElement> myElements;
 
   public StaticPseudoFunctionalStyleMethodOptions() {
-    myElements = new ArrayList<PipelineElement>();
+    myElements = new ArrayList<>();
     restoreDefault(myElements);
   }
 
@@ -87,7 +87,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
   }
 
   public void writeExternal(final @NotNull Element xmlElement) {
-    final List<PipelineElement> toRemoveElements = new ArrayList<PipelineElement>();
+    final List<PipelineElement> toRemoveElements = new ArrayList<>();
     restoreDefault(toRemoveElements);
     toRemoveElements.removeAll(myElements);
 
@@ -95,7 +95,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       xmlElement.addContent(createXmlElement(element)
                               .setAttribute(DELETE_ATTR, ""));
     }
-    final List<PipelineElement> defaultElements = new ArrayList<PipelineElement>();
+    final List<PipelineElement> defaultElements = new ArrayList<>();
     restoreDefault(defaultElements);
     for (PipelineElement element : myElements) {
       if (!defaultElements.contains(element)) {
@@ -153,7 +153,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       @Override
       public void run(AnActionButton button) {
         final int[] indices = list.getSelectedIndices();
-        final List<PipelineElement> toRemove = new ArrayList<PipelineElement>(indices.length);
+        final List<PipelineElement> toRemove = new ArrayList<>(indices.length);
         for (int idx : indices) {
           toRemove.add(myElements.get(idx));
         }

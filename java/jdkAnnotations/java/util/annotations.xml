@@ -612,19 +612,10 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
-  <item name="java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt; c) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt; c) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt; c) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;) 0">
@@ -981,12 +972,6 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
-  <item name="java.util.List List&lt;E&gt; subList(int fromIndex, int toIndex)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name="java.util.List ListIterator&lt;E&gt; listIterator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.util.List T[] toArray(T[])">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1120,6 +1105,15 @@
   <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val val="&quot;null,_-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional T get()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Optional T orElse(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;!null -&gt; !null&quot;"/>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>

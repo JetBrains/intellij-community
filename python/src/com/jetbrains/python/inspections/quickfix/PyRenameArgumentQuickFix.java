@@ -32,14 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyRenameArgumentQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.rename.argument");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.rename.argument");
   }
 
   @Override

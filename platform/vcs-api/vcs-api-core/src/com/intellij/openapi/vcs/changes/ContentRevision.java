@@ -29,10 +29,10 @@ public interface ContentRevision {
   /**
    * Content of the revision. Implementers are encouraged to lazy implement this especially when it requires connection to the
    * version control server or something.
-   * Might return null in case if file path denotes a directory or content is impossible to retreive.
+   * Might return null in case if file path denotes a directory or content is impossible to retrieve.
    *
    * @return content of the revision
-   * @throws com.intellij.openapi.vcs.VcsException in case when content retrieval fails
+   * @throws VcsException in case when content retrieval fails
    */
   @Nullable
   String getContent() throws VcsException;
@@ -46,7 +46,7 @@ public interface ContentRevision {
   /**
    * Revision ID. Content revisions with same file path and revision number are considered to be equal and must have same content unless
    * {@link VcsRevisionNumber#NULL} is returned. Use {@link VcsRevisionNumber#NULL} when revision number is not applicable like for
-   * the currently uncommited revision.
+   * the currently uncommitted revision.
    * @return revision ID in terms of version control
    */
   @NotNull

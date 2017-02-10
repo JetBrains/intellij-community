@@ -58,7 +58,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   @NotNull
   @Override
   public VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
 
     String qualifiedName = psiPackage.getQualifiedName();
@@ -102,7 +102,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
 
   private static boolean changePackagePrefixes(@NotNull PsiPackage psiPackage, @NotNull String oldQualifiedName, @NotNull String newQualifiedName) {
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
-    List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+    List<ModifiableRootModel> modelsToCommit = new ArrayList<>();
     for (final Module module : modules) {
       boolean anyChange = false;
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();

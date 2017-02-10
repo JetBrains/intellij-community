@@ -92,7 +92,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
   }
 
   private static void generateAndShowXml(final Module module, final String className) {
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(module).recursively().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
       try {
@@ -226,7 +226,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     private Object createMap(ParameterizedType type, FList<Type> processedTypes) throws Exception {
       Type keyType = type.getActualTypeArguments()[0];
       Type valueType = type.getActualTypeArguments()[1];
-      final HashMap<Object, Object> map = new HashMap<Object, Object>();
+      final HashMap<Object, Object> map = new HashMap<>();
       for (int i = 0; i < 2; i++) {
         Object key = createValue(keyType, processedTypes);
         Object value = createValue(valueType, processedTypes);
@@ -241,10 +241,10 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       Collection<Object> o;
       if (List.class.isAssignableFrom(aClass)) {
-        o = new ArrayList<Object>();
+        o = new ArrayList<>();
       }
       else if (Set.class.isAssignableFrom(aClass)) {
-        o = new HashSet<Object>();
+        o = new HashSet<>();
       }
       else {
         return null;

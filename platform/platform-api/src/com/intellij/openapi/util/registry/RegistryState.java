@@ -43,7 +43,7 @@ public class RegistryState implements PersistentStateComponent<Element> {
   @Override
   public void loadState(Element state) {
     Registry.getInstance().loadState(state);
-    SortedMap<String, String> userProperties = new TreeMap<String, String>(Registry.getInstance().getUserProperties());
+    SortedMap<String, String> userProperties = new TreeMap<>(Registry.getInstance().getUserProperties());
     userProperties.remove("ide.firstStartup");
     if (!userProperties.isEmpty()) {
       LOG.info("Registry values changed by user:");

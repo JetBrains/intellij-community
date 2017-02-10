@@ -332,9 +332,9 @@ public class ParameterInfoComponent extends JPanel {
       setBackground(background);
       int index = 0;
       int curOffset = 0;
-      final ArrayList<OneLineComponent> components = new ArrayList<OneLineComponent>();
+      final ArrayList<OneLineComponent> components = new ArrayList<>();
 
-      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
+      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
 
       String line = "";
       for (int i = 0; i < texts.length; i++) {
@@ -397,7 +397,7 @@ public class ParameterInfoComponent extends JPanel {
                          boolean isDisabled,
                          boolean isStrikeout,
                          Color background, @Nullable TextRange range) {
-      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
+      Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
       if (range != null)
         flagsMap.put(range, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
       if (isDisabled)
@@ -431,7 +431,7 @@ public class ParameterInfoComponent extends JPanel {
       final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
 
-      final Map<Integer, Integer> faultMap = new HashMap<Integer, Integer>();
+      final Map<Integer, Integer> faultMap = new HashMap<>();
       if (isDisabledBeforeHighlight) {
         final String tag = getTag(disabledTag);
         labelText.insert(0, tag);

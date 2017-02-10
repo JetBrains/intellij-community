@@ -110,7 +110,7 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
       @NotNull
       @Override
       public LinkedHashSet<String> suggestNames() {
-        LinkedHashSet<String> strings = new LinkedHashSet<String>();
+        LinkedHashSet<String> strings = new LinkedHashSet<>();
         strings.add("f");
         return strings;
       }

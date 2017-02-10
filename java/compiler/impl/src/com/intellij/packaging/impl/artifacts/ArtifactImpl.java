@@ -57,7 +57,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     myRootElement = rootElement;
     myOutputPath = outputPath;
     myDispatcher = dispatcher;
-    myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
+    myProperties = new HashMap<>();
     resetProperties();
   }
 

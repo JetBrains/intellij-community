@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -27,9 +28,16 @@ import java.util.List;
  * @author nik
  */
 public class XRemoveWatchAction extends XWatchesTreeActionBase {
-
-  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty();
+  @Override
+  public void update(AnActionEvent e) {
+    XDebuggerTree tree = XDebuggerTree.getTree(e);
+    boolean enabled = tree != null && !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty();
+    if (ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
+      e.getPresentation().setEnabled(enabled);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(enabled);
+    }
   }
 
   @Override

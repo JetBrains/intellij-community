@@ -103,7 +103,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
 
   private void fireFileStatusesChanged(VirtualFile parent) {
     final VirtualFile[] children = parent.getChildren();
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(children.length + 1);
+    final List<VirtualFile> files = new ArrayList<>(children.length + 1);
     files.add(parent);
     Collections.addAll(files, children);
     myDirtyScopeManager.filesDirty(files, null);

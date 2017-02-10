@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
@@ -53,9 +52,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
+    int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1
+                                                                      : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
-    for (int idx = maxSeverity; idx >= 0; idx--) {
+    for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {

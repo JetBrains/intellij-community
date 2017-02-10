@@ -28,15 +28,10 @@ public class IpnbCutCellAction extends AnAction {
   }
 
   public static void cutCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ipnbFilePanel.cutCell();
-            ipnbFilePanel.saveToFile();
-          }
-        });
-      }
-    }, "Ipnb.cutCell", new Object());
+    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ipnbFilePanel.cutCell();
+        ipnbFilePanel.saveToFile(false);
+      }), "Ipnb.cutCell", new Object());
   }
 }

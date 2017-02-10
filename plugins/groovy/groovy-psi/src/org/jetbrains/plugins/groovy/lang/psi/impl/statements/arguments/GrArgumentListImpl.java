@@ -61,7 +61,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
-    List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
+    List<GrNamedArgument> result = new ArrayList<>();
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
     }
@@ -76,7 +76,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @Override
   @NotNull
   public GrExpression[] getExpressionArguments() {
-    List<GrExpression> result = new ArrayList<GrExpression>();
+    List<GrExpression> result = new ArrayList<>();
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) result.add((GrExpression)cur);
     }
@@ -86,7 +86,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @NotNull
   @Override
   public GroovyPsiElement[] getAllArguments() {
-    List<GroovyPsiElement> args = new ArrayList<GroovyPsiElement>();
+    List<GroovyPsiElement> args = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add((GroovyPsiElement)child);
     }

@@ -40,6 +40,9 @@
     <colorAndFontPanelFactory implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
 
+    <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
+                factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
+
     <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
     <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
@@ -54,6 +57,8 @@
 
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
+                            order="first"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
@@ -85,6 +90,9 @@
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateLocalFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$Provider" order="first"/>
+
+    <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="last"/>
+    <ignoredFileProvider implementation="com.intellij.configurationStore.vcs.StoreIgnoredFileProvider"/>
   </extensions>
 </idea-plugin>
 

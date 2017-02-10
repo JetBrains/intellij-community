@@ -44,7 +44,7 @@ public class RncHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ourMap1;
 
   static {
-    ourMap1 = new HashMap<IElementType, TextAttributesKey>();
+    ourMap1 = new HashMap<>();
 
     fillMap(ourMap1, RncTokenTypes.KEYWORDS, DefaultLanguageHighlighterColors.KEYWORD);
     fillMap(ourMap1, RncTokenTypes.OPERATORS, DefaultLanguageHighlighterColors.OPERATION_SIGN);

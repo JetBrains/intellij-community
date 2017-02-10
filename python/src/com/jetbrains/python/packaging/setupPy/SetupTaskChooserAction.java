@@ -51,9 +51,9 @@ public class SetupTaskChooserAction extends AnAction {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
     final Project project = module.getProject();
-    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<SetupTask>(project, "Enter setup.py task name",
-                                                                                        "No tasks found",
-                                                                                        SetupTaskIntrospector.getTaskList(module));
+    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project, "Enter setup.py task name",
+                                                                               "No tasks found",
+                                                                               SetupTaskIntrospector.getTaskList(module));
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, GotoActionBase.getPsiContext(e));
     popup.setShowListForEmptyPattern(true);
 
@@ -81,7 +81,7 @@ public class SetupTaskChooserAction extends AnAction {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     try {
       final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
-      List<String> parameters = new ArrayList<String>();
+      List<String> parameters = new ArrayList<>();
       parameters.add(taskName);
       if (options != null) {
         SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);

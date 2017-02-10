@@ -66,7 +66,7 @@ public class TestsLocationProviderUtil {
     }
 
     //split file by "/" in parts
-    final LinkedList<String> folders = new LinkedList<String>();
+    final LinkedList<String> folders = new LinkedList<>();
     final StringTokenizer st = new StringTokenizer(filePath, "/", false);
     String fileName = null;
     while (st.hasMoreTokens()) {
@@ -120,7 +120,7 @@ public class TestsLocationProviderUtil {
     }
 
     if (maxProximity >= minProximityThreshold) {
-      final List<VirtualFile> files = new ArrayList<VirtualFile>();
+      final List<VirtualFile> files = new ArrayList<>();
       for (FileInfo info : candidates) {
         if (info.getProximity() == maxProximity) {
           files.add(info.getFile());
@@ -134,7 +134,7 @@ public class TestsLocationProviderUtil {
 
   public static List<FileInfo> collectCandidates(final Project project, final String fileName,
                                                  final boolean includeNonProjectItems) {
-    final List<FileInfo> filesInfo = new ArrayList<FileInfo>();
+    final List<FileInfo> filesInfo = new ArrayList<>();
     final ChooseByNameContributor[] contributors = Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME);
     for (ChooseByNameContributor contributor : contributors) {
       // let's find files with same name in project and libraries

@@ -17,14 +17,14 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.ui.components.ComponentsKt.Panel;
 
 public class DataViewsConfigurableUi {
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY = "debugger.valueTooltipAutoShow";
@@ -34,6 +34,7 @@ public class DataViewsConfigurableUi {
   private JFormattedTextField valueTooltipDelayTextField;
   private JPanel panel;
   private JCheckBox sortAlphabeticallyCheckBox;
+  @SuppressWarnings("unused")
   private JPanel myEditorSettingsPanel;
   private JCheckBox myShowValuesInlineCheckBox;
   private JCheckBox myShowValueTooltipCheckBox;
@@ -42,6 +43,7 @@ public class DataViewsConfigurableUi {
 
   public DataViewsConfigurableUi() {
     UIUtil.configureNumericFormattedTextField(valueTooltipDelayTextField);
+    myShowValueTooltipCheckBox.addItemListener(e -> updateEnabledState());
   }
 
   private int getValueTooltipDelay() {
@@ -72,6 +74,11 @@ public class DataViewsConfigurableUi {
     myShowValueTooltipCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY));
     myShowValueTooltipOnCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY));
     myTooltipLabel.setText(XDebuggerBundle.message("settings.tooltip.label", Registry.stringValue("ide.forcedShowTooltip")));
+    updateEnabledState();
+  }
+
+  private void updateEnabledState() {
+    valueTooltipDelayTextField.setEnabled(myShowValueTooltipCheckBox.isSelected());
   }
 
   public void apply(@NotNull XDebuggerDataViewSettings settings) {
@@ -84,9 +91,6 @@ public class DataViewsConfigurableUi {
   }
 
   private void createUIComponents() {
-    myEditorSettingsPanel = new JPanel();
-    IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder("Editor", false);
-    myEditorSettingsPanel.setBorder(titledBorder);
-    titledBorder.acceptMinimumSize(myEditorSettingsPanel);
+    myEditorSettingsPanel = Panel("Editor");
   }
 }

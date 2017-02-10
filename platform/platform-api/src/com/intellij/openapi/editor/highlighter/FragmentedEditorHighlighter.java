@@ -51,7 +51,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
-    myPieces = new ArrayList<Element>();
+    myPieces = new ArrayList<>();
     myAdditionalOffset = additionalOffset;
     translate(sourceIterator, ranges);
   }

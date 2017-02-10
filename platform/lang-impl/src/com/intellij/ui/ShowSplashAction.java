@@ -29,7 +29,7 @@ public class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final ApplicationInfoEx app = ApplicationInfoImpl.getShadowInstance();
-    final Splash splash = new Splash(app.getSplashImageUrl(), app.getSplashTextColor());
+    final Splash splash = new Splash(app);
     final SplashListener listener = new SplashListener(splash);
     splash.addFocusListener(listener);
     splash.addKeyListener(listener);

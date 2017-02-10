@@ -33,7 +33,7 @@ public class EmmetLexer {
   @Nullable
   public List<ZenCodingToken> lex(@NotNull String text) {
     text += ZenCodingTemplate.MARKER;
-    final List<ZenCodingToken> result = new ArrayList<ZenCodingToken>();
+    final List<ZenCodingToken> result = new ArrayList<>();
 
     boolean inQuotes = false;
     boolean inApostrophes = false;

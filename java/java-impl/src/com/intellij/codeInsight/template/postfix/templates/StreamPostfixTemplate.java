@@ -20,11 +20,11 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
   public StreamPostfixTemplate() {
-    super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorTopmost(JavaPostfixTemplatesUtils.IS_ARRAY)));
+    super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorAllExpressionsWithCurrentOffset(JavaPostfixTemplatesUtils.IS_ARRAY)));
   }
 
   @Nullable

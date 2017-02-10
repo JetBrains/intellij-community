@@ -106,13 +106,13 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
 
     OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
 
-    final Set<Library> libraries = new THashSet<Library>();
+    final Set<Library> libraries = new THashSet<>();
     if (!includeTests) {
       orderEnumerator = orderEnumerator.productionOnly();
     }
     final ModulesProvider modulesProvider = myContext.getModulesProvider();
     final OrderEnumerator enumerator = orderEnumerator.using(modulesProvider).withoutSdk().runtimeOnly().recursively();
-    enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<Library>(libraries));
+    enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<>(libraries));
     enumerator.forEachModule(module -> {
       if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
         archive.addOrFindChild(factory.createModuleOutput(module));
@@ -135,7 +135,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
     else {
       final ArtifactRootElement<?> root = factory.createArtifactRootElement();
-      List<String> classpath = new ArrayList<String>();
+      List<String> classpath = new ArrayList<>();
       root.addOrFindChild(archive);
       addLibraries(libraries, root, archive, classpath);
       ManifestFileUtil.updateManifest(manifestFile, mainClassName, classpath, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,146 +28,146 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 class GrAssignabilityTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
 
-  public void testIncompatibleTypesAssignments() { doTest(); }
+  void testIncompatibleTypesAssignments() { doTest() }
 
-  public void testDefaultMapConstructorNamedArgs() {
+  void testDefaultMapConstructorNamedArgs() {
     addBigDecimal()
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
-  public void testDefaultMapConstructorNamedArgsError() {
+  void testDefaultMapConstructorNamedArgsError() {
     addBigDecimal()
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
-  public void testDefaultMapConstructorWhenDefConstructorExists() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+  void testDefaultMapConstructorWhenDefConstructorExists() {
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
-  public void testUnresolvedMethodCallWithTwoDeclarations() {
-    doTest();
+  void testUnresolvedMethodCallWithTwoDeclarations() {
+    doTest()
   }
 
-  public void testConstructor() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+  void testConstructor() {
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
-  public void testEverythingAssignableToString() {doTest();}
+  void testEverythingAssignableToString() { doTest() }
 
-  public void testMethodCallWithDefaultParameters() {doTest();}
+  void testMethodCallWithDefaultParameters() { doTest() }
 
-  public void testClosureWithDefaultParameters() {doTest();}
+  void testClosureWithDefaultParameters() { doTest() }
 
-  public void testClosureCallMethodWithInapplicableArguments() {doTest();}
+  void testClosureCallMethodWithInapplicableArguments() { doTest() }
 
-  public void testCallIsNotApplicable() {doTest();}
+  void testCallIsNotApplicable() { doTest() }
 
-  public void testPathCallIsNotApplicable() {doTest();}
+  void testPathCallIsNotApplicable() { doTest() }
 
-  public void testByteArrayArgument() {doTest();}
+  void testByteArrayArgument() { doTest() }
 
-  public void testPutValueToEmptyMap() {doTest();}
+  void testPutValueToEmptyMap() { doTest() }
 
-  public void _testPutIncorrectValueToMap() {doTest();} //incorrect test
+  void _testPutIncorrectValueToMap() { doTest() } //incorrect test
 
-  public void testTupleTypeAssignments() {
-    addBigDecimal();
-    doTest();
+  void testTupleTypeAssignments() {
+    addBigDecimal()
+    doTest()
   }
 
-  public void testSignatureIsNotApplicableToList() {
-    doTest();
+  void testSignatureIsNotApplicableToList() {
+    doTest()
   }
 
-  public void testInheritConstructorsAnnotation() {
-    doTest();
+  void testInheritConstructorsAnnotation() {
+    doTest()
   }
 
-  public void testCollectionAssignments() {doTest(); }
+  void testCollectionAssignments() { doTest() }
 
-  public void testReturnAssignability() {doTest(); }
+  void testReturnAssignability() { doTest() }
 
-  public void testMapNotAcceptedAsStringParameter() {doTest();}
+  void testMapNotAcceptedAsStringParameter() { doTest() }
 
-  public void testRawTypeInAssignment() {doTest();}
+  void testRawTypeInAssignment() { doTest() }
 
-  public void testMapParamWithNoArgs() {doTest();}
+  void testMapParamWithNoArgs() { doTest() }
 
-  public void testInheritInterfaceInDelegate() {
-    doTest();
+  void testInheritInterfaceInDelegate() {
+    doTest()
   }
 
-  public void testThisTypeInStaticContext() {
-    doTest();
+  void testThisTypeInStaticContext() {
+    doTest()
   }
 
-  public void testAnonymousClassArgList() {
-    doTest();
+  void testAnonymousClassArgList() {
+    doTest()
   }
 
-  public void testTupleConstructorAttributes() {
-    doTest();
+  void testTupleConstructorAttributes() {
+    doTest()
   }
 
-  public void testCanonicalConstructorApplicability() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}");
-    doTest();
+  void testCanonicalConstructorApplicability() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    doTest()
   }
 
-  public void testStringAssignableToChar() {
-    doTest();
+  void testStringAssignableToChar() {
+    doTest()
   }
 
 
-  public void testCurrying() {
-    doTest();
+  void testCurrying() {
+    doTest()
   }
 
-  public void testAnotherCurrying() {
-    doTest();
+  void testAnotherCurrying() {
+    doTest()
   }
 
-  public void testResultOfIncUsed() {
-    doTest(new GroovyResultOfIncrementOrDecrementUsedInspection());
+  void testResultOfIncUsed() {
+    doTest(new GroovyResultOfIncrementOrDecrementUsedInspection())
   }
 
-  public void testNativeMapAssignability() {
-    doTest();
+  void testNativeMapAssignability() {
+    doTest()
   }
 
-  public void testTwoLevelGrMap() {
-    doTest();
+  void testTwoLevelGrMap() {
+    doTest()
   }
 
-  public void testPassingCollectionSubtractionIntoGenericMethod() {
-    doTest(new GrUnresolvedAccessInspection());
+  void testPassingCollectionSubtractionIntoGenericMethod() {
+    doTest(new GrUnresolvedAccessInspection())
   }
 
-  public void testImplicitEnumCoercion() {
-    doTest();
+  void testImplicitEnumCoercion() {
+    doTest()
   }
 
-  public void testUnknownVarInArgList() {
-    doTest();
+  void testUnknownVarInArgList() {
+    doTest()
   }
 
-  public void testCallableProperty() {
-    doTest();
+  void testCallableProperty() {
+    doTest()
   }
 
-  public void testEnumConstantConstructors() {
-    doTest();
+  void testEnumConstantConstructors() {
+    doTest()
   }
 
-  public void testLiteralConstructorUsages() {
-    doTest();
+  void testLiteralConstructorUsages() {
+    doTest()
   }
 
-  public void testSpreadArguments() {
-    doTest();
+  void testSpreadArguments() {
+    doTest()
   }
 
-  public void testDiamondTypeInferenceSOE() {
+  void testDiamondTypeInferenceSOE() {
     testHighlighting(''' Map<Integer, String> a; a[2] = [:] ''', false, false, false)
   }
 
@@ -182,10 +182,10 @@ class A {
             }
         }.run()
     }
-}''', true, false, false);
+}''', true, false, false)
   }
 
-  public void testNonInferrableArgsOfDefParams() {
+  void testNonInferrableArgsOfDefParams() {
     testHighlighting('''\
 def foo0(def a) { }
 def bar0(def b) { foo0(b) }
@@ -198,7 +198,7 @@ def bar2(def b) { foo2<weak_warning descr="Cannot infer argument types">(b)</wea
 ''')
   }
 
-  public void testPutAtApplicability() {
+  void testPutAtApplicability() {
     myFixture.addClass("""\
 package java.util;
 public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {}
@@ -211,7 +211,7 @@ files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethod
 ''')
   }
 
-  public void testStringToCharAssignability() {
+  void testStringToCharAssignability() {
     testHighlighting('''\
 def foo(char c){}
 
@@ -339,7 +339,8 @@ class A {
 
   void testTupleAssignment() {
     testHighlighting('''\
-def (String x, int y)
+String x 
+int y 
 (x, <warning descr="Cannot assign 'String' to 'int'">y</warning>) = foo()
 
 print x + y
@@ -639,7 +640,7 @@ a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' c
 ''')
   }
 
-  public void testVarWithInitializer() {
+  void testVarWithInitializer() {
     testHighlighting('''\
 Object o = new Date()
 foo(o)

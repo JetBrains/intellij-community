@@ -16,103 +16,57 @@
 package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.BitUtil;
-
-import java.util.Arrays;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IndexTree {
-  public final static int PACKAGE = 1 << 0;
+  public static final boolean STUB_HIERARCHY_ENABLED = Registry.is("java.hierarchy.service");
+
+  public final static int PACKAGE = 1;
   public final static int CLASS = 1 << 1;
-  public static final int STATIC       = 1 << 3;
-  public static final int INTERFACE    = 1 << 4;
   public static final int ANNOTATION   = 1 << 5;
   public static final int ENUM         = 1 << 6;
   public static final int COMPILED     = 1 << 7;
   public static final int MEMBER       = 1 << 8;
+  public static final int SUPERS_UNRESOLVED = 1 << 9;
 
   public static final byte BYTECODE = 0;
   public static final byte JAVA = 1;
   public static final byte GROOVY = 2;
 
   public static class Unit {
-    public final int myFileId;
-    public final String myPackageId;
+    @NotNull public final String myPackageName;
     public final byte myUnitType;
     public final Import[] imports;
     public final ClassDecl[] myDecls;
 
-    public Unit(int fileId, String packageId, byte unitType, Import[] imports, ClassDecl[] decls) {
-      this.myFileId = fileId;
-      this.myPackageId = packageId;
-      this.myUnitType = unitType;
+    public Unit(@Nullable String packageName, byte unitType, Import[] imports, ClassDecl[] decls) {
+      myPackageName = StringUtil.notNullize(packageName);
+      myUnitType = unitType;
       this.imports = imports;
-      this.myDecls = decls;
+      myDecls = decls;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Unit unit = (Unit)o;
-
-      if (myFileId != unit.myFileId) return false;
-      if (myPackageId != null ? !myPackageId.equals(unit.myPackageId) : unit.myPackageId != null) return false;
-      if (!Arrays.equals(imports, unit.imports)) return false;
-      if (!Arrays.equals(myDecls, unit.myDecls)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFileId;
-      result = 31 * result + (myPackageId != null ? myPackageId.hashCode() : 0);
-      result = 31 * result + Arrays.hashCode(imports);
-      result = 31 * result + Arrays.hashCode(myDecls);
-      return result;
-    }
   }
 
   public static class Import {
     public static final Import[] EMPTY_ARRAY = new Import[0];
-    public final String myFullname;
+    @NotNull public final String myQualifier;
+    @Nullable public final String myImportedName;
     public final boolean myStaticImport;
     public final boolean myOnDemand;
-    public final String myAlias;
+    @Nullable public final String myAlias;
 
-    public Import(String fullname, boolean staticImport, boolean onDemand, String alias) {
-      this.myFullname = fullname;
-      this.myStaticImport = staticImport;
-      this.myOnDemand = onDemand;
-      this.myAlias = alias;
+    public Import(String fullname, boolean staticImport, boolean onDemand, @Nullable String alias) {
+      myQualifier = onDemand ? fullname : StringUtil.getPackageName(fullname);
+      myImportedName = onDemand ? null : StringUtil.getShortName(fullname);
+      myStaticImport = staticImport;
+      myOnDemand = onDemand;
+      myAlias = alias;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Import anImport = (Import)o;
-
-      if (myStaticImport != anImport.myStaticImport) return false;
-      if (myOnDemand != anImport.myOnDemand) return false;
-      if (!myFullname.equals(anImport.myFullname)) return false;
-      if (myAlias != null ? !myAlias.equals(anImport.myAlias) : anImport.myAlias != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFullname.hashCode();
-      result = 31 * result + (myStaticImport ? 1 : 0);
-      result = 31 * result + (myOnDemand ? 1 : 0);
-      result = 31 * result + (myAlias != null ? myAlias.hashCode() : 0);
-      return result;
-    }
   }
 
   public static abstract class Decl {
@@ -131,44 +85,15 @@ public class IndexTree {
     public final String myName;
     public final String[] mySupers;
 
-    public ClassDecl(int stubId, int mods, String name, String[] supers, Decl[] decls) {
+    public ClassDecl(int stubId, int mods, @Nullable String name, String[] supers, Decl[] decls) {
       super(decls);
-      this.myStubId = stubId;
-      this.myMods = mods;
-      this.myName = name;
-      this.mySupers = supers;
+      assert stubId > 0;
+      myStubId = stubId;
+      myMods = mods;
+      myName = name;
+      mySupers = supers;
     }
 
-    public IStubElementType getStubElementType() {
-      boolean isEnum = BitUtil.isSet(myMods, IndexTree.ENUM);
-      boolean isAnonymous = false;
-
-      return JavaClassElementType.typeForClass(isAnonymous, isEnum);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ClassDecl classDecl = (ClassDecl)o;
-      if (myStubId != classDecl.myStubId) return false;
-      if (myMods != classDecl.myMods) return false;
-      if (myName != null ? !myName.equals(classDecl.myName) : classDecl.myName != null) return false;
-      if (!Arrays.equals(mySupers, classDecl.mySupers)) return false;
-      if (!Arrays.equals(myDecls, classDecl.myDecls)) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myStubId;
-      result = 31 * result + myMods;
-      result = 31 * result + (myName != null ? myName.hashCode() : 0);
-      result = 31 * result + Arrays.hashCode(mySupers);
-      result = 31 * result + Arrays.hashCode(myDecls);
-      return result;
-    }
   }
 
   public static class MemberDecl extends Decl {
@@ -177,19 +102,6 @@ public class IndexTree {
       super(decls);
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MemberDecl that = (MemberDecl)o;
-      if (!Arrays.equals(myDecls, that.myDecls)) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(myDecls);
-    }
   }
 
 }

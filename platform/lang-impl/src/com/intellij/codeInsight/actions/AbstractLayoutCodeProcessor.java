@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -48,6 +51,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.SmartList;
@@ -59,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -166,7 +169,7 @@ public abstract class AbstractLayoutCodeProcessor {
   {
     myProject = project;
     myModule = null;
-    myFiles = filterFilesTo(files, new ArrayList<PsiFile>());
+    myFiles = filterFilesTo(files, new ArrayList<>());
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
@@ -225,15 +228,21 @@ public abstract class AbstractLayoutCodeProcessor {
     final FutureTask<Boolean> previousTask = getPreviousProcessorTask(file, processChangedTextOnly);
     final FutureTask<Boolean> currentTask = prepareTask(file, processChangedTextOnly);
 
-    return new FutureTask<Boolean>(() -> {
-      if (previousTask != null) {
-        previousTask.run();
-        if (!previousTask.get() || previousTask.isCancelled()) return false;
+    return new FutureTask<>(() -> {
+      try {
+        if (previousTask != null) {
+          previousTask.run();
+          if (!previousTask.get() || previousTask.isCancelled()) return false;
+        }
+
+        ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
+
+        return currentTask.get() && !currentTask.isCancelled();
       }
-
-      ApplicationManager.getApplication().runWriteAction(() -> currentTask.run());
-
-      return currentTask.get() && !currentTask.isCancelled();
+      catch (ExecutionException e) {
+        ExceptionUtil.rethrowUnchecked(e.getCause());
+        throw e;
+      }
     });
   }
 
@@ -315,7 +324,7 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-    final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<FutureTask<Boolean>>();
+    final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<>();
     Runnable readAction = () -> {
       if (!checkFileWritable(file)) return;
       try{
@@ -334,6 +343,12 @@ public abstract class AbstractLayoutCodeProcessor {
         task.get();
       }
       catch (CancellationException ignored) {
+      }
+      catch (ExecutionException e) {
+        if (e.getCause() instanceof IndexNotReadyException) {
+          throw (IndexNotReadyException)e.getCause();
+        }
+        LOG.error(e);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -375,7 +390,7 @@ public abstract class AbstractLayoutCodeProcessor {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return true;
 
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
 
     return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, file.getProject());
   }
@@ -397,6 +412,7 @@ public abstract class AbstractLayoutCodeProcessor {
         return;
       }
       catch(IndexNotReadyException e) {
+        LOG.warn(e);
         return;
       }
 
@@ -409,7 +425,8 @@ public abstract class AbstractLayoutCodeProcessor {
             ApplicationManager.getApplication().invokeLater(myPostRunnable);
           }
         }
-        catch (IndexNotReadyException ignored) {
+        catch (IndexNotReadyException e) {
+          LOG.warn(e);
         }
       }, myCommandName, null);
 
@@ -534,7 +551,7 @@ public abstract class AbstractLayoutCodeProcessor {
         ProgressIndicatorProvider.checkCanceled();
         FutureTask<Boolean> writeTask = writeTaskRef.get();
         
-        ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask), ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask));
 
         checkStop(writeTask, file);
       });
@@ -546,10 +563,7 @@ public abstract class AbstractLayoutCodeProcessor {
           myStopFormatting = true;
         }
       }
-      catch (InterruptedException e) {
-        LOG.error("Got unexpected exception during formatting " + file, e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         LOG.error("Got unexpected exception during formatting " + file, e);
       }
     }
@@ -591,7 +605,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   protected static List<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
-    final List<TextRange> ranges = new SmartList<TextRange>();
+    final List<TextRange> ranges = new SmartList<>();
     if (selectionModel.hasSelection()) {
       TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       ranges.add(range);

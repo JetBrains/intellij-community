@@ -32,11 +32,11 @@ public class JiraTransitionsWrapperApi2 {
 
   @NotNull
   public Set<CustomTaskState> getTransitions() {
-    final Set<CustomTaskState> result = new LinkedHashSet<CustomTaskState>();
+    final Set<CustomTaskState> result = new LinkedHashSet<>();
     nextTransition:
     for (JiraTransition transition : transitions) {
       final String stateName = transition.target.name;
-      final List<String> resolutions = new ArrayList<String>();
+      final List<String> resolutions = new ArrayList<>();
       if (transition.fields != null) {
         for (Map.Entry<String, JsonElement> field : transition.fields.entrySet()) {
           final String fieldName = field.getKey();

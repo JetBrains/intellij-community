@@ -122,11 +122,11 @@ public class AnnotateLocalFileAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (vcs == null) return;
 
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     assert annotationProvider != null;
 
-    final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+    final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
 
     VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
 

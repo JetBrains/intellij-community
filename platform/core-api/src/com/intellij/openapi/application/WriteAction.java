@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,22 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("deprecation")
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
 
   @NotNull
   @Override
-  @SuppressWarnings("InstanceofCatchParameter")
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
-    final Application application = ApplicationManager.getApplication();
-    boolean dispatchThread = application.isDispatchThread();
-    if (dispatchThread) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
       AccessToken token = start(getClass());
       try {
         result.run();
-      } finally {
+      }
+      finally {
         token.finish();
       }
       return result;
@@ -60,17 +60,29 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       }
     });
 
-    result.throwException();
+    if (!isSilentExecution()) {
+      result.throwException();
+    }
+
     return result;
   }
 
+  /**
+   * @see #run(ThrowableRunnable)
+   * @see #compute(ThrowableComputable)
+   */
+  @Deprecated
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
-    Class aClass = ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class);
-    return start(aClass);
+    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
   }
 
+  /**
+   * @see #run(ThrowableRunnable)
+   * @see #compute(ThrowableComputable)
+   */
+  @Deprecated
   @NotNull
   public static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
@@ -80,7 +92,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     AccessToken token = start();
     try {
       action.run();
-    } finally {
+    }
+    finally {
       token.finish();
     }
   }
@@ -89,7 +102,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     AccessToken token = start();
     try {
       return action.compute();
-    } finally {
+    }
+    finally {
       token.finish();
     }
   }

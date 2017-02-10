@@ -4,7 +4,8 @@
       <!-- these must be declared before standard EnterAction and TabAction -->
       <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
-      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"/>
+      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"
+              use-shortcut-of="EditorCompleteStatement"/>
       <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
 
       <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction"/>
@@ -151,6 +152,8 @@
         <separator/>
         <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
         <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
+        <separator/>
+        <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction" text="Validate Local History Storage"/>
       </group>
 
       <separator/>
@@ -171,7 +174,8 @@
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
 
-    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"/>
+    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"
+            internal="true"/>
 
     <reference ref="Compile">
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
@@ -388,7 +392,8 @@
 
     <group>
       <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" />
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
       <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
     </group>

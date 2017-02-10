@@ -69,7 +69,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiClass[] possibleClasses = JavaPsiFacade.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
 
-    final Set<Module> modules = new THashSet<Module>();
+    final Set<Module> modules = new THashSet<>();
     for (PsiClass aClass : possibleClasses) {
       Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
@@ -80,7 +80,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
       return Arrays.asList(ModuleManager.getInstance(project).getModules());
     }
     else {
-      final Set<Module> result = new HashSet<Module>();
+      final Set<Module> result = new HashSet<>();
       for (Module module : modules) {
         ModuleUtilCore.collectModulesDependsOn(module, result);
       }

@@ -58,7 +58,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
 
   @Override
   public String[] getNames() {
-    final ArrayList<String> taskFullCmds = new ArrayList<String>();
+    final ArrayList<String> taskFullCmds = new ArrayList<>();
     for (T item : myItems) {
       taskFullCmds.add(item.getName());
     }

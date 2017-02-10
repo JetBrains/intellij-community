@@ -86,7 +86,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
 
   @NotNull
   private static Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
-    Set<FoldingDescriptor> foldingDescriptors = new HashSet<FoldingDescriptor>();
+    Set<FoldingDescriptor> foldingDescriptors = new HashSet<>();
     final Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile file = documentManager != null ? documentManager.getPsiFile(document) : null;

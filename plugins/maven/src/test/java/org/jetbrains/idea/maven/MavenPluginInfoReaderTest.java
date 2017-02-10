@@ -42,9 +42,9 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
   public void testGoals() throws Exception {
     assertEquals("compiler", p.getGoalPrefix());
 
-    List<String> qualifiedGoals = new ArrayList<String>();
-    List<String> displayNames = new ArrayList<String>();
-    List<String> goals = new ArrayList<String>();
+    List<String> qualifiedGoals = new ArrayList<>();
+    List<String> displayNames = new ArrayList<>();
+    List<String> goals = new ArrayList<>();
     for (MavenPluginInfo.Mojo m : p.getMojos()) {
       goals.add(m.getGoal());
       qualifiedGoals.add(m.getQualifiedGoal());

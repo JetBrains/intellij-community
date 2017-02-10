@@ -173,14 +173,22 @@ public class BuildFSState {
     myInitialScanPerformed.add(target);
   }
 
-  public void registerDeleted(BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
-    registerDeleted(target, file);
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
+    registerDeleted(context, target, file);
     if (tsStorage != null) {
       tsStorage.removeStamp(file, target);
     }
   }
 
-  public void registerDeleted(BuildTarget<?> target, File file) {
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file) {
+    final FilesDelta currentDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
+    if (currentDelta != null) {
+      currentDelta.addDeleted(file);
+    }
+    final FilesDelta nextDelta = getRoundDelta(NEXT_ROUND_DELTA_KEY, context);
+    if (nextDelta != null) {
+      nextDelta.addDeleted(file);
+    }
     getDelta(target).addDeleted(file);
   }
 

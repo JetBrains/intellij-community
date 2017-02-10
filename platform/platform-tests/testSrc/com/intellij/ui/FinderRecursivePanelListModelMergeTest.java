@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
     final StringFinderRecursivePanel panel = createStringPanel(initialItems);
     disposeOnTearDown(panel);
 
-    JBList list = panel.getList();
+    JBList<String> list = panel.getList();
     CollectionListModel<String> model = panel.getListModel();
 
     list.setSelectedIndex(initialSelectionIdx);
@@ -118,7 +118,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
   @NotNull
   private StringFinderRecursivePanel createStringPanel(String[] initialItems) {
     StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems);
-    panel.init();
+    panel.initPanel();
     return panel;
   }
 
@@ -147,7 +147,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
       return false;
     }
 
-    public JBList getList() {
+    public JBList<String> getList() {
       return myList;
     }
 
@@ -156,13 +156,13 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
     }
 
     @Override
-    protected JBList createList() {
+    protected JBList<String> createList() {
       myList = super.createList();
-      ((CollectionListModel)myList.getModel()).replaceAll(getListItems());
+      ((CollectionListModel<String>)myList.getModel()).replaceAll(getListItems());
       return myList;
     }
 
-    public void merge(@NotNull CollectionListModel<String> listModel, @NotNull JList list, @NotNull List<String> newItems) {
+    public void merge(@NotNull CollectionListModel<String> listModel, @NotNull JList<String> list, @NotNull List<String> newItems) {
       mergeListItems(listModel, list, newItems);
     }
   }

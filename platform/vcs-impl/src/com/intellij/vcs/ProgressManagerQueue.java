@@ -40,7 +40,7 @@ public class ProgressManagerQueue {
   public ProgressManagerQueue(@NotNull Project project, @NotNull String title) {
     myProject = project;
     myLock = new Object();
-    myQueue = new ArrayDeque<Runnable>();
+    myQueue = new ArrayDeque<>();
     myActive = false;
     myQueueWorker = new MyWorker();
     myProgressManager = ProgressManager.getInstance();

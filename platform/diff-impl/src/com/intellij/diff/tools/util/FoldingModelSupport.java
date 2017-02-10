@@ -24,7 +24,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -100,12 +99,21 @@ public class FoldingModelSupport {
                          @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (changedLines == null) return;
-    if (settings.range == -1) return;
+    for (FoldedBlock folding : getFoldedBlocks()) {
+      folding.destroyHighlighter();
+    }
 
     runBatchOperation(() -> {
-      FoldingBuilder builder = new FoldingBuilder(context, settings);
-      builder.build(changedLines);
+      for (FoldedBlock folding : getFoldedBlocks()) {
+        folding.destroyFolding();
+      }
+      myFoldings.clear();
+
+
+      if (changedLines != null && settings.range != -1) {
+        FoldingBuilder builder = new FoldingBuilder(context, settings);
+        builder.build(changedLines);
+      }
     });
 
     updateLineNumbers(true);
@@ -220,16 +228,14 @@ public class FoldingModelSupport {
   private void runBatchOperation(@NotNull Runnable runnable) {
     Runnable lastRunnable = runnable;
 
-    for (int i = 0; i < myCount; i++) {
-      final Editor editor = myEditors[i];
+    for (EditorEx editor : myEditors) {
       final Runnable finalRunnable = lastRunnable;
       lastRunnable = () -> {
-        Runnable operation = () -> finalRunnable.run();
         if (DiffUtil.isFocusedComponent(editor.getComponent())) {
-          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(finalRunnable);
         }
         else {
-          editor.getFoldingModel().runBatchFoldingOperation(operation);
+          editor.getFoldingModel().runBatchFoldingOperation(finalRunnable);
         }
       };
     }
@@ -244,23 +250,15 @@ public class FoldingModelSupport {
   }
 
   public void destroy() {
-    for (int i = 0; i < myCount; i++) {
-      destroyFoldings(i);
-    }
-
     for (FoldedBlock folding : getFoldedBlocks()) {
       folding.destroyHighlighter();
     }
-    myFoldings.clear();
-  }
 
-  private void destroyFoldings(final int index) {
-    final FoldingModelEx model = myEditors[index].getFoldingModel();
-    model.runBatchFoldingOperation(() -> {
+    runBatchOperation(() -> {
       for (FoldedBlock folding : getFoldedBlocks()) {
-        FoldRegion region = folding.getRegion(index);
-        if (region != null) model.removeFoldRegion(region);
+        folding.destroyFolding();
       }
+      myFoldings.clear();
     });
   }
 
@@ -612,6 +610,13 @@ public class FoldingModelSupport {
         myHighlighters.addAll(DiffDrawUtil.createLineSeparatorHighlighter(myEditors[i],
                                                                           region.getStartOffset(), region.getEndOffset(),
                                                                           getHighlighterCondition(block, i)));
+      }
+    }
+
+    public void destroyFolding() {
+      for (int i = 0; i < myCount; i++) {
+        FoldRegion region = myRegions[i];
+        if (region != null) myEditors[i].getFoldingModel().removeFoldRegion(region);
       }
     }
 

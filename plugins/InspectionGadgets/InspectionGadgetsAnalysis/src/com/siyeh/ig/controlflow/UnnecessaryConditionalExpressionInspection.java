@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,19 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -40,8 +44,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.conditional.expression.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.conditional.expression.display.name");
   }
 
   @Override
@@ -57,65 +60,42 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final PsiConditionalExpression expression =
-      (PsiConditionalExpression)infos[0];
-    return InspectionGadgetsBundle.message(
-      "simplifiable.conditional.expression.problem.descriptor",
-      calculateReplacementExpression(expression));
-  }
-
-  static String calculateReplacementExpression(
-    PsiConditionalExpression exp) {
-    final PsiExpression thenExpression = exp.getThenExpression();
-    final PsiExpression elseExpression = exp.getElseExpression();
-    final PsiExpression condition = exp.getCondition();
-
-    if (BoolUtils.isFalse(thenExpression) &&
-        BoolUtils.isTrue(elseExpression)) {
-      return BoolUtils.getNegatedExpressionText(condition);
-    }
-    else {
-      return condition.getText();
-    }
+    final String replacement = (String)infos[0];
+    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement);
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryConditionalFix();
+    final String replacement = (String)infos[0];
+    return new UnnecessaryConditionalFix(replacement);
   }
 
-  private static class UnnecessaryConditionalFix
-    extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
+  private static class UnnecessaryConditionalFix extends InspectionGadgetsFix {
+
+    private final String myReplacement;
+
+    public UnnecessaryConditionalFix(String replacement) {
+      myReplacement = replacement;
     }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiConditionalExpression expression =
-        (PsiConditionalExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
+      PsiReplacementUtil.replaceExpression(expression, myReplacement);
     }
   }
 
-  private static class UnnecessaryConditionalExpressionVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryConditionalExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(
-      PsiConditionalExpression expression) {
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenExpression = expression.getThenExpression();
       if (thenExpression == null) {
@@ -125,12 +105,38 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
       if (elseExpression == null) {
         return;
       }
-      if (BoolUtils.isFalse(thenExpression) &&
-          BoolUtils.isTrue(elseExpression) ||
-          BoolUtils.isTrue(thenExpression) &&
-          BoolUtils.isFalse(elseExpression)) {
-        registerError(expression, expression);
+      final PsiExpression condition = ParenthesesUtils.stripParentheses(expression.getCondition());
+      if (condition == null) {
+        return;
       }
+      if (BoolUtils.isFalse(thenExpression) && BoolUtils.isTrue(elseExpression)) {
+        registerError(expression, BoolUtils.getNegatedExpressionText(condition));
+      }
+      else if (BoolUtils.isTrue(thenExpression) && BoolUtils.isFalse(elseExpression)) {
+        registerError(expression, condition.getText());
+      }
+      else if (isUnnecessary(condition, thenExpression, elseExpression, JavaTokenType.EQEQ)) {
+        registerError(expression, elseExpression.getText());
+      }
+      else if (isUnnecessary(condition, elseExpression, thenExpression, JavaTokenType.NE)) {
+        registerError(expression, thenExpression.getText());
+      }
+    }
+
+    boolean isUnnecessary(PsiExpression condition, PsiExpression thenExpression, PsiExpression elseExpression, IElementType expectedToken) {
+      if (!(condition instanceof PsiBinaryExpression)) {
+        return false;
+      }
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      final IElementType token = binaryExpression.getOperationTokenType();
+      if (token != expectedToken) {
+        return false;
+      }
+      final EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      return equivalence.expressionsAreEquivalent(thenExpression, lhs) && equivalence.expressionsAreEquivalent(elseExpression, rhs) ||
+             equivalence.expressionsAreEquivalent(thenExpression, rhs) && equivalence.expressionsAreEquivalent(elseExpression, lhs);
     }
   }
 }

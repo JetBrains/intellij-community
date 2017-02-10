@@ -19,7 +19,6 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -43,7 +42,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +94,7 @@ public class ExternalSystemApiUtil {
     }
 
     private int getOrder(@NotNull Object o) {
-      Queue<Class<?>> toCheck = new ArrayDeque<Class<?>>();
+      Queue<Class<?>> toCheck = new ArrayDeque<>();
       toCheck.add(o.getClass());
       while (!toCheck.isEmpty()) {
         Class<?> clazz = toCheck.poll();
@@ -114,7 +116,7 @@ public class ExternalSystemApiUtil {
   @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
 
   @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<Runnable>("External System queue", runnable -> {
+    new TransferToEDTQueue<>("External System queue", runnable -> {
       runnable.run();
       return true;
     }, Conditions.alwaysFalse(), 300);
@@ -230,7 +232,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -358,7 +360,7 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                            @Nullable BooleanFunction<DataNode<?>> predicate) {
-    SmartList<DataNode<?>> result = new SmartList<DataNode<?>>();
+    SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
         result.add(node);
@@ -373,7 +375,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    Queue<DataNode<?>> queue = new LinkedList<DataNode<?>>();
+    Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
@@ -381,7 +383,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
                                                  @NotNull BooleanFunction<DataNode<?>> predicate) {
-    return findInQueue(new LinkedList<DataNode<?>>(nodes), predicate);
+    return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
@@ -464,17 +466,17 @@ public class ExternalSystemApiUtil {
     }
     
     if (synchronous) {
-      app.invokeAndWait(task, ModalityState.defaultModalityState());
+      app.invokeAndWait(task);
     }
     else {
-      app.invokeLater(task, ModalityState.defaultModalityState());
+      app.invokeLater(task);
     }
   }
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
     final Ref<T> result = Ref.create();
-    app.invokeAndWait(() -> result.set(task.compute()), ModalityState.defaultModalityState());
+    app.invokeAndWait(() -> result.set(task.compute()));
     return result.get();
   }
 

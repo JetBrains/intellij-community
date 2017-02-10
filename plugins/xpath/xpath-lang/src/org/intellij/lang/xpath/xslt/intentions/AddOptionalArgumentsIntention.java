@@ -60,7 +60,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
         final XsltTemplate template = call.getTemplate();
         if (template == null) return false;
 
-        final Set<String> params = new HashSet<String>();
+        final Set<String> params = new HashSet<>();
         final XsltParameter[] parameters = template.getParameters();
         for (XsltParameter parameter : parameters) {
             if (parameter.hasDefault()) params.add(parameter.getName());

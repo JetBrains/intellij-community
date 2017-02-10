@@ -164,7 +164,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     for (final PsiElement ref : refsToInline) {
-      final List<PsiElement> elems = new ArrayList<PsiElement>();
+      final List<PsiElement> elems = new ArrayList<>();
       final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false);
       for (Instruction i : latestDefs) {
         elems.add(i.getElement());

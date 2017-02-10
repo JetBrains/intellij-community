@@ -90,7 +90,7 @@ public class GitUnstashDialog extends DialogWrapper {
   /**
    * Set of branches for the current root
    */
-  private final HashSet<String> myBranches = new HashSet<String>();
+  private final HashSet<String> myBranches = new HashSet<>();
 
   private final Project myProject;
   private GitVcs myVcs;
@@ -367,7 +367,7 @@ public class GitUnstashDialog extends DialogWrapper {
         public void run() {
           h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
           Git git = ServiceManager.getService(Git.class);
-          result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));
+          result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
         }
       }, GitBundle.getString("unstash.unstashing"), true, myProject);
 

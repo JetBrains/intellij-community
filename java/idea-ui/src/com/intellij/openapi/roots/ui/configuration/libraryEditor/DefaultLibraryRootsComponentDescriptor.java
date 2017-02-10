@@ -106,7 +106,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     @NotNull
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      List<VirtualFile> result = new ArrayList<>();
       collectJavadocRoots(rootCandidate, result, progressIndicator);
       return result;
     }
@@ -118,6 +118,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
           progressIndicator.checkCanceled();
           if (file.isDirectory() && file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null) {
             result.add(file);
+            JavadocQuarantineStatusCleaner.cleanIfNeeded(file);
             return false;
           }
           return true;

@@ -101,8 +101,8 @@ public class OriginsAnalysis {
     for (int i = 0; i < backTransitions.length; i++) {
       backTransitions[i] = new TIntArrayList();
     }
-    LinkedList<InsnLocation> queue = new LinkedList<InsnLocation>();
-    HashSet<InsnLocation> queued = new HashSet<InsnLocation>();
+    LinkedList<InsnLocation> queue = new LinkedList<>();
+    HashSet<InsnLocation> queued = new HashSet<>();
     for (int from = 0; from < instructions.size(); from++) {
       for (int to : graph.transitions[from]) {
         TIntArrayList froms = backTransitions[to];
@@ -182,7 +182,7 @@ public class OriginsAnalysis {
 
   @NotNull
   private static Frame<SourceValue> makePreFrame(@NotNull Frame<Value> frame) {
-    Frame<SourceValue> preFrame = new Frame<SourceValue>(frame.getLocals(), frame.getMaxStackSize());
+    Frame<SourceValue> preFrame = new Frame<>(frame.getLocals(), frame.getMaxStackSize());
     for (int i = 0; i < frame.getLocals(); i++) {
       preFrame.setLocal(i, new PreValue(true, i, frame.getLocal(i).getSize()));
     }

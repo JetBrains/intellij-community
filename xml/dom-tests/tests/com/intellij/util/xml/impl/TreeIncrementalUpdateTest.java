@@ -259,7 +259,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testTypeBeforeRootTag() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "a"), getTestRootDisposable());
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "a"), getTestRootDisposable());
 
     final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
                                                          "<a/>");

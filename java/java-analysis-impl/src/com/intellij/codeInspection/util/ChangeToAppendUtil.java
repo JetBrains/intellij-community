@@ -26,8 +26,9 @@ public class ChangeToAppendUtil {
     if (concatenation == null) return null;
     final PsiType type = appendable.getType();
     if (type == null) return null;
-    final StringBuilder result =
-      buildAppendExpression(concatenation, type.equalsToText("java.lang.Appendable"), new StringBuilder(appendable.getText()));
+    final boolean useStringValueOf = !type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
+                                     !type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER);
+    final StringBuilder result = buildAppendExpression(concatenation, useStringValueOf, new StringBuilder(appendable.getText()));
     if (result == null) return null;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(appendable.getProject());
     return factory.createExpressionFromText(result.toString(), appendable);

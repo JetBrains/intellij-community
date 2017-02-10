@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CaretOffsetUpdater {
-    private final Map<Editor, Integer> myCaretOffsets = new HashMap<Editor, Integer>();
+    private final Map<Editor, Integer> myCaretOffsets = new HashMap<>();
 
     public CaretOffsetUpdater(@NotNull Document document) {
       Editor[] editors = EditorFactory.getInstance().getEditors(document);

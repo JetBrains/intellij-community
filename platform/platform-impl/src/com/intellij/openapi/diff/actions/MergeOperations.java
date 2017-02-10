@@ -54,7 +54,7 @@ public class MergeOperations {
   public List<Operation> getOperations() {
     Fragment fragment = getCurrentFragment();
     if (fragment == null) return NO_OPERATIONS;
-    ArrayList<Operation> operations = new ArrayList<Operation>(3);
+    ArrayList<Operation> operations = new ArrayList<>(3);
     TextRange range = fragment.getRange(mySide);
     if (range.getLength() > 0) {
       if (isWritable(mySide)) operations.add(removeOperation(range, getDocument()));

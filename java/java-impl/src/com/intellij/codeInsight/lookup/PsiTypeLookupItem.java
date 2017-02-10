@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -59,6 +59,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   @NotNull private final PsiSubstitutor mySubstitutor;
   private boolean myAddArrayInitializer;
   private String myLocationString = "";
+  private final String myForcedPresentableName;
 
   private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount, InsertHandler<PsiTypeLookupItem> fixer,
                             @NotNull PsiSubstitutor substitutor) {
@@ -67,6 +68,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     myBracketsCount = bracketsCount;
     myImportFixer = fixer;
     mySubstitutor = substitutor;
+    myForcedPresentableName = o instanceof PsiClass && !lookupString.equals(((PsiClass)o).getName()) ? lookupString : null;
   }
 
   @NotNull
@@ -82,6 +84,10 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     return type;
   }
 
+  @Nullable
+  public String getForcedPresentableName() {
+    return myForcedPresentableName;
+  }
 
   public void setIndicateAnonymous(boolean indicateAnonymous) {
     myIndicateAnonymous = indicateAnonymous;
@@ -221,24 +227,19 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       if (psiClass != null) {
         String name = psiClass.getName();
         if (name != null) {
-          final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-
           PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
-
-          Set<String> allStrings = new HashSet<String>();
-          allStrings.add(name);
+          String[] allStrings;
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
             // inner class name should be shown qualified if its not accessible by single name
-            PsiClass aClass = psiClass.getContainingClass();
-            while (aClass != null && !PsiUtil.isInnerClass(aClass) && aClass.getName() != null) {
-              name = aClass.getName() + '.' + name;
-              allStrings.add(name);
-              aClass = aClass.getContainingClass();
-            }
+            allStrings = ArrayUtil.toStringArray(JavaCompletionUtil.getAllLookupStrings(psiClass));
+          } else {
+            allStrings = new String[]{name};
           }
+          String lookupString = allStrings[allStrings.length - 1];
 
-          PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, name, diamond, bracketsCount, importFixer, substitutor);
-          item.addLookupStrings(ArrayUtil.toStringArray(allStrings));
+          PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount, importFixer,
+                                                         classResolveResult.getSubstitutor());
+          item.addLookupStrings(allStrings);
           return item;
         }
       }
@@ -284,7 +285,12 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
     }
     if (myBracketsCount > 0) {
-      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
+      List<LookupElementPresentation.TextFragment> tail = new ArrayList<>(presentation.getTailFragments());
+      presentation.clearTail();
+      presentation.appendTailText(StringUtil.repeat("[]", myBracketsCount), false);
+      for (LookupElementPresentation.TextFragment fragment : tail) {
+        presentation.appendTailText(fragment.text, fragment.isGrayed());
+      }
     }
   }
 

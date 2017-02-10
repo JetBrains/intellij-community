@@ -1,5 +1,0 @@
-class X {
-    {
-       Comparable<String> c = <spot>o</spot> -> 1;
-    }
-}

@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class IOFilesBasedDirectoryPruner {
-  private final List<File> myFiles = new ArrayList<File>();
+  private final List<File> myFiles = new ArrayList<>();
   private final ProgressIndicator myProgressIndicator;
   private final String myCharset = CvsApplicationLevelConfiguration.getCharset();
 

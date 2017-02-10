@@ -46,6 +46,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int IS_FINAL_MASK = 0x08;
   private static final int IS_USES_DEPRECATION_MASK = 0x200;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
+  private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x400;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
@@ -86,7 +87,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   public void addOutTypeRefernce(RefClass refClass){
     if (myOutTypeReferences == null){
-      myOutTypeReferences = new THashSet<RefClass>();
+      myOutTypeReferences = new THashSet<>();
     }
     myOutTypeReferences.add(refClass);
   }
@@ -191,7 +192,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   public boolean isSuspiciousRecursive() {
-    return isCalledOnlyFrom(this, new Stack<RefJavaElement>());
+    return isCalledOnlyFrom(this, new Stack<>());
   }
 
   private boolean isCalledOnlyFrom(RefJavaElement refElement, Stack<RefJavaElement> callStack) {
@@ -257,9 +258,21 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
+    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting);
   }
 
+  protected void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
+    if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom != null &&
+        expressionFrom.isQualified() && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+      setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+    }
+  }
+
+  public boolean isUsedQualifiedOutsidePackage() {
+    return checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+  }
+  
   protected RefJavaManager getRefJavaManager() {
     return getRefManager().getExtension(RefJavaManager.MANAGER);
   }

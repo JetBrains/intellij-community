@@ -83,7 +83,7 @@ public class MethodsChain {
 
   @SuppressWarnings("unchecked")
   public MethodsChain addEdge(final PsiMethod[] psiMethods, final String newQualifierClassName, final int newWeight) {
-    final List<PsiMethod[]> newRevertedPath = new ArrayList<PsiMethod[]>(myRevertedPath.size() + 1);
+    final List<PsiMethod[]> newRevertedPath = new ArrayList<>(myRevertedPath.size() + 1);
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(psiMethods);
     return new MethodsChain(newRevertedPath,
@@ -157,7 +157,7 @@ public class MethodsChain {
   }
 
   private static Set<String> joinSets(final Set<String>... sets) {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
     for (final Set<String> set : sets) {
       for (final String s : set) {
         result.add(s);
@@ -167,7 +167,7 @@ public class MethodsChain {
   }
 
   private static Set<String> chooseParametersQNames(final PsiMethod[] methods) {
-    final Set<String> qNames = new HashSet<String>();
+    final Set<String> qNames = new HashSet<>();
     for (final PsiParameter methodParameter : methods[0].getParameterList().getParameters()) {
       qNames.add(methodParameter.getType().getCanonicalText());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   public SafeFileOutputStream(File target, boolean preserveAttributes) throws FileNotFoundException {
+    if (LOG.isTraceEnabled()) LOG.trace(">> " + target);
     myTargetFile = target;
     myPreserveAttributes = preserveAttributes;
     myTempFile = new File(myTargetFile.getPath() + EXTENSION_TMP);
@@ -119,6 +120,10 @@ public class SafeFileOutputStream extends OutputStream {
     }
 
     File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
+    if (oldFile.exists() && !FileUtil.delete(oldFile)) {
+      FileUtil.delete(myTempFile);
+      throw new IOException(message("safe.write.drop.old", myTargetFile, oldFile.getName()));
+    }
     try {
       FileUtil.rename(myTargetFile, oldFile);
     }
@@ -142,5 +147,7 @@ public class SafeFileOutputStream extends OutputStream {
     if (!FileUtil.delete(oldFile)) {
       throw new IOException(message("safe.write.drop.temp", oldFile));
     }
+
+    if (LOG.isTraceEnabled()) LOG.trace("<< " + myTargetFile);
   }
 }

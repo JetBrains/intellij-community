@@ -77,7 +77,7 @@ public abstract class PropertyTable extends JBTable {
   private final AbstractTableModel myModel = new PropertyTableModel();
   protected List<PropertiesContainer> myContainers = Collections.emptyList();
   protected List<Property> myProperties = Collections.emptyList();
-  protected final Set<String> myExpandedProperties = new HashSet<String>();
+  protected final Set<String> myExpandedProperties = new HashSet<>();
 
   private boolean mySkipUpdate;
   private boolean myStoppingEditing;
@@ -313,7 +313,7 @@ public abstract class PropertyTable extends JBTable {
       }
 
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
-      myContainers = new ArrayList<PropertiesContainer>(containers);
+      myContainers = new ArrayList<>(containers);
       fillProperties();
       myModel.fireTableDataChanged();
 
@@ -374,7 +374,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void restoreSelection(Property selection) {
-    List<Property> propertyPath = new ArrayList<Property>(2);
+    List<Property> propertyPath = new ArrayList<>(2);
     while (selection != null) {
       propertyPath.add(0, selection);
       selection = selection.getParent();
@@ -412,11 +412,11 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void fillProperties() {
-    myProperties = new ArrayList<Property>();
+    myProperties = new ArrayList<>();
     int size = myContainers.size();
 
     if (size > 0) {
-      List<Property> rootProperties = new ArrayList<Property>();
+      List<Property> rootProperties = new ArrayList<>();
       for (Property each : (Iterable<? extends Property>)getProperties(myContainers.get(0))) {
         addIfNeeded(getCurrentComponent(), each, rootProperties);
       }
@@ -435,7 +435,7 @@ public abstract class PropertyTable extends JBTable {
         }
 
         for (int i = 1; i < size; i++) {
-          List<Property> otherProperties = new ArrayList<Property>();
+          List<Property> otherProperties = new ArrayList<>();
           fillProperties(myContainers.get(i), otherProperties);
 
           for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
@@ -598,7 +598,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private List<Property> getFilterChildren(Property property) {
-    List<Property> properties = new ArrayList<Property>(getChildren(property));
+    List<Property> properties = new ArrayList<>(getChildren(property));
     for (Iterator<Property> I = properties.iterator(); I.hasNext(); ) {
       Property child = I.next();
       if (child.isExpert() && !myShowExpertProperties) {

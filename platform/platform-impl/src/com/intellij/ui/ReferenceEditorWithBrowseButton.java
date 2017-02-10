@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -63,11 +64,13 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     return getChildComponent();
   }
 
+  @Override
   public String getText() {
     return getEditorTextField().getText().trim();
   }
 
-  public void setText(final String text) {
+  @Override
+  public void setText(@NotNull String text) {
     Document oldDocument = getEditorTextField().getDocument();
     String oldText = oldDocument.getText();
     for (DocumentListener listener : myDocumentListeners) {

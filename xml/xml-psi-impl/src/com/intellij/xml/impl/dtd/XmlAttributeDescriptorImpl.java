@@ -110,7 +110,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   public String[] getEnumeratedValues() {
 
     XmlElement[] values = myDecl.getEnumeratedValues();
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (XmlElement value : values) {
       result.add(value.getText());
     }

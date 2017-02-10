@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,9 +35,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     if (problemElement == null || !problemElement.isValid()) {
       return;
     }
-    if (prepareForWriting() && !FileModificationService.getInstance().preparePsiElementsForWrite(problemElement)) {
-      return;
-    }
     try {
       doFix(project, descriptor);
     }
@@ -48,10 +44,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
       final Logger logger = Logger.getInstance(className);
       logger.error(e);
     }
-  }
-
-  protected boolean prepareForWriting() {
-    return true;
   }
 
   protected abstract void doFix(Project project, ProblemDescriptor descriptor);

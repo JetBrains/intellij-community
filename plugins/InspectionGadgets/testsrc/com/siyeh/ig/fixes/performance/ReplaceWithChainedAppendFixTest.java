@@ -34,4 +34,16 @@ public class ReplaceWithChainedAppendFixTest extends IGQuickFixesTestCase {
 
   public void testUnresolvedMethod() { doTest(); }
 
+  public void testPrintWriterAppend() {
+    myFixture.addClass("package java.lang;" +
+                       "public interface Appendable {}");
+    myFixture.addClass("package java.io;" +
+                       "public class PrintWriter extends java.lang.Appendable {" +
+                       "@Override" +
+                       "public PrintWriter append(CharSequence csq) throws IOException {" +
+                       " return null;" +
+                       "}}");
+    doTest();
+  }
+
 }

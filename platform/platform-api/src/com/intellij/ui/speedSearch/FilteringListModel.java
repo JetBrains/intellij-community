@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class FilteringListModel<T> extends AbstractListModel {
   private final ListModel myOriginalModel;
-  private final List<T> myData = new ArrayList<T>();
+  private final List<T> myData = new ArrayList<>();
   private Condition<T> myCondition = null;
 
 

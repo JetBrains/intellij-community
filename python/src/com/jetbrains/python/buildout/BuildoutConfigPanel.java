@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,10 +59,8 @@ public class BuildoutConfigPanel extends JPanel {
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     //descriptor.setRoot(myConfiguration.getRoot());
-    myScript.addBrowseFolderListener(
-      "Choose a buildout script", "Select the target script that will invoke your code",
-      null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT, false
-    );
+    myScript.addBrowseFolderListener("Choose a buildout script", "Select the target script that will invoke your code", null, descriptor,
+                                     TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     myScript.getComboBox().setEditable(true);
 
     initErrorValidation();

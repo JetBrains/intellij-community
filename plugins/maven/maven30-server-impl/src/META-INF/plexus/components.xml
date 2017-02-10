@@ -28,7 +28,7 @@
     <component>
       <role>org.apache.maven.artifact.resolver.ArtifactResolver</role>
       <role-hint>ide</role-hint>
-      <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver</implementation>
+      <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven30ArtifactResolver</implementation>
       <description />
       <isolated-realm>false</isolated-realm>
       <requirements>

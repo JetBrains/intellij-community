@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -73,11 +73,13 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * @author Leonid Shalupov
+ * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
@@ -130,10 +132,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(patchers);
     final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
-
-    List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
-
-    return new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   @NotNull
@@ -252,7 +251,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     createStandardGroups(commandLine);
-    
+
     initEnvironment(project, commandLine, config, isDebug);
 
     setRunnerPath(project, commandLine, config);
@@ -291,11 +290,38 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
+    setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
+
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
+
     buildPythonPath(project, commandLine, myConfig, isDebug);
+  }
+
+  private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
+    if (PythonSdkType.isVirtualEnv(sdkHome)) {
+      PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
+      if (reader.getActivate() != null) {
+        try {
+          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+
+          for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
+            if ("PATH".equals(e.getKey())) {
+              env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
+            }
+            else {
+              env.put(e.getKey(), e.getValue());
+            }
+          }
+        }
+        catch (Exception e) {
+          LOG.error("Couldn't read virtualenv variables", e);
+        }
+      }
+    }
   }
 
   protected static void addCommonEnvironmentVariables(@Nullable String homePath, Map<String, String> env) {
@@ -336,7 +362,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public static List<String> getAddedPaths(Sdk pythonSdk) {
-    List<String> pathList = new ArrayList<String>();
+    List<String> pathList = new ArrayList<>();
     final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
       final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPathFiles();
@@ -401,7 +427,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                      boolean addSourceRoots) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     if (module != null) {
-      Set<Module> dependencies = new HashSet<Module>();
+      Set<Module> dependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(module, dependencies);
 
       if (addContentRoots) {
@@ -497,7 +523,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       Module module = getModule(project, config);
 
       Sdk sdk = PythonSdkType.findPythonSdk(module);
-      
+
       if (sdk != null) {
         sdkHome = sdk.getHomePath();
       }

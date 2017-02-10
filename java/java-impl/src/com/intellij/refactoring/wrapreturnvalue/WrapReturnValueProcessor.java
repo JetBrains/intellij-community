@@ -86,12 +86,12 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     myQualifiedName = StringUtil.getQualifiedName(packageName, className);
     myUseExistingClass = useExistingClass;
 
-    final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> typeParamSet = new HashSet<>();
     final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     assert returnTypeElement != null;
     returnTypeElement.accept(visitor);
-    myTypeParameters = new ArrayList<PsiTypeParameter>(typeParamSet);
+    myTypeParameters = new ArrayList<>(typeParamSet);
     if (useExistingClass) {
       myUnwrapMethodName = calculateUnwrapMethodName();
     }
@@ -183,7 +183,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (myUseExistingClass) {
       if (existingClass == null) {
@@ -191,7 +191,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }
       else {
         boolean foundConstructor = false;
-        final Set<PsiType> returnTypes = new HashSet<PsiType>();
+        final Set<PsiType> returnTypes = new HashSet<>();
         returnTypes.add(myMethod.getReturnType());
         final PsiCodeBlock methodBody = myMethod.getBody();
         if (methodBody != null) {
