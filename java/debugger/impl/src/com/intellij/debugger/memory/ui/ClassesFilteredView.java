@@ -31,10 +31,7 @@ import com.intellij.debugger.memory.tracking.ClassPreparedListener;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
 import com.intellij.debugger.memory.tracking.TrackingType;
-import com.intellij.debugger.memory.utils.AndroidUtil;
-import com.intellij.debugger.memory.utils.KeyboardUtils;
-import com.intellij.debugger.memory.utils.LowestPriorityCommand;
-import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
+import com.intellij.debugger.memory.utils.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -50,9 +47,9 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.*;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,18 +58,17 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.IntStream;
 
 import static com.intellij.debugger.memory.ui.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
 import static com.intellij.debugger.memory.ui.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
 
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
+  private static final InheritanceResolver RESOLVER = new MySimpleInheritanceResolver();
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
   private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   private final static double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
@@ -103,6 +99,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
    * Indicates that view is visible
    */
   private boolean myIsActive;
+
+  private boolean myIsSubclassesEnabled = false;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession, @NotNull DebugProcessImpl debugProcess) {
     super();
@@ -258,10 +256,26 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     final Presentation actionsPresentation = new Presentation("Memory View Settings");
     actionsPresentation.setIcon(AllIcons.General.SecondaryGroup);
 
-    final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
+    final ActionButton settingsButton = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
+    final JToggleButton enableSubclasses = new JToggleButton(AllIcons.Hierarchy.Subtypes);
+    final JPanel buttonsPanel = new JPanel(new FlowLayout());
+    buttonsPanel.add(enableSubclasses);
+    buttonsPanel.add(settingsButton);
+
+    enableSubclasses.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean newValue = enableSubclasses.isSelected();
+        if (myIsSubclassesEnabled != newValue) {
+          myIsSubclassesEnabled = newValue;
+          mySingleAlarm.cancelAndRequest();
+        }
+      }
+    });
+
     final BorderLayoutPanel topPanel = new BorderLayoutPanel();
     topPanel.addToCenter(myFilterTextField);
-    topPanel.addToRight(button);
+    topPanel.addToRight(buttonsPanel);
     addToTop(topPanel);
     addToCenter(scroll);
   }
@@ -422,10 +436,17 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
 
       if (isContextValid()) {
-        final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
-          .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
-          .toArray();
-        ApplicationManager.getApplication().invokeLater(() -> myTable.setClassesAndUpdateCounts(classes, counts));
+        final Map<ReferenceType, Long> concreteCounts = StreamEx.of(classes.stream())
+          .zipWith(IntStreamEx.range(0, chunks.size())
+                     .boxed()
+                     .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
+                     .boxed())
+          .toMap();
+
+        final Map<ReferenceType, Long> counts = myIsSubclassesEnabled
+                                                ? CountsResolver.resolveCounts(concreteCounts, RESOLVER)
+                                                : concreteCounts;
+        ApplicationManager.getApplication().invokeLater(() -> myTable.setClassesAndUpdateCounts(counts));
       }
 
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(false));
@@ -552,6 +573,30 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         ApplicationManager.getApplication().invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         updateClassesAndCounts();
       }
+    }
+  }
+
+  /**
+   * Currently supports only direct subtypes :(
+   */
+  private static class MySimpleInheritanceResolver implements InheritanceResolver {
+    @NotNull
+    @Override
+    public Map<ReferenceType, List<ReferenceType>> resolveSubclasses(@NotNull List<ReferenceType> classesForResolving) {
+      final Map<ReferenceType, List<ReferenceType>> result = new HashMap<>();
+      for (final ReferenceType ref : classesForResolving) {
+        if (ref instanceof ArrayType) {
+          result.put(ref, Collections.emptyList());
+        }
+        else if (ref instanceof InterfaceType) {
+          result.put(ref, new ArrayList<>(((InterfaceType)ref).implementors()));
+        }
+        else if (ref instanceof ClassType) {
+          result.put(ref, new ArrayList<>(((ClassType)ref).subclasses()));
+        }
+      }
+
+      return result;
     }
   }
 }

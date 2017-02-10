@@ -69,7 +69,6 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -232,7 +231,7 @@ public class InstancesWindow extends DialogWrapper {
       }.installOn(list);
 
       final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
-                                                                                            myInstancesTree, list, myClassName);
+                                                                                                  myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
       add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
@@ -287,8 +286,9 @@ public class InstancesWindow extends DialogWrapper {
     private void cancelFilteringTask() {
       if (myFilteringTask != null) {
         synchronized (myFilteringTaskLock) {
-          if (myFilteringTask != null) {
-            myFilteringTask.cancel();
+          final MyFilteringWorker task = myFilteringTask;
+          if (task != null) {
+            task.cancel();
             myFilteringTask = null;
           }
         }
@@ -502,7 +502,9 @@ public class InstancesWindow extends DialogWrapper {
       }
 
       public void cancel() {
-        myTask.cancel();
+        if (myTask != null) {
+          myTask.cancel();
+        }
         super.cancel(false);
       }
     }

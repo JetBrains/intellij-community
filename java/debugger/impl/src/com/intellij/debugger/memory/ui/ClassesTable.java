@@ -216,25 +216,22 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  void setClassesAndUpdateCounts(@NotNull List<ReferenceType> classes, @NotNull long[] counts) {
-    assert classes.size() == counts.length;
+  void setClassesAndUpdateCounts(@NotNull Map<ReferenceType, Long> counts) {
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
-    int newSelectedIndex = classes.indexOf(selectedClass);
-    boolean isInitialized = !myItems.isEmpty();
-    myItems = Collections.unmodifiableList(new ArrayList<>(classes));
+    myItems = Collections.unmodifiableList(new ArrayList<>(counts.keySet()));
+    final int newSelectedIndex = myItems.indexOf(selectedClass);
 
-    for (int i = 0, size = classes.size(); i < size; i++) {
-      ReferenceType ref = classes.get(i);
-      DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
-                           ? new DiffValue(0, 0)
-                           : myCounts.getOrDefault(ref, UNKNOWN_VALUE);
-      myCounts.put(ref, oldValue.update(counts[i]));
+    for (final ReferenceType ref : counts.keySet()) {
+      final DiffValue oldValue = !myCounts.containsKey(ref)
+                                 ? new DiffValue(0, 0)
+                                 : myCounts.getOrDefault(ref, UNKNOWN_VALUE);
+      myCounts.put(ref, oldValue.update(counts.get(ref)));
     }
 
     showContent();
 
     if (newSelectedIndex != -1 && !myModel.isHided()) {
-      int ix = convertRowIndexToView(newSelectedIndex);
+      final int ix = convertRowIndexToView(newSelectedIndex);
       changeSelection(ix,
                       DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
