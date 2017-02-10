@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.FileAccessorCache;
 import com.intellij.util.text.ByteArrayCharSequence;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +86,6 @@ public class ZipHandler extends ArchiveHandler {
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
     FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(true);
-    assert existingZipRef != null;
     try {
       return buildEntryMapForZipFile(existingZipRef.get());
     }
@@ -107,7 +107,7 @@ public class ZipHandler extends ArchiveHandler {
     return map;
   }
 
-  @Nullable
+  @Contract("true -> !null")
   protected FileAccessorCache.Handle<ZipFile> getCachedZipFileHandle(boolean createHandleIfNeeded) throws IOException {
     FileAccessorCache.Handle<ZipFile> handle = createHandleIfNeeded ? ourZipFileFileAccessorCache.get(this) : ourZipFileFileAccessorCache.getIfCached(this);
 
