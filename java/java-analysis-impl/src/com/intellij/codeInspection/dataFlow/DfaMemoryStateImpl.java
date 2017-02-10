@@ -36,6 +36,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
@@ -614,6 +615,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
+  @Override
+  public void applyIsPresentCheck(boolean present, DfaValue qualifier) {
+    if (qualifier instanceof DfaVariableValue) {
+      setVariableState((DfaVariableValue)qualifier, getVariableState((DfaVariableValue)qualifier).withOptionalPresense(present));
+    }
+  }
+
   static DfaValue unwrap(DfaValue value) {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
@@ -766,6 +774,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
     }
+    if (!isNegated && dfaRight instanceof DfaOptionalValue) {
+      applyIsPresentCheck(((DfaOptionalValue)dfaRight).isPresent(), dfaLeft);
+    }
 
     return true;
   }
@@ -907,13 +918,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
+  @Override
+  public ThreeState checkOptional(DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue)value;
+      DfaVariableState state = getVariableState(var);
+      return state.getOptionalPresense();
+    }
+    return value instanceof DfaOptionalValue ? ThreeState.fromBoolean(((DfaOptionalValue)value).isPresent()) : ThreeState.UNSURE;
+  }
+
   @Nullable
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     return myFactory.getRelationFactory().createRelation(dfaVar, dfaNull, JavaTokenType.EQEQ, negated);
   }
 
-  protected void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
+  void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
     assert !myUnknownVariables.contains(dfaVar);
     if (state.equals(myDefaultVariableStates.get(dfaVar))) {
       myVariableStates.remove(dfaVar);
@@ -923,7 +944,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
   
-  protected DfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {

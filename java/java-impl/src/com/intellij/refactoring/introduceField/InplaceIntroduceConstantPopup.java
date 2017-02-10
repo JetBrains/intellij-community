@@ -130,7 +130,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       initialVisibility = PsiModifier.PUBLIC;
     }
     else {
-      String effectiveVisibility = IntroduceConstantDialog.getEffectiveVisibility(initialVisibility, myOccurrences, myParentClass);
+      String effectiveVisibility = IntroduceConstantDialog.getEffectiveVisibility(initialVisibility, myOccurrences, myParentClass, myProject);
       if (effectiveVisibility != null) {
         return effectiveVisibility;
       }
