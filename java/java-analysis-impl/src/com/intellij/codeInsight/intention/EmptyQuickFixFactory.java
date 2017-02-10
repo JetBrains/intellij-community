@@ -655,4 +655,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

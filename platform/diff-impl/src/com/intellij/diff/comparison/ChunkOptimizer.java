@@ -22,7 +22,6 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,19 +214,17 @@ abstract class ChunkOptimizer<T> {
    *      bad: "ABooYZ AB[uuYZ AB]zzYZ" - "ABooYZ AB[]zzYZ"
    */
   public static class LineChunkOptimizer extends ChunkOptimizer<Line> {
-    private final int myThreshold;
-
     public LineChunkOptimizer(@NotNull List<Line> lines1,
                               @NotNull List<Line> lines2,
                               @NotNull FairDiffIterable changes,
                               @NotNull ProgressIndicator indicator) {
       super(lines1, lines2, changes, indicator);
-      myThreshold = Registry.intValue("diff.unimportant.line.char.count");
     }
 
     @Override
     protected int getShift(@NotNull Side touchSide, int equalForward, int equalBackward, @NotNull Range range1, @NotNull Range range2) {
       Integer shift;
+      int threshold = ComparisonUtil.getUnimportantLineCharCount();
 
       shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
       if (shift != null) return shift;
@@ -235,10 +232,10 @@ abstract class ChunkOptimizer<T> {
       shift = getChangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
       if (shift != null) return shift;
 
-      shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, myThreshold);
+      shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, threshold);
       if (shift != null) return shift;
 
-      shift = getChangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, myThreshold);
+      shift = getChangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, threshold);
       if (shift != null) return shift;
 
       return 0;

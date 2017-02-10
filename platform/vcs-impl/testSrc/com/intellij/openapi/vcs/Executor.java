@@ -185,7 +185,7 @@ public class Executor {
   }
 
   @NotNull
-  protected static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode)
+  public static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode)
     throws ExecutionException
   {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
@@ -277,13 +277,13 @@ public class Executor {
   }
 
   @NotNull
-  protected static File child(@NotNull String fileName) {
+  public static File child(@NotNull String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir, fileName);
   }
 
   @NotNull
-  protected static File ourCurrentDir() {
+  public static File ourCurrentDir() {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir);
   }

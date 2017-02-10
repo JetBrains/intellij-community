@@ -133,6 +133,10 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     return false;
   }
 
+  @Override
+  protected void fireBreakpointChanged() {
+  }
+
   private static class CapturedStacksMap extends LinkedHashMap<ObjectReference, List<StackFrameItem>> {
     @Override
     protected boolean removeEldestEntry(Map.Entry eldest) {

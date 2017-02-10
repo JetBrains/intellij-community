@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -1348,7 +1349,12 @@ public class UsageViewImpl implements UsageView {
   }
 
   public boolean canPerformReRun() {
-    return myUsageSearcherFactory != null && allTargetsAreValid();
+    try {
+      return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.create() != null;
+    }
+    catch (PsiInvalidElementAccessException e) {
+      return false;
+    }
   }
 
   private boolean checkReadonlyUsages() {

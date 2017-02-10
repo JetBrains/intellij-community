@@ -124,12 +124,19 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
-    Key<CachedValue<T>> key = getKeyForClass(provider.getClass(), globalKeyForProvider);
-    CachedValue<T> value = psi.getUserData(key);
-    return value == null ? computeAndGet(psi, key, provider) : value.getValue();
+    return getCachedValue(psi, CachedValuesManager.<T>getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
   }
 
-  public static <T> T computeAndGet(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
+  /**
+   * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
+   * @return The cached value
+   */
+  public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
+    CachedValue<T> value = psi.getUserData(key);
+    if (value != null) {
+      return value.getValue();
+    }
+
     return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
       @Nullable
       @Override

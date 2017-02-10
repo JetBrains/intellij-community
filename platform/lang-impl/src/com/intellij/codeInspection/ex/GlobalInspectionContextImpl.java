@@ -345,6 +345,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     UIUtil.invokeLaterIfNeeded(() -> {
       LOG.info("Code inspection finished");
+      if (getProject().isDisposed()) return;
 
       InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
       if (!(myView == null ? view : myView).hasProblems()) {

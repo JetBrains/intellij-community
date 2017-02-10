@@ -894,7 +894,9 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
       }
     };
-    for (int i=0; i<10_000;i++) {
+    int N = Math.max(100, Timings.adjustAccordingToMySpeed(20_000, false));
+    System.out.println("N = " + N);
+    for (int i=0; i<N;i++) {
       Disposable disposable = Disposer.newDisposable();
       // supply listener to separate pointers under one root so that it will be removed on dispose
       VirtualFilePointerImpl bb =
@@ -902,8 +904,8 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
       if (i%1000==0)System.out.println("i = " + i);
 
-      int N = Runtime.getRuntime().availableProcessors();
-      CountDownLatch ready = new CountDownLatch(N);
+      int NThreads = Runtime.getRuntime().availableProcessors();
+      CountDownLatch ready = new CountDownLatch(NThreads);
       Runnable read = () -> {
         try {
           ready.countDown();
@@ -918,7 +920,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       };
 
       run = true;
-      List<Thread> threads = IntStream.range(0, N).mapToObj(n -> new Thread(read, "reader"+n)).collect(Collectors.toList());
+      List<Thread> threads = IntStream.range(0, NThreads).mapToObj(n -> new Thread(read, "reader"+n)).collect(Collectors.toList());
       threads.forEach(Thread::start);
       ready.await();
 

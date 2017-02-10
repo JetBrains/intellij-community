@@ -15,13 +15,9 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.configurationStore.SchemeManagerImpl
-import com.intellij.configurationStore.TestScheme
-import com.intellij.configurationStore.TestSchemesProcessor
-import com.intellij.configurationStore.save
+import com.intellij.configurationStore.*
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.toByteArray
-import com.intellij.util.xmlb.serialize
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource

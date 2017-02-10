@@ -44,6 +44,12 @@
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.GradleCleanupService</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>

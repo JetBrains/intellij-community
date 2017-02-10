@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -246,7 +247,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         final PyClass cls = ((PyClassType)exprType).getPyClass();
         final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true, null);
         if (enter != null) {
-          final PyType enterType = enter.getCallType(expression, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
+          final PyType enterType = enter.getCallType(expression, Collections.emptyMap(), context);
           if (enterType != null) {
             return enterType;
           }
@@ -360,13 +361,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-        return getCollectionElementType(iterateReturnType);
+        return getIteratedItemType(iterateReturnType, source, anchor, context, false);
       }
-      final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
-                                    PyNames.DUNDER_NEXT : PyNames.NEXT;
-      final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
-      if (next != null) {
-        return getContextSensitiveType(next, context, source);
+      final Ref<PyType> nextMethodCallType = getNextMethodCallType(iterableType, source, anchor, context, false);
+      if (nextMethodCallType != null) {
+        return nextMethodCallType.get();
       }
       final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
       if (getItem != null) {
@@ -377,16 +376,44 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-        return getCollectionElementType(iterateReturnType);
+        return getIteratedItemType(iterateReturnType, source, anchor, context, true);
       }
     }
     return null;
   }
 
   @Nullable
-  private static PyType getCollectionElementType(@Nullable PyType type) {
+  private static PyType getIteratedItemType(@Nullable PyType type,
+                                            @Nullable PyExpression source,
+                                            @NotNull PsiElement anchor,
+                                            @NotNull TypeEvalContext context,
+                                            boolean async) {
     if (type instanceof PyCollectionType) {
       return ((PyCollectionType)type).getIteratedItemType();
+    }
+    final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
+    if (nextMethodCallType != null) {
+      return nextMethodCallType.get();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getNextMethodCallType(@Nullable PyType type,
+                                                   @Nullable PyExpression source,
+                                                   @NotNull PsiElement anchor,
+                                                   @NotNull TypeEvalContext context,
+                                                   boolean async) {
+    if (type == null) return null;
+
+    final String nextMethodName = async
+                                  ? PyNames.ANEXT
+                                  : LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30)
+                                    ? PyNames.DUNDER_NEXT
+                                    : PyNames.NEXT;
+    final PyFunction next = findMethodByName(type, nextMethodName, context);
+    if (next != null) {
+      return Ref.create(getContextSensitiveType(next, context, source));
     }
     return null;
   }
@@ -408,7 +435,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                @Nullable PyExpression source) {
-    return function.getCallType(source, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
+    return function.getCallType(source, Collections.emptyMap(), context);
   }
 
   @Nullable

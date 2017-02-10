@@ -6,15 +6,28 @@ import argparse
 import atexit
 import imp
 import os
+import re
 import sys
-import time
-import datetime
 
 from teamcity import teamcity_presence_env_var, messages
 
 # Some runners need it to "detect" TC and start protocol
 if teamcity_presence_env_var not in os.environ:
     os.environ[teamcity_presence_env_var] = "LOCAL"
+
+
+def _parse_parametrized(part):
+    """
+
+    Support nose generators / py.test parameters and other functions that provides names like foo(1,2)
+    Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
+    with parentheses
+    """
+    match = re.match("^(.+)(\(.+\))$", part)
+    if not match:
+        return [part]
+    else:
+        return [match.group(1), match.group(2)]
 
 
 # Monkeypatching TC to pass location hint
@@ -146,7 +159,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         # Intellij may fail to process message if it has char just before it.
         # Space before message has no visible affect, but saves from such cases
         print(" ")
-        if messageName == "enteredTheMatrix":
+        if messageName in {"enteredTheMatrix", "testCount"}:
             _old_service_messages.message(self, messageName, **properties)
             return
         properties["locationHint"] = "python://{0}".format(properties["name"])
@@ -169,12 +182,9 @@ class NewTeamcityServiceMessages(_old_service_messages):
         It most cases dot is used, but runner may provide custom function
         """
         parts = test_name.split(".")
-        if not PARSE_FUNC:
-            return parts
-
         result = []
         for part in parts:
-            result += PARSE_FUNC(part)
+            result += _parse_parametrized(part)
         return result
 
     def _fix_setup_teardown_name(self, test_name):
@@ -187,11 +197,15 @@ class NewTeamcityServiceMessages(_old_service_messages):
         except KeyError:
             return test_name
 
-    def blockOpened(self, name, flowId=None):
-        self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
-
-    def blockClosed(self, name, flowId=None):
-        self.testFinished(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+    # Blocks are used for 2 cases now:
+    # 1) Unittest subtests (broken, because failure can't be reported)
+    # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
+    # So, temporary disabled
+    # def blockOpened(self, name, flowId=None):
+    #     self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+    #
+    # def blockClosed(self, name, flowId=None):
+    #     self.testFinished(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
         test_name_as_list = self._test_to_list(testName)
@@ -304,7 +318,7 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     return map(_patch_target, targets)
 
 
-def jb_start_tests(func_to_parse=None):
+def jb_start_tests():
     """
     Parses arguments, starts protocol and returns tuple of arguments
 
@@ -326,8 +340,6 @@ def jb_start_tests(func_to_parse=None):
     parser.add_argument('--target', help='Python target to run', action="append")
     namespace = parser.parse_args()
     del sys.argv[1:]  # Remove all args
-    global PARSE_FUNC
-    PARSE_FUNC = func_to_parse
     NewTeamcityServiceMessages().message('enteredTheMatrix')
     return namespace.path, namespace.target, additional_args
 

@@ -53,7 +53,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element targetElement = new Element(myTagName);
 
@@ -86,12 +86,13 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Element element) {
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
     if (valueAttribute == null) {
       if (myValueAttribute.isEmpty()) {
         assert myBinding != null;
-        myAccessor.set(context, myBinding.deserialize(context, element));
+        myAccessor.set(context, myBinding.deserializeUnsafe(context, element));
       }
       else {
         List<Element> children = element.getChildren();

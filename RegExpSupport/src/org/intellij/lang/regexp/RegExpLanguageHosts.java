@@ -121,8 +121,8 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.supportsPythonConditionalRefs();
   }
 
-  public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
-    final RegExpLanguageHost host = findRegExpHost(quantifier);
+  public boolean supportsPossessiveQuantifiers(@Nullable final RegExpElement context) {
+    final RegExpLanguageHost host = findRegExpHost(context);
     return host == null || host.supportsPossessiveQuantifiers();
   }
 

@@ -125,8 +125,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           // ignore mime type=true : IDEA-19562
           final AnnotationConsumer annotateHandler = createAnnotationHandler(progress, result);
 
-          final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
-                                             SvnUtil.checkRepositoryVersion15(myVcs, url);
+          boolean calculateMergeinfo =
+            myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && SvnUtil.checkRepositoryVersion15(myVcs, url);
           final MySteppedLogGetter logGetter = new MySteppedLogGetter(
             myVcs, ioFile, progress,
             myVcs.getFactory(ioFile).createHistoryClient(), endRevision, result,
@@ -250,8 +250,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), current);
     final AnnotationConsumer annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
-    final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
-                                       SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
+    boolean calculateMergeinfo =
+      myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate() && SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
     AnnotateClient client = myVcs.getFactory().createAnnotateClient();
     client
       .annotate(SvnTarget.fromURL(wasUrl, svnRevision), SVNRevision.create(1), svnRevision, calculateMergeinfo, getLogClientOptions(myVcs),
@@ -383,7 +383,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
 
     public void go() throws VcsException {
-      final int maxAnnotateRevisions = SvnConfiguration.getInstance(myVcs.getProject()).getMaxAnnotateRevisions();
+      int maxAnnotateRevisions = myVcs.getSvnConfiguration().getMaxAnnotateRevisions();
       boolean longHistory = true;
       if (maxAnnotateRevisions == -1) {
         longHistory = false;
@@ -450,6 +450,6 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   @Nullable
   private static DiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
-    return SvnConfiguration.getInstance(vcs.getProject()).isIgnoreSpacesInAnnotate() ? new DiffOptions(true, true, true) : null;
+    return vcs.getSvnConfiguration().isIgnoreSpacesInAnnotate() ? new DiffOptions(true, true, true) : null;
   }
 }

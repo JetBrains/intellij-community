@@ -67,7 +67,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -75,7 +74,9 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -2748,28 +2749,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, Interpolable, FinelyAdjustable {
+  class MyScrollBar extends JBScrollBar {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
-    private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-    private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
       setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
-      if (SystemProperties.isTrueSmoothScrollingEnabled()) {
-        setModel(new SmoothBoundedRangeModel(this));
-      }
     }
 
     void setPersistentUI(ScrollBarUI ui) {
       myPersistentUI = ui;
       setUI(ui);
-    }
-
-    @Override
-    public boolean canBePreprocessed(MouseEvent e) {
-      return JBScrollPane.canBePreprocessed(e, this);
     }
 
     @Override
@@ -2784,55 +2775,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
       setOpaque(shouldScrollBarBeOpaque(myProject));
-    }
-
-    /**
-     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
-     * we need to add the interpolation support separately.
-     *
-     * @see SmoothScrollPane.SmoothScrollBar#setValue(int)
-     */
-    @Override
-    public void setValue(int value) {
-      ComponentSettings settings = ComponentSettings.getInstance();
-
-      MyScrollPane scrollPane = (MyScrollPane)myScrollPane;
-
-      InputSource source = scrollPane.getInputSource(getValueIsAdjusting());
-
-      if (settings.isTrueSmoothScrollingEligibleFor(myEditorComponent) &&
-          settings.isInterpolationEligibleFor(this) &&
-          settings.isInterpolationEnabledFor(source) &&
-          myScrollingModel.isAnimationEnabled()) {
-
-          myInterpolator.setTarget(value, scrollPane.getInitialDelay(source));
-      }
-      else {
-        super.setValue(value);
-      }
-    }
-
-    @Override
-    public void setCurrentValue(int value) {
-      super.setValue(value);
-
-      myAdjuster.reset();
-    }
-
-    @Override
-    public int getTargetValue() {
-      return myInterpolator.getTarget();
-    }
-
-    /**
-     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
-     * we need to add fractional delta support separately.
-     *
-     * @see SmoothScrollPane.SmoothScrollBar#adjustValue(double)
-     */
-    @Override
-    public void adjustValue(double delta) {
-      myAdjuster.adjustValue(delta);
     }
 
     /**
@@ -4201,13 +4143,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       long currentTimeMillis = System.currentTimeMillis();
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
-        g.drawImage(sprites[spriteIndex], x, y, null);
+        UIUtil.drawImage(g, sprites[spriteIndex], x, y, null);
         JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, 12, 64), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
 
-      g.drawImage(sprites[spriteIndex++], x, y, null);
+      UIUtil.drawImage(g, sprites[spriteIndex++], x, y, null);
       if (spriteIndex == sprites.length) {
         nrp.set(false);
         ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));

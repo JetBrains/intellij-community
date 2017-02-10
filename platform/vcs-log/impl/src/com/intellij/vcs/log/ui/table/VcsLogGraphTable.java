@@ -330,9 +330,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
-      sb.append(getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN).toString());
-      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.AUTHOR_COLUMN).toString());
-      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.DATE_COLUMN).toString());
+      for (int j = GraphTableModel.ROOT_COLUMN + 1; j < getModel().getColumnCount(); j++) {
+        sb.append(getModel().getValueAt(row, j).toString());
+        if (j < getModel().getRowCount() - 1) sb.append(" ");
+      }
       if (i != selectedRows.length - 1) sb.append("\n");
     }
 

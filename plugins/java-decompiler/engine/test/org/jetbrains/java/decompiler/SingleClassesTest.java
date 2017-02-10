@@ -22,9 +22,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
@@ -98,6 +99,7 @@ public class SingleClassesTest {
   @Test public void testAnonymousParamNames() { doTest("pkg/TestAnonymousParamNames"); }
   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
+  @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

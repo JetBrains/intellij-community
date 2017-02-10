@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -243,12 +244,12 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(vDir.findChild("libFiles"));
     assertNotNull(vDir.findChild("CssInvalidElement"));
 
-    assertNotNull(vDir.findChild("extFiles"));
-    assertNotNull(vDir.findChild("/extFiles/"));
-    assertNotNull(vDir.findChild("extFiles/"));
-    assertNotNull(vDir.findChild("/extFiles"));
-    assertNotNull(vDir.findChild("//extFiles"));
-    assertNotNull(vDir.findChild("extFiles///"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("extFiles"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("/extFiles/"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("extFiles/"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("/extFiles"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("//extFiles"));
+    assertNotNull(Arrays.toString(vDir.getChildren()), vDir.findChild("extFiles///"));
 
     assertNull(vDir.findChild("/xxx/extFiles/"));
     assertNull(vDir.findChild("xxx/extFiles/"));

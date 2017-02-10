@@ -207,6 +207,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
+  @NotNull
   protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
@@ -310,7 +311,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
-    public EditorWrapper(@NotNull Editor editor) {
+    EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
     }
 

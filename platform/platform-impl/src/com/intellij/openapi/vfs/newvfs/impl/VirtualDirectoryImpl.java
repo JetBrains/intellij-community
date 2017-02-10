@@ -150,16 +150,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry found = doFindChildInArray(name, ignoreCase);
     if (found != null) return found;
 
-    if (allChildrenLoaded()) {
-      return NULL_VIRTUAL_FILE;
+    if (ensureCanonicalName) {
+      String canonicalName = UriUtil.trimTrailingSlashes(UriUtil.trimLeadingSlashes(FileUtilRt.toSystemIndependentName(name)));
+      if (canonicalName.indexOf('/') != -1) return null; // name must not contain slashes in the middle
+      VirtualFile fake = new FakeVirtualFile(this, canonicalName);
+      canonicalName = delegate.getCanonicallyCasedName(fake);
+      if (canonicalName.isEmpty()) return null;
+      if (!canonicalName.equals(name)) {
+        found = doFindChildInArray(canonicalName, ignoreCase);
+        if (found != null) return found;
+        name = canonicalName;
+      }
     }
 
-    if (ensureCanonicalName) {
-      name = UriUtil.trimTrailingSlashes(UriUtil.trimLeadingSlashes(FileUtilRt.toSystemIndependentName(name)));
-      if (name.indexOf('/') != -1) return null; // name must not contain slashes in the middle
-      VirtualFile fake = new FakeVirtualFile(this, name);
-      name = delegate.getCanonicallyCasedName(fake);
-      if (name.isEmpty()) return null;
+    if (allChildrenLoaded()) {
+      return NULL_VIRTUAL_FILE;
     }
 
     VirtualFileSystemEntry child;

@@ -1745,4 +1745,17 @@ class Bar {
 
   void testSuggestClassNamesForLambdaParameterTypes() { doTest('\n') }
 
+  void testOnlyExtendsSuperInWildcard() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+
+    configure()
+    assert myFixture.lookupElementStrings == ['extends', 'super']
+    LookupManager.getInstance(project).hideActiveLookup()
+
+    myFixture.type('n')
+    assert !myFixture.completeBasic()
+    myFixture.type('\b')
+    checkResultByFile(getTestName(false) + ".java")
+  }
+
 }

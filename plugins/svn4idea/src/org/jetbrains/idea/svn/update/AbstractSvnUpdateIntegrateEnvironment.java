@@ -93,8 +93,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       final File ioRoot = contentRoot.getIOFile();
       if (! ((SvnUpdateContext)context.get()).shouldRunFor(ioRoot)) continue;
 
-      Collection<VirtualFile> roots = SvnUtil.crawlWCRoots(myVcs.getProject(), ioRoot, crawler, progressIndicator);
-      updatedRoots.addAll(roots);
+      updatedRoots.addAll(SvnUtil.crawlWCRoots(myVcs, ioRoot, crawler, progressIndicator));
     }
     if (updatedRoots.isEmpty()) {
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
@@ -156,7 +155,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         if ((deletedGroup != null) && (replacedGroup != null) && (! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
           final Set<String> replacedFiles = new HashSet<>(replacedGroup.getFiles());
           final Collection<String> deletedFiles = new HashSet<>(deletedGroup.getFiles());
-          
+
           for (String deletedFile : deletedFiles) {
             if (replacedFiles.contains(deletedFile)) {
               deletedGroup.remove(deletedFile);

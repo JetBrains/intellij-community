@@ -28,7 +28,6 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -417,8 +416,9 @@ public class EditorModificationUtil {
 
   /**
    * @return true when not viewer
+   *         false otherwise, additionally information hint with warning would be shown
    */
-  public static boolean showReadOnlyViewWarning(Editor editor) {
+  public static boolean checkModificationAllowed(Editor editor) {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 

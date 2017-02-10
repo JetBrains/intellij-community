@@ -262,7 +262,9 @@ public class CompletionLookupArranger extends LookupArranger {
 
     addPrefixItems(model);
     addFrozenItems(items, model);
-    addSomeItems(model, byRelevance, lastAdded -> model.size() >= MAX_PREFERRED_COUNT);
+    if (model.size() < MAX_PREFERRED_COUNT) {
+      addSomeItems(model, byRelevance, lastAdded -> model.size() >= MAX_PREFERRED_COUNT);
+    }
     addCurrentlySelectedItemToTop(lookup, items, model);
 
     freezeTopItems(lookup, model);

@@ -41,7 +41,10 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -615,12 +618,55 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
   }
 
+  private static class MultiNameFinder<T extends PyElement> implements Processor<T> {
+
+    @NotNull
+    private final List<T> myResult;
+
+    @NotNull
+    private final String[] myNames;
+
+    @Nullable
+    private PyClass myLastVisitedClass;
+
+    public MultiNameFinder(@NotNull String... names) {
+      myResult = new ArrayList<>();
+      myNames = names;
+      myLastVisitedClass = null;
+    }
+
+    @Override
+    public boolean process(T t) {
+      final PyClass currentClass = t instanceof PyPossibleClassMember ? ((PyPossibleClassMember)t).getContainingClass() : null;
+      // Stop when the current class changes and there was a result
+      if (myLastVisitedClass != null && currentClass != myLastVisitedClass && !myResult.isEmpty()) {
+        return false;
+      }
+
+      myLastVisitedClass = currentClass;
+
+      if (ArrayUtil.contains(t.getName(), myNames)) {
+        myResult.add(t);
+      }
+
+      return true;
+    }
+  }
+
   @Override
   public PyFunction findMethodByName(@Nullable final String name, boolean inherited, @Nullable TypeEvalContext context) {
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<>(name);
     visitMethods(proc, inherited, context);
     return proc.getResult();
+  }
+
+  @NotNull
+  @Override
+  public List<PyFunction> multiFindMethodByName(@NotNull String name, boolean inherited, @Nullable TypeEvalContext context) {
+    final MultiNameFinder<PyFunction> processor = new MultiNameFinder<>(name);
+    visitMethods(processor, inherited, context);
+    return processor.myResult;
   }
 
   @Nullable
@@ -1167,6 +1213,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
               result.add((PyTargetExpression)expression);
             }
           }
+        }
+
+        @Override
+        public void visitPyWithStatement(PyWithStatement node) {
+          StreamEx
+            .of(node.getWithItems())
+            .map(PyWithItem::getTarget)
+            .select(PyTargetExpression.class)
+            .forEach(result::add);
         }
       });
       return result;

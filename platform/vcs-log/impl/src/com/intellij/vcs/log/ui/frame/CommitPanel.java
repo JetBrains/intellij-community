@@ -519,8 +519,7 @@ public class CommitPanel extends JBPanel {
           width = getWidth();
         }
         else {
-          Rectangle rect = scrollPane.getViewport().getViewRect();
-          width = rect.x + rect.width;
+          width = scrollPane.getViewport().getViewRect().x + scrollPane.getWidth();
         }
         myLabelPainter.paint((Graphics2D)g, myText, width - painterSize.width - RIGHT_BORDER, 0, myColor);
       }

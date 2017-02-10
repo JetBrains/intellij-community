@@ -362,7 +362,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
       }
       if (variable != builderVariable) {
-        ref.handleElementRename(builderVariable.getName());
+        ExpressionUtils.renameReference(ref, Objects.requireNonNull(builderVariable.getName()));
       }
       PsiMethodCallExpression methodCallExpression = ExpressionUtils.getCallForQualifier(ref);
       if(methodCallExpression != null) {

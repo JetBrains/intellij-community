@@ -39,6 +39,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
   @Test
   public void testCreateFileInDir() throws Exception {
     VirtualFile dir = createDir(myRootDir, "newdir");
+    dirty(dir);
     VirtualFile bfile = create(dir, "new.txt");
     add(bfile.getPath());
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );

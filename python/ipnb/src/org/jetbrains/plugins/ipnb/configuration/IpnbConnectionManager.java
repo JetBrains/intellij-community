@@ -305,11 +305,12 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
       if (showNotification) {
         final String message = e.getMessage();
-        if (message.startsWith(IpnbConnection.UNABLE_LOGIN)) {
+        if (message.startsWith(IpnbConnection.UNABLE_LOGIN_MESSAGE)) {
           showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter());
         }
-        else if(message.startsWith(CONNECTION_REFUSED)) {
-          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: connection refused", new IpnbSettingsAdapter());
+        else if (message.startsWith(CONNECTION_REFUSED) || message.startsWith(IpnbConnection.CANNOT_START_JUPYTER)) {
+          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: cannot connect to Jupyter server", 
+                      new IpnbSettingsAdapter());
         }
         
         LOG.warn("Jupyter Notebook connection refused: " + message);
@@ -544,7 +545,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     shutdownKernels();
   }
 
-  private void shutdownKernels() {
+  public void shutdownKernels() {
     for (IpnbConnection connection : myKernels.values()) {
       if (!connection.isAlive()) continue;
       connection.shutdown();

@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testFramework implementation="org.jetbrains.plugins.groovy.ext.spock.SpockTestFramework" order="first"/>
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.ext.spock.SpockPomDeclarationSearcher"/>
+  </extensions>
+</idea-plugin>

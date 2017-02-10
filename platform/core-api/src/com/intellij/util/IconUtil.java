@@ -482,6 +482,16 @@ public class IconUtil {
   }
 
   @NotNull
+  public static Icon brighter(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new BrighterFilter(tones));
+  }
+
+  @NotNull
+  public static Icon darker(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new DarkerFilter(tones));
+  }
+
+  @NotNull
   private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
     BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
                                     UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
@@ -534,6 +544,48 @@ public class IconUtil {
       int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
       int grey = (max + min) / 2;
       return new int[]{grey, grey, grey, rgba[3]};
+    }
+  }
+
+  private static class BrighterFilter extends Filter {
+    private final int myTones;
+
+    public BrighterFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.min(1, brightness * 1.1F);
+        if (brightness == 1) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    }
+  }
+
+  private static class DarkerFilter extends Filter {
+    private final int myTones;
+
+    public DarkerFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.max(0, brightness / 1.1F);
+        if (brightness == 0) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
     }
   }
 

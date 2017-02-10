@@ -61,8 +61,8 @@ class TeamcityDocTestResult(TeamcityTestResult):
   def stopSuite(self, suite):
     self.messages.testSuiteFinished(suite.name)
 
-  def addFailure(self, test, err = ''):
-    self.messages.testFailed(self.getTestName(test),
+  def addFailure(self, test, err = '', expected=None, actual=None):
+    self.messages.testFailed(self.getTestName(test), expected=expected, actual=actual,
       message='Failure', details=err, duration=int(self.__getDuration(test)))
 
   def addError(self, test, err = ''):
@@ -180,7 +180,12 @@ class DocTestRunner(doctest.DocTestRunner):
         self.result.startTest(example)
         err = self._failure_header(test, example) +\
               self._checker.output_difference(example, got, self.optionflags)
-        self.result.addFailure(example, err)
+        expected = None
+        try:
+          expected = example.want
+        except KeyError:
+          pass
+        self.result.addFailure(example, err, expected=expected, actual=got)
 
       elif outcome is BOOM:
         self.result.startTest(example)

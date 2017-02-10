@@ -9,20 +9,9 @@ from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args
 from teamcity import pytest_plugin
 
 
-def __parse_parametrized(part):
-    """
-
-    Support pytest parametrized tests for cases like foo[1,2]
-    """
-    match = re.match("^(.+)\[(.+)\]$", part)
-    if not match:
-        return [part]
-    else:
-        return [match.group(1), match.group(2)]
-
 
 if __name__ == '__main__':
-    path, targets, additional_args = jb_start_tests(__parse_parametrized)
+    path, targets, additional_args = jb_start_tests()
     sys.argv += additional_args
     joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
     # When file is launched in py.test it should be file.py: you can't provide it as bare module

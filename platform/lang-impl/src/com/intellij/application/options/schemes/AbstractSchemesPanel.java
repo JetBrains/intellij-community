@@ -20,7 +20,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +69,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
+    add(Box.createRigidArea(new Dimension(0, 12)));
+    add(new JSeparator());
     add(Box.createVerticalGlue());
     add(Box.createRigidArea(new Dimension(0, 10)));
   }
@@ -133,7 +141,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
 
   public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
     myInfoLabel.setText(message);
-    myInfoLabel.setForeground(messageType.getTitleForeground());
+    myInfoLabel.setForeground(messageTypeToColor(messageType));
   }
 
   public final void clearInfo() {
@@ -164,4 +172,25 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
    *         separators.
    */
   public abstract boolean supportsProjectSchemes();
+  
+  public void showStatus(final String message, MessageType messageType) {
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
+                                    messageType.getPopupBackground(), null);
+    balloonBuilder.setFadeoutTime(5000);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    balloon.showInCenterOf(myToolbar);
+    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+  }
+  
+  @SuppressWarnings("UseJBColor")
+  private static Color messageTypeToColor(@NotNull MessageType messageType) {
+    if (messageType == MessageType.INFO) {
+      return Color.GRAY;
+    }
+    else if (messageType == MessageType.ERROR) {
+      return Color.RED;
+    }
+    return JBColor.BLACK;
+  }
 }

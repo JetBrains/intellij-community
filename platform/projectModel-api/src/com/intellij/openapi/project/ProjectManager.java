@@ -32,9 +32,9 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 
   /**
-   * Gets <code>ProjectManager</code> instance.
+   * Gets {@code ProjectManager} instance.
    *
-   * @return <code>ProjectManager</code> instance
+   * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ProjectManager.class);

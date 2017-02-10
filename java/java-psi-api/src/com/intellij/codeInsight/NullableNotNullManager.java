@@ -15,15 +15,15 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +33,18 @@ import java.util.*;
  * @author anna
  * @since 25.01.2011
  */
-public abstract class NullableNotNullManager implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
+public abstract class NullableNotNullManager {
+  protected static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
 
   private static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   private static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
 
-  public static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, JAVAX_ANNOTATION_NULLABLE,
+  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, JAVAX_ANNOTATION_NULLABLE,
     "edu.umd.cs.findbugs.annotations.Nullable", "android.support.annotation.Nullable"
   };
 
@@ -329,7 +329,7 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     return myNotNulls;
   }
 
-  public boolean hasDefaultValues() {
+  boolean hasDefaultValues() {
     List<String> predefinedNotNulls = getPredefinedNotNulls();
     if (DEFAULT_NULLABLES.length != getNullables().size() || predefinedNotNulls.size() != getNotNulls().size()) {
       return false;
@@ -349,41 +349,6 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     }
 
     return true;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public Element getState() {
-    final Element component = new Element("component");
-
-    if (hasDefaultValues()) {
-      return component;
-    }
-
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, component);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return component;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public void loadState(Element state) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, state);
-      if (myNullables.isEmpty()) {
-        Collections.addAll(myNullables, DEFAULT_NULLABLES);
-      }
-      if (myNotNulls.isEmpty()) {
-        myNotNulls.addAll(getPredefinedNotNulls());
-      }
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
   }
 
   public static boolean isNullable(@NotNull PsiModifierListOwner owner) {

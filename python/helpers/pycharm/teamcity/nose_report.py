@@ -8,7 +8,11 @@ from teamcity import is_running_under_teamcity
 from teamcity.common import is_string, split_output, limit_output, get_class_fullname, convert_error_to_string
 from teamcity.messages import TeamcityServiceMessages
 
+import nose
+# noinspection PyPackageRequirements
 from nose.exc import SkipTest, DeprecatedTest
+# noinspection PyPackageRequirements
+from nose.plugins import Plugin
 
 
 CONTEXT_SUITE_FQN = "nose.suite.ContextSuite"
@@ -21,7 +25,7 @@ def _ln(label):
     out = '%s %s %s' % ('-' * chunk, label, '-' * chunk)
     pad = 70 - len(out)
     if pad > 0:
-        out = out + ('-' * pad)
+        out += '-' * pad
     return out
 
 
@@ -31,7 +35,8 @@ _captured_output_end_marker = "\n" + _ln('>> end captured stdout <<')
 _real_stdout = sys.stdout
 
 
-class TeamcityReport(object):
+# noinspection PyPep8Naming,PyMethodMayBeStatic
+class TeamcityReport(Plugin):
     name = 'teamcity-report'
     score = 10000
 
@@ -40,6 +45,8 @@ class TeamcityReport(object):
 
         self.messages = TeamcityServiceMessages(_real_stdout)
         self.test_started_datetime_map = {}
+        self.config = None
+        self.total_tests = 0
         self.enabled = False
 
     def get_test_id(self, test):
@@ -79,41 +86,32 @@ class TeamcityReport(object):
 
     def configure(self, options, conf):
         self.enabled = is_running_under_teamcity()
+        self.config = conf
 
     def options(self, parser, env=os.environ):
         pass
 
-    def _get_capture_plugin(self, test):
+    def _get_capture_plugin(self):
         """
-        :type test: nose.case.Test
-        :rtype: nose.plugins.base.Plugin
+        :rtype: nose.plugins.capture.Capture
         """
-        for plugin in test.config.plugins.plugins:
+        for plugin in self.config.plugins.plugins:
             if plugin.name == "capture":
                 return plugin
         return None
 
-    def _capture_plugin_enabled(self, test):
-        """
-        :type test: nose.case.Test
-        """
-        plugin = self._get_capture_plugin(test)
+    def _capture_plugin_enabled(self):
+        plugin = self._get_capture_plugin()
         return plugin is not None and plugin.enabled
 
-    def _capture_plugin_buffer(self, test):
-        """
-        :type test: nose.case.Test
-        """
-        plugin = self._get_capture_plugin(test)
+    def _capture_plugin_buffer(self):
+        plugin = self._get_capture_plugin()
         if plugin is None:
             return None
         return getattr(plugin, "buffer", None)
 
-    def _captureStandardOutput_value(self, test):
-        """
-        :type test: nose.case.Test
-        """
-        if self._capture_plugin_enabled(test):
+    def _captureStandardOutput_value(self):
+        if self._capture_plugin_enabled():
             return 'false'
         else:
             return 'true'
@@ -140,9 +138,9 @@ class TeamcityReport(object):
         test_id = self.get_test_id(test)
 
         captured_output = getattr(test, "capturedOutput", None)
-        if captured_output is None and self._capture_plugin_enabled(test):
+        if captured_output is None and self._capture_plugin_enabled():
             # nose capture does not fill 'capturedOutput' property on successful tests
-            captured_output = self._capture_plugin_buffer(test)
+            captured_output = self._capture_plugin_buffer()
         if captured_output:
             for chunk in split_output(limit_output(captured_output)):
                 self.messages.testStdOut(test_id, chunk, flowId=test_id)
@@ -152,6 +150,44 @@ class TeamcityReport(object):
             self.messages.testFinished(test_id, testDuration=time_diff, flowId=test_id)
         else:
             self.messages.testFinished(test_id, flowId=test_id)
+
+    def prepareTestLoader(self, loader):
+        """Insert ourselves into loader calls to count tests.
+        The top-level loader call often returns lazy results, like a LazySuite.
+        This is a problem, as we would destroy the suite by iterating over it
+        to count the tests. Consequently, we monkey-patch the top-level loader
+        call to do the load twice: once for the actual test running and again
+        to yield something we can iterate over to do the count.
+
+        from https://github.com/erikrose/nose-progressive/
+        :type loader: nose.loader.TestLoader
+        """
+
+        # TODO: If there's ever a practical need, also patch loader.suiteClass
+        # or even TestProgram.createTests. createTests seems to be main top-
+        # level caller of loader methods, and nose.core.collector() (which
+        # isn't even called in nose) is an alternate one.
+        #
+        # nose 1.3.4 contains required fix:
+        # Another fix for Python 3.4: Call super in LazySuite to access _removed_tests variable
+        if hasattr(loader, 'loadTestsFromNames') and nose.__versioninfo__ >= (1, 3, 4):
+            old_loadTestsFromNames = loader.loadTestsFromNames
+
+            def _loadTestsFromNames(*args, **kwargs):
+                suite = old_loadTestsFromNames(*args, **kwargs)
+                self.total_tests += suite.countTestCases()
+
+                # Clear out the loader's cache. Otherwise, it never finds any tests
+                # for the actual test run:
+                loader._visitedPaths = set()
+
+                return old_loadTestsFromNames(*args, **kwargs)
+            loader.loadTestsFromNames = _loadTestsFromNames
+
+    # noinspection PyUnusedLocal
+    def prepareTestRunner(self, runner):
+        if self.total_tests:
+            self.messages.testCount(self.total_tests)
 
     def addError(self, test, err):
         test_class_name = get_class_fullname(test)
@@ -164,7 +200,7 @@ class TeamcityReport(object):
             self.messages.testIgnored(test_id, message="Deprecated", flowId=test_id)
             self.report_finish(test)
         elif test_class_name == CONTEXT_SUITE_FQN:
-            self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(test), flowId=test_id)
+            self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(), flowId=test_id)
             self.report_fail(test, 'error in ' + test.error_context + ' context', err)
             self.messages.testFinished(test_id, flowId=test_id)
         else:
@@ -179,7 +215,7 @@ class TeamcityReport(object):
         test_id = self.get_test_id(test)
 
         self.test_started_datetime_map[test_id] = datetime.datetime.now()
-        self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(test), flowId=test_id)
+        self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(), flowId=test_id)
 
     def addSuccess(self, test):
         self.report_finish(test)

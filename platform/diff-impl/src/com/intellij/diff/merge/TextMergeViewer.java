@@ -81,6 +81,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class TextMergeViewer implements MergeTool.MergeViewer {
   private static final Logger LOG = Logger.getInstance(TextMergeViewer.class);
@@ -203,8 +204,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       myTextDiffProvider = new TextDiffProviderBase(getTextSettings(),
                                                     myInnerDiffWorker::onSettingsChanged,
-                                                    new IgnorePolicy[]{IgnorePolicy.DEFAULT},
-                                                    new HighlightPolicy[]{HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD});
+                                                    ar(IgnorePolicy.DEFAULT),
+                                                    ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
 
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);

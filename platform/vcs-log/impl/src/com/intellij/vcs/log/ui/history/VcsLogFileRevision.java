@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -32,7 +31,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class VcsLogFileRevision extends VcsFileRevisionEx {
-  @NotNull private final Change myChange;
+  @Nullable private final ContentRevision myRevision;
   @NotNull private final FilePath myPath;
   private final long myAuthorTime;
   @NotNull private final String myFullMessage;
@@ -40,8 +39,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   @NotNull private final VcsUser myAuthor;
   @NotNull private final VcsUser myCommitter;
 
-  public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @NotNull Change change, @NotNull FilePath path) {
-    myChange = change;
+  public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @Nullable ContentRevision revision, @NotNull FilePath path) {
+    myRevision = revision;
     myPath = path;
 
     myAuthor = details.getAuthor();
@@ -102,9 +101,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   public byte[] loadContent() throws IOException, VcsException {
     if (myContent != null) return myContent;
 
-    ContentRevision afterRevision = myChange.getAfterRevision();
-    if (afterRevision != null) {
-      String content = afterRevision.getContent();
+    if (myRevision != null) {
+      String content = myRevision.getContent();
       if (content != null) {
         myContent = content.getBytes(myPath.getCharset().name());
         return myContent;
@@ -121,8 +119,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public VcsRevisionNumber getRevisionNumber() {
-    if (myChange.getAfterRevision() == null) return null;
-    return myChange.getAfterRevision().getRevisionNumber();
+    if (myRevision == null) return null;
+    return myRevision.getRevisionNumber();
   }
 
   @Override

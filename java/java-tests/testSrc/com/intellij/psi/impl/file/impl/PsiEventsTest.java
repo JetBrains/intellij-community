@@ -17,7 +17,6 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -43,8 +42,6 @@ import java.io.IOException;
 
 @SkipSlowTestLocally
 public class PsiEventsTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.PsiEventsTest");
-
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
   private VirtualFile mySrcDir1;
@@ -338,12 +335,9 @@ public class PsiEventsTest extends PsiTestCase {
     final EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
-        return null;
-      }
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
+      return null;
     });
 
 
@@ -358,12 +352,9 @@ public class PsiEventsTest extends PsiTestCase {
       }
     }.assertCompleted(listener.getEventsString());
 
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-        return null;
-      }
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
+      return null;
     });
   }
 
@@ -583,10 +574,10 @@ public class PsiEventsTest extends PsiTestCase {
     rename(virtualFile, "b.xml");
   }
 
-  String newText;
-  String original;
-  String eventsFired = "";
-  PsiTreeChangeListener listener;
+  private String newText;
+  private String original;
+  private String eventsFired = "";
+  private PsiTreeChangeListener listener;
   public void testBeforeAfterChildrenChange() throws Throwable {
     listener = new PsiTreeChangeListener() {
       @Override
@@ -753,32 +744,32 @@ public class PsiEventsTest extends PsiTestCase {
 
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
     }, getTestRootDisposable());
 
@@ -792,11 +783,11 @@ public class PsiEventsTest extends PsiTestCase {
     assertTrue(documentManager.isCommitted(document));
   }
 
-  private static void checkCommitted(boolean shouldBeCommitted, PsiTreeChangeEvent event) {
+  private static void checkCommitted(PsiTreeChangeEvent event) {
     PsiFile file = event.getFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
-    assertEquals(shouldBeCommitted, documentManager.isCommitted(document));
+    assertTrue(documentManager.isCommitted(document));
   }
 
   public void testTreeChangePreprocessorThrowsException() throws Exception {

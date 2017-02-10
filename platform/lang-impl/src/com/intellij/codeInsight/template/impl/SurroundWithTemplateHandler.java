@@ -41,7 +41,7 @@ import java.util.Set;
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     DefaultActionGroup group = createActionGroup(project, editor, file);
     if (group == null) return;
 

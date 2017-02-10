@@ -15,17 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.WorkingTimeMeasurer;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.postOrder;
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
 /**
  * @author ven
@@ -33,9 +33,10 @@ import java.util.*;
 public class DFAEngine<E> {
 
   private final Instruction[] myFlow;
-
   private final DfaInstance<E> myDfa;
   private final Semilattice<E> mySemilattice;
+
+  private WorkCounter myCounter = null;
 
   public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
@@ -79,74 +80,65 @@ public class DFAEngine<E> {
 
   @Nullable
   private List<E> performDFA(boolean timeout) {
-    WorkingTimeMeasurer measurer = null;
+    final int n = myFlow.length;
+    final List<E> info = new ArrayList<>(Collections.nCopies(n, myDfa.initial()));
+    final CallEnvironment env = new MyCallEnvironment(n);
 
-    ArrayList<E> info = new ArrayList<>(Collections.nCopies(myFlow.length, myDfa.initial()));
-    CallEnvironment env = new MyCallEnvironment(myFlow.length);
-    
-    boolean[] visited = new boolean[myFlow.length];
+    final WorkList workList = new WorkList(getFlowOrder());
 
-    final boolean forward = myDfa.isForward();
-    int[] order = ControlFlowBuilderUtil.postorder(myFlow); //todo for backward?
-    int count = 0;
-    for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
-      Instruction instr = myFlow[order[i]];
-
-      if (!visited[instr.num()]) {
-        Queue<Instruction> workList = new LinkedList<>();
-
-        workList.add(instr);
-        visited[instr.num()] = true;
-
-        while (!workList.isEmpty()) {
-          count++;
-          if (timeout && count % 512 == 0) {
-            if (measurer == null) {
-              long msLimit = Registry.intValue("ide.dfa.time.limit.online");
-
-              measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
-            }
-            else if (measurer.isTimeOver()) {
-              return null;
-            }
-          }
-
-          ProgressManager.checkCanceled();
-          final Instruction curr = workList.remove();
-          final int num = curr.num();
-          final E oldE = info.get(num);
-          E newE = join(curr, info, env);
-          myDfa.fun(newE, curr);
-          if (!mySemilattice.eq(newE, oldE)) {
-            info.set(num, newE);
-            for (Instruction next : getNext(curr, env)) {
-              workList.add(next);
-              visited[next.num()] = true;
-            }
-          }
+    while (!workList.isEmpty()) {
+      ProgressManager.checkCanceled();
+      if (timeout && checkCounter()) return null;
+      final int num = workList.next();
+      final Instruction curr = myFlow[num];
+      final E oldE = info.get(num);                     // saved outbound state
+      final E newE = getInboundState(curr, info, env);  // inbound state
+      myDfa.fun(newE, curr);                            // newly modified outbound state
+      if (!mySemilattice.eq(newE, oldE)) {              // if outbound state changed
+        info.set(num, newE);                            // save new state
+        for (Instruction next : getNext(curr, env)) {
+          workList.offer(next.num());
         }
       }
-
-      if (forward) i++;
-      else i--;
     }
-
 
     return info;
   }
 
   @NotNull
-  private E join(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
-    final Iterable<Instruction> prev = myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
-    ArrayList<E> prevInfos = new ArrayList<>();
-    for (Instruction i : prev) {
+  private int[] getFlowOrder() {
+    if (myDfa.isForward()) {
+      return reversedPostOrder(myFlow);
+    }
+    else {
+      return postOrder(myFlow);
+    }
+  }
+
+  @NotNull
+  private E getInboundState(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
+    List<E> prevInfos = new ArrayList<>();
+    for (Instruction i : getPrevious(instruction, env)) {
       prevInfos.add(info.get(i.num()));
     }
     return mySemilattice.join(prevInfos);
   }
 
   @NotNull
-  private Iterable<Instruction> getNext(@NotNull Instruction curr, @NotNull CallEnvironment env) {
-    return myDfa.isForward() ? curr.successors(env) : curr.predecessors(env);
+  private Iterable<Instruction> getPrevious(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+    return myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
+  }
+
+  @NotNull
+  private Iterable<Instruction> getNext(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+    return myDfa.isForward() ? instruction.successors(env) : instruction.predecessors(env);
+  }
+
+  private boolean checkCounter() {
+    if (myCounter == null) {
+      myCounter = new WorkCounter();
+      return false;
+    }
+    return myCounter.isTimeOver();
   }
 }

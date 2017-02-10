@@ -80,7 +80,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
           }
         }
         catch (SchemeImportException e) {
-          SchemeImportUtil.showStatus(getSchemesPanel(), "Import failed: " + e.getMessage(), MessageType.ERROR);
+          getSchemesPanel().showStatus("Import failed: " + e.getMessage(), MessageType.ERROR);
         }
       }
     }

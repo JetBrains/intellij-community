@@ -809,6 +809,11 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
   private static String getVariableReferenceText(PsiReferenceExpression reference, PsiVariable variable, PsiElement context) {
     final String text = reference.getText();
     final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+    PsiExpression qualifier = reference.getQualifierExpression();
+    while(qualifier != null) {
+      if(!(qualifier instanceof PsiReferenceExpression)) return text;
+      qualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
+    }
     final PsiVariable target = resolveHelper.resolveReferencedVariable(text, context);
     return variable != target ? ExpressionUtils.getQualifierOrThis(reference).getText() + "." + text : text;
   }

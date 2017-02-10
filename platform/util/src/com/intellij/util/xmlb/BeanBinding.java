@@ -42,14 +42,14 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.List;
 
-class BeanBinding extends Binding {
+public class BeanBinding extends NotNullDeserializeBinding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Binding[] myBindings;
 
-  final Class<?> myBeanClass;
+  protected final Class<?> myBeanClass;
 
   ThreeState compareByFields = ThreeState.UNSURE;
 
@@ -128,9 +128,9 @@ class BeanBinding extends Binding {
 
   @Override
   @NotNull
-  public Object deserialize(Object context, @NotNull Element element) {
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
-    deserializeInto(instance, element, null);
+    deserializeInto(instance, element);
     return instance;
   }
 
@@ -179,6 +179,10 @@ class BeanBinding extends Binding {
     });
   }
 
+  public void deserializeInto(@NotNull Object result, @NotNull Element element) {
+    deserializeInto(result, element, null);
+  }
+
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
@@ -222,7 +226,7 @@ class BeanBinding extends Binding {
             if (accessorNameTracker != null) {
               accessorNameTracker.add(binding.getAccessor().getName());
             }
-            binding.deserialize(result, child);
+            binding.deserializeUnsafe(result, child);
           }
           continue nextNode;
         }
@@ -244,7 +248,8 @@ class BeanBinding extends Binding {
     return element.getName().equals(myTagName);
   }
 
-  private static String getTagName(Class<?> aClass) {
+  @NotNull
+  private static String getTagName(@NotNull Class<?> aClass) {
     for (Class<?> c = aClass; c != null; c = c.getSuperclass()) {
       String name = getTagNameFromAnnotation(c);
       if (name != null) {
@@ -252,7 +257,15 @@ class BeanBinding extends Binding {
       }
     }
     String name = aClass.getSimpleName();
-    return name.isEmpty() ? aClass.getSuperclass().getSimpleName() : name;
+    if (name.isEmpty()) {
+      name = aClass.getSuperclass().getSimpleName();
+    }
+
+    int lastIndexOf = name.lastIndexOf('$');
+    if (lastIndexOf > 0 && name.length() > (lastIndexOf + 1)) {
+      return name.substring(lastIndexOf + 1);
+    }
+    return name;
   }
 
   private static String getTagNameFromAnnotation(Class<?> aClass) {
@@ -401,8 +414,8 @@ class BeanBinding extends Binding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor) {
-    Binding binding = XmlSerializerImpl.getBinding(accessor);
+  private Binding createBinding(@NotNull MutableAccessor accessor) {
+    Binding binding = getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
     }
@@ -440,5 +453,10 @@ class BeanBinding extends Binding {
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
+  }
+
+
+  protected Binding getBinding(@NotNull MutableAccessor accessor) {
+    return XmlSerializerImpl.getBinding(accessor);
   }
 }

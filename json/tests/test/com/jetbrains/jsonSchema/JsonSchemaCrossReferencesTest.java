@@ -169,6 +169,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
+    JsonSchemaService.Impl.get(getProject()).reset();
 
     doHighlighting();
     complete();

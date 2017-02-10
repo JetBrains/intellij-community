@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
@@ -89,12 +90,10 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     return getChildComponent();
   }
 
-  /**
-   * @return trimmed text
-   */
+  @NotNull
   @Override
-  public String getText(){
-    return getTextField().getText();
+  public String getText() {
+    return StringUtil.notNullize(getTextField().getText());
   }
 
   @Override

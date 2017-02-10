@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -549,14 +549,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
-    if (pattern != null) {
-      myWildcardPatterns.add(wildcardPattern);
-      if (isPatternNegated(wildcardPattern)) {
-        myNegatedCompiledPatterns.add(pattern);
-      }
-      else {
-        myCompiledPatterns.add(pattern);
-      }
+    myWildcardPatterns.add(wildcardPattern);
+    if (isPatternNegated(wildcardPattern)) {
+      myNegatedCompiledPatterns.add(pattern);
+    }
+    else {
+      myCompiledPatterns.add(pattern);
     }
   }
 

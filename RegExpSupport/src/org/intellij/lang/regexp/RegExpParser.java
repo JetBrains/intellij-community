@@ -333,14 +333,16 @@ public class RegExpParser implements PsiParser {
     else if (type == RegExpTT.SET_OPTIONS) {
       builder.advanceLexer();
 
-      final PsiBuilder.Marker o = builder.mark();
       if (builder.getTokenType() == RegExpTT.OPTIONS_ON) {
+        final PsiBuilder.Marker o = builder.mark();
         builder.advanceLexer();
+        o.done(RegExpElementTypes.OPTIONS);
       }
       if (builder.getTokenType() == RegExpTT.OPTIONS_OFF) {
+        final PsiBuilder.Marker o = builder.mark();
         builder.advanceLexer();
+        o.done(RegExpElementTypes.OPTIONS);
       }
-      o.done(RegExpElementTypes.OPTIONS);
 
       if (builder.getTokenType() == RegExpTT.COLON) {
         builder.advanceLexer();

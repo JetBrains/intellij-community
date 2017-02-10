@@ -22,6 +22,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.tree.IElementType;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         }
       }
       final String text = buildReplacementText(pattern);
+      //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
     }
 
@@ -100,7 +103,42 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
   static String buildReplacementText(RegExpPattern pattern) {
     final StringBuilder text = new StringBuilder("[");
     for (RegExpBranch branch : pattern.getBranches()) {
-      text.append(branch.getText());
+      for (PsiElement child : branch.getChildren()) {
+        final RegExpChar ch = (RegExpChar)child;
+        final IElementType type = ch.getNode().getFirstChildNode().getElementType();
+        if (type == RegExpTT.REDUNDANT_ESCAPE) {
+          text.append((char)ch.getValue());
+        }
+        else if (type == RegExpTT.ESC_CHARACTER) {
+          final int value = ch.getValue();
+          switch (value) {
+            case '.':
+            case '$':
+            case '?':
+            case '*':
+            case '+':
+            case '|':
+            case '{':
+            case '(':
+            case ')':
+              text.append((char)value);
+              break;
+            case '^':
+              if (text.length() == 1) {
+                text.append(ch.getText());
+              }
+              else {
+                text.append((char)value);
+              }
+              break;
+            default:
+              text.append(ch.getText());
+          }
+        }
+        else {
+          text.append(ch.getText());
+        }
+      }
     }
     text.append("]");
     return text.toString();

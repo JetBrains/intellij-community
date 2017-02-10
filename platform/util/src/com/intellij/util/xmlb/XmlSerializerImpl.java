@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -34,9 +35,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-class XmlSerializerImpl {
+public class XmlSerializerImpl {
   private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
   @NotNull
@@ -64,13 +64,11 @@ class XmlSerializerImpl {
   @Nullable
   static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
     Class<?> aClass = object.getClass();
-    Binding binding = getClassBinding(aClass, aClass, null);
-    assert binding != null;
-    return (Element)binding.serialize(object, null, filter);
+    return (Element)getMainBinding(aClass, aClass, null).serialize(object, null, filter);
   }
 
   @Nullable
-  static Binding getBinding(@NotNull Type type) {
+  public static Binding getBinding(@NotNull Type type) {
     return getClassBinding(typeToClass(type), type, null);
   }
 
@@ -81,7 +79,7 @@ class XmlSerializerImpl {
   }
 
   @NotNull
-  static Class<?> typeToClass(@NotNull Type type) {
+  public static Class<?> typeToClass(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class<?>)type;
     }
@@ -99,7 +97,11 @@ class XmlSerializerImpl {
 
   @Nullable
   static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
-    if (aClass.isPrimitive() ||
+    return isPrimitive(aClass) ? null : getMainBinding(aClass, originalType, accessor);
+  }
+
+  public static boolean isPrimitive(@NotNull Class<?> aClass) {
+    return aClass.isPrimitive() ||
         aClass == String.class ||
         aClass == Integer.class ||
         aClass == Long.class ||
@@ -107,15 +109,20 @@ class XmlSerializerImpl {
         aClass == Double.class ||
         aClass == Float.class ||
         aClass.isEnum() ||
-        Date.class.isAssignableFrom(aClass)) {
-      return null;
-    }
+        Date.class.isAssignableFrom(aClass);
+  }
 
+  @NotNull
+  synchronized static Binding getMainBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
     Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
     if (binding == null) {
-      binding = getNonCachedClassBinding(aClass, accessor, originalType);
+      binding = createClassBinding(aClass, accessor, originalType);
+      if (binding == null) {
+        binding = new BeanBinding(aClass, accessor);
+      }
+
       map.put(key, binding);
       try {
         binding.init(originalType);
@@ -132,14 +139,14 @@ class XmlSerializerImpl {
   private static Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
     Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
-      map = new ConcurrentHashMap<Pair<Type, MutableAccessor>, Binding>();
+      map = ContainerUtil.newConcurrentMap();
       ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
     }
     return map;
   }
 
-  @NotNull
-  private static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+  @Nullable
+  public static Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
     if (aClass.isArray()) {
       if (Element.class.isAssignableFrom(aClass.getComponentType())) {
         assert accessor != null;
@@ -170,7 +177,7 @@ class XmlSerializerImpl {
         return new CompactCollectionBinding(accessor);
       }
     }
-    return new BeanBinding(aClass, accessor);
+    return null;
   }
 
   @Nullable

@@ -39,7 +39,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass instanceof GrTypeDefinition) {
       GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;

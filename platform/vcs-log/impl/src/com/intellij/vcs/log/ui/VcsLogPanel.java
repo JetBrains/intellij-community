@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.impl.VcsLogManager;
@@ -63,6 +64,11 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     }
     else if (VCS_LOG_DATA_PROVIDER.is(dataId)) {
       return myManager.getDataManager();
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
+      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
+      if (hashes.isEmpty()) return null;
+      return VcsLogUtil.convertToRevisionNumber(ObjectUtils.notNull(ContainerUtil.getFirstItem(hashes)).getHash());
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();

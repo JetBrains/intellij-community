@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
@@ -144,7 +145,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
-    public List<String> CHANGED_PATHS = new ArrayList<>();
+    @SuppressWarnings("WeakerAccess") public List<String> CHANGED_PATHS = new ArrayList<>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -439,12 +440,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
     final boolean wasActive = myToolWindowManager.isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
-    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders;
-    if (wnd != null && wnd.isValid()) {
-      editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, wnd);
-    } else {
-      editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
-    }
+    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
+                           ? myEditorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
+                           : myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
 
     myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
@@ -504,11 +502,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   private static final class PlaceInfo {
-
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
-    private final WeakReference<EditorWindow> myWindow;
+    private final Reference<EditorWindow> myWindow;
 
     PlaceInfo(@NotNull VirtualFile file,
               @NotNull FileEditorState navigationState,

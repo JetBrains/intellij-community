@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -37,6 +38,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
@@ -96,6 +98,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     add(createActionsToolbar(), BorderLayout.WEST);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
+    EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION)).
+      registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myGraphTable);
 
     Disposer.register(myUi, this);
   }
@@ -133,7 +137,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return myUi.getProperties();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      return createRevisionForFirstSelectedCommit();
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.isEmpty()) return null;
+      return createRevision(ContainerUtil.getFirstItem(details));
+    }
+    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, this::createRevision), VcsFileRevision.class);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
@@ -146,22 +157,34 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
       }
     }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return myFilePath.getVirtualFile();
+    }
     else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
       return false;
     }
     return null;
   }
 
+  @Nullable
   private VcsLogFileRevision createRevisionForFirstSelectedCommit() {
-    VcsFullCommitDetails details = ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails());
+    return createRevision(ContainerUtil.getFirstItem(myUi.getVcsLog().getSelectedDetails()));
+  }
+
+  @Nullable
+  private VcsLogFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
       Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
-      if (change.getAfterRevision() == null) {
-        LOG.error("After revision for commit " + details.getId() + " change " + change + " is null.");
-        return null;
+      ContentRevision revision = change.getAfterRevision();
+      if (revision == null) {
+        revision = change.getBeforeRevision();
+        if (revision == null) {
+          LOG.error("Before and after revisions for commit " + details.getId().toShortString() + ", change " + change + " are null.");
+          return null;
+        }
       }
-      return new VcsLogFileRevision(details, change, change.getAfterRevision().getFile());
+      return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
     }
     return null;
   }

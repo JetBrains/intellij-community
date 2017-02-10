@@ -48,8 +48,18 @@ public abstract class LexerTestCase extends UsefulTestCase {
       assertSameLines(expected, result);
     }
     else {
-      assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+      assertSameLinesWithFile(getPathToTestDataFile(getExpectedFileExtension()), result);
     }
+  }
+
+  @NotNull
+  protected String getPathToTestDataFile(String extension) {
+    return PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + extension;
+  }
+
+  @NotNull
+  protected String getExpectedFileExtension() {
+    return ".txt";
   }
 
   protected void checkZeroState(String text, TokenSet tokenTypes) {
@@ -106,7 +116,12 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void doFileTest(@NonNls String fileExt) {
-    String fileName = PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + "." + fileExt;
+    doTest(loadTestDataFile("." + fileExt));
+  }
+
+  @NotNull
+  protected String loadTestDataFile(@NonNls String fileExt) {
+    String fileName = getPathToTestDataFile(fileExt);
     String text = "";
     try {
       String fileText = FileUtil.loadFile(new File(fileName));
@@ -115,7 +130,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     catch (IOException e) {
       fail("can't load file " + fileName + ": " + e.getMessage());
     }
-    doTest(text);
+    return text;
   }
 
   protected boolean shouldTrim() {

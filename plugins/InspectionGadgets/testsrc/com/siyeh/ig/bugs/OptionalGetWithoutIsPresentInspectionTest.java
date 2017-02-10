@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,6 +30,18 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "OptionalUsedAsFieldOrParameterType"})
 public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTestCase {
+  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
+    }
+  };
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return PROJECT_DESCRIPTOR;
+  }
 
   public void testSimple() {
     doTest("import java.util.Optional;" +
@@ -142,37 +160,6 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package java.util;" +
-      "import java.util.function.Consumer;" +
-      "public final class Optional<T> {" +
-      "  private final T value;" +
-      "  public T get() {" +
-      "    if (value == null) {" +
-      "      throw new NoSuchElementException(\"No value present\");" +
-      "    }" +
-      "    return value;" +
-      "  }" +
-      "  public boolean isPresent() {" +
-      "    return value != null;" +
-      "  }" +
-      "  public static<T> Optional<T> empty() {" +
-      "    return new Optional<>();" +
-      "  }" +
-      "  public static <T> Optional<T> of(T value) {" +
-      "    return new Optional<>(value);" +
-      "  }" +
-      "}",
-
-      "package java.util;" +
-      "public final class OptionalDouble {" +
-      "  public boolean isPresent() {" +
-      "    return true;" +
-      "  }" +
-      "  public double getAsDouble() {" +
-      "    return 0.0;" +
-      "  }" +
-      "}",
-
       "package org.junit;" +
       "public class Assert {" +
       "  public static void assertTrue(boolean b) {}" +

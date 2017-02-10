@@ -26,7 +26,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
-import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -36,10 +35,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -463,41 +462,45 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
   @Override
   public void processVariants(@NotNull PsiScopeProcessor processor) {
-    OrFilter filter = new OrFilter();
-    filter.addFilter(ElementClassFilter.CLASS);
-    if (isQualified()) {
-      filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-    }
-    filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter()), new ElementFilter() {
-      @Override
-      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-        return LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)element, PsiReferenceExpressionImpl.this,
-                                                                     null, PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
-      }
-
-      @Override
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }));
-    filter.addFilter(ElementClassFilter.VARIABLE);
-
-    FilterScopeProcessor filterProcessor = new FilterScopeProcessor<CandidateInfo>(filter, processor) {
+    DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
+      private PsiElement myResolveContext;
       private final Set<String> myVarNames = new THashSet<String>();
 
       @Override
       public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
-          myVarNames.add(((PsiVariable) element).getName());
-        }
-        else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
-          return true;
-        }
-        else if (element instanceof PsiClass && seemsScrambled((PsiClass)element)) {
-          return true;
-        }
+        return !shouldProcess(element) || super.execute(element, state);
+      }
 
-        return super.execute(element, state);
+      private boolean shouldProcess(@NotNull PsiElement element) {
+        if (element instanceof PsiVariable) return ensureNonShadowedVariable((PsiVariable)element);
+        if (element instanceof PsiClass) return !seemsScrambled((PsiClass)element);
+        if (element instanceof PsiPackage) return isQualified();
+        if (element instanceof PsiMethod) return shouldProcessMethod((PsiMethod)element);
+        return false;
+      }
+
+      private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
+        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+          myVarNames.add(element.getName());
+        }
+        if (element instanceof PsiField && myVarNames.contains(element.getName())) {
+          return false;
+        }
+        return true;
+      }
+
+      private boolean shouldProcessMethod(@NotNull PsiMethod method) {
+        PsiReferenceExpressionImpl ref = PsiReferenceExpressionImpl.this;
+        return !method.isConstructor() &&
+               LambdaUtil.isValidQualifier4InterfaceStaticMethodCall(method, ref, myResolveContext, PsiUtil.getLanguageLevel(ref));
+      }
+
+      @Override
+      public void handleEvent(@NotNull Event event, Object associated) {
+        if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
+          myResolveContext = (PsiElement)associated;
+        }
+        super.handleEvent(event, associated);
       }
 
     };

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class OctalEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
-    quickfixTest("\\011<caret>", "\\x09", "Replace with '\\x09'");
+    quickfixTest("<warning descr=\"Octal escape '\\011' in RegExp\">\\011</warning>", "\\x09", "Replace with '\\x09'");
   }
 
   @NotNull

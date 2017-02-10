@@ -16,6 +16,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +29,9 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,13 +49,42 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+    new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
   }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalUnitTestFactory createFactory() {
+          return PyUniversalUnitTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    final PyUniversalUnitTestConfiguration configuration = task.getConfiguration();
+    configuration.setPattern("foo");
+    configuration.getTarget().setTargetType(TestTargetType.PATH);
+    configuration.getTarget().setTarget("foo.py");
+    configuration.checkConfiguration();
+  }
+
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class, "folderWithTests"));
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                                 PyUniversalUnitTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PyUniversalUnitTestConfiguration.class));
   }
 
   @Test
@@ -112,6 +143,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         final int expectedNumberOfTests = (runner.getCurrentRerunStep() == 0 ? 2 : 1);
         Assert.assertThat("Wrong number tests", runner.getAllTestsCount(), equalTo(expectedNumberOfTests));
       }
+
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
@@ -153,24 +185,6 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
 
         stopMessageCapture();
-      }
-    });
-  }
-
-  /**
-   * Deletes all files in temp. folder
-   */
-  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
-      assert testRoot != null : "No temp path?";
-      try {
-        for (final VirtualFile child : testRoot.getChildren()) {
-          child.delete(null);
-        }
-      }
-      catch (final IOException e) {
-        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
       }
     });
   }
@@ -222,19 +236,20 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testUTRunnerByPattern() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "*pattern.py") {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "*pattern.py") {
 
 
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all) {
-        assertEquals(runner.getFormattedTestTree(),4, runner.getAllTestsCount());
-        assertEquals(runner.getFormattedTestTree(),2, runner.getPassedTestsCount());
-        assertEquals(runner.getFormattedTestTree(),2, runner.getFailedTestsCount());
-      }
-    });
+        @Override
+        protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
+        }
+      });
   }
 
   /**
@@ -347,14 +362,33 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testRelativeImports() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports",
+                                                           PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(runner.getFormattedTestTree(),1, runner.getAllTestsCount());
-        assertEquals(runner.getFormattedTestTree(),1, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+      }
+    });
+  }
+
+  /**
+   * Deletes all files in temp. folder
+   */
+  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
+      assert testRoot != null : "No temp path?";
+      try {
+        for (final VirtualFile child : testRoot.getChildren()) {
+          child.delete(null);
+        }
+      }
+      catch (final IOException e) {
+        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
       }
     });
   }

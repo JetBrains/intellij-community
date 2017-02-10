@@ -19,6 +19,7 @@ package com.jetbrains.python.testing.universalTests
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -63,6 +64,13 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
       return ""
     }
 
+  }
+
+  override fun checkConfiguration() {
+    super.checkConfiguration()
+    if (target.targetType == TestTargetType.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
+      throw RuntimeConfigurationWarning("Pattern can only be used to match files in folder. Can't use pattern for file.")
+    }
   }
 
   override fun isFrameworkInstalled() = true //Unittest is always available

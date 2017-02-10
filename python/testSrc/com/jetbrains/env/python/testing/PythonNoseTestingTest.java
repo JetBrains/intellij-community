@@ -1,13 +1,15 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -19,23 +21,46 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final PyConfigurationCreationTask<PyUniversalNoseTestConfiguration> task =
+      new PyConfigurationCreationTask<PyUniversalNoseTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalNoseTestFactory createFactory() {
+          return PyUniversalNoseTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    task.checkEmptyTarget();
+  }
 
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
+      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class, "folderWithTests"));
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+                                                                                 PyUniversalNoseTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+        PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testNoseRunner() {
 
-    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>( "/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
 
       @NotNull
       @Override
@@ -60,7 +85,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner( "test2.py", 0);
+        return new PyNoseTestProcessRunner("test2.py", 0);
       }
 
       @Override

@@ -48,20 +48,25 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.*;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.ref.Reference;
 import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
   public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
+  private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
+    AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -69,14 +74,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFile myOriginalFile;
   private final FileViewProvider myViewProvider;
-  private volatile Reference<StubTree> myStub;
+  private volatile FileTrees myTrees = FileTrees.noStub(null, this);
   private boolean myInvalidated;
-  private volatile boolean myAstLoaded;
-  private volatile boolean myUseStrongRefs;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private AstPathPsiMap myRefToPsi;
   private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<FileElement>();
   protected final PsiManagerEx myManager;
-  private volatile Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
@@ -129,7 +132,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private FileElement derefTreeElement() {
-    return SoftReference.deref(myTreeElementPointer);
+    return myTrees.derefTreeElement();
   }
 
   @Override
@@ -185,10 +188,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myFileElementBeingLoaded.set(treeElement);
     try {
       while (true) {
-        StubTree stub = derefStub();
-        List<Pair<StubBasedPsiElementBase, AstPath>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
+        FileTrees trees = myTrees;
+        List<Pair<StubBasedPsiElementBase, AstPath>> bindings = calcStubAstBindings(treeElement, cachedDocument, trees);
 
-        FileElement savedTree = ensureTreeElement(viewProvider, treeElement, stub, bindings);
+        FileElement savedTree = ensureTreeElement(viewProvider, treeElement, trees, bindings);
         if (savedTree != null) {
           return savedTree;
         }
@@ -202,7 +205,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Nullable
   private FileElement ensureTreeElement(@NotNull FileViewProvider viewProvider,
                                         @NotNull FileElement treeElement,
-                                        @Nullable StubTree stub,
+                                        @NotNull FileTrees trees,
                                         @NotNull List<Pair<StubBasedPsiElementBase, AstPath>> bindings) {
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
@@ -210,17 +213,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         return existing;
       }
 
-      if (stub != derefStub()) {
-        return null; // stub has been just loaded by another thread, it needs to be bound to AST
+      if (trees != myTrees) {
+        return null; // try again
       }
 
-      if (stub != null) {
-        putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, stub.hashCode());
-      }
-
-      switchFromStubToAst(bindings);
-      myTreeElementPointer = createTreeElementPointer(treeElement);
-      myAstLoaded = true;
+      switchFromStubToAst(bindings, trees);
+      updateTrees(trees.withAst(createTreeElementPointer(treeElement)));
 
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
         LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
@@ -257,8 +255,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  private void switchFromStubToAst(List<Pair<StubBasedPsiElementBase, AstPath>> bindings) {
-    if (!bindings.isEmpty() && myUseStrongRefs) {
+  private void switchFromStubToAst(List<Pair<StubBasedPsiElementBase, AstPath>> bindings, FileTrees trees) {
+    if (!bindings.isEmpty() && trees.useStrongRefs) {
       List<String> psiStrings = ContainerUtil.map(bindings, new Function<Pair<StubBasedPsiElementBase, AstPath>, String>() {
         @Override
         public String fun(Pair<StubBasedPsiElementBase, AstPath> pair) {
@@ -280,8 +278,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private List<Pair<StubBasedPsiElementBase, AstPath>> calcStubAstBindings(@NotNull FileElement root,
                                                                            @Nullable final Document cachedDocument,
-                                                                           @Nullable final StubTree stubTree) {
-    if (stubTree == null || myAstLoaded) { // don't bind green stub to AST: the PSI should already be cached in myRefToPsi
+                                                                           FileTrees trees) {
+    final StubTree stubTree = trees.derefStub();
+    if (stubTree == null || trees.astLoaded) { // don't bind green stub to AST: the PSI should already be cached in myRefToPsi
       return Collections.emptyList();
     }
 
@@ -346,7 +345,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
-    clearStub(STUB_PSI_MISMATCH);
+    updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
 
     throw new AssertionError(message
                              + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
@@ -370,14 +369,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     return treeElement;
-  }
-
-  private void clearStub(@NotNull String reason) {
-    StubTree stubHolder = derefStub();
-    if (stubHolder != null) {
-      ((PsiFileStubImpl<?>)stubHolder.getRoot()).clearPsi(reason);
-    }
-    myStub = null;
   }
 
   public void clearCaches() {
@@ -448,7 +439,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     synchronized (PsiLock.LOCK) {
-      clearStub(reason);
+      updateTrees(myTrees.clearStub(reason));
     }
     clearCaches();
   }
@@ -602,8 +593,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void setTreeElementPointer(@Nullable FileElement element) {
-    myTreeElementPointer = element;
-    myAstLoaded = myUseStrongRefs = false;
+    updateTrees(FileTrees.noStub(element, this));
   }
 
   @Override
@@ -664,7 +654,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         treeElement.detachFromFile();
         DebugUtil.onInvalidated(treeElement);
       }
-      clearStub("onContentReload");
+      updateTrees(myTrees.clearStub("onContentReload"));
     }
     finally {
       DebugUtil.finishPsiModification();
@@ -703,7 +693,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    if (myAstLoaded && !mayReloadStub()) return null;
+    if (myTrees.astLoaded && !mayReloadStub()) return null;
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB))) return null;
 
     final StubTree derefd = derefStub();
@@ -791,7 +781,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   private StubTree derefStub() {
-    return SoftReference.dereference(myStub);
+    return myTrees.derefStub();
+  }
+
+  private void updateTrees(@NotNull FileTrees trees) {
+    if (!ourTreeUpdater.compareAndSet(this, myTrees, trees)) {
+      LOG.error("Non-atomic trees update");
+      myTrees = trees;
+    }
   }
 
   private void setStubTree(StubTree stubTree) {
@@ -802,8 +799,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         ((StubBase)stubTree.getPlainList().get(index)).setPsi(psi);
       }
     }
-    myStub = new SoftReference<StubTree>(stubTree);
-    myAstLoaded = false;
+    updateTrees(myTrees.withExclusiveStub(stubTree));
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
@@ -1115,7 +1111,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           throw new RuntimeException("Stub and PSI element type mismatch in " + getName(), e);
         }
 
-        myStub = new SoftReference<StubTree>(tree);
+        updateTrees(myTrees.withGreenStub(tree));
       }
 
       return tree;
@@ -1162,7 +1158,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public final void beforeAstChange() {
     if (!useStrongRefs()) {
-      myUseStrongRefs = true;
+      updateTrees(myTrees.switchToStrongRefs());
       myRefToPsi.switchToStrongRefs();
 
       FileElement element = getTreeElement();
@@ -1193,8 +1189,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myRefToPsi;
   }
 
-  public boolean useStrongRefs() {
-    return myUseStrongRefs;
+  public final boolean useStrongRefs() {
+    return myTrees.useStrongRefs;
   }
 
   public boolean mayCacheAst() {

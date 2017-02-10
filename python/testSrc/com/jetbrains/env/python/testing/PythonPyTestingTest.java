@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,8 +11,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.universalTests.*;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -31,13 +31,61 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalPyTestFactory createFactory() {
+          return PyUniversalPyTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    task.checkEmptyTarget();
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "folderWithTests"));
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                                 PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PY_TEST_NAME,
+        PyUniversalPyTestConfiguration.class));
+  }
+
+  /**
+   * Ensure dots in test names do not break anything (PY-13833)
+   */
+  @Test
+  public void testEscape() throws Exception {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("test_escape_me.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        final String resultTree = runner.getFormattedTestTree().trim();
+        final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
+        Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
+      }
+    });
   }
 
   // Import error should lead to test failure
@@ -138,9 +186,10 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          // Pytest supports [1] notation, so we only rerun failed
-          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
-          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
+          // We rerun all tests, since running parametrized tests is broken until
+          // https://github.com/JetBrains/teamcity-messages/issues/121
+          assertEquals(runner.getFormattedTestTree(), 7, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 3, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }

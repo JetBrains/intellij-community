@@ -122,7 +122,7 @@ public class GraphTableModel extends AbstractTableModel {
           return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
       default:
-        throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));
+        throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (getColumnCount() - 1));
     }
   }
 
@@ -145,7 +145,7 @@ public class GraphTableModel extends AbstractTableModel {
       case DATE_COLUMN:
         return String.class;
       default:
-        throw new IllegalArgumentException("columnIndex is " + column + " > " + (COLUMN_COUNT - 1));
+        throw new IllegalArgumentException("columnIndex is " + column + " > " + (getColumnCount() - 1));
     }
   }
 

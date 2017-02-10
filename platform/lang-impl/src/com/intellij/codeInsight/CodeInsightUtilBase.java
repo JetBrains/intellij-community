@@ -101,11 +101,11 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   // returns true on success
   @Deprecated
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
-    return EditorModificationUtil.showReadOnlyViewWarning(editor);
+    return EditorModificationUtil.checkModificationAllowed(editor);
   }
 
   @Deprecated
   public static void showReadOnlyViewWarning(Editor editor) {
-    EditorModificationUtil.showReadOnlyViewWarning(editor);
+    EditorModificationUtil.checkModificationAllowed(editor);
   }
 }

@@ -2764,7 +2764,7 @@
                      implementationClass="com.siyeh.ig.visibility.AnonymousClassVariableHidesContainingMethodVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ClassEscapesDefinedScope" shortName="ClassEscapesItsScope" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="class.escapes.defined.scope.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.visibility.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.visibility.ClassEscapesItsScopeInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="FieldNameHidesFieldInSuperclass" shortName="FieldHidesSuperclassField"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="field.name.hides.in.superclass.display.name"

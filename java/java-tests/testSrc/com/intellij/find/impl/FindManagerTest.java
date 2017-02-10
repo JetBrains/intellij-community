@@ -921,6 +921,23 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!findResult.isStringFound());
   }
 
+  public void testRegExpMatchReplacement() throws InterruptedException, FindManager.MalformedReplacementStringException {
+    String text = "final override val\n" +
+                  "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
+    String pattern = "final override val\n" +
+                     "d(\\w+)PrimitiveType by lazyThreadSafeIdempotentGenerator \\{ D(\\w+)PrimitiveType\\( typeManager = this \\) \\}";
+    String replacement = "";
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel(pattern);
+
+    findModel.setRegularExpressions(true);
+    findModel.setMultiline(true);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+    assertEquals(replacement, myFindManager.getStringToReplace(findResult.substring(text), findModel, 0, text));
+  }
+
   public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
     String text = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     FindModel findModel = FindManagerTestUtils.configureFindModel("(x+x+)+y");

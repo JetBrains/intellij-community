@@ -21,7 +21,10 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.memory.component.*;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
+import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.debugger.memory.component.MemoryViewManagerState;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.event.MemoryViewManagerListener;
 import com.intellij.debugger.memory.tracking.ClassPreparedListener;
@@ -32,16 +35,17 @@ import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.KeyboardUtils;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -96,7 +100,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private final AtomicBoolean myIsTrackersActivated = new AtomicBoolean(false);
 
   /**
-   * Indicates that view is visible in tool window
+   * Indicates that view is visible
    */
   private boolean myIsActive;
 
@@ -149,9 +153,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       protected void action() throws Exception {
         final boolean activated = myIsTrackersActivated.get();
-        for (Map.Entry<String, TrackingType> entry : myInstancesTracker.getTrackedClasses().entrySet()) {
-          TrackingType type = entry.getValue();
-          String className = entry.getKey();
+        myInstancesTracker.getTrackedClasses().forEach((className, type) -> {
           List<ReferenceType> classes = debugProcess.getVirtualMachineProxy().classesByName(className);
           if (classes.isEmpty()) {
             new ClassPreparedListener(className, debugSession) {
@@ -166,7 +168,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
               trackClass(ref, type, activated);
             }
           }
-        }
+        });
 
         myInstancesTracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
       }
@@ -257,7 +259,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     });
 
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
-    addToTop(myFilterTextField);
+    final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
+    group.setPopup(true);
+    final Presentation actionsPresentation = new Presentation("Memory View Settings");
+    actionsPresentation.setIcon(AllIcons.General.SecondaryGroup);
+
+    final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
+    final BorderLayoutPanel topPanel = new BorderLayoutPanel();
+    topPanel.addToCenter(myFilterTextField);
+    topPanel.addToRight(button);
+    addToTop(topPanel);
     addToCenter(scroll);
   }
 
@@ -534,6 +545,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         });
         mySingleAlarm.cancelAllRequests();
       }
+    }
+
+    @Override
+    public void sessionStopped() {
+      myTable.clean();
     }
 
     @Override

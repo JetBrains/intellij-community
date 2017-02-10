@@ -328,7 +328,7 @@ public class IncrementalSearchHandler {
   private static class MyLabel extends JLabel {
     public MyLabel(String text) {
       super(text);
-      this.setBackground(HintUtil.INFORMATION_COLOR);
+      this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());
       this.setOpaque(true);
     }

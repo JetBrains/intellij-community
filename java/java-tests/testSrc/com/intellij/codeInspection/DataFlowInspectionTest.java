@@ -16,8 +16,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
@@ -416,5 +420,27 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableMethodReturningNotNull() { doTest(); }
 
   public void testDivisionByZero() { doTestReportConstantReferences(); }
+
+  public void testFieldUsedBeforeInitialization() { doTest(); }
+
+  public void testImplicitlyInitializedField() {
+    PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+      @Override
+      public boolean isImplicitUsage(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitRead(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitWrite(PsiElement element) {
+        return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
+      }
+    }, getTestRootDisposable());
+    doTest();
+  }
 
 }

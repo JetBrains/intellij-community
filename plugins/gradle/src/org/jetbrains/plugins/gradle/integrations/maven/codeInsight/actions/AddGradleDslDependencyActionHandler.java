@@ -48,7 +48,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor) ||
+    if (!EditorModificationUtil.checkModificationAllowed(editor) ||
         !FileModificationService.getInstance().preparePsiElementsForWrite(file)) return;
 
     final List<MavenId> ids;

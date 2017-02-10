@@ -634,11 +634,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
     PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    return file.getLength() <= FileUtilRt.LARGE_FOR_CONTENT_LOADING && (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl);
+    return file.getLength() <= FileUtilRt.LARGE_FOR_CONTENT_LOADING &&
+           (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file));
   }
 
   @TestOnly
-  public void setAskReloadFromDisk(@NotNull Disposable disposable, @NotNull MemoryDiskConflictResolver newProcessor) {
+  void setAskReloadFromDisk(@NotNull Disposable disposable, @NotNull MemoryDiskConflictResolver newProcessor) {
     final MemoryDiskConflictResolver old = myConflictResolver;
     myConflictResolver = newProcessor;
     Disposer.register(disposable, () -> myConflictResolver = old);

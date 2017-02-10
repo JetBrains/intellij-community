@@ -193,7 +193,6 @@ public class GitCherryPicker extends VcsCherryPicker {
       }
       else if (isNothingToCommitMessage(result)) {
         alreadyPicked.add(commitWrapper);
-        return true;
       }
       else {
         notifyError(result.getErrorOutputAsHtmlString(), commitWrapper, successfulCommits);
@@ -204,9 +203,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
-    if (!result.getErrorOutputAsJoinedString().isEmpty()) {
-      return false;
-    }
     String stdout = result.getOutputAsJoinedString();
     return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
   }
@@ -461,7 +457,8 @@ public class GitCherryPicker extends VcsCherryPicker {
       return null;
     }
 
-    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    String adjustedMessage = commitMessage.replace('\n', ' ').replaceAll("[ ]{2,}", " ");
+    String changeListName = createNameForChangeList(adjustedMessage, 0);
     LocalChangeList createdChangeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
     LocalChangeList actualChangeList = moveChanges(originalChanges, createdChangeList);
     if (actualChangeList != null && !actualChangeList.getChanges().isEmpty()) {

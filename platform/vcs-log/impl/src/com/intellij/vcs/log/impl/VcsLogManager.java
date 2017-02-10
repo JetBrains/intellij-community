@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -50,7 +51,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Runnable myRecreateMainLogHandler;
+  @Nullable private final Consumer<Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
@@ -66,7 +67,7 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Collection<VcsRoot> roots,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Runnable recreateHandler) {
+                       @Nullable Consumer<Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
@@ -143,9 +144,7 @@ public class VcsLogManager implements Disposable {
                                             @NotNull VcsLogRefresher refresher,
                                             @NotNull Disposable disposableParent) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
-      providers2roots.putValue(entry.getValue(), entry.getKey());
-    }
+    logProviders.forEach((key, value) -> providers2roots.putValue(value, key));
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
       Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
@@ -219,17 +218,7 @@ public class VcsLogManager implements Disposable {
 
     protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String message = "Fatal error, VCS Log re-created: " + e.getMessage();
-          if (isLogVisible()) {
-            LOG.info(e);
-            displayFatalErrorMessage(message);
-          }
-          else {
-            LOG.error(message, e);
-          }
-          myRecreateMainLogHandler.run();
-        });
+        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
       }
       else {
         LOG.error(e);

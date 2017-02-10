@@ -56,6 +56,11 @@ public class Disposer {
     }
   };
 
+  private final static String debugDisposer = System.getProperty("idea.disposer.debug");
+  public static boolean isDebugDisposerOn() {
+    return "on".equals(debugDisposer);
+  }
+
   private static boolean ourDebugMode;
 
   private Disposer() {
@@ -144,7 +149,10 @@ public class Disposer {
   /**
    * @return old value
    */
-  public static boolean setDebugMode(final boolean debugMode) {
+  public static boolean setDebugMode(boolean debugMode) {
+    if (debugMode) {
+      debugMode = !"off".equals(debugDisposer);
+    }
     boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;
     return oldValue;

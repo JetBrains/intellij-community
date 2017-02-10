@@ -1,9 +1,14 @@
 !verbose 2
 
+Unicode true
+!addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
+!addincludedir "${NSIS_DIR}\Include"
+
 !include "paths.nsi"
 !include "strings.nsi"
 !include "Registry.nsi"
 !include "version.nsi"
+!include WinVer.nsh
 !include x64.nsh
 !define JAVA_REQUIREMENT 1.8
 
@@ -38,7 +43,6 @@ ${StrRep}
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
-ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
@@ -77,9 +81,7 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
     ;The platform is returned into $0, minor version into $1.
     ;Windows 7 is equals values of 6 as platform and 1 as minor version.
     ;Windows 8 is equals values of 6 as platform and 2 as minor version.
-    nsisos::osversion
-    ${If} $0 == "6"
-      ${AndIf} $1 >= "1"
+    ${If} ${AtLeastWin8}
       StrCpy $0 "1"
     ${else}
       StrCpy $0 "0"
@@ -357,7 +359,6 @@ Function ConfirmDesktopShortcut
   ${EndIf}
 customPreActions:
   Call customPreInstallActions
-association:
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   push "${ASSOCIATION}"
@@ -858,11 +859,9 @@ skip_ipr:
   SectionIn RO
 !include "idea_win.nsh"
 
-  IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
-skip_properties:
 
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
@@ -899,7 +898,7 @@ skip_properties:
   ExecWait "$INSTDIR\jre\jre\bin\javaw.exe -Xshare:dump"
   SetOutPath $INSTDIR\bin
 ; set the current time for installation files under $INSTDIR\bin
-  ExecCmd::exec 'copy "$INSTDIR\bin\*.*s" +,,'
+  ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
   ${If} $0 == "1"
     ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
@@ -923,7 +922,6 @@ SectionEnd
 Function un.getRegKey
   ReadRegStr $R2 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
   StrCpy $R2 "$R2\bin"
-user:
   StrCmp $R2 $INSTDIR HKCU admin
 HKCU:
   StrCpy $baseRegKey "HKCU"

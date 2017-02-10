@@ -19,26 +19,15 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
-
-  lateinit protected var myVcsHelper: MockVcsHelper
-
-  override fun setUp() {
-    super.setUp()
-
-    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
-  }
 
   override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
@@ -116,7 +105,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       resolveConflicts(this)
       myGit.setShouldRebaseFail { true }
     }
@@ -125,10 +114,6 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected fun resolveConflicts(repository: GitRepository) {
     cd(repository)
     git("add -u .")
-  }
-
-  protected fun `do nothing on merge`() {
-    myVcsHelper.onMerge{}
   }
 
   protected fun assertSuccessfulRebaseNotification(message: String) : Notification {
@@ -237,7 +222,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
-      GitExecutor.file(filePath).create(content).add()
+      file(filePath).create(content).add()
       return this
     }
 

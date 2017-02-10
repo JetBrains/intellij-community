@@ -19,7 +19,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -63,7 +63,7 @@ public abstract class CodeInsightAction extends AnAction {
     final CodeInsightActionHandler handler = getHandler();
     PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
     if (elementToMakeWritable != null &&
-        !(EditorModificationUtil.showReadOnlyViewWarning(editor) &&
+        !(EditorModificationUtil.checkModificationAllowed(editor) &&
           FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable))) {
       return;
     }

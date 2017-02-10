@@ -17,7 +17,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -172,8 +175,4 @@ public class DummyHolder extends PsiFileImpl {
     return super.getViewProvider();
   }
 
-  @Override
-  public boolean useStrongRefs() {
-    return true;
-  }
 }

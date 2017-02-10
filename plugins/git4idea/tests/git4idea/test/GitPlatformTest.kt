@@ -40,16 +40,19 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var myVcs: GitVcs
   protected lateinit var myDialogManager: TestDialogManager
   protected lateinit var myVcsNotifier: TestVcsNotifier
+  protected lateinit var vcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     myGitSettings = GitVcsSettings.getInstance(myProject)
-    myGitSettings.appSettings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE)
+    myGitSettings.appSettings.setPathToGit(gitExecutable())
 
     myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
+
+    vcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
     myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
@@ -87,13 +90,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository) {
-    val target = "parent.git"
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")) {
     val targetName = "origin"
-    Executor.cd(myProjectRoot)
-    GitExecutor.git("clone --bare '%s' %s", source.root.path, target)
-    GitExecutor.cd(source)
-    GitExecutor.git("remote add %s '%s'", targetName, "$myProjectRoot/$target")
+    git("clone --bare '${source.root.path}' ${target.path}")
+    cd(source)
+    git("remote add $targetName '${target.path}'")
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
@@ -112,6 +113,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     val hookFile = File(gitDir, "hooks/$hookName")
     FileUtil.writeToFile(hookFile, hookContent)
     hookFile.setExecutable(true, false)
+  }
+
+  protected fun `do nothing on merge`() {
+    vcsHelper.onMerge{}
   }
 
   protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
@@ -138,5 +143,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     if (notification != null) {
       fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
     }
+  }
+
+  protected fun `assert merge dialog was shown`() {
+    assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
 }

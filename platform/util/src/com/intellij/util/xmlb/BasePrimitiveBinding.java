@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,5 +44,24 @@ abstract class BasePrimitiveBinding extends Binding {
       //noinspection unchecked
       myConverter = ReflectionUtil.newInstance(converterClass);
     }
+  }
+
+  @Nullable
+  @Override
+  public final Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+    return serialize(o, filter);
+  }
+
+  @Nullable
+  public abstract Object serialize(@NotNull Object o, @NotNull SerializationFilter filter);
+
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+    return context;
+  }
+
+  @Override
+  public final Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return deserialize(context, element);
   }
 }

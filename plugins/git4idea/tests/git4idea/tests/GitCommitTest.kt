@@ -16,7 +16,7 @@
 package git4idea.tests
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
@@ -25,8 +25,7 @@ import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitHistoryUtils
-import git4idea.test.GitExecutor.*
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.*
 import git4idea.test.GitTestUtil.createFileStructure
 import java.io.File
 import java.util.*

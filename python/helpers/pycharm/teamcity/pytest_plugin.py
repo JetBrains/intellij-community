@@ -107,12 +107,31 @@ class EchoTeamCityMessages(object):
 
         test_id = nodeid
 
-        if test_id.find("::") < 0:
-            test_id += "::top_level"
+        if test_id:
+            if test_id.find("::") < 0:
+                test_id += "::top_level"
+        else:
+            test_id = "top_level"
+
+        first_bracket = test_id.find("[")
+        if first_bracket > 0:
+            # [] -> (), make it look like nose parameterized tests
+            params = "(" + test_id[first_bracket + 1:]
+            if params.endswith("]"):
+                params = params[:-1] + ")"
+            test_id = test_id[:first_bracket]
+            if test_id.endswith("::"):
+                test_id = test_id[:-2]
+        else:
+            params = ""
 
         test_id = test_id.replace("::()::", "::")
         test_id = re.sub(r"\.pyc?::", r"::", test_id)
         test_id = test_id.replace(".", "_").replace(os.sep, ".").replace("/", ".").replace('::', '.')
+
+        if params:
+            params = params.replace(".", "_")
+            test_id += params
 
         return test_id
 
@@ -120,6 +139,9 @@ class EchoTeamCityMessages(object):
         if type(location) is tuple and len(location) == 3:
             return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
         return str(location)
+
+    def pytest_collection_modifyitems(self, session, config, items):
+        self.teamcity.testCount(len(items))
 
     def pytest_runtest_logstart(self, nodeid, location):
         self.ensure_test_start_reported(self.format_test_id(nodeid, location))

@@ -23,6 +23,5 @@ import com.intellij.psi.PsiElement
  * @return The cached value
  */
 inline fun <T> PsiElement.getCachedValue(key: Key<CachedValue<T>>, provider: () -> CachedValueProvider<T>): T {
-  val value = getUserData(key)
-  return if (value == null) CachedValuesManager.computeAndGet(this, key, provider()) else value.value
+  return (getUserData(key) ?: return CachedValuesManager.getCachedValue(this, key, provider())).value
 }

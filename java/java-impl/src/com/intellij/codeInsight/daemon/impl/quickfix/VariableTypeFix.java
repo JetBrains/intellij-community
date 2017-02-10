@@ -81,6 +81,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         && myVariable.getTypeElement() != null
         && myVariable.getManager().isInProject(myVariable)
         && getReturnType() != null
+        && !LambdaUtil.notInferredType(getReturnType())
         && getReturnType().isValid()
         && !TypeConversionUtil.isNullType(getReturnType())
         && !TypeConversionUtil.isVoidType(getReturnType());

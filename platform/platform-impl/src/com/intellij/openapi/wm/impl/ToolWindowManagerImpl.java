@@ -507,13 +507,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void projectClosed() {
+    if (myFrame == null) {
+      return;
+    }
     final String[] ids = getToolWindowIds();
 
     // Remove ToolWindowsPane
-    if (myFrame != null) {
-      ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-      myWindowManager.releaseFrame(myFrame);
-    }
+    ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
+    myWindowManager.releaseFrame(myFrame);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -529,6 +530,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myEditorComponentFocusWatcher.deinstall(editorComponent);
     appendSetEditorComponentCmd(null, commandsList);
     execute(commandsList);
+    myFrame = null;
   }
 
   @Override

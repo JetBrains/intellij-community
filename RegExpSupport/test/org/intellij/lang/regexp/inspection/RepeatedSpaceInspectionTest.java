@@ -36,7 +36,7 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testReplacement() {
-    quickfixTest("     ", " {5}", "Replace with ' {5}'");
+    quickfixTest("<warning descr=\"5 consecutive spaces in RegExp\">     </warning>", " {5}", "Replace with ' {5}'");
   }
 
   @Override

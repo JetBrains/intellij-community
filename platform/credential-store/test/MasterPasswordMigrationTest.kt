@@ -15,11 +15,11 @@
  */
 package com.intellij.credentialStore
 
+import com.intellij.configurationStore.deserializeInto
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Test
@@ -93,7 +93,7 @@ internal class MasterPasswordMigrationTest {
   private fun getDb(data: String): PasswordDatabase {
     val passwordDatabase = PasswordDatabase()
     val state = PasswordDatabase.State()
-    XmlSerializer.deserializeInto(state, JDOMUtil.load(data.reader()))
+    loadElement(data).deserializeInto(state)
     passwordDatabase.loadState(state)
     return passwordDatabase
   }

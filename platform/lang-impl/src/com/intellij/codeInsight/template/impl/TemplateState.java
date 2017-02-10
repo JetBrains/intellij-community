@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -786,7 +786,7 @@ public class TemplateState implements Disposable {
     if (changes.size() > 1) {
       ContainerUtil.sort(changes, (o1, o2) -> {
         int startDiff = o2.startOffset - o1.startOffset;
-        return startDiff != 0 ? startDiff : o2.endOffset - o1.endOffset;
+        return startDiff != 0 ? startDiff : o2.segmentNumber - o1.segmentNumber;
       });
     }
     DocumentUtil.executeInBulk(myDocument, true, () -> {
@@ -797,7 +797,7 @@ public class TemplateState implements Disposable {
   }
 
   /**
-   * Must be invoked on every segment change in order to avoid ovelapping editing segment with its neibours
+   * Must be invoked on every segment change in order to avoid overlapping editing segment with its neighbours
    */
   private void fixOverlappedSegments(int currentSegment) {
     if (currentSegment >= 0) {

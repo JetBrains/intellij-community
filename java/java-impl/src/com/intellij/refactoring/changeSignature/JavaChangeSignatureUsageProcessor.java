@@ -1027,7 +1027,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
-            if (toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
+            if (toRemove.length > 0 && toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
           }

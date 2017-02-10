@@ -279,4 +279,14 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, "psiElement1 -> ", "psiElement", "getParent", "PsiElement"
   }
 
+  void testStaticallyImportedFromInterface() {
+    myFixture.addClass("package pkg;\n" +
+                       "public interface Point {\n" +
+                       "    static Point point(double x, double y) {}\n" +
+                       "}")
+    configureByTestName()
+    myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
 }

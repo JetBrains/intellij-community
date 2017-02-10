@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,14 +65,7 @@ fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).de
 
 fun loadElement(path: Path): Element = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
 
-private fun loadDocument(reader: Reader): Document {
-  try {
-    return getSaxBuilder().build(reader)
-  }
-  finally {
-    reader.close()
-  }
-}
+private fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 

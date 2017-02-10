@@ -15,9 +15,9 @@
  */
 package git4idea.repo
 
+import com.intellij.openapi.vcs.Executor.cd
 import git4idea.branch.GitBranchUtil
-import git4idea.test.GitExecutor.*
-import git4idea.test.GitTestUtil
+import git4idea.test.*
 import java.io.File
 
 class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {

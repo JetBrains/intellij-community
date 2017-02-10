@@ -31,7 +31,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.*
+import git4idea.test.*
 import git4idea.test.GitTestUtil.makeCommit
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
@@ -318,7 +318,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     makeCommit("msg")
 
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
-    myVcsHelper.onMerge {}
+    vcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, listOf("bro.txt"), result)

@@ -112,7 +112,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
       assert elements.size() == 1;
@@ -125,8 +125,12 @@ class MapBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
+  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return null;
+  }
+
   @Nullable
-  public Object deserialize(Object context, @NotNull Element element) {
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
       return deserialize(context, element.getChildren());
     }
@@ -191,7 +195,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
       assert binding != null;
       for (Element element : entry.getChildren()) {
         if (binding.isBoundTo(element)) {
-          return binding.deserialize(context, element);
+          return binding.deserializeUnsafe(context, element);
         }
       }
     }

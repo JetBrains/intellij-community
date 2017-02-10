@@ -15,6 +15,8 @@
  */
 package git4idea.merge
 
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeData
@@ -24,8 +26,10 @@ import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.*
 import git4idea.test.GitPlatformTest
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.mv
 import git4idea.util.GitFileUtils
 import java.io.File
 import java.io.FileNotFoundException

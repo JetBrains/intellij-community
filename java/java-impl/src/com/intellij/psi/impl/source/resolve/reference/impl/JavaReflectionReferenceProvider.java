@@ -18,11 +18,12 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
+abstract class JavaReflectionReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -34,9 +35,9 @@ public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
           PsiElement grandParent = parent.getParent();
           if (grandParent instanceof PsiMethodCallExpression) {
             PsiReferenceExpression methodReference = ((PsiMethodCallExpression)grandParent).getMethodExpression();
-            PsiExpression qualifier = methodReference.getQualifierExpression();
-            if (qualifier != null) {
-              return new PsiReference[]{new JavaLangClassMemberReference(literal, qualifier)};
+            PsiReference[] references = getReferencesByMethod(literal, methodReference, context);
+            if (references != null) {
+              return references;
             }
           }
         }
@@ -44,4 +45,9 @@ public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
     }
     return PsiReference.EMPTY_ARRAY;
   }
+
+  @Nullable
+  protected abstract PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                          @NotNull PsiReferenceExpression methodReference,
+                                                          @NotNull ProcessingContext context);
 }

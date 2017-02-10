@@ -66,9 +66,4 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
   public DefinitionMap initial() {
     return new DefinitionMap();
   }
-
-  @Override
-  public boolean isForward() {
-    return true;
-  }
 }

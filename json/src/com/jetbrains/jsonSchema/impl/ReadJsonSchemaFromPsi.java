@@ -185,6 +185,8 @@ public class ReadJsonSchemaFromPsi {
             }
           } else if (value instanceof JsonBooleanLiteral) {
             objects.add(((JsonBooleanLiteral)value).getValue());
+          } else if (value instanceof JsonNullLiteral) {
+            objects.add("null");
           }
         }
         object.setEnum(objects);

@@ -60,9 +60,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String PIP_PRE_26_VERSION = "1.1";
   private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
-  private static final String SETUPTOOLS_VERSION = "18.1";
-  private static final String PIP_VERSION = "7.1.0";
-  private static final String VIRTUALENV_VERSION = "13.1.0";
+  private static final String SETUPTOOLS_VERSION = "28.8.0";
+  private static final String PIP_VERSION = "9.0.1";
+  private static final String VIRTUALENV_VERSION = "15.1.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 

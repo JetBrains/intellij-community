@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,23 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.ModuleParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.JavaDummyElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -122,19 +116,15 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {
-    File file = new File(directory, "module-info.java");
+    File file = new File(directory, PsiJavaModule.MODULE_INFO_FILE);
     myProgress.setText2(file.getName());
     try {
-      final char[] chars = FileUtil.loadFileText(file);
-      String text = new String(chars);
+      String text = FileUtil.loadFile(file);
 
+      PsiFileFactory factory = PsiFileFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
       ModuleInfo moduleInfo = ReadAction.compute(() -> {
-        Project project = ProjectManager.getInstance().getDefaultProject();
-        PsiManager manager = PsiManager.getInstance(project);
-        JavaDummyElement dummyElement = new JavaDummyElement(text, builder -> ModuleParser.parseModule(builder), LanguageLevel.JDK_1_9);
-        DummyHolder holder = DummyHolderFactory.createHolder(manager, dummyElement, null);
-        PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement());
-        PsiJavaModule javaModule = PsiTreeUtil.getChildOfType(element, PsiJavaModule.class);
+        PsiFile psiFile = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaFileType.INSTANCE, text);
+        PsiJavaModule javaModule = psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getModuleDeclaration() : null;
         if (javaModule == null) {
           throw new IncorrectOperationException("Incorrect module declaration '" + file.getPath() + "'");
         }

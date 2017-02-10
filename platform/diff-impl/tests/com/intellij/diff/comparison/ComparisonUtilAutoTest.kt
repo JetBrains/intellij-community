@@ -25,7 +25,6 @@ import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 
 class ComparisonUtilAutoTest : DiffTestCase() {
@@ -516,8 +515,8 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     // in non-squashed blocks non-trimmed elements are possible
     if (allowNonSquashed) {
       if (policy != ComparisonPolicy.IGNORE_WHITESPACES) return
-      if (countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
-      if (countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+      if (countNonWhitespaceCharacters(line1) <= ComparisonUtil.getUnimportantLineCharCount()) return
+      if (countNonWhitespaceCharacters(line2) <= ComparisonUtil.getUnimportantLineCharCount()) return
     }
 
     assertFalse(MANAGER.isEquals(line1, line2, policy))

@@ -53,7 +53,7 @@ public abstract class SyntheticLibrary {
   public abstract Collection<VirtualFile> getSourceRoots();
 
   @NotNull
-  public static SyntheticLibrary newFixedLibrary(@Nullable String name, @NotNull Collection<VirtualFile> sourceRoots) {
+  public static SyntheticLibrary newImmutableLibrary(@Nullable String name, @NotNull Collection<VirtualFile> sourceRoots) {
     return new SyntheticLibrary() {
       @Nullable
       @Override

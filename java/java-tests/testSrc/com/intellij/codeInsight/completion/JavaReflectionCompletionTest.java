@@ -142,6 +142,29 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(1, "num", "num2", "num3");
   }
 
+
+  public void testClassForNameClasses() {
+    myFixture.addClass("package foo.bar; public class PublicClass {}");
+    myFixture.addClass("package foo.bar; class PackageLocalClass {}");
+    doTest(1, "PackageLocalClass", "PublicClass");
+  }
+
+  public void testClassForNamePackages() {
+    myFixture.addClass("package foo.bar.one; public class FirstClass {}");
+    myFixture.addClass("package foo.bar.two; public class SecondClass {}");
+    doTest(0, "one", "two");
+  }
+
+  public void testClassForNameNested() {
+    myFixture.addClass("package foo.bar; public class PublicClass { public static class NestedClass {} }");
+    doTest(0, "NestedClass");
+  }
+
+  public void testWithClassLoader() {
+    myFixture.addClass("package foo.bar; public class PublicClass {}");
+    doTest(0, "PublicClass");
+  }
+
   private void doTest(int index, String... expected) {
     configureByFile(getTestName(false) + ".java");
     assertStringItems(expected);

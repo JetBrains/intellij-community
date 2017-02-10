@@ -209,7 +209,7 @@ public class IDEATestNGRemoteListener {
     String methodName = getTestMethodNameWithParams(result);
     final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
-    final String failureMessage = ex.getMessage();
+    final String failureMessage = ex != null ? ex.getMessage() : null;
     if (failureMessage != null) {
       ComparisonFailureData notification;
       try {

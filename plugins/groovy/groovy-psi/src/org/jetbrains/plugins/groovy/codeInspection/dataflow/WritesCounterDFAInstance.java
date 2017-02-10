@@ -69,9 +69,4 @@ public class WritesCounterDFAInstance implements DfaInstance<TObjectIntHashMap<G
   public TObjectIntHashMap<GrVariable> initial() {
     return new TObjectIntHashMap<>();
   }
-
-  @Override
-  public boolean isForward() {
-    return true;
-  }
 }

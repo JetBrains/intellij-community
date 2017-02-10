@@ -203,17 +203,6 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
     return stroke;
   }
 
-  private static class MenuWrapper extends ButtonWrapper {
-    private MenuWrapper(AbstractButton component) {
-      super(component);
-    }
-
-    @Override
-    boolean isDisabled() {
-      return UISettings.getShadowInstance().DISABLE_MNEMONICS;
-    }
-  }
-
   private static class ButtonWrapper extends MnemonicWrapper<AbstractButton> {
     private KeyStroke myStrokePressed;
     private KeyStroke myStrokeReleased;
@@ -239,7 +228,9 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
 
     @Override
     void setMnemonicCode(int code) {
-      myComponent.setMnemonic(code);
+      if (getMnemonicCode() != code) {
+        myComponent.setMnemonic(code);
+      }
       if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
         InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         if (map != null) {
@@ -256,7 +247,9 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
 
     @Override
     void setMnemonicIndex(int index) {
-      myComponent.setDisplayedMnemonicIndex(index);
+      if (getMnemonicIndex() != index) {
+        myComponent.setDisplayedMnemonicIndex(index);
+      }
     }
   }
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
@@ -39,6 +40,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,7 +243,8 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
         updateTreeIfNeeded(settings);
       }
     });
-    myProject.getMessageBus().connect(myProject).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
         updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
@@ -253,6 +256,22 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
         updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
+      }
+    });
+    connection.subscribe(RuntimeDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
+      @Override
+      public void contentChanged(boolean withStructure) {
+        updateTree(withStructure);
+      }
+    });
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateTree(false);
       }
     });
   }

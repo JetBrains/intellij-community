@@ -32,7 +32,11 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
   }
 
   public void testQuickfix() {
-    quickfixTest("x|y|z", "[xyz]", "Replace with '[xyz]'");
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
+  }
+
+  public void testRemoveEscaping() {
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|<weak_warning descr=\"Redundant character escape\">\\å</weak_warning>|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
   }
 
   @NotNull

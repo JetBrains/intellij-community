@@ -53,9 +53,12 @@ public abstract class AdditionalLibraryRootsProvider {
     if (roots.isEmpty()) {
       return Collections.emptyList();
     }
-    return Collections.singletonList(SyntheticLibrary.newFixedLibrary(null, roots));
+    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(null, roots));
   }
 
+  /**
+   * @deprecated use {@link #getAdditionalProjectLibraries(Project)} instead
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {

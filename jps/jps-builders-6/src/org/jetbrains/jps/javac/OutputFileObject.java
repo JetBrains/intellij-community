@@ -21,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 
@@ -135,10 +134,13 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     final BinaryContent content = myContent;
+    final String encoding = myEncodingName;
     if (content != null) {
-      return new String(content.getBuffer(), content.getOffset(), content.getLength());
+      return encoding == null? 
+             new String(content.getBuffer(), content.getOffset(), content.getLength()) : 
+             new String(content.getBuffer(), content.getOffset(), content.getLength(), encoding);
     }
-    return FileUtilRt.loadFile(myFile, myEncodingName, false);
+    return FileUtilRt.loadFile(myFile, encoding, false);
   }
 
   @Nullable

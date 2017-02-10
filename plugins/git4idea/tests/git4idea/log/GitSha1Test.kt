@@ -18,9 +18,7 @@ package git4idea.log
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
-import git4idea.test.GitExecutor.*
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.GitTestUtil
+import git4idea.test.*
 
 class GitSha1Test : GitSingleRepoTest() {
   var A_FILE = "a.txt"

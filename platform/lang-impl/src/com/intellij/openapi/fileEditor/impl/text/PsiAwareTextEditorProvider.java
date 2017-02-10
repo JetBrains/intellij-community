@@ -92,6 +92,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
+  @NotNull
   @Override
   protected TextEditorState getStateImpl(final Project project, @NotNull final Editor editor, @NotNull final FileEditorStateLevel level) {
     final TextEditorState state = super.getStateImpl(project, editor, level);

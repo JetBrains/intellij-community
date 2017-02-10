@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author Gregory.Shrago
  */
-class ValuableDataFlowRunner extends DataFlowRunner {
+public class ValuableDataFlowRunner extends DataFlowRunner {
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
@@ -64,11 +64,11 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     }
   }
 
-  static class ValuableDfaVariableState extends DfaVariableState {
+  public static class ValuableDfaVariableState extends DfaVariableState {
     private final DfaValue myValue;
     @NotNull final FList<PsiExpression> myConcatenation;
 
-    private ValuableDfaVariableState(@NotNull DfaVariableValue psiVariable) {
+    public ValuableDfaVariableState(@NotNull DfaVariableValue psiVariable) {
       super(psiVariable);
       myValue = null;
       myConcatenation = FList.emptyList();

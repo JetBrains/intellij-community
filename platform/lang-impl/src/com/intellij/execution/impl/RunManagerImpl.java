@@ -356,6 +356,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     checkRecentsLimit();
 
     mySharedConfigurations.put(newId, shared);
+    if (shared) {
+      settings.setTemporary(false);
+    }
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
 
     if (existingSettings == settings) {
@@ -798,7 +801,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Nullable
-  private String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
+  String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null) {
       for (Map.Entry<String, RunnerAndConfigurationSettings> entry : myConfigurations.entrySet()) {
         if (entry.getValue() == settings) {

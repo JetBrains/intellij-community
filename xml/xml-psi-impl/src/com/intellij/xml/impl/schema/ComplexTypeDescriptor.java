@@ -47,7 +47,6 @@ import java.util.*;
 public class ComplexTypeDescriptor extends TypeDescriptor {
   private final static Logger LOG = Logger.getInstance(ComplexTypeDescriptor.class);
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
-  private final XmlTag myTag;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
     new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
@@ -124,12 +123,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   @NonNls private static final String BASE_ATTR_NAME = "base";
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
+    super(tag);
     myDocumentDescriptor = documentDescriptor;
-    myTag = tag;
-  }
-
-  public XmlTag getDeclaration(){
-    return myTag;
   }
 
   @Nullable

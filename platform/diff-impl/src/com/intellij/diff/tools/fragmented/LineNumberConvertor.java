@@ -70,8 +70,10 @@ public class LineNumberConvertor {
   /**
    * Master was changed. We should update converters, because of changed shift.
    *
-   * @param synchronous true - slave were changed in a same way
-   *                    false - slave was not changed
+   * @param synchronous true - corresponding range in slave was changed in the same way.
+   *                           NB: [startLine, endLine) range MUST be strictly mapped to the slave.
+   *                    false - slave was not changed.
+   *                            Modified range can no longer be strictly converted.
    */
   public void handleMasterChange(int startLine, int endLine, int shift, boolean synchronous) {
     myCorrector.handleMasterChange(startLine, endLine, shift, synchronous);
@@ -80,7 +82,7 @@ public class LineNumberConvertor {
 
   /**
    * @param approximate false: return exact matching between lines, and -1 if it's impossible
-   *                    true: return 'good enough' position, even if exact matching is impossible
+   *        (strict)    true: return 'good enough' position, even if exact matching is impossible
    */
   private int convertRaw(boolean fromMaster, int value, boolean approximate) {
     TreeMap<Integer, Data> fragments = fromMaster ? myFragments : myInvertedFragments;

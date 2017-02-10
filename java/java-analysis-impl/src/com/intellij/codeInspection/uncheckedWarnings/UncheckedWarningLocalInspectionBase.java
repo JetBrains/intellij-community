@@ -401,20 +401,13 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      PsiType returnType = null;
-      final PsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
-      if (psiElement instanceof PsiMethod) {
-        returnType = ((PsiMethod)psiElement).getReturnType();
-      }
-      else if (psiElement instanceof PsiLambdaExpression) {
-        returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)psiElement);
-      }
-
+      final PsiType returnType = PsiTypesUtil.getMethodReturnType(statement);
       if (returnType != null && !PsiType.VOID.equals(returnType)) {
         final PsiExpression returnValue = statement.getReturnValue();
         if (returnValue != null) {
           final PsiType valueType = returnValue.getType();
           if (valueType != null) {
+            final PsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
             LocalQuickFix[] fixes = psiElement instanceof PsiMethod
                                     ? new LocalQuickFix[]{QuickFixFactory.getInstance().createMethodReturnFix((PsiMethod)psiElement, valueType, true)}
                                     : LocalQuickFix.EMPTY_ARRAY;

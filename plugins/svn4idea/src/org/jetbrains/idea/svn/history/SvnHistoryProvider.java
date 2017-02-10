@@ -42,7 +42,10 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -223,7 +226,7 @@ public class SvnHistoryProvider
       }
     }
 
-    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate();
+    boolean showMergeSources = myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate();
     final LogLoader logLoader;
     if (path.isNonLocal()) {
       logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards, showMergeSources);

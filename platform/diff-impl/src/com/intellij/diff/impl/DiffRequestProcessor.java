@@ -753,7 +753,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
       .setAwtTooltip(true)
       .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
-      .setTextBg(HintUtil.INFORMATION_COLOR)
+      .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
   }
 

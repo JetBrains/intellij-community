@@ -79,7 +79,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
     if (transferable == null) return;
 
-    if (!EditorModificationUtil.showReadOnlyViewWarning(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 
     final Document document = editor.getDocument();
     if (!EditorModificationUtil.requestWriting(editor)) {

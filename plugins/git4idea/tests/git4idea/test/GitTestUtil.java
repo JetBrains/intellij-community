@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -41,13 +40,14 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.intellij.openapi.vcs.Executor.append;
+import static com.intellij.openapi.util.text.StringUtil.splitByLines;
+import static com.intellij.openapi.vcs.Executor.*;
 import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.mkdir;
-import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -170,7 +170,7 @@ public class GitTestUtil {
 
   @NotNull
   public static Set<VcsRef> readAllRefs(@NotNull VirtualFile root, @NotNull VcsLogObjectsFactory objectsFactory) {
-    String[] refs = StringUtil.splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
+    String[] refs = splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
     Set<VcsRef> result = ContainerUtil.newHashSet();
     for (String ref : refs) {
       result.addAll(new RefParser(objectsFactory).parseCommitRefs(ref, root));
@@ -197,7 +197,11 @@ public class GitTestUtil {
 
   @NotNull
   public static String cleanupForAssertion(@NotNull String content) {
-    return content.replace("<br/>", "\n").replace("\n", " ").replaceAll("[ ]{2,}", " ").replaceAll(" href='[^']*'", "").trim();
+    String nobr = content.replace("<br/>", "\n").replace("<hr/>", "\n");
+    return Arrays.stream(splitByLines(nobr))
+      .map(line -> line.replaceAll(" href='[^']*'", "").trim())
+      .filter(line -> !line.isEmpty())
+      .collect(Collectors.joining(" "));
   }
 
   @NotNull

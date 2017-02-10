@@ -197,6 +197,19 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
         }
       }
     }
+    else if (context instanceof XmlTag && nsDescriptor instanceof XmlNSDescriptorImpl) {
+      // check for redefined descriptor
+      XmlTag tag = (XmlTag)context;
+      if (!tag.getNamespace().equals(((XmlNSDescriptorImpl)nsDescriptor).getDefaultNamespace())) {
+          XmlNSDescriptor descriptor = tag.getNSDescriptor(tag.getNamespace(), true);
+          if (descriptor != nsDescriptor && descriptor instanceof XmlNSTypeDescriptorProvider) {
+            TypeDescriptor typeDescriptor = ((XmlNSTypeDescriptorProvider)descriptor).getTypeDescriptor(myDescriptorTag);
+            if (typeDescriptor != null && typeDescriptor.getDeclaration() != type.getDeclaration()) {
+              return typeDescriptor;
+            }
+          }
+      }
+    }
     return type;
   }
 

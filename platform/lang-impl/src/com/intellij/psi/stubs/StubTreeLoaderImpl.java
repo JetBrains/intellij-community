@@ -55,17 +55,26 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     try {
-      final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
-      fc.putUserData(IndexingDataKeys.PROJECT, project);
-      if (psiFile != null && !vFile.getFileType().isBinary()) {
-        fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
-        // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
+      byte[] content = vFile.contentsToByteArray();
+      vFile.setPreloadedContentHint(content);
+      final FileContent fc;
+      try {
+        fc = new FileContentImpl(vFile, content);
+        fc.putUserData(IndexingDataKeys.PROJECT, project);
+        if (psiFile != null && !vFile.getFileType().isBinary()) {
+          fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
+          // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
+        }
+
+        Stub element = RecursionManager.doPreventingRecursion(vFile, false, () -> StubTreeBuilder.buildStubTree(fc));
+        if (element instanceof PsiFileStub) {
+          StubTree tree = new StubTree((PsiFileStub)element);
+          tree.setDebugInfo("created from file content");
+          return tree;
+        }
       }
-      Stub element = RecursionManager.doPreventingRecursion(vFile, false, () -> StubTreeBuilder.buildStubTree(fc));
-      if (element instanceof PsiFileStub) {
-        StubTree tree = new StubTree((PsiFileStub)element);
-        tree.setDebugInfo("created from file content");
-        return tree;
+      finally {
+        vFile.setPreloadedContentHint(null);
       }
     }
     catch (IOException e) {

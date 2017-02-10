@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class RunnerLayout  {
   protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<>((o1, o2) -> o1.getIndex() - o2.getIndex());
+  protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
   private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<>();
 
   protected General myGeneral = new General();
@@ -127,7 +127,6 @@ public class RunnerLayout  {
     List<Element> tabs = parentNode.getChildren(StringUtil.getShortName(TabImpl.class.getName()));
     for (Element eachTabElement : tabs) {
       TabImpl eachTab = XmlSerializer.deserialize(eachTabElement, TabImpl.class);
-      assert eachTab != null;
       XmlSerializer.deserializeInto(getOrCreateTab(eachTab.getIndex()), eachTabElement);
     }
 

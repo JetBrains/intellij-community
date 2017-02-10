@@ -8,7 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.ssl.CertificateManager;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.cookie.SM;
+import org.apache.http.entity.ContentType;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_17;
@@ -40,21 +43,25 @@ import java.util.stream.Collectors;
  */
 public class IpnbConnection {
   private static final Logger LOG = Logger.getInstance(IpnbConnection.class);
+  
   protected static final String API_URL = "/api";
+  protected static final String KERNELS_URL = API_URL + "/kernels";
   private final static String DEFAULT_LOGIN_PATH = "/login";
   private static final String KERNEL_SPECS_PATH = "/kernelspecs";
   private static final String SESSIONS_PATH = "/sessions";
   private static final String USER_PATH = "/user";
   private static final String HUB_PREFIX = "/hub";
-  private static final String SPAWN_URL = HUB_PREFIX + "/spawn";
-  protected static final String KERNELS_URL = API_URL + "/kernels";
-  
+  private static final String XSRF_TOKEN_HEADER = "X-XSRFToken";
+  private static final String USERNAME_PARAMETER = "username";
+  private static final String PASSWORD_PARAMETER = "password";
+  private static final String XSRF_PARAMETER = "_xsrf";
+  private static final String DEFAULT_KERNEL_SPEC_NAME = "default";
+  private static final String TREE_PATH = "/tree";
   private static final int ATTEMPT_TO_CONNECT_NUMBER = 10;
-
-  // TODO: Serialize cookies for the authentication message
-  protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
-                                              "\"channel\":\"shell\" }";
+  
   public static final String AUTHENTICATION_NEEDED = "Authentication needed";
+  public static final String UNABLE_LOGIN_MESSAGE = "Unable to login: ";
+  public static final String CANNOT_START_JUPYTER = "Cannot start Jupyter Notebook";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
@@ -78,19 +85,22 @@ public class IpnbConnection {
   private HashMap<String, String> myHeaders = new HashMap<>();
   private final CookieManager myCookieManager;
 
-  public final static String UNABLE_LOGIN = "Unable to login: ";
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
                         @Nullable final String token, @NotNull Project project, @NotNull String pathToFile) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
     myToken = token;
-    mySessionId = UUID.randomUUID().toString();
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-    if (!isRemote() && !myURI.getScheme().equals("http")) {
-      throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
+    if (!isRemote()) {
+      if (!myURI.getScheme().equals("http")) {
+        throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
+      }
+    }
+    else if (!myURI.getScheme().equals("https")) {
+      throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
     }
     
     initXSRF(myURI.toString());
@@ -99,12 +109,14 @@ public class IpnbConnection {
       String loginUrl = getLoginUrl();
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
+      mySessionId = myHeaders.get(SM.COOKIE);
     }
     else {
       if (myToken != null) {
-        myHeaders.put("Authorization", "token " + myToken);
+        myHeaders.put(HttpHeaders.AUTHORIZATION, "token " + myToken);
       }
       myKernelId = startKernel();
+      mySessionId = UUID.randomUUID().toString();
     }
     
     initializeClients();
@@ -114,37 +126,34 @@ public class IpnbConnection {
     IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
     final String username = ipnbSettings.getUsername();
     String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
-    myHeaders.put("Cookie", cookies);
+    myHeaders.put(SM.COOKIE, cookies);
     if (myIsHubServer) {
       if (myXsrf == null) {
-        initXSRF(myURI.toString() + "/user/" + username + "/tree?");
+        initXSRF(myURI.toString() + USER_PATH + "/" + username + TREE_PATH);
       }
-      final Boolean started = startJupyterNotebookServer();
+      final Boolean started = startJupyterNotebookServer(username);
       if (!started) {
-        throw new IOException("Cannot start Jupyter Notebook");
+        throw new IOException(CANNOT_START_JUPYTER);
       }
     }
     final String kernelName = getDefaultKernelName();
     return getExistingKernelForSession(pathToFile, kernelName);
   }
 
-  private boolean startJupyterNotebookServer() throws IOException {
-    String serverStartUrl = getLocation(myURI + SPAWN_URL);
-
-    if (serverStartUrl != null && serverStartUrl.startsWith(USER_PATH)) {
-      for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
-        final String username = IpnbSettings.getInstance(myProject).getUsername();
-        final String locationPrefix = USER_PATH + "/" + username + "/tree";
-        final String location = getLocation(myURI + serverStartUrl);
-        if (location != null && location.startsWith(locationPrefix)) {
-          return true;
-        }
-        try {
-          TimeUnit.MILLISECONDS.sleep(500);
-        }
-        catch (InterruptedException e) {
-          LOG.warn(e.getMessage());
-        }
+  private boolean startJupyterNotebookServer(@NotNull String username) throws IOException {
+    String serverStartUrl = USER_PATH + "/" + username;
+    
+    for (int i = 0; i < ATTEMPT_TO_CONNECT_NUMBER; i++) {
+      final String locationPrefix = USER_PATH + "/" + username + TREE_PATH;
+      final String location = getLocation(myURI + serverStartUrl);
+      if (location != null && location.startsWith(locationPrefix)) {
+        return true;
+      }
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e.getMessage());
       }
     }
     
@@ -157,7 +166,7 @@ public class IpnbConnection {
     if (urlConnection instanceof HttpURLConnection) {
       final HttpURLConnection connection = configureConnection((HttpURLConnection)urlConnection, HTTPMethod.GET.name());
       try {
-        return connection.getHeaderField("Location");
+        return connection.getHeaderField(HttpHeaders.LOCATION);
       }
       finally {
         connection.disconnect();
@@ -184,9 +193,9 @@ public class IpnbConnection {
     String urlParameters = null;
     try {
       urlParameters = new URIBuilder()
-        .addParameter("_xsrf", myXsrf)
-        .addParameter("username", username)
-        .addParameter("password", password)
+        .addParameter(XSRF_PARAMETER, myXsrf)
+        .addParameter(USERNAME_PARAMETER, username)
+        .addParameter(PASSWORD_PARAMETER, password)
         .build().toString();
     }
     catch (URISyntaxException e) {
@@ -199,8 +208,8 @@ public class IpnbConnection {
                                                                              HTTPMethod.POST.name()), HttpsURLConnection.class);
     if (connection != null) {
       connection.setUseCaches(false);
-      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-      connection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+      connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
+      connection.setRequestProperty(HttpHeaders.CONTENT_LENGTH, Integer.toString(postData.length));
       connection.setDoOutput(true);
 
       final OutputStream outputStream = connection.getOutputStream();
@@ -219,15 +228,15 @@ public class IpnbConnection {
       }
     }
     String message = connection == null ? "" : connection.getResponseCode() + " " + connection.getResponseMessage();
-    throw new IOException(UNABLE_LOGIN + message);
+    throw new IOException(UNABLE_LOGIN_MESSAGE + message);
   }
 
   private String getDefaultKernelName() {
     try {
       final String response = httpRequest(createApiUrl(KERNEL_SPECS_PATH), HTTPMethod.GET.name());
       final JsonObject kernelSpecs = ObjectUtils.tryCast(new JsonParser().parse(response), JsonObject.class);
-      if (kernelSpecs != null && kernelSpecs.has("default")) {
-        return kernelSpecs.get("default").getAsString();
+      if (kernelSpecs != null && kernelSpecs.has(DEFAULT_KERNEL_SPEC_NAME)) {
+        return kernelSpecs.get(DEFAULT_KERNEL_SPEC_NAME).getAsString();
       }
       else {
         LOG.warn("Got wrong kernel specs: " + response);
@@ -267,8 +276,8 @@ public class IpnbConnection {
         ObjectUtils.tryCast(configureConnection((HttpURLConnection)connection, HTTPMethod.POST.name()),
                             HttpsURLConnection.class);
       if (httpsConnection != null) {
-        httpsConnection.setRequestProperty("Content-Type", "application/json");
-        httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+        httpsConnection.setRequestProperty(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        httpsConnection.setRequestProperty(HttpHeaders.CONTENT_LENGTH, Integer.toString(postData.length));
         httpsConnection.setUseCaches(false);
         httpsConnection.setDoOutput(true);
 
@@ -303,13 +312,13 @@ public class IpnbConnection {
   private String getLoginUrl() throws IOException {
     String location = "";
     final String loginUrl = myURI.toString() + DEFAULT_LOGIN_PATH;
-    final HttpsURLConnection connection = ObjectUtils.tryCast(new URL(loginUrl).openConnection(), HttpsURLConnection.class);
-    if (connection != null) {
+    if (myURI.getScheme().equals("https")) {
       configureHttpsConnection();
+      final HttpsURLConnection connection = (HttpsURLConnection)new URL(loginUrl).openConnection();
       connection.setInstanceFollowRedirects(false);
       connection.connect();
       if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        location = connection.getHeaderField("Location");
+        location = connection.getHeaderField(HttpHeaders.LOCATION);
         connection.disconnect();
       }
     }
@@ -323,7 +332,7 @@ public class IpnbConnection {
       connection.getHeaderFields();
       final List<HttpCookie> cookies = myCookieManager.getCookieStore().getCookies();
       for (HttpCookie cookie : cookies) {
-        if ("_xsrf".equals(cookie.getName())) {
+        if (XSRF_PARAMETER.equals(cookie.getName())) {
           myXsrf = cookie.getValue();
         }
       }
@@ -343,7 +352,8 @@ public class IpnbConnection {
     myShellClient = new WebSocketClient(getShellURI(), draft, myHeaders, 0) {
       @Override
       public void onOpen(@NotNull ServerHandshake handshakeData) {
-        send(authMessage);
+        final Message message = createMessage("connect_request", UUID.randomUUID().toString(), null, null);
+        send(new Gson().toJson(message));
         myIsShellOpen = true;
         notifyOpen();
       }
@@ -411,7 +421,12 @@ public class IpnbConnection {
   }
 
   protected void shutdownKernel() throws IOException {
-    httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTPMethod.DELETE.name());
+    if (myIsHubServer) {
+      httpRequest(myURI + USER_PATH + "/" + IpnbSettings.getInstance(myProject).getUsername() + KERNELS_URL + "/" + myKernelId,  HTTPMethod.DELETE.name());
+    }
+    else {
+      httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTPMethod.DELETE.name());
+    }
   }
 
   public void interrupt() throws IOException {
@@ -480,10 +495,10 @@ public class IpnbConnection {
     urlConnection.setReadTimeout(60000);
     urlConnection.setInstanceFollowRedirects(false);
     if (!StringUtil.isEmptyOrSpaces(myToken)) {
-      urlConnection.setRequestProperty("Authorization", "token " + myToken);
+      urlConnection.setRequestProperty(HttpHeaders.AUTHORIZATION, "token " + myToken);
     }
     else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
-      urlConnection.setRequestProperty("X-XSRFToken", myXsrf);
+      urlConnection.setRequestProperty(XSRF_TOKEN_HEADER, myXsrf);
     }
     if (!myHeaders.isEmpty()) {
       for (Map.Entry<String, String> entry : myHeaders.entrySet()) {
@@ -503,11 +518,14 @@ public class IpnbConnection {
     content.add("user_expressions", new JsonObject());
     content.addProperty("allow_stdin", false);
 
-    return createMessage("execute_request", content, messageId);
+    return createMessage("execute_request", messageId, content, USERNAME_PARAMETER);
   }
 
-  private Message createMessage(String messageType, JsonObject content, String messageId) {
-    final Header header = Header.create(messageId, "username", mySessionId, messageType);
+  private Message createMessage(@NotNull String messageType,
+                                @NotNull String messageId,
+                                @Nullable JsonObject content,
+                                @Nullable String username) {
+    final Header header = Header.create(messageId, username, mySessionId, messageType);
     final JsonObject parentHeader = new JsonObject();
 
     final JsonObject metadata = new JsonObject();
@@ -770,7 +788,8 @@ public class IpnbConnection {
 
     @Override
     public void onOpen(ServerHandshake handshakeData) {
-      send(authMessage);
+      final Message message = createMessage("connect_request", UUID.randomUUID().toString(), null, null);
+      send(new Gson().toJson(message));
       myIsIOPubOpen = true;
       notifyOpen();
     }

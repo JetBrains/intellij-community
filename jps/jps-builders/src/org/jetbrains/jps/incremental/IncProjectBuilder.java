@@ -574,7 +574,7 @@ public class IncProjectBuilder {
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final long cleanStart = System.currentTimeMillis();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
-    final Set<File> allSourceRoots = new HashSet<File>();
+    final Set<File> allSourceRoots = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY);
 
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
@@ -631,7 +631,7 @@ public class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = Collections.singleton(outputRoot);
+          final Set<File> _outRoot = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY, outputRoot);
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;

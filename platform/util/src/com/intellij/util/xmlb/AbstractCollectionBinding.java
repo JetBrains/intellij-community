@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding {
+abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
   private Map<Class<?>, Binding> itemBindings;
 
   protected final Class<?> itemType;
@@ -99,7 +99,8 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     return null;
   }
 
-  abstract Object processResult(Collection result, Object target);
+  @NotNull
+  abstract Object processResult(@NotNull Collection result, @Nullable Object target);
 
   @NotNull
   abstract Collection<Object> getIterable(@NotNull Object o);
@@ -135,7 +136,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -160,7 +161,6 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     }
     return processResult(result, context);
   }
-
 
   @Nullable
   private Object serializeItem(@Nullable Object value, Object context, @NotNull SerializationFilter filter) {
@@ -189,7 +189,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     }
   }
 
-  private Object deserializeItem(@NotNull Element node, Object context) {
+  private Object deserializeItem(@NotNull Element node, @Nullable Object context) {
     Binding binding = getElementBinding(node);
     if (binding == null) {
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
@@ -203,12 +203,13 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       return XmlSerializerImpl.convert(value, itemType);
     }
     else {
-      return binding.deserialize(context, node);
+      return binding.deserializeUnsafe(context, node);
     }
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Element element) {
+  @NotNull
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -229,6 +230,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     else {
       result = deserializeSingle(context, element);
     }
+    //noinspection unchecked
     return processResult(result, context);
   }
 

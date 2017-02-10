@@ -42,6 +42,7 @@ public abstract class RegExpInspectionTestCase extends LightPlatformCodeInsightF
   protected void quickfixTest(@Language("RegExp") String before, @Language("RegExp") String after, String hint) {
     myFixture.enableInspections(getInspection());
     myFixture.configureByText(RegExpFileType.INSTANCE, before);
+    myFixture.testHighlighting();
     final IntentionAction intention = findIntention(hint);
     assertNotNull(intention);
     myFixture.launchAction(intention);

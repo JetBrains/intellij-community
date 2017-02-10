@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -72,7 +71,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
 
     return expressionInfoPromise.thenAsync(expressionInfo -> {
       AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
-      UIUtil.invokeLaterIfNeeded(() -> PsiDocumentManager.getInstance(project).performWhenAllCommitted(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
         int textLength = editor.getDocument().getTextLength();
         if (expressionInfo == null) {
           resultPromise.setResult(null);
@@ -85,7 +84,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
           return;
         }
         resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session));
-      }));
+      });
       return resultPromise;
     });
   }
