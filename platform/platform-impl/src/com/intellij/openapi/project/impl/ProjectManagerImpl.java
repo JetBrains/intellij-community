@@ -415,7 +415,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
-      myOpenProjectByHash.remove(project.getLocationHash());
+      myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
   }
 
