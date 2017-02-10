@@ -69,7 +69,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          ui.addContent(memoryViewContent, -1, PlaceInGrid.right, true);
+          ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
 
           ui.addListener(new ContentManagerAdapter() {
             @Override
