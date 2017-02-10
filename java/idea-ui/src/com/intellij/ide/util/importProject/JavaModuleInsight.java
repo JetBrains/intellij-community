@@ -303,7 +303,7 @@ public class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitExportsStatement(PsiExportsStatement statement) {
+    public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
       super.visitExportsStatement(statement);
       PsiJavaCodeReferenceElement reference = statement.getPackageReference();
       if (reference != null) {

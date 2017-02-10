@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,7 +403,11 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitModuleStatement(statement);
   }
 
-  public void visitExportsStatement(PsiExportsStatement statement) {
+  public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitOpensStatement(PsiPackageAccessibilityStatement statement) {
     visitModuleStatement(statement);
   }
 

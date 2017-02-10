@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Represents an {@code exports} statement of a Java module declaration.
+ * Represents a package access control statement ({@code exports} or {@code opens}) of a Java module declaration.
  *
- * @since 2016.3
+ * @since 2017.1
  */
-public interface PsiExportsStatement extends PsiElement {
-  PsiExportsStatement[] EMPTY_ARRAY = new PsiExportsStatement[0];
+public interface PsiPackageAccessibilityStatement extends PsiElement {
+  PsiPackageAccessibilityStatement[] EMPTY_ARRAY = new PsiPackageAccessibilityStatement[0];
+
+  enum Role {EXPORTS, OPENS}
+
+  @NotNull Role getRole();
 
   @Nullable PsiJavaCodeReferenceElement getPackageReference();
   @Nullable String getPackageName();

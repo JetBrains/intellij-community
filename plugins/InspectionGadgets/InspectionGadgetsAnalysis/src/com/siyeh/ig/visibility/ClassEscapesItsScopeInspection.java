@@ -85,7 +85,7 @@ public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspection
               Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
               if (module != null) {
                 Set<String> exportedPackageNames =
-                  new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiExportsStatement::getPackageName));
+                  new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
                 if (exportedPackageNames.contains(javaFile.getPackageName())) {
                   checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getModuleName(), exportedPackageNames));
                 }

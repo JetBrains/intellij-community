@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1685,13 +1685,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitExportsStatement(PsiExportsStatement statement) {
+  public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
     super.visitExportsStatement(statement);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-      PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaCodeReferenceElement ref = statement.getPackageReference();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(ref));
-      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkExportTargets(statement, container));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkExportTargets(statement));
     }
   }
 

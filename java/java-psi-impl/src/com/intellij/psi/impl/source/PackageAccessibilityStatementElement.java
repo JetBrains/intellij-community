@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-public class ExportsElement extends CompositeElement {
-  public ExportsElement(@NotNull IElementType type) {
+public class PackageAccessibilityStatementElement extends CompositeElement {
+  public PackageAccessibilityStatementElement(@NotNull IElementType type) {
     super(type);
   }
 

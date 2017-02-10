@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class JavaModuleGraphUtil {
 
   private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
     Map<String, Set<String>> map = ContainerUtil.newHashMap();
-    for (PsiExportsStatement statement : source.getExports()) {
+    for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
       map.put(pkg, targets.isEmpty() ? Collections.emptySet() : ContainerUtil.newTroveSet(targets));

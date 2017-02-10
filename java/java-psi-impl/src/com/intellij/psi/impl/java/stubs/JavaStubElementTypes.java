@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ public interface JavaStubElementTypes {
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   JavaModuleElementType MODULE = new JavaModuleElementType();
   JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
-  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType();
+
+  JavaPackageAccessibilityStatementElementType EXPORTS_STATEMENT = new JavaPackageAccessibilityStatementElementType("EXPORTS_STATEMENT");
+  JavaPackageAccessibilityStatementElementType OPENS_STATEMENT = new JavaPackageAccessibilityStatementElementType("OPENS_STATEMENT");
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull

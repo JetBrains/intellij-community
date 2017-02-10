@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
         }
       }
       List<String> emptyList = Collections.emptyList();
-      for (PsiExportsStatement statement : javaModule.getExports()) {
+      for (PsiPackageAccessibilityStatement statement : javaModule.getExports()) {
         PsiElement element = addReference(statement.getPackageReference());
         String packageName = null;
         if (element instanceof PsiPackage) {
@@ -142,7 +142,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   @NotNull
   private static Map<String, List<String>> getPackagesExportedByModule(@NotNull PsiJavaModule javaModule) {
     Map<String, List<String>> exportedPackages = new THashMap<>();
-    for (PsiExportsStatement statement : javaModule.getExports()) {
+    for (PsiPackageAccessibilityStatement statement : javaModule.getExports()) {
       String packageName = statement.getPackageName();
       if (packageName != null) {
         exportedPackages.put(packageName, statement.getModuleNames());

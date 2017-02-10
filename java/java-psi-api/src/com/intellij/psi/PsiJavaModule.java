@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,5 +32,8 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNamedElement, P
   @NotNull String getModuleName();
 
   @NotNull Iterable<PsiRequiresStatement> getRequires();
-  @NotNull Iterable<PsiExportsStatement> getExports();
+  @NotNull Iterable<PsiPackageAccessibilityStatement> getExports();
+  @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens();
+  @NotNull Iterable<PsiUsesStatement> getUses();
+  @NotNull Iterable<PsiProvidesStatement> getProvides();
 }

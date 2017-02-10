@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static java.util.Arrays.asList;
+import java.util.Collections;
+
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private PsiJavaModuleReferenceElement myReference;
@@ -60,8 +61,26 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
   @NotNull
   @Override
-  public Iterable<PsiExportsStatement> getExports() {
-    return JBIterable.of(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY));
+  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+    return JBIterable.of(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+    return JBIterable.of(getStub().getChildrenByType(JavaElementType.OPENS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiUsesStatement> getUses() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiProvidesStatement> getProvides() {
+    return Collections.emptyList();
   }
 
   @Override
@@ -75,7 +94,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
     if (buffer.length() > position) buffer.append('\n');
     position = buffer.length();
-    for (PsiExportsStatement statement : getExports()) appendText(statement, newIndentLevel, buffer);
+    for (PsiPackageAccessibilityStatement statement : getExports()) appendText(statement, newIndentLevel, buffer);
 
     if (buffer.length() > position) buffer.append('\n');
     StringUtil.repeatSymbol(buffer, ' ', newIndentLevel);
@@ -89,11 +108,11 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameElement(), mirror.getNameElement());
 
-    setMirrors(asList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
-               PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiRequiresStatement.class));
+    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
+               newArrayList(mirror.getRequires()));
 
-    setMirrors(asList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY)),
-               PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiExportsStatement.class));
+    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY)),
+               newArrayList(mirror.getExports()));
   }
 
   @Override

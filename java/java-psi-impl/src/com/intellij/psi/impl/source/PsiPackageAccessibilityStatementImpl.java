@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiExportsStatementStub;
+import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
+import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,21 @@ import java.util.List;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
-public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatementStub> implements PsiExportsStatement {
-  public PsiExportsStatementImpl(@NotNull PsiExportsStatementStub stub) {
-    super(stub, JavaStubElementTypes.EXPORTS_STATEMENT);
+public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<PsiPackageAccessibilityStatementStub> implements PsiPackageAccessibilityStatement {
+  public PsiPackageAccessibilityStatementImpl(@NotNull PsiPackageAccessibilityStatementStub stub) {
+    super(stub, stub.getStubType());
   }
 
-  public PsiExportsStatementImpl(@NotNull ASTNode node) {
+  public PsiPackageAccessibilityStatementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  @Override
+  public Role getRole() {
+    PsiPackageAccessibilityStatementStub stub = getGreenStub();
+    IElementType type = stub != null ? stub.getStubType() : getNode().getElementType();
+    return JavaPackageAccessibilityStatementElementType.typeToRole(type);
   }
 
   @Nullable
@@ -47,7 +56,7 @@ public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatem
   @Nullable
   @Override
   public String getPackageName() {
-    PsiExportsStatementStub stub = getGreenStub();
+    PsiPackageAccessibilityStatementStub stub = getGreenStub();
     if (stub != null) {
       return StringUtil.nullize(stub.getPackageName());
     }
@@ -66,7 +75,7 @@ public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatem
   @NotNull
   @Override
   public List<String> getModuleNames() {
-    PsiExportsStatementStub stub = getGreenStub();
+    PsiPackageAccessibilityStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.getTargets();
     }
@@ -80,7 +89,9 @@ public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatem
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitExportsStatement(this);
+      Role role = getRole();
+      if (role == Role.EXPORTS) ((JavaElementVisitor)visitor).visitExportsStatement(this);
+      else if (role == Role.OPENS) ((JavaElementVisitor)visitor).visitOpensStatement(this);
     }
     else {
       visitor.visitElement(this);
@@ -89,6 +100,6 @@ public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatem
 
   @Override
   public String toString() {
-    return "PsiExportsStatement";
+    return "PsiPackageAccessibilityStatement";
   }
 }

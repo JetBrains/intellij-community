@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
-import com.intellij.psi.impl.java.stubs.impl.PsiExportsStatementStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaModuleStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiPackageAccessibilityStatementStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiRequiresStatementStubImpl;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ModuleVisitor;
@@ -26,6 +26,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 
+import static com.intellij.psi.impl.java.stubs.JavaStubElementTypes.EXPORTS_STATEMENT;
 import static com.intellij.util.BitUtil.isSet;
 
 public class ModuleStubBuildingVisitor extends ClassVisitor {
@@ -60,7 +61,8 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
 
       @Override
       public void visitExport(String packageName, String... modules) {
-        new PsiExportsStatementStubImpl(myResult, packageName.replace('/', '.'), modules == null ? null : Arrays.asList(modules));
+        new PsiPackageAccessibilityStatementStubImpl(
+          myResult, EXPORTS_STATEMENT, packageName.replace('/', '.'), modules == null ? null : Arrays.asList(modules));
       }
     };
   }

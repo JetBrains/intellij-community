@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,25 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @NotNull
   @Override
-  public Iterable<PsiExportsStatement> getExports() {
+  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiUsesStatement> getUses() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiProvidesStatement> getProvides() {
     return Collections.emptyList();
   }
 
@@ -146,7 +164,6 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     final PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
     return CachedValuesManager.getCachedValue(directory, new CachedValueProvider<LightJavaModule>() {
-      @Nullable
       @Override
       public Result<LightJavaModule> compute() {
         LightJavaModule module = new LightJavaModule(manager, jarRoot);

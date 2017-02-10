@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,17 +43,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class ModuleHighlightUtil {
   @Nullable
@@ -143,12 +139,12 @@ public class ModuleHighlightUtil {
       "module.duplicate.export", results);
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiUsesStatement.class),
+      module.getUses(),
       st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
       "module.duplicate.uses", results);
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiProvidesStatement.class),
+      module.getProvides(),
       st -> Optional.of(pair(st.getInterfaceReference(), st.getImplementationReference()))
         .map(p -> p.first != null && p.second != null ? refText(p.first) + " / " + refText(p.second) : null),
       "module.duplicate.provides", results);
@@ -176,20 +172,11 @@ public class ModuleHighlightUtil {
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
-    Set<String> exports = ContainerUtil.newTroveSet(), uses = ContainerUtil.newTroveSet();
-    for (PsiElement child : psiTraverser().children(module)) {
-      if (child instanceof PsiExportsStatement) {
-        PsiJavaCodeReferenceElement ref = ((PsiExportsStatement)child).getPackageReference();
-        if (ref != null) exports.add(refText(ref));
-      }
-      else if (child instanceof PsiUsesStatement) {
-        PsiJavaCodeReferenceElement ref = ((PsiUsesStatement)child).getClassReference();
-        if (ref != null) uses.add(refText(ref));
-      }
-    }
+    Set<String> exports = JBIterable.from(module.getExports()).map(st -> refText(st.getPackageReference())).filter(Objects::nonNull).toSet();
+    Set<String> uses = JBIterable.from(module.getUses()).map(st -> refText(st.getClassReference())).filter(Objects::nonNull).toSet();
 
     Module host = findModule(module);
-    for (PsiProvidesStatement statement : psiTraverser().children(module).filter(PsiProvidesStatement.class)) {
+    for (PsiProvidesStatement statement : module.getProvides()) {
       PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
       if (ref != null) {
         PsiElement target = ref.resolve();
@@ -207,7 +194,7 @@ public class ModuleHighlightUtil {
   }
 
   private static String refText(PsiJavaCodeReferenceElement ref) {
-    return PsiNameHelper.getQualifiedClassName(ref.getText(), true);
+    return ref != null ? PsiNameHelper.getQualifiedClassName(ref.getText(), true) : null;
   }
 
   @Nullable
@@ -278,7 +265,7 @@ public class ModuleHighlightUtil {
   }
 
   @NotNull
-  static List<HighlightInfo> checkExportTargets(@NotNull PsiExportsStatement statement, @NotNull PsiJavaModule container) {
+  static List<HighlightInfo> checkExportTargets(@NotNull PsiPackageAccessibilityStatement statement) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> targets = ContainerUtil.newTroveSet();

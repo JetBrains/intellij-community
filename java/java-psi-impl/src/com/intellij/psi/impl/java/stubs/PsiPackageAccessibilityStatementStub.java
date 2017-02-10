@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.PsiExportsStatement;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.stubs.StubElement;
 
 import java.util.List;
 
-public interface PsiExportsStatementStub extends StubElement<PsiExportsStatement> {
+public interface PsiPackageAccessibilityStatementStub extends StubElement<PsiPackageAccessibilityStatement> {
   String getPackageName();
   List<String> getTargets();
 }

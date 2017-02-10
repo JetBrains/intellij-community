@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public interface JavaElementType {
   IElementType MODULE = JavaStubElementTypes.MODULE;
   IElementType REQUIRES_STATEMENT = JavaStubElementTypes.REQUIRES_STATEMENT;
   IElementType EXPORTS_STATEMENT = JavaStubElementTypes.EXPORTS_STATEMENT;
+  IElementType OPENS_STATEMENT = JavaStubElementTypes.OPENS_STATEMENT;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
@@ -32,6 +33,19 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
+  private static final Condition<PsiPackageAccessibilityStatement> EXPORTS_FILTER = new Condition<PsiPackageAccessibilityStatement>() {
+    @Override
+    public boolean value(PsiPackageAccessibilityStatement statement) {
+      return statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS;
+    }
+  };
+  private static final Condition<PsiPackageAccessibilityStatement> OPENS_FILTER = new Condition<PsiPackageAccessibilityStatement>() {
+    @Override
+    public boolean value(PsiPackageAccessibilityStatement statement) {
+      return statement.getRole() == PsiPackageAccessibilityStatement.Role.OPENS;
+    }
+  };
+
   public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
     super(stub, JavaStubElementTypes.MODULE);
   }
@@ -72,14 +86,38 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @NotNull
   @Override
-  public Iterable<PsiExportsStatement> getExports() {
+  public Iterable<PsiPackageAccessibilityStatement> getExports() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
-      return JBIterable.of(stub.getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY));
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
     }
     else {
-      return psiTraverser().children(this).filter(PsiExportsStatement.class);
+      return psiTraverser().children(this).filter(PsiPackageAccessibilityStatement.class).filter(EXPORTS_FILTER);
     }
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.OPENS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
+    }
+    else {
+      return psiTraverser().children(this).filter(PsiPackageAccessibilityStatement.class).filter(OPENS_FILTER);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiUsesStatement> getUses() {
+    return psiTraverser().children(this).filter(PsiUsesStatement.class);
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiProvidesStatement> getProvides() {
+    return psiTraverser().children(this).filter(PsiProvidesStatement.class);
   }
 
   @Override
