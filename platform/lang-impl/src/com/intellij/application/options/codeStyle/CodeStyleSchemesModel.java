@@ -67,7 +67,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     }
   }
 
-  public void removeScheme(final CodeStyleScheme scheme) {
+  @Override
+  public void removeScheme(@NotNull final CodeStyleScheme scheme) {
     mySchemes.remove(scheme);
     myDispatcher.getMulticaster().schemeListChanged();
     if (myGlobalSelected == scheme) {

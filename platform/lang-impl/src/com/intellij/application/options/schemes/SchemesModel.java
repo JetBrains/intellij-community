@@ -71,4 +71,6 @@ public interface SchemesModel<T extends Scheme> {
    *         returns {@code true}.
    */
   boolean differsFromDefault(@NotNull T scheme);
+
+  void removeScheme(@NotNull T scheme);
 }

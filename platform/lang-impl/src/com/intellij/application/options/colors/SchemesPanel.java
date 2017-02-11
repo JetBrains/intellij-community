@@ -96,7 +96,7 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
         @Override
         protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
           if (myOptions.saveSchemeAs(scheme, newName)) {
-            myOptions.removeScheme(scheme.getName());
+            myOptions.removeScheme(scheme);
             myOptions.selectScheme(newName);
           }
         }

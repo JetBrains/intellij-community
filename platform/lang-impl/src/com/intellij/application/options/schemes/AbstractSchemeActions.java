@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
@@ -348,7 +349,14 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    *
    * @param scheme The scheme to delete.
    */
-  protected abstract void deleteScheme(@NotNull T scheme);
+  protected void deleteScheme(@NotNull T scheme) {
+    if (Messages.showOkCancelDialog(
+      "Do you want to delete \"" + scheme.getName() + "\" scheme?",
+      "Delete Scheme",
+      Messages.getQuestionIcon()) == Messages.OK) {
+      mySchemesPanel.getModel().removeScheme(scheme);
+    }
+  }
 
   /**
    * Export the scheme using the given exporter name.

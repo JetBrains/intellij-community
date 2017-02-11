@@ -66,11 +66,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   }
 
   @Override
-  protected void deleteScheme(@NotNull CodeStyleScheme scheme) {
-    getModel().removeScheme(scheme);
-  }
-
-  @Override
   protected void importScheme(@NotNull String importerName) {
     CodeStyleScheme currentScheme = getCurrentScheme();
     if (currentScheme != null) {

@@ -113,11 +113,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   @Override
-  protected void deleteScheme(@NotNull EditorColorsScheme scheme) {
-    getOptions().removeScheme(scheme.getName());
-  }
-
-  @Override
   protected void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
     // Unsupported for now.
   }

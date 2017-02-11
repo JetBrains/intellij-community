@@ -255,20 +255,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     resetSchemesCombo(null);
   }
 
-  public void removeScheme(String name) {
-    if (mySelectedScheme.getName().equals(name)) {
+  @Override
+  public void removeScheme(@NotNull EditorColorsScheme scheme) {
+    String schemeName = scheme.getName();
+    if (mySelectedScheme.getName().equals(schemeName)) {
       selectDefaultScheme();
     }
 
     boolean deletedNewlyCreated = false;
 
-    MyColorScheme toDelete = mySchemes.get(name);
+    MyColorScheme toDelete = mySchemes.get(schemeName);
 
     if (toDelete != null) {
       deletedNewlyCreated = toDelete.isNew();
     }
 
-    mySchemes.remove(name);
+    mySchemes.remove(schemeName);
     resetSchemesCombo(null);
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
   }
