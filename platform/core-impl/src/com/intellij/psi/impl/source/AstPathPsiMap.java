@@ -87,8 +87,10 @@ class AstPathPsiMap {
   @NotNull
   StubBasedPsiElementBase<?> cachePsi(@NotNull AstPath key, @NotNull StubBasedPsiElementBase psi) {
     myQueue.cleanupStaleReferences();
-    myMap.put(key, new MyReference(psi, key, myQueue));
+    // ensure PSI will use AST path before making it available to other threads
+    // otherwise another thread could invoke StubRef.getNode and fail since file's AST isn't set yet
     psi.setSubstrateRef(key);
+    myMap.put(key, new MyReference(psi, key, myQueue));
     return psi;
   }
 
