@@ -9687,6 +9687,14 @@ public final class CmdlineRemoteProto {
            * <code>PROGRESS = 4;</code>
            */
           PROGRESS(3, 4),
+          /**
+           * <code>JPS_INFO = 5;</code>
+           */
+          JPS_INFO(4, 5),
+          /**
+           * <code>OTHER = 6;</code>
+           */
+          OTHER(5, 6),
           ;
 
           /**
@@ -9705,6 +9713,14 @@ public final class CmdlineRemoteProto {
            * <code>PROGRESS = 4;</code>
            */
           public static final int PROGRESS_VALUE = 4;
+          /**
+           * <code>JPS_INFO = 5;</code>
+           */
+          public static final int JPS_INFO_VALUE = 5;
+          /**
+           * <code>OTHER = 6;</code>
+           */
+          public static final int OTHER_VALUE = 6;
 
 
           public final int getNumber() { return value; }
@@ -9715,6 +9731,8 @@ public final class CmdlineRemoteProto {
               case 2: return WARNING;
               case 3: return INFO;
               case 4: return PROGRESS;
+              case 5: return JPS_INFO;
+              case 6: return OTHER;
               default: return null;
             }
           }

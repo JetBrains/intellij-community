@@ -179,14 +179,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (stats.size() == 1) {
       final Map.Entry<String, Collection<String>> entry = stats.entrySet().iterator().next();
       final String compilerName = entry.getKey();
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, compilerName + " was used to compile java sources"));
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO, compilerName + " was used to compile java sources"));
       LOG.info(compilerName + " was used to compile " + entry.getValue());
     }
     else {
       for (Map.Entry<String, Collection<String>> entry : stats.entrySet()) {
         final String compilerName = entry.getKey();
         final Collection<String> moduleNames = entry.getValue();
-        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO,
           moduleNames.size() == 1 ?
           compilerName + " was used to compile [" + moduleNames.iterator().next() + "]" :
           compilerName + " was used to compile " + moduleNames.size() + " modules"
@@ -354,7 +354,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           if (!compiledOk) {
-            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
+            diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
           }
           throw new StopBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
@@ -1194,8 +1194,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           myWarningCount++;
           break;
         case NOTE:
-        default:
           kind = BuildMessage.Kind.INFO;
+          break;
+        case OTHER:
+          kind = diagnostic instanceof JpsInfoDiagnostic? BuildMessage.Kind.JPS_INFO : BuildMessage.Kind.OTHER;
+          break;
+        default:
+          kind = BuildMessage.Kind.OTHER;
       }
       File sourceFile = null;
       try {

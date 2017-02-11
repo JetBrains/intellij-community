@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.incremental.messages;
+package org.jetbrains.jps.javac;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
+ *         Date: 10-Feb-17
  */
-public abstract class BuildMessage {
-  public enum Kind {
-    ERROR, WARNING, INFO, PROGRESS, JPS_INFO, OTHER
-  }
-
-  private final String myMessageText;
-  private final Kind myKind;
-
-  protected BuildMessage(String messageText, Kind kind) {
-    myMessageText = messageText;
-    myKind = kind;
-  }
-
-  public Kind getKind() {
-    return myKind;
-  }
-
-  public String getMessageText() {
-    return myMessageText;
-  }
-
-  public String toString() {
-    return getMessageText();
+public final class JpsInfoDiagnostic extends PlainMessageDiagnostic{
+  public JpsInfoDiagnostic(String message) {
+    super(Kind.OTHER, message);
   }
 }

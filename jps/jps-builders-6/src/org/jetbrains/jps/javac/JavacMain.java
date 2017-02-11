@@ -233,7 +233,7 @@ public class JavacMain {
   }
 
   private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {
-    diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
+    diagnosticConsumer.report(new JpsInfoDiagnostic("Compilation was canceled"));
   }
 
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
