@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
-import com.intellij.openapi.vcs.Executor.cat
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
@@ -55,7 +55,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   public override fun setUp() {
     super.setUp()
 
-    Executor.cd(myProjectRoot)
+    cd(myProjectRoot)
     val community = Executor.mkdir("community")
     val contrib = Executor.mkdir("contrib")
 
@@ -64,10 +64,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myContrib = createRepository(contrib.path)
     myRepositories = Arrays.asList<GitRepository>(myUltimate, myCommunity, myContrib)
 
-    Executor.cd(myProjectRoot)
-    Executor.touch(".gitignore", "community\ncontrib")
+    cd(myProjectRoot)
+    touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
+    myUltimate.update()
   }
 
   fun test_create_new_branch_without_problems() {
@@ -473,7 +474,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_rollback_of_checkout_branch_as_new_branch_should_delete_branches() {
     branchWithCommit(myRepositories, "feature")
-    Executor.touch("feature.txt", "feature_content")
+    touch("feature.txt", "feature_content")
     git("add feature.txt")
     git("commit -m feature_changes")
     git("checkout master")
@@ -597,7 +598,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("push -u origin $feature")
 
     // create a commit and merge it to master, but not to feature's upstream
-    Executor.touch("feature.txt", "feature content")
+    touch("feature.txt", "feature content")
     git("add feature.txt")
     git("commit -m feature_branch")
     git("checkout master")
@@ -759,7 +760,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_checkout_in_detached_head() {
     cd(myCommunity)
-    Executor.touch("file.txt", "some content")
+    touch("file.txt", "some content")
     add("file.txt")
     commit("msg")
     git(myCommunity, "checkout HEAD^")
@@ -903,7 +904,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
     cd(unmergedRepo)
     git("checkout todelete")
-    Executor.touch("afile.txt", "content")
+    touch("afile.txt", "content")
     git("add afile.txt")
     git("commit -m unmerged_commit")
     git("checkout master")
