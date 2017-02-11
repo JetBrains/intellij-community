@@ -706,7 +706,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
-    StubTree stubHolder = (StubTree)tree;
     final FileViewProvider viewProvider = getViewProvider();
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
@@ -716,10 +715,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      final PsiFileStub baseRoot = stubHolder.getRoot();
+      PsiFileStub baseRoot = ((StubTree)tree).getRoot();
       if (baseRoot instanceof PsiFileStubImpl && !((PsiFileStubImpl)baseRoot).rootsAreSet()) {
         LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
-        return stubHolder;
+        return null;
       }
       final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
@@ -732,34 +731,42 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                   StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
         rebuildStub();
-        return stubHolder;
+        return null;
       }
-      // set all stub trees to avoid reading file when stub tree for another psi root is accessed
-      int matchingRoot = 0;
-      for (Pair<IStubFileElementType, PsiFile> root : roots) {
-        final PsiFileStub matchingStub = stubRoots[matchingRoot++];
-        PsiFileImpl eachPsiRoot = (PsiFileImpl)root.second;
-        //noinspection unchecked
-        ((StubBase)matchingStub).setPsi(eachPsiRoot);
-        final StubTree stubTree = new StubTree(matchingStub);
-        FileElement fileElement = eachPsiRoot.getTreeElement();
-        if (fileElement != null) {
-          stubTree.setDebugInfo("created in getStubTree(), with AST");
 
-          // Set references from these stubs to AST, because:
-          // Stub index might call getStubTree on main PSI file, but then use getPlainListFromAllRoots and return stubs from another file.
-          // Even if that file already has AST, stub.getPsi() should be the same as in AST
-          TreeUtil.bindStubsToTree(eachPsiRoot, stubTree, fileElement);
-        } else {
-          stubTree.setDebugInfo("created in getStubTree(), no AST");
-          if (eachPsiRoot == this) stubHolder = stubTree;
-          eachPsiRoot.setStubTree(stubTree);
-        }
-        eachPsiRoot.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
+      // first, set all references from stubs to existing PSI (in AST or AstPathPsiMap)
+      Map<PsiFileImpl, StubTree> bindings = prepareAllStubTrees(roots, stubRoots);
+      StubTree result = bindings.get(this);
+      assert result != null : "Current file not in root list: " + roots + ", vp=" + viewProvider;
+
+      // now stubs can be safely published
+      for (PsiFileImpl eachPsiRoot : bindings.keySet()) {
+        eachPsiRoot.updateTrees(eachPsiRoot.myTrees.withExclusiveStub(bindings.get(eachPsiRoot)));
       }
-      assert derefStub() == stubHolder : "Current file not in root list: " + roots + ", vp=" + viewProvider;
-      return stubHolder;
+      return result;
     }
+  }
+
+  private static Map<PsiFileImpl, StubTree> prepareAllStubTrees(List<Pair<IStubFileElementType, PsiFile>> roots, PsiFileStub[] rootStubs) {
+    Map<PsiFileImpl, StubTree> bindings = ContainerUtil.newIdentityHashMap();
+    for (int i = 0; i < roots.size(); i++) {
+      PsiFileImpl eachPsiRoot = (PsiFileImpl)roots.get(i).second;
+      //noinspection unchecked
+      ((StubBase)rootStubs[i]).setPsi(eachPsiRoot);
+      StubTree stubTree = new StubTree(rootStubs[i]);
+      FileElement fileElement = eachPsiRoot.getTreeElement();
+      stubTree.setDebugInfo("created in getStubTree(), with AST = " + (fileElement != null));
+      if (fileElement != null) {
+        // Set references from these stubs to AST, because:
+        // Stub index might call getStubTree on main PSI file, but then use getPlainListFromAllRoots and return stubs from another file.
+        // Even if that file already has AST, stub.getPsi() should be the same as in AST
+        TreeUtil.bindStubsToTree(eachPsiRoot, stubTree, fileElement);
+      } else {
+        eachPsiRoot.bindStubsToCachedPsi(stubTree);
+        bindings.put(eachPsiRoot, stubTree);
+      }
+    }
+    return bindings;
   }
 
   private boolean mayReloadStub() {
@@ -791,7 +798,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private void setStubTree(StubTree stubTree) {
+  private void bindStubsToCachedPsi(StubTree stubTree) {
     for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
       int index = psi.getStubIndex();
       if (index >= 0) {
@@ -799,7 +806,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         ((StubBase)stubTree.getPlainList().get(index)).setPsi(psi);
       }
     }
-    updateTrees(myTrees.withExclusiveStub(stubTree));
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
