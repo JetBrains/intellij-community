@@ -31,7 +31,8 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
   protected boolean isEnabled(AnActionEvent e) {
     final ReferenceType selectedClass = getSelectedClass(e);
     final InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
-    return super.isEnabled(e) && selectedClass != null && provider != null;
+    final int count = getInstancesCount(e);
+    return super.isEnabled(e) && selectedClass != null && provider != null && count > 0;
   }
 
   @Override
