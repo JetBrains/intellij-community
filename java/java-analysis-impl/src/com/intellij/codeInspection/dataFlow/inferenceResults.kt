@@ -123,7 +123,7 @@ data class MethodData(
     internal val bodyEnd: Int
 ) {
   fun methodBody(method: PsiMethod): () -> PsiCodeBlock = {
-    if ((method as StubBasedPsiElement<*>?)?.stub != null)
+    if ((method as? StubBasedPsiElement<*>)?.stub != null)
       CachedValuesManager.getCachedValue(method) { CachedValueProvider.Result(getDetachedBody(method), method) }
     else
       method.body!!
