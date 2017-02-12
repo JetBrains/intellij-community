@@ -748,7 +748,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     TextAttributes attributes = contentType.getAttributes();
     MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
-    int layer = HighlighterLayer.CONSOLE_FILTER - 1; // make custom filters able to draw their text attributes over the default ones
+    int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
     RangeHighlighter tokenMarker = model.addRangeHighlighter(startOffset, endOffset, layer,
                                                              attributes, HighlighterTargetArea.EXACT_RANGE);
     tokenMarker.putUserData(CONTENT_TYPE, contentType);
