@@ -1256,7 +1256,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                    @NotNull String pathBeforeSlash) {
       super(id, segment, data, null, fs);
       myName = name;
-      if (pathBeforeSlash.contains("..") || pathBeforeSlash.endsWith("/")) {
+      if (!looksCanonical(pathBeforeSlash)) {
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
       myPathBeforeSlash = pathBeforeSlash;
@@ -1296,5 +1296,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     public String getUrl() {
       return getFileSystem().getProtocol() + "://" + getPath();
     }
+  }
+
+  private static boolean looksCanonical(@NotNull String pathBeforeSlash) {
+    if (pathBeforeSlash.endsWith("/")) {
+      return false;
+    }
+    int start = 0;
+    while (true) {
+      int i = pathBeforeSlash.indexOf("..", start);
+      if (i == -1) break;
+      if (i != 0 && pathBeforeSlash.charAt(i-1) == '/') return false; // /..
+      if (i < pathBeforeSlash.length() - 2 && pathBeforeSlash.charAt(i+2) == '/') return false; // ../
+      start = i+1;
+    }
+    return true;
   }
 }
