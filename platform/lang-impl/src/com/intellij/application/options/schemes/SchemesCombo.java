@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
@@ -85,7 +86,30 @@ public class SchemesCombo<T extends Scheme> {
         stopEdit();
       }
     });
+    nameEditorField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateOnTyping();
+      }
+    });
     return nameEditorField;
+  }
+
+  private void validateOnTyping() {
+    String currName = myNameEditorField.getText();
+    MySchemeListItem<T> selectedItem = getSelectedItem();
+    if (selectedItem != null && !currName.equals(selectedItem.getSchemeName())) {
+      String validationMessage = validateSchemeName(currName);
+      if (validationMessage != null) {
+        mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
+        return;
+      }
+    }
+    showHint();
+  }
+
+  private void showHint() {
+    mySchemesPanel.showInfo(EDITING_HINT, MessageType.INFO);
   }
 
   private void revertSchemeName() {
@@ -140,7 +164,7 @@ public class SchemesCombo<T extends Scheme> {
   public void startEdit() {
     T scheme = getSelectedScheme();
     if (scheme != null) {
-      mySchemesPanel.showInfo(EDITING_HINT, MessageType.INFO);
+      showHint();
       myNameEditorField.setText(scheme.getName());
       myLayout.last(myRootPanel);
       myNameEditorField.requestFocus();
