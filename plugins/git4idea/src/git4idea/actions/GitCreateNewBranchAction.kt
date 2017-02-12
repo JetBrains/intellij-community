@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.actions;
+package git4idea.actions
 
-import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.Hash;
-import git4idea.branch.GitBrancher;
-import git4idea.branch.GitNewBranchOptions;
-import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.Hash
+import git4idea.branch.GitBranchUtil.getNewBranchNameFromUser
+import git4idea.branch.GitBrancher
+import git4idea.repo.GitRepository
 
-import static git4idea.branch.GitBranchUtil.getNewBranchNameFromUser;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
+class GitCreateNewBranchAction : GitLogSingleCommitAction() {
 
-public class GitCreateNewBranchAction extends GitLogSingleCommitAction {
-
-  @Override
-  protected void actionPerformed(@NotNull GitRepository repository, @NotNull Hash commit) {
-    Project project = repository.getProject();
-    GitNewBranchOptions options = getNewBranchNameFromUser(project, singleton(repository), "Checkout New Branch From " + commit.toShortString());
+  override fun actionPerformed(repository: GitRepository, commit: Hash) {
+    val project = repository.project
+    val options = getNewBranchNameFromUser(project, setOf(repository), "Checkout New Branch From " + commit.toShortString())
     if (options != null) {
-      GitBrancher brancher = GitBrancher.getInstance(project);
-      if (options.shouldCheckout()) {
-        brancher.checkoutNewBranchStartingFrom(options.getName(), commit.asString(), singletonList(repository), null);
+      val brancher = GitBrancher.getInstance(project)
+      if (options.checkout) {
+        brancher.checkoutNewBranchStartingFrom(options.name, commit.asString(), listOf(repository), null)
       }
       else {
-        brancher.createBranch(options.getName(), singletonMap(repository, commit.asString()));
+        brancher.createBranch(options.name, mapOf(repository to commit.asString()));
       }
     }
   }
