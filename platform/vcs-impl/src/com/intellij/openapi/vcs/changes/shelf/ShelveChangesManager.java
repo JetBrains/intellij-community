@@ -59,6 +59,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.*;
@@ -120,23 +121,28 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     super(project);
     myPathMacroSubstitutor = PathMacroManager.getInstance(myProject);
     myBus = bus;
-    mySchemeManager =
-      SchemeManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new NonLazySchemeProcessor<ShelvedChangeList, ShelvedChangeList>() {
-        @Nullable
-        @Override
-        public ShelvedChangeList readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
-          return readOneShelvedChangeList(element);
-        }
+    String customPath = myPathMacroSubstitutor.expandPath(VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH);
+    FilePath customShelfFilePath = customPath != null ? VcsUtil.getFilePath(customPath) : null;
 
-        @NotNull
-        @Override
-        public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
-          Element child = new Element(ELEMENT_CHANGELIST);
-          scheme.writeExternal(child);
-          myPathMacroSubstitutor.collapsePaths(child);
-          return child;
-        }
-      });
+    mySchemeManager =
+      SchemeManagerFactory.getInstance(project)
+        .create(customShelfFilePath != null ? customShelfFilePath.getName() : SHELVE_MANAGER_DIR_PATH,
+                new NonLazySchemeProcessor<ShelvedChangeList, ShelvedChangeList>() {
+                  @NotNull
+                  @Override
+                  public ShelvedChangeList readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
+                    return readOneShelvedChangeList(element);
+                  }
+
+                  @NotNull
+                  @Override
+                  public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
+                    Element child = new Element(ELEMENT_CHANGELIST);
+                    scheme.writeExternal(child);
+                    myPathMacroSubstitutor.collapsePaths(child);
+                    return child;
+                  }
+                }, null, customPath != null ? Paths.get(customPath) : null);
 
     myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanSystemUnshelvedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
@@ -847,7 +853,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     notifyStateChanged();
   }
 
-  @Nullable
+  @NotNull
   private ShelvedChangeList createRecycledChangelist(ShelvedChangeList changeList) throws IOException {
     final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
     final File newPath = getPatchFileInConfigDir(newPatchDir);
