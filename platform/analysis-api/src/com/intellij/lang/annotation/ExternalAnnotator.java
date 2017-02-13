@@ -76,4 +76,11 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    */
   public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) {
   }
+
+  /**
+   * Return inspection which should run in batch mode. Generally todo
+   */
+  public String getPairedBatchInspectionShortName() {
+    return null;
+  }
 }
