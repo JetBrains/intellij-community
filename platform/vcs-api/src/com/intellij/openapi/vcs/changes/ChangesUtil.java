@@ -133,9 +133,10 @@ public class ChangesUtil {
 
   @NotNull
   public static Stream<FilePath> getAllPaths(@NotNull Stream<Change> changes) {
-    return changes
-      .flatMap(change -> Stream.of(getBeforePath(change), getAfterPath(change)))
-      .filter(Objects::nonNull);
+    return changes.flatMap(change ->
+                             Stream.of(getBeforePath(change), getAfterPath(change))
+                               .filter(Objects::nonNull)
+                               .distinct());
   }
 
   /**
