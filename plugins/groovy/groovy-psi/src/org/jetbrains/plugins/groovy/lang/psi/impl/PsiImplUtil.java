@@ -633,12 +633,7 @@ public class PsiImplUtil {
       toplevel = (GrExpression)toplevel.getParent();
     }
 
-    final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
-    if (normalized instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
-      return com.intellij.psi.util.PsiUtil.captureToplevelWildcards(normalized, expression);
-    }
-
-    return normalized;
+    return doNormalizeWildcardByPosition(type, expression, toplevel);
   }
 
   @Nullable
@@ -652,7 +647,7 @@ public class PsiImplUtil {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
 
       if (PsiUtil.isAccessedForWriting(toplevel)) {
-        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
+        return wildcardType.getBound();
       }
       else {
         if (wildcardType.isExtends()) {
