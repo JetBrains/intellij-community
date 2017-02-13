@@ -128,6 +128,17 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return this;
   }
 
+  @Override
+  public PsiModifierList getModifierList() {
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
+  }
+
   @Nullable
   @Override
   public PsiDocComment getDocComment() {

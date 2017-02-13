@@ -103,6 +103,16 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   @Override
+  public PsiModifierList getModifierList() {
+    return null;
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    return false;
+  }
+
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }

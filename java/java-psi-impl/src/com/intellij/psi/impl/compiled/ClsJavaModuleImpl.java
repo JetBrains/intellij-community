@@ -19,11 +19,13 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +97,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
     setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameIdentifier(), mirror.getNameIdentifier());
+    setMirror(getModifierList(), mirror.getModifierList());
 
     setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
                newArrayList(mirror.getRequires()));
@@ -118,6 +121,18 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw cannotModifyException(this);
+  }
+
+  @Override
+  public PsiModifierList getModifierList() {
+    StubElement<PsiModifierList> childStub = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    return childStub != null ? childStub.getPsi() : null;
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   @Nullable
