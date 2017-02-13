@@ -222,8 +222,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.getRightHorizontalSplit() != myComponent.myRightLayoutCheckBox.isSelected();
     settings.setRightHorizontalSplit(myComponent.myRightLayoutCheckBox.isSelected());
 
-    update |= settings.NAVIGATE_TO_PREVIEW != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
-    settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
+    update |= settings.getNavigateToPreview() != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
+    settings.setNavigateToPreview(myComponent.myNavigateToPreviewCheckBox.isSelected());
 
     ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
     boolean updateEditorScheme = false;
@@ -346,7 +346,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
     myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
-    myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
+    myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
@@ -411,7 +411,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
-    isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
+    isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();

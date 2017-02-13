@@ -32,7 +32,7 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
     UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings == null || !uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) {
+    if (uiSettings == null || !uiSettings.getShowDirectoryForNonUniqueFilenames() || DumbService.isDumb(project)) {
       return null;
     }
 

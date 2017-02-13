@@ -148,10 +148,10 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField var DEFAULT_AUTOSCROLL_TO_SOURCE = false
   @Transient var presentationMode = false
   @JvmField var PRESENTATION_MODE_FONT_SIZE = 24
-  @JvmField var MARK_MODIFIED_TABS_WITH_ASTERISK = false
-  @JvmField var SHOW_TABS_TOOLTIPS = true
-  @JvmField var SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true
-  @JvmField var NAVIGATE_TO_PREVIEW = false
+  @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
+  @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
+  @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
+  @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
