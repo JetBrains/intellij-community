@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
+import com.intellij.util.ui.JBUI.ScaleType;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +228,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
         Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
-        return new DnDImage(ImageUtil.toBufferedImage(image), new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
+        // [tav] temp workaround for JRE-224
+        if (SystemInfo.isWindows && UIUtil.isJDKManagedHiDPI()) {
+          image = ImageUtil.toBufferedImage(image, !JBUI.isHiDPI((Graphics2D)GraphicsUtil.safelyGetGraphics(myEditor.getComponent()), ScaleType.SYS));
+        }
+        return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();

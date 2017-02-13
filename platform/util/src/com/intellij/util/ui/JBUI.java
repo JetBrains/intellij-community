@@ -432,14 +432,24 @@ public class JBUI {
   public static boolean isHiDPI(@Nullable GraphicsDevice gd, ScaleType type) {
     switch (type) {
       case USR:
-        return scale(1f) > 1f;
+        return isHiDPI(scale(1f));
       case SYS:
-        return sysScale(gd) > 1f;
+        return isHiDPI(sysScale(gd));
       case PIX:
-        return pixScale(gd) > 1f;
+        return isHiDPI(pixScale(gd));
       default:
         return false;
     }
+  }
+
+  /**
+   * Returns whether the scale factor assumes HiDPI-awareness.
+   *
+   * @param scale the scale factor
+   * @return whether HiDPI-awareness is assumed for the scale factor
+   */
+  public static boolean isHiDPI(float scale) {
+    return scale > 1f;
   }
 
   /**
@@ -452,7 +462,7 @@ public class JBUI {
   }
 
   /**
-   * Equivalent of {@link #isHiDPI(Graphics2D, ScaleType)} called for the graphics of specified component.
+   * Equivalent of {@link #isHiDPI(Graphics2D, ScaleType.USR)} called for the graphics of the specified component.
    *
    * @see #isHiDPI(Graphics2D, ScaleType)
    * @param component if it's {@code null} the graphics of the default screen device will be used
