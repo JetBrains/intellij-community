@@ -62,6 +62,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,12 +105,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
    */
   private boolean myIsActive;
 
-  public ClassesFilteredView(@NotNull XDebugSession debugSession, @NotNull DebugProcessImpl debugProcess) {
+  public ClassesFilteredView(@NotNull XDebugSession debugSession,
+                             @NotNull DebugProcessImpl debugProcess,
+                             @NotNull InstancesTracker tracker) {
     super();
 
     myProject = debugSession.getProject();
 
-    myInstancesTracker = InstancesTracker.getInstance(myProject);
+    myInstancesTracker = tracker;
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
       public void classChanged(@NotNull String name, @NotNull TrackingType type) {
@@ -147,7 +150,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       protected void action() throws Exception {
         final boolean activated = myIsTrackersActivated.get();
-        myInstancesTracker.getTrackedClasses().forEach((className, type) -> {
+        tracker.getTrackedClasses().forEach((className, type) -> {
           List<ReferenceType> classes = debugProcess.getVirtualMachineProxy().classesByName(className);
           if (classes.isEmpty()) {
             new ClassPreparedListener(className, debugSession) {
@@ -164,14 +167,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           }
         });
 
-        myInstancesTracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
+        tracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
       }
     });
 
     final MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
-    myTable = new ClassesTable(debugSession, memoryViewManagerState.isShowWithDiffOnly,
-                               memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly, this);
+    myTable = new ClassesTable(tracker, this, memoryViewManagerState.isShowWithDiffOnly,
+                               memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly);
     myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
     Disposer.register(this, myTable);
 
@@ -286,7 +289,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         return;
       }
 
-      final ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, debugSession);
+      final ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, debugSession, myInstancesTracker);
       tracker.setBackgroundMode(!myIsActive);
       if (isTrackerEnabled) {
         tracker.enable();
@@ -303,7 +306,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private void handleClassSelection(@Nullable ReferenceType ref) {
     final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
-      new InstancesWindow(debugSession, limit -> ref.instances(limit), ref.name()).show();
+      new InstancesWindow(debugSession, limit -> {
+        final List<ObjectReference> instances = ref.instances(limit);
+        return instances == null ? Collections.emptyList() : instances;
+      }, ref.name()).show();
     }
   }
 

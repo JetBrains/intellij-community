@@ -42,7 +42,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
     ReferenceType selectedClass = getSelectedClass(e);
     final Project project = e.getProject();
-    if (project != null && selectedClass != null) {
+    if (project != null && selectedClass != null && !project.isDisposed()) {
       InstancesTracker tracker = InstancesTracker.getInstance(project);
       return tracker.isTracked(selectedClass.name());
     }
@@ -54,7 +54,7 @@ public class TrackInstancesToggleAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
     final ReferenceType selectedClass = getSelectedClass(e);
     final Project project = e.getProject();
-    if (selectedClass != null && project != null) {
+    if (selectedClass != null && project != null && !project.isDisposed()) {
       InstancesTracker tracker = InstancesTracker.getInstance(project);
       boolean isAlreadyTracked = tracker.isTracked(selectedClass.name());
 
