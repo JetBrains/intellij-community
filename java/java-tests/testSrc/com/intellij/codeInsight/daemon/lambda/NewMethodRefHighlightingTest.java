@@ -517,11 +517,11 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testApplicabilityErrorVisibleWhenConstraintsFromFunctionalExpressionsProvideValidSubstitutor() throws Exception {
+  public void testApplicabilityErrorVisibleWhenConstraintsFromFunctionalExpressionsProvideValidSubstitutor() {
     doTest();
   }
 
-  public void testExactMethodReferenceWithWildcardBound() throws Exception {
+  public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() throws Exception {
     doTest();
   }
 
