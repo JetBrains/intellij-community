@@ -44,7 +44,7 @@ import java.util.Collection;
  */
 public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
-  private SchemesCombo<T> mySchemesCombo;
+  private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   private JLabel myInfoLabel;
@@ -60,7 +60,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     controlsPanel.add(new JLabel(getTitle()));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
-    mySchemesCombo = new SchemesCombo<>(this);
+    mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
     controlsPanel.add(myToolbar);
