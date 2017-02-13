@@ -536,7 +536,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }, myCaretModel);
 
     if (UISettings.getInstance().getPresentationMode()) {
-      setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      setFontSize(UISettings.getInstance().getPresentationModeFontSize());
     }
 
     myGutterComponent.updateSize();
@@ -548,7 +548,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetbrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
     }
-
   }
 
   /**

@@ -219,9 +219,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public Font getFont(EditorFontType key) {
-    if (UISettings.getInstance().getPresentationMode()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getPresentationMode()) {
       final Font font = myFonts.get(key);
-      return new Font(font.getName(), font.getStyle(), UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      return new Font(font.getName(), font.getStyle(), uiSettings.getPresentationModeFontSize());
     }
     return myFonts.get(key);
   }

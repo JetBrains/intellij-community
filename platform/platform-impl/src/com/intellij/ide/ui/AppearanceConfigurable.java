@@ -153,7 +153,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     initComponent();
     UISettings settings = UISettings.getInstance();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
-    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
+    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
@@ -165,8 +165,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       update = true;
     }
 
-    if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
-      settings.PRESENTATION_MODE_FONT_SIZE = _presentationFontSize;
+    if (_presentationFontSize != settings.getPresentationModeFontSize()) {
+      settings.setPresentationModeFontSize(_presentationFontSize);
       shouldUpdateUI = true;
     }
 
@@ -326,7 +326,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
 
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
-    myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
+    myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
@@ -416,7 +416,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 
-    isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
+    isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;

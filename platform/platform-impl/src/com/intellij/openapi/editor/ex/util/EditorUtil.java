@@ -860,7 +860,7 @@ public final class EditorUtil {
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     int size = UISettings.getInstance().getPresentationMode()
-               ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+               ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
     return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 

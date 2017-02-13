@@ -113,7 +113,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int fontSize = inPresentation ? settings.PRESENTATION_MODE_FONT_SIZE : globalScheme.getEditorFontSize();
+    int fontSize = inPresentation ? settings.getPresentationModeFontSize() : globalScheme.getEditorFontSize();
     if (inPresentation) {
       ourSavedConsoleFontSize = globalScheme.getConsoleFontSize();
       globalScheme.setConsoleFontSize(fontSize);
@@ -148,7 +148,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor = settings.PRESENTATION_MODE_FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE;
+      float scaleFactor = settings.getPresentationModeFontSize() / UIUtil.DEF_SYSTEM_FONT_SIZE;
       ourSavedScaleFactor = JBUI.scale(1f);
       JBUI.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {

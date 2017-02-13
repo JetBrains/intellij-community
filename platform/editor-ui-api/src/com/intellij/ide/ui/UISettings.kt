@@ -104,6 +104,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @Transient
   var OVERRIDE_NONIDEA_LAF_FONTS = false
 
+  @Suppress("unused")
+  @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
+  @JvmField
+  @Transient
+  var PRESENTATION_MODE_FONT_SIZE = 24
+
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by storedProperty(true)
@@ -147,7 +153,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField var DND_WITH_PRESSED_ALT_ONLY = false
   @JvmField var DEFAULT_AUTOSCROLL_TO_SOURCE = false
   @Transient var presentationMode = false
-  @JvmField var PRESENTATION_MODE_FONT_SIZE = 24
+  @get:OptionTag("PRESENTATION_MODE_FONT_SIZE") var presentationModeFontSize by storedProperty(24)
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
@@ -221,6 +227,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     EDITOR_AA_TYPE = editorAAType
     PRESENTATION_MODE = presentationMode
     OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
+    PRESENTATION_MODE_FONT_SIZE = presentationModeFontSize
   }
 
   private fun initDefFont() {

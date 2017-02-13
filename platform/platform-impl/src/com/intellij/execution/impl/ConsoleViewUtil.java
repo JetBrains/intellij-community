@@ -89,7 +89,7 @@ public class ConsoleViewUtil {
 
       final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
       if (UISettings.getInstance().getPresentationMode()) {
-        scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+        scheme.setEditorFontSize(UISettings.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
     });
