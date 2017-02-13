@@ -17,6 +17,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -31,8 +32,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.xmlb.XmlSerializer;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -48,6 +52,8 @@ import java.util.List;
  * @author egor
  */
 public class CaptureConfigurable implements SearchableConfigurable {
+  private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
+
   private MyTableModel myTableModel;
 
   @NotNull
@@ -90,6 +96,26 @@ public class CaptureConfigurable implements SearchableConfigurable {
       @Override
       public void run(AnActionButton button) {
         TableUtil.moveSelectedItemsDown(table);
+      }
+    });
+
+    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() == 1;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> {
+          try {
+            myTableModel.add(c.clone());
+            table.getSelectionModel().setSelectionInterval(table.getRowCount() - 1, table.getRowCount() - 1);
+          }
+          catch (CloneNotSupportedException ex) {
+            LOG.error(ex);
+          }
+        });
       }
     });
 
@@ -136,16 +162,16 @@ public class CaptureConfigurable implements SearchableConfigurable {
         if (wrapper == null) return;
 
         Element rootElement = new Element("capture-points");
-        for (int row : table.getSelectedRows()) {
-          CapturePoint c = myTableModel.get(table.convertRowIndexToModel(row));
+        selectedCapturePoints(table).forEach(c -> {
           try {
             CapturePoint clone = c.clone();
             clone.myEnabled = false;
             rootElement.addContent(XmlSerializer.serialize(clone));
           }
-          catch (CloneNotSupportedException ignore) {
+          catch (CloneNotSupportedException ex) {
+            LOG.error(ex);
           }
-        }
+        });
         try {
           JDOMUtil.writeDocument(new Document(rootElement), wrapper.getFile(), "\n");
         }
@@ -162,6 +188,10 @@ public class CaptureConfigurable implements SearchableConfigurable {
     });
 
     return decorator.createPanel();
+  }
+
+  private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
+    return IntStreamEx.of(table.getSelectedRows()).map(table::convertRowIndexToModel).mapToObj(myTableModel::get);
   }
 
   private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
