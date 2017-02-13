@@ -599,7 +599,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected final AnAction createValueAction(@Nullable Object target, Producer<T> value, @NotNull Consumer<T> consumer) {
     return new ComboBoxAction() {
       void updateText() {
-        getTemplatePresentation().setText(renderValue(value.produce(), getNullValueText(target)));
+        getTemplatePresentation().setText(StringUtil.shortenTextWithEllipsis(renderValue(value.produce(), getNullValueText(target)), 40, 0));
       }
 
       @Override
@@ -623,6 +623,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
             });
             popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
             return popup;
+          }
+
+          @Nullable
+          @Override
+          public String getToolTipText() {
+            return getToolTipFor(value.produce());
           }
         };
       }
