@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -286,14 +285,14 @@ public class DataFlowRunner {
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        myNestedClosures.putValue(body, createClosureState(state));
+        myNestedClosures.putValue(body, state.createClosureState());
       }
     }
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      myNestedClosures.putValue(initializer.getBody(), createClosureState(state));
+      myNestedClosures.putValue(initializer.getBody(), state.createClosureState());
     }
     for (PsiField field : nestedClass.getFields()) {
-      myNestedClosures.putValue(field, createClosureState(state));
+      myNestedClosures.putValue(field, state.createClosureState());
     }
   }
   
@@ -301,7 +300,7 @@ public class DataFlowRunner {
     DfaMemoryState state = instructionState.getMemoryState();
     PsiElement body = expr.getBody();
     if (body != null) {
-      myNestedClosures.putValue(body, createClosureState(state));
+      myNestedClosures.putValue(body, state.createClosureState());
     }
   }
 
@@ -358,17 +357,5 @@ public class DataFlowRunner {
     }
 
     return Pair.create(trueSet, falseSet);
-  }
-
-  @NotNull
-  private static DfaMemoryStateImpl createClosureState(@NotNull DfaMemoryState memState) {
-    DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-    copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
-    for (DfaVariableValue value : vars) {
-      copy.flushDependencies(value);
-    }
-    copy.emptyStack();
-    return copy;
   }
 }

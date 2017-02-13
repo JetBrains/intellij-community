@@ -192,7 +192,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       checkMax(false);
 
       if (!affected.isEmpty()) {
-        for (IntervalNode<T> node : affected) {
+        // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
+        for (int i = affected.size() - 1; i >= 0; i--) {
+          IntervalNode<T> node = affected.get(i);
           // assumption: interval.getEndOffset() will never be accessed during remove()
           int startOffset = node.intervalStart();
           int endOffset = node.intervalEnd();

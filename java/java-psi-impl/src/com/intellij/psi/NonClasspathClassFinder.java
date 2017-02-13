@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +53,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private final PsiManager myManager;
   private final String[] myFileExtensions;
 
-  public NonClasspathClassFinder(Project project, String... fileExtensions) {
+  public NonClasspathClassFinder(@NotNull Project project, @NotNull String... fileExtensions) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
@@ -63,6 +64,12 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         clearCache();
       }
     });
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        clearCache();
+      }
+    }, project);
   }
 
   @NotNull 

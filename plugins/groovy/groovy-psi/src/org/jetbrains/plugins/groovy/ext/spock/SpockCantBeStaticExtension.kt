@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.configurationStore
+package org.jetbrains.plugins.groovy.ext.spock
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.ComponentSerializationUtil
-import com.intellij.openapi.components.PersistentStateComponent
-import org.jdom.Element
+import com.intellij.openapi.util.Condition
+import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-fun deserializeAndLoadState(component: PersistentStateComponent<*>, element: Element) {
-  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(component.javaClass))
-  (state as? BaseState)?.resetModificationCount()
-  @Suppress("UNCHECKED_CAST")
-  (component as PersistentStateComponent<Any>).loadState(state)
+class SpockCantBeStaticExtension : Condition<PsiElement> {
+
+  override fun value(element: PsiElement?): Boolean {
+    return element is GrMethod
+           && isSpecification(element.containingClass)
+           && (isFeatureMethod(element) || isFixtureMethod(element))
+  }
 }

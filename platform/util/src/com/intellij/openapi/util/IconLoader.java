@@ -516,15 +516,11 @@ public final class IconLoader {
         }
       });
 
-      private Image getOrLoadOrigImage(float pixScale) {
-        return getOrLoadOrigImage(pixScale, true);
-      }
-
       /**
        * Retrieves the orig image based on the pixScale.
        */
       private Image getOrLoadOrigImage(float pixScale, boolean allowFloatScaling) {
-        boolean needRetinaImage = ImageUtil.needRetinaImage(pixScale);
+        boolean needRetinaImage = JBUI.isHiDPI(pixScale);
         Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
         if (image != null) return image;
 
@@ -621,7 +617,7 @@ public final class IconLoader {
       Icon icon = getOrComputeIcon();
       if (icon != null) {
         if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(1f);
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(1f, false);
           if (img != null) {
             icon = new ImageIcon(img);
           }

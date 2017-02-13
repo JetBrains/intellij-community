@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -423,7 +423,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
     PsiJavaModule module = file.getModuleDeclaration();
     assertNotNull(module);
-    assertEquals("M.N", module.getModuleName());
+    assertEquals("M.N", module.getName());
 
     assertNull(file.getPackageStatement());
     assertEquals(0, file.getClasses().length);

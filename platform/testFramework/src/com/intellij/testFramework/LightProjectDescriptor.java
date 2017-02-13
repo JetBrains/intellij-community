@@ -90,20 +90,29 @@ public class LightProjectDescriptor {
     VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assert dummyRoot != null;
     dummyRoot.refresh(false, false);
+    VirtualFile srcRoot = doCreateSourceRoot(dummyRoot, srcPath);
+    registerSourceRoot(module.getProject(), srcRoot);
+    return srcRoot;
+  }
 
+  protected VirtualFile doCreateSourceRoot(VirtualFile root, String srcPath) {
     VirtualFile srcRoot;
     try {
-      srcRoot = dummyRoot.createChildDirectory(this, srcPath);
+      srcRoot = root.createChildDirectory(this, srcPath);
       cleanSourceRoot(srcRoot);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
 
+    return srcRoot;
+  }
+
+  protected void registerSourceRoot(Project project, VirtualFile srcRoot) {
     IndexableFileSet indexableFileSet = new IndexableFileSet() {
       @Override
       public boolean isInSet(@NotNull VirtualFile file) {
-        return file.getFileSystem() == srcRoot.getFileSystem() && module.getProject().isOpen();
+        return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
       }
 
       @Override
@@ -118,9 +127,7 @@ public class LightProjectDescriptor {
       }
     };
     FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
-    Disposer.register(module.getProject(), () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
-
-    return srcRoot;
+    Disposer.register(project, () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {

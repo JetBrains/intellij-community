@@ -187,7 +187,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
 
     // Limits
-    myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
+    myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.getMaxClipboardContents()));
 
     // Strip trailing spaces on save
 
@@ -283,8 +283,8 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     boolean uiSettingsChanged = false;
     int maxClipboardContents = getMaxClipboardContents();
-    if (uiSettings.MAX_CLIPBOARD_CONTENTS != maxClipboardContents) {
-      uiSettings.MAX_CLIPBOARD_CONTENTS = maxClipboardContents;
+    if (uiSettings.getMaxClipboardContents() != maxClipboardContents) {
+      uiSettings.setMaxClipboardContents(maxClipboardContents);
       uiSettingsChanged = true;
     }
 
@@ -449,7 +449,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     // Limits
 
 
-    isModified |= getMaxClipboardContents() != uiSettings.MAX_CLIPBOARD_CONTENTS;
+    isModified |= getMaxClipboardContents() != uiSettings.getMaxClipboardContents();
 
     // Paste
 

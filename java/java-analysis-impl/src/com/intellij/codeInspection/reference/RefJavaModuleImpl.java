@@ -37,7 +37,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private List<RequiredModule> myRequiredModules;
 
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
-    super(javaModule.getModuleName(), javaModule, manager);
+    super(javaModule.getName(), javaModule, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
   }
 
@@ -91,7 +91,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
             PsiJavaModule requiredModule = (PsiJavaModule)element;
             Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
             if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
-            myRequiredModules.add(new RequiredModule(requiredModule.getModuleName(), packagesExportedByModule, statement.isPublic()));
+            myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.isPublic()));
           }
         }
       }
@@ -110,7 +110,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
             if (packageName != null && moduleElement instanceof PsiJavaModule) {
               List<String> toModuleNames = myExportedPackageNames.get(packageName);
               if (toModuleNames == emptyList) myExportedPackageNames.put(packageName, toModuleNames = new ArrayList<>(1));
-              toModuleNames.add(((PsiJavaModule)moduleElement).getModuleName());
+              toModuleNames.add(((PsiJavaModule)moduleElement).getName());
             }
           }
         }

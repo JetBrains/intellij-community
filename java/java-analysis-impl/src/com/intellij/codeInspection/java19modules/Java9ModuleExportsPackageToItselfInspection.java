@@ -55,7 +55,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
       super.visitExportsStatement(statement);
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {
-        String moduleName = javaModule.getModuleName();
+        String moduleName = javaModule.getName();
         List<PsiJavaModuleReferenceElement> referenceElements = ContainerUtil.newArrayList(statement.getModuleReferences());
         for (PsiJavaModuleReferenceElement referenceElement : referenceElements) {
           if (moduleName.equals(referenceElement.getReferenceText())) {

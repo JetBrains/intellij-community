@@ -19,7 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RuntimeDashboardContent;
+import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -33,8 +33,8 @@ import java.util.List;
  */
 public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   public RemoveConfigurationAction() {
-    super(ExecutionBundle.message("runtime.dashboard.remove.configuration.action.name"),
-          ExecutionBundle.message("runtime.dashboard.remove.configuration.action.description"),
+    super(ExecutionBundle.message("run.dashboard.remove.configuration.action.name"),
+          ExecutionBundle.message("run.dashboard.remove.configuration.action.description"),
           AllIcons.General.Remove);
   }
 
@@ -50,10 +50,10 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RuntimeDashboardContent content, AnActionEvent e, List<DashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<DashboardRunConfigurationNode> nodes) {
     if (Messages.showYesNoDialog((Project)null,
-                                 ExecutionBundle.message("runtime.dashboard.remove.configuration.dialog.message"),
-                                 ExecutionBundle.message("runtime.dashboard.remove.configuration.dialog.title"),
+                                 ExecutionBundle.message("run.dashboard.remove.configuration.dialog.message"),
+                                 ExecutionBundle.message("run.dashboard.remove.configuration.dialog.title"),
                                  Messages.getWarningIcon())
         != Messages.YES) {
       return;

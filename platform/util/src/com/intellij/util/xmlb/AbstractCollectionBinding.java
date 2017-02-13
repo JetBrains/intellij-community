@@ -107,7 +107,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Collection<Object> collection = getIterable(o);
 
     String tagName = getTagName(o);
@@ -163,7 +163,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @Nullable
-  private Object serializeItem(@Nullable Object value, Object context, @NotNull SerializationFilter filter) {
+  private Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
     if (value == null) {
       LOG.warn("Collection " + myAccessor + " contains 'null' object");
       return null;

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -53,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements ApplicationComponent {
+public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final MessageBus myEventBus;
@@ -66,13 +67,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
-  @SuppressWarnings({"FieldCanBeLocal", "unused"})
-  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::clearIdCache);
   private volatile int myStructureModificationCount;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     myEventBus = bus;
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
+    LowMemoryWatcher.register(this::clearIdCache, this);
   }
 
   @Override
@@ -83,6 +83,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public void disposeComponent() {
     performShutdown();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void performShutdown() {
@@ -1252,7 +1256,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                    @NotNull String pathBeforeSlash) {
       super(id, segment, data, null, fs);
       myName = name;
-      if (pathBeforeSlash.contains("..") || pathBeforeSlash.endsWith("/")) {
+      if (!looksCanonical(pathBeforeSlash)) {
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
       myPathBeforeSlash = pathBeforeSlash;
@@ -1292,5 +1296,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     public String getUrl() {
       return getFileSystem().getProtocol() + "://" + getPath();
     }
+  }
+
+  private static boolean looksCanonical(@NotNull String pathBeforeSlash) {
+    if (pathBeforeSlash.endsWith("/")) {
+      return false;
+    }
+    int start = 0;
+    while (true) {
+      int i = pathBeforeSlash.indexOf("..", start);
+      if (i == -1) break;
+      if (i != 0 && pathBeforeSlash.charAt(i-1) == '/') return false; // /..
+      if (i < pathBeforeSlash.length() - 2 && pathBeforeSlash.charAt(i+2) == '/') return false; // ../
+      start = i+1;
+    }
+    return true;
   }
 }

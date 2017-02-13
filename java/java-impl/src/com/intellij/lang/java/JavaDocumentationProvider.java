@@ -384,7 +384,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getModuleName());
+    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getName());
 
     return sb.toString();
   }

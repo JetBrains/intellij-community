@@ -48,12 +48,12 @@ abstract class BasePrimitiveBinding extends Binding {
 
   @Nullable
   @Override
-  public final Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public final Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     return serialize(o, filter);
   }
 
   @Nullable
-  public abstract Object serialize(@NotNull Object o, @NotNull SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable SerializationFilter filter);
 
   @NotNull
   public Object deserialize(@NotNull Object context, @NotNull Element element) {

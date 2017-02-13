@@ -67,8 +67,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 /**
@@ -446,7 +446,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAfterRevisionsFiles(changes.stream())));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAllFiles(changes.stream())));
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);

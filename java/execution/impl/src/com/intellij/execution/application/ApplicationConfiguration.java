@@ -298,7 +298,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
         if (mainClass != null) {
           PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
           if (mainModule != null) {
-            params.setModuleName(mainModule.getModuleName());
+            params.setModuleName(mainModule.getName());
             PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
             modulePath.addAll(classPath.getPathList());
             classPath.clear();

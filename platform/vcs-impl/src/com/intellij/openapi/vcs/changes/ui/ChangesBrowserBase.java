@@ -53,8 +53,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
 
@@ -448,7 +448,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAfterRevisionsFiles(getSelectedChanges().stream()),
+      getAllFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
     ).distinct();
   }

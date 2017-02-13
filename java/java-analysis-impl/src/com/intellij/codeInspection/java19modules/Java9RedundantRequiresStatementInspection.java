@@ -173,7 +173,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
       return StreamEx.of(transitiveModules)
         .filter(transitiveModule -> isReexported(currentModule, transitiveModule))
-        .map(transitiveModule -> transitiveModule.getModuleName())
+        .map(transitiveModule -> transitiveModule.getName())
         .toSet();
     }
 
@@ -204,7 +204,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : reexportedDependencies) {
           PsiJavaModule tempModule =
-            parserFacade.createModuleFromText("module " + currentModule.getModuleName() + " { requires " + dependencyName + "; }");
+            parserFacade.createModuleFromText("module " + currentModule.getName() + " { requires " + dependencyName + "; }");
           Iterable<PsiRequiresStatement> tempModuleRequires = tempModule.getRequires();
           PsiRequiresStatement requiresStatement = tempModuleRequires.iterator().next();
           currentModule.addAfter(requiresStatement, addingPlace);

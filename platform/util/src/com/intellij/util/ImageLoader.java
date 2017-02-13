@@ -292,9 +292,9 @@ public class ImageLoader implements Serializable {
 
     final boolean scaleImages = (scaleFactor > 1.0f && !UIUtil.isJDKManagedHiDPI());
 
-    // For any scale factor > 1.0, always prefer retina images, because downscaling
+    // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than upscaling non-retina images.
-    final boolean loadRetinaImages = (scaleFactor > 1.0f);
+    final boolean loadRetinaImages = JBUI.isHiDPI(scaleFactor);
 
     return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), loadRetinaImages, allowFloatScaling, pixScale).load(
       ImageConverterChain.create().
@@ -314,7 +314,7 @@ public class ImageLoader implements Serializable {
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
-    return allowFloatScaling ? scale : ImageUtil.needRetinaImage(scale) ? 2f : 1f;
+    return allowFloatScaling ? scale : JBUI.isHiDPI(scale) ? 2f : 1f;
   }
 
   @NotNull
@@ -362,7 +362,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
-    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), ImageUtil.needRetinaImage(JBUI.pixScale()), true).
+    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), JBUI.isHiDPI(JBUI.pixScale()), true).
       load(ImageConverterChain.create().withRetina());
   }
 

@@ -42,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
+import static java.lang.Math.max;
+
 /**
  * @author yole
  */
@@ -111,13 +113,13 @@ public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disp
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
         BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
-        long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+        long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
-        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeToNextCheck <= 0) {
+        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
           myCheckRunnable.run();
         }
         else {
-          queueNextCheck(timeToNextCheck);
+          queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
         }
       }
     });

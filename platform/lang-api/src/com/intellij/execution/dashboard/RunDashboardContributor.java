@@ -24,18 +24,18 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * In order to show run configurations of the specific configuration type in Runtime Dashboard tool window,
+ * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
  * one should register this extension.
  *
  * @author konstantin.aleev
  */
 @ApiStatus.Experimental
-public abstract class RuntimeDashboardContributor {
-  public static final ExtensionPointName<RuntimeDashboardContributor> EP_NAME = ExtensionPointName.create("com.intellij.runtimeDashboardContributor");
+public abstract class RunDashboardContributor {
+  public static final ExtensionPointName<RunDashboardContributor> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardContributor");
 
   private final ConfigurationType myType;
 
-  protected RuntimeDashboardContributor(ConfigurationType type) {
+  protected RunDashboardContributor(ConfigurationType type) {
     myType = type;
   }
 
@@ -74,13 +74,13 @@ public abstract class RuntimeDashboardContributor {
     return DashboardRunConfigurationStatus.FAILED;
   }
 
-  public static RuntimeDashboardContributor getContributor(ConfigurationType type) {
-    if (!Registry.is("ide.runtime.dashboard")) {
+  public static RunDashboardContributor getContributor(ConfigurationType type) {
+    if (!Registry.is("ide.run.dashboard")) {
       return null;
     }
 
     if (type != null) {
-      for (RuntimeDashboardContributor contributor : EP_NAME.getExtensions()) {
+      for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
         if (type.equals(contributor.getType())) {
           return contributor;
         }

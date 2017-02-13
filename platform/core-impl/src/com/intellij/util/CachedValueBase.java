@@ -53,7 +53,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private synchronized Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
-    if (expected != getData()) return null;
+    if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
       myData = new SoftReference<Data<T>>(updatedValue);
@@ -67,7 +67,7 @@ public abstract class CachedValueBase<T> {
   }
 
   private synchronized boolean compareAndClearData(Data<T> expected) {
-    if (getData() == expected) {
+    if (getRawData() == expected) {
       myData = null;
       return true;
     }
@@ -101,7 +101,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private Data<T> getUpToDateOrNull(boolean dispose) {
-    final Data<T> data = getData();
+    final Data<T> data = getRawData();
 
     if (data != null) {
       if (isUpToDate(data)) {
@@ -115,7 +115,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  private Data<T> getData() {
+  final Data<T> getRawData() {
     return SoftReference.dereference(myData);
   }
 
@@ -223,7 +223,7 @@ public abstract class CachedValueBase<T> {
 
     if (stamp.mayCacheNow()) {
       while (true) {
-        Data<T> alreadyComputed = getData();
+        Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {

@@ -777,8 +777,8 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
         else if (startOffset < maxOffset && endOffset > minOffset) {
-          float x1 = fragment.offsetToX(Math.max(minOffset, startOffset));
-          float x2 = fragment.offsetToX(Math.min(maxOffset, endOffset));
+          float x1 = minOffset == maxOffset ? fragment.getStartX() : fragment.offsetToX(Math.max(minOffset, startOffset));
+          float x2 = minOffset == maxOffset ? fragment.getEndX() : fragment.offsetToX(Math.min(maxOffset, endOffset));
           if (x1 > x2) {
             float tmp = x1;
             x1 = x2;

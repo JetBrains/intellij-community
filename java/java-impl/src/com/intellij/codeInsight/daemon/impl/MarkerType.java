@@ -324,7 +324,7 @@ public class MarkerType {
       return null;
     }
 
-    Comparator<PsiClass> comparator = PsiClassListCellRenderer.INSTANCE.getComparator();
+    Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
     Arrays.sort(subclasses, comparator);
 
     String start = DaemonBundle.message(aClass.isInterface() ? "interface.is.implemented.by.header" : "class.is.subclassed.by.header");

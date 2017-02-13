@@ -338,7 +338,7 @@ public class EditorWindow {
       return currentlySelectedIndex;
     }
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+    if (uiSettings.getActiveMruEditorOnClose()) {
       // try to open last visited file
       final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
       for (int idx = histFiles.length - 1; idx >= 0; idx--) {
@@ -357,7 +357,7 @@ public class EditorWindow {
         }
       }
     } else
-    if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE && fileIndex + 1 < myTabbedPane.getTabCount()) {
+    if (uiSettings.getActiveRigtEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
       return fileIndex + 1;
     }
 
@@ -856,7 +856,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS
+      setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);
     }
@@ -887,9 +887,10 @@ public class EditorWindow {
     }
 
     final Icon modifiedIcon;
-    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || !UISettings.getInstance().getHideTabsIfNeed()) {
+    UISettings settings = UISettings.getInstance();
+    if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
       modifiedIcon =
-        UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+        settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
     }
     else {
@@ -900,7 +901,7 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    int xShift = !UISettings.getInstance().getHideTabsIfNeed() ? 4 : 0;
+    int xShift = !settings.getHideTabsIfNeed() ? 4 : 0;
     result.setIcon(baseIcon, i++, xShift, 0);
     if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
@@ -1068,7 +1069,7 @@ public class EditorWindow {
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(() -> {
       if (myTabbedPane == null) return;
-      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
+      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().getCloseNonModifiedFilesFirst();
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
         doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);

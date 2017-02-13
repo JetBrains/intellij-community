@@ -701,10 +701,6 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  private void scheduleDisposeOnClose(@NotNull Disposable disposable) {
-    Disposer.register(this, disposable);
-  }
-
   @NotNull
   protected AnAction[] createActions() {
     final TreeExpander treeExpander = new TreeExpander() {
@@ -738,7 +734,7 @@ public class UsageViewImpl implements UsageView {
     final AnAction expandAllAction = actionsManager.createExpandAllAction(treeExpander, component);
     final AnAction collapseAllAction = actionsManager.createCollapseAllAction(treeExpander, component);
 
-    scheduleDisposeOnClose(() -> {
+    Disposer.register(this, () -> {
       expandAllAction.unregisterCustomShortcutSet(component);
       collapseAllAction.unregisterCustomShortcutSet(component);
     });

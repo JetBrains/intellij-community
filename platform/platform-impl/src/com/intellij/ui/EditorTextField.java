@@ -569,7 +569,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return;
     }
     UISettings settings = UISettings.getInstance();
-    if (settings.getPresentationMode()) editor.setFontSize(settings.PRESENTATION_MODE_FONT_SIZE);
+    if (settings.getPresentationMode()) editor.setFontSize(settings.getPresentationModeFontSize());
   }
 
   protected boolean shouldHaveBorder() {

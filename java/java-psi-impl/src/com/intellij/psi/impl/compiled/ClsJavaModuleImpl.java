@@ -43,18 +43,6 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
   @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameElement() {
-    return myReference;
-  }
-
-  @NotNull
-  @Override
-  public String getModuleName() {
-    return myReference.getReferenceText();
-  }
-
-  @NotNull
-  @Override
   public Iterable<PsiRequiresStatement> getRequires() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
   }
@@ -85,7 +73,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
-    buffer.append("module ").append(getModuleName()).append(" {\n");
+    buffer.append("module ").append(getName()).append(" {\n");
 
     int newIndentLevel = indentLevel + getIndentSize();
 
@@ -106,7 +94,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     PsiJavaModule mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
 
     setMirrorCheckingType(element, JavaElementType.MODULE);
-    setMirror(getNameElement(), mirror.getNameElement());
+    setMirror(getNameIdentifier(), mirror.getNameIdentifier());
 
     setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
                newArrayList(mirror.getRequires()));
@@ -115,9 +103,16 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
                newArrayList(mirror.getExports()));
   }
 
+  @NotNull
+  @Override
+  public PsiJavaModuleReferenceElement getNameIdentifier() {
+    return myReference;
+  }
+
+  @NotNull
   @Override
   public String getName() {
-    return getModuleName();
+    return myReference.getReferenceText();
   }
 
   @Override
@@ -139,7 +134,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return getNameElement();
+    return getNameIdentifier();
   }
 
   @Override
@@ -154,6 +149,6 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
   @Override
   public String toString() {
-    return "PsiJavaModule:" + getModuleName();
+    return "PsiJavaModule:" + getName();
   }
 }

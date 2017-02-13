@@ -141,7 +141,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
     int size;
     if (UISettings.getInstance().getPresentationMode()) {
-      size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
+      size = UISettings.getInstance().getPresentationModeFontSize();
     }
     else {
       size = colorScheme.getGlobal().getConsoleFontSize();

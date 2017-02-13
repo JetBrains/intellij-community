@@ -29,10 +29,10 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class StopAction extends RuntimeDashboardTreeLeafAction<DashboardRunConfigurationNode> {
+public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
   public StopAction() {
-    super(ExecutionBundle.message("runtime.dashboard.stop.action.name"),
-          ExecutionBundle.message("runtime.dashboard.stop.action.description"),
+    super(ExecutionBundle.message("run.dashboard.stop.action.name"),
+          ExecutionBundle.message("run.dashboard.stop.action.description"),
           AllIcons.Actions.Suspend);
   }
 

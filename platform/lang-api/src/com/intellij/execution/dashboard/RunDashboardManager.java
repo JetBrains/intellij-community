@@ -25,12 +25,12 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public interface RuntimeDashboardManager {
+public interface RunDashboardManager {
   Topic<DashboardListener> DASHBOARD_TOPIC =
-    Topic.create("runtime dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+    Topic.create("run dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  static RuntimeDashboardManager getInstance(Project project) {
-    return ServiceManager.getService(project, RuntimeDashboardManager.class);
+  static RunDashboardManager getInstance(Project project) {
+    return ServiceManager.getService(project, RunDashboardManager.class);
   }
 
   ContentManager getDashboardContentManager();

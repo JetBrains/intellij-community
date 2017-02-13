@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -50,7 +49,6 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
-
   private static final String LEFT = BorderLayout.WEST;
 
   private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
@@ -234,7 +232,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
+    if (UISettings.getInstance().getShowIconInQuickNavigation()) {
       final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
       if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
         // it won't display any new information
@@ -263,7 +261,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public Comparator<T> getComparator() {
-    return (o1, o2) -> getComparingObject(o1).compareTo(getComparingObject(o2));
+    //noinspection unchecked
+    return Comparator.comparing(this::getComparingObject);
   }
 
   @NotNull

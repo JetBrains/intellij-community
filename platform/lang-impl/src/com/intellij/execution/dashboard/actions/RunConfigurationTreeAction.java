@@ -22,7 +22,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class RunConfigurationTreeAction extends RuntimeDashboardTreeAction<DashboardRunConfigurationNode> {
+public abstract class RunConfigurationTreeAction extends RunDashboardTreeAction<DashboardRunConfigurationNode> {
   protected RunConfigurationTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }

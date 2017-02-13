@@ -36,7 +36,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element serialized = new Element(myName);
     if (value == null) {

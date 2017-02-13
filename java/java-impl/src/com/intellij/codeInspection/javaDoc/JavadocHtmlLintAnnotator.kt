@@ -38,7 +38,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
@@ -47,15 +46,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.sun.tools.doclint.DocLint
 import java.io.File
 
-class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
+class JavadocHtmlLintAnnotator() :
     ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
 
   data class Info(val file: PsiFile)
   data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
   data class Result(val annotations: List<Anno>)
 
+  override fun getPairedBatchInspectionShortName() = JavadocHtmlLintInspection.SHORT_NAME
+
   override fun collectInformation(file: PsiFile): Info? =
-      if (isJava8SourceFile(file) && "/**" in file.text && isToolEnabled(file)) Info(file) else null
+      if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null
 
   override fun doAnnotate(collectedInfo: Info): Result? {
     val file = collectedInfo.file.virtualFile!!
@@ -121,9 +122,6 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
   private fun isJava8SourceFile(file: PsiFile) =
       file is PsiJavaFile && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
       file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
-
-  private fun isToolEnabled(file: PsiFile) =
-      manual || InspectionProjectProfileManager.getInstance(file.project).currentProfile.isToolEnabled(key.value, file)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")

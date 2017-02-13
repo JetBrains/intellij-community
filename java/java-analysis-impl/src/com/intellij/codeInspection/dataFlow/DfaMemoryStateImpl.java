@@ -53,6 +53,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   // dfa value id -> indices in myEqClasses list of the classes which contain the id (or wrapped)
   private final TIntObjectHashMap<int[]> myIdToEqClassesIndices;
   private final Stack<DfaValue> myStack;
+  // Closures which correspond to the stack top (do not track other closures for now)
+  private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   private final TLongHashSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
@@ -104,6 +106,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public DfaMemoryStateImpl createCopy() {
     return new DfaMemoryStateImpl(this);
+  }
+
+  @NotNull
+  @Override
+  public DfaMemoryStateImpl createClosureState() {
+    DfaMemoryStateImpl copy = createCopy();
+    copy.flushFields();
+    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
+    for (DfaVariableValue value : vars) {
+      copy.flushDependencies(value);
+    }
+    copy.emptyStack();
+    myStackTopClosures.add(copy);
+    return copy;
+  }
+
+  List<DfaMemoryState> getStackTopClosures() {
+    return new ArrayList<>(myStackTopClosures);
   }
 
   public boolean equals(Object obj) {
@@ -221,6 +241,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public DfaValue pop() {
     myCachedHash = null;
+    myStackTopClosures.clear();
     return myStack.pop();
   }
 
@@ -232,12 +253,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void push(@NotNull DfaValue value) {
     myCachedHash = null;
+    myStackTopClosures.clear();
     myStack.push(value);
   }
 
   @Override
   public void emptyStack() {
     myCachedHash = null;
+    myStackTopClosures.clear();
     while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
       myStack.pop();
     }
@@ -1116,7 +1139,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         @Override
         public boolean execute(int id, int[] set) {
           DfaValue value = myFactory.getValue(id);
-          s.append(value + " -> " + Arrays.toString(set) + ", ");
+          s.append(value).append(" -> ").append(Arrays.toString(set)).append(", ");
           return true;
         }
       });

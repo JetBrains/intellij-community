@@ -164,7 +164,7 @@ public class PyCharmEduInitialConfigurator {
 
       uiSettings.setHideToolStripes(false);
       uiSettings.setShowMemoryIndicator(false);
-      uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
       uiSettings.setShowMainToolbar(false);
 
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
@@ -176,7 +176,7 @@ public class PyCharmEduInitialConfigurator {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
       uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));

@@ -78,7 +78,8 @@ class GitBranchPopupActions {
         .collect(toList());
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null);
+                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
+                               firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =

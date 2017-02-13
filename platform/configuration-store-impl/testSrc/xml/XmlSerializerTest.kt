@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.StoredPropertyStateTest
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
@@ -39,6 +40,7 @@ import java.util.*
   XmlSerializerTest::class,
   XmlSerializerMapTest::class,
   XmlSerializerCollectionTest::class,
+  StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class
 )
 class XmlSerializerTestSuite
@@ -240,7 +242,7 @@ internal class XmlSerializerTest {
     bean.INT_V = 987
     bean.STRING_V = "1234"
 
-    val element = bean.serialize(null)
+    val element = bean.serialize()
 
     val node = element.children.get(0)
     element.removeContent(node)
@@ -642,7 +644,7 @@ internal class XmlSerializerTest {
 private val XML_PREFIX = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
-  val element = bean.serialize(filter)
+  val element = bean.serialize<Any>(filter)
   var actual = JDOMUtil.writeElement(element, "\n").trim()
   if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
     actual = actual.substring(XML_PREFIX.length).trim()

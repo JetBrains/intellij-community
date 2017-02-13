@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +40,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +264,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
     LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
     if (languageLevelModuleExtension.getLanguageLevel() != null) {
-      languageLevelModuleExtension.writeExternal(root);
+      //noinspection ConstantConditions
+      XmlSerializer.serializeInto(languageLevelModuleExtension.getState(), root);
       isModified = true;
     }
 
@@ -442,10 +443,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
   }
 
-  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
+  public static void appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
     if (file == null) {
-      return false;
+      return;
     }
 
     final Project project = model.getModule().getProject();
@@ -455,16 +456,15 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      return appendRelatedToModule(element, classesUrl, rootName, file, module);
+      appendRelatedToModule(element, classesUrl, rootName, file, module);
     }
     else if (ProjectRootManager.getInstance(project).getFileIndex().isExcluded(file)) {
       for (Module aModule : ModuleManager.getInstance(project).getModules()) {
         if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) {
-          return true;
+          return;
         }
       }
     }
-    return false;
   }
 
   private static boolean appendRelatedToModule(Element element, String classesUrl, String rootName, VirtualFile file, Module module) {

@@ -77,7 +77,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element serialized = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
@@ -163,7 +163,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return map;
   }
 
-  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @NotNull SerializationFilter filter) {
+  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
     if (value == null) {
       return;
     }

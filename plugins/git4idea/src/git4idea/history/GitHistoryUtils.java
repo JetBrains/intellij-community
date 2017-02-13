@@ -835,7 +835,15 @@ public class GitHistoryUtils {
 
     List<T> commits = ContainerUtil.newArrayList();
 
-    loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+    try {
+      loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
 
     return commits;
   }

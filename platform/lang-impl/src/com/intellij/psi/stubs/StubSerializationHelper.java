@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -44,8 +45,9 @@ public class StubSerializationHelper {
   protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
   protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
 
-  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage) {
+  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
+    myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
   public void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
@@ -116,7 +118,7 @@ public class StubSerializationHelper {
     return idValue;
   }
 
-  private final RecentStringInterner myStringInterner = new RecentStringInterner();
+  private final RecentStringInterner myStringInterner;
 
   @NotNull
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {

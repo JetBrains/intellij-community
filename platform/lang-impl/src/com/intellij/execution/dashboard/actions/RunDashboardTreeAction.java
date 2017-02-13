@@ -24,14 +24,14 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class RuntimeDashboardTreeAction<T extends DashboardNode> extends DashboardTreeAction<T, RuntimeDashboardContent> {
-  protected RuntimeDashboardTreeAction(String text, String description, Icon icon) {
+public abstract class RunDashboardTreeAction<T extends DashboardNode> extends DashboardTreeAction<T, RunDashboardContent> {
+  protected RunDashboardTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
-  protected final RuntimeDashboardContent getTreeContent(AnActionEvent e) {
-    return e.getData(RuntimeDashboardContent.KEY);
+  protected final RunDashboardContent getTreeContent(AnActionEvent e) {
+    return e.getData(RunDashboardContent.KEY);
   }
 
   @Override

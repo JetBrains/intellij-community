@@ -16,6 +16,9 @@
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ComponentSerializationUtil
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
@@ -32,10 +35,25 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.primaryConstructor
 
-fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
-
-fun serialize(`object`: Any): Element {
-  return XmlSerializer.serialize(`object`)
+@JvmOverloads
+fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializationFilter()): Element {
+  try {
+    val clazz = javaClass
+    val binding = getBinding(clazz)
+    if (binding is BeanBinding) {
+      // top level expects not null (null indicates error, empty element will be omitted)
+      return binding.serialize(this, true, filter)
+    }
+    else {
+      return binding.serialize(this, null, filter) as Element
+    }
+  }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException("Can't serialize instance of ${this.javaClass}", e)
+  }
 }
 
 inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
@@ -70,6 +88,26 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
 fun Element.deserializeInto(bean: Any) {
   try {
     (getBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
+  }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException(e)
+  }
+}
+
+fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
+  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(javaClass))
+  (state as? BaseState)?.resetModificationCount()
+  @Suppress("UNCHECKED_CAST")
+  (this as PersistentStateComponent<Any>).loadState(state)
+}
+
+fun <T : Any> T.serializeInto(element: Element) {
+  try {
+    val binding = getBinding(javaClass)
+    (binding as BeanBinding).serializeInto(this, element, null)
   }
   catch (e: XmlSerializationException) {
     throw e
@@ -125,8 +163,7 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
 
   override fun getBinding(accessor: MutableAccessor): Binding? {
     val type = accessor.genericType
-    val aClass = typeToClass(type)
-    return if (isPrimitive(aClass)) null else getBinding(aClass, type, accessor)
+    return getClassBinding(typeToClass(type), type, accessor)
   }
 
   private fun newInstance(): Any {
@@ -142,13 +179,18 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
       return constructor.newInstance()
     }
     catch (e: RuntimeException) {
-      // if cannot create data class
-      val kClass = clazz.kotlin
-      (kClass.primaryConstructor ?: kClass.constructors.firstOrNull())?.let {
-        return it.callBy(emptyMap())
-      }
-
-      throw e
+      return createUsingKotlin(clazz) ?: throw e
+    }
+    catch (e: NoSuchMethodException) {
+      return createUsingKotlin(clazz) ?: throw e
     }
   }
+
+  private fun createUsingKotlin(clazz: Class<*>): Any? {
+    // if cannot create data class
+    val kClass = clazz.kotlin
+    return (kClass.primaryConstructor ?: kClass.constructors.firstOrNull())?.callBy(emptyMap())
+  }
 }
+
+private fun getClassBinding(clazz: Class<*>, type: Type = clazz, accessor: MutableAccessor? = null) = if (isPrimitive(clazz)) null else getBinding(clazz, type, accessor)
