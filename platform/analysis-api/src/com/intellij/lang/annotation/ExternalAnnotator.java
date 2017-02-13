@@ -78,7 +78,10 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   }
 
   /**
-   * Return inspection which should run in batch mode. Generally todo
+   * Return inspection which should run in batch mode.
+   * When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
+   * Implementing {@link com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection} and extending {@link com.intellij.codeInspection.LocalInspectionTool} would
+   * provide implementation for a batch tool which would run without read action, according to the {@link #doAnnotate(Object)} documentation
    */
   public String getPairedBatchInspectionShortName() {
     return null;
