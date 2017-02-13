@@ -226,9 +226,10 @@ class OptionalWithoutIsPresent {
     return Optional.empty();
   }
 
-  //void order(Optional<String> order) {
-  //  order.ifPresent(o -> System.out.println(order.get()));
-  //}
+  void order(Optional<String> order, boolean b) {
+    order.ifPresent(o -> System.out.println(order.get()));
+    System.out.println(order.orElseGet(() -> order.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>().trim()));
+  }
 
   public static void two(Optional<Object> o1,Optional<Object> o2) {
     if (!o1.isPresent() && !o2.isPresent()) {
