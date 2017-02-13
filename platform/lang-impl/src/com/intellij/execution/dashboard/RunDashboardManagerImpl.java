@@ -46,14 +46,14 @@ import java.util.stream.Collectors;
  * @author konstantin.aleev
  */
 @State(
-  name = "RuntimeDashboard",
+  name = "RunDashboard",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, PersistentStateComponent<RuntimeDashboardManagerImpl.State> {
+public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   @NotNull private final ContentManager myContentManager;
   private List<DashboardGrouper> myGroupers = new ArrayList<>();
 
-  public RuntimeDashboardManagerImpl(@NotNull final Project project) {
+  public RunDashboardManagerImpl(@NotNull final Project project) {
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     ContentUI contentUI = new PanelContentUI();
     myContentManager = contentFactory.createContentManager(contentUI, false, project);
@@ -68,13 +68,13 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
         .map(DashboardGrouper::new)
         .collect(Collectors.toList());
 
-      RuntimeDashboardContent dashboardContent = new RuntimeDashboardContent(project, myContentManager, myGroupers);
+      RunDashboardContent dashboardContent = new RunDashboardContent(project, myContentManager, myGroupers);
       Content content = contentFactory.createContent(dashboardContent, null, false);
       Disposer.register(content, dashboardContent);
       toolWindow.getContentManager().addContent(content);
     }
 
-    if (!Registry.is("ide.runtime.dashboard")) {
+    if (!Registry.is("ide.run.dashboard")) {
       toolWindow.setAvailable(false, null);
     }
 
@@ -88,7 +88,7 @@ public class RuntimeDashboardManagerImpl implements RuntimeDashboardManager, Per
 
   @Override
   public String getToolWindowId() {
-    return ToolWindowId.RUNTIME_DASHBOARD;
+    return ToolWindowId.RUN_DASHBOARD;
   }
 
   @Override

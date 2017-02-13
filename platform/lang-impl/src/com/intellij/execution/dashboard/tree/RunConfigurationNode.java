@@ -21,7 +21,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.DashboardRunConfigurationStatus;
-import com.intellij.execution.dashboard.RuntimeDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -68,7 +68,7 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
     boolean isStored = RunManager.getInstance(getProject()).getAllConfigurationsList().contains(configurationSettings.getConfiguration());
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
-    RuntimeDashboardContributor contributor = RuntimeDashboardContributor.getContributor(configurationSettings.getType());
+    RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
     assert contributor != null;
     Icon icon = null;
     DashboardRunConfigurationStatus status = contributor.getStatus(this);

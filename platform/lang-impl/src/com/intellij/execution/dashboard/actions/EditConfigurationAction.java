@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class EditConfigurationAction extends RunConfigurationTreeAction {
   public EditConfigurationAction() {
-    super(ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name"),
-          ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name"),
+    super(ExecutionBundle.message("run.dashboard.edit.configuration.action.name"),
+          ExecutionBundle.message("run.dashboard.edit.configuration.action.name"),
           AllIcons.Actions.EditSource);
   }
 
@@ -35,7 +35,7 @@ public class EditConfigurationAction extends RunConfigurationTreeAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setText(ExecutionBundle.message("runtime.dashboard.edit.configuration.action.name") + "...");
+      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.edit.configuration.action.name") + "...");
     }
   }
 
@@ -48,6 +48,6 @@ public class EditConfigurationAction extends RunConfigurationTreeAction {
   @Override
   protected void doActionPerformed(DashboardRunConfigurationNode node) {
     RunDialog.editConfiguration(node.getProject(), node.getConfigurationSettings(),
-                                ExecutionBundle.message("runtime.dashboard.edit.configuration.dialog.title"));
+                                ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"));
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.DashboardGroup;
 import com.intellij.execution.dashboard.DashboardGroupingRule;
-import com.intellij.execution.dashboard.RuntimeDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
@@ -38,12 +38,12 @@ import java.util.stream.Collectors;
 /**
  * @author konstantin.aleev
  */
-public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
+public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
   private final List<DashboardGrouper> myGroupers;
   private final RunConfigurationsTreeRootNode myRootElement;
 
-  public RuntimeDashboardTreeStructure(@NotNull Project project, @NotNull List<DashboardGrouper> groupers) {
+  public RunDashboardTreeStructure(@NotNull Project project, @NotNull List<DashboardGrouper> groupers) {
     super(project);
     myProject = project;
     myGroupers = groupers;
@@ -72,7 +72,7 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
 
   public class RunConfigurationsTreeRootNode extends AbstractTreeNode<Object> {
     public RunConfigurationsTreeRootNode() {
-      super(RuntimeDashboardTreeStructure.this.myProject, new Object());
+      super(RunDashboardTreeStructure.this.myProject, new Object());
     }
 
     @NotNull
@@ -81,7 +81,7 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
       List<RunConfigurationNode> nodes = new ArrayList<>();
 
       List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-        .filter(runConfiguration -> RuntimeDashboardContributor.isShowInDashboard(runConfiguration.getType()))
+        .filter(runConfiguration -> RunDashboardContributor.isShowInDashboard(runConfiguration.getType()))
         .collect(Collectors.toList());
 
       //noinspection ConstantConditions ???
@@ -102,7 +102,7 @@ public class RuntimeDashboardTreeStructure extends AbstractTreeStructureBase {
         .collect(Collectors.toList());
       List<RunContentDescriptor> notStoredDescriptors = executionManager.getRunningDescriptors(settings -> {
         RunConfiguration configuration = settings.getConfiguration();
-        return RuntimeDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
+        return RunDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
       });
       notStoredDescriptors.forEach(descriptor -> {
         Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);

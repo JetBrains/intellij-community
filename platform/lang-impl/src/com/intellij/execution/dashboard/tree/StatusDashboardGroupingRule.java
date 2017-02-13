@@ -40,8 +40,8 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.status.action.name"),
-                                      ExecutionBundle.message("runtime.dashboard.group.by.status.action.name"),
+    return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
+                                      ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
                                       AllIcons.Actions.GroupByPrefix); // TODO [konstantin.aleev] provide new icon
   }
 
@@ -65,7 +65,7 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
   public DashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof DashboardRunConfigurationNode) {
       DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
-      RuntimeDashboardContributor contributor = RuntimeDashboardContributor.getContributor(
+      RunDashboardContributor contributor = RunDashboardContributor.getContributor(
         runConfigurationNode.getConfigurationSettings().getType());
       if (contributor != null) {
         DashboardRunConfigurationStatus status = contributor.getStatus(runConfigurationNode);

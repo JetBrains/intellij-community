@@ -17,7 +17,7 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.*;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
-import com.intellij.execution.dashboard.tree.RuntimeDashboardTreeStructure;
+import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.CommonActionsManager;
@@ -58,11 +58,11 @@ import java.util.Set;
 /**
  * @author konstantin.aleev
  */
-public class RuntimeDashboardContent extends JPanel implements TreeContent, Disposable {
-  public static final DataKey<RuntimeDashboardContent> KEY = DataKey.create("runtimeDashboardContent");
-  @NonNls private static final String PLACE_TOOLBAR = "RuntimeDashboardContent#Toolbar";
-  @NonNls private static final String RUNTIME_DASHBOARD_TOOLBAR = "RuntimeDashboardToolbar";
-  @NonNls private static final String RUNTIME_DASHBOARD_POPUP = "RuntimeDashboardPopup";
+public class RunDashboardContent extends JPanel implements TreeContent, Disposable {
+  public static final DataKey<RunDashboardContent> KEY = DataKey.create("runDashboardContent");
+  @NonNls private static final String PLACE_TOOLBAR = "RunDashboardContent#Toolbar";
+  @NonNls private static final String RUN_DASHBOARD_TOOLBAR = "RunDashboardToolbar";
+  @NonNls private static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
 
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
@@ -83,7 +83,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
 
   @NotNull private final Project myProject;
 
-  public RuntimeDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -102,7 +102,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myDetailsPanelLayout = new CardLayout();
     myDetailsPanel = new JPanel(myDetailsPanelLayout);
-    myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("runtime.dashboard.empty.selection.message"));
+    myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.empty.selection.message"));
     myDetailsPanel.add(MESSAGE_CARD, myMessagePanel);
     splitter.setSecondComponent(myDetailsPanel);
     add(splitter, BorderLayout.CENTER);
@@ -163,9 +163,9 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
     });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_TOOLBAR));
-    popupActionGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_POPUP));
-    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.RUNTIME_DASHBOARD_POPUP, ActionManager.getInstance());
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TOOLBAR));
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_POPUP));
+    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.RUN_DASHBOARD_POPUP, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
   }
@@ -173,7 +173,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   private void onSelectionChanged() {
     Set<AbstractTreeNode> nodes = myBuilder.getSelectedElements(AbstractTreeNode.class);
     if (nodes.size() != 1) {
-      showMessagePanel(ExecutionBundle.message("runtime.dashboard.empty.selection.message"));
+      showMessagePanel(ExecutionBundle.message("run.dashboard.empty.selection.message"));
       myLastSelection = null;
       return;
     }
@@ -196,12 +196,12 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
         return;
       }
       if (node instanceof DashboardRunConfigurationNode) {
-        showMessagePanel(ExecutionBundle.message("runtime.dashboard.not.started.configuration.message"));
+        showMessagePanel(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
         return;
       }
     }
 
-    showMessagePanel(ExecutionBundle.message("runtime.dashboard.empty.selection.message"));
+    showMessagePanel(ExecutionBundle.message("run.dashboard.empty.selection.message"));
   }
 
   private void showMessagePanel(String text) {
@@ -221,7 +221,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   }
 
   private void setupBuilder() {
-    RuntimeDashboardTreeStructure structure = new RuntimeDashboardTreeStructure(myProject, myGroupers);
+    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers);
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -262,7 +262,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
         updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
-    connection.subscribe(RuntimeDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
+    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
       @Override
       public void contentChanged(boolean withStructure) {
         updateTree(withStructure);
@@ -281,7 +281,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   }
 
   private void updateTreeIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && RuntimeDashboardContributor.isShowInDashboard(settings.getType())) {
+    if (settings != null && RunDashboardContributor.isShowInDashboard(settings.getType())) {
       updateTree(true);
     }
   }
@@ -289,7 +289,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
   private JComponent createToolbar() {
     JPanel toolBarPanel = new JPanel(new GridLayout());
     DefaultActionGroup leftGroup = new DefaultActionGroup();
-    leftGroup.add(ActionManager.getInstance().getAction(RUNTIME_DASHBOARD_TOOLBAR));
+    leftGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TOOLBAR));
     // TODO [konstantin.aleev] provide context help ID
     //leftGroup.add(new Separator());
     //leftGroup.add(new ContextHelpAction(HELP_ID));
@@ -301,7 +301,7 @@ public class RuntimeDashboardContent extends JPanel implements TreeContent, Disp
       @Override
       public Object getData(@NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
-          return RuntimeDashboardContent.this;
+          return RunDashboardContent.this;
         }
         return null;
       }

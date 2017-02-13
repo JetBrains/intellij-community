@@ -43,8 +43,8 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
-                                      ExecutionBundle.message("runtime.dashboard.group.by.folder.action.name"),
+    return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.folder.action.name"),
+                                      ExecutionBundle.message("run.dashboard.group.by.folder.action.name"),
                                       AllIcons.Actions.GroupByPackage);
   }
 

@@ -69,7 +69,7 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
     }
 
     if (RunDialog.editConfiguration(node.getProject(), copiedSettings,
-                                    ExecutionBundle.message("runtime.dashboard.edit.configuration.dialog.title"))) {
+                                    ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
       runManager.addConfiguration(copiedSettings, runManager.isConfigurationShared(settings),
                                   runManager.getBeforeRunTasks(settings.getConfiguration()), false);
     }

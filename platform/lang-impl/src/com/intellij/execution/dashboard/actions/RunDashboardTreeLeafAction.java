@@ -27,8 +27,8 @@ import java.util.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class RuntimeDashboardTreeLeafAction<T extends DashboardNode> extends RuntimeDashboardTreeAction<T> {
-  protected RuntimeDashboardTreeLeafAction(String text, String description, Icon icon) {
+public abstract class RunDashboardTreeLeafAction<T extends DashboardNode> extends RunDashboardTreeAction<T> {
+  protected RunDashboardTreeLeafAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
