@@ -115,14 +115,14 @@ public class IpnbConfigurable implements SearchableConfigurable {
     url = StringUtil.trimEnd(url, "/");
     final boolean urlModified = !url.equals(IpnbSettings.getInstance(myProject).getURL());
     if (urlModified) {
-      IpnbSettings.getInstance(myProject).setURL(url);
       IpnbConnectionManager.getInstance(myProject).shutdownKernels();
+      IpnbSettings.getInstance(myProject).setURL(url);
     }
 
     if (isCredentialsModified()) {
+      IpnbConnectionManager.getInstance(myProject).shutdownKernels();
       IpnbSettings.getInstance(myProject).setUsername(myUsernameField.getText());
       IpnbSettings.getInstance(myProject).setPassword(String.valueOf(myPasswordField.getPassword()), myProject.getLocationHash());
-      IpnbConnectionManager.getInstance(myProject).shutdownKernels();
     }
   }
 
