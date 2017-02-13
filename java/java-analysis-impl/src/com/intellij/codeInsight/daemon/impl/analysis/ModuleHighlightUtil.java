@@ -223,13 +223,13 @@ public class ModuleHighlightUtil {
         return moduleResolveError(refElement, ref);
       }
       else if (target == container) {
-        String message = JavaErrorMessages.message("module.cyclic.dependence", container.getModuleName());
+        String message = JavaErrorMessages.message("module.cyclic.dependence", container.getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
       }
       else {
         Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle((PsiJavaModule)target);
         if (cycle != null && cycle.contains(container)) {
-          Stream<String> stream = cycle.stream().map(PsiJavaModule::getModuleName);
+          Stream<String> stream = cycle.stream().map(PsiJavaModule::getName);
           if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
           String message = JavaErrorMessages.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
@@ -373,8 +373,8 @@ public class ModuleHighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
       }
 
-      String refModuleName = refModule.getModuleName();
-      String requiredName = targetModule.getModuleName();
+      String refModuleName = refModule.getName();
+      String requiredName = targetModule.getName();
       if (!(targetModule instanceof LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, refModule))) {
         String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
@@ -421,7 +421,7 @@ public class ModuleHighlightUtil {
 
   private static TextRange range(PsiJavaModule module) {
     PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
-    return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
+    return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameIdentifier().getTextRange().getEndOffset());
   }
 
   private static PsiElement range(PsiJavaCodeReferenceElement refElement) {

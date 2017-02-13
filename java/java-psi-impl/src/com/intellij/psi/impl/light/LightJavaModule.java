@@ -57,18 +57,6 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameElement() {
-    return myRefElement;
-  }
-
-  @NotNull
-  @Override
-  public String getModuleName() {
-    return myRefElement.getReferenceText();
-  }
-
-  @NotNull
-  @Override
   public Iterable<PsiRequiresStatement> getRequires() {
     return Collections.emptyList();
   }
@@ -97,9 +85,16 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return Collections.emptyList();
   }
 
+  @NotNull
+  @Override
+  public PsiJavaModuleReferenceElement getNameIdentifier() {
+    return myRefElement;
+  }
+
+  @NotNull
   @Override
   public String getName() {
-    return getModuleName();
+    return myRefElement.getReferenceText();
   }
 
   @Override
@@ -125,12 +120,12 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @Override
   public int hashCode() {
-    return getModuleName().hashCode() * 31 + getManager().hashCode();
+    return getName().hashCode() * 31 + getManager().hashCode();
   }
 
   @Override
   public String toString() {
-    return "PsiJavaModule:" + getModuleName();
+    return "PsiJavaModule:" + getName();
   }
 
   private static class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {

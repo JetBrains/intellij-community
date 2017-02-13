@@ -92,7 +92,7 @@ class JavaModuleCompletion {
     if (!(statement instanceof PsiJavaModule)) {
       PsiElement host = statement.getParent();
       if (host instanceof PsiJavaModule) {
-        String hostName = ((PsiJavaModule)host).getModuleName();
+        String hostName = ((PsiJavaModule)host).getName();
         Project project = context.getProject();
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);

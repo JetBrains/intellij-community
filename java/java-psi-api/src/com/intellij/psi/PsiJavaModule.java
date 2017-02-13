@@ -22,14 +22,14 @@ import org.jetbrains.annotations.NotNull;
  *
  * @since 2016.3
  */
-public interface PsiJavaModule extends NavigatablePsiElement, PsiNamedElement, PsiJavaDocumentedElement {
+public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierOwner, PsiJavaDocumentedElement {
   String MODULE_INFO_CLASS = "module-info";
   String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
   String JAVA_BASE = "java.base";
 
-  @NotNull PsiJavaModuleReferenceElement getNameElement();
-  @NotNull String getModuleName();
+  @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
+  @Override @NotNull String getName();
 
   @NotNull Iterable<PsiRequiresStatement> getRequires();
   @NotNull Iterable<PsiPackageAccessibilityStatement> getExports();

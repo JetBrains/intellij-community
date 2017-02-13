@@ -56,24 +56,6 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameElement() {
-    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReferenceElement.class);
-  }
-
-  @NotNull
-  @Override
-  public String getModuleName() {
-    PsiJavaModuleStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.getName();
-    }
-    else {
-      return getNameElement().getReferenceText();
-    }
-  }
-
-  @NotNull
-  @Override
   public Iterable<PsiRequiresStatement> getRequires() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
@@ -120,16 +102,29 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return psiTraverser().children(this).filter(PsiProvidesStatement.class);
   }
 
+  @NotNull
+  @Override
+  public PsiJavaModuleReferenceElement getNameIdentifier() {
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReferenceElement.class);
+  }
+
+  @NotNull
   @Override
   public String getName() {
-    return getModuleName();
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    else {
+      return getNameIdentifier().getReferenceText();
+    }
   }
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(getProject());
-    PsiJavaModuleReferenceElement newName = factory.createModuleFromText("module " + name + " {}").getNameElement();
-    getNameElement().replace(newName);
+    PsiJavaModuleReferenceElement newName = factory.createModuleFromText("module " + name + " {}").getNameIdentifier();
+    getNameIdentifier().replace(newName);
     return this;
   }
 
@@ -147,7 +142,7 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return getNameElement();
+    return getNameIdentifier();
   }
 
   @Override
@@ -162,6 +157,6 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @Override
   public String toString() {
-    return "PsiJavaModule:" + getModuleName();
+    return "PsiJavaModule:" + getName();
   }
 }
