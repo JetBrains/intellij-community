@@ -42,14 +42,14 @@ public class EditableSchemesCombo<T extends Scheme> {
   
   private SchemesCombo<T> myComboBox;
   private JPanel myRootPanel;
-  private AbstractSchemesPanel<T> mySchemesPanel;
+  private AbstractSchemesPanel<T, ?> mySchemesPanel;
   private final CardLayout myLayout;
   private final JTextField myNameEditorField;
 
   private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
   private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
 
-  public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+  public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
     myRootPanel = new JPanel(myLayout);

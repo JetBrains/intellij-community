@@ -40,7 +40,7 @@ import java.util.List;
 
 public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
 
-  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme> schemesPanel) {
+  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
 

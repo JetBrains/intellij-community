@@ -42,7 +42,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
 
-  protected CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme> schemesPanel) {
+  protected CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
 

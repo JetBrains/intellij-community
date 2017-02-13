@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * <p>
- * A standard set of scheme actions: copy, reset, rename, etc. used in {@link AbstractSchemesPanel}. More actions can be added via
+ * A standard set of scheme actions: copy, reset, rename, etc. used in {@link SimpleSchemesPanel}. More actions can be added via
  * {@link #addAdditionalActions(List)} method. Available actions depend on {@link SchemesModel}. If schemes model supports both IDE and
  * project schemes, {@link #copyToIDE(Scheme)} and {@link #copyToProject(Scheme)} must be overridden to do the actual job, default
  * implementation for the methods does nothing.
@@ -39,7 +39,7 @@ import java.util.List;
  * Import and export actions are available only if there are importer/exporter implementations for the actual scheme type.
  *
  * @param <T> The actual scheme type.
- * @see AbstractSchemesPanel
+ * @see SimpleSchemesPanel
  * @see SchemesModel
  * @see SchemeImporter
  * @see SchemeExporter
@@ -48,9 +48,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
-  private final AbstractSchemesPanel<T> mySchemesPanel;
+  private final AbstractSchemesPanel<T, ?> mySchemesPanel;
 
-  protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+  protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     mySchemeImportersNames = getSchemeImportersNames();
     mySchemeExporterNames = getSchemeExporterNames();
@@ -415,7 +415,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    */
   protected abstract Class<T> getSchemeType();
 
-  public final AbstractSchemesPanel<T> getSchemesPanel() {
+  public final AbstractSchemesPanel<T, ?> getSchemesPanel() {
     return mySchemesPanel;
   }
 }
