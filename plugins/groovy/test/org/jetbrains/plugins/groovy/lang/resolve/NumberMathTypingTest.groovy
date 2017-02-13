@@ -19,6 +19,8 @@ import com.intellij.psi.PsiClassType
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 
@@ -150,5 +152,18 @@ def foo($left a, $right b) {
         throw new RuntimeException("$left $operator $right (expected: $expected)", e)
       }
     }
+  }
+
+  void 'test resolve Number Number math methods'() {
+    fixture.configureByText '_.groovy', '''\
+def foo(Number m, Number n) {
+  m.plus n
+  m.minus n
+  m.div n
+  m.multiply n
+}
+'''
+    fixture.enableInspections GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
+    fixture.checkHighlighting()
   }
 }
