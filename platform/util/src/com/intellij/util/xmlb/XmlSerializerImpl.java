@@ -40,7 +40,7 @@ public class XmlSerializerImpl {
   private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
   @NotNull
-  static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
+  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
     try {
       Class<?> aClass = object.getClass();
       Binding binding = getClassBinding(aClass, aClass, null);
@@ -62,7 +62,7 @@ public class XmlSerializerImpl {
   }
 
   @Nullable
-  static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
+  static Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
     Class<?> aClass = object.getClass();
     return (Element)getMainBinding(aClass, aClass, null).serialize(object, null, filter);
   }

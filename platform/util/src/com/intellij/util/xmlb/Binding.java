@@ -38,7 +38,7 @@ public abstract class Binding {
   }
 
   @Nullable
-  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
 
   public boolean isBoundTo(@NotNull Element element) {
     return false;
