@@ -154,6 +154,11 @@ public class EditableSchemesCombo<T extends Scheme> {
         return mySchemesPanel.getModel().supportsProjectSchemes();
       }
 
+      @Override
+      protected boolean isProjectScheme(@NotNull T scheme) {
+        return mySchemesPanel.getModel().isProjectScheme(scheme);
+      }
+
       @NotNull
       @Override
       protected SimpleTextAttributes getSchemeAttributes(T scheme) {
