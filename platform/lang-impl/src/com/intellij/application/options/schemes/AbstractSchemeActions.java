@@ -195,10 +195,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
+        final boolean isProjectScheme = mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme);
         duplicateScheme(currentScheme,
                         SchemeNameGenerator.getUniqueName(
                       SchemeManager.getDisplayName(currentScheme), 
-                      name -> mySchemesPanel.getModel().containsScheme(name)));
+                      name -> mySchemesPanel.getModel().containsScheme(name, isProjectScheme)));
         currentScheme = getCurrentScheme();
         if (currentScheme != null)  {
           mySchemesPanel.startEdit();

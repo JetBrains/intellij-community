@@ -75,8 +75,9 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   @Override
   protected void copyToIDE(@NotNull CodeStyleScheme scheme) {
+    final boolean isProjectScheme = getModel().isProjectScheme(scheme);
     String name =
-      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName));
+      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
     CodeStyleScheme newScheme = getModel().exportProjectScheme(name);
     getModel().setUsePerProjectSettings(false);
     getModel().selectScheme(newScheme, null);

@@ -20,6 +20,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class SchemesCombo<T extends Scheme> {
     String currName = myNameEditorField.getText();
     MySchemeListItem<T> selectedItem = getSelectedItem();
     if (selectedItem != null && !currName.equals(selectedItem.getSchemeName())) {
-      String validationMessage = validateSchemeName(currName);
+      String validationMessage = validateSchemeName(currName, mySchemesPanel.getModel().isProjectScheme(ObjectUtils.notNull(selectedItem.getScheme())));
       if (validationMessage != null) {
         mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
         return;
@@ -131,7 +132,8 @@ public class SchemesCombo<T extends Scheme> {
         cancelEdit();
         return;
       }
-      String validationMessage = validateSchemeName(newName);
+      boolean isProjectScheme = mySchemesPanel.getModel().isProjectScheme(ObjectUtils.notNull(selectedItem.getScheme()));
+      String validationMessage = validateSchemeName(newName, isProjectScheme);
       if (validationMessage != null) {
         mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
       }
@@ -331,11 +333,11 @@ public class SchemesCombo<T extends Scheme> {
   }
 
   @Nullable
-  public String validateSchemeName(@NotNull String name) {
+  private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (name.isEmpty()) {
       return EMPTY_NAME_MESSAGE;
     }
-    else if (mySchemesPanel.getModel().containsScheme(name)) {
+    else if (mySchemesPanel.getModel().containsScheme(name, isProjectScheme)) {
       return NAME_ALREADY_EXISTS_MESSAGE;
     }
     return null;
