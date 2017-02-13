@@ -86,7 +86,11 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
 
   private boolean isOutdated(CachedValue<?> value) {
     return value instanceof CachedValueBase &&
-           (!((CachedValueBase)value).isFromMyProject(myProject) || !value.hasUpToDateValue());
+           (!((CachedValueBase)value).isFromMyProject(myProject) || hasOutdatedValue((CachedValueBase)value));
+  }
+
+  private static boolean hasOutdatedValue(CachedValueBase base) {
+    return !base.hasUpToDateValue() && base.getRawData() != null;
   }
 
   public Project getProject() {
