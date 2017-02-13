@@ -22,6 +22,7 @@ import com.intellij.psi.PsiVariable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
@@ -244,4 +245,20 @@ class FooSpec extends spock.lang.Specification {
     assert !elements.contains("_")
   }
 
+  void 'test method may be static'() {
+    myFixture.configureByText 'specs.groovy', '''\
+class SomeSpec extends spock.lang.Specification {
+  def cleanup() {}
+  def setupSpec() {}
+  def <warning descr="Method may be static">regularMethod</warning>() {}
+  def featureMethod() {
+    expect: 1 == 1
+  }
+}
+'''
+    def inspection = new GrMethodMayBeStaticInspection()
+    inspection.myIgnoreEmptyMethods = false
+    myFixture.enableInspections inspection
+    myFixture.checkHighlighting()
+  }
 }
