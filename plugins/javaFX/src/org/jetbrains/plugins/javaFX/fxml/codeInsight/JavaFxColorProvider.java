@@ -149,7 +149,10 @@ public class JavaFxColorProvider implements ElementColorProvider {
 
   private static Integer getComponent(Object value) {
     if (value instanceof Number) {
-      return ((Number)value).intValue();
+      int component = ((Number)value).intValue();
+      if (component >= 0 && component <= 255) {
+        return component;
+      }
     }
     return null;
   }
@@ -157,14 +160,20 @@ public class JavaFxColorProvider implements ElementColorProvider {
   private static Integer getScaledComponent(Object value) {
     if (value instanceof Number) {
       double doubleValue = ((Number)value).doubleValue();
-      return (int)(doubleValue * 255 + 0.5);
+      int component = (int)(doubleValue * 255 + 0.5);
+      if (component >= 0 && component <= 255) {
+        return component;
+      }
     }
     return null;
   }
 
-  private static Float getHsbComponent(Object value) {
+  private static Float getHsbComponent(Object value, boolean checkRange) {
     if (value instanceof Number) {
-      return ((Number)value).floatValue();
+      float component = ((Number)value).floatValue();
+      if (!checkRange || component >= 0.0f && component <= 1.0f) {
+        return component;
+      }
     }
     return null;
   }
@@ -224,9 +233,9 @@ public class JavaFxColorProvider implements ElementColorProvider {
   }
 
   private static Color getHsbColor(Object hValue, Object sValue, Object bValue, Object alphaValue) {
-    Float h = getHsbComponent(hValue);
-    Float s = getHsbComponent(sValue);
-    Float b = getHsbComponent(bValue);
+    Float h = getHsbComponent(hValue, false);
+    Float s = getHsbComponent(sValue, true);
+    Float b = getHsbComponent(bValue, true);
     Integer alpha = getScaledComponent(alphaValue);
     if (h != null && s != null && b != null && alpha != null) {
       Color hsbColor = Color.getHSBColor(h / 360.0f, s, b);
