@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -103,5 +104,29 @@ public class ConstructionUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Returns true if given expression is an empty array initializer
+   *
+   * @param expression expression to test
+   * @return true if supplied expression is an empty array initializer
+   */
+  public static boolean isEmptyArrayInitializer(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (!(expression instanceof PsiNewExpression)) return false;
+    final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    final PsiExpression[] dimensions = newExpression.getArrayDimensions();
+    if (dimensions.length == 0) {
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+      if (arrayInitializer == null) return false;
+      final PsiExpression[] initializers = arrayInitializer.getInitializers();
+      return initializers.length == 0;
+    }
+    for (PsiExpression dimension : dimensions) {
+      final String dimensionText = dimension.getText();
+      if (!"0".equals(dimensionText)) return false;
+    }
+    return true;
   }
 }
