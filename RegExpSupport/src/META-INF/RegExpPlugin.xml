@@ -39,5 +39,8 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="DuplicateAlternationBranch"
                      displayName="Duplicate branch in alternation" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="EscapedMetaCharacter" displayName="Escaped meta character"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
   </extensions>
 </idea-plugin>
