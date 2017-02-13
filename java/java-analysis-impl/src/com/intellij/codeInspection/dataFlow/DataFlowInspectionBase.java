@@ -26,6 +26,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
@@ -340,7 +341,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, runner.getInstructions());
 
-    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls());
+    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
 
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
@@ -351,7 +352,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private void reportUncheckedOptionalGet(ProblemsHolder holder, Map<PsiMethodCallExpression, ThreeState> calls) {
+  private void reportUncheckedOptionalGet(ProblemsHolder holder,
+                                          Map<PsiMethodCallExpression, ThreeState> calls,
+                                          List<PsiExpression> qualifiers) {
     for (Map.Entry<PsiMethodCallExpression, ThreeState> entry : calls.entrySet()) {
       ThreeState state = entry.getValue();
       if (state == ThreeState.YES || state == ThreeState.UNSURE && !REPORT_UNCHECKED_OPTIONALS) {
@@ -366,6 +369,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         holder.registerProblem(getElementToHighlight(call),
                                InspectionsBundle.message("dataflow.message.optional.get.definitely.absent", optionalClass.getName()));
       } else if (state == ThreeState.UNSURE) {
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        if (qualifier instanceof PsiMethodCallExpression &&
+            qualifiers.stream().anyMatch(q -> PsiEquivalenceUtil.areElementsEquivalent(q, qualifier))) {
+          // Conservatively do not report methodCall().get() cases if methodCall().isPresent() was found in the same method
+          // without deep correspondence analysis
+          continue;
+        }
         holder.registerProblem(getElementToHighlight(call),
                                InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()));
       }
@@ -920,6 +930,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
+    private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
     @Override
@@ -941,6 +952,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return myOptionalCalls;
     }
 
+    List<PsiExpression> getOptionalQualifiers() {
+      return myOptionalQualifiers;
+    }
+
     Collection<PsiCall> getAlwaysFailingCalls() {
       return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
     }
@@ -956,10 +971,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
       if (call != null) {
         String methodName = call.getMethodExpression().getReferenceName();
-        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-        if (qualifier != null && TypeUtils.isOptional(qualifier.getType()) && isOptionalGetMethodName(methodName)) {
-          ThreeState state = memState.checkOptional(memState.peek());
-          myOptionalCalls.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        if (qualifier != null && TypeUtils.isOptional(qualifier.getType())) {
+          if ("isPresent".equals(methodName) && qualifier instanceof PsiMethodCallExpression) {
+            myOptionalQualifiers.add(qualifier);
+          }
+          else if (isOptionalGetMethodName(methodName)) {
+            ThreeState state = memState.checkOptional(memState.peek());
+            myOptionalCalls.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
+          }
         }
       }
       DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);

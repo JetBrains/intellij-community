@@ -265,7 +265,7 @@ class OptionalWithoutIsPresent {
     opt2.get();
   }
 
-  static final class Range {
+  class Range {
     Optional<Integer> min = Optional.of(1);
     Optional<Integer> max = Optional.of(2);
 
