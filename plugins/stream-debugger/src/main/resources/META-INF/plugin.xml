@@ -1,24 +1,26 @@
 <idea-plugin>
-    <id>org.jetbrains.debugger.streams</id>
-    <name>Java Streams Debugger</name>
-    <version>0.0.1</version>
-    <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <id>org.jetbrains.debugger.streams</id>
+  <name>Java Streams Debugger</name>
+  <version>0.0.1</version>
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[
+  <description><![CDATA[
       <p>TBD</p>
     ]]></description>
 
-    <change-notes><![CDATA[
+  <change-notes><![CDATA[
     ]]>
-    </change-notes>
+  </change-notes>
 
-    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="171"/>
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="171"/>
 
-    <actions>
-        <action id="StreamTracerAction"
-                class="com.intellij.debugger.streams.action.StreamTracerAction"
-                icon="AllIcons.Debugger.ThreadRunning"/>
-    </actions>
+  <actions>
+    <action id="StreamTracerAction"
+            class="com.intellij.debugger.streams.action.StreamTracerAction"
+            icon="AllIcons.Debugger.ThreadRunning">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt P"/>
+    </action>
+  </actions>
 
 </idea-plugin>
