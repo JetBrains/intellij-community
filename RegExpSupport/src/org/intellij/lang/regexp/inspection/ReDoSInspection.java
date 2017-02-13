@@ -23,12 +23,20 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ReDoSInspection extends LocalInspectionTool {
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Exponential backtracking";
+  }
 
   @Override
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
