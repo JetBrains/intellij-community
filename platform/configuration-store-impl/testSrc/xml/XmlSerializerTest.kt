@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.StoredPropertyStateTest
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
@@ -39,6 +40,7 @@ import java.util.*
   XmlSerializerTest::class,
   XmlSerializerMapTest::class,
   XmlSerializerCollectionTest::class,
+  StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class
 )
 class XmlSerializerTestSuite
