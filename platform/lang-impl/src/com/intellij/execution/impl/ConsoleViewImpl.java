@@ -938,7 +938,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
     }
-    int endLine = myEditor.getDocument().getLineCount() - 1;
+    DocumentEx document = myEditor.getDocument();
+    if (document.getTextLength() == 0) return;
+
+    int endLine = Math.max(0, document.getLineCount() - 1);
 
     if (canHighlightHyperlinks) {
       myHyperlinks.highlightHyperlinks(myFilters, startLine, endLine);
