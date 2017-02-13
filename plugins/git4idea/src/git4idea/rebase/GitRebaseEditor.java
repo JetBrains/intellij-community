@@ -139,7 +139,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private void validateFields() {
     final List<GitRebaseEntry> entries = myTableModel.myEntries;
     if (entries.size() == 0) {
-      setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"));
+      setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"), myCommitsTable);
       setOKActionEnabled(false);
       return;
     }
@@ -150,7 +150,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     if (i < entries.size()) {
       GitRebaseEntry.Action action = entries.get(i).getAction();
       if (action == GitRebaseEntry.Action.squash || action == GitRebaseEntry.Action.fixup) {
-        setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())));
+        setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())), myCommitsTable);
         setOKActionEnabled(false);
         return;
       }

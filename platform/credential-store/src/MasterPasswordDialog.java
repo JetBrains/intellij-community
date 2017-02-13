@@ -66,7 +66,7 @@ public class MasterPasswordDialog extends DialogWrapper {
       super.doOKAction();
     }
     else {
-      setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount));
+      setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount), myRootPanel);
       if (info.component != null) {
         info.component.requestFocus();
       }

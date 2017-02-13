@@ -169,7 +169,7 @@ public class HgInitDialog extends DialogWrapper {
   }
 
   private void disableOKAction() {
-    setErrorText(HgVcsMessages.message("hg4idea.init.dialog.incorrect.path"));
+    setErrorText(HgVcsMessages.message("hg4idea.init.dialog.incorrect.path"), myTextFieldBrowser);
     setOKActionEnabled(false);
   }
 

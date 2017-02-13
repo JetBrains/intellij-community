@@ -66,6 +66,10 @@ public class LoginPanel {
     return String.valueOf(myPasswordField.getPassword());
   }
 
+  public JTextField getPasswordField() {
+    return myPasswordField;
+  }
+
   public String getLogin() {
     return myLoginField.getText();
   }

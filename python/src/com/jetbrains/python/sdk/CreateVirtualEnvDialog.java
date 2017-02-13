@@ -188,7 +188,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.no.base.interpreter"));
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.no.base.interpreter"), mySdkCombo);
     }
   }
 

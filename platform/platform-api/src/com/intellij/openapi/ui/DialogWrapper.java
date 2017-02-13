@@ -31,6 +31,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -59,6 +60,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -343,14 +345,12 @@ public abstract class DialogWrapper {
     installErrorPainter();
 
     myErrorPainter.setValidationInfo(info);
-    if (!myErrorText.isTextSet(info.message)) {
-      SwingUtilities.invokeLater(() -> {
-        if (myDisposed) return;
-        setErrorText(info.message);
-        myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(false);
-      });
-    }
+    SwingUtilities.invokeLater(() -> {
+      if (myDisposed) return;
+      setErrorText(info.message, info.component);
+      myPeer.getRootPane().getGlassPane().repaint();
+      getOKAction().setEnabled(false);
+    });
   }
 
   private void installErrorPainter() {
@@ -361,14 +361,12 @@ public abstract class DialogWrapper {
 
   private void clearProblems() {
     myErrorPainter.setValidationInfo(null);
-    if (!myErrorText.isTextSet(null)) {
-      SwingUtilities.invokeLater(() -> {
-        if (myDisposed) return;
-        setErrorText(null);
-        myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(true);
-      });
-    }
+    SwingUtilities.invokeLater(() -> {
+      if (myDisposed) return;
+      setErrorText(null, null);
+      myPeer.getRootPane().getGlassPane().repaint();
+      getOKAction().setEnabled(true);
+    });
   }
 
   protected void createDefaultActions() {
@@ -1916,22 +1914,63 @@ public abstract class DialogWrapper {
     }
   }
 
-  private Dimension myActualSize = null;
-  private String myLastErrorText = null;
+  private Dimension  myActualSize = null;
+  private String     myLastErrorText = null;
+  private JComponent myLastComponent = null;
 
+  /**
+   * Don't override this method. It is not final for the API compatibility.
+   * It will not be called by the DialogWrapper's validator.
+   * Use this method only in circumstances when the exact invalid component is hard to
+   * detect or the valid status is based on several fields. In other cases use
+   * <code>{@link #setErrorText(String, JComponent)}</code> method.
+   * @param text the error text to display
+   */
   protected void setErrorText(@Nullable final String text) {
-    if (Comparing.equal(myLastErrorText, text)) {
+    setErrorText(text, null);
+  }
+
+  protected void setErrorText(@Nullable final String text, @Nullable final JComponent component) {
+    if (Comparing.equal(myLastErrorText, text) && Comparing.equal(myLastComponent, component)) {
       return;
     }
-    myLastErrorText = text;
+
     myErrorTextAlarm.cancelAllRequests();
-    myErrorTextAlarm.addRequest(() -> {
-      final String text1 = myLastErrorText;
-      if (myActualSize == null && !myErrorText.isVisible()) {
-        myActualSize = getSize();
+
+    if (Registry.is("ide.inplace.errors.outline") && myLastComponent != null) {
+      myLastComponent.putClientProperty("JComponent.error.outline", Boolean.FALSE);
+    }
+
+    myLastErrorText = text;
+    myLastComponent = component;
+
+    if (Registry.is("ide.inplace.errors.outline") && component != null) {
+      Boolean outline = Boolean.valueOf(text != null && !text.isEmpty());
+      component.putClientProperty("JComponent.error.outline", outline);
+
+      if (outline) {
+        JLabel label = new JLabel();
+        int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
+        int textWidth = component.getWidth() - AllIcons.Actions.Lightning.getIconWidth();
+        if (textWidth > oneLineWidth) textWidth = oneLineWidth;
+
+        String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
+        label.setText(htmlText);
+        label.setIcon(AllIcons.Actions.Lightning);
+        label.setHorizontalAlignment(JLabel.LEADING);
+
+        component.putClientProperty("JComponent.error.balloonBuilder",
+                                    JBPopupFactory.getInstance().createBalloonBuilder(label)
+                                                                .setDisposable(getDisposable()));
       }
-      myErrorText.setError(text1);
-    }, 300, null);
+    } else {
+      myErrorTextAlarm.addRequest(() -> {
+        myErrorText.setError(myLastErrorText);
+        if (myActualSize == null && !myErrorText.isVisible()) {
+          myActualSize = getSize();
+        }
+      }, 300, null);
+    }
   }
 
   @Nullable
@@ -2128,7 +2167,7 @@ public abstract class DialogWrapper {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-      if (myInfo != null && myInfo.component != null) {
+      if (myInfo != null && myInfo.component != null && !Registry.is("ide.inplace.errors.outline")) {
         final JComponent comp = myInfo.component;
         final int w = comp.getWidth();
         final int h = comp.getHeight();
