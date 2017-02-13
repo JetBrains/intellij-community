@@ -138,7 +138,7 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
         for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
           final PsiElement referenceElement = reference.getElement();
           if (referenceElement instanceof PsiReferenceExpression) {
-            ExpressionUtils.renameReference((PsiReferenceExpression)referenceElement, name);
+            ExpressionUtils.bindReferenceTo((PsiReferenceExpression)referenceElement, name);
           }
         }
       }

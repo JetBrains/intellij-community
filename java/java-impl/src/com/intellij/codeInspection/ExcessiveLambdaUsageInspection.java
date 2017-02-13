@@ -110,7 +110,7 @@ public class ExcessiveLambdaUsageInspection extends BaseJavaBatchLocalInspection
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
       if(call == null) return;
 
-      ExpressionUtils.renameCall(call, myInfo.getTargetName(call));
+      ExpressionUtils.bindCallTo(call, myInfo.getTargetName(call));
       CommentTracker ct = new CommentTracker();
       ct.replaceAndRestoreComments(lambda, ct.text(body));
     }

@@ -159,7 +159,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
       if (!COLLECTION_STREAM.test(qualifierCall)) return;
       PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
-      ExpressionUtils.renameCall(qualifierCall, SIZE_METHOD);
+      ExpressionUtils.bindCallTo(qualifierCall, SIZE_METHOD);
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
