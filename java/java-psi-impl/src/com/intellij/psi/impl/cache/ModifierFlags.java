@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 
 /**
+ * Constants used in Java stubs; may differ from ones used in a .class file format.
+ *
  * @author max
  */
 public final class ModifierFlags {
@@ -39,6 +41,7 @@ public final class ModifierFlags {
   public static final int ABSTRACT_MASK = 0x0400;
   public static final int STRICTFP_MASK = 0x0800;
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
+  public static final int OPEN_MASK = 0x2000;
 
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
   public static final TIntObjectHashMap<String> MODIFIER_FLAG_TO_NAME_MAP = new TIntObjectHashMap<String>();
@@ -57,6 +60,7 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.ABSTRACT, ABSTRACT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STRICTFP, STRICTFP_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.OPEN, OPEN_MASK);
 
     for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keys()) {
       MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.get((String)name), (String)name);
@@ -74,6 +78,7 @@ public final class ModifierFlags {
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.DEFAULT_KEYWORD, DEFENDER_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.ABSTRACT_KEYWORD, ABSTRACT_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.STRICTFP_KEYWORD, STRICTFP_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.OPEN_KEYWORD, OPEN_MASK);
   }
 
   public static boolean hasModifierProperty(String name, int mask) {
