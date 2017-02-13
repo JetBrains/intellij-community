@@ -1,0 +1,23 @@
+<component name="CopyrightManager">
+  <settings default="">
+    <module2copyright>
+      <element module="idea openapi" copyright="openapi" />
+      <element module="community except testdata" copyright="openapi" />
+      <element module="spring-api" copyright="openapi" />
+      <element module="contrib" copyright="openapi" />
+    </module2copyright>
+    <LanguageOptions name="HTML">
+      <option name="fileTypeOverride" value="1" />
+    </LanguageOptions>
+    <LanguageOptions name="JAVA" />
+    <LanguageOptions name="Properties">
+      <option name="fileTypeOverride" value="1" />
+    </LanguageOptions>
+    <LanguageOptions name="XML">
+      <option name="fileTypeOverride" value="1" />
+    </LanguageOptions>
+    <LanguageOptions name="__TEMPLATE__">
+      <option name="addBlankAfter" value="false" />
+    </LanguageOptions>
+  </settings>
+</component>
