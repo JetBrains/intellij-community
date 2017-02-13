@@ -25,7 +25,6 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -226,7 +225,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
 
       private Comparable getComparingObject(PsiElement o1) {
-        return ReadAction.compute(() -> getRenderer(o1, targetsWithRenderers, gotoData).getComparingObject(o1));
+        return getRenderer(o1, targetsWithRenderers, gotoData).getComparingObject(o1);
       }
     };
   }

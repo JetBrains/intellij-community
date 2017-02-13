@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -267,9 +268,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @NotNull
   public Comparable getComparingObject(T element) {
-    String elementText = getElementText(element);
-    String containerText = getContainerText(element, elementText);
-    return containerText != null ? elementText + " " + containerText : elementText;
+    return ReadAction.compute(() -> {
+      String elementText = getElementText(element);
+      String containerText = getContainerText(element, elementText);
+      return containerText != null ? elementText + " " + containerText : elementText;
+    });
   }
 
   public void installSpeedSearch(PopupChooserBuilder builder) {
