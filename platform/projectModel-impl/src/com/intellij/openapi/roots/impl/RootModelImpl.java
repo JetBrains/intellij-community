@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
-import com.intellij.configurationStore.SerializationUtilKt;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +133,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       ModuleExtension model = extension.getModifiableModel(false);
 
       if (model instanceof PersistentStateComponent) {
-        SerializationUtilKt.deserializeAndLoadState((PersistentStateComponent)model, element);
+        XmlSerializer.deserializeAndLoadState((PersistentStateComponent)model, element);
       }
       else {
         //noinspection deprecation
@@ -452,6 +451,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
       if (extension instanceof PersistentStateComponent) {
+        //noinspection ConstantConditions
         XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
       }
       else {

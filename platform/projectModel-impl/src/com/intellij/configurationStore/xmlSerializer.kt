@@ -16,6 +16,9 @@
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ComponentSerializationUtil
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
@@ -85,6 +88,26 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
 fun Element.deserializeInto(bean: Any) {
   try {
     (getBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
+  }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException(e)
+  }
+}
+
+fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
+  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(javaClass))
+  (state as? BaseState)?.resetModificationCount()
+  @Suppress("UNCHECKED_CAST")
+  (this as PersistentStateComponent<Any>).loadState(state)
+}
+
+fun <T : Any> T.serializeInto(element: Element) {
+  try {
+    val binding = getBinding(javaClass)
+    (binding as BeanBinding).serializeInto(this, element, null)
   }
   catch (e: XmlSerializationException) {
     throw e
