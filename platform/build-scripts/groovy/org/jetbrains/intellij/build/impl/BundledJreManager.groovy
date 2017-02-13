@@ -130,7 +130,7 @@ class BundledJreManager {
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbsdk8")
+    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbrex8")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
