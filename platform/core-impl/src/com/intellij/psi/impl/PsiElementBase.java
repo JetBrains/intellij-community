@@ -274,7 +274,6 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     visitor.visitElement(this);
   }
 
-  @NotNull
   @Override
   public String getName() {
     return null;
