@@ -22,12 +22,14 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.profiling.ResolveProfiler;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -52,12 +55,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
@@ -596,12 +597,41 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return dot == null ? null : dot.getNode().getElementType();
   }
 
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, (ref, incomplete) -> {
+  private static final PolyVariantResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<GrReferenceExpressionImpl>() {
+
+    @Nullable
+    @Override
+    public Collection<PsiPolyVariantReference> collectDependencies(@NotNull GrReferenceExpressionImpl expression) {
+      final GrExpression qualifier = expression.getQualifier();
+      if (qualifier == null) return null;
+
+      final List<PsiPolyVariantReference> result = new SmartList<>();
+      qualifier.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof GrReferenceExpression) {
+            super.visitElement(element);
+          }
+          else if (element instanceof GrMethodCall) {
+            super.visitElement(((GrMethodCall)element).getInvokedExpression());
+          }
+        }
+
+        @Override
+        protected void elementFinished(PsiElement element) {
+          if (element instanceof GrReferenceExpression) {
+            result.add(((GrReferenceExpression)element));
+          }
+        }
+      });
+      return result;
+    }
+
+    @NotNull
+    @Override
+    public ResolveResult[] doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
       GroovyResolveResult[] regularResults = ref.multiResolve(incomplete, false);
-      if (PsiUtil.isLValueOfOperatorAssignment(this)) {
+      if (PsiUtil.isLValueOfOperatorAssignment(ref)) {
         Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
         ContainerUtil.addAll(result, ref.multiResolve(incomplete, true));
         ContainerUtil.addAll(result, regularResults);
@@ -610,7 +640,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       else {
         return regularResults;
       }
-    });
+    }
+  };
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
   }
 
   @NotNull

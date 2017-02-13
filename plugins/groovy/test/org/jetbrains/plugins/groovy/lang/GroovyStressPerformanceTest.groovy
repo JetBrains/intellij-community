@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,10 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.util.Slow
@@ -529,5 +533,54 @@ public class Doo$i {}
       myFixture.checkHighlighting true, false, false
       configure 2
     }).attempts(1).cpuBound().assertTiming()
+  }
+
+  void 'test resolve long reference chain'() {
+    def sb = new StringBuilder('''\
+class Node {
+  public Node nn
+}
+def a = new Node()
+a''')
+    def n = 1000
+    n.times {
+      sb.append '.nn'
+    }
+    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
+    def expression = (GrReferenceExpression)file.statements.last()
+    assert expression.resolve() instanceof GrField
+  }
+
+  void 'test resolve long method chain'() {
+    def sb = new StringBuilder('''\
+class Node {
+  public Node nn() {}
+}
+def a = new Node()
+a''')
+    def n = 500
+    n.times {
+      sb.append '.nn()'
+    }
+    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
+    def expression = (GrMethodCall)file.statements.last()
+    assert expression.resolveMethod() instanceof GrMethod
+  }
+
+  void 'test resolve long assignment chain'() {
+    def sb = new StringBuilder('''\
+class Node {
+  public Node plus(Node n) {n}
+}
+def a = new Node()
+a''')
+    def n = 1000
+    n.times {
+      sb.append "+= a"
+    }
+    sb.append("+= new Node()")
+    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
+    def expression = (GrAssignmentExpression)file.statements.last()
+    assert expression.resolve() instanceof GrMethod
   }
 }
