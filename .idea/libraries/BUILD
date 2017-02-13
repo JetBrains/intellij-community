@@ -39,6 +39,14 @@ java_library(
 )
 
 java_library(
+    name = "equalsverifier",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5:jar"],
+)
+
+java_library(
     name = "easymock-tools",
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -50,8 +58,20 @@ java_library(
     name = "mockito",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5:jar"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/mockito/mockito-core/2.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy/1.6.5:jar",
+        "//prebuilts/tools/common/m2/repository/net/bytebuddy/byte-buddy-agent/1.6.5:jar",
+    ],
 )
 
 java_library(
@@ -912,8 +932,8 @@ java_library(
     name = "sqlite",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:sqlite-jdbc-3.6.20.1"],
-    runtime_deps = ["//tools/idea/lib:sqlite-jdbc-3.6.20.1"],
+    exports = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
+    runtime_deps = ["//tools/idea/lib:sqlite-jdbc-3.8.11.2"],
 )
 
 java_library(

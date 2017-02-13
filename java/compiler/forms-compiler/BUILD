@@ -5,6 +5,7 @@ iml_module(
     srcs = ["src"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
+    test_tags = ["manual"],  # This is flaky on macOS and we don't use it anyway.
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/java/compiler/instrumentation-util"],
     # do not sort: must match IML order

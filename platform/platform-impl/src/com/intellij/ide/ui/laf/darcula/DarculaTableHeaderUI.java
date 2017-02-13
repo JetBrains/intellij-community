@@ -24,6 +24,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.Enumeration;
 
@@ -43,14 +44,17 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     final GraphicsConfig config = new GraphicsConfig(g);
     final Color bg = c.getBackground();
     g.setPaint(new GradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, c.getHeight(), ColorUtil.shift(bg, 0.9)));
+
+    TableColumnModel model = ((JTableHeader)c).getColumnModel();
+
     final int h = c.getHeight();
-    final int w = c.getWidth();
+    final int w = model.getTotalColumnWidth();
     g.fillRect(0,0, w, h);
     g.setPaint(ColorUtil.shift(bg, 0.75));
     g.drawLine(0, h-1, w, h-1);
     g.drawLine(w-1, 0, w-1, h-1);
 
-    final Enumeration<TableColumn> columns = ((JTableHeader)c).getColumnModel().getColumns();
+    final Enumeration<TableColumn> columns = model.getColumns();
 
     final Color lineColor = ColorUtil.shift(bg, 0.7);
     final Color shadow = Gray._255.withAlpha(30);

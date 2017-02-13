@@ -968,9 +968,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (application != null) {
       application.assertIsDispatchThread();
     }
-    else if (!SwingUtilities.isEventDispatchThread()) {
-      throw new RuntimeException(Thread.currentThread().toString());
-    }
+    // android studio: commented out to allow testing.
+    // See: https://docs.oracle.com/javase/tutorial/extra/fullscreen/rendering.html
+    // else if (!SwingUtilities.isEventDispatchThread()) {
+    //   throw new RuntimeException(Thread.currentThread().toString());
+    // }
   }
 
   @NotNull

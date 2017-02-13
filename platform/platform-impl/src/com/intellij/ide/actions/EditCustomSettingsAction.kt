@@ -93,7 +93,7 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   override fun file(): File? = EditCustomVmOptionsAction.file.value
   override fun template(): String =
       if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))
-        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see http://tools.android.com/tech-docs/configuration\n"
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see https://developer.android.com/studio/intro/studio-config.html\n"
       else
         "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
 

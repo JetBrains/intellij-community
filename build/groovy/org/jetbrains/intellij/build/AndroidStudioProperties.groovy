@@ -115,10 +115,21 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
       withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
 
+      withModule("perfd-host", "android-profilers.jar")
+      withModule("profilers", "android-profilers.jar")
+      withModule("profilers-ui", "android-profilers.jar")
 
       withModule("common", "android-base-common.jar")
 
-      // Shit, do I have to manually manage the libraries too? :-(
+      /*
+      TODO:
++      dir("resources") {
++        fileset(file: "${home}/../../out/studio/transform/libs/profilers-transform.jar")
++        dir("perfd") {
++          fileset(dir: "${home}/../../out/studio/native/out/release")
++        }
++      }
+       */
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       //withProjectLibrary("builder-model") //todo[nik] move to module libraries
@@ -159,6 +170,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
 
+  // TODO: Exclude BUILD files
   // TODO: Remove JavaFX
   // TODO: Remove annotations-java8.jar
 /*

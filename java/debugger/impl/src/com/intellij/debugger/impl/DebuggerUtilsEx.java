@@ -89,7 +89,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
-    final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
+    //final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
+    // b.android.com/222803, disable other language options for "Evaluate and Log"
+    final CodeFragmentFactory[] providers = new CodeFragmentFactory[0];
     final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="equalsverifier">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5/equalsverifier-2.1.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.1.5/equalsverifier-2.1.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

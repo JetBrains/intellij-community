@@ -40,15 +40,6 @@
     <orderEntry type="module-library" exported="">
       <library name="commons-io">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-io-2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="commons-lang">
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
         </CLASSES>
         <JAVADOC />

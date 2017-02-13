@@ -56,7 +56,7 @@ iml_module(
         "//tools/idea/plugins/gradle/lib:gradle-resources-3.2",
         "//tools/idea/plugins/gradle/lib:gradle-cli-3.2",
         "//tools/idea/plugins/gradle/lib:guava-jdk5-17.0",
-        "//tools/idea/plugins/gradle/lib:jsr305-1.3.9",
+        "//tools/idea/.idea/libraries:jsr305",
         "//tools/idea/plugins/gradle/lib:commons-io-2.2",
         "//tools/idea/plugins/gradle/lib:jna-3.2.7",
         "//tools/idea/plugins/gradle/lib:native-platform-0.11",
