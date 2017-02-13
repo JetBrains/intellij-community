@@ -58,7 +58,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -389,7 +388,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           if (file != null) {
             final InspectionProfileImpl profile;
             try {
-              profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myApplicationProfileManager, getProject(), wholePanel);
+              profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myApplicationProfileManager, getProject());
               final SingleInspectionProfilePanel existed = getProfilePanel(profile);
               if (existed != null) {
                 if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
@@ -435,12 +434,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
                                                               @NotNull BaseInspectionProfileManager profileManager,
-                                                              @NotNull Project project,
-                                                              @Nullable JPanel anchorPanel) {
-    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (!unitTestMode) {
-      LOG.assertTrue(anchorPanel != null);
-    }
+                                                              @NotNull Project project) {
     InspectionProfileImpl profile =
       new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), profileManager);
     if (Comparing.strEqual(rootElement.getName(), "component")) {
@@ -461,8 +455,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
     }
     if (!levels.isEmpty()) {
-      if (!unitTestMode) {
-        if (Messages.showYesNoDialog(anchorPanel, "Undefined severities detected: " +
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
                                                   StringUtil.join(levels, ", ") +
                                                   ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
             Messages.YES) {
