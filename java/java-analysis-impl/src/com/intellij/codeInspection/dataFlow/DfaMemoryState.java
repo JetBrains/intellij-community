@@ -35,7 +35,7 @@ public interface DfaMemoryState {
   DfaMemoryState createCopy();
 
   @NotNull
-  DfaMemoryStateImpl createClosureState();
+  DfaMemoryState createClosureState();
 
   DfaValue pop();
   DfaValue peek();
