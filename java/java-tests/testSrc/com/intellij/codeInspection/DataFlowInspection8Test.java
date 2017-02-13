@@ -69,6 +69,15 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                        "public class Assert {" +
                        "  public static void assertTrue(boolean b) {}" +
                        "}");
+    myFixture.addClass("package com.google.common.base;\n" +
+                       "\n" +
+                       "public abstract class Optional<T> {\n" +
+                       "  public static <T> Optional<T> absent() {}\n" +
+                       "  public static <T> Optional<T> of(T ref) {}\n" +
+                       "  public static <T> Optional<T> fromNullable(T ref) {}\n" +
+                       "  public abstract T get();\n" +
+                       "  public abstract boolean isPresent();\n" +
+                       "}");
     doTest();
   }
 
