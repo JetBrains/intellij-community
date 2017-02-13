@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -614,6 +615,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           }
           else if (element instanceof GrMethodCall) {
             super.visitElement(((GrMethodCall)element).getInvokedExpression());
+          }
+          else if (element instanceof GrParenthesizedExpression) {
+            super.visitElement(((GrParenthesizedExpression)element).getOperand());
           }
         }
 

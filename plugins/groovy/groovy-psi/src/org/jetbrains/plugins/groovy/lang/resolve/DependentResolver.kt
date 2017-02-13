@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache
 abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.PolyVariantResolver<T> {
 
   companion object {
-    @JvmStatic
     private val resolvingDependencies = ThreadLocal.withInitial<MutableSet<PsiPolyVariantReference>> { mutableSetOf() }
   }
 

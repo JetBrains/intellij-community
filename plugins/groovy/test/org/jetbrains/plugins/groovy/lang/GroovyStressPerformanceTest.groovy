@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -36,10 +33,6 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.util.Slow
@@ -123,7 +116,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    
+
     PlatformTestUtil.startPerformanceTest("Reparse is not incremental", 10000, {
       story.toCharArray().each {
         myFixture.type it
@@ -535,52 +528,24 @@ public class Doo$i {}
     }).attempts(1).cpuBound().assertTiming()
   }
 
-  void 'test resolve long reference chain'() {
-    def sb = new StringBuilder('''\
+  void 'test resolve long chains'() {
+    def header = """\
 class Node {
   public Node nn
-}
-def a = new Node()
-a''')
-    def n = 1000
-    n.times {
-      sb.append '.nn'
-    }
-    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
-    def expression = (GrReferenceExpression)file.statements.last()
-    assert expression.resolve() instanceof GrField
-  }
-
-  void 'test resolve long method chain'() {
-    def sb = new StringBuilder('''\
-class Node {
   public Node nn() {}
-}
-def a = new Node()
-a''')
-    def n = 500
-    n.times {
-      sb.append '.nn()'
-    }
-    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
-    def expression = (GrMethodCall)file.statements.last()
-    assert expression.resolveMethod() instanceof GrMethod
-  }
-
-  void 'test resolve long assignment chain'() {
-    def sb = new StringBuilder('''\
-class Node {
   public Node plus(Node n) {n}
 }
 def a = new Node()
-a''')
-    def n = 1000
-    n.times {
-      sb.append "+= a"
+"""
+    def data = [
+      "(a${'.nn' * 1000}).nn",                 // (a.nn.nn ...).nn ... .nn
+      "a${'.nn()' * 500}.nn",                            // a.nn().nn() ... .nn().nn
+      "a${' += a' * 1000} += new Node()",   // a += a += a ... += a += new Node()
+    ]
+    for (expressionText in data) {
+      def file = (GroovyFile)fixture.configureByText('_.groovy', header + expressionText)
+      def reference = (PsiReference)file.statements.last()
+      assert reference.resolve() != null
     }
-    sb.append("+= new Node()")
-    def file = (GroovyFile)fixture.configureByText('_.groovy', sb.toString())
-    def expression = (GrAssignmentExpression)file.statements.last()
-    assert expression.resolve() instanceof GrMethod
   }
 }

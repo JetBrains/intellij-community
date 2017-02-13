@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
@@ -51,6 +52,9 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
         public void visitElement(PsiElement element) {
           if (element instanceof GrBinaryExpression) {
             super.visitElement(element);
+          }
+          else if (element instanceof GrParenthesizedExpression) {
+            super.visitElement(((GrParenthesizedExpression)element).getOperand());
           }
         }
 
