@@ -783,6 +783,42 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(0).get()\n");
   }
 
+  // PY-20057
+  public void testClassObjectType() {
+    doTest("Type[MyClass]",
+           "from typing import Type\n" +
+           "\n" +
+           "class MyClass:\n" +
+           "    pass\n" +
+           "\n" +
+           "def f(x: Type[MyClass]): \n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testConstrainedClassObjectTypeOfParam() {
+    doTest("Type[T]",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T', bound=int)\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testConstrainedClassObjectTypeOfResultValue() {
+    doTest("int",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T', bound=int)\n" +
+           "\n" +
+           "def f(x: Type[T]) -> T:\n" +
+           "    return x()\n" +
+           "\n" +
+           "expr = f(int)");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

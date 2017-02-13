@@ -62,6 +62,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String COROUTINE = "typing.Coroutine";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String GENERIC = "typing.Generic";
+  public static final String TYPE = "typing.Type";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
@@ -482,6 +483,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (genericType != null) {
         return Ref.create(genericType);
       }
+      final PyType classObjType = getClassObjectType(resolved, context);
+      if (classObjType != null) {
+        return Ref.create(classObjType);
+      }
       final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
       if (classType != null) {
         return classType;
@@ -499,6 +504,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     finally {
       context.getExpressionCache().remove(resolved);
     }
+  }
+
+  @Nullable
+  private static PyType getClassObjectType(@Nullable PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subsExpr = (PySubscriptionExpression)resolved;
+      final PyExpression operand = subsExpr.getOperand();
+      final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
+      if (operandNames.contains(TYPE)) {
+        final PyExpression indexExpr = subsExpr.getIndexExpression();
+        if (indexExpr != null) {
+          final PyType type = Ref.deref(getType(indexExpr, context));
+          if (type instanceof PyClassType && !((PyClassType)type).isDefinition()) {
+            return new PyClassTypeImpl(((PyClassType)type).getPyClass(), false);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
