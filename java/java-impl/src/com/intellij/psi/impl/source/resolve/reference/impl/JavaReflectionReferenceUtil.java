@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -174,5 +176,10 @@ class JavaReflectionReferenceUtil {
     if (methodCall != null) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall.getArgumentList());
     }
+  }
+
+  @NotNull
+  static LookupElement withPriority(LookupElement lookupElement, boolean hasPriority) {
+    return PrioritizedLookupElement.withPriority(lookupElement, hasPriority ? 0 : -1);
   }
 }

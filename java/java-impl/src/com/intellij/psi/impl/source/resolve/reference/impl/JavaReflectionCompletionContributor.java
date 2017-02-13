@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupValueWithPriority;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -27,11 +28,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -42,18 +43,27 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Pavel.Dolgov
  */
 public class JavaReflectionCompletionContributor extends CompletionContributor {
+  private static final String CONSTRUCTOR = "getConstructor";
+  private static final String DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
+  private static final String ANNOTATION = "getAnnotation";
+  private static final String DECLARED_ANNOTATION = "getDeclaredAnnotation";
+  private static final String ANNOTATIONS_BY_TYPE = "getAnnotationsByType";
+  private static final String DECLARED_ANNOTATIONS_BY_TYPE = "getDeclaredAnnotationsByType";
+  private static final String ANNOTATED_ELEMENT = "java.lang.reflect.AnnotatedElement";
 
+  private static final Set<String> DECLARED_NAMES =
+    ContainerUtil.immutableSet(DECLARED_CONSTRUCTOR, DECLARED_ANNOTATION, DECLARED_ANNOTATIONS_BY_TYPE);
   private static final ElementPattern<? extends PsiElement> CONSTRUCTOR_ARGUMENTS = psiElement(PsiExpressionList.class)
     .withParent(psiExpression().methodCall(
       psiMethod()
-        .withName("getConstructor", "getDeclaredConstructor")
+        .withName(CONSTRUCTOR, DECLARED_CONSTRUCTOR)
         .definedInClass(CommonClassNames.JAVA_LANG_CLASS)));
 
   private static final ElementPattern<? extends PsiElement> ANNOTATION_ARGUMENTS = psiElement(PsiExpressionList.class)
     .withParent(psiExpression().methodCall(
       psiMethod()
-        .withName("getAnnotation", "getDeclaredAnnotation", "getAnnotationsByType", "getDeclaredAnnotationsByType")
-        .with(new MethodDefinedInInterfacePatternCondition("java.lang.reflect.AnnotatedElement"))));
+        .withName(ANNOTATION, DECLARED_ANNOTATION, ANNOTATIONS_BY_TYPE, DECLARED_ANNOTATIONS_BY_TYPE)
+        .with(new MethodDefinedInInterfacePatternCondition(ANNOTATED_ELEMENT))));
 
   private static final ElementPattern<PsiElement> BEGINNING_OF_CONSTRUCTOR_ARGUMENTS = beginningOfArguments(CONSTRUCTOR_ARGUMENTS);
 
@@ -79,28 +89,32 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
     }
 
     if (BEGINNING_OF_ANNOTATION_ARGUMENTS.accepts(position)) {
-      PsiClass psiClass = getQualifierClass(position);
-      if (psiClass != null) {
-        addAnnotationClasses(psiClass, result);
-      }
+      addVariants(position, (psiClass, isDeclared) -> addAnnotationClasses(psiClass, isDeclared, result));
       //TODO handle annotations on fields and methods
     }
-    if (BEGINNING_OF_CONSTRUCTOR_ARGUMENTS.accepts(position)) {
-      PsiClass psiClass = getQualifierClass(position);
+    else if (BEGINNING_OF_CONSTRUCTOR_ARGUMENTS.accepts(position)) {
+      addVariants(position, (psiClass, isDeclared) -> addConstructorParameterTypes(psiClass, isDeclared, result));
+    }
+  }
+
+  private static void addVariants(PsiElement position, BiConsumer<PsiClass, Boolean> variantAdder) {
+    PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
+    if (methodCall != null) {
+      PsiClass psiClass = getReflectiveClass(methodCall.getMethodExpression().getQualifierExpression());
       if (psiClass != null) {
-        addConstructorParameterTypes(psiClass, result);
+        String methodName = methodCall.getMethodExpression().getReferenceName();
+        if (methodName != null) {
+          variantAdder.accept(psiClass, DECLARED_NAMES.contains(methodName));
+        }
       }
     }
   }
 
-  @Nullable
-  private static PsiClass getQualifierClass(@Nullable PsiElement position) {
-    PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
-    return methodCall != null ? getReflectiveClass(methodCall.getMethodExpression().getQualifierExpression()) : null;
-  }
+  private static void addAnnotationClasses(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
+    Set<PsiAnnotation> declaredAnnotations =
+      isDeclared ? ContainerUtil.set(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
 
-  private static void addAnnotationClasses(@NotNull PsiModifierListOwner annotationsOwner, @NotNull CompletionResultSet result) {
-    PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(annotationsOwner, true, null);
+    PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(psiClass, true, null, false);
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null) {
@@ -112,6 +126,9 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
             LookupElement lookupElement = LookupElementBuilder.createWithIcon(annotationClass)
               .withPresentableText(className + ".class")
               .withInsertHandler(JavaReflectionCompletionContributor::handleAnnotationClassInsertion);
+            if (isDeclared) {
+              lookupElement = withPriority(lookupElement, declaredAnnotations.contains(annotation));
+            }
             result.addElement(lookupElement);
           }
         }
@@ -119,26 +136,22 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addConstructorParameterTypes(@NotNull PsiClass psiClass, @NotNull CompletionResultSet result) {
+  private static void addConstructorParameterTypes(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
     PsiMethod[] constructors = psiClass.getConstructors();
-    if (constructors.length != 0) {
-      for (PsiMethod constructor : constructors) {
-        String parameterTypesText = Arrays.stream(constructor.getParameterList().getParameters())
-          .map(p -> p.getType().getCanonicalText())
-          .collect(Collectors.joining(",", constructor.getName() + "(", ")"));
-
-        LookupElement lookupElement = LookupElementBuilder.createWithIcon(constructor)
-          .withPresentableText(parameterTypesText)
-          .withInsertHandler(JavaReflectionCompletionContributor::handleConstructorSignatureInsertion);
-        result.addElement(lookupElement);
+    for (PsiMethod constructor : constructors) {
+      LookupElement lookupElement = JavaLookupElementBuilder.forMethod(constructor, PsiSubstitutor.EMPTY)
+        .withInsertHandler(JavaReflectionCompletionContributor::handleConstructorSignatureInsertion);
+      if (isDeclared) {
+        lookupElement = withPriority(lookupElement, isPublic(constructor));
       }
+      result.addElement(lookupElement);
     }
   }
 
   private static void handleAnnotationClassInsertion(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Object object = item.getObject();
     if (object instanceof PsiClass) {
-      String className = ((PsiClass)object).getName();
+      String className = ((PsiClass)object).getQualifiedName();
       if (className != null) {
         handleParametersInsertion(context, className + ".class");
       }

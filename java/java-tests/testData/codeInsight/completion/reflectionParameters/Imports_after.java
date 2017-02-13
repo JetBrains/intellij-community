@@ -1,6 +1,8 @@
 import foo.bar.*;
+import foo.baz.Baz;
+
 class Main {
   void foo() throws ReflectiveOperationException {
-    Test.class.getAnnotation(Bar.class);
+    More.class.getAnnotation(Baz.class);
   }
 }
