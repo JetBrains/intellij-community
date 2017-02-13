@@ -98,6 +98,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @Transient
   var PRESENTATION_MODE = false
 
+  @Suppress("unused")
+  @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
+  @JvmField
+  @Transient
+  var OVERRIDE_NONIDEA_LAF_FONTS = false
+
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by storedProperty(true)
@@ -117,22 +123,21 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by storedProperty(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by storedProperty(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(1)
-
-  @JvmField var HIDE_KNOWN_EXTENSION_IN_TABS = false
-  @JvmField var SHOW_ICONS_IN_QUICK_NAVIGATION = true
-  @JvmField var CLOSE_NON_MODIFIED_FILES_FIRST = false
-  @JvmField var ACTIVATE_MRU_EDITOR_ON_CLOSE = false
-  @JvmField var ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false
+  @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hdeKnownExtensionInTabs by storedProperty(false)
+  @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by storedProperty(true)
+  @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST") var closeNonModifiedFilesFirst by storedProperty(false)
+  @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE") var activeMruEditorOnClose by storedProperty(false)
+  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @JvmField var COLOR_BLINDNESS: ColorBlindness? = null
-  @JvmField var MOVE_MOUSE_ON_DEFAULT_BUTTON = false
-  @JvmField var ENABLE_ALPHA_MODE = false
-  @JvmField var ALPHA_MODE_DELAY = 1500
-  @JvmField var ALPHA_MODE_RATIO = 0.5f
-  @JvmField var MAX_CLIPBOARD_CONTENTS = 5
-  @JvmField var OVERRIDE_NONIDEA_LAF_FONTS = false
-  @JvmField var SHOW_ICONS_IN_MENUS = true
+  @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton by storedProperty(false)
+  @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode by storedProperty(false)
+  @get:OptionTag("ALPHA_MODE_DELAY") var alphaModeDelay by storedProperty(1500)
+  @get:OptionTag("ALPHA_MODE_RATIO") var alphaModeRatio by storedProperty(0.5f)
+  @get:OptionTag("MAX_CLIPBOARD_CONTENTS") var maxClipboardContents by storedProperty(5)
+  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS") var overrideLafFonts by storedProperty(false)
+  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(true)
   @JvmField var DISABLE_MNEMONICS = SystemInfo.isMac // IDEADEV-33409, should be disabled by default on MacOS
   @JvmField var DISABLE_MNEMONICS_IN_CONTROLS = false
   @JvmField var USE_SMALL_LABELS_ON_TABS = SystemInfo.isMac
@@ -177,8 +182,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     // TODO[anton] consider making all IDEs use the same settings
     if (PlatformUtils.isAppCode()) {
       scrollTabLayoutInEditor = true
-      ACTIVATE_RIGHT_EDITOR_ON_CLOSE = true
-      SHOW_ICONS_IN_MENUS = false
+      activeRigtEditorOnClose = true
+      showIconsInMenus = false
     }
   }
 
@@ -215,6 +220,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     SHOW_CLOSE_BUTTON = showCloseButton
     EDITOR_AA_TYPE = editorAAType
     PRESENTATION_MODE = presentationMode
+    OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
   }
 
   private fun initDefFont() {
@@ -253,11 +259,11 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
 
     // Check that alpha delay and ratio are valid
-    if (ALPHA_MODE_DELAY < 0) {
-      ALPHA_MODE_DELAY = 1500
+    if (alphaModeDelay < 0) {
+      alphaModeDelay = 1500
     }
-    if (ALPHA_MODE_RATIO < 0.0f || ALPHA_MODE_RATIO > 1.0f) {
-      ALPHA_MODE_RATIO = 0.5f
+    if (alphaModeRatio < 0.0f || alphaModeRatio > 1.0f) {
+      alphaModeRatio = 0.5f
     }
 
     if (FONT_SCALE <= 0) {
@@ -292,8 +298,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       }
     }
 
-    if (MAX_CLIPBOARD_CONTENTS <= 0) {
-      MAX_CLIPBOARD_CONTENTS = 5
+    if (maxClipboardContents <= 0) {
+      maxClipboardContents = 5
     }
 
     fireUISettingsChanged()

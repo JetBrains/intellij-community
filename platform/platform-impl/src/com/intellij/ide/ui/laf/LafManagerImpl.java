@@ -742,7 +742,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     //  }
     //} else
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
+    if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       JBUI.setUserScaleFactor(uiSettings.FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));

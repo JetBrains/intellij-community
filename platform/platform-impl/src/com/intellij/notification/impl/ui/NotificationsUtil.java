@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class NotificationsUtil {
   @Nullable
   public static Pair<String, Integer> getFontData() {
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
+    if (uiSettings.getOverrideLafFonts()) {
       return Pair.create(uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
     }
     return UIUtil.getSystemFontData();
@@ -147,6 +147,7 @@ public class NotificationsUtil {
     if (listener == null) return null;
 
     return new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final NotificationListener listener1 = notification.getListener();

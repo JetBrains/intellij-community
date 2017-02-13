@@ -123,22 +123,22 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myHideTabsCheckbox.setEnabled(myScrollTabLayoutInEditorCheckBox.isSelected());
     myHideTabsCheckbox.setSelected(uiSettings.getHideTabsIfNeed());
     myEditorTabPlacement.setSelectedItem(uiSettings.getEditorTabPlacement());
-    myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
+    myHideKnownExtensions.setSelected(uiSettings.getHdeKnownExtensionInTabs());
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.getReuseNotModifiedTabs());
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.getShowCloseButton());
 
-    if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
+    if (uiSettings.getCloseNonModifiedFilesFirst()) {
       myCloseNonModifiedFilesFirstRadio.setSelected(true);
     }
     else {
       myCloseLRUFilesRadio.setSelected(true);
     }
-    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+    if (uiSettings.getActiveMruEditorOnClose()) {
       myActivateMRUEditorOnCloseRadio.setSelected(true);
     }
-    else if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
+    else if (uiSettings.getActiveRigtEditorOnClose()) {
       myActivateRightNeighbouringTabRadioButton.setSelected(true);
     }
     else {
@@ -170,16 +170,16 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     uiSettings.setEditorTabPlacement(tabPlacement);
 
     boolean hide = myHideKnownExtensions.isSelected();
-    if (uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS != hide) uiSettingsChanged = true;
-    uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
+    if (uiSettings.getHdeKnownExtensionInTabs() != hide) uiSettingsChanged = true;
+    uiSettings.setHdeKnownExtensionInTabs(hide);
 
     boolean dir = myShowDirectoryInTabCheckBox.isSelected();
     if (uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES != dir) uiSettingsChanged = true;
     uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = dir;
 
-    uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
-    uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
-    uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE = myActivateRightNeighbouringTabRadioButton.isSelected();
+    uiSettings.setCloseNonModifiedFilesFirst(myCloseNonModifiedFilesFirstRadio.isSelected());
+    uiSettings.setActiveMruEditorOnClose(myActivateMRUEditorOnCloseRadio.isSelected());
+    uiSettings.setActiveRigtEditorOnClose(myActivateRightNeighbouringTabRadioButton.isSelected());
 
     if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs())) uiSettingsChanged = true;
     uiSettings.setReuseNotModifiedTabs(myReuseNotModifiedTabsCheckBox.isSelected());
@@ -204,24 +204,19 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs());
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.getEditorTabPlacement();
-    isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;
+    isModified |= myHideKnownExtensions.isSelected() != uiSettings.getHdeKnownExtensionInTabs();
     isModified |= myShowDirectoryInTabCheckBox.isSelected() != uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES;
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.getScrollTabLayoutInEditor();
     isModified |= myHideTabsCheckbox.isSelected() != uiSettings.getHideTabsIfNeed();
     isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.getShowCloseButton();
 
-    isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
-    isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
-    isModified |= isModified(myActivateRightNeighbouringTabRadioButton, uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE);
+    isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.getCloseNonModifiedFilesFirst());
+    isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.getActiveMruEditorOnClose());
+    isModified |= isModified(myActivateRightNeighbouringTabRadioButton, uiSettings.getActiveRigtEditorOnClose());
 
     return isModified;
   }
-
-  @Override
-  public void disposeUIResources() {
-  }
-
 
   private static boolean isModified(JTextField textField, int value) {
     try {

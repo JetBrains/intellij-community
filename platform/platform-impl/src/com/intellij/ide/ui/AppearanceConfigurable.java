@@ -190,20 +190,20 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setShowToolWindowsNumbers(myComponent.myWindowShortcutsCheckBox.isSelected());
     update |= settings.getHideToolStripes() != !myComponent.myShowToolStripesCheckBox.isSelected();
     settings.setHideToolStripes(!myComponent.myShowToolStripesCheckBox.isSelected());
-    update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
-    settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
+    update |= settings.getShowIconsInMenus() != myComponent.myCbDisplayIconsInMenu.isSelected();
+    settings.setShowIconsInMenus(myComponent.myCbDisplayIconsInMenu.isSelected());
     update |= settings.getShowMemoryIndicator() != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
     settings.setShowMemoryIndicator(myComponent.myShowMemoryIndicatorCheckBox.isSelected());
     update |= settings.getAllowMergeButtons() != myComponent.myAllowMergeButtons.isSelected();
     settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
     update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
     settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
-    if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
+    if (settings.getOverrideLafFonts() != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
     }
-    settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
-    settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
+    settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
+    settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
     settings.HIDE_NAVIGATION_ON_FOCUS_LOSS = myComponent.myHideNavigationPopupsCheckBox.isSelected();
     settings.DND_WITH_PRESSED_ALT_ONLY = myComponent.myAltDNDCheckBox.isSelected();
 
@@ -237,8 +237,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
 
-    update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
-    settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
+    update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
+    settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
@@ -249,7 +249,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
       }
     }
-
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
@@ -263,12 +262,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       catch (NumberFormatException ignored) {
       }
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
-      if (myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE ||
-          delay != -1 && delay != settings.ALPHA_MODE_DELAY || ratio != settings.ALPHA_MODE_RATIO) {
+      if (myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode() ||
+          delay != -1 && delay != settings.getAlphaModeDelay() || ratio != settings.getAlphaModeRatio()) {
         update = true;
-        settings.ENABLE_ALPHA_MODE = myComponent.myEnableAlphaModeCheckBox.isSelected();
-        settings.ALPHA_MODE_DELAY = delay;
-        settings.ALPHA_MODE_RATIO = ratio;
+        settings.setEnableAlphaMode(myComponent.myEnableAlphaModeCheckBox.isSelected());
+        settings.setAlphaModeDelay(delay);
+        settings.setAlphaModeRatio(ratio);
       }
     }
     int tooltipDelay = Math.min(myComponent.myInitialTooltipDelaySlider.getValue(), 5000);
@@ -314,7 +313,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     initComponent();
     UISettings settings = UISettings.getInstance();
 
-    if (settings.OVERRIDE_NONIDEA_LAF_FONTS) {
+    if (settings.getOverrideLafFonts()) {
       myComponent.myFontCombo.setFontName(settings.FONT_FACE);
     } else {
       myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
@@ -331,17 +330,17 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
-    myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
+    myComponent.myCbDisplayIconsInMenu.setSelected(settings.getShowIconsInMenus());
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.getShowMemoryIndicator());
     myComponent.myAllowMergeButtons.setSelected(settings.getAllowMergeButtons());
     myComponent.myCycleScrollingCheckBox.setSelected(settings.getCycleScrolling());
 
-    myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
-    myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
+    myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
+    myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.HIDE_NAVIGATION_ON_FOCUS_LOSS);
     myComponent.myAltDNDCheckBox.setSelected(settings.DND_WITH_PRESSED_ALT_ONLY);
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
-    myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
+    myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
@@ -354,18 +353,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
     if (alphaModeEnabled) {
-      myComponent.myEnableAlphaModeCheckBox.setSelected(settings.ENABLE_ALPHA_MODE);
+      myComponent.myEnableAlphaModeCheckBox.setSelected(settings.getEnableAlphaMode());
     }
     else {
       myComponent.myEnableAlphaModeCheckBox.setSelected(false);
     }
     myComponent.myEnableAlphaModeCheckBox.setEnabled(alphaModeEnabled);
-    myComponent.myAlphaModeDelayTextField.setText(Integer.toString(settings.ALPHA_MODE_DELAY));
-    myComponent.myAlphaModeDelayTextField.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
-    int ratio = (int)(settings.ALPHA_MODE_RATIO * 100f);
+    myComponent.myAlphaModeDelayTextField.setText(Integer.toString(settings.getAlphaModeDelay()));
+    myComponent.myAlphaModeDelayTextField.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
+    int ratio = (int)(settings.getAlphaModeRatio() * 100f);
     myComponent.myAlphaModeRatioSlider.setValue(ratio);
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
-    myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
+    myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
     myComponent.myInitialTooltipDelaySlider.setValue(Registry.intValue("ide.tooltip.initialDelay"));
     myComponent.updateCombo();
   }
@@ -398,12 +397,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
-    isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
+    isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.getShowIconsInMenus();
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.getShowMemoryIndicator();
     isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.getAllowMergeButtons();
     isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.getCycleScrolling();
 
-    isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
+    isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.getOverrideLafFonts();
 
     isModified |= myComponent.myDisableMnemonics.isSelected() != settings.DISABLE_MNEMONICS;
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
@@ -415,16 +414,16 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
 
-    isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
+    isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 
     isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
 
-    isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
+    isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.DND_WITH_PRESSED_ALT_ONLY;
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
-      isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE;
+      isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;
       try {
         delay = Integer.parseInt(myComponent.myAlphaModeDelayTextField.getText());
@@ -432,10 +431,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       catch (NumberFormatException ignored) {
       }
       if (delay != -1) {
-        isModified |= delay != settings.ALPHA_MODE_DELAY;
+        isModified |= delay != settings.getAlphaModeDelay();
       }
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
-      isModified |= ratio != settings.ALPHA_MODE_RATIO;
+      isModified |= ratio != settings.getAlphaModeRatio();
     }
     int tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
     isModified |=  tooltipDelay != Registry.intValue("ide.tooltip.initialDelay");

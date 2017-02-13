@@ -58,6 +58,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
+  fun storedProperty(defaultValue: Float = 0f): ReadWriteProperty<BaseState, Float> {
+    val result = StoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
   fun storedProperty(defaultValue: Boolean = false): ReadWriteProperty<BaseState, Boolean> {
     val result = StoredProperty(defaultValue)
     properties.add(result)

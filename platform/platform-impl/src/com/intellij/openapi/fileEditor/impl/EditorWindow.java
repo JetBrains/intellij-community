@@ -338,7 +338,7 @@ public class EditorWindow {
       return currentlySelectedIndex;
     }
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+    if (uiSettings.getActiveMruEditorOnClose()) {
       // try to open last visited file
       final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
       for (int idx = histFiles.length - 1; idx >= 0; idx--) {
@@ -357,7 +357,7 @@ public class EditorWindow {
         }
       }
     } else
-    if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE && fileIndex + 1 < myTabbedPane.getTabCount()) {
+    if (uiSettings.getActiveRigtEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
       return fileIndex + 1;
     }
 
@@ -1068,7 +1068,7 @@ public class EditorWindow {
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(() -> {
       if (myTabbedPane == null) return;
-      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
+      final boolean closeNonModifiedFilesFirst = UISettings.getInstance().getCloseNonModifiedFilesFirst();
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
         doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
