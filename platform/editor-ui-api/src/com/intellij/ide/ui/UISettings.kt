@@ -144,14 +144,15 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MAX_CLIPBOARD_CONTENTS") var maxClipboardContents by storedProperty(5)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS") var overrideLafFonts by storedProperty(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(true)
-  @JvmField var DISABLE_MNEMONICS = SystemInfo.isMac // IDEADEV-33409, should be disabled by default on MacOS
-  @JvmField var DISABLE_MNEMONICS_IN_CONTROLS = false
-  @JvmField var USE_SMALL_LABELS_ON_TABS = SystemInfo.isMac
-  @JvmField var MAX_LOOKUP_WIDTH2 = 500
-  @JvmField var MAX_LOOKUP_LIST_HEIGHT = 11
-  @JvmField var HIDE_NAVIGATION_ON_FOCUS_LOSS = true
-  @JvmField var DND_WITH_PRESSED_ALT_ONLY = false
-  @JvmField var DEFAULT_AUTOSCROLL_TO_SOURCE = false
+  // IDEADEV-33409, should be disabled by default on MacOS
+  @get:OptionTag("DISABLE_MNEMONICS") var disableMnemonics by storedProperty(SystemInfo.isMac)
+  @get:OptionTag("DISABLE_MNEMONICS_IN_CONTROLS") var disableMnemonicsInControls by storedProperty(false)
+  @get:OptionTag("USE_SMALL_LABELS_ON_TABS") var useSmallLabelsOnTabs by storedProperty(SystemInfo.isMac)
+  @get:OptionTag("MAX_LOOKUP_WIDTH2") var maxLookupWidth by storedProperty(500)
+  @get:OptionTag("MAX_LOOKUP_LIST_HEIGHT") var maxLookupListHeight by storedProperty(11)
+  @get:OptionTag("HIDE_NAVIGATION_ON_FOCUS_LOSS") var hideNavigationOnFocusLoss by storedProperty(true)
+  @get:OptionTag("DND_WITH_PRESSED_ALT_ONLY") var dndWithPressedAltOnly by storedProperty(false)
+  @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE") var defaultAutoScrollToSource by storedProperty(false)
   @Transient var presentationMode = false
   @get:OptionTag("PRESENTATION_MODE_FONT_SIZE") var presentationModeFontSize by storedProperty(24)
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
@@ -173,9 +174,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   init {
     tweakPlatformDefaults()
 
-    val scrollToSource = WelcomeWizardUtil.getAutoScrollToSource()
-    if (scrollToSource != null) {
-      DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource
+    WelcomeWizardUtil.getAutoScrollToSource()?.let {
+      defaultAutoScrollToSource = it
     }
   }
 

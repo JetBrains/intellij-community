@@ -135,7 +135,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   protected boolean isCloseByFocusLost() {
-    return UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS;
+    return UISettings.getInstance().getHideNavigationOnFocusLoss();
   }
 
   @Override
@@ -193,7 +193,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
       // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
       final Dimension currentSize = myDropdownPopup.getSize();
-      if (UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS ||
+      if (UISettings.getInstance().getHideNavigationOnFocusLoss() ||
           preferredBounds.width > currentSize.width || preferredBounds.height > currentSize.height) {
         myDropdownPopup.setSize(preferredBounds.getSize());
       }

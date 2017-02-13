@@ -204,14 +204,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
     settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
-    settings.HIDE_NAVIGATION_ON_FOCUS_LOSS = myComponent.myHideNavigationPopupsCheckBox.isSelected();
-    settings.DND_WITH_PRESSED_ALT_ONLY = myComponent.myAltDNDCheckBox.isSelected();
+    settings.setHideNavigationOnFocusLoss(myComponent.myHideNavigationPopupsCheckBox.isSelected());
+    settings.setDndWithPressedAltOnly(myComponent.myAltDNDCheckBox.isSelected());
 
-    update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
-    settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
+    update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
+    settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
 
-    update |= settings.USE_SMALL_LABELS_ON_TABS != myComponent.myUseSmallLabelsOnTabs.isSelected();
-    settings.USE_SMALL_LABELS_ON_TABS = myComponent.myUseSmallLabelsOnTabs.isSelected();
+    update |= settings.getUseSmallLabelsOnTabs() != myComponent.myUseSmallLabelsOnTabs.isSelected();
+    settings.setUseSmallLabelsOnTabs(myComponent.myUseSmallLabelsOnTabs.isSelected());
 
     update |= settings.getWideScreenSupport() != myComponent.myWidescreenLayoutCheckBox.isSelected();
     settings.setWideScreenSupport(myComponent.myWidescreenLayoutCheckBox.isSelected());
@@ -234,8 +234,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       updateEditorScheme = true;
     }
 
-    update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
-    settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
+    update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
+    settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
 
     update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
@@ -337,19 +337,19 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
-    myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.HIDE_NAVIGATION_ON_FOCUS_LOSS);
-    myComponent.myAltDNDCheckBox.setSelected(settings.DND_WITH_PRESSED_ALT_ONLY);
+    myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
+    myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
-    myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
-    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
+    myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
+    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
     myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
-    myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
+    myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
     if (alphaModeEnabled) {
@@ -404,10 +404,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.getOverrideLafFonts();
 
-    isModified |= myComponent.myDisableMnemonics.isSelected() != settings.DISABLE_MNEMONICS;
-    isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
+    isModified |= myComponent.myDisableMnemonics.isSelected() != settings.getDisableMnemonics();
+    isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.getDisableMnemonicsInControls();
 
-    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
+    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.getUseSmallLabelsOnTabs();
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
@@ -419,8 +419,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
-    isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
-    isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.DND_WITH_PRESSED_ALT_ONLY;
+    isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
+    isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();

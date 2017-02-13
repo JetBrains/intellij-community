@@ -103,7 +103,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useSmallLabels() {
-    return UISettings.getInstance().USE_SMALL_LABELS_ON_TABS;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs();
   }
 
   @Override
@@ -115,8 +115,6 @@ public class JBEditorTabs extends JBTabsImpl {
   public boolean hasUnderline() {
     return isSingleRow() && !Registry.is("ide.new.editor.tabs.selection");
   }
-
-
 
   @Override
   protected void doPaintInactive(Graphics2D g2d,
