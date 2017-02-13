@@ -123,7 +123,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
         else {
           //if profile was disabled and cancel after apply was pressed
-          final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
+          final InspectionProfile profile = profiles.getSelectedScheme();
           final boolean canExecute = profile != null && profile.isExecutable(project);
           dialog.setOKActionEnabled(canExecute);
         }
