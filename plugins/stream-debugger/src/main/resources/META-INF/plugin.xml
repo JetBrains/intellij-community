@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>org.jetbrains.debugger.streams</id>
+    <name>Java Streams Debugger</name>
+    <version>0.0.1</version>
+    <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+
+    <description><![CDATA[
+      <p>TBD</p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+    ]]>
+    </change-notes>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="171"/>
+
+    <actions>
+        <action id="StreamTracerAction"
+                class="com.intellij.debugger.streams.action.StreamTracerAction"
+                icon="AllIcons.Debugger.ThreadRunning"/>
+    </actions>
+
+</idea-plugin>

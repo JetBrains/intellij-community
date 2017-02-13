@@ -1,0 +1,34 @@
+buildscript {
+    repositories {
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+}
+
+plugins {
+    id "org.jetbrains.intellij" version "0.1.10"
+}
+
+repositories {
+    jcenter()
+}
+
+apply plugin: 'idea'
+apply plugin: 'org.jetbrains.intellij'
+apply plugin: 'java'
+
+group 'com.intellij.debugger.stream'
+version '1.0-SNAPSHOT'
+
+intellij {
+    type = 'IC'
+    version = 'LATEST-EAP-SNAPSHOT'
+
+    pluginName = 'stream-debugger'
+    updateSinceUntilBuild = false
+
+    sandboxDirectory = project.rootDir.canonicalPath + "/.sandbox"
+}
+
+dependencies {
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
+}
