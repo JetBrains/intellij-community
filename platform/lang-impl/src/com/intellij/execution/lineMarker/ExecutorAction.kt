@@ -100,7 +100,7 @@ class ExecutorAction private constructor(private val origin: AnAction,
 
   override fun isPopup(): Boolean = origin !is ActionGroup || origin.isPopup
 
-  override fun hideIfNoVisibleChildren(): Boolean = origin !is ActionGroup || origin.hideIfNoVisibleChildren()
+  override fun hideIfNoVisibleChildren(): Boolean = origin is ActionGroup && origin.hideIfNoVisibleChildren()
 
   override fun disableIfNoVisibleChildren(): Boolean = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
 

@@ -71,7 +71,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
 
   @Override
   public boolean hideIfNoVisibleChildren() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
+    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
   }
 
   @Override
