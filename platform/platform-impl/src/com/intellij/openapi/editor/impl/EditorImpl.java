@@ -1870,7 +1870,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     return isReleased ? new Dimension()
-                      : SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().areDynamicScrollbarsEnabled()
+                      : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
                         ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                         : myView.getPreferredSize();
   }
