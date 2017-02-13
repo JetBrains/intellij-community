@@ -57,7 +57,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   private void createUIComponents() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")));
+    controlsPanel.add(new JLabel(getTitle()));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
     mySchemesCombo = new SchemesCombo<>(this);
@@ -74,7 +74,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     add(Box.createVerticalGlue());
     add(Box.createRigidArea(new Dimension(0, 10)));
   }
-  
+
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     toolbarActionGroup.add(new TopActionGroup());
@@ -150,6 +150,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
 
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
+  }
+
+  protected String getTitle() {
+    return ApplicationBundle.message("editbox.scheme.name");
   }
 
   /**
