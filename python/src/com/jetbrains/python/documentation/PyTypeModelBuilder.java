@@ -186,6 +186,19 @@ public class PyTypeModelBuilder {
       visitor.param(this);
     }
   }
+  
+  static class ClassObjectType extends TypeModel {
+    private final TypeModel classType;
+
+    public ClassObjectType(TypeModel classType) {
+      this.classType = classType;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.classObject(this);
+    }
+  } 
 
   /**
    * Builds tree-like type model for PyType
@@ -251,6 +264,9 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = build((PyCallableType)type);
     }
+    else if (type instanceof PyClassType && !((PyClassType)type).isDefinition()) {
+      result = new ClassObjectType(build(type, allowUnions));
+    }
     if (result == null) {
       result = NamedType.nameOrAny(type);
     }
@@ -309,6 +325,8 @@ public class PyTypeModelBuilder {
     void optional(OptionalType type);
 
     void tuple(TupleType type);
+
+    void classObject(ClassObjectType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -501,6 +519,13 @@ public class PyTypeModelBuilder {
       if (type.homogeneous) {
         add(", ...");
       }
+      add("]");
+    }
+
+    @Override
+    public void classObject(ClassObjectType type) {
+      add("Type[");
+      type.classType.accept(this);
       add("]");
     }
   }
