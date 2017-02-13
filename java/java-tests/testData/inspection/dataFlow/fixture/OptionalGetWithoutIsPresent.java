@@ -13,9 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.util.Optional;
+import java.util.*;
 
 class OptionalWithoutIsPresent {
+
+  void testSimple(Optional<String> o, OptionalDouble od, OptionalInt oi, OptionalLong ol) {
+    System.out.println(o.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    System.out.println(oi.<warning descr="'OptionalInt.getAsInt()' without 'isPresent()' check">getAsInt</warning>());
+    System.out.println(ol.<warning descr="'OptionalLong.getAsLong()' without 'isPresent()' check">getAsLong</warning>());
+    System.out.println(od.<warning descr="'OptionalDouble.getAsDouble()' without 'isPresent()' check">getAsDouble</warning>());
+  }
+
+  {
+    System.out.println(getIntegerOptional().<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+  }
+
+  void testWhile() {
+    Optional<String> o = Optional.empty();
+    while (!o.isPresent()) {
+      o = Optional.of("");
+    }
+    System.out.println(o.get());
+  }
+
+  void testWhile2() {
+    Optional<Integer> o = getIntegerOptional();
+    while (o.isPresent()) {
+      System.out.println(o.get());
+    }
+  }
+
+  public void testPolyadicExpression(Optional<String> value) {
+    boolean flag = value.isPresent() && "Yes".equals(value.get());
+  }
+
+  boolean testPolyadicExpression2(Optional<String> o) {
+    return !o.isPresent() || o.get().equals("j");
+  }
+
+  String testPolyadicExpression3() {
+    Optional<String> o = getOptional();
+    if (o == null || !o.isPresent()) {
+      return "";
+    }
+    return o.get();
+  }
+
+  void testNested(Optional<String> opt, String action) {
+    if (!opt.isPresent()) {
+      throw new IllegalArgumentException();
+    }
+    switch (action) {
+      case "case":
+        System.out.println(opt.get());
+        break;
+      default:
+        System.err.println(opt.get());
+    }
+  }
 
   void m(Optional<Integer> maybe) {
     if (!!!maybe.isPresent()) {
@@ -29,9 +84,9 @@ class OptionalWithoutIsPresent {
       maybe = Optional.empty();
       System.out.println(maybe.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
     }
-    boolean b = ((maybe.isPresent())) && maybe.get() == 1;
-    boolean c = (!maybe.isPresent()) || maybe.get() == 1;
-    Integer value = !maybe.isPresent() ? 0 : maybe.get();
+    boolean b = <warning descr="Condition '((maybe.isPresent()))' is always 'false'">((maybe.isPresent()))</warning> && maybe.get() == 1;
+    boolean c = <warning descr="Condition '(!maybe.isPresent())' is always 'true'">(!maybe.isPresent())</warning> || maybe.get() == 1;
+    Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!maybe.isPresent()</warning> ? 0 : maybe.get();
   }
 
   Optional<Integer> getIntegerOptional() {
@@ -42,7 +97,7 @@ class OptionalWithoutIsPresent {
     Optional<String> optional = Optional.empty();
     final boolean present = optional.isPresent();
     // optional = Optional.empty();
-    if (present) {
+    if (<warning descr="Condition 'present' is always 'false'">present</warning>) {
       final String string = optional.get();
       System.out.println(string);
     }
@@ -52,7 +107,7 @@ class OptionalWithoutIsPresent {
     Optional<String> optional = Optional.empty();
     final boolean present = optional.isPresent();
     optional = Optional.empty();
-    if (present) {
+    if (<warning descr="Condition 'present' is always 'false'">present</warning>) {
       final String string = optional.get();
       System.out.println(string);
     }
@@ -101,7 +156,7 @@ class OptionalWithoutIsPresent {
 
   private void checkAsserts2() {
     Optional<String> o3 = Optional.empty();
-    org.testng.Assert.assertTrue(o3.isPresent());
+    org.testng.Assert.<warning descr="The call to assertTrue always fails, according to its method contracts">assertTrue</warning>(o3.isPresent());
     System.out.println(o3.get());
   }
 
@@ -131,16 +186,16 @@ class OptionalWithoutIsPresent {
 
   private void checkOfNullable(String value) {
     System.out.println(Optional.ofNullable(value).<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
-    System.out.println(Optional.ofNullable(value+"a").get());
-    System.out.println(Optional.ofNullable("xyz").get());
+    System.out.println(Optional.ofNullable(<warning descr="Passing a non-null argument to 'Optional'">value+"a"</warning>).get());
+    System.out.println(Optional.ofNullable(<warning descr="Passing a non-null argument to 'Optional'">"xyz"</warning>).get());
   }
 
   public static String demo() {
     Optional<String> holder = Optional.empty();
 
-    if (! holder.isPresent()) {
+    if (<warning descr="Condition '! holder.isPresent()' is always 'true'">! holder.isPresent()</warning>) {
       holder = Optional.of("hello world");
-      if (!holder.isPresent()) {
+      if (<warning descr="Condition '!holder.isPresent()' is always 'false'">!holder.isPresent()</warning>) {
         return null;
       }
     }
@@ -243,7 +298,7 @@ class OptionalWithoutIsPresent {
   }
 
   void shortIf(Optional<String> o) {
-    if (true || o.isPresent()) {
+    if (<warning descr="Condition 'true || o.isPresent()' is always 'true'">true || o.isPresent()</warning>) {
       o.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>();
     }
   }
@@ -257,6 +312,6 @@ class OptionalWithoutIsPresent {
   }
 
   String f(Optional<String> optional, Optional<String> opt2) {
-    return optional.isPresent()  ? opt2.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>() : null;
+    return optional.isPresent()  ? opt2.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>() : "";
   }
 }

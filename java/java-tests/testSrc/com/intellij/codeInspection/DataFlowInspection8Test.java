@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,29 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
+  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
+    }
+  };
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return PROJECT_DESCRIPTOR;
   }
 
   @Override
@@ -46,8 +57,21 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
+
   public void testOptionalOfNullable() { doTest(); }
   public void testOptionalIsPresent() { doTest(); }
+  public void testOptionalGetWithoutIsPresent() {
+    myFixture.addClass("package org.junit;" +
+                       "public class Assert {" +
+                       "  public static void assertTrue(boolean b) {}" +
+                       "}");
+    myFixture.addClass("package org.testng;" +
+                       "public class Assert {" +
+                       "  public static void assertTrue(boolean b) {}" +
+                       "}");
+    doTest();
+  }
+
   public void testPrimitiveInVoidLambda() { doTest(); }
   public void testNotNullLambdaParameter() { doTest(); }
   public void testNotNullOptionalLambdaParameter() { doTest(); }

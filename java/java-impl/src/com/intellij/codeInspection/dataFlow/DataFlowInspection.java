@@ -76,6 +76,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     private final JCheckBox myTreatUnknownMembersAsNullable;
     private final JCheckBox myReportNullArguments;
     private final JCheckBox myReportNullableMethodsReturningNotNull;
+    private final JCheckBox myReportUncheckedOptionals;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -151,6 +152,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
+      myReportUncheckedOptionals = new JCheckBox("Report Optional.get() calls without previous isPresent check");
+      myReportUncheckedOptionals.setSelected(REPORT_UNCHECKED_OPTIONALS);
+      myReportUncheckedOptionals.getModel().addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          REPORT_UNCHECKED_OPTIONALS = myReportUncheckedOptionals.isSelected();
+        }
+      });
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
@@ -182,6 +192,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myReportNullableMethodsReturningNotNull, gc);
+
+      gc.gridy++;
+      add(myReportUncheckedOptionals, gc);
     }
   }
 
