@@ -166,13 +166,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     mySchemesCombo.updateSelected();
   }
 
-  /**
-   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be 
-   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes 
-   *         separators.
-   */
-  public abstract boolean supportsProjectSchemes();
-  
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),

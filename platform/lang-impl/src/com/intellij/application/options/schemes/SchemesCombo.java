@@ -188,7 +188,7 @@ public class SchemesCombo<T extends Scheme> {
   public void resetSchemes(@NotNull Collection<T> schemes) {
     myComboBoxModel.removeAllElements();
     SchemesModel<T> model = mySchemesPanel.getModel();
-    if (mySchemesPanel.supportsProjectSchemes()) {
+    if (mySchemesPanel.getModel().supportsProjectSchemes()) {
       myComboBoxModel.addElement(new MySeparatorItem(PROJECT_LEVEL));
       addItems(schemes, scheme -> model.isProjectScheme(scheme));
       myComboBoxModel.addElement(new MySeparatorItem(IDE_LEVEL));
@@ -247,7 +247,7 @@ public class SchemesCombo<T extends Scheme> {
       T scheme = value.getScheme();
       if (scheme != null) {
         append(value.getPresentableText(), getSchemeAttributes(value));
-        if (mySchemesPanel.supportsProjectSchemes()) {
+        if (mySchemesPanel.getModel().supportsProjectSchemes()) {
           if (index == -1) {
             append("  " + (mySchemesPanel.getModel().isProjectScheme(scheme) ? PROJECT_LEVEL : IDE_LEVEL),
                    SimpleTextAttributes.GRAY_ATTRIBUTES);

@@ -75,7 +75,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
-    if (mySchemesPanel.supportsProjectSchemes()) {
+    if (mySchemesPanel.getModel().supportsProjectSchemes()) {
       actions.add(new CopyToProjectAction());
       actions.add(new CopyToIDEAction());
       actions.add(new Separator());
@@ -195,7 +195,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
-        final boolean isProjectScheme = mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme);
+        final boolean isProjectScheme = mySchemesPanel.getModel().supportsProjectSchemes() && getModel().isProjectScheme(currentScheme);
         duplicateScheme(currentScheme,
                         SchemeNameGenerator.getUniqueName(
                       SchemeManager.getDisplayName(currentScheme), 

@@ -276,6 +276,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
   }
 
+  @Override
+  public boolean supportsProjectSchemes() {
+    return false;
+  }
+
 
   private void selectDefaultScheme() {
     DefaultColorsScheme defaultScheme =
