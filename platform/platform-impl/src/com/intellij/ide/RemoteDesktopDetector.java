@@ -21,21 +21,16 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentSettings;
 import com.sun.jna.platform.win32.User32;
 
-public class RemoteDesktopDetector {
+public class RemoteDesktopDetector extends RemoteDesktopService {
   private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Remote Desktop", NotificationDisplayType.BALLOON, false);
-  
-  public static RemoteDesktopDetector getInstance() {
-    return ServiceManager.getService(RemoteDesktopDetector.class);
-  }
-  
+
   private volatile boolean myFailureDetected;
   private volatile boolean myRemoteDesktopConnected;
   
@@ -81,9 +76,5 @@ public class RemoteDesktopDetector {
   
   public boolean isRemoteDesktopConnected() {
     return myRemoteDesktopConnected;
-  }
-  
-  public static boolean isRemoteSession() {
-    return getInstance().isRemoteDesktopConnected();
   }
 }
