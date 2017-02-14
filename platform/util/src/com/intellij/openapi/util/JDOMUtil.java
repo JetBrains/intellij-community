@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
@@ -368,7 +369,13 @@ public class JDOMUtil {
     write(document, file, lineSeparator);
   }
 
+  public static void write(@NotNull Parent element, @NotNull File file) throws IOException {
+    write(element, file, "\n");
+  }
+
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
+    FileUtil.createParentDirs(file);
+
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
       write(element, stream, lineSeparator);

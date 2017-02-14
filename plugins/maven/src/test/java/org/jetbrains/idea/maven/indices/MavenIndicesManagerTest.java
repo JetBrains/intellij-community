@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,19 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
     MavenServerManager.getInstance().setUseMaven2(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      myIndicesFixture.tearDown();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testEnsuringLocalRepositoryIndex() throws Exception {
@@ -51,17 +55,17 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     File dir4 = myIndicesFixture.getRepositoryHelper().getTestData("dir/bar");
 
     List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1,
-                                                                                        Collections.<Pair<String, String>>emptyList());
+                                                                                        Collections.emptyList());
     assertEquals(1, indices1.size());
     assertTrue(myIndicesFixture.getIndicesManager().getIndices().contains(indices1.get(0)));
 
     assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2,
-                                                                                   Collections.<Pair<String, String>>emptyList()));
+                                                                                   Collections.emptyList()));
     assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3,
-                                                                                   Collections.<Pair<String, String>>emptyList()));
+                                                                                   Collections.emptyList()));
 
     List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4,
-                                                                                        Collections.<Pair<String, String>>emptyList());
+                                                                                        Collections.emptyList());
     assertFalse(indices1.get(0).equals(indices2.get(0)));
   }
 
@@ -87,7 +91,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
-                                                            Collections.<Pair<String, String>>emptyList());
+                                                            Collections.emptyList());
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
