@@ -26,8 +26,6 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -39,8 +37,6 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,7 +50,6 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;
-  private final EvaluationContextImpl myEvaluationContext;
   private final ResolvedCall myResolvedCall;
   private final Map<Value, TreePath> myValue2Path = new HashMap<>();
   private final Map<TreePath, Value> myPath2Value = new HashMap<>();
@@ -64,21 +59,20 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
   private ValuesHighlightingListener myForwardListener = EMPTY_LISTENER;
   private boolean myIgnoreSelectionEvents = false;
 
-  public CollectionTree(@NotNull Project project,
-                        @NotNull ResolvedCall call,
-                        @NotNull EvaluationContextImpl evaluationContext) {
+  CollectionTree(@NotNull Project project,
+                 @NotNull ResolvedCall call,
+                 @NotNull EvaluationContextImpl evaluationContext) {
     super(project, new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myProject = project;
-    myEvaluationContext = evaluationContext;
     myNodeManager = new MyNodeManager(project);
     myResolvedCall = call;
     final List<Value> values = call.getValues();
-    final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(call.getValues()));
+    final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(call.getValues(), evaluationContext));
     setRoot(root, false);
     root.setLeaf(false);
 
-    setCellRenderer(new ColoredTreeCellRenderer() {
+    setCellRenderer(new TraceTreeCellRenderer() {
       @Override
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
@@ -87,10 +81,10 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
+        super.customizeCellRenderer(tree, value, true, expanded, leaf, row, true);
         if (value instanceof XValueNodeImpl) {
           final XValueNodeImpl node = (XValueNodeImpl)value;
           final TreePath path = node.getPath();
-          append(value.toString());
           if (myHighlighted.contains(path)) {
             setIcon(AllIcons.Debugger.ThreadStates.Idle);
           }
@@ -155,11 +149,11 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
     myIgnoreSelectionEvents = false;
   }
 
-  public void setBackwardListener(@NotNull ValuesHighlightingListener listener) {
+  void setBackwardListener(@NotNull ValuesHighlightingListener listener) {
     myBackwardListener = listener;
   }
 
-  public void setForwardListener(@NotNull ValuesHighlightingListener listener) {
+  void setForwardListener(@NotNull ValuesHighlightingListener listener) {
     myForwardListener = listener;
   }
 
@@ -177,9 +171,11 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
   private class MyRootValue extends XValue {
     private final List<Value> myValues;
+    private final EvaluationContextImpl myEvaluationContext;
 
-    MyRootValue(@NotNull List<Value> values) {
+    MyRootValue(@NotNull List<Value> values, @NotNull EvaluationContextImpl evaluationContext) {
       myValues = values;
+      myEvaluationContext = evaluationContext;
     }
 
     @Override
