@@ -17,7 +17,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 
-/*
+/**
  * @author max
  */
 public abstract class StubPsiFactory {
