@@ -142,12 +142,6 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Content[] getContent(@NotNull Element m) {
-    List<Content> list = m.getContent();
-    return list.toArray(new Content[list.size()]);
-  }
-
-  @NotNull
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[list.size()]);
