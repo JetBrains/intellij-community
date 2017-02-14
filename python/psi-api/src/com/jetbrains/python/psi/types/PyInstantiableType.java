@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.types;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A type that can describe either particular instantiated instance of a class or a class itself. 
  * 
@@ -23,5 +25,9 @@ package com.jetbrains.python.psi.types;
 public interface PyInstantiableType<T extends PyInstantiableType<T>> extends PyType {
   boolean isDefinition();
 
+  @NotNull
   T toInstance();
+
+  @NotNull
+  T toClass();
 }

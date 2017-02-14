@@ -108,8 +108,15 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
     return myIsDefinition;
   }
 
+  @NotNull
   @Override
   public PyGenericType toInstance() {
     return myIsDefinition ? new PyGenericType(myName, myBound, false) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyGenericType toClass() {
+    return myIsDefinition ? this : new PyGenericType(myName, myBound, true);
   }
 }
