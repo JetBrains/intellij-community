@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -97,7 +98,7 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    assertThat(actualImlElement).isEqualTo(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
+    assertThat(actualImlElement).isEqualTo(Paths.get(project.getBaseDir().getPath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {

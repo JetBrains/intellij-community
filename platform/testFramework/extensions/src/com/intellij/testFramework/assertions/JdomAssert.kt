@@ -24,6 +24,7 @@ import com.intellij.util.loadElement
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.jdom.Element
+import java.io.File
 import java.nio.file.Path
 
 class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
@@ -36,6 +37,9 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
 
     return this
   }
+
+  @Deprecated("isEqualTo(file: Path)", ReplaceWith("isEqualTo(file.toPath())"))
+  fun isEqualTo(file: File) = isEqualTo(file.toPath())
 
   fun isEqualTo(file: Path): JdomAssert {
     isNotNull
