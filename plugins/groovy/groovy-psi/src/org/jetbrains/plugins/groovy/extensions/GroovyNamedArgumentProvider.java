@@ -45,7 +45,7 @@ public abstract class GroovyNamedArgumentProvider {
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     // no op
   }
 
@@ -54,7 +54,7 @@ public abstract class GroovyNamedArgumentProvider {
                                 @Nullable GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     getNamedArguments(call, resolve, argumentName, forCompletion, result);
   }
 

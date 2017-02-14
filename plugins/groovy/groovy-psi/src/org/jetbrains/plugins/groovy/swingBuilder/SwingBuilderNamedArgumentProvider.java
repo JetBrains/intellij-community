@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     PsiType returnType = resolve == null ? null : ((PsiMethod)resolve).getReturnType();
     PsiClass aClass = PsiTypesUtil.getPsiClass(returnType);
     if (aClass == null) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgument
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     if (!forCompletion || !(resolve instanceof PsiMethod)) return;
 
     PsiType returnType = ((PsiMethod)resolve).getReturnType();
