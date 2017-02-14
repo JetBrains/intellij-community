@@ -39,6 +39,7 @@ public class TraceWindow extends DialogWrapper {
                      @NotNull List<ResolvedCall> calls) {
     super(project, false);
     setModal(false);
+    setTitle("Stream Trace");
     myCalls = calls;
     myEvaluationContext = evaluationContext;
 
