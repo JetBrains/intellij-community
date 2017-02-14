@@ -16,7 +16,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -121,7 +120,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
           element.setAttribute((org.jdom.Attribute)node);
         }
         else {
-          JDOMUtil.addContent(element, node);
+          addContent(element, node);
         }
       }
     }

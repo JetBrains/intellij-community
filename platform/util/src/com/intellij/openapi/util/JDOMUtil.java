@@ -141,24 +141,14 @@ public class JDOMUtil {
     return i * 31 + s.hashCode();
   }
 
+  /**
+   * @deprecated Use Element.getChildren() directly
+   */
   @NotNull
+  @Deprecated
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[list.size()]);
-  }
-
-  public static void addContent(@NotNull final Element targetElement, final Object node) {
-    if (node instanceof Content) {
-      Content content = (Content)node;
-      targetElement.addContent(content);
-    }
-    else if (node instanceof List) {
-      //noinspection unchecked
-      targetElement.addContent((List)node);
-    }
-    else {
-      throw new IllegalArgumentException("Wrong node: " + node);
-    }
   }
 
   public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
