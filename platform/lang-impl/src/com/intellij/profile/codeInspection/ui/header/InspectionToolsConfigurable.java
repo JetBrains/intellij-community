@@ -41,7 +41,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -51,6 +50,7 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -62,8 +62,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -361,14 +363,14 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
             InspectionProfileImpl profile = getSelectedObject();
             LOG.assertTrue(true);
             Element element = profile.writeScheme(false);
-            File file = new File(FileUtil.toSystemDependentName(dir.getPath()), sanitizeFileName(profile.getName()) + ".xml");
-            if (file.isFile() &&
+            Path file = Paths.get(dir.getPath(), sanitizeFileName(profile.getName()) + ".xml");
+            if (Files.isRegularFile(file.toAbsolutePath()) &&
                 Messages.showOkCancelDialog(wholePanel, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
                                             Messages.getQuestionIcon()) != Messages.OK) {
               return;
             }
 
-            JDOMUtil.write(element, file, "\n");
+            JdomKt.write(element, file);
           }
           catch (IOException e1) {
             LOG.error(e1);
