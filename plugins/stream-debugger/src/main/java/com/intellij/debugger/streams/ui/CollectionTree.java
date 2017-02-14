@@ -33,6 +33,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
@@ -47,6 +48,8 @@ import java.util.stream.Collectors;
 public class CollectionTree extends XDebuggerTree implements ValuesHighlightingListener {
   private static final ValuesHighlightingListener EMPTY_LISTENER = (values, direction) -> {
   };
+
+  private static final TreePath[] EMPTY_PATHS = new TreePath[0];
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;
@@ -114,9 +117,11 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
         return;
       }
 
-      final TreePath[] paths = e.getPaths();
+      @Nullable final TreePath[] selectedPaths = getSelectionPaths();
+
+      @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<Value> values1 =
-        Arrays.stream(paths).filter(e::isAddedPath).map(myPath2Value::get).filter(Objects::nonNull).collect(Collectors.toList());
+        Arrays.stream(paths).map(myPath2Value::get).filter(Objects::nonNull).collect(Collectors.toList());
       if (values1.isEmpty()) {
         return;
       }
