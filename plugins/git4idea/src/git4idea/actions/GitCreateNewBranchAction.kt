@@ -63,6 +63,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
   private fun collectData(e: AnActionEvent): Data {
     val project = e.project ?: return Data.Invisible()
     val manager = getRepositoryManager(project)
+    if (manager.repositories.isEmpty()) return Data.Invisible()
 
     val log = e.getData(VcsLogDataKeys.VCS_LOG)
     if (log != null) {
