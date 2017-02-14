@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.tools.ant.types.FileSet
+import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
@@ -293,27 +294,31 @@ class DistributionJARsBuilder {
     def enabledModulesSet = buildContext.productProperties.productLayout.enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
-      checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values())
+      checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
       buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars)
     }
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames) {
-    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml") }
+  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiValuesMap<String, String> moduleExcludes) {
+    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
 
     moduleNames.each {
-      if (containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class")) {
+      if (containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
         buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$mainPluginModule' plugin, because they are included into a platform JAR. " +
                                     "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
       }
     }
   }
 
-  private boolean containsFileInOutput(String moduleName, String filePath) {
-    return new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false), filePath).exists()
+  private boolean containsFileInOutput(String moduleName, String filePath, Collection<String> excludes) {
+    def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false))
+    def fileInOutput = new File(moduleOutput, filePath)
+    return fileInOutput.exists() && (excludes == null || excludes.every {
+      createFileSet(it, moduleOutput).iterator().every { !(it instanceof FileProvider && FileUtil.filesEqual(it.file, fileInOutput))}
+    })
   }
 
   private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars) {
@@ -419,20 +424,24 @@ class DistributionJARsBuilder {
     moduleExcludes.entrySet().each { entry ->
       String module = entry.key
       entry.value.each { pattern ->
-        def fileSet = new FileSet()
-        fileSet.setProject(buildContext.ant.antProject)
         def moduleOutput = new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false))
         if (!moduleOutput.exists()) {
           buildContext.messages.error("There are excludes defined for module '$module', but the module wasn't compiled; " +
                                       "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
         }
-        fileSet.setDir(moduleOutput)
-        fileSet.createInclude().setName(pattern)
-        if (fileSet.size() == 0) {
+        if (createFileSet(pattern, moduleOutput).size() == 0) {
           buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
         }
       }
     }
+  }
+
+  private FileSet createFileSet(String pattern, File baseDir) {
+    def fileSet = new FileSet()
+    fileSet.setProject(buildContext.ant.antProject)
+    fileSet.setDir(baseDir)
+    fileSet.createInclude().setName(pattern)
+    return fileSet
   }
 
   static String basePath(BuildContext buildContext, String moduleName) {
