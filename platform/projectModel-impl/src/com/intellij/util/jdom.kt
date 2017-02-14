@@ -60,9 +60,9 @@ private fun getSaxBuilder(): SAXBuilder {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun write(element: Parent, file: Path, lineSeparator: String = "\n") {
+fun Parent.write(file: Path, lineSeparator: String = "\n") {
   BufferedOutputStream(file.outputStream()).use {
-    JDOMUtil.write(element, it, lineSeparator)
+    JDOMUtil.write(this, it, lineSeparator)
   }
 }
 

@@ -257,11 +257,6 @@ public class JDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
-  @NotNull
-  public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
-    return getSaxBuilder().build(new CharArrayReader(chars, 0, length));
-  }
-
   private static SAXBuilder getSaxBuilder() {
     SoftReference<SAXBuilder> reference = ourSaxBuilder.get();
     SAXBuilder saxBuilder = com.intellij.reference.SoftReference.dereference(reference);
