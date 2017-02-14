@@ -258,6 +258,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22507
+  public void testTimetupleOnAssertedDate() {
+    doMultiFileTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
