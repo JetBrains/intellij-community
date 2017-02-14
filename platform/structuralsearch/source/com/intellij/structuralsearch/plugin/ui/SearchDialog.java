@@ -552,6 +552,7 @@ public class SearchDialog extends DialogWrapper {
     statusPanel.add(super.createSouthPanel(), BorderLayout.NORTH);
     statusPanel.add(statusText = new JLabel(SSRBundle.message("status.message")), BorderLayout.WEST);
     statusPanel.add(status = new JLabel(), BorderLayout.CENTER);
+    status.setMinimumSize(new Dimension(0, 0));
     return statusPanel;
   }
 
