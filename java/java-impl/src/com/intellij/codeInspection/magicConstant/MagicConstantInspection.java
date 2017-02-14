@@ -46,6 +46,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -331,29 +332,37 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.LONG_RANK) {
       PsiAnnotationMemberValue intValues = magic.findAttributeValue("intValues");
       if (intValues instanceof PsiArrayInitializerMemberValue) {
-        allowedValues = ((PsiArrayInitializerMemberValue)intValues).getInitializers();
-        values = true;
+        final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)intValues).getInitializers();
+        if (initializers.length != 0) {
+          allowedValues = initializers;
+          values = true;
+        }
       }
-      else {
+      if (!values) {
         PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
         if (orValue instanceof PsiArrayInitializerMemberValue) {
-          allowedValues = ((PsiArrayInitializerMemberValue)orValue).getInitializers();
-          flags = true;
+          final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)orValue).getInitializers();
+          if (initializers.length != 0) {
+            allowedValues = initializers;
+            flags = true;
+          }
         }
       }
     }
     else if (type.equals(PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(manager.getProject())))) {
       PsiAnnotationMemberValue strValuesAttr = magic.findAttributeValue("stringValues");
       if (strValuesAttr instanceof PsiArrayInitializerMemberValue) {
-        allowedValues = ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers();
-        values = true;
+        final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers();
+        if (initializers.length != 0) {
+          allowedValues = initializers;
+          values = true;
+        }
       }
     }
     else {
       return null; //other types not supported
     }
 
-    // Also there're could be valuesFromClass of flagsFromClass
     PsiAnnotationMemberValue[] valuesFromClass = readFromClass("valuesFromClass", magic, type, manager);
     if (valuesFromClass != null) {
       allowedValues = ArrayUtil.mergeArrays(allowedValues, valuesFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
@@ -368,7 +377,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       return null;
     }
     if (values && flags) {
-      // Combination of 'flags' and 'values', that's weird TODO: Log?
+      throw new IncorrectOperationException(
+        "Misconfiguration of @MagicConstant annotation: 'flags' and 'values' shouldn't be used at the same time");
     }
     return new AllowedValues(allowedValues, flags);
   }

@@ -24,7 +24,7 @@ class Const {
 }
 public class X {
 
-  void f(@MagicConstant(intValues={Const.X, Const.Y, Const.Z, Const2.I}) int x) {
+  void f(@MagicConstant(intValues={Const.X, Const.Y, Const.Z}) int x) {
     /////////// BAD
     f(0);
     f(1);
@@ -50,7 +50,7 @@ public class X {
     f2(x);
   }
 
-  void f2(@MagicConstant(valuesFromClass =Const.class, intValues={Const2.I}) int x) {
+  void f2(@MagicConstant(valuesFromClass =Const.class) int x) {
     /////////// BAD
     f2(0);
     f2(1);
@@ -61,11 +61,11 @@ public class X {
       x = 2;
       assert x != 1;
     }
+
     ////////////// GOOD
     f2(Const.X);
     f2(Const.Y);
-    f2(Const.Z); 
-    f2(Const2.I);
+    f2(Const.Z);
     int i2 = this == null ? Const.X : Const.Y;
     f2(i2);
     if (x == Const.X) {
@@ -76,7 +76,7 @@ public class X {
     f(x);
   }
 
-  void f3(@MagicConstant(flags ={Const.X, Const.Y, Const.Z, Const2.I}) int x) {
+  void f3(@MagicConstant(flags ={Const.X, Const.Y, Const.Z}) int x) {
     /////////// BAD
     f3(2);
     f3(1);
@@ -113,7 +113,7 @@ public class X {
     f4(x);
   }
 
-  void f4(@MagicConstant(flagsFromClass =Const.class, flags={Const2.I}) int x) {
+  void f4(@MagicConstant(flagsFromClass =Const.class) int x) {
     /////////// BAD
     f4(-3);
     f4(1);
@@ -128,8 +128,8 @@ public class X {
     ////////////// GOOD
     f4(Const.X);
     f4(Const.Y);
-    f4(Const.Z); 
-    f4(Const2.I);
+    f4(Const.Z);
+
     int i2 = this == null ? Const.X : Const.Y;
     f4(i2);
     int ix = Const.X | Const.Y;
@@ -152,7 +152,7 @@ public class X {
 
 
   class Alias {
-    @MagicConstant(intValues={Const.X, Const.Y, Const.Z, Const2.I})
+    @MagicConstant(intValues={Const.X, Const.Y, Const.Z})
     @interface IntEnum{}
 
     void f(@IntEnum int x) {
@@ -267,7 +267,4 @@ public class X {
     // 0 is not allowed despite the fact that it's flags parameter
     font(0);
   }
-}
-class Const2 {
-  public static final int I = 0x10;
 }
