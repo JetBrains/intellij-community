@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,17 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
       }
       return false;
     }
+  }
+
+  @Override
+  public PsiModifierList getModifierList() {
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   @Override
