@@ -34,6 +34,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesModel;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.SimpleTextAttributes;
@@ -43,8 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private static final Logger LOG = Logger.getInstance(CodeInspectionAction.class);
@@ -176,10 +175,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
                               InspectionProfileManager appProfileManager,
                               InspectionProjectProfileManager projectProfileManager,
                               Project project) {
-    List<InspectionProfileImpl> profiles = new ArrayList<>();
-    profiles.addAll(appProfileManager.getProfiles());
-    profiles.addAll(projectProfileManager.getProfiles());
-    profilesCombo.resetSchemes(profiles);
+    profilesCombo.resetSchemes(InspectionProfileSchemesModel.getSortedProfiles(appProfileManager, projectProfileManager));
     InspectionProfileImpl selectedProfile = getProfileToUse(project, appProfileManager, projectProfileManager);
     profilesCombo.selectScheme(selectedProfile);
   }
