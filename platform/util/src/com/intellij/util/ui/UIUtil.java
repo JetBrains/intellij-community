@@ -2399,6 +2399,7 @@ public class UIUtil {
       public void run() {
         if (isToDispose(progress)) {
           progress.getUI().uninstallUI(progress);
+          ReflectionUtil.resetField(progress, "ui");
           progress.putClientProperty("isDisposed", Boolean.TRUE);
         }
       }
