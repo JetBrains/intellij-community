@@ -118,7 +118,7 @@ public class PyUserSkeletonsUtil {
 
   @Nullable
   public static PyFile getUserSkeletonForModuleQName(@NotNull String qName, @NotNull PsiElement foothold) {
-    final Sdk sdk = PythonSdkType.getSdk(foothold);
+    final Sdk sdk = PythonSdkType.findPythonSdk(foothold);
     if (sdk != null) {
       final Project project = foothold.getProject();
       final PythonSdkPathCache cache = PythonSdkPathCache.getInstance(project, sdk);
