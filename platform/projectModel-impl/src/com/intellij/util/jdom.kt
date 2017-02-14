@@ -101,7 +101,7 @@ fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> 
 
 fun Element.toByteArray(): ByteArray {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, "\n")
+  JDOMUtil.write(this, out, "\n")
   return out.toByteArray()
 }
 

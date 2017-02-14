@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,7 +368,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               return;
             }
 
-            JDOMUtil.writeParent(element, file, "\n");
+            JDOMUtil.write(element, file, "\n");
           }
           catch (IOException e1) {
             LOG.error(e1);

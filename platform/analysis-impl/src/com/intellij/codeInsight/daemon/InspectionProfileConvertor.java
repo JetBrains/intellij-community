@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class InspectionProfileConvertor {
     try {
       Element root = JDOMUtil.load(files[0]);
       if (root.getAttributeValue(VERSION_ATT) == null){
-        JDOMUtil.writeParent(root, new FileOutputStream(new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION)), "\n");
+        JDOMUtil.write(root, new FileOutputStream(new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION)), "\n");
         FileUtil.delete(files[0]);
       }
     }

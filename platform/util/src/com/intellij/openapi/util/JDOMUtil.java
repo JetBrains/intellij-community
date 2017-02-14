@@ -43,7 +43,10 @@ import org.xml.sax.XMLReader;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author mike
@@ -362,13 +365,13 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
-    writeParent(document, file, lineSeparator);
+    write(document, file, lineSeparator);
   }
 
-  public static void writeParent(@NotNull Parent element, @NotNull File file, String lineSeparator) throws IOException {
+  public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
-      writeParent(element, stream, lineSeparator);
+      write(element, stream, lineSeparator);
     }
     finally {
       stream.close();
@@ -376,10 +379,10 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull OutputStream stream, String lineSeparator) throws IOException {
-    writeParent(document, stream, lineSeparator);
+    write(document, stream, lineSeparator);
   }
 
-  public static void writeParent(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
+  public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
     OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
     try {
       if (element instanceof Document) {
@@ -416,10 +419,10 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeParent(Parent element, String lineSeparator) {
+  public static String write(Parent element, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
-      writeParent(element, writer, lineSeparator);
+      write(element, writer, lineSeparator);
       return writer.toString();
     }
     catch (IOException e) {
@@ -427,7 +430,7 @@ public class JDOMUtil {
     }
   }
 
-  public static void writeParent(Parent element, Writer writer, String lineSeparator) throws IOException {
+  public static void write(Parent element, Writer writer, String lineSeparator) throws IOException {
     if (element instanceof Element) {
       writeElement((Element) element, writer, lineSeparator);
     } else if (element instanceof Document) {
