@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.GridBagConstraints;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
 import static java.awt.GridBagConstraints.*;
@@ -51,6 +51,8 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     myUseCustomShelfDirectory = new JBCheckBox("Use custom shelf storage directory");
     myShelfDirectoryLabel = new JBLabel("Shelf directory:");
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
+    myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
+                                                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myDefaultPresentationPathString = ShelveChangesManager.getDefaultShelfPresentationPath(project);
     initComponents();
