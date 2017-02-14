@@ -45,6 +45,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -325,42 +326,51 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiType type,
                                                          @NotNull PsiAnnotation magic,
                                                          @NotNull PsiManager manager) {
-    PsiAnnotationMemberValue[] allowedValues;
-    final boolean canBeOred;
+    PsiAnnotationMemberValue[] allowedValues = PsiAnnotationMemberValue.EMPTY_ARRAY;
+    boolean values = false, flags = false;
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.LONG_RANK) {
       PsiAnnotationMemberValue intValues = magic.findAttributeValue("intValues");
-      allowedValues = intValues instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)intValues).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-      if (allowedValues.length == 0) {
-        PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
-        allowedValues = orValue instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)orValue).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-        canBeOred = true;
+      if (intValues instanceof PsiArrayInitializerMemberValue) {
+        allowedValues = ((PsiArrayInitializerMemberValue)intValues).getInitializers();
+        values = true;
       }
       else {
-        canBeOred = false;
+        PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
+        if (orValue instanceof PsiArrayInitializerMemberValue) {
+          allowedValues = ((PsiArrayInitializerMemberValue)orValue).getInitializers();
+          flags = true;
+        }
       }
     }
     else if (type.equals(PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(manager.getProject())))) {
       PsiAnnotationMemberValue strValuesAttr = magic.findAttributeValue("stringValues");
-      allowedValues = strValuesAttr instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-      canBeOred = false;
+      if (strValuesAttr instanceof PsiArrayInitializerMemberValue) {
+        allowedValues = ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers();
+        values = true;
+      }
     }
     else {
       return null; //other types not supported
     }
 
-    if (allowedValues.length != 0) {
-      return new AllowedValues(allowedValues, canBeOred);
+    // Also there're could be valuesFromClass of flagsFromClass
+    PsiAnnotationMemberValue[] valuesFromClass = readFromClass("valuesFromClass", magic, type, manager);
+    if (valuesFromClass != null) {
+      allowedValues = ArrayUtil.mergeArrays(allowedValues, valuesFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
+      values = true;
     }
-
-    // last resort: try valuesFromClass
-    PsiAnnotationMemberValue[] values = readFromClass("valuesFromClass", magic, type, manager);
-    boolean ored = false;
-    if (values == null) {
-      values = readFromClass("flagsFromClass", magic, type, manager);
-      ored = true;
+    PsiAnnotationMemberValue[] flagsFromClass = readFromClass("flagsFromClass", magic, type, manager);
+    if (flagsFromClass != null) {
+      allowedValues = ArrayUtil.mergeArrays(allowedValues, flagsFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
+      flags = true;
     }
-    if (values == null) return null;
-    return new AllowedValues(values, ored);
+    if (allowedValues.length == 0) {
+      return null;
+    }
+    if (values && flags) {
+      // Combination of 'flags' and 'values', that's weird TODO: Log?
+    }
+    return new AllowedValues(allowedValues, flags);
   }
 
   private static PsiAnnotationMemberValue[] readFromClass(@NonNls @NotNull String attributeName,
