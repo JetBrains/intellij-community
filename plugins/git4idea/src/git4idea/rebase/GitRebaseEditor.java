@@ -35,7 +35,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
