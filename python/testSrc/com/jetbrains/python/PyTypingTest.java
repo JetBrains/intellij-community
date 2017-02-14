@@ -807,16 +807,29 @@ public class PyTypingTest extends PyTestCase {
   }
   
   // PY-20057
-  public void testConstrainedClassObjectTypeOfResultValue() {
+  public void testFunctionCreatesInstanceFromType() {
     doTest("int",
            "from typing import Type, TypeVar\n" +
            "\n" +
-           "T = TypeVar('T', bound=int)\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "def f(x: Type[T]) -> T:\n" +
            "    return x()\n" +
            "\n" +
            "expr = f(int)");
+  }
+
+  // PY-20057
+  public void testFunctionReturnsTypeOfInstance() {
+    doTest("Type[int]",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "def f(x: T) -> Type[T]:\n" +
+           "    return type(T)\n" +
+           "    \n" +
+           "expr = f(42)");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

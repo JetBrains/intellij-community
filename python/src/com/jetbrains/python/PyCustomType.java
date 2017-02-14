@@ -84,13 +84,22 @@ public class PyCustomType implements PyClassLikeType {
     return !myInstanceType;
   }
 
+  @NotNull
   @Override
   public final PyClassLikeType toInstance() {
     return myInstanceType
            ? this
-           : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[myTypesToMimic.size()]));
+           : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[0]));
   }
 
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myInstanceType
+           ? new PyCustomType(myQualifiedName, myFilter, false, myTypesToMimic.toArray(new PyClassLikeType[0]))
+           : this;
+  }
 
   @Nullable
   @Override

@@ -416,7 +416,22 @@ public class PyTypeChecker {
                                   @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        final PyType substitution = substitutions.get((PyGenericType)type);
+        final PyGenericType typeVar = (PyGenericType)type;
+        PyType substitution = substitutions.get(typeVar);
+        if (substitution == null) {
+          if (!typeVar.isDefinition()) {
+            final PyInstantiableType<?> classType = as(substitutions.get(typeVar.toClass()), PyInstantiableType.class);
+            if (classType != null) {
+              substitution = classType.toInstance();
+            }
+          }
+          else {
+            final PyInstantiableType<?> instanceType = as(substitutions.get(typeVar.toInstance()), PyInstantiableType.class);
+            if (instanceType != null) {
+              substitution = instanceType.toClass();
+            }
+          }
+        }
         if (substitution instanceof PyGenericType && substitution != type) {
           final PyType recursive = substitute(substitution, substitutions, context);
           if (recursive != null) {
