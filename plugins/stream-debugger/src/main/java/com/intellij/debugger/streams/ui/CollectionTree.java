@@ -121,7 +121,11 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
       @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<Value> values1 =
-        Arrays.stream(paths).map(myPath2Value::get).filter(Objects::nonNull).collect(Collectors.toList());
+        Arrays.stream(paths)
+          .map(CollectionTree::getTopPath)
+          .map(myPath2Value::get)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
       if (values1.isEmpty()) {
         return;
       }
@@ -218,5 +222,13 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
     public DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
     }
+  }
+
+  private static TreePath getTopPath(@NotNull TreePath path) {
+    while (path.getPathCount() > 2) {
+      path = path.getParentPath();
+    }
+
+    return path;
   }
 }
