@@ -34,15 +34,15 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testDeclaredField() throws Exception {
-    doTest(1, "num", "num2", "num3");
+    doTest(2, "num", "num1", "num2");
   }
 
   public void testDeclaredMethod() throws Exception {
-    doTest(1, "method", "method2", "method3");
+    doTest(2, "method", "method1", "method2");
   }
 
   public void testDeclaredMethod2() throws Exception {
-    doTest(2, "method", "method2", "method3");
+    doTest(1, "method", "method1", "method2");
   }
 
   public void testMethod() throws Exception {
@@ -50,7 +50,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testForNameDeclaredMethod() throws Exception {
-    doTest(1, "method", "method2", "method3");
+    doTest(2, "method", "method1", "method2");
   }
 
   public void testForNameMethod() throws Exception {
@@ -62,7 +62,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testForNameDeclaredField() throws Exception {
-    doTest(2, "num", "num2", "num3");
+    doTest(1, "num", "num1", "num2");
   }
 
   public void testVarargMethod() throws Exception {
@@ -135,7 +135,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testConstantGetClassField() throws Exception {
-    doTest(1, "num", "num2", "num3");
+    doTest(2, "num", "num3", "num2");
   }
 
   public void testExpressionGetClassField() throws Exception {
@@ -165,9 +165,14 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(0, "PublicClass");
   }
 
+  public void testHasConstructor() {
+    doTest(2, "method", "method2", "method1");
+  }
+
+
   private void doTest(int index, String... expected) {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems(expected);
+    assertFirstStringItems(expected);
     if (index >= 0) selectItem(getLookup().getItems().get(index));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }

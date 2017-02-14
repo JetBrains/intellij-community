@@ -153,7 +153,7 @@ class JavaReflectionReferenceUtil {
    * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
    */
   @Contract("null, _ -> false")
-  static boolean isReachable(PsiMember member, PsiClass psiClass) {
+  static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
     return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
@@ -180,6 +180,6 @@ class JavaReflectionReferenceUtil {
 
   @NotNull
   static LookupElement withPriority(LookupElement lookupElement, boolean hasPriority) {
-    return PrioritizedLookupElement.withPriority(lookupElement, hasPriority ? 0 : -1);
+    return PrioritizedLookupElement.withPriority(lookupElement, hasPriority ? 1 : -1);
   }
 }
