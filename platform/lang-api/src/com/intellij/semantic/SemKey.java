@@ -79,7 +79,7 @@ public class SemKey<T extends SemElement> {
 
   @SafeVarargs
   public static <T extends SemElement> SemKey<T> createKey(String debugName, @NotNull SemKey<? super T>... supers) {
-    return new SemKey<>(debugName, supers);
+    return new SemKey<T>(debugName, supers);
   }
 
   @Override
