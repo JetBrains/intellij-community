@@ -86,11 +86,24 @@ public class PyDataViewerPanel extends JPanel {
 
   private void updateModel() {
     AsyncArrayTableModel model = getModel();
-    if (model != null) {
-      model.invalidateCache();
-      if (isShowing()) {
-        model.fireTableDataChanged();
-      }
+    if (model == null) {
+      return;
+    }
+    model.invalidateCache();
+    updateDebugValue(model);
+    if (isShowing()) {
+      model.fireTableDataChanged();
+    }
+  }
+
+  private void updateDebugValue(@NotNull AsyncArrayTableModel model) {
+    PyDebugValue oldValue = model.getDebugValue();
+    if (!oldValue.isTemporary()) {
+      return;
+    }
+    PyDebugValue newValue = getDebugValue(mySliceTextField.getText());
+    if (newValue != null) {
+      model.setDebugValue(newValue);
     }
   }
 
