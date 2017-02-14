@@ -48,7 +48,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
-  private final AbstractSchemesPanel<T, ?> mySchemesPanel;
+  protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
 
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
@@ -84,6 +84,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     actions.add(new RenameAction());
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
+    addAdditionalActions(actions);
     if (!mySchemeExporterNames.isEmpty()) {
       actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.export"), mySchemeExporterNames) {
         @NotNull
@@ -103,7 +104,6 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         }
       });
     }
-    addAdditionalActions(actions);
     return actions;
   }
   

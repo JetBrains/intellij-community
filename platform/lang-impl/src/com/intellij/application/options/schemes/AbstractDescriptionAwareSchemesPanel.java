@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,63 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile.codeInspection.ui.header;
+package com.intellij.application.options.schemes;
 
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
-/**
- * @author Dmitry Batkovich
- */
-public class AuxiliaryRightPanel extends JPanel {
+public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> {
   private static final String SHOW_DESCRIPTION_CARD = "show.description.card";
   private static final String EDIT_DESCRIPTION_CARD = "edit.description.card";
   private static final String ERROR_CARD = "error.card";
 
-  private final DescriptionLabel myDescriptionLabel;
-  private final JLabel myErrorLabel;
-  private final ValidatedTextField myValidatedTextField;
-  private final CardLayout myLayout;
-  private final JPanel myCardPanel;
+  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
 
-  public AuxiliaryRightPanel(final DescriptionSaveListener descriptionListener) {
-    myCardPanel = new JPanel();
-    myDescriptionLabel = new DescriptionLabel();
+  private DescriptionLabel myDescriptionLabel;
+  private JLabel myWarningLabel;
+  private JBTextField myDescriptionTextField;
+  private CardLayout myLayout;
 
-    myErrorLabel = new JLabel();
-    myErrorLabel.setBackground(UIUtil.isUnderDarcula() ? JBColor.PINK.darker() : JBColor.PINK);
-    myErrorLabel.setForeground(JBColor.BLACK);
-    myErrorLabel.setOpaque(true);
+  @NotNull
+  @Override
+  protected JPanel createInfoComponent() {
+    JPanel panel = new JPanel();
+    myLayout = new CardLayout();
+    panel.setLayout(myLayout);
 
-    myValidatedTextField = new ValidatedTextField(new SaveInputComponentValidator() {
+    myDescriptionTextField = new JBTextField();
+    myDescriptionTextField.addFocusListener(new FocusAdapter() {
       @Override
-      public void doSave(@NotNull String text) {
-        descriptionListener.saveDescription(text.trim());
-      }
-
-      @Override
-      public boolean checkValid(@NotNull String text) {
-        return true;
-      }
-
-      @Override
-      public void cancel() {
-        descriptionListener.cancel();
+      public void focusLost(FocusEvent e) {
+        applyDescription();
       }
     });
+    myDescriptionTextField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        applyDescription();
+      }
+    }, ESC_KEY_STROKE, JComponent.WHEN_FOCUSED);
+    myDescriptionTextField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        showDescription();
+      }
+    }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
 
-    myLayout = new CardLayout();
-    myCardPanel.setLayout(myLayout);
-    myCardPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
-
+    myDescriptionLabel = new DescriptionLabel();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -81,43 +81,51 @@ public class AuxiliaryRightPanel extends JPanel {
       }
     }.installOn(myDescriptionLabel);
 
-    myCardPanel.add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
-    myCardPanel.add(myErrorLabel, ERROR_CARD);
-    myCardPanel.add(myValidatedTextField, EDIT_DESCRIPTION_CARD);
+    myWarningLabel = new JLabel();
 
-    showDescription(null);
+    panel.add(myDescriptionTextField, EDIT_DESCRIPTION_CARD);
+    panel.add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
+    panel.add(myWarningLabel, ERROR_CARD);
 
-    setLayout(new BorderLayout());
-    add(myValidatedTextField.getHintLabel(), BorderLayout.NORTH);
-    add(myCardPanel, BorderLayout.CENTER);
+    myLayout.show(panel, ERROR_CARD);
+    return panel;
   }
 
-  public void showDescription(@Nullable String newDescription) {
-    if (newDescription == null) {
-      newDescription = "";
+  @Override
+  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+    myWarningLabel.setText(message);
+    myWarningLabel.setForeground(messageType.getTitleForeground());
+    myLayout.show(myInfoComponent, ERROR_CARD);
+  }
+
+  @Override
+  public void selectScheme(@Nullable T scheme) {
+    super.selectScheme(scheme);
+    if (scheme != null) {
+      showDescription();
     }
-    myDescriptionLabel.setAllText(newDescription);
-    myLayout.show(myCardPanel, SHOW_DESCRIPTION_CARD);
+  }
+
+  @Override
+  public final void clearInfo() {
+    myLayout.show(myInfoComponent, SHOW_DESCRIPTION_CARD);
+  }
+
+  public void showDescription() {
+    String newDescription = (((DescriptionAwareSchemeActions<T>)getActions()).getDescription(getSelectedScheme()));
+    myDescriptionLabel.setAllText(StringUtil.notNullize(newDescription));
+    myLayout.show(myInfoComponent, SHOW_DESCRIPTION_CARD);
   }
 
   public void editDescription(@Nullable String startValue) {
-    if (startValue == null) {
-      startValue = "";
-    }
-    myValidatedTextField.setText(startValue);
-    myLayout.show(myCardPanel, EDIT_DESCRIPTION_CARD);
-    myValidatedTextField.requestFocus();
+    myLayout.show(myInfoComponent, EDIT_DESCRIPTION_CARD);
+    myDescriptionTextField.setText(StringUtil.notNullize(startValue));
+    myDescriptionTextField.requestFocus();
   }
 
-  public void showError(final @NotNull String errorText) {
-    myErrorLabel.setText(errorText);
-    myLayout.show(myCardPanel, ERROR_CARD);
-  }
-
-  public interface DescriptionSaveListener {
-    void saveDescription(@NotNull String description);
-
-    void cancel();
+  private void applyDescription() {
+    (((DescriptionAwareSchemeActions<T>)getActions())).setDescription(getSelectedScheme(), myDescriptionTextField.getText());
+    showDescription();
   }
 
   private static class DescriptionLabel extends MultiLineLabel {
