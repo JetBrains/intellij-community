@@ -32,8 +32,8 @@ public class CapturePoint implements Cloneable {
   @Attribute("method-name")
   public String myMethodName;
 
-  @Attribute("param-idx")
-  public int myParamNo = 0;
+  @Attribute("capture-key-expression")
+  public String myCaptureKeyExpression;
 
   @Attribute("insert-class-name")
   public String myInsertClassName;
@@ -49,15 +49,19 @@ public class CapturePoint implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    CapturePoint point = (CapturePoint)o;
+    CapturePoint that = (CapturePoint)o;
 
-    if (myEnabled != point.myEnabled) return false;
-    if (myParamNo != point.myParamNo) return false;
-    if (myClassName != null ? !myClassName.equals(point.myClassName) : point.myClassName != null) return false;
-    if (myMethodName != null ? !myMethodName.equals(point.myMethodName) : point.myMethodName != null) return false;
-    if (myInsertClassName != null ? !myInsertClassName.equals(point.myInsertClassName) : point.myInsertClassName != null) return false;
-    if (myInsertMethodName != null ? !myInsertMethodName.equals(point.myInsertMethodName) : point.myInsertMethodName != null) return false;
-    if (myInsertKeyExpression != null ? !myInsertKeyExpression.equals(point.myInsertKeyExpression) : point.myInsertKeyExpression != null) {
+    if (myEnabled != that.myEnabled) return false;
+    if (myClassName != null ? !myClassName.equals(that.myClassName) : that.myClassName != null) return false;
+    if (myMethodName != null ? !myMethodName.equals(that.myMethodName) : that.myMethodName != null) return false;
+    if (myCaptureKeyExpression != null
+        ? !myCaptureKeyExpression.equals(that.myCaptureKeyExpression)
+        : that.myCaptureKeyExpression != null) {
+      return false;
+    }
+    if (myInsertClassName != null ? !myInsertClassName.equals(that.myInsertClassName) : that.myInsertClassName != null) return false;
+    if (myInsertMethodName != null ? !myInsertMethodName.equals(that.myInsertMethodName) : that.myInsertMethodName != null) return false;
+    if (myInsertKeyExpression != null ? !myInsertKeyExpression.equals(that.myInsertKeyExpression) : that.myInsertKeyExpression != null) {
       return false;
     }
 
@@ -69,7 +73,7 @@ public class CapturePoint implements Cloneable {
     int result = (myEnabled ? 1 : 0);
     result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
     result = 31 * result + (myMethodName != null ? myMethodName.hashCode() : 0);
-    result = 31 * result + myParamNo;
+    result = 31 * result + (myCaptureKeyExpression != null ? myCaptureKeyExpression.hashCode() : 0);
     result = 31 * result + (myInsertClassName != null ? myInsertClassName.hashCode() : 0);
     result = 31 * result + (myInsertMethodName != null ? myInsertMethodName.hashCode() : 0);
     result = 31 * result + (myInsertKeyExpression != null ? myInsertKeyExpression.hashCode() : 0);
