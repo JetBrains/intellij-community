@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,27 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.ImportsLayoutSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
-public class CodeStyleImportsPanel extends JPanel {
+public abstract class CodeStyleImportsPanelBase extends JPanel {
+  private final PackageEntryTable myPackageList = new PackageEntryTable();
   private JCheckBox myCbUseFQClassNames;
   private JCheckBox myCbUseSingleClassImports;
   private JCheckBox myCbInsertInnerClassImports;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
-  private final PackageEntryTable myPackageList = new PackageEntryTable();
-
   private JBTable myPackageTable;
-  private final CodeStyleSettings mySettings;
 
   private JPanel myGeneralPanel;
   private JPanel myPackagesPanel;
@@ -46,8 +46,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private ImportLayoutPanel myImportLayoutPanel;
   private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
 
-  public CodeStyleImportsPanel(CodeStyleSettings settings) {
-    mySettings = settings;
+  public CodeStyleImportsPanelBase() {
     setLayout(new BorderLayout());
     add(myWholePanel, BorderLayout.CENTER);
 
@@ -55,6 +54,12 @@ public class CodeStyleImportsPanel extends JPanel {
     createImportPanel();
     createPackagePanel();
   }
+
+  public abstract void reset(CodeStyleSettings settings);
+
+  public abstract void apply(CodeStyleSettings settings);
+
+  public abstract boolean isModified(CodeStyleSettings settings);
 
   private void createImportPanel() {
     myImportLayoutPanel = new ImportLayoutPanel() {
@@ -83,9 +88,8 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbInsertInnerClassImports = new JCheckBox(ApplicationBundle.message("checkbox.insert.imports.for.inner.classes"));
     group.add(myCbInsertInnerClassImports);
 
-    myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider(mySettings);
-    group.add(myFqnInJavadocOption.getPanel());
-    
+    fillCustomOptions(group);
+
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
@@ -113,18 +117,17 @@ public class CodeStyleImportsPanel extends JPanel {
     ImportLayoutPanel.resizeColumns(packageTable, table, myImportLayoutPanel.areStaticImportsEnabled());
   }
 
-  public void reset(CodeStyleSettings settings) {
-    myCbUseFQClassNames.setSelected(settings.USE_FQ_CLASS_NAMES);
-    myCbUseSingleClassImports.setSelected(settings.USE_SINGLE_CLASS_IMPORTS);
-    myCbInsertInnerClassImports.setSelected(settings.INSERT_INNER_CLASS_IMPORTS);
-    myClassCountField.setText(Integer.toString(settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
-    myNamesCountField.setText(Integer.toString(settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
+  public void resetLayoutSettings(ImportsLayoutSettings settings) {
+    myCbUseFQClassNames.setSelected(settings.isUseFqClassNames());
+    myCbUseSingleClassImports.setSelected(settings.isUseSingleClassImports());
+    myCbInsertInnerClassImports.setSelected(settings.isInsertInnerClassImports());
+    myClassCountField.setText(Integer.toString(settings.getClassCountToUseImportOnDemand()));
+    myNamesCountField.setText(Integer.toString(settings.getNamesCountToUseImportOnDemand()));
 
-    myImportLayoutPanel.getImportLayoutList().copyFrom(settings.IMPORT_LAYOUT_TABLE);
-    myPackageList.copyFrom(settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-    myFqnInJavadocOption.reset(settings);
+    myImportLayoutPanel.getImportLayoutList().copyFrom(settings.getImportLayoutTable());
+    myPackageList.copyFrom(settings.getPackagesToUseImportOnDemand());
 
-    myImportLayoutPanel.getCbLayoutStaticImportsSeparately().setSelected(settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
+    myImportLayoutPanel.getCbLayoutStaticImportsSeparately().setSelected(settings.isLayoutStaticImportsSeparately());
 
     final JBTable importLayoutTable = myImportLayoutPanel.getImportLayoutTable();
     AbstractTableModel model = (AbstractTableModel)importLayoutTable.getModel();
@@ -141,42 +144,46 @@ public class CodeStyleImportsPanel extends JPanel {
     }
   }
 
-  public void reset() {
-    reset(mySettings);
-  }
-
-  public void apply(CodeStyleSettings settings) {
+  public void applyLayoutSettings(ImportsLayoutSettings settings) {
     stopTableEditing();
 
-    settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = myImportLayoutPanel.areStaticImportsEnabled();
-    settings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
-    settings.USE_SINGLE_CLASS_IMPORTS = myCbUseSingleClassImports.isSelected();
-    settings.INSERT_INNER_CLASS_IMPORTS = myCbInsertInnerClassImports.isSelected();
+    settings.setLayoutStaticImportsSeparately(myImportLayoutPanel.areStaticImportsEnabled());
+    settings.setUseFqClassNames(myCbUseFQClassNames.isSelected());
+    settings.setUseSingleClassImports(myCbUseSingleClassImports.isSelected());
+    settings.setInsertInnerClassImports(myCbInsertInnerClassImports.isSelected());
     try {
-      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myClassCountField.getText());
+      int value = Integer.parseInt(myClassCountField.getText());
+      settings.setClassCountToUseImportOnDemand(value);
     }
     catch (NumberFormatException e) {
       //just a bad number
     }
     try {
-      settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = Integer.parseInt(myNamesCountField.getText());
+      int value = Integer.parseInt(myNamesCountField.getText());
+      settings.setNamesCountToUseImportOnDemand(value);
     }
     catch (NumberFormatException e) {
       //just a bad number
     }
 
-    final PackageEntryTable list = myImportLayoutPanel.getImportLayoutList();
-    list.removeEmptyPackages();
-    settings.IMPORT_LAYOUT_TABLE.copyFrom(list);
-
-    myPackageList.removeEmptyPackages();
-    settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
-
-    myFqnInJavadocOption.apply(settings);
+    PackageEntryTable list = myImportLayoutPanel.getImportLayoutList();
+    settings.getImportLayoutTable().copyFrom(getCopyWithoutEmptyPackages(list));
+    settings.getPackagesToUseImportOnDemand().copyFrom(getCopyWithoutEmptyPackages(myPackageList));
   }
 
-  public void apply() {
-    apply(mySettings);
+  public boolean isModifiedLayoutSettings(ImportsLayoutSettings settings) {
+    boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.isLayoutStaticImportsSeparately());
+    isModified |= isModified(myCbUseFQClassNames, settings.isUseFqClassNames());
+    isModified |= isModified(myCbUseSingleClassImports, settings.isUseSingleClassImports());
+    isModified |= isModified(myCbInsertInnerClassImports, settings.isInsertInnerClassImports());
+    isModified |= isModified(myClassCountField, settings.getClassCountToUseImportOnDemand());
+    isModified |= isModified(myNamesCountField, settings.getNamesCountToUseImportOnDemand());
+
+    PackageEntryTable list = myImportLayoutPanel.getImportLayoutList();
+    isModified |= isModified(getCopyWithoutEmptyPackages(list), settings.getImportLayoutTable());
+    isModified |= isModified(getCopyWithoutEmptyPackages(myPackageList), settings.getPackagesToUseImportOnDemand());
+
+    return isModified;
   }
 
   private void stopTableEditing() {
@@ -184,23 +191,19 @@ public class CodeStyleImportsPanel extends JPanel {
     TableUtil.stopEditing(myPackageTable);
   }
 
-  public boolean isModified(CodeStyleSettings settings) {
-    boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
-    isModified |= isModified(myCbUseFQClassNames, settings.USE_FQ_CLASS_NAMES);
-    isModified |= myFqnInJavadocOption.isModified(settings);
-    isModified |= isModified(myCbUseSingleClassImports, settings.USE_SINGLE_CLASS_IMPORTS);
-    isModified |= isModified(myCbInsertInnerClassImports, settings.INSERT_INNER_CLASS_IMPORTS);
-    isModified |= isModified(myClassCountField, settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
-    isModified |= isModified(myNamesCountField, settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
-
-    isModified |= isModified(myImportLayoutPanel.getImportLayoutList(), settings.IMPORT_LAYOUT_TABLE);
-    isModified |= isModified(myPackageList, settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-
-    return isModified;
+  protected void fillCustomOptions(OptionGroup group) {
   }
 
-  public boolean isModified() {
-    return isModified(mySettings);
+  @NotNull
+  private static PackageEntryTable getCopyWithoutEmptyPackages(PackageEntryTable table) {
+    try {
+      PackageEntryTable copy = (PackageEntryTable)table.clone();
+      copy.removeEmptyPackages();
+      return copy;
+    }
+    catch (CloneNotSupportedException ignored) {
+      throw new IllegalStateException("Clone should be supported");
+    }
   }
 
   private static boolean isModified(JTextField textField, int value) {
@@ -213,7 +216,7 @@ public class CodeStyleImportsPanel extends JPanel {
     }
   }
 
-  private static boolean isModified(JCheckBox checkBox, boolean value) {
+  protected static boolean isModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 
