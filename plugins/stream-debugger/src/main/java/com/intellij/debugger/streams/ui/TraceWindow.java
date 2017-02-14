@@ -30,13 +30,13 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceView extends DialogWrapper {
+public class TraceWindow extends DialogWrapper {
   private final List<ResolvedCall> myCalls;
   private final EvaluationContextImpl myEvaluationContext;
 
-  public TraceView(@NotNull EvaluationContextImpl evaluationContext,
-                   @Nullable Project project,
-                   @NotNull List<ResolvedCall> calls) {
+  public TraceWindow(@NotNull EvaluationContextImpl evaluationContext,
+                     @Nullable Project project,
+                     @NotNull List<ResolvedCall> calls) {
     super(project, false);
     setModal(false);
     myCalls = calls;

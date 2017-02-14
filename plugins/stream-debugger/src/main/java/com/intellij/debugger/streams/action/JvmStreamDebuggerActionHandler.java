@@ -24,7 +24,7 @@ import com.intellij.debugger.streams.resolve.ResolvedCall;
 import com.intellij.debugger.streams.trace.MapStreamTracerImpl;
 import com.intellij.debugger.streams.trace.TracingCallback;
 import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.ui.TraceView;
+import com.intellij.debugger.streams.ui.TraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,7 +66,7 @@ public class JvmStreamDebuggerActionHandler extends DebuggerActionHandler {
           public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
             final List<ResolvedCall> calls = chain.resolveCalls(result);
             ApplicationManager.getApplication()
-              .invokeLater(() -> new TraceView(context, session.getProject(), calls).show());
+              .invokeLater(() -> new TraceWindow(context, session.getProject(), calls).show());
           }
 
           @Override
