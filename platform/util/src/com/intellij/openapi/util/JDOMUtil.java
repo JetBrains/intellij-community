@@ -285,7 +285,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+  private static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     try {
       return getSaxBuilder().build(reader);
     }
