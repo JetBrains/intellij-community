@@ -120,20 +120,20 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
       @Nullable final TreePath[] selectedPaths = getSelectionPaths();
 
       @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
-      final List<Value> values1 =
+      final List<Value> highlightedItems =
         Arrays.stream(paths)
           .map(CollectionTree::getTopPath)
           .map(myPath2Value::get)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
-      if (values1.isEmpty()) {
+      if (highlightedItems.isEmpty()) {
         return;
       }
 
-      myHighlighted = values1.stream().map(myValue2Path::get).collect(Collectors.toSet());
+      myHighlighted = highlightedItems.stream().map(myValue2Path::get).collect(Collectors.toSet());
 
-      propagateBackward(values1);
-      propagateForward(values1);
+      propagateBackward(highlightedItems);
+      propagateForward(highlightedItems);
 
       repaint();
     });
