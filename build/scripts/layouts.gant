@@ -50,19 +50,6 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("jps-builders-6")
       }
 
-      // Android Studio: include metrics libraries in $install/lib
-      // including the common base library to avoid classloader issues.
-      jar("android-base-common.jar") {
-        module("common")
-      }
-      jar("google-analytics-library.jar") {
-        module("android-annotations")
-        module("analytics-protos")
-        module("analytics-shared")
-        module("analytics-tracker")
-        module("analytics-publisher")
-      }
-
       //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
       jar("groovy-jps-plugin.jar") {
         module("groovy-jps-plugin")

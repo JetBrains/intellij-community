@@ -184,5 +184,5 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
   ${IDE_PROPERTIES_PROPERTY} \
   @@ide_jvm_args@@ \
-  @@main_class_name@@ \
+  com.intellij.idea.Main \
   "$@"

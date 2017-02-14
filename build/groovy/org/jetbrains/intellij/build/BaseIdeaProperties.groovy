@@ -69,7 +69,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-    "ui-designer-core"
+    "ui-designer-core",
+    "ui-designer-jps-plugin",
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "copyright",
@@ -80,7 +81,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "yaml",
     "tasks-core",
     "tasks-java",
-    "maven",
     "gradle",
     "git4idea",
     "remote-servers-git",
@@ -92,24 +92,25 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "jetgroovy",
     "junit",
     "testng",
-    "xpath",
-    "xslt-debugger",
     "android-plugin",
-    /* Disabled in Android Studio
-    "javaFX-CE",
-    */
     "java-i18n",
-    "ant",
-    "ui-designer",
-    "ByteCodeViewer",
     "coverage",
     "java-decompiler-plugin",
-    "devkit",
-    "eclipse",
     "IntelliLang",
     "IntelliLang-java",
     "IntelliLang-xml",
     "intellilang-jps-plugin"
+    /* Disabled in Android Studio
+    "ant",
+    "ByteCodeViewer",
+    "devkit",
+    "eclipse",
+    "javaFX-CE",
+    "maven",
+    "ui-designer",
+    "xpath",
+    "xslt-debugger",
+    */
   ]
 
   BaseIdeaProperties() {
