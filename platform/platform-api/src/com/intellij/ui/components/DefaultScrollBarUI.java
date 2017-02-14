@@ -195,6 +195,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myScrollBar = (JScrollBar)c;
     ScrollColorProducer.setBackground(c);
     ScrollColorProducer.setForeground(c);
+    myScrollBar.setOpaque(false);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);
