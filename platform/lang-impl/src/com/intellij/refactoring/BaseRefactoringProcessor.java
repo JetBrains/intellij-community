@@ -152,6 +152,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    */
   protected abstract void performRefactoring(@NotNull UsageInfo[] usages);
 
+  @NotNull
   protected abstract String getCommandName();
 
   protected void doRun() {
