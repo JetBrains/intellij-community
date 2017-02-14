@@ -183,7 +183,7 @@ public class JDOMUtil {
     return result;
   }
 
-  public static void appendLegalized(@NotNull StringBuilder sb, char each) {
+  private static void appendLegalized(@NotNull StringBuilder sb, char each) {
     if (each == '<' || each == '>') {
       sb.append(each == '<' ? "&lt;" : "&gt;");
     }
@@ -270,7 +270,11 @@ public class JDOMUtil {
     return saxBuilder;
   }
 
+  /**
+   * @deprecated Use load
+   */
   @NotNull
+  @Deprecated
   public static Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
     return loadDocument(new CharSequenceReader(seq));
   }

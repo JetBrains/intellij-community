@@ -132,7 +132,8 @@ open class FileBasedStorage(file: Path,
       else {
         val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        @Suppress("DEPRECATION")
+        return loadElement(charBuffer)
       }
       return null
     }

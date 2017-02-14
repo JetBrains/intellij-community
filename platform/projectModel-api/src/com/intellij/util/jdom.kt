@@ -66,6 +66,7 @@ fun Parent.write(file: Path, lineSeparator: String = "\n") {
   }
 }
 
+@Throws(IOException::class, JDOMException::class)
 fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
 
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
