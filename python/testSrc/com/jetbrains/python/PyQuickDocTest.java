@@ -277,4 +277,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testUnknownTuple() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
+
+  public void testTypeVars() {
+    myFixture.copyDirectoryToProject("typing", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
 }
