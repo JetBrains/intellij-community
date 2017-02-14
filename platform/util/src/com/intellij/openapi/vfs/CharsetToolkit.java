@@ -129,7 +129,7 @@ public class CharsetToolkit {
   @NotNull
   public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
-      return stream;
+      stream = new BufferedInputStream(stream);
     }
 
     stream.mark(4);
