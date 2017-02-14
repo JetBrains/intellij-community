@@ -199,6 +199,21 @@ public class PyTypeModelBuilder {
       visitor.classObject(this);
     }
   } 
+  
+  static class GenericType extends TypeModel {
+    private final String name;
+    private final List<TypeModel> bounds;
+
+    public GenericType(@Nullable String name, @NotNull List<TypeModel> bounds) {
+      this.name = name;
+      this.bounds = bounds;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.genericType(this);
+    }
+  }
 
   /**
    * Builds tree-like type model for PyType
@@ -262,10 +277,25 @@ public class PyTypeModelBuilder {
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
-      result = build((PyCallableType)type);
+      result = buildCallable((PyCallableType)type);
     }
-    else if (type instanceof PyClassType && !((PyClassType)type).isDefinition()) {
-      result = new ClassObjectType(build(type, allowUnions));
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      result = new ClassObjectType(build(((PyInstantiableType)type).toInstance(), allowUnions));
+    }
+    else if (type instanceof PyGenericType) {
+      //assert !((PyGenericType)type).isDefinition()
+      final PyType bound = ((PyGenericType)type).getBound();
+      final List<TypeModel> boundNames;
+      if (bound instanceof PyUnionType) {
+        boundNames = ContainerUtil.map(((PyUnionType)bound).getMembers(), t -> build(t, allowUnions));
+      }
+      else if (bound != null) {
+        boundNames = Collections.singletonList(build(bound, allowUnions));
+      }
+      else {
+        boundNames = Collections.emptyList();
+      }
+      result = new GenericType(type.getName(), boundNames);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -295,7 +325,7 @@ public class PyTypeModelBuilder {
     return null;
   }
 
-  private TypeModel build(@NotNull PyCallableType type) {
+  private TypeModel buildCallable(@NotNull PyCallableType type) {
     List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
     if (parameters != null) {
@@ -327,6 +357,8 @@ public class PyTypeModelBuilder {
     void tuple(TupleType type);
 
     void classObject(ClassObjectType type);
+
+    void genericType(GenericType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -527,6 +559,25 @@ public class PyTypeModelBuilder {
       add("Type[");
       type.classType.accept(this);
       add("]");
+    }
+
+    @Override
+    public void genericType(GenericType type) {
+      add("TypeVar('");
+      add(type.name);
+      add("'");
+      if (!type.bounds.isEmpty()) {
+        add(", ");
+        boolean first = true;
+        for (TypeModel bound : type.bounds) {
+          if (!first) {
+            add(", ");
+          }
+          bound.accept(this);
+          first = false;
+        }
+      }
+      add(")");
     }
   }
 }

@@ -797,7 +797,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[T]",
+    doTest("Type[TypeVar('T', int)]",
            "from typing import Type, TypeVar\n" +
            "\n" +
            "T = TypeVar('T', bound=int)\n" +

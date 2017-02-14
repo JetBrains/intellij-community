@@ -516,8 +516,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final PyExpression indexExpr = subsExpr.getIndexExpression();
         if (indexExpr != null) {
           final PyType type = Ref.deref(getType(indexExpr, context));
-          if (type instanceof PyClassType && !((PyClassType)type).isDefinition()) {
-            return new PyClassTypeImpl(((PyClassType)type).getPyClass(), false);
+          final PyClassType classType = as(type, PyClassType.class);
+          if (classType != null && !classType.isDefinition()) {
+            return new PyClassTypeImpl(classType.getPyClass(), true);
+          }
+          final PyGenericType typeVar = as(type, PyGenericType.class);
+          if (typeVar != null && !typeVar.isDefinition()) {
+            return new PyGenericType(typeVar.getName(), typeVar.getBound(), true);
           }
         }
       }

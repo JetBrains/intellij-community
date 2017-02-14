@@ -31,10 +31,7 @@ import java.util.Set;
 /**
  * @author vlan
  */
-public interface PyClassLikeType extends PyCallableType, PyWithAncestors {
-  boolean isDefinition();
-
-  PyClassLikeType toInstance();
+public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInstantiableType<PyClassLikeType> {
 
   @Nullable
   String getClassQName();
