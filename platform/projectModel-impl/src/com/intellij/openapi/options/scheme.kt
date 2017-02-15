@@ -53,6 +53,8 @@ abstract class SchemeManagerFactory {
                                                                  isUseOldFileNameSanitize: Boolean = false,
                                                                  streamProvider: StreamProvider? = null,
                                                                  directoryPath: Path? = null): SchemeManager<SCHEME>
+  open fun dispose(schemeManager: SchemeManager<*>) {
+  }
 }
 
 enum class SchemeState {
