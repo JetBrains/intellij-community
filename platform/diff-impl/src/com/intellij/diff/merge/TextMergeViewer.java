@@ -873,22 +873,37 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private boolean hasNonConflictedChanges(@NotNull ThreeSide side) {
-      return ContainerUtil.exists(getAllChanges(), change -> !change.isResolved() &&
-                                                             !change.isConflict() &&
-                                                             change.isChange(side));
+      if (ContainerUtil.exists(getAllChanges(), change -> !change.isResolved() &&
+                                                          !change.isConflict() &&
+                                                          change.isChange(side))) {
+        return true;
+      }
+
+      if (side == ThreeSide.BASE) {
+        if (ContainerUtil.exists(getAllChanges(), change -> canResolveConflictedChange(change))) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) continue;
-          if (change.isResolved(side)) continue;
-          if (!change.isChange(side)) continue;
-          Side masterSide = side.select(Side.LEFT,
-                                        change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
-                                        Side.RIGHT);
-          replaceChange(change, masterSide, false);
+          if (change.isConflict()) {
+            if (side != ThreeSide.BASE) continue;
+            resolveConflictedChange(change);
+          }
+          else {
+            if (change.isResolved(side)) continue;
+            if (!change.isChange(side)) continue;
+            Side masterSide = side.select(Side.LEFT,
+                                          change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
+                                          Side.RIGHT);
+            replaceChange(change, masterSide, false);
+          }
         }
       });
 
