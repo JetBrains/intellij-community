@@ -96,6 +96,11 @@ public class ObjectUtils {
     return null;
   }
 
+  @SuppressWarnings("unchecked")
+  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
+    if (clazz.isInstance(obj)) consumer.consume((T)obj);
+  }
+
   @Nullable
   public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
     if (condition.value(obj)) {

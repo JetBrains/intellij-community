@@ -39,17 +39,20 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -423,18 +426,69 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals("abc", document.getText());
   }
 
-  public void testFileBecomesTooLarge() throws Exception {
-    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+  public void testFileTooLarge() throws Exception {
+    String content = getTooLargeContent();
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", content));
     PsiFile psiFile = findFile(vFile);
     Document document = getDocument(psiFile);
 
-    makeFileTooLarge(vFile);
-    assertFalse(psiFile.isValid());
-    psiFile = findFile(vFile);
-    assertInstanceOf(psiFile, PsiLargeFile.class);
+    assertNotNull(document);
+    assertFalse(psiFile.isWritable());
+    assertInstanceOf(psiFile, PsiTextLargeFile.class);
 
-    assertNoFileDocumentMapping(vFile, psiFile, document);
-    assertEquals("abc", document.getText());
+    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
+    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
+    int contentSize = (int)(FileUtilRt.getLargeFilePreviewSize() / bytesPerChar);
+    String substring = content.substring(0, contentSize);
+    assertEquals(substring, document.getText());
+  }
+
+  public void testBinaryFileTooLarge() throws Exception {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.zip", getTooLargeContent()));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+    assertNull(document);
+    assertInstanceOf(psiFile, PsiBinaryLargeFile.class);
+  }
+
+  public void testLargeFileException() throws Throwable {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", getTooLargeContent()));
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.getOutputStream(this);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(new byte[] {});
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2, this);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.contentsToByteArray();
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.contentsToByteArray(false);
+      }
+    });
   }
 
   private void assertNoFileDocumentMapping(VirtualFile vFile, PsiFile psiFile, Document document) {
@@ -442,14 +496,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNull(FileDocumentManager.getInstance().getFile(document));
     assertNull(getPsiDocumentManager().getPsiFile(document));
     assertNull(getDocument(psiFile));
-  }
-
-  private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
-    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
-      setFileText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      return null;
-    });
   }
 
   public void testCommitDocumentInModalDialog() throws IOException {
@@ -710,5 +756,17 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     PsiFile file2 = getPsiManager().findFile(virtualFile);
     assertEquals(PlainTextLanguage.INSTANCE, file2.getLanguage());
+  }
+
+  @NotNull
+  private static String getTooLargeContent() {
+    return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
+  }
+
+  private static abstract class FileTooBigExceptionCase extends AbstractExceptionCase {
+    @Override
+    public Class getExpectedExceptionClass() {
+      return FileTooBigException.class;
+    }
   }
 }

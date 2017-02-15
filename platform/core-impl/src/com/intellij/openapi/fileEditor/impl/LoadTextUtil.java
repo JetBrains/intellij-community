@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +47,8 @@ import java.nio.charset.UnsupportedCharsetException;
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
+
+  private static final int UNLIMITED = -1;
 
   private LoadTextUtil() { }
 
@@ -328,8 +331,13 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
+    return loadText(file, UNLIMITED);
+  }
+
+  @NotNull
+  public static CharSequence loadText(@NotNull final VirtualFile file, int limit) {
     if (file instanceof LightVirtualFile) {
-      return ((LightVirtualFile)file).getContent();
+      return limitCharSequence(((LightVirtualFile)file).getContent(), limit);
     }
 
     if (file.isDirectory()) {
@@ -347,7 +355,7 @@ public final class LoadTextUtil {
         catch (AssertionError e) {
           LOG.error(e);
         }
-        return text;
+        return limitCharSequence(text, limit);
       }
 
       throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " +
@@ -355,12 +363,17 @@ public final class LoadTextUtil {
     }
 
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() : FileUtil.loadFirst(file.getInputStream(), limit);
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
       return ArrayUtil.EMPTY_CHAR_SEQUENCE;
     }
+  }
+
+  @NotNull
+  private static CharSequence limitCharSequence(@NotNull CharSequence sequence, int limit) {
+    return limit == UNLIMITED ? sequence : sequence.subSequence(0, Math.min(limit, sequence.length()));
   }
 
   @NotNull

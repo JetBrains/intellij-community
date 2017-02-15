@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -361,6 +362,13 @@ public class VfsUtilCore {
     finally {
       reader.close();
     }
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull VirtualFile file) throws IOException {
+    return FileUtilRt.isTooLarge(file.getLength()) ?
+           FileUtil.loadFirst(file.getInputStream(), FileUtilRt.getLargeFilePreviewSize()) :
+           file.contentsToByteArray();
   }
 
   @NotNull

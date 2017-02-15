@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
+  private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
+
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
 
@@ -878,7 +880,7 @@ public class FileUtilRt {
       return Integer.parseInt(System.getProperty("idea.max.intellisense.filesize")) * KILOBYTE;
     }
     catch (NumberFormatException e) {
-      return 2500 * KILOBYTE;
+      return DEFAULT_INTELLISENSE_LIMIT;
     }
   }
 
@@ -888,6 +890,15 @@ public class FileUtilRt {
     }
     catch (NumberFormatException e) {
       return 20 * MEGABYTE;
+    }
+  }
+
+  public static int getLargeFilePreviewSize() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.content.load.large.preview.size")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return DEFAULT_INTELLISENSE_LIMIT;
     }
   }
 

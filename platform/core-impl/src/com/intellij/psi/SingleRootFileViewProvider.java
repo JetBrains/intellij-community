@@ -42,7 +42,8 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
-import com.intellij.psi.impl.file.PsiLargeFileImpl;
+import com.intellij.psi.impl.file.PsiBinaryLargeFileImpl;
+import com.intellij.psi.impl.file.PsiTextLargeFileImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
@@ -342,7 +343,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Nullable
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
-      return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
+      return isTooLargeForContentLoading(file) ?
+             new PsiBinaryLargeFileImpl(((PsiManagerImpl)getManager()), this) :
+             new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!isTooLargeForIntelligence(file)) {
       final PsiFile psiFile = createFile(getBaseLanguage());
@@ -350,7 +353,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     if (isTooLargeForContentLoading(file)) {
-      return new PsiLargeFileImpl((PsiManagerImpl)getManager(), this);
+      return new PsiTextLargeFileImpl(this);
     }
 
     return new PsiPlainTextFileImpl(this);

@@ -21,10 +21,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -362,14 +359,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       charset = configured == null ? Charset.defaultCharset() : configured;
       setCharset(charset);
     }
-    else if (SingleRootFileViewProvider.isTooLargeForContentLoading(this)) {
-      charset = super.getCharset();
-    }
     else {
       try {
         final byte[] content;
         try {
-          content = contentsToByteArray();
+          content = VfsUtil.loadBytes(this);
         }
         catch (FileNotFoundException e) {
           // file has already been deleted on disk
