@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
 import static java.awt.GridBagConstraints.*;
@@ -53,6 +56,26 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
     myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShelfDirectoryPath.getTextField().setInputVerifier(new InputVerifier() {
+      @Override
+      public boolean verify(JComponent input) {
+        File file = new File(myShelfDirectoryPath.getText());
+        String errorMessage = null;
+        if (!file.exists()) {
+          errorMessage = "Shelf directory doesn't exist";
+        }
+        else if (!file.canWrite() || !file.canRead()) {
+          errorMessage = "Shelf directory should have read and write access";
+        }
+        if (errorMessage != null && myShelfDirectoryPath.isShowing()) {
+          PopupUtil
+            .showBalloonForComponent(myShelfDirectoryPath, "Shelf directory should have read and write access", MessageType.WARNING, false,
+                                     myProject);
+          return false;
+        }
+        return true;
+      }
+    });
     myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myDefaultPresentationPathString = ShelveChangesManager.getDefaultShelfPresentationPath(project);
     initComponents();
