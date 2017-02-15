@@ -123,7 +123,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
     if (checkClass && checkRunWith) {
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
+      PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
         return !isParameterized(annotation);
       }
@@ -363,6 +363,10 @@ public class JUnitUtil {
       if (isSuiteMethod(method)) return method;
     }
     return null;
+  }
+
+  public static PsiAnnotation getRunWithAnnotation(PsiClass aClass) {
+    return AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(RUN_WITH));
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
