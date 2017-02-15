@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.editor.event.ScrollingEventsListener;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,4 @@ public interface ScrollingModel {
 
   void addVisibleAreaListener(@NotNull VisibleAreaListener listener);
   void removeVisibleAreaListener(@NotNull VisibleAreaListener listener);
-
-  void addScrollEventsListener(@NotNull ScrollingEventsListener listener);
-  void removeEditorScrollingListener(@NotNull ScrollingEventsListener listener);
 }

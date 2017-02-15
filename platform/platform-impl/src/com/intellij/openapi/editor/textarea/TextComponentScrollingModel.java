@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.editor.event.ScrollingEventsListener;
+import com.intellij.openapi.editor.ex.ScrollingEventsListener;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,16 +110,6 @@ public class TextComponentScrollingModel implements ScrollingModel {
 
   @Override
   public void removeVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void addScrollEventsListener(@NotNull ScrollingEventsListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void removeEditorScrollingListener(@NotNull ScrollingEventsListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

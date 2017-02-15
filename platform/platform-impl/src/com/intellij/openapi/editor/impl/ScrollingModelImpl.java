@@ -35,7 +35,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.event.ScrollingEventsListener;
+import com.intellij.openapi.editor.ex.ScrollingEventsListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
@@ -151,7 +151,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       scrollTo(caretPosition, scrollType);
     }
     for (ScrollingEventsListener listener : myScrollingEventsListeners) {
-      listener.scrollToCaret();
+      listener.scrollToCaret(scrollType);
     }
   }
 
@@ -172,7 +172,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     assertIsDispatchThread();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.logicalPositionToXY(pos), scrollType));
     for (ScrollingEventsListener listener : myScrollingEventsListeners) {
-      listener.scrollTo(pos);
+      listener.scrollTo(pos, scrollType);
     }
   }
 
