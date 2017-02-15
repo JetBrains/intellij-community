@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 
-class StreamValidatorTest {
+class EventStreamValidatorTest {
     
     @Test
     fun simple_sequence_of_actions() {
@@ -24,7 +24,7 @@ class StreamValidatorTest {
     
     @Test
     fun up_down_actions() {
-        var list = listOf(
+        val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.down_event_new_pos_1,
                 LogEventFixtures.up_pressed_new_pos_0,
@@ -37,7 +37,7 @@ class StreamValidatorTest {
 
     @Test
     fun up_down_actions_wrong() {
-        var list = listOf(
+        val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.down_event_new_pos_1,
                 LogEventFixtures.up_pressed_new_pos_0,
@@ -50,7 +50,7 @@ class StreamValidatorTest {
 
     @Test
     fun selected_by_typing() {
-        var list = listOf(
+        val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
                 LogEventFixtures.type_event_current_pos_0_left_id_0,
@@ -61,7 +61,7 @@ class StreamValidatorTest {
 
     @Test
     fun selected_by_typing_error() {
-        var list = listOf(
+        val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.type_event_current_pos_0_left_ids_0_1,
                 LogEventFixtures.down_event_new_pos_1,
@@ -74,7 +74,8 @@ class StreamValidatorTest {
         val output = ByteArrayOutputStream()
         val err = ByteArrayOutputStream()
 
-        val separator = SessionsInputSeparator(ByteArrayInputStream(list.join().toByteArray()), output, err)
+        val input = list.join().toByteArray()
+        val separator = SessionsInputSeparator(ByteArrayInputStream(input), output, err)
         separator.processInput()
 
         assertThat(err.toString().trim()).isEqualTo(expectedErr)

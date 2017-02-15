@@ -10,6 +10,7 @@ import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.commons.codec.binary.Base64OutputStream
+import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
 import org.apache.http.entity.ContentType
@@ -96,10 +97,6 @@ abstract class RequestService {
     abstract fun post(url: String, file: File): ResponseData?
     abstract fun postZipped(url: String, file: File): ResponseData?
     abstract fun get(url: String): ResponseData?
-    
-    companion object {
-        fun getInstance() = ServiceManager.getService(RequestService::class.java)
-    }
 }
 
 class SimpleRequestService: RequestService() {
@@ -111,7 +108,7 @@ class SimpleRequestService: RequestService() {
         try {
             val response = Request.Post(url).bodyForm(form.build()).execute()
             val httpResponse = response.returnResponse()
-            return ResponseData(httpResponse.statusLine.statusCode)
+            return ResponseData(httpResponse.status())
         } catch (e: IOException) {
             LOG.debug(e)
             return null
@@ -121,12 +118,12 @@ class SimpleRequestService: RequestService() {
     override fun postZipped(url: String, file: File): ResponseData? {
         try {
             val zippedArray = getZippedContent(file)
-            val request = Request.Post(url).bodyByteArray(zippedArray)
-            request.addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
-            val response = request.execute()
-            val httpResponse = response.returnResponse()
-            val text = EntityUtils.toString(httpResponse.entity)
-            return ResponseData(httpResponse.statusLine.statusCode, text)
+            val request = Request.Post(url).bodyByteArray(zippedArray).apply {
+                addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
+            }
+            
+            val response = request.execute().returnResponse()
+            return ResponseData(response.status(), response.text())
         } catch (e: IOException) {
             LOG.debug(e)
             return null
@@ -168,7 +165,7 @@ class SimpleRequestService: RequestService() {
 
 
 data class ResponseData(val code: Int, val text: String = "") {
-    fun isOK() = code >= 200 && code < 300
+    fun isOK() = code in 200..299
 }
 
 
@@ -181,3 +178,6 @@ object GzipBase64Compressor {
         return outputStream.toByteArray()   
     }
 }
+
+fun HttpResponse.text(): String = EntityUtils.toString(entity)
+fun HttpResponse.status(): Int = statusLine.statusCode

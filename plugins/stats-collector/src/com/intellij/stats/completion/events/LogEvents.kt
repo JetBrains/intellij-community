@@ -155,6 +155,8 @@ class TypeEvent(
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
+    
+    fun newCompletionIds(): List<Int> = newCompletionListItems.map { it.id } 
 }
 
 class CompletionStartedEvent(

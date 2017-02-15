@@ -3,10 +3,11 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.Matchers
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockito_kotlin.any
+import org.mockito.ArgumentMatchers.anyMap
 import org.picocontainer.MutablePicoContainer
+import java.io.File
 
 
 class PerformanceTests : LightFixtureCompletionTestCase() {
@@ -43,14 +44,17 @@ class Test {
     fun `test do not block EDT on logging`() {
         myFixture.configureByText("Test.java", text)
         myFixture.addClass(runnable)
-
         
-        val requestService = mock(RequestService::class.java)
-        val anyString = Matchers.anyString()
-        val anyMap = Matchers.anyMapOf(String::class.java, String::class.java)
-        `when`(requestService.post(anyString, anyMap)).then { 
-            Thread.sleep(5000)
-            ResponseData(200)
+        val requestService = mock<RequestService> {
+            on { postZipped(any<String>(), any<File>()) }.then { 
+                Thread.sleep(5000)
+                ResponseData(200)
+            }
+            
+            on { post(any<String>(), anyMap<String, String>()) }.then { 
+                Thread.sleep(5000)
+                ResponseData(200)
+            }
         }
 
         val file = pathProvider.getUniqueFile()

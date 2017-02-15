@@ -1,9 +1,10 @@
 package com.intellij.stats.completion
 
 import com.intellij.testFramework.LightPlatformTestCase
+import com.nhaarman.mockito_kotlin.doReturn
+import com.nhaarman.mockito_kotlin.doThrow
+import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
 import java.io.File
 
 class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
@@ -29,10 +30,6 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     lateinit var firstFile: File
     lateinit var secondFile: File
     
-    lateinit var urlProvider: UrlProvider
-    lateinit var requestService: RequestService
-    lateinit var filePathProvider: FilePathProvider
-
     val test_url = "http://xxx.com" 
 
     override fun setUp() {
@@ -45,10 +42,6 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         secondFile = File("second_file")
         secondFile.createNewFile()
         secondFile.writeText("text")
-        
-        urlProvider = mock(UrlProvider::class.java)
-        requestService = mock(RequestService::class.java)
-        filePathProvider = mock(FilePathProvider::class.java)
     }
 
     override fun tearDown() {
@@ -62,12 +55,14 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     fun `test removed if every file send response was ok`() {
-        `when`(filePathProvider.getDataFiles()).thenReturn(listOf(firstFile, secondFile))
+        val filePathProvider = mock<FilePathProvider> {
+            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
+        }
 
-        `when`(urlProvider.statsServerPostUrl).thenReturn(test_url)
-
-        `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(200))
-        `when`(requestService.post(test_url, secondFile)).thenReturn(ResponseData(200))
+        val requestService = mock<RequestService> {
+            on { postZipped(test_url, firstFile) }.doReturn(okResponse())
+            on { postZipped(test_url, secondFile) }.doReturn(okResponse())
+        }
         
         val sender = StatisticSender(requestService, filePathProvider)
         sender.sendStatsData(test_url)
@@ -78,13 +73,14 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
 
     fun `test removed first if only first is sent`() {
-        `when`(filePathProvider.getDataFiles()).thenReturn(listOf(firstFile, secondFile))
-
-        `when`(urlProvider.statsServerPostUrl).thenReturn(test_url)
-
-        `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(200))
-        `when`(requestService.post(test_url, secondFile)).thenReturn(ResponseData(404))
-
+        val filePathProvider = mock<FilePathProvider> {
+            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
+        }
+        val requestService = mock<RequestService> {
+            on { postZipped(test_url, firstFile) }.doReturn(okResponse())
+            on { postZipped(test_url, secondFile) }.doReturn(failResponse())
+        }
+        
         val sender = StatisticSender(requestService, filePathProvider)
         sender.sendStatsData(test_url)
 
@@ -93,13 +89,15 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     fun `test none is removed if all send failed`() {
-        `when`(filePathProvider.getDataFiles()).thenReturn(listOf(firstFile, secondFile))
-
-        `when`(urlProvider.statsServerPostUrl).thenReturn(test_url)
-
-        `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(404))
-        `when`(requestService.post(test_url, secondFile)).thenThrow(IllegalAccessError("Should not be invoked"))
-
+        val filePathProvider = mock<FilePathProvider> {
+            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
+        }
+        
+        val requestService = mock<RequestService> {
+            on { postZipped(test_url, firstFile) }.doReturn(failResponse())
+            on { postZipped(test_url, secondFile) }.doThrow(IllegalStateException("Should not be invoked"))
+        }
+        
         val sender = StatisticSender(requestService, filePathProvider)
         sender.sendStatsData(test_url)
 
@@ -108,3 +106,7 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
     
 }
+
+
+fun okResponse(message: String = "") = ResponseData(200, message)
+fun failResponse(message: String = "") = ResponseData(404, message)

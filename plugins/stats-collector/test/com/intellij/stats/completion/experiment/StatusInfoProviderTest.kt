@@ -3,10 +3,10 @@ package com.intellij.stats.completion.experiment
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
 import com.intellij.testFramework.LightIdeaTestCase
+import com.nhaarman.mockito_kotlin.doReturn
+import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Matchers
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.mockito.ArgumentMatchers
 
 class StatusInfoProviderTest : LightIdeaTestCase() {
 
@@ -16,7 +16,7 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
   "status" : "$status",
   "salt" : "$salt",
   "experimentVersion" : $version,
-  "url": "$url"  
+  "urlForZipBase64Content": "$url"  
 }
 """
     
@@ -56,9 +56,9 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
 
 
     private fun getProvider(response: String): StatusInfoProvider {
-        val requestSender = mock(RequestService::class.java)
-        `when`(requestSender.get(Matchers.anyString()))
-                .thenReturn(ResponseData(200, response))
+        val requestSender = mock<RequestService> {
+            on { get(ArgumentMatchers.anyString()) }.doReturn(ResponseData(200, response))
+        }
         return StatusInfoProvider(requestSender)
     }
 
