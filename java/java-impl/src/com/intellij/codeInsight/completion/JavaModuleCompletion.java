@@ -65,7 +65,7 @@ class JavaModuleCompletion {
         addModuleReferences(context, result);
       }
       else if (context instanceof PsiJavaCodeReferenceElement) {
-        addCodeReferences(context, result, resultSet);
+        addClassOrPackageReferences(context, result, resultSet);
       }
     }
   }
@@ -106,30 +106,33 @@ class JavaModuleCompletion {
     }
   }
 
-  private static void addCodeReferences(PsiElement context, Consumer<LookupElement> result, CompletionResultSet resultSet) {
-    PsiElement statement = context.getParent();
-    if (statement instanceof PsiPackageAccessibilityStatement) {
+  private static void addClassOrPackageReferences(PsiElement context, Consumer<LookupElement> result, CompletionResultSet resultSet) {
+    PsiElement refOwner = context.getParent();
+    if (refOwner instanceof PsiPackageAccessibilityStatement) {
       Module module = ModuleUtilCore.findModuleForPsiElement(context);
       PsiPackage topPackage = JavaPsiFacade.getInstance(context.getProject()).findPackage("");
       if (module != null && topPackage != null) {
         processPackage(topPackage, module.getModuleScope(false), result);
       }
     }
-    else if (statement instanceof PsiUsesStatement) {
+    else if (refOwner instanceof PsiUsesStatement) {
       processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.SEMICOLON);
     }
-    else if (statement instanceof PsiProvidesStatement) {
-      PsiJavaCodeReferenceElement intRef = ((PsiProvidesStatement)statement).getInterfaceReference();
-      if (context == intRef) {
-        processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.HUMBLE_SPACE_BEFORE_WORD);
-      }
-      else if (context == ((PsiProvidesStatement)statement).getImplementationReference() && intRef != null) {
-        PsiElement service = intRef.resolve();
-        Module module = ModuleUtilCore.findModuleForPsiElement(context);
-        if (service instanceof PsiClass && module != null) {
-          Predicate<PsiClass> filter = psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                                                   InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)service, true);
-          processClasses(context.getProject(), module.getModuleScope(false), resultSet, filter, TailType.SEMICOLON);
+    else if (refOwner instanceof PsiProvidesStatement) {
+      processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.HUMBLE_SPACE_BEFORE_WORD);
+    }
+    else if (refOwner instanceof PsiReferenceList) {
+      PsiElement statement = refOwner.getParent();
+      if (statement instanceof PsiProvidesStatement) {
+        PsiJavaCodeReferenceElement intRef = ((PsiProvidesStatement)statement).getInterfaceReference();
+        if (intRef != null) {
+          PsiElement service = intRef.resolve();
+          Module module = ModuleUtilCore.findModuleForPsiElement(context);
+          if (service instanceof PsiClass && module != null) {
+            Predicate<PsiClass> filter = psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                                                     InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)service, true);
+            processClasses(context.getProject(), module.getModuleScope(false), resultSet, filter, TailType.SEMICOLON);
+          }
         }
       }
     }

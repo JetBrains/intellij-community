@@ -1,4 +1,8 @@
 PsiJavaFile:Incomplete0.java
+  PsiImportList
+    <empty list>
+  PsiModifierList:
+    <empty list>
   PsiKeyword:module('module')
   PsiErrorElement:Identifier expected
     <empty list>

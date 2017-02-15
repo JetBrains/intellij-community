@@ -495,15 +495,27 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   }
 
   public void testModuleInfo() {
-    doTest("module M. /*ignore me*/ N {\n" +
-           "  requires A.B;\n" +
-           "  exports m.n;\n" +
+    doTest("@Deprecated open module M. /*ignore me*/ N {\n" +
+           "  requires transitive static A.B;\n" +
+           "  exports k.l;\n" +
+           "  opens m.n;\n" +
+           "  uses p.C;\n" +
+           "  provides p.C with x.Y;\n" +
            "}",
 
            "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
            "  MODULE:PsiJavaModuleStub:M.N\n" +
-           "    REQUIRES_STATEMENT:PsiRequiresStatementStub:0:A.B\n" +
-           "    EXPORTS_STATEMENT:PsiPackageAccessibilityStatementStub[EXPORTS]:m.n\n");
+           "    MODIFIER_LIST:PsiModifierListStub[mask=8192]\n" +
+           "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "    REQUIRES_STATEMENT:PsiRequiresStatementStub:A.B\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=16392]\n" +
+           "    EXPORTS_STATEMENT:PsiPackageAccessibilityStatementStub[EXPORTS]:k.l\n" +
+           "    OPENS_STATEMENT:PsiPackageAccessibilityStatementStub[OPENS]:m.n\n" +
+           "    USES_STATEMENT:PsiUsesStatementStub:p.C\n" +
+           "    PROVIDES_STATEMENT:PsiProvidesStatementStub:p.C\n" +
+           "      PROVIDES_WITH_LIST:PsiRefListStub[PROVIDES_WITH_LIST:x.Y]\n");
   }
 
   public void testSOEProof() {

@@ -48,7 +48,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
 public class ModuleHighlightUtil {
@@ -131,23 +130,26 @@ public class ModuleHighlightUtil {
     checkDuplicateRefs(
       module.getRequires(),
       st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText),
-      "module.duplicate.requires", results);
+      "module.duplicate.requires",
+      results);
 
     checkDuplicateRefs(
       module.getExports(),
       st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
-      "module.duplicate.export", results);
+      "module.duplicate.export",
+      results);
 
     checkDuplicateRefs(
       module.getUses(),
       st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
-      "module.duplicate.uses", results);
+      "module.duplicate.uses",
+      results);
 
     checkDuplicateRefs(
       module.getProvides(),
-      st -> Optional.of(pair(st.getInterfaceReference(), st.getImplementationReference()))
-        .map(p -> p.first != null && p.second != null ? refText(p.first) + " / " + refText(p.second) : null),
-      "module.duplicate.provides", results);
+      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::refText),
+      "module.duplicate.provides",
+      results);
 
     return results;
   }
@@ -290,7 +292,11 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
     if (refElement != null) {
       PsiElement target = refElement.resolve();
-      if (target instanceof PsiClass && ((PsiClass)target).isEnum()) {
+      if (target == null) {
+        String message = JavaErrorMessages.message("cannot.resolve.symbol", refElement.getReferenceName());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).description(message).create();
+      }
+      else if (target instanceof PsiClass && ((PsiClass)target).isEnum()) {
         String message = JavaErrorMessages.message("module.service.enum", ((PsiClass)target).getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).description(message).create();
       }
@@ -300,37 +306,56 @@ public class ModuleHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkServiceImplementation(@Nullable PsiJavaCodeReferenceElement implRef,
-                                                  @Nullable PsiJavaCodeReferenceElement intRef) {
-    if (implRef != null && intRef != null) {
-      PsiElement implTarget = implRef.resolve(), intTarget = intRef.resolve();
-      if (implTarget instanceof PsiClass && intTarget instanceof PsiClass) {
+  static List<HighlightInfo> checkServiceImplementations(@NotNull PsiProvidesStatement statement) {
+    PsiReferenceList implRefList = statement.getImplementationList();
+    if (implRefList == null) return null;
+
+    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
+    PsiElement intTarget = intRef != null ? intRef.resolve() : null;
+
+    Set<String> filter = ContainerUtil.newTroveSet();
+    for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
+      String refText = refText(implRef);
+      if (!filter.add(refText)) {
+        String message = JavaErrorMessages.message("module.duplicate.impl", refText);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(implRef).description(message).create();
+        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(implRef));
+        results.add(info);
+        continue;
+      }
+
+      if (!(intTarget instanceof PsiClass)) continue;
+
+      PsiElement implTarget = implRef.resolve();
+      if (implTarget instanceof PsiClass) {
         PsiClass implClass = (PsiClass)implTarget;
         if (!InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           String message = JavaErrorMessages.message("module.service.subtype");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
         }
-        if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        else if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
         }
-
-        PsiMethod[] constructors = implClass.getConstructors();
-        if (constructors.length > 0) {
-          PsiMethod constructor = JBIterable.of(constructors).find(c -> c.getParameterList().getParametersCount() == 0);
-          if (constructor == null) {
-            String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
-          }
-          if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-            String message = JavaErrorMessages.message("module.service.hidden.ctor", implClass.getName());
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create();
+        else {
+          PsiMethod[] constructors = implClass.getConstructors();
+          if (constructors.length > 0) {
+            PsiMethod constructor = JBIterable.of(constructors).find(c -> c.getParameterList().getParametersCount() == 0);
+            if (constructor == null) {
+              String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+            }
+            else if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+              String message = JavaErrorMessages.message("module.service.hidden.ctor", implClass.getName());
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+            }
           }
         }
       }
     }
 
-    return null;
+    return results;
   }
 
   @Nullable

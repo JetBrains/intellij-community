@@ -113,4 +113,14 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
     return new ClsPackageAccessibilityStatementImpl(stub);
   }
+
+  @Override
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return new ClsUsesStatementImpl(stub);
+  }
+
+  @Override
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return new ClsProvidesStatementImpl(stub);
+  }
 }

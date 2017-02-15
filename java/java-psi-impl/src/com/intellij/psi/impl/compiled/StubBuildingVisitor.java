@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.*;
@@ -188,9 +187,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] types) {
-    PsiReferenceList.Role role = JavaClassReferenceListElementType.elementTypeToRole(type);
-
-    new PsiClassReferenceListStubImpl(type, parent, types, role);
+    new PsiClassReferenceListStubImpl(type, parent, types);
   }
 
   private static int packCommonFlags(int access) {
@@ -867,4 +864,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return canonicalText.replace('/', '.');
     }
   };
+
+  public static AnnotationVisitor getAnnotationTextCollector(String desc, Consumer<String> consumer) {
+    return new AnnotationTextCollector(desc, GUESSING_MAPPER, consumer);
+  }
 }

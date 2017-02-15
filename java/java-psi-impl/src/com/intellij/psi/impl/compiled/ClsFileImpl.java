@@ -645,18 +645,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
-      boolean module = internalName.endsWith("/module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
-      String packageName = getPackageName(internalName);
+      boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
       LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(reader.readShort(6));
 
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
-        ModuleStubBuildingVisitor visitor = new ModuleStubBuildingVisitor(stub, packageName);
+        ModuleStubBuildingVisitor visitor = new ModuleStubBuildingVisitor(stub);
         reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
         if (visitor.getResult() != null) return stub;
       }
       else {
-        PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, packageName, level, true);
+        PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, getPackageName(internalName), level, true);
         try {
           FileContentPair source = new FileContentPair(file, bytes);
           StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<FileContentPair>(source, STRATEGY, stub, 0, className);

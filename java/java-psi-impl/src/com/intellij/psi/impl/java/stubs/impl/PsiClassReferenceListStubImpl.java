@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,11 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
-  @NotNull
-  private final PsiReferenceList.Role myRole;
   private final StringRef[] myNames;
   private PsiClassType[] myTypes;
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull String[] names, @NotNull PsiReferenceList.Role role) {
-    this(type, parent, toStringRefs(names), role);
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] names) {
+    this(type, parent, toStringRefs(names));
   }
 
   @NotNull
@@ -50,16 +48,16 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return myNames;
   }
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull StringRef[] names, @NotNull PsiReferenceList.Role role) {
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull StringRef[] names) {
     super(parent, type);
     myNames = names;
-    myRole = role;
   }
 
   @NotNull
   @Override
   public PsiClassType[] getReferencedTypes() {
     if (myTypes != null) return myTypes;
+
     if (myNames.length == 0) {
       myTypes = PsiClassType.EMPTY_ARRAY;
       return myTypes;
@@ -117,17 +115,18 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   @NotNull
   @Override
   public PsiReferenceList.Role getRole() {
-    return myRole;
+    return JavaClassReferenceListElementType.elementTypeToRole(getStubType());
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("PsiRefListStub[").append(myRole.name()).append(":");
+    builder.append("PsiRefListStub[").append(getRole()).append(':');
     for (int i = 0; i < myNames.length; i++) {
       if (i > 0) builder.append(", ");
       builder.append(myNames[i]);
     }
-    builder.append("]");
+    builder.append(']');
     return builder.toString();
   }
 }

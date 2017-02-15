@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ public class ModuleParserTest extends JavaParsingTestCase {
   public void testSimple1() { doParserTest("module a.b. /*here!*/ c { }"); }
   public void testSimple2() { doParserTest("/* comment */\nmodule X { }"); }
 
+  public void testModifierList0() { doParserTest("open module M { }"); }
+  public void testModifierList1() { doParserTest("@Deprecated module M { }"); }
+
   public void testName0() { doParserTest("module A. { }"); }
   public void testName1() { doParserTest("module A..B { }"); }
   public void testName2() { doParserTest("module A B { }"); }
@@ -44,7 +47,7 @@ public class ModuleParserTest extends JavaParsingTestCase {
 
   public void testRequires0() { doParserTest("module M { requires }"); }
   public void testRequires1() { doParserTest("module M { requires X }"); }
-  public void testRequires2() { doParserTest("module M { requires public X; }"); }
+  public void testRequires2() { doParserTest("module M { requires transitive static X; }"); }
   public void testRequires3() { doParserTest("module M { requires private X; }"); }
   public void testRequires4() { doParserTest("module M { requires A, B; }"); }
 
@@ -58,6 +61,9 @@ public class ModuleParserTest extends JavaParsingTestCase {
   public void testExports7() { doParserTest("module M { exports pkg to A, ; }"); }
   public void testExports8() { doParserTest("module M { exports pkg to , B; }"); }
 
+  public void testOpens0() { doParserTest("module M { opens }"); }
+  public void testOpens1() { doParserTest("module M { opens pkg to A, B; }"); }
+
   public void testUses0() { doParserTest("module M { uses }"); }
   public void testUses1() { doParserTest("module M { uses C }"); }
   public void testUses2() { doParserTest("module M { uses java.nio.file.spi.FileSystemProvider; }"); }
@@ -70,6 +76,7 @@ public class ModuleParserTest extends JavaParsingTestCase {
   public void testProvides5() { doParserTest("module M { provides Spi with Impl }"); }
   public void testProvides6() { doParserTest("module M { provides Spi with Impl; }"); }
   public void testProvides7() { doParserTest("module M { provides Spi _ }"); }
+  public void testProvides8() { doParserTest("module M { provides Spi with Impl1, Impl2, }"); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getFileParser().parse(builder));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           uses pkg.main.C;
           <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
-          <error descr="Duplicate provides: pkg.main.C / pkg.main.Impl">provides pkg.main.C with pkg. main. Impl;</error>
+          <error descr="Duplicate provides: pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
         }""".trimIndent())
   }
 
@@ -114,11 +114,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testProvides() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic interface C { }")
+    addFile("pkg/main/I.java", "package pkg.main;\npublic interface I { }")
     addFile("pkg/main/Impl1.java", "package pkg.main;\nclass Impl1 { }")
     addFile("pkg/main/Impl2.java", "package pkg.main;\npublic class Impl2 { }")
     addFile("pkg/main/Impl3.java", "package pkg.main;\npublic abstract class Impl3 implements C { }")
     addFile("pkg/main/Impl4.java", "package pkg.main;\npublic class Impl4 implements C {\n public Impl4(String s) { }\n}")
     addFile("pkg/main/Impl5.java", "package pkg.main;\npublic class Impl5 implements C {\n protected Impl5() { }\n}")
+    addFile("pkg/main/Impl6.java", "package pkg.main;\npublic class Impl6 implements I { }")
     highlight("""
         module M {
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
@@ -126,6 +128,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.<error descr="The service implementation is an abstract class: Impl3">Impl3</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a default constructor: Impl4">Impl4</error>;
           provides pkg.main.C with pkg.main.<error descr="The default constructor of the service implementation is not public: Impl5">Impl5</error>;
+          provides pkg.main.I with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
         }""".trimIndent())
   }
 
@@ -153,7 +156,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires public M7; }", M6)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 

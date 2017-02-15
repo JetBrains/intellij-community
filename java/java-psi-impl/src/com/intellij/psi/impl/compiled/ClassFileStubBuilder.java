@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
-  public static final int STUB_VERSION = 18;
+  public static final int STUB_VERSION = 19;
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
