@@ -17,22 +17,23 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.FINAL;
@@ -76,11 +77,10 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
       if (ClassInheritorsSearch.search(containingClass).findFirst() != null) {
         return;
       }
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
-      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+      doMakeFinal(modifierList);
       return;
     }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Query<PsiClass> search = ClassInheritorsSearch.search(containingClass);
     search.forEach(aClass -> {
       conflicts.putValue(containingClass, InspectionGadgetsBundle
@@ -100,8 +100,25 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
       conflictsDialogOK = true;
     }
     if (conflictsDialogOK) {
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
-      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+      doMakeFinal(modifierList);
     }
+  }
+
+  private static void doMakeFinal(PsiModifierList modifierList) {
+    WriteAction.run(() -> {
+      modifierList.setModifierProperty(FINAL, true);
+      modifierList.setModifierProperty(ABSTRACT, false);
+    });
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }
