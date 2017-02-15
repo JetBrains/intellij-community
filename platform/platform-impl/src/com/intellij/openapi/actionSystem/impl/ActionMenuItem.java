@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -114,7 +113,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
-    updateContext(DataManager.getInstance().getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()));
     TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
 
@@ -298,7 +296,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
       fm.typeAheadUntil(typeAhead, getText());
-      fm.doWhenFocusSettlesDown(() -> {
+      fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
