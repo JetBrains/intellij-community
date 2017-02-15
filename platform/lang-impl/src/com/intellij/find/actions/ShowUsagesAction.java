@@ -639,6 +639,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
                                    @NotNull final AsyncProcessIcon processIcon) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     final String title = presentation.getTabText();

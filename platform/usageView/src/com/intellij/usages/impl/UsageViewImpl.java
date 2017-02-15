@@ -98,9 +98,8 @@ public class UsageViewImpl implements UsageView {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
-  private final MyPanel myRootPanel;
-  @NotNull
-  private final JTree myTree;
+  private MyPanel myRootPanel; // accessed in EDT only
+  private JTree myTree; // accessed in EDT only
   private final ScheduledFuture<?> myFireEventsFuture;
   private Content myContent;
 
@@ -181,41 +180,6 @@ public class UsageViewImpl implements UsageView {
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
 
-    myTree = new Tree(myModel) {
-      {
-        ToolTipManager.sharedInstance().registerComponent(this);
-      }
-
-      @Override
-      public boolean isRootVisible() {
-        return false;  // to avoid re-building model when it calls setRootVisible(true)
-      }
-
-      @Override
-      public String getToolTipText(MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
-          }
-        }
-        return null;
-      }
-
-      @Override
-      public boolean isPathEditable(final TreePath path) {
-        return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
-      }
-
-      // hack to avoid quadratic expandAll()
-      @Override
-      public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-        return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
-      }
-    };
-
-    myRootPanel = new MyPanel(myTree);
-    Disposer.register(this, myRootPanel);
     UsageModelTracker myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
@@ -230,6 +194,41 @@ public class UsageViewImpl implements UsageView {
         // lock here to avoid concurrent execution of this init and dispose in other thread
         synchronized (lock) {
           if (isDisposed) return;
+          myTree = new Tree(myModel) {
+            {
+              ToolTipManager.sharedInstance().registerComponent(this);
+            }
+
+            @Override
+            public boolean isRootVisible() {
+              return false;  // to avoid re-building model when it calls setRootVisible(true)
+            }
+
+            @Override
+            public String getToolTipText(MouseEvent e) {
+              TreePath path = getPathForLocation(e.getX(), e.getY());
+              if (path != null) {
+                if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+                  return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
+                }
+              }
+              return null;
+            }
+
+            @Override
+            public boolean isPathEditable(final TreePath path) {
+              return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+            }
+
+            // hack to avoid quadratic expandAll()
+            @Override
+            public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+              return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
+            }
+          };
+
+          myRootPanel = new MyPanel(myTree);
+          Disposer.register(this, myRootPanel);
           myTree.setModel(myModel);
 
           myRootPanel.setLayout(new BorderLayout());
@@ -430,6 +429,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void clearRendererCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (expandingAll) return; // to avoid quadratic row enumeration
     // clear renderer cache of node preferred size
     TreeUI ui = myTree.getUI();
@@ -452,11 +452,14 @@ public class UsageViewImpl implements UsageView {
   }
 
   private int getVisibleRowCount() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     // myTree.getVisibleRowCount returns 20
     return TreeUtil.getVisibleRowCountForFixedRowHeight(myTree);
   }
 
   private void setupCentralPanel() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myCentralPanel.removeAll();
     disposeUsageContextPanels();
 
@@ -568,6 +571,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void initTree() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myTree.setShowsRootHandles(true);
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
@@ -632,6 +636,8 @@ public class UsageViewImpl implements UsageView {
 
   @NotNull
   private JComponent createActionsToolbar() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     DefaultActionGroup group = new DefaultActionGroup() {
       @Override
       public void update(AnActionEvent e) {
@@ -656,6 +662,7 @@ public class UsageViewImpl implements UsageView {
 
   @NotNull
   private JComponent toUsageViewToolbar(@NotNull DefaultActionGroup group) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     actionToolbar.setTargetComponent(myRootPanel);
     return actionToolbar.getComponent();
@@ -667,6 +674,7 @@ public class UsageViewImpl implements UsageView {
 
   @NotNull
   private JComponent createFiltersToolbar() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction[] groupingActions = createGroupingActions();
@@ -684,11 +692,13 @@ public class UsageViewImpl implements UsageView {
   }
 
   public void addFilteringActions(@NotNull DefaultActionGroup group) {
-    final JComponent component = getComponent();
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (getPresentation().isMergeDupLinesAvailable()) {
       final MergeDupLines mergeDupLines = new MergeDupLines();
-      mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
+      final JComponent component = myRootPanel;
+      if (component != null) {
+        mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
+      }
       group.add(mergeDupLines);
     }
 
@@ -703,6 +713,7 @@ public class UsageViewImpl implements UsageView {
 
   @NotNull
   protected AnAction[] createActions() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final TreeExpander treeExpander = new TreeExpander() {
       @Override
       public void expandAll() {
@@ -817,6 +828,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private boolean shouldTreeReactNowToRuleChanges() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myPresentation.isDetachedMode() || myTree.isShowing();
   }
 
@@ -859,6 +871,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void captureUsagesExpandState(TreePath pathFrom, final Collection<UsageState> states) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myTree.isExpanded(pathFrom)) {
       return;
     }
@@ -877,6 +890,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void restoreUsageExpandState(@NotNull Collection<UsageState> states) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //always expand the last level group
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
     for (int i = root.getChildCount() - 1; i >= 0; i--) {
@@ -913,7 +927,7 @@ public class UsageViewImpl implements UsageView {
     TreeUtil.expand(myTree, 2);
   }
 
-  public void expandRoot() {
+  void expandRoot() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
@@ -921,6 +935,7 @@ public class UsageViewImpl implements UsageView {
 
   @NotNull
   DefaultMutableTreeNode getModelRoot() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
@@ -1122,7 +1137,8 @@ public class UsageViewImpl implements UsageView {
   @Override
   @NotNull
   public JComponent getComponent() {
-    return myRootPanel;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myRootPanel == null ? new JLabel() : myRootPanel;
   }
 
   @Override
@@ -1136,6 +1152,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void updateImmediately() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
     checkNodeValidity(root, new TreePath(root));
@@ -1143,6 +1160,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void updateImmediatelyNodesUpToRoot(@NotNull List<TreeNode> nodes) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
 
@@ -1161,6 +1179,7 @@ public class UsageViewImpl implements UsageView {
 
 
   private void updateOnSelectionChanged() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       try {
         myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos());
@@ -1171,6 +1190,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean shouldCheckChildren = true;
     if (myTree.isCollapsed(path)) {
       if (node instanceof Node) {
@@ -1222,10 +1242,13 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     disposeUsageContextPanels();
     synchronized (lock) {
       isDisposed = true;
-      ToolTipManager.sharedInstance().unregisterComponent(myTree);
+      if (myTree != null) {
+        ToolTipManager.sharedInstance().unregisterComponent(myTree);
+      }
       myUpdateAlarm.cancelAllRequests();
     }
     disposeSmartPointers();
@@ -1419,6 +1442,7 @@ public class UsageViewImpl implements UsageView {
 
   @Nullable
   private Node getSelectedNode() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath leadSelectionPath = myTree.getLeadSelectionPath();
     if (leadSelectionPath == null) return null;
 
@@ -1428,6 +1452,7 @@ public class UsageViewImpl implements UsageView {
 
   @Nullable
   private Node[] getSelectedNodes() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] leadSelectionPath = myTree.getSelectionPaths();
     if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
 
@@ -1445,6 +1470,7 @@ public class UsageViewImpl implements UsageView {
   @Override
   @Nullable
   public Set<Usage> getSelectedUsages() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
       return null;
@@ -1489,6 +1515,7 @@ public class UsageViewImpl implements UsageView {
 
   @Nullable
   private UsageTarget[] getSelectedUsageTargets() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
 
@@ -1730,7 +1757,8 @@ public class UsageViewImpl implements UsageView {
       mySelected = isSelected;
     }
 
-    public void restore() {
+    private void restore() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       final UsageNode node = myUsageNodes.get(myUsage);
       if (node == NULL_NODE || node == null) {
         return;
@@ -1795,6 +1823,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private List<UsageInfo> getSelectedUsageInfos() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
@@ -1832,6 +1861,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   public Usage getNextToSelect(@NotNull Usage toDelete) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     UsageNode usageNode = myUsageNodes.get(toDelete);
     if (usageNode == null) return null;
 
