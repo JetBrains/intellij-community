@@ -160,7 +160,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
     final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
-    List<String> patchers = new ArrayList<String>();
+    List<String> patchers = new ArrayList<>();
 
     for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
       patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
@@ -217,7 +217,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   private static Set<String> getPathsToCompile(List<File> toCompile) {
-    final Set<String> toCompilePaths = new LinkedHashSet<String>();
+    final Set<String> toCompilePaths = new LinkedHashSet<>();
     for (File file : toCompile) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Path to compile: " + file.getPath());
@@ -317,7 +317,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
     final JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
-    final List<File> toCompile = new ArrayList<File>();
+    final List<File> toCompile = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
       public boolean apply(T target, File file, R sourceRoot) throws IOException {
         if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
@@ -385,7 +385,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   protected Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
-    final Set<String> cp = new LinkedHashSet<String>();
+    final Set<String> cp = new LinkedHashSet<>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
     cp.addAll(GroovyBuilder.getGroovyRtRoots());
@@ -402,7 +402,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   private Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<T, String> finalOutputs) throws IOException {
-    final Map<String, String> class2Src = new HashMap<String, String>();
+    final Map<String, String> class2Src = new HashMap<>();
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
       context.getProjectDescriptor().getProject());
     for (T target : getTargets(chunk)) {

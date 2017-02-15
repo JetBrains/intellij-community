@@ -103,7 +103,7 @@ public class IncProjectBuilder {
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
-  private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
+  private final List<MessageHandler> myMessageHandlers = new ArrayList<>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
     public void processMessage(BuildMessage msg) {
       for (MessageHandler h : myMessageHandlers) {
@@ -178,13 +178,10 @@ public class IncProjectBuilder {
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        JavacMain.clearCompilerZipFileCache();
-        myProjectDescriptor.dataManager.flush(false);
-        myProjectDescriptor.timestamps.getStorage().force();
-      }
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
+      JavacMain.clearCompilerZipFileCache();
+      myProjectDescriptor.dataManager.flush(false);
+      myProjectDescriptor.timestamps.getStorage().force();
     });
     
     startTempDirectoryCleanupTask();
@@ -353,7 +350,7 @@ public class IncProjectBuilder {
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(FileGeneratedEvent event) {
-        final Set<File> outputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        final Set<File> outputs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
@@ -425,11 +422,9 @@ public class IncProjectBuilder {
     }
     final File[] files = tempDir.listFiles();
     if (files != null && files.length != 0) {
-      final RunnableFuture<Void> task = new FutureTask<Void>(new Runnable() {
-        public void run() {
-          for (File tempFile : files) {
-            FileUtil.delete(tempFile);
-          }
+      final RunnableFuture<Void> task = new FutureTask<>(() -> {
+        for (File tempFile : files) {
+          FileUtil.delete(tempFile);
         }
       }, null);
       final Thread thread = new Thread(task, "Temp directory cleanup");
@@ -510,11 +505,11 @@ public class IncProjectBuilder {
 
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-    final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
-        List<String> deletedPaths = new ArrayList<String>();
+        List<String> deletedPaths = new ArrayList<>();
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
@@ -533,7 +528,7 @@ public class IncProjectBuilder {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
       if (data == null) {
-        data = new THashSet<BuildTarget<?>>();
+        data = new THashSet<>();
         context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
       }
       data.addAll(targets);
@@ -608,7 +603,7 @@ public class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final CompileScope compileScope = context.getScope();
-    final List<File> filesToDelete = new ArrayList<File>();
+    final List<File> filesToDelete = new ArrayList<>();
     final Predicate<BuildTarget<?>> forcedBuild = new Predicate<BuildTarget<?>>() {
       public boolean apply(BuildTarget<?> input) {
         return compileScope.isBuildForced(input);
@@ -754,8 +749,8 @@ public class IncProjectBuilder {
 
   private static class BuildChunkTask {
     private final BuildTargetChunk myChunk;
-    private final Set<BuildChunkTask> myNotBuiltDependencies = new THashSet<BuildChunkTask>();
-    private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<BuildChunkTask>();
+    private final Set<BuildChunkTask> myNotBuiltDependencies = new THashSet<>();
+    private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
@@ -776,7 +771,7 @@ public class IncProjectBuilder {
     }
 
     public List<BuildChunkTask> markAsFinishedAndGetNextReadyTasks() {
-      List<BuildChunkTask> nextTasks = new SmartList<BuildChunkTask>();
+      List<BuildChunkTask> nextTasks = new SmartList<>();
       for (BuildChunkTask task : myTasksDependsOnThis) {
         final boolean removed = task.myNotBuiltDependencies.remove(this);
         LOG.assertTrue(removed, task.getChunk().toString() + " didn't have " + getChunk().toString());
@@ -792,7 +787,7 @@ public class IncProjectBuilder {
   private class BuildParallelizer {
     private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor("IncProjectBuilder executor pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
-    private final AtomicReference<Throwable> myException = new AtomicReference<Throwable>();
+    private final AtomicReference<Throwable> myException = new AtomicReference<>();
     private final Object myQueueLock = new Object();
     private final CountDownLatch myTasksCountDown;
     private final List<BuildChunkTask> myTasks;
@@ -803,8 +798,8 @@ public class IncProjectBuilder {
       final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
-      myTasks = new ArrayList<BuildChunkTask>(chunks.size());
-      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<BuildTarget<?>, BuildChunkTask>();
+      myTasks = new ArrayList<>(chunks.size());
+      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>();
       for (BuildTargetChunk chunk : chunks) {
         BuildChunkTask task = new BuildChunkTask(chunk);
         myTasks.add(task);
@@ -828,7 +823,7 @@ public class IncProjectBuilder {
     }
 
     public void buildInParallel() throws IOException, ProjectBuildException {
-      List<BuildChunkTask> initialTasks = new ArrayList<BuildChunkTask>();
+      List<BuildChunkTask> initialTasks = new ArrayList<>();
       for (BuildChunkTask task : myTasks) {
         if (task.isReady()) {
           initialTasks.add(task);
@@ -854,16 +849,12 @@ public class IncProjectBuilder {
 
     private void queueTasks(List<BuildChunkTask> tasks) {
       if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
-        final List<BuildTargetChunk> chunksToLog = new ArrayList<BuildTargetChunk>();
+        final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
         for (BuildChunkTask task : tasks) {
           chunksToLog.add(task.getChunk());
         }
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
-        Collections.sort(chunksToLog, new Comparator<BuildTargetChunk>() {
-          public int compare(final BuildTargetChunk o1, final BuildTargetChunk o2) {
-            return o1.toString().compareTo(o2.toString());
-          }
-        });
+        chunksToLog.sort(Comparator.comparing(BuildTargetChunk::toString));
         for (BuildTargetChunk chunk : chunksToLog) {
           logBuilder.append(chunk.toString()).append("; ");
         }
@@ -876,34 +867,31 @@ public class IncProjectBuilder {
 
     private void queueTask(final BuildChunkTask task) {
       final CompileContext chunkLocalContext = createContextWrapper(myContext);
-      myParallelBuildExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
+      myParallelBuildExecutor.execute(() -> {
+        try {
           try {
-            try {
-              if (myException.get() == null) {
-                buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk());
-              }
+            if (myException.get() == null) {
+              buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk());
             }
-            finally {
-              myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
-              myProjectDescriptor.dataManager.flush(true);
-            }
-          }
-          catch (Throwable e) {
-            myException.compareAndSet(null, e);
-            LOG.info(e);
           }
           finally {
-            LOG.debug("Finished compilation of " + task.getChunk().toString());
-            myTasksCountDown.countDown();
-            List<BuildChunkTask> nextTasks;
-            synchronized (myQueueLock) {
-              nextTasks = task.markAsFinishedAndGetNextReadyTasks();
-            }
-            if (!nextTasks.isEmpty()) {
-              queueTasks(nextTasks);
-            }
+            myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
+            myProjectDescriptor.dataManager.flush(true);
+          }
+        }
+        catch (Throwable e) {
+          myException.compareAndSet(null, e);
+          LOG.info(e);
+        }
+        finally {
+          LOG.debug("Finished compilation of " + task.getChunk().toString());
+          myTasksCountDown.countDown();
+          List<BuildChunkTask> nextTasks;
+          synchronized (myQueueLock) {
+            nextTasks = task.markAsFinishedAndGetNextReadyTasks();
+          }
+          if (!nextTasks.isEmpty()) {
+            queueTasks(nextTasks);
           }
         }
       });
@@ -928,18 +916,14 @@ public class IncProjectBuilder {
   private boolean runBuildersForChunk(final CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {
     Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
-      Set<ModuleBuildTarget> moduleTargets = new LinkedHashSet<ModuleBuildTarget>();
+      Set<ModuleBuildTarget> moduleTargets = new LinkedHashSet<>();
       for (BuildTarget<?> target : targets) {
         if (target instanceof ModuleBuildTarget) {
           moduleTargets.add((ModuleBuildTarget)target);
         }
         else {
-          String targetsString = StringUtil.join(targets, new Function<BuildTarget<?>, String>() {
-            @Override
-            public String fun(BuildTarget<?> target) {
-              return StringUtil.decapitalize(target.getPresentableName());
-            }
-          }, ", ");
+          String targetsString = StringUtil.join(targets,
+                                                 (Function<BuildTarget<?>, String>)target1 -> StringUtil.decapitalize(target1.getPresentableName()), ", ");
           context.processMessage(new CompilerMessage(
             "", BuildMessage.Kind.ERROR, "Cannot build " + StringUtil.decapitalize(target.getPresentableName()) + " because it is included into a circular dependency (" +
                                          targetsString + ")")
@@ -1041,10 +1025,7 @@ public class IncProjectBuilder {
       //  }));
       //}
     }
-    catch (BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch (ProjectBuildException e) {
+    catch (BuildDataCorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Throwable e) {
@@ -1130,9 +1111,9 @@ public class IncProjectBuilder {
     boolean doneSomething = false;
     try {
       // cleanup outputs
-      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<BuildTarget<?>, Collection<String>>();
+      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
 
-      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final THashSet<File> dirsToDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       for (BuildTarget<?> target : targets) {
 
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
@@ -1151,7 +1132,7 @@ public class IncProjectBuilder {
         final Collection<String> pathsForIteration;
         if (myIsTestMode) {
           // ensure predictable order in test logs
-          pathsForIteration = new ArrayList<String>(deletedPaths);
+          pathsForIteration = new ArrayList<>(deletedPaths);
           Collections.sort((List<String>)pathsForIteration);
         }
         else {
@@ -1161,7 +1142,7 @@ public class IncProjectBuilder {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
           if (outputs != null && !outputs.isEmpty()) {
-            List<String> deletedOutputPaths = new ArrayList<String>();
+            List<String> deletedOutputPaths = new ArrayList<>();
             final OutputToTargetRegistry outputToSourceRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
             for (String output : outputToSourceRegistry.getSafeToDeleteOutputs(outputs, buildTargetId)) {
               final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);

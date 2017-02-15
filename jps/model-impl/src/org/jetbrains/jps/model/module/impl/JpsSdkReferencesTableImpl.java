@@ -70,7 +70,7 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
   private static <P extends JpsElement> JpsSdkReferenceRole<P> getSdkReferenceRole(@NotNull JpsSdkType<P> type) {
     JpsSdkReferenceRole<P> role = ourReferenceRoles.get(type);
     if (role != null) return role;
-    ourReferenceRoles.putIfAbsent(type, new JpsSdkReferenceRole<P>(type));
+    ourReferenceRoles.putIfAbsent(type, new JpsSdkReferenceRole<>(type));
     return ourReferenceRoles.get(type);
   }
 

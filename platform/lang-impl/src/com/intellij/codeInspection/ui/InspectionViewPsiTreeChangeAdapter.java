@@ -72,6 +72,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             final Project project = view.getProject();
 
             final Runnable runnable = () -> {
+              if (view.isDisposed()) return;
               synchronized (myView.getTreeStructureUpdateLock()) {
                 InspectionTreeNode root = myView.getTree().getRoot();
                 boolean[] needUpdateUI = {false};

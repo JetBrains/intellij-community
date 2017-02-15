@@ -159,7 +159,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         result.add(node);
       }
       else {
-        if (!FileUtil.pathsEqual(module.getModuleFilePath(), moduleData.getModuleFilePath())) {
+        if (!FileUtil.pathsEqual(ExternalSystemApiUtil.getExternalProjectPath(module), moduleData.getLinkedExternalProjectPath())) {
           modelsProvider.getModifiableModuleModel().disposeModule(module);
           result.add(node);
           Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);

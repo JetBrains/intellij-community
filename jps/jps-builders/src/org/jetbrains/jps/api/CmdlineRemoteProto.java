@@ -3432,7 +3432,7 @@ public final class CmdlineRemoteProto {
                 }
                 case 34: {
                   if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                    scope_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>();
+                    scope_ = new java.util.ArrayList<>();
                     mutable_bitField0_ |= 0x00000008;
                   }
                   scope_.add(input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.PARSER, extensionRegistry));
@@ -3448,7 +3448,7 @@ public final class CmdlineRemoteProto {
                 }
                 case 50: {
                   if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-                    builderParameter_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair>();
+                    builderParameter_ = new java.util.ArrayList<>();
                     mutable_bitField0_ |= 0x00000020;
                   }
                   builderParameter_.add(input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.PARSER, extensionRegistry));
@@ -5025,7 +5025,7 @@ public final class CmdlineRemoteProto {
             java.util.Collections.emptyList();
           private void ensureScopeIsMutable() {
             if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-              scope_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>(scope_);
+              scope_ = new java.util.ArrayList<>(scope_);
               bitField0_ |= 0x00000008;
              }
           }
@@ -5243,7 +5243,7 @@ public final class CmdlineRemoteProto {
             java.util.Collections.emptyList();
           private void ensureBuilderParameterIsMutable() {
             if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-              builderParameter_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair>(builderParameter_);
+              builderParameter_ = new java.util.ArrayList<>(builderParameter_);
               bitField0_ |= 0x00000020;
              }
           }
@@ -7168,7 +7168,7 @@ public final class CmdlineRemoteProto {
                 }
                 case 34: {
                   if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                    generatedFiles_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile>();
+                    generatedFiles_ = new java.util.ArrayList<>();
                     mutable_bitField0_ |= 0x00000008;
                   }
                   generatedFiles_.add(input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.PARSER, extensionRegistry));
@@ -9253,7 +9253,7 @@ public final class CmdlineRemoteProto {
             java.util.Collections.emptyList();
           private void ensureGeneratedFilesIsMutable() {
             if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-              generatedFiles_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile>(generatedFiles_);
+              generatedFiles_ = new java.util.ArrayList<>(generatedFiles_);
               bitField0_ |= 0x00000008;
              }
           }

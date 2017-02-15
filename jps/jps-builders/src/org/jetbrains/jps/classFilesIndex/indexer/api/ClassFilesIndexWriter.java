@@ -54,10 +54,10 @@ public class ClassFilesIndexWriter<K, V> {
     myMappings = compileContext.getProjectDescriptor().dataManager.getMappings();
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        index = new ClassFilesIndexStorageWriter<K, V>(storageDir,
-                                                       myIndexer.getKeyDescriptor(),
-                                                       myIndexer.getDataExternalizer(),
-                                                       myMappings);
+        index = new ClassFilesIndexStorageWriter<>(storageDir,
+                                                   myIndexer.getKeyDescriptor(),
+                                                   myIndexer.getDataExternalizer(),
+                                                   myMappings);
         break;
       }
       catch (final IOException e) {

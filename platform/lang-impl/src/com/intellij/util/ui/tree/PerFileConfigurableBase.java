@@ -78,6 +78,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
   protected static final Key<String> CLEAR_TEXT = KeyWithDefaultValue.create("CLEAR_TEXT", "<Clear>");
   protected static final Key<String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", "<None>");
+  protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
 
   protected final Project myProject;
   protected final PerFileMappings<T> myMappings;
@@ -183,7 +184,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Nullable
   protected JComponent createDefaultMappingComponent() {
     myDefaultProps.addAll(getDefaultMappings());
-    if (myMappings instanceof LanguagePerFileMappings) {
+    if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
       myDefaultProps.add(Trinity.create("Project " + StringUtil.capitalize(param(MAPPING_TITLE)),
                                         () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
                                         o -> myMappings.setMapping(null, o)));

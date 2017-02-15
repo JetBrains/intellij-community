@@ -345,12 +345,14 @@ public abstract class DialogWrapper {
     installErrorPainter();
 
     myErrorPainter.setValidationInfo(info);
-    SwingUtilities.invokeLater(() -> {
-      if (myDisposed) return;
-      setErrorText(info.message, info.component);
-      myPeer.getRootPane().getGlassPane().repaint();
-      getOKAction().setEnabled(false);
-    });
+    if (!myErrorText.isTextSet(info.message)) {
+      SwingUtilities.invokeLater(() -> {
+        if (myDisposed) return;
+        setErrorText(info.message);
+        myPeer.getRootPane().getGlassPane().repaint();
+        getOKAction().setEnabled(false);
+      });
+    }
   }
 
   private void installErrorPainter() {
@@ -361,12 +363,14 @@ public abstract class DialogWrapper {
 
   private void clearProblems() {
     myErrorPainter.setValidationInfo(null);
-    SwingUtilities.invokeLater(() -> {
-      if (myDisposed) return;
-      setErrorText(null, null);
-      myPeer.getRootPane().getGlassPane().repaint();
-      getOKAction().setEnabled(true);
-    });
+    if (!myErrorText.isTextSet(null)) {
+      SwingUtilities.invokeLater(() -> {
+        if (myDisposed) return;
+        setErrorText(null);
+        myPeer.getRootPane().getGlassPane().repaint();
+        getOKAction().setEnabled(true);
+      });
+    }
   }
 
   protected void createDefaultActions() {
@@ -2167,7 +2171,7 @@ public abstract class DialogWrapper {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-      if (myInfo != null && myInfo.component != null && !Registry.is("ide.inplace.errors.outline")) {
+      if (myInfo != null && myInfo.component != null) {
         final JComponent comp = myInfo.component;
         final int w = comp.getWidth();
         final int h = comp.getHeight();

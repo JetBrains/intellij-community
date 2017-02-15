@@ -38,6 +38,8 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   protected final Class<?> itemType;
   @Nullable
   protected final AbstractCollection annotation;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private Serializer serializer;
 
   public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
@@ -52,13 +54,15 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @Override
-  public void init(@NotNull Type originalType) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+    this.serializer = serializer;
+
     if (annotation == null || annotation.surroundWithTag()) {
       return;
     }
 
     if (StringUtil.isEmpty(annotation.elementTag()) ||
-        (annotation.elementTag().equals(Constants.OPTION) && XmlSerializerImpl.getBinding(itemType) == null)) {
+        (annotation.elementTag().equals(Constants.OPTION) && serializer.getBinding(itemType) == null)) {
       throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
     }
   }
@@ -66,7 +70,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @NotNull
   private synchronized Map<Class<?>, Binding> getElementBindings() {
     if (itemBindings == null) {
-      Binding binding = XmlSerializerImpl.getBinding(itemType);
+      Binding binding = serializer.getBinding(itemType);
       if (annotation == null || annotation.elementTypes().length == 0) {
         itemBindings = binding == null ? Collections.<Class<?>, Binding>emptyMap() : Collections.<Class<?>, Binding>singletonMap(itemType, binding);
       }
@@ -76,7 +80,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
           itemBindings.put(itemType, binding);
         }
         for (Class aClass : annotation.elementTypes()) {
-          Binding b = XmlSerializerImpl.getBinding(aClass);
+          Binding b = serializer.getBinding(aClass);
           if (b != null) {
             itemBindings.put(aClass, b);
           }
@@ -169,7 +173,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       return null;
     }
 
-    Binding binding = XmlSerializerImpl.getBinding(value.getClass());
+    Binding binding = serializer.getBinding(value.getClass());
     if (binding == null) {
       Element serializedItem = new Element(annotation == null ? Constants.OPTION : annotation.elementTag());
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();

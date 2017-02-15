@@ -28,10 +28,10 @@ public class FilePattern {
 
   @Tag("includes")
   @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public Set<String> includes = new HashSet<String>();
+  public Set<String> includes = new HashSet<>();
 
   @Tag("excludes")
   @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public Set<String> excludes = new HashSet<String>();
+  public Set<String> excludes = new HashSet<>();
 
 }

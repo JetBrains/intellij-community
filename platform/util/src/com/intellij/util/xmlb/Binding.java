@@ -45,7 +45,7 @@ public abstract class Binding {
     return false;
   }
 
-  public void init(@NotNull Type originalType) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
   @Nullable

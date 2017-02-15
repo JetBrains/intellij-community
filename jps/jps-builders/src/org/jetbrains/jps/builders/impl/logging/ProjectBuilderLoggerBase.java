@@ -62,7 +62,7 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
 
   @Override
   public void logCompiledPaths(Collection<String> paths, String builderName, String description) throws IOException {
-    List<File> files = new ArrayList<File>(paths.size());
+    List<File> files = new ArrayList<>(paths.size());
     for (String path : paths) {
       files.add(new File(path));
     }

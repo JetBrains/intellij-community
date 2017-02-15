@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -416,19 +416,9 @@ public class KeymapUtil {
   }
 
   /**
-   * Checks whether mouse event's button and modifiers match a shortcut configured in active keymap for given action id.
-   * Only shortcuts having click count of 1 can be matched, mouse event's click count is ignored.
+   * Creates shortcut corresponding to a single-click event
    */
-  public static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) {
-      return false;
-    }
-    Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return false;
-    }
-
+  public static MouseShortcut createMouseShortcut(@NotNull MouseEvent e) {
     int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
     if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
@@ -440,8 +430,7 @@ public class KeymapUtil {
         button = MouseEvent.BUTTON2;
       }
     }
-
-    return keymap.hasActionId(actionId, new MouseShortcut(button, modifiers, 1));
+    return new MouseShortcut(button, modifiers, 1);
   }
 
   /**

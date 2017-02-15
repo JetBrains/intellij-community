@@ -46,7 +46,7 @@ class CompilerReferenceReader {
 
   private final CompilerBackwardReferenceIndex myIndex;
 
-  private CompilerReferenceReader(File buildDir) throws IOException {
+  private CompilerReferenceReader(File buildDir) {
     myIndex = new CompilerBackwardReferenceIndex(buildDir);
   }
 
@@ -117,8 +117,9 @@ class CompilerReferenceReader {
     try {
       return new CompilerReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    catch (RuntimeException e) {
+      LOG.error("An exception while initialization of compiler reference index.", e);
+      return null;
     }
   }
 

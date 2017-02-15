@@ -29,6 +29,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -57,6 +58,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -3751,15 +3754,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
   }
 
   private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) return false;
+    Keymap keymap = keymapManager.getActiveKeymap();
+    if (keymap == null) return false;
+    MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
+    String[] mappedActions = keymap.getActionIds(mouseShortcut);
+    if (!ArrayUtil.contains(actionId, mappedActions)) return false;
+    if (mappedActions.length < 2) return true;
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String mappedActionId : mappedActions) {
+      if (actionId.equals(mappedActionId)) continue;
+      AnAction action = actionManager.getAction(mappedActionId);
+      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU,
+                                                                   DataManager.getInstance().getDataContext(e.getComponent()));
+      if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) return false;
+    }
+    return true;
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
