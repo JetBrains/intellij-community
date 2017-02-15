@@ -346,13 +346,17 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyGenericType) {
+    return isUnknown(type, true);
+  }
+
+  public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown) {
+    if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
       return true;
     }
     if (type instanceof PyUnionType) {
       final PyUnionType union = (PyUnionType)type;
       for (PyType t : union.getMembers()) {
-        if (isUnknown(t)) {
+        if (isUnknown(t, genericsAreUnknown)) {
           return true;
         }
       }
