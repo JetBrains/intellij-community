@@ -18,6 +18,8 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -68,6 +70,9 @@ public class CompositeInputFilter implements InputFilter {
         if (!isBroken) {
           try {
             return filter.applyFilter(text, contentType);
+          }
+          catch (ProcessCanceledException ignored) {
+            ProgressManager.checkCanceled();
           }
           catch (Throwable e) {
             isBroken = true;
