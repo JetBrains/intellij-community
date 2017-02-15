@@ -129,7 +129,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
         }
         return true;
       });
-    } else {
+    } else if (infoType instanceof PsiClassType) {
       JavaInheritorsGetter.processInheritors(parameters, Collections.singleton((PsiClassType)infoType), matcher, type -> {
         if (!infoType.equals(type)) {
           result.consume(type);
