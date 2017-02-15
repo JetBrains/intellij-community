@@ -264,12 +264,7 @@ class MethodRepr extends ProtoMember {
     stream.println();
 
     final TypeRepr.AbstractType[] es = myExceptions.toArray(new TypeRepr.AbstractType[myExceptions.size()]);
-    Arrays.sort(es, new Comparator<TypeRepr.AbstractType>() {
-          @Override
-          public int compare(final TypeRepr.AbstractType o1, final TypeRepr.AbstractType o2) {
-            return o1.getDescr(context).compareTo(o2.getDescr(context));
-          }
-        });
+    Arrays.sort(es, (o1, o2) -> o1.getDescr(context).compareTo(o2.getDescr(context)));
     stream.print("          Exceptions : ");
     for (final TypeRepr.AbstractType e : es) {
       stream.print(e.getDescr(context));

@@ -69,12 +69,7 @@ public class BuilderRegistry {
     }
     else {
       final Set<String> finalCompilableFileExtensions = compilableFileExtensions;
-      myModuleBuilderFileFilter = new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          return finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
-        }
-      };
+      myModuleBuilderFileFilter = file -> finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
     }
   }
 

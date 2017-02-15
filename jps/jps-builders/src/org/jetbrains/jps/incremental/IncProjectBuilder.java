@@ -178,13 +178,10 @@ public class IncProjectBuilder {
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        JavacMain.clearCompilerZipFileCache();
-        myProjectDescriptor.dataManager.flush(false);
-        myProjectDescriptor.timestamps.getStorage().force();
-      }
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
+      JavacMain.clearCompilerZipFileCache();
+      myProjectDescriptor.dataManager.flush(false);
+      myProjectDescriptor.timestamps.getStorage().force();
     });
     
     startTempDirectoryCleanupTask();
@@ -425,11 +422,9 @@ public class IncProjectBuilder {
     }
     final File[] files = tempDir.listFiles();
     if (files != null && files.length != 0) {
-      final RunnableFuture<Void> task = new FutureTask<Void>(new Runnable() {
-        public void run() {
-          for (File tempFile : files) {
-            FileUtil.delete(tempFile);
-          }
+      final RunnableFuture<Void> task = new FutureTask<Void>(() -> {
+        for (File tempFile : files) {
+          FileUtil.delete(tempFile);
         }
       }, null);
       final Thread thread = new Thread(task, "Temp directory cleanup");
@@ -859,11 +854,7 @@ public class IncProjectBuilder {
           chunksToLog.add(task.getChunk());
         }
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
-        Collections.sort(chunksToLog, new Comparator<BuildTargetChunk>() {
-          public int compare(final BuildTargetChunk o1, final BuildTargetChunk o2) {
-            return o1.toString().compareTo(o2.toString());
-          }
-        });
+        Collections.sort(chunksToLog, (o1, o2) -> o1.toString().compareTo(o2.toString()));
         for (BuildTargetChunk chunk : chunksToLog) {
           logBuilder.append(chunk.toString()).append("; ");
         }
@@ -876,34 +867,31 @@ public class IncProjectBuilder {
 
     private void queueTask(final BuildChunkTask task) {
       final CompileContext chunkLocalContext = createContextWrapper(myContext);
-      myParallelBuildExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
+      myParallelBuildExecutor.execute(() -> {
+        try {
           try {
-            try {
-              if (myException.get() == null) {
-                buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk());
-              }
+            if (myException.get() == null) {
+              buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk());
             }
-            finally {
-              myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
-              myProjectDescriptor.dataManager.flush(true);
-            }
-          }
-          catch (Throwable e) {
-            myException.compareAndSet(null, e);
-            LOG.info(e);
           }
           finally {
-            LOG.debug("Finished compilation of " + task.getChunk().toString());
-            myTasksCountDown.countDown();
-            List<BuildChunkTask> nextTasks;
-            synchronized (myQueueLock) {
-              nextTasks = task.markAsFinishedAndGetNextReadyTasks();
-            }
-            if (!nextTasks.isEmpty()) {
-              queueTasks(nextTasks);
-            }
+            myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
+            myProjectDescriptor.dataManager.flush(true);
+          }
+        }
+        catch (Throwable e) {
+          myException.compareAndSet(null, e);
+          LOG.info(e);
+        }
+        finally {
+          LOG.debug("Finished compilation of " + task.getChunk().toString());
+          myTasksCountDown.countDown();
+          List<BuildChunkTask> nextTasks;
+          synchronized (myQueueLock) {
+            nextTasks = task.markAsFinishedAndGetNextReadyTasks();
+          }
+          if (!nextTasks.isEmpty()) {
+            queueTasks(nextTasks);
           }
         }
       });
@@ -934,12 +922,8 @@ public class IncProjectBuilder {
           moduleTargets.add((ModuleBuildTarget)target);
         }
         else {
-          String targetsString = StringUtil.join(targets, new Function<BuildTarget<?>, String>() {
-            @Override
-            public String fun(BuildTarget<?> target) {
-              return StringUtil.decapitalize(target.getPresentableName());
-            }
-          }, ", ");
+          String targetsString = StringUtil.join(targets,
+                                                 (Function<BuildTarget<?>, String>)target1 -> StringUtil.decapitalize(target1.getPresentableName()), ", ");
           context.processMessage(new CompilerMessage(
             "", BuildMessage.Kind.ERROR, "Cannot build " + StringUtil.decapitalize(target.getPresentableName()) + " because it is included into a circular dependency (" +
                                          targetsString + ")")

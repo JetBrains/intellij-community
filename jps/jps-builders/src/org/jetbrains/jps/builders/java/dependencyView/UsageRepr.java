@@ -597,12 +597,9 @@ class UsageRepr {
       final List<String> arguments = new LinkedList<String>();
 
       if (myUsedArguments != null) {
-        myUsedArguments.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(final int value) {
-            arguments.add(context.getValue(value));
-            return true;
-          }
+        myUsedArguments.forEach(value -> {
+          arguments.add(context.getValue(value));
+          return true;
         });
       }
 

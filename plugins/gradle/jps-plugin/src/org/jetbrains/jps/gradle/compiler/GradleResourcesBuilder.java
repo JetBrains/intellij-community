@@ -80,24 +80,21 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     });
 
     GradleResourceRootDescriptor[] roots = files.keySet().toArray(new GradleResourceRootDescriptor[files.keySet().size()]);
-    Arrays.sort(roots, new Comparator<GradleResourceRootDescriptor>() {
-      @Override
-      public int compare(GradleResourceRootDescriptor r1, GradleResourceRootDescriptor r2) {
-        int res = r1.getIndexInPom() - r2.getIndexInPom();
-        if (r1.isOverwrite()) {
-          assert r2.isOverwrite();
-          return res;
-        }
-
-        if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
-        if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
-
-        if (!r1.getConfiguration().isFiltered) {
-          res = -res;
-        }
-
+    Arrays.sort(roots, (r1, r2) -> {
+      int res = r1.getIndexInPom() - r2.getIndexInPom();
+      if (r1.isOverwrite()) {
+        assert r2.isOverwrite();
         return res;
       }
+
+      if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
+      if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
+
+      if (!r1.getConfiguration().isFiltered) {
+        res = -res;
+      }
+
+      return res;
     });
 
     GradleResourceFileProcessor fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);

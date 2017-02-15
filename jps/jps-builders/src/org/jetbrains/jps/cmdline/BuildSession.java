@@ -346,16 +346,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   public void processFSEvent(final CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    myEventsProcessor.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          applyFSEvent(myProjectDescriptor, event, true);
-          myLastEventOrdinal += 1;
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+    myEventsProcessor.execute(() -> {
+      try {
+        applyFSEvent(myProjectDescriptor, event, true);
+        myLastEventOrdinal += 1;
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }
@@ -652,12 +649,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     private EventsProcessor() {
       super("BuildSession.EventsProcessor.EventsProcessor pool", SharedThreadPool.getInstance());
       myProcessingEnabled.down();
-      execute(new Runnable() {
-        @Override
-        public void run() {
-          myProcessingEnabled.waitFor();
-        }
-      });
+      execute(() -> myProcessingEnabled.waitFor());
     }
 
     private void startProcessing() {

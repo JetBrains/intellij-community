@@ -654,18 +654,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     assert counter != null;
 
     counter.incTaskCount();
-    myTaskRunner.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          taskRunnable.run();
-        }
-        catch (Throwable e) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, e));
-        }
-        finally {
-          counter.decTaskCounter();
-        }
+    myTaskRunner.execute(() -> {
+      try {
+        taskRunnable.run();
+      }
+      catch (Throwable e) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+      }
+      finally {
+        counter.decTaskCounter();
       }
     });
   }
@@ -1283,17 +1280,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
       }
 
-      submitAsyncTask(myContext, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            for (ClassPostProcessor processor : ourClassProcessors) {
-              processor.process(myContext, fileObject);
-            }
+      submitAsyncTask(myContext, () -> {
+        try {
+          for (ClassPostProcessor processor : ourClassProcessors) {
+            processor.process(myContext, fileObject);
           }
-          finally {
-            myDelegateOutputFileSink.save(fileObject);
-          }
+        }
+        finally {
+          myDelegateOutputFileSink.save(fileObject);
         }
       });
     }

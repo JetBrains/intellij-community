@@ -105,12 +105,7 @@ public class EclipseCompilerTool extends JavaCompilingTool {
   public static File findEcjJarFile() {
     File[] libs = {new File(PathManager.getHomePath(), "lib"), new File(PathManager.getHomePath(), "community/lib")};
     for (File lib : libs) {
-      File[] children = lib.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX);
-        }
-      });
+      File[] children = lib.listFiles((dir, name) -> name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX));
       if (children != null && children.length > 0) {
         return children[0];
       }

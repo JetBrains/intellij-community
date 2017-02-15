@@ -115,12 +115,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
   @Override
   protected void addJUnitDefaultLib(JpsModule rootModel, String junitName, ExpandMacroToPathMap macroMap) {
     final String ideaHome = macroMap.substitute("$APPLICATION_HOME_DIR$", SystemInfo.isFileSystemCaseSensitive);
-    final FilenameFilter junitFilter = new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.startsWith("junit");
-      }
-    };
+    final FilenameFilter junitFilter = (dir, name) -> name.startsWith("junit");
     File[] junitJars = new File(ideaHome, "lib").listFiles(junitFilter);
     if (junitJars == null || junitJars.length == 0) {
       junitJars = new File(new File(ideaHome, "community"), "lib").listFiles(junitFilter);

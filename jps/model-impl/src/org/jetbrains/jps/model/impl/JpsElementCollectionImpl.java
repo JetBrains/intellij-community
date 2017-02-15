@@ -140,12 +140,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     public Iterator<X> iterator() {
       //noinspection unchecked
       Iterator<JpsTypedElement<?>> iterator = (Iterator<JpsTypedElement<?>>)myElements.iterator();
-      return new FilteringIterator<JpsTypedElement<?>, X>(iterator, new Condition<JpsTypedElement<?>>() {
-        @Override
-        public boolean value(JpsTypedElement<?> e) {
-          return e.getType().equals(myType);
-        }
-      });
+      return new FilteringIterator<JpsTypedElement<?>, X>(iterator, e -> e.getType().equals(myType));
     }
   }
 }

@@ -382,13 +382,7 @@ public class JpsGantProjectBuilder {
         case PROGRESS:
           if (msg instanceof BuildingTargetProgressMessage) {
             String targetsString = StringUtil.join(((BuildingTargetProgressMessage)msg).getTargets(),
-                                                   new NotNullFunction<BuildTarget<?>, String>() {
-                                                     @NotNull
-                                                     @Override
-                                                     public String fun(BuildTarget<?> dom) {
-                                                       return dom.getPresentableName();
-                                                     }
-                                                   }, ",");
+                                                   (NotNullFunction<BuildTarget<?>, String>)dom -> dom.getPresentableName(), ",");
             switch (((BuildingTargetProgressMessage)msg).getEventType()) {
               case STARTED:
                 myBuildInfoPrinter.printBlockOpenedMessage(JpsGantProjectBuilder.this, targetsString);

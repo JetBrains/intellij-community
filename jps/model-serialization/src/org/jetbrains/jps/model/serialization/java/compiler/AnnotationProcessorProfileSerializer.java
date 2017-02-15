@@ -28,12 +28,7 @@ import java.util.*;
  * @author nik
  */
 public class AnnotationProcessorProfileSerializer {
-  private static final Comparator<String> ALPHA_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareToIgnoreCase(o2);
-    }
-  };
+  private static final Comparator<String> ALPHA_COMPARATOR = (o1, o2) -> o1.compareToIgnoreCase(o2);
   private static final String ENTRY = "entry";
   private static final String NAME = "name";
   private static final String VALUE = "value";

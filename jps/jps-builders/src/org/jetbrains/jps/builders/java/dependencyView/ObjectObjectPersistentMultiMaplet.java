@@ -217,15 +217,12 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void forEachEntry(final TObjectObjectProcedure<K, Collection<V>> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<K>() {
-        @Override
-        public boolean process(K key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }

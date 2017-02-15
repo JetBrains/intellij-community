@@ -305,16 +305,13 @@ public class JavaBuilderUtil {
 
   private static FileFilter createOrFilter(final List<FileFilter> filters) {
     if (filters == null || filters.isEmpty()) return null;
-    return new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        for (FileFilter filter : filters) {
-          if (filter.accept(pathname)) {
-            return true;
-          }
+    return pathname -> {
+      for (FileFilter filter : filters) {
+        if (filter.accept(pathname)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 

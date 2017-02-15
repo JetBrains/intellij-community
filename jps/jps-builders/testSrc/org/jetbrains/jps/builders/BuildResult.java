@@ -72,12 +72,8 @@ public class BuildResult implements MessageHandler {
 
   private static void dumpSourceToOutputMappings(ProjectDescriptor pd, PrintStream stream) throws IOException {
     List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>(pd.getBuildTargetIndex().getAllTargets());
-    Collections.sort(targets, new Comparator<BuildTarget<?>>() {
-      @Override
-      public int compare(BuildTarget<?> o1, BuildTarget<?> o2) {
-        return StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false);
-      }
-    });
+    Collections.sort(targets,
+                     (o1, o2) -> StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false));
     final TIntObjectHashMap<BuildTarget<?>> id2Target = new TIntObjectHashMap<BuildTarget<?>>();
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
@@ -109,13 +105,10 @@ public class BuildResult implements MessageHandler {
       TIntHashSet targetsIds = registry.getState(key);
       if (targetsIds == null) continue;
       final List<String> targetsNames = new ArrayList<String>();
-      targetsIds.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          BuildTarget<?> target = id2Target.get(value);
-          targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
-          return true;
-        }
+      targetsIds.forEach(value -> {
+        BuildTarget<?> target = id2Target.get(value);
+        targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
+        return true;
       });
       Collections.sort(targetsNames);
       stream.println(hashCodeToOutputPath.get(key) + " -> " + targetsNames);

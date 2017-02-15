@@ -179,28 +179,25 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
 
   @Override
   public void processModuleAndLibraries(@Nullable final Consumer<JpsModule> moduleConsumer, @Nullable final Consumer<JpsLibrary> libraryConsumer) {
-    processDependencies(new Processor<JpsDependencyElement>() {
-      @Override
-      public boolean process(JpsDependencyElement dependencyElement) {
-        if (moduleConsumer != null) {
-          if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
-            moduleConsumer.consume(dependencyElement.getContainingModule());
-          }
-          else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
-            JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
-            if (module != null) {
-              moduleConsumer.consume(module);
-            }
+    processDependencies(dependencyElement -> {
+      if (moduleConsumer != null) {
+        if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
+          moduleConsumer.consume(dependencyElement.getContainingModule());
+        }
+        else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
+          JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
+          if (module != null) {
+            moduleConsumer.consume(module);
           }
         }
-        if (libraryConsumer != null && dependencyElement instanceof JpsLibraryDependency) {
-          JpsLibrary library = ((JpsLibraryDependency)dependencyElement).getLibrary();
-          if (library != null) {
-            libraryConsumer.consume(library);
-          }
-        }
-        return true;
       }
+      if (libraryConsumer != null && dependencyElement instanceof JpsLibraryDependency) {
+        JpsLibrary library = ((JpsLibraryDependency)dependencyElement).getLibrary();
+        if (library != null) {
+          libraryConsumer.consume(library);
+        }
+      }
+      return true;
     });
   }
 }

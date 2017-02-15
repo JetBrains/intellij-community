@@ -90,19 +90,16 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   }
 
   public String getFullLog(final File... baseDirs) {
-    return StringUtil.join(myLogLines, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        for (File dir : baseDirs) {
-          if (dir != null) {
-            String path = FileUtil.toSystemIndependentName(dir.getAbsolutePath()) + "/";
-            if (s.startsWith(path)) {
-              return s.substring(path.length());
-            }
+    return StringUtil.join(myLogLines, s -> {
+      for (File dir : baseDirs) {
+        if (dir != null) {
+          String path = FileUtil.toSystemIndependentName(dir.getAbsolutePath()) + "/";
+          if (s.startsWith(path)) {
+            return s.substring(path.length());
           }
         }
-        return s;
       }
+      return s;
     }, "\n");
   }
 

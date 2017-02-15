@@ -54,21 +54,18 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, final TargetOutputIndex outputIndex) {
     final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
     final JpsArtifact artifact = getArtifact();
-    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
-      @Override
-      public boolean process(JpsPackagingElement element) {
-        if (element instanceof JpsArtifactOutputPackagingElement) {
-          JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
-          if (included != null && !included.equals(artifact)) {
-            if (!StringUtil.isEmpty(included.getOutputPath())) {
-              dependencies.add(new ArtifactBuildTarget(included));
-              return false;
-            }
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
+      if (element instanceof JpsArtifactOutputPackagingElement) {
+        JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+        if (included != null && !included.equals(artifact)) {
+          if (!StringUtil.isEmpty(included.getOutputPath())) {
+            dependencies.add(new ArtifactBuildTarget(included));
+            return false;
           }
         }
-        dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
-        return true;
       }
+      dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
+      return true;
     });
     if (!dependencies.isEmpty()) {
       final List<BuildTarget<?>> additional = new SmartList<BuildTarget<?>>();
