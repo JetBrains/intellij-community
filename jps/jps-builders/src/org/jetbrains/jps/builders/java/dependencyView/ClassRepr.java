@@ -408,7 +408,7 @@ public class ClassRepr extends Proto {
 
     stream.print("      Interfaces : ");
     final TypeRepr.AbstractType[] is = myInterfaces.toArray(new TypeRepr.AbstractType[myInterfaces.size()]);
-    Arrays.sort(is, (o1, o2) -> o1.getDescr(context).compareTo(o2.getDescr(context)));
+    Arrays.sort(is, Comparator.comparing(o -> o.getDescr(context)));
     for (final TypeRepr.AbstractType t : is) {
       stream.print(t.getDescr(context));
       stream.print(" ");

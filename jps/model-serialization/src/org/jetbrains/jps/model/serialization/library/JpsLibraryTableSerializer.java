@@ -74,7 +74,7 @@ public class JpsLibraryTableSerializer {
       }
     }
 
-    Collections.sort(libraries, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    libraries.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
     for (JpsLibrary library : libraries) {
       Element libraryTag = new Element(LIBRARY_TAG);

@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -44,7 +43,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project) {
     List<JpsArtifact> artifacts = new ArrayList<>(getArtifacts(project));
-    Collections.sort(artifacts, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    artifacts.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     return artifacts;
   }
 

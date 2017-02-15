@@ -57,7 +57,7 @@ public class ArtifactSorter {
     DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<>(graph);
     List<JpsArtifact> names = new ArrayList<>();
     names.addAll(graph.getNodes());
-    Collections.sort(names, builder.comparator());
+    names.sort(builder.comparator());
     return names;
   }
 

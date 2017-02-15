@@ -22,7 +22,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -34,7 +33,10 @@ import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.*;
 
@@ -72,8 +74,8 @@ public class BuildResult implements MessageHandler {
 
   private static void dumpSourceToOutputMappings(ProjectDescriptor pd, PrintStream stream) throws IOException {
     List<BuildTarget<?>> targets = new ArrayList<>(pd.getBuildTargetIndex().getAllTargets());
-    Collections.sort(targets,
-                     (o1, o2) -> StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false));
+    targets.sort(
+      (o1, o2) -> StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false));
     final TIntObjectHashMap<BuildTarget<?>> id2Target = new TIntObjectHashMap<>();
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);

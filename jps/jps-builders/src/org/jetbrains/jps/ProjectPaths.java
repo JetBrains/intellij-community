@@ -158,7 +158,7 @@ public class ProjectPaths {
       }
       if (roots.size() > 1) {
         roots = new ArrayList<>(roots); // sort roots to get deterministic result
-        Collections.sort(roots, (o1, o2) -> o1.compareTo(o2));
+        roots.sort(Comparator.naturalOrder());
       }
       final File parent = JpsPathUtil.urlToFile(roots.get(0));
       return StringUtil.isEmpty(sourceDirName)? parent : new File(parent, sourceDirName);

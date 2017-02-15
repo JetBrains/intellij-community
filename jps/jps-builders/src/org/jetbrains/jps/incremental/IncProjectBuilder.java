@@ -854,7 +854,7 @@ public class IncProjectBuilder {
           chunksToLog.add(task.getChunk());
         }
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
-        Collections.sort(chunksToLog, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+        chunksToLog.sort(Comparator.comparing(BuildTargetChunk::toString));
         for (BuildTargetChunk chunk : chunksToLog) {
           logBuilder.append(chunk.toString()).append("; ");
         }
