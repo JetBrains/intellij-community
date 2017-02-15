@@ -122,12 +122,10 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
           }
         }
       }
-
       Decl member = processMember(el, namesCache);
       if (member != null) {
         innerList.add(member);
       }
-
     }
     int flags = translateFlags(classStub);
     if (classStub.isAnonymousInQualifiedNew()) {
