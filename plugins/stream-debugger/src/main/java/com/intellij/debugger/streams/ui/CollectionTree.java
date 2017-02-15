@@ -70,7 +70,6 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
     myProject = project;
     myNodeManager = new MyNodeManager(project);
     myResolvedCall = call;
-    final List<Value> values = call.getValues();
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(call.getValues(), evaluationContext));
     setRoot(root, false);
     root.setLeaf(false);
@@ -95,6 +94,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
       }
     });
 
+    final List<Value> values = call.getValues();
     getTreeModel().addTreeModelListener(new TreeModelAdapter() {
       @Override
       public void treeNodesInserted(TreeModelEvent event) {
@@ -154,6 +154,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
     else {
       propagateForward(values);
     }
+    
     repaint();
     myIgnoreSelectionEvents = false;
   }
@@ -167,13 +168,19 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
   }
 
   private void propagateBackward(@NotNull List<Value> values) {
-    final List<Value> prevValues = values.stream().flatMap(x -> myResolvedCall.getPreviousValues(x).stream()).collect(Collectors.toList());
+    final List<Value> prevValues = values.stream()
+      .flatMap(x -> myResolvedCall.getPreviousValues(x).stream())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
 
     myBackwardListener.highlightingChanged(prevValues, PropagationDirection.BACKWARD);
   }
 
   private void propagateForward(@NotNull List<Value> values) {
-    final List<Value> nextValues = values.stream().flatMap(x -> myResolvedCall.getNextValues(x).stream()).collect(Collectors.toList());
+    final List<Value> nextValues = values.stream()
+      .flatMap(x -> myResolvedCall.getNextValues(x).stream())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
 
     myForwardListener.highlightingChanged(nextValues, PropagationDirection.FORWARD);
   }
