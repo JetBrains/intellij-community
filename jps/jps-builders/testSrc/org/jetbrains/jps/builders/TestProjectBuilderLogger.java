@@ -34,9 +34,9 @@ import java.util.Set;
  * @author nik
  */
 public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
-  private MultiMap<String, File> myCompiledFiles = new MultiMap<String, File>();
-  private Set<File> myDeletedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-  private List<String> myLogLines = new ArrayList<String>();
+  private MultiMap<String, File> myCompiledFiles = new MultiMap<>();
+  private Set<File> myDeletedFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private List<String> myLogLines = new ArrayList<>();
   
   @Override
   public void logDeletedFiles(Collection<String> paths) {
@@ -70,7 +70,7 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   }
 
   private static void assertRelativePaths(File[] baseDirs, Collection<File> files, String[] expected) {
-    List<String> relativePaths = new ArrayList<String>();
+    List<String> relativePaths = new ArrayList<>();
     for (File file : files) {
       String path = file.getAbsolutePath();
       for (File baseDir : baseDirs) {

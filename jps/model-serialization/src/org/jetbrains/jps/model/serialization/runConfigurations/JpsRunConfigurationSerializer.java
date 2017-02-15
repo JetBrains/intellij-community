@@ -35,7 +35,7 @@ public class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 
   public static void loadRunConfigurations(@NotNull JpsProject project, @Nullable Element runManagerTag) {
-    Map<String, JpsRunConfigurationPropertiesSerializer<?>> serializers = new HashMap<String, JpsRunConfigurationPropertiesSerializer<?>>();
+    Map<String, JpsRunConfigurationPropertiesSerializer<?>> serializers = new HashMap<>();
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsRunConfigurationPropertiesSerializer<?> serializer : extension.getRunConfigurationPropertiesSerializers()) {
         serializers.put(serializer.getTypeId(), serializer);

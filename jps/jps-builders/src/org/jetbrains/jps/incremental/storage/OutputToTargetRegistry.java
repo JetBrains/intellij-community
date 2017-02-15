@@ -110,7 +110,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     if (size == 0) {
       return outputPaths;
     }
-    final Collection<String> result = new ArrayList<String>(size);
+    final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
       final int key = FileUtil.pathHashCode(outputPath);
       synchronized (myDataLock) {

@@ -44,7 +44,8 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
       @NotNull
       @Override

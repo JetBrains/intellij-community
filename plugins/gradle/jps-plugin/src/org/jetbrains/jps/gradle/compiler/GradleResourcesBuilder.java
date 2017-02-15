@@ -60,7 +60,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     final GradleModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
     if (config == null) return;
 
-    final Map<GradleResourceRootDescriptor, List<File>> files = new HashMap<GradleResourceRootDescriptor, List<File>>();
+    final Map<GradleResourceRootDescriptor, List<File>> files = new HashMap<>();
 
     holder.processDirtyFiles(new FileProcessor<GradleResourceRootDescriptor, GradleResourcesTarget>() {
 
@@ -70,7 +70,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
 
         List<File> fileList = files.get(rd);
         if (fileList == null) {
-          fileList = new ArrayList<File>();
+          fileList = new ArrayList<>();
           files.put(rd, fileList);
         }
 

@@ -71,7 +71,7 @@ class InProcessGroovyc implements GroovycFlavor {
                                         final GroovycOutputParser parser) throws Exception {
     boolean jointPossible = forStubs && !myHasStubExcludes;
     final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
-                                                ? new LinkedBlockingQueue<String>() : null;
+                                                ? new LinkedBlockingQueue<>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
@@ -291,7 +291,7 @@ class InProcessGroovyc implements GroovycFlavor {
       }
     };
 
-    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
+    ourParentLoaderCache = new SoftReference<>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }
 

@@ -54,15 +54,15 @@ public class ArtifactSorter {
 
   private List<JpsArtifact> doGetSortedArtifacts() {
     Graph<JpsArtifact> graph = createArtifactsGraph();
-    DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
-    List<JpsArtifact> names = new ArrayList<JpsArtifact>();
+    DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<>(graph);
+    List<JpsArtifact> names = new ArrayList<>();
     names.addAll(graph.getNodes());
     Collections.sort(names, builder.comparator());
     return names;
   }
 
   private Map<JpsArtifact, JpsArtifact> computeArtifactToSelfIncludingNameMap() {
-    final Map<JpsArtifact, JpsArtifact> result = new HashMap<JpsArtifact, JpsArtifact>();
+    final Map<JpsArtifact, JpsArtifact> result = new HashMap<>();
     final Graph<JpsArtifact> graph = createArtifactsGraph();
     for (JpsArtifact artifact : graph.getNodes()) {
       final Iterator<JpsArtifact> in = graph.getIn(artifact);
@@ -75,7 +75,7 @@ public class ArtifactSorter {
       }
     }
 
-    final DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
+    final DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<>(graph);
     if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
 
     for (Collection<JpsArtifact> component : builder.getComponents()) {
@@ -104,9 +104,9 @@ public class ArtifactSorter {
 
   @NotNull
   public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<JpsArtifact> artifacts) {
-    Set<JpsArtifact> result = new HashSet<JpsArtifact>();
+    Set<JpsArtifact> result = new HashSet<>();
     for (JpsArtifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, new HashSet<JpsArtifact>(), result, true);
+      collectIncludedArtifacts(artifact, new HashSet<>(), result, true);
     }
     return result;
   }
@@ -146,7 +146,7 @@ public class ArtifactSorter {
     private final Set<JpsArtifact> myArtifactNodes;
 
     public ArtifactsGraph(final JpsModel model) {
-      myArtifactNodes = new LinkedHashSet<JpsArtifact>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
+      myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
     @Override
@@ -156,7 +156,7 @@ public class ArtifactSorter {
 
     @Override
     public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
-      final Set<JpsArtifact> included = new LinkedHashSet<JpsArtifact>();
+      final Set<JpsArtifact> included = new LinkedHashSet<>();
       processIncludedArtifacts(artifact, includedArtifact -> {
         if (myArtifactNodes.contains(includedArtifact)) {
           included.add(includedArtifact);

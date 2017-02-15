@@ -46,8 +46,8 @@ import java.util.Map;
 public class GroovycOutputParser {
   private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
-  private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
-  private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
+  private final List<OutputItem> myCompiledItems = new ArrayList<>();
+  private final List<CompilerMessage> compilerMessages = new ArrayList<>();
   private final StringBuffer stdErr = new StringBuffer();
   private final ModuleChunk myChunk;
   private final CompileContext myContext;
@@ -210,7 +210,7 @@ public class GroovycOutputParser {
   }
 
   public List<CompilerMessage> getCompilerMessages() {
-    ArrayList<CompilerMessage> messages = new ArrayList<CompilerMessage>(compilerMessages);
+    ArrayList<CompilerMessage> messages = new ArrayList<>(compilerMessages);
     final StringBuffer unparsedBuffer = getStdErr();
     if (unparsedBuffer.length() != 0) {
       String msg = unparsedBuffer.toString();

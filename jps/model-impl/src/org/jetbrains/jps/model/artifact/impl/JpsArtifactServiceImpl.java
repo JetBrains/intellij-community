@@ -43,7 +43,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
 
   @Override
   public List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project) {
-    List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>(getArtifacts(project));
+    List<JpsArtifact> artifacts = new ArrayList<>(getArtifacts(project));
     Collections.sort(artifacts, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     return artifacts;
   }
@@ -62,7 +62,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public <P extends JpsElement> JpsArtifact createArtifact(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement,
                                                            @NotNull JpsArtifactType<P> type, @NotNull P properties) {
-    return new JpsArtifactImpl<P>(name, rootElement, type, properties);
+    return new JpsArtifactImpl<>(name, rootElement, type, properties);
   }
 
   @Override

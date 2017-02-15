@@ -108,7 +108,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Nullable
   static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
-    Map<ModuleBuildTarget, String> finalOutputs = new LinkedHashMap<ModuleBuildTarget, String>();
+    Map<ModuleBuildTarget, String> finalOutputs = new LinkedHashMap<>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {

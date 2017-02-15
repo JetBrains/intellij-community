@@ -94,7 +94,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
-    final Map<String, String> builderParams = new HashMap<String, String>();
+    final Map<String, String> builderParams = new HashMap<>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       builderParams.put(pair.getKey(), pair.getValue());
     }
@@ -113,8 +113,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   @Override
   public void run() {
     Throwable error = null;
-    final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
-    final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
+    final Ref<Boolean> hasErrors = new Ref<>(false);
+    final Ref<Boolean> doneSomething = new Ref<>(false);
     try {
       ProfilingHelper profilingHelper = null;
       if (Utils.IS_PROFILING_MODE) {
@@ -362,7 +362,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (future != null) {
       if (result.getIsSuccess()) {
         final List<String> paths = result.getPathList();
-        final List<File> files = new ArrayList<File>(paths.size());
+        final List<File> files = new ArrayList<>(paths.size());
         for (String path : paths) {
           files.add(new File(path));
         }

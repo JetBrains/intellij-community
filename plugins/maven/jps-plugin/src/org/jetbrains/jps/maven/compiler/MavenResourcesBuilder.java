@@ -49,7 +49,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       return;
     }
 
-    final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<MavenResourceRootDescriptor, List<File>>();
+    final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<>();
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
 
@@ -59,7 +59,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
         List<File> fileList = files.get(rd);
         if (fileList == null) {
-          fileList = new ArrayList<File>();
+          fileList = new ArrayList<>();
           files.put(rd, fileList);
         }
 

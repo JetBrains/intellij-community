@@ -34,7 +34,7 @@ public class ArtifactInstructionsBuilderContextImpl implements ArtifactInstructi
   public ArtifactInstructionsBuilderContextImpl(JpsModel model, BuildDataPaths dataPaths) {
     myModel = model;
     myDataPaths = dataPaths;
-    myParentArtifacts = new HashSet<JpsArtifact>();
+    myParentArtifacts = new HashSet<>();
   }
 
   @Override

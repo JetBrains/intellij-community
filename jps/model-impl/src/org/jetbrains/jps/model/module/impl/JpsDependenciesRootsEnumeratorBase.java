@@ -42,14 +42,14 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
 
   @Override
   public Collection<String> getUrls() {
-    Set<String> urls = new LinkedHashSet<String>();
-    processUrls(new CollectConsumer<String>(urls));
+    Set<String> urls = new LinkedHashSet<>();
+    processUrls(new CollectConsumer<>(urls));
     return urls;
   }
 
   @Override
   public Collection<File> getRoots() {
-    final Set<File> files = new LinkedHashSet<File>();
+    final Set<File> files = new LinkedHashSet<>();
     processUrls(url -> files.add(JpsPathUtil.urlToFile(url)));
     return files;
   }

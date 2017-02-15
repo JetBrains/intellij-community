@@ -151,7 +151,7 @@ class MethodRepr extends ProtoMember {
     super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), annotations, defaultValue);
     myParameterAnnotations = parameterAnnotations;
     Set<TypeRepr.AbstractType> typeCollection =
-      exceptions != null ? new THashSet<TypeRepr.AbstractType>(exceptions.length) : Collections.<TypeRepr.AbstractType>emptySet();
+      exceptions != null ? new THashSet<>(exceptions.length) : Collections.<TypeRepr.AbstractType>emptySet();
     myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, exceptions, typeCollection);
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }
@@ -164,7 +164,7 @@ class MethodRepr extends ProtoMember {
       final int size = DataInputOutputUtil.readINT(in);
       myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
 
-      myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<TypeRepr.AbstractType>(0), in);
+      myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<>(0), in);
 
       final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.classTypeExternalizer(context);
       myParameterAnnotations = (Set<ParamAnnotation>)RW.read(new DataExternalizer<ParamAnnotation>() {
@@ -176,7 +176,7 @@ class MethodRepr extends ProtoMember {
         public ParamAnnotation read(@NotNull DataInput in) throws IOException {
           return new ParamAnnotation(clsTypeExternalizer, in);
         }
-      }, new THashSet<ParamAnnotation>(), in);
+      }, new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

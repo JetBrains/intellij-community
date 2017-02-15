@@ -91,7 +91,7 @@ public class JavaBuilderUtil {
   public static void registerFilterToSkipMarkingAffectedFileDirty(@NotNull CompileContext context, @NotNull FileFilter filter) {
     List<FileFilter> filters = SKIP_MARKING_DIRTY_FILTERS_KEY.get(context);
     if (filters == null) {
-      SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, filters = new ArrayList<FileFilter>());
+      SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, filters = new ArrayList<>());
     }
     filters.add(filter);
   }
@@ -189,7 +189,7 @@ public class JavaBuilderUtil {
           // unmark as affected all successfully compiled
           allAffectedFiles.removeAll(successfullyCompiled);
 
-          final Set<File> affectedBeforeDif = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> affectedBeforeDif = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
           affectedBeforeDif.addAll(allAffectedFiles);
 
           final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
@@ -215,7 +215,7 @@ public class JavaBuilderUtil {
           }
 
           if (incremental) {
-            final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+            final Set<File> newlyAffectedFiles = new HashSet<>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
 
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
@@ -344,7 +344,7 @@ public class JavaBuilderUtil {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Pair<File, JpsModule>> result = new ArrayList<Pair<File, JpsModule>>();
+    final List<Pair<File, JpsModule>> result = new ArrayList<>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
@@ -374,7 +374,7 @@ public class JavaBuilderUtil {
   private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
     Set<File> files = dataKey.get(context);
     if (files == null) {
-      files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       dataKey.set(context, files);
     }
     return files;
@@ -384,7 +384,7 @@ public class JavaBuilderUtil {
     if (!dirtyFilesHolder.hasRemovedFiles()) {
       return Collections.emptySet();
     }
-    final Set<String> removed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> removed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }
@@ -438,7 +438,7 @@ public class JavaBuilderUtil {
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<? extends BuildTarget<?>> myChunkTargets;
-    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<BuildTarget<?>, Set<BuildTarget<?>>>();
+    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<>();
     private final BuildRootIndex myBuildRootIndex;
     private final BuildTargetIndex myBuildTargetIndex;
 

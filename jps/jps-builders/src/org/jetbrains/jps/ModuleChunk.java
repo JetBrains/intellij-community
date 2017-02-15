@@ -36,7 +36,7 @@ public class ModuleChunk {
   public ModuleChunk(Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;
     myTargets = targets;
-    myModules = new LinkedHashSet<JpsModule>();
+    myModules = new LinkedHashSet<>();
     for (ModuleBuildTarget target : targets) {
       myModules.add(target.getModule());
       containsTests |= target.isTests();

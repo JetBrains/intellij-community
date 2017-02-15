@@ -101,7 +101,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
     myLogger = new TestProjectBuilderLogger();
-    myBuildParams = new HashMap<String, String>();
+    myBuildParams = new HashMap<>();
   }
 
   @Override
@@ -220,7 +220,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
-      Map<String, String> allPathVariables = new HashMap<String, String>(pathVariables.size() + 1);
+      Map<String, String> allPathVariables = new HashMap<>(pathVariables.size() + 1);
       allPathVariables.putAll(pathVariables);
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
       allPathVariables.putAll(getAdditionalPathVariables());

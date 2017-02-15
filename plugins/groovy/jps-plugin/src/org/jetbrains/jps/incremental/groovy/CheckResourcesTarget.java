@@ -73,7 +73,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
-    List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    List<BuildTarget<?>> result = new ArrayList<>();
 
     ModuleBuildTarget compileTarget = new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.getInstance(isTests()));
     result.add(compileTarget);
@@ -153,7 +153,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
     @NotNull
     @Override
     public BuildTargetLoader<CheckResourcesTarget> createLoader(@NotNull JpsModel model) {
-      final Map<String, JpsModule> modules = new HashMap<String, JpsModule>();
+      final Map<String, JpsModule> modules = new HashMap<>();
       for (JpsModule module : model.getProject().getModules()) {
         modules.put(module.getName(), module);
       }

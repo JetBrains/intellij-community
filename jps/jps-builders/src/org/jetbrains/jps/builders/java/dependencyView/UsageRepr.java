@@ -594,7 +594,7 @@ class UsageRepr {
       stream.println("    AnnotationUsage:");
       stream.println("      Type     : " + myType.getDescr(context));
 
-      final List<String> arguments = new LinkedList<String>();
+      final List<String> arguments = new LinkedList<>();
 
       if (myUsedArguments != null) {
         myUsedArguments.forEach(value -> {
@@ -605,7 +605,7 @@ class UsageRepr {
 
       Collections.sort(arguments);
 
-      final List<String> targets = new LinkedList<String>();
+      final List<String> targets = new LinkedList<>();
 
       if (myUsedTargets != null) {
         for (final ElemType e : myUsedTargets) {

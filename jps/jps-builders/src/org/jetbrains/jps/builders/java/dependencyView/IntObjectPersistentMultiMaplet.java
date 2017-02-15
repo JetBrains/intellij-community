@@ -44,7 +44,8 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<Integer, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override

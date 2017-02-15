@@ -39,7 +39,7 @@ public class FormsParsing {
   public static String readBoundClassName(File formFile) throws IOException {
     final BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile));
     try {
-      final Ref<String> result = new Ref<String>(null);
+      final Ref<String> result = new Ref<>(null);
       parse(in, new IXMLBuilderAdapter() {
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
           throws Exception {

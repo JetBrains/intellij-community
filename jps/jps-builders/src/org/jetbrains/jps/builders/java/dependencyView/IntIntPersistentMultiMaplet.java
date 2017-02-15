@@ -41,7 +41,7 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private final SLRUCache<Integer, TIntHashSet> myCache;
 
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
-    myMap = new PersistentHashMap<Integer, TIntHashSet>(file, keyExternalizer, new IntSetExternalizer());
+    myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
     myCache = new SLRUCache<Integer, TIntHashSet>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
@@ -95,7 +95,7 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myCache.remove(key);
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
         public void append(final DataOutput out) throws IOException {
-          final Ref<IOException> exRef = new Ref<IOException>();
+          final Ref<IOException> exRef = new Ref<>();
           value.forEach(value1 -> {
             try {
               DataInputOutputUtil.writeINT(out, value1);
@@ -251,7 +251,7 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static class IntSetExternalizer implements DataExternalizer<TIntHashSet> {
     @Override
     public void save(@NotNull final DataOutput out, final TIntHashSet value) throws IOException {
-      final Ref<IOException> exRef = new Ref<IOException>(null);
+      final Ref<IOException> exRef = new Ref<>(null);
       value.forEach(elem -> {
         try {
           DataInputOutputUtil.writeINT(out, elem);

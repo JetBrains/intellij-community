@@ -61,8 +61,8 @@ public class JpsGantProjectBuilder {
   private JpsModelLoader myModelLoader;
   private boolean myDryRun;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
-  private Set<String> myCompiledModules = new HashSet<String>();
-  private Set<String> myCompiledModuleTests = new HashSet<String>();
+  private Set<String> myCompiledModules = new HashSet<>();
+  private Set<String> myCompiledModuleTests = new HashSet<>();
   private boolean myStatisticsReported;
   private Logger.Factory myFileLoggerFactory;
 
@@ -190,7 +190,7 @@ public class JpsGantProjectBuilder {
   }
 
   public void buildModules(List<JpsModule> modules) {
-    Set<String> names = new LinkedHashSet<String>();
+    Set<String> names = new LinkedHashSet<>();
     info("Collecting dependencies for " + modules.size() + " modules");
     for (JpsModule module : modules) {
       Set<String> dependencies = getModuleDependencies(module, false);
@@ -231,7 +231,7 @@ public class JpsGantProjectBuilder {
     if (!includeTests) {
       enumerator = enumerator.productionOnly();
     }
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new HashSet<>();
     for (JpsModule depModule : enumerator.getModules()) {
       names.add(depModule.getName());
     }
@@ -248,10 +248,10 @@ public class JpsGantProjectBuilder {
       Logger.setFactory(AntLoggerFactory.class);
       boolean forceBuild = !myBuildIncrementally;
 
-      List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+      List<TargetTypeBuildScope> scopes = new ArrayList<>();
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
         if (includeTests || !type.isTests()) {
-          List<String> namesToCompile = new ArrayList<String>(allModules ? getAllModules() : modulesSet);
+          List<String> namesToCompile = new ArrayList<>(allModules ? getAllModules() : modulesSet);
           if (type.isTests()) {
             namesToCompile.removeAll(myCompiledModuleTests);
             myCompiledModuleTests.addAll(namesToCompile);
@@ -299,7 +299,7 @@ public class JpsGantProjectBuilder {
   }
 
   private Set<String> getAllModules() {
-    HashSet<String> modules = new HashSet<String>();
+    HashSet<String> modules = new HashSet<>();
     for (JpsModule module : myModel.getProject().getModules()) {
       modules.add(module.getName());
     }
@@ -322,7 +322,7 @@ public class JpsGantProjectBuilder {
   public List<String> moduleRuntimeClasspath(JpsModule module, boolean forTests) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests));
     Collection<File> roots = enumerator.classes().getRoots();
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (File root : roots) {
       result.add(root.getAbsolutePath());
     }

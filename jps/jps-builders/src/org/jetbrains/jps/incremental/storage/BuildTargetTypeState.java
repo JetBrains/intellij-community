@@ -43,8 +43,8 @@ public class BuildTargetTypeState {
     myTargetType = targetType;
     myTargetsState = state;
     myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
-    myConfigurations = new ConcurrentHashMap<BuildTarget<?>, BuildTargetConfiguration>(16, 0.75f, 1);
-    myTargetIds = new HashMap<BuildTarget<?>, Integer>();
+    myConfigurations = new ConcurrentHashMap<>(16, 0.75f, 1);
+    myTargetIds = new HashMap<>();
     load();
   }
 

@@ -92,8 +92,8 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @NotNull
   @Override
   public Set<JpsModule> getModules() {
-    Set<JpsModule> result = new LinkedHashSet<JpsModule>();
-    processModules(new CollectConsumer<JpsModule>(result));
+    Set<JpsModule> result = new LinkedHashSet<>();
+    processModules(new CollectConsumer<>(result));
     return result;
   }
 
@@ -108,7 +108,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   }
 
   public boolean processDependencies(Processor<JpsDependencyElement> processor) {
-    THashSet<JpsModule> processed = new THashSet<JpsModule>();
+    THashSet<JpsModule> processed = new THashSet<>();
     for (JpsModule module : myRootModules) {
       if (!doProcessDependencies(module, processor, processed)) {
         return false;
@@ -166,8 +166,8 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @NotNull
   @Override
   public Set<JpsLibrary> getLibraries() {
-    Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
-    processLibraries(new CollectConsumer<JpsLibrary>(libraries));
+    Set<JpsLibrary> libraries = new LinkedHashSet<>();
+    processLibraries(new CollectConsumer<>(libraries));
     return libraries;
   }
 

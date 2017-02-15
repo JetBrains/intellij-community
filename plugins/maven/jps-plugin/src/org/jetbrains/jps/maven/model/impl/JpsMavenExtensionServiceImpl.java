@@ -46,7 +46,7 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.maven.model.impl.JpsMavenExtensionServiceImpl");
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
   private final Map<File, MavenProjectConfiguration> myLoadedConfigs =
-    new THashMap<File, MavenProjectConfiguration>(FileUtil.FILE_HASHING_STRATEGY);
+    new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
   private final FactoryMap<File, Boolean> myConfigFileExists = new ConcurrentFactoryMap<File, Boolean>() {
     @Nullable
     @Override

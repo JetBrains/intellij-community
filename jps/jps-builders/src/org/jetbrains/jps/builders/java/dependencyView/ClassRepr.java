@@ -243,7 +243,7 @@ public class ClassRepr extends Proto {
     this.myContext = context;
     myFileName = fileName;
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<TypeRepr.AbstractType>(1));
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
     myFields = fields;
     myMethods = methods;
     this.myAnnotationTargets = annotationTargets;
@@ -260,9 +260,9 @@ public class ClassRepr extends Proto {
       this.myContext = context;
       myFileName = DataInputOutputUtil.readINT(in);
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<TypeRepr.AbstractType>(1), in);
-      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<FieldRepr>(), in);
-      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<MethodRepr>(), in);
+      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
+      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
+      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
       myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
@@ -273,7 +273,7 @@ public class ClassRepr extends Proto {
       int flags = DataInputOutputUtil.readINT(in);
       myIsLocal = (flags & LOCAL_MASK) != 0;
       myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
-      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<UsageRepr.Usage>(), in);
+      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -371,7 +371,7 @@ public class ClassRepr extends Proto {
 
   @NotNull
   public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
-    final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
+    final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
       if (p.satisfy(mm)) {
@@ -492,7 +492,7 @@ public class ClassRepr extends Proto {
 
     stream.println("      Usages:");
 
-    final List<String> usages = new LinkedList<String>();
+    final List<String> usages = new LinkedList<>();
 
     for (final UsageRepr.Usage u : myUsages) {
       final ByteArrayOutputStream bas = new ByteArrayOutputStream();

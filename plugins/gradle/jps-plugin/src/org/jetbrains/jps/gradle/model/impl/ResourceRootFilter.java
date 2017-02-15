@@ -71,7 +71,7 @@ public class ResourceRootFilter {
         throw new RuntimeException("Unsupported filter: " + properties , e);
       }
       if(propertiesMap == null) {
-        propertiesMap = new HashMap<Object, Object>();
+        propertiesMap = new HashMap<>();
       }
     }
     return propertiesMap;

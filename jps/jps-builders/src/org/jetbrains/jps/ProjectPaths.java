@@ -67,7 +67,7 @@ public class ProjectPaths {
                                                     boolean excludeMainModuleOutput,
                                                     ClasspathPart classpathPart,
                                                     boolean exportedOnly) {
-    final Set<File> files = new LinkedHashSet<File>();
+    final Set<File> files = new LinkedHashSet<>();
     for (JpsModule module : chunk.getModules()) {
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively();
       if (exportedOnly) {
@@ -109,7 +109,7 @@ public class ProjectPaths {
   @NotNull
   public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
     final boolean includeTests = chunk.containsTests();
-    final Map<File, String> result = new LinkedHashMap<File, String>();
+    final Map<File, String> result = new LinkedHashMap<>();
     processModulesRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), module -> {
       for (JpsModuleSourceRoot root : module.getSourceRoots()) {
         if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
@@ -133,7 +133,7 @@ public class ProjectPaths {
 
   public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk) {
     final boolean forTests = chunk.containsTests();
-    final Set<File> sourcePaths = new LinkedHashSet<File>();
+    final Set<File> sourcePaths = new LinkedHashSet<>();
     processModulesRecursively(chunk, JpsJavaClasspathKind.compile(forTests),
                               module -> addFile(sourcePaths, JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests)));
     return sourcePaths;
@@ -157,7 +157,7 @@ public class ProjectPaths {
         return null;
       }
       if (roots.size() > 1) {
-        roots = new ArrayList<String>(roots); // sort roots to get deterministic result
+        roots = new ArrayList<>(roots); // sort roots to get deterministic result
         Collections.sort(roots, (o1, o2) -> o1.compareTo(o2));
       }
       final File parent = JpsPathUtil.urlToFile(roots.get(0));

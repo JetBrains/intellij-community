@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
  * @since 7/24/2014
  */
 public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
-  private final Collection<ResourceRootFilter> myFilters = new ArrayList<ResourceRootFilter>();
+  private final Collection<ResourceRootFilter> myFilters = new ArrayList<>();
   private final CompileContext myContext;
   private final Ref<File> myOutputFileRef;
 
@@ -95,7 +95,7 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
       final Map<Object, Object> properties = filter.getProperties();
       if (!properties.isEmpty()) {
         if (ExpandProperties.class.getName().equals(filter.filterType)) {
-          final Map<Object, Object> antProps = new HashMap<Object, Object>(properties);
+          final Map<Object, Object> antProps = new HashMap<>(properties);
           final Project project = new Project();
           for (Map.Entry<Object, Object> entry : antProps.entrySet()) {
             project.setProperty(entry.getKey().toString(), entry.getValue().toString());

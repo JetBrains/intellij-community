@@ -149,7 +149,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
             warManifest.write(outputStream);
 
             if (fileCopyPackagingElement instanceof JpsElementBase) {
-              final LinkedList<String> pathParts = new LinkedList<String>();
+              final LinkedList<String> pathParts = new LinkedList<>();
               pathParts.add(fileCopyPackagingElement.getRenamedOutputFileName());
 
               JpsElementBase parent = ((JpsElementBase)fileCopyPackagingElement).getParent();
