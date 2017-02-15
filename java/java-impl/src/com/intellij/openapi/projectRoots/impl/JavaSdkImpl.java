@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -31,7 +29,6 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +45,6 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -183,98 +179,14 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestHomePath() {
-    if (SystemInfo.isMac) {
-      if (new File("/usr/libexec/java_home").canExecute()) {
-        String path = ExecUtil.execAndReadLine(new GeneralCommandLine("/usr/libexec/java_home"));
-        if (path != null && new File(path).isDirectory()) {
-          return path;
-        }
-      }
-
-      String home = checkKnownLocations("/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
-      if (home != null) return home;
-    }
-
-    if (SystemInfo.isLinux) {
-      String home = checkKnownLocations("/usr/java", "/opt/java", "/usr/lib/jvm");
-      if (home != null) return home;
-    }
-
-    if (SystemInfo.isSolaris) {
-      String home = checkKnownLocations("/usr/jdk");
-      if (home != null) return home;
-    }
-
-    String property = System.getProperty("java.home");
-    if (property != null) {
-      File javaHome = new File(property);
-      if (javaHome.getName().equals("jre")) {
-        javaHome = javaHome.getParentFile();
-      }
-      if (javaHome != null && javaHome.isDirectory()) {
-        return javaHome.getAbsolutePath();
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static String checkKnownLocations(String... locations) {
-    for (String home : locations) {
-      if (new File(home).isDirectory()) {
-        return home;
-      }
-    }
-
-    return null;
+    Collection<String> paths = suggestHomePaths();
+    return paths.isEmpty() ? null : paths.iterator().next();
   }
 
   @NotNull
   @Override
   public Collection<String> suggestHomePaths() {
-    if (!SystemInfo.isWindows)
-      return Collections.singletonList(suggestHomePath());
-
-    String property = System.getProperty("java.home");
-    if (property == null)
-      return Collections.emptyList();
-
-    File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
-    if (javaHome == null || !javaHome.isDirectory() || javaHome.getParentFile() == null) {
-      return Collections.emptyList();
-    }
-    ArrayList<String> result = new ArrayList<>();
-    File javasFolder = javaHome.getParentFile();
-    scanFolder(javasFolder, result);
-    File parentFile = javasFolder.getParentFile();
-    File root = parentFile != null ? parentFile.getParentFile() : null;
-    String name = parentFile != null ? parentFile.getName() : "";
-    if (name.contains("Program Files") && root != null) {
-      String x86Suffix = " (x86)";
-      boolean x86 = name.endsWith(x86Suffix) && name.length() > x86Suffix.length();
-      File anotherJavasFolder;
-      if (x86) {
-        anotherJavasFolder = new File(root, name.substring(0, name.length() - x86Suffix.length()));
-      }
-      else {
-        anotherJavasFolder = new File(root, name + x86Suffix);
-      }
-      if (anotherJavasFolder.isDirectory()) {
-        scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
-      }
-    }
-    result.sort((o1, o2) -> Comparing.compare(JdkVersionUtil.getVersion(o2), JdkVersionUtil.getVersion(o1)));
-    return result;
-  }
-
-  private static void scanFolder(File javasFolder, List<String> result) {
-    @SuppressWarnings("RedundantCast") File[] candidates = javasFolder.listFiles((FileFilter)JdkUtil::checkForJdk);
-    if (candidates != null) {
-      for (File file : candidates) {
-        result.add(file.getAbsolutePath());
-      }
-    }
+    return JavaHomeFinder.suggestHomePaths();
   }
 
   @NotNull
