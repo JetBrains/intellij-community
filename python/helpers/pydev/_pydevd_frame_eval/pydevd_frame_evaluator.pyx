@@ -15,19 +15,35 @@ AVOID_RECURSION = [
 ]
 
 get_file_type = DONT_TRACE.get
+NO_BREAKS_IN_FRAME = 1
+
+
+class UseCodeExtraHolder:
+    use_code_extra = True
+
+
+def is_use_code_extra():
+    return UseCodeExtraHolder.use_code_extra
+
+
+def set_use_code_extra(new_value):
+    UseCodeExtraHolder.use_code_extra = new_value
+
 
 cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
     frame = <object> frame_obj
     cdef str filepath = frame.f_code.co_filename
     cdef bint skip_file = exc
-    cdef void* extra = PyMem_Malloc(sizeof(int))
+    cdef void* extra = NULL
     cdef int* extra_value = NULL
 
-    _PyCode_GetExtra(<PyObject*> frame.f_code, 0, &extra)
-    if extra is not NULL:
-        extra_value = <int*> extra
-        if extra_value[0] == 1:
-            return _PyEval_EvalFrameDefault(frame_obj, exc)
+    if is_use_code_extra():
+        extra = PyMem_Malloc(sizeof(int))
+        _PyCode_GetExtra(<PyObject*> frame.f_code, 0, &extra)
+        if extra is not NULL:
+            extra_value = <int*> extra
+            if extra_value[0] == NO_BREAKS_IN_FRAME:
+                return _PyEval_EvalFrameDefault(frame_obj, exc)
 
     for file in AVOID_RECURSION:
         # we can't call any other function without this check, because we can get stack overflow
@@ -100,7 +116,7 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
 
         if not was_break:
             extra_value = <int*> PyMem_Malloc(sizeof(int))
-            extra_value[0] = 1
+            extra_value[0] = NO_BREAKS_IN_FRAME
             _PyCode_SetExtra(<PyObject*> code_object, 0, extra_value)
 
         additional_info.is_tracing = False

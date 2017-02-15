@@ -1,5 +1,5 @@
 try:
-    from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval
+    from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, set_use_code_extra
 except ImportError:
     try:
         import struct
@@ -25,6 +25,6 @@ except ImportError:
         check_name = '_pydevd_frame_eval.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        frame_eval_func, stop_frame_eval = mod.frame_eval_func, mod.stop_frame_eval
+        frame_eval_func, stop_frame_eval, set_use_code_extra = mod.frame_eval_func, mod.stop_frame_eval, mod.set_use_code_extra
     except ImportError:
         raise
