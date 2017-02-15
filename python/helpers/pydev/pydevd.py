@@ -36,7 +36,7 @@ from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_fr
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, set_use_code_extra
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -674,6 +674,7 @@ class PyDB:
             thread_id = get_thread_id(thread)
             int_cmd = InternalSetTracingThread(thread_id)
             self.post_internal_command(int_cmd, thread_id)
+            set_use_code_extra(False)
 
 
     def _send_breakpoint_condition_exception(self, thread):
