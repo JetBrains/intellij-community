@@ -46,6 +46,11 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
   }
 
   @Override
+  public PsiFile getContainingFile() {
+    return getElementInfo().restoreFile();
+  }
+
+  @Override
   public PsiFile getElement() {
     if (getRange() == null) return null; // range is invalid
     return getContainingFile();
