@@ -507,6 +507,8 @@ public class ActionsTreeUtil {
     return action -> {
       if (filter == null) return true;
       if (action == null) return false;
+      action = tryUnstubAction(action);
+
       final String insensitiveFilter = filter.toLowerCase();
       ArrayList<String> options = new ArrayList<>();
       options.add(action.getTemplatePresentation().getText());
@@ -596,5 +598,14 @@ public class ActionsTreeUtil {
     return group instanceof DefaultActionGroup
            ? ((DefaultActionGroup)group).getChildActionsOrStubs()
            : group.getChildren(null);
+  }
+
+  @NotNull
+  private static AnAction tryUnstubAction(@NotNull AnAction action) {
+    if (action instanceof ActionStub) {
+      AnAction newAction = ActionManager.getInstance().getActionOrStub(((ActionStub)action).getId());
+      if (newAction != null) return newAction;
+    }
+    return action;
   }
 }
