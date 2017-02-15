@@ -39,9 +39,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -51,25 +51,19 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Bitness;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.NonNls;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -638,16 +632,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
     if (reporter != null) {
       IdeaLoggingEvent e = new AndroidStudioAnrEvent(fileName, Joiner.on('\n').join(threadDump));
-
-      Component parentComponent = IdeFocusManager.findInstance().getFocusOwner();
-      if (parentComponent == null) {
-        parentComponent = IdeFrameImpl.getActiveFrame();
-      }
-      if (parentComponent == null) {
-        return;
-      }
-
-      reporter.submit(new IdeaLoggingEvent[]{e}, null, parentComponent, info -> {
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
       });
     }
   }
@@ -660,14 +645,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
     if (reporter != null) {
       IdeaLoggingEvent e = new AndroidStudioCrashEvents(descriptions);
-      Component parentComponent = IdeFocusManager.findInstance().getFocusOwner();
-      if (parentComponent == null) {
-        parentComponent = IdeFrameImpl.getActiveFrame();
-      }
-      if (parentComponent == null) {
-        return;
-      }
-      reporter.submit(new IdeaLoggingEvent[]{e}, null, parentComponent, info -> {
+      reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
       });
     }
   }

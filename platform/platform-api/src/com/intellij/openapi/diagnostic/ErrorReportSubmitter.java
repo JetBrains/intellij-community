@@ -63,7 +63,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @SuppressWarnings("deprecation")
   public boolean submit(@NotNull IdeaLoggingEvent[] events,
                         @Nullable String additionalInfo,
-                        @NotNull Component parentComponent,
+                        @Nullable Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
@@ -83,7 +83,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
   @SuppressWarnings({"deprecation", "unused"})
-  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
+  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, @Nullable Component parent) {
     throw new UnsupportedOperationException("Deprecated API called");
   }
 }

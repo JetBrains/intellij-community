@@ -48,7 +48,7 @@ open class ITNReporter : ErrorReportSubmitter() {
 
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
-                      parentComponent: Component,
+                      parentComponent: Component?,
                       consumer: Consumer<SubmittedReportInfo>): Boolean {
     return submit(events.get(0), parentComponent, consumer, ErrorBean(events.get(0).throwable, IdeaLogger.ourLastActionId), additionalInfo)
   }
@@ -86,11 +86,11 @@ private fun showMessageDialog(parentComponent: Component, project: Project?, mes
   }
 }
 
-private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, errorBean: ErrorBean, description: String?): Boolean {
+private fun submit(event: IdeaLoggingEvent, parentComponent: Component?, callback: Consumer<SubmittedReportInfo>, errorBean: ErrorBean, description: String?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   // ask password only if user name was specified
   if (credentials.hasOnlyUserName()) {
-    if (!showJetBrainsAccountDialog(parentComponent).showAndGet()) {
+    if (parentComponent != null && !showJetBrainsAccountDialog(parentComponent).showAndGet()) {
       return false
     }
 
@@ -144,7 +144,9 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
 
       if (e is UpdateAvailableException) {
         val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-        showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon())
+        if (parentComponent != null) {
+          showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon())
+        }
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
         return@invokeLater
       }
@@ -153,7 +155,7 @@ private fun submit(event: IdeaLoggingEvent, parentComponent: Component, callback
         callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
       else {
-        if (e is NoSuchEAPUserException) {
+        if (e is NoSuchEAPUserException && parentComponent != null) {
           showJetBrainsAccountDialog(parentComponent, project).show()
         }
         ApplicationManager.getApplication().invokeLater { submit(event, parentComponent, callback, errorBean, description) }
