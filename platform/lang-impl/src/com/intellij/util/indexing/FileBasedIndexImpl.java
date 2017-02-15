@@ -157,7 +157,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        state = myState = myStateFuture.get();
+        myState = state = myStateFuture.get();
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -285,8 +285,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     if (restrictedTo != null && !Comparing.equal(file, restrictedTo) ||
-        filter != null && restrictedTo == null && !filter.accept(file)
-      ) {
+        filter != null && restrictedTo == null && !filter.accept(file)) {
       return false;
     }
     return true;
@@ -636,12 +635,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
 
-  private final ThreadLocal<Boolean> myReentrancyGuard = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   /**
    * DO NOT CALL DIRECTLY IN CLIENT CODE
@@ -791,6 +785,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return -1;
   }
 
+  @FunctionalInterface
   public interface IdValueProcessor<V> {
     /**
      * @param fileId the id of the file that the value came from
@@ -1063,7 +1058,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                                              @Nullable final Condition<V> valueChecker,
                                                              @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
-      index -> InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, (k) -> {
+      index -> InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, __ -> {
                                                                     ProgressManager.checkCanceled();
                                                                     return true;
                                                                   }, valueChecker,
@@ -1897,7 +1892,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (myInitialized) ensureUpToDateAsync();
     }
 
-    public boolean isScheduledForUpdate(VirtualFile file) {
+    boolean isScheduledForUpdate(VirtualFile file) {
       return myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)));
     }
 
@@ -1917,7 +1912,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    public int getChangedFileCount() {
+    int getChangedFileCount() {
       return myVfsEventsMerger.getApproximateChangesCount() + myFilesToUpdate.size();
     }
 
