@@ -139,7 +139,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
+
+  // In theory, this detects real leaks (myProjects being a WeakHashMap).
+  // However the cost of cleaning up all our tests is too high at this point, for too little benefit.
+  // If the disposed projects are still strongly referenced after all tests are done, the leak checker will flag them anyway.
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "false"));
   private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
