@@ -21,6 +21,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -77,10 +78,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
             PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
             if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
               try {
-                if (type instanceof PsiClassType) {
-                  type = ((PsiClassType)type).rawType();
-                }
-                return type.getCanonicalText().equals(myDeclaringClassName.getName(process).replace('$', '.'));
+                return InheritanceUtil.isInheritor(type, myDeclaringClassName.getName(process).replace('$', '.'));
               }
               catch (EvaluateException e) {
                 LOG.info(e);
@@ -93,6 +91,9 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return false;
     }
     if (myTargetMethodSignature != null && !signatureMatches(method, myTargetMethodSignature.getName(process))) {
+      return false;
+    }
+    if (method.isBridge()) { // skip bridge methods
       return false;
     }
     return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), location.declaringType());
