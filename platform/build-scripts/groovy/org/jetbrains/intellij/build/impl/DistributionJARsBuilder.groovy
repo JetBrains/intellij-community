@@ -260,7 +260,8 @@ class DistributionJARsBuilder {
           }
           def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
           ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
+          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", getPluginVersion(plugin),
+                                   buildContext.buildNumber,
                                    productLayout.prepareCustomPluginRepositoryForPublishedPlugins,
                                    productLayout.pluginModulesWithRestrictedCompatibleBuildRange.contains(plugin.mainModule))
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
@@ -272,7 +273,7 @@ class DistributionJARsBuilder {
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
       pluginsToPublish.each { plugin ->
         def directory = plugin.directoryName
-        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${buildContext.buildNumber}"
+        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
         ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
@@ -281,6 +282,10 @@ class DistributionJARsBuilder {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
       }
     }
+  }
+
+  private String getPluginVersion(PluginLayout plugin) {
+    return plugin.version != null ? plugin.version : buildContext.buildNumber
   }
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
@@ -453,10 +458,10 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<version>[\\d.]*</version>",
-                                   replace: "<version>${buildNumber}</version>")
+                                   replace: "<version>${version}</version>")
     def sinceBuild
     def untilBuild
     if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
@@ -481,12 +486,12 @@ class DistributionJARsBuilder {
                                    replace: "<idea-version since-build=\"${sinceBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                                   replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
+                                   replace: "<change-notes>\n<![CDATA[\nPlugin version: ${version}")
     def file = new File(pluginXmlPath)
     def text = file.text
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
     if (!text.contains("<version>")) {
-      file.text = text.replace(anchor, "${anchor}\n  <version>${buildNumber}</version>")
+      file.text = text.replace(anchor, "${anchor}\n  <version>${version}</version>")
       text = file.text
     }
     if (!text.contains("<idea-version since-build")) {
