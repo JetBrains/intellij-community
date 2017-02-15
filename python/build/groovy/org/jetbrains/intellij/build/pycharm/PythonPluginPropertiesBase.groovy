@@ -43,8 +43,17 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
   }
 
   PluginLayout pythonCommunityPluginLayout(String pluginVersion) {
+    def pluginXmlModules = [
+      "IntelliLang-python",
+      "ipnb",
+    ]
     pythonPlugin(pythonCommunityPluginModule, "python-ce", "python-community-plugin-build-patches",
-                 communityModules, pluginVersion)
+                 communityModules, pluginVersion) {
+      pluginXmlModules.each { module ->
+        excludeFromModule(module, "META-INF/plugin.xml")
+      }
+      excludeFromModule(pythonCommunityPluginModule, "META-INF/python-plugin-dependencies.xml")
+    }
   }
 
   static PluginLayout pythonPlugin(String mainModuleName, String name, String buildPatchesModule, List<String> modules,
@@ -55,8 +64,6 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
       version = pluginVersion
       modules.each { module ->
         withModule(module, mainJarName, false)
-        excludeFromModule(module, "**/plugin.xml")
-        excludeFromModule(module, "**/python-plugin-dependencies.xml")
       }
       withModule(buildPatchesModule, mainJarName, false)
       withResourceFromModule("python-helpers", "", "helpers")
