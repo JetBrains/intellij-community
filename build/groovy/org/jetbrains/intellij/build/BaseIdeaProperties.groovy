@@ -155,14 +155,17 @@ abstract class BaseIdeaProperties extends ProductProperties {
     context.ant.copy(todir: "$targetDirectory/lib") {
       fileset(file: "$context.paths.communityHome/jps/lib/optimizedFileManager.jar")
     }
-    context.ant.copy(todir: "$targetDirectory/lib/ant") {
-      fileset(dir: "$context.paths.communityHome/lib/ant") {
-        exclude(name: "**/src/**")
-      }
-    }
-    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
-    }
+
+// Android Studio: skip these
+//    context.ant.copy(todir: "$targetDirectory/lib/ant") {
+//      fileset(dir: "$context.paths.communityHome/lib/ant") {
+//        exclude(name: "**/src/**")
+//      }
+//    }
+//    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
+//      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
+//    }
+
     /* Disabled in Android Studio:
     context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
     */

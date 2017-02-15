@@ -29,6 +29,9 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 // TODO: Use separate bundle identifier for EAP and non-EAP
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
+
+  private String gradleVersion = "3.2"
+
   AndroidStudioProperties(String home) {
     baseFileName = "studio"
     platformPrefix = "AndroidStudio"
@@ -238,6 +241,17 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$targetDirectory/bin") {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
     }
+
+    def root = "$buildContext.paths.communityHome/../.."
+
+    // Bundle Gradle and an offline Maven repo
+    buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+    buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
+      fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2")
+      fileset(dir: "$root/out/studio/repo")
+    }
+
+    buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
   }
 
   @Override
@@ -276,7 +290,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
 
       @Override
-      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "AS-$buildNumber" }
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio" }
     }
   }
 
