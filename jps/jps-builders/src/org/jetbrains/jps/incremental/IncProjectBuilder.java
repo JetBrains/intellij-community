@@ -1025,10 +1025,7 @@ public class IncProjectBuilder {
       //  }));
       //}
     }
-    catch (BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch (ProjectBuildException e) {
+    catch (BuildDataCorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Throwable e) {

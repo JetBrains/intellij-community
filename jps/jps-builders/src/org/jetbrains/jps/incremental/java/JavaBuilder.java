@@ -248,13 +248,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool);
     }
-    catch (BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch (ProjectBuildException e) {
-      throw e;
-    }
-    catch (PersistentEnumeratorBase.CorruptedException e) {
+    catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {

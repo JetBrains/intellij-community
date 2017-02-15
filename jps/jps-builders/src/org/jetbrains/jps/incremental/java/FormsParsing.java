@@ -102,13 +102,7 @@ public class FormsParsing {
         LOG.debug(e);
       }
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
       LOG.error(e);
     }
   }

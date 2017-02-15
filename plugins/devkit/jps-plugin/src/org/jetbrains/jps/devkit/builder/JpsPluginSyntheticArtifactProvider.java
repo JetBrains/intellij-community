@@ -87,10 +87,7 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
             }
           }
         }
-        catch (JDOMException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (JDOMException | IOException e) {
           LOG.info(e);
         }
       }

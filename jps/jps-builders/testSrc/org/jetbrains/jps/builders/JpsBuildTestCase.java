@@ -340,10 +340,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       builder.build(scopeBuilder.build(), false);
       result.storeMappingsDump(descriptor);
     }
-    catch (RebuildRequestedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
+    catch (RebuildRequestedException | IOException e) {
       throw new RuntimeException(e);
     }
     return result;

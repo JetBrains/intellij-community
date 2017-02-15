@@ -97,10 +97,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
       context.processMessage(new ProgressMessage(""));
     }
-    catch(BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch(ProjectBuildException e) {
+    catch(BuildDataCorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {
