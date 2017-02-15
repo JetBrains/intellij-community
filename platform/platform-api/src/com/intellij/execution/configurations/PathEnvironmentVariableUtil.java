@@ -59,10 +59,23 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, filter, EnvironmentUtil.getValue(PATH));
-    return ContainerUtil.getFirstItem(exeFiles);
+    return findInPath(fileBaseName, EnvironmentUtil.getValue(PATH), filter);
   }
 
+  /**
+   * Finds an executable file with the specified base name, that is located in a directory
+   * listed in the passed PATH environment variable value and is accepted by filter.
+   *
+   * @param fileBaseName file base name
+   * @param pathVariableValue value of PATH environment variable
+   * @param filter exe file filter
+   * @return {@link File} instance or null if not found
+   */
+  @Nullable
+  public static File findInPath(@NotNull String fileBaseName, @Nullable String pathVariableValue, @Nullable FileFilter filter) {
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, filter, pathVariableValue);
+    return ContainerUtil.getFirstItem(exeFiles);
+  }
   /**
    * Finds an executable file with the specified base name, that is located in a directory
    * listed in PATH environment variable.
