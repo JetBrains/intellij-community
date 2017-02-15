@@ -50,7 +50,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
-import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
@@ -73,7 +72,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -2397,32 +2395,9 @@ public class UIUtil {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (isToDispose(progress)) {
-          progress.getUI().uninstallUI(progress);
-          ReflectionUtil.resetField(progress, "ui");
-          progress.putClientProperty("isDisposed", Boolean.TRUE);
-        }
+        progress.setUI(null);
       }
     });
-  }
-
-  private static boolean isToDispose(final JProgressBar progress) {
-    final ProgressBarUI ui = progress.getUI();
-
-    if (ui == null) return false;
-    if (Boolean.TYPE.equals(progress.getClientProperty("isDisposed"))) return false;
-
-    try {
-      final Field progressBarField = ReflectionUtil.findField(ui.getClass(), JProgressBar.class, "progressBar");
-      progressBarField.setAccessible(true);
-      return progressBarField.get(ui) != null;
-    }
-    catch (NoSuchFieldException e) {
-      return true;
-    }
-    catch (IllegalAccessException e) {
-      return true;
-    }
   }
 
   @Nullable
