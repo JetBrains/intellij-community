@@ -43,8 +43,7 @@ class MLRanker : ApplicationComponent.Adapter() {
         if (featureArray != null) {
             return ranker.rank(featureArray)  
         }
-        //todo rework here
-        return Double.MIN_VALUE
+        throw IllegalStateException("No feature array created $lookupRelevance")
     }
     
     companion object {
