@@ -15,6 +15,7 @@
  */
 package com.intellij.stats.completion.sorting
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
@@ -47,6 +48,6 @@ class MLRanker : ApplicationComponent.Adapter() {
     }
     
     companion object {
-        fun getInstance(): MLRanker = ServiceManager.getService(MLRanker::class.java)
+        fun getInstance(): MLRanker = ApplicationManager.getApplication().getComponent(MLRanker::class.java)
     }
 }
