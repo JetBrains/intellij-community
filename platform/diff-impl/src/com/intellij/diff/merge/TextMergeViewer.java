@@ -204,6 +204,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       myTextDiffProvider = new TextDiffProviderBase(getTextSettings(),
                                                     myInnerDiffWorker::onSettingsChanged,
+                                                    this,
                                                     ar(IgnorePolicy.DEFAULT),
                                                     ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
 

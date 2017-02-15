@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.run
 
 import com.intellij.application.options.PathMacrosCollector
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.JdomKt
 
 class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
   void testJunitConfiguration() {
@@ -56,8 +56,7 @@ class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
     </recent_temporary>
   </component>
 '''
-    def element = JDOMUtil.loadDocument(text).rootElement
-    assert PathMacrosCollector.getMacroNames(element).empty
+    assert PathMacrosCollector.getMacroNames(JdomKt.loadElement(text)).empty
   }
 
 }

@@ -173,7 +173,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
           }
         });
         try {
-          JDOMUtil.writeDocument(new Document(rootElement), wrapper.getFile(), "\n");
+          JDOMUtil.write(rootElement, wrapper.getFile());
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();

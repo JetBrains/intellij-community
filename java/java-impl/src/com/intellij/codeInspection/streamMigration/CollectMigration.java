@@ -106,7 +106,8 @@ class CollectMigration extends BaseStreamApiMigration {
     return initializerClass != null &&
            varClass != null &&
            CommonClassNames.JAVA_UTIL_HASH_MAP.equals(initializerClass.getQualifiedName()) &&
-           CommonClassNames.JAVA_UTIL_MAP.equals(varClass.getQualifiedName());
+           CommonClassNames.JAVA_UTIL_MAP.equals(varClass.getQualifiedName()) &&
+           !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer);
   }
 
   @Nullable
@@ -315,13 +316,14 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiClassType rawVarType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
     if (rawType != null && rawVarType != null &&
         rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
-        (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
+        (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+        !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toList()";
     }
     else if (rawType != null && rawVarType != null &&
              rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
-             (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) ||
-              rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
+             (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+             !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toSet()";
     }
     else {
@@ -331,7 +333,7 @@ class CollectMigration extends BaseStreamApiMigration {
         PsiExpressionList argumentList = ((PsiNewExpression)copy).getArgumentList();
         if (argumentList != null) {
           PsiExpression arg = ArrayUtil.getFirstElement(argumentList.getExpressions());
-          if (arg != null) {
+          if (arg != null && !(arg.getType() instanceof PsiPrimitiveType)) {
             arg.delete();
           }
         }

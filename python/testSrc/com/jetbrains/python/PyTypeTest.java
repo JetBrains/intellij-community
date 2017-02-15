@@ -1461,6 +1461,38 @@ public class PyTypeTest extends PyTestCase {
            "expr = float.fromhex(\"0.5\")");
   }
 
+  // PY-13159
+  public void testAbsAbstractProperty() {
+    doTest("str",
+           "import abc\n" +
+           "class D:\n" +
+           "    @abc.abstractproperty\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
+  public void testAbsAbstractPropertyWithFrom() {
+    doTest("str",
+           "from abc import abstractproperty\n" +
+           "class D:\n" +
+           "    @abstractproperty\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
+  // TODO: enable this test when properties will be calculated with TypeEvalContext
+  public void ignoredTestAbsAbstractPropertyWithAs() {
+    doTest("str",
+           "from abc import abstractproperty as ap\n" +
+           "class D:\n" +
+           "    @ap\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
     doTest("Any",

@@ -22,7 +22,16 @@ import com.intellij.psi.impl.source.resolve.ResolveCache
 abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.PolyVariantResolver<T> {
 
   companion object {
-    private val resolvingDependencies = ThreadLocal.withInitial<MutableSet<PsiPolyVariantReference>> { mutableSetOf() }
+    /**
+     * Given: resolve was called on a reference a.r1.r2...rN.
+     * Its dependencies: a, a.r1, a.r1.r2, ... , a.r1.r2...rN-1.
+     * We resolve dependencies in a loop.
+     * Assume currently resolving dependency is a.r1.r2...rK, K < N.
+     * By the time it is being processed all its dependencies are already resolved and the resolve results are stored in a list,
+     * so we do not need to collect/resolve its dependencies again.
+     * This field is needed to memoize currently resolving dependencies.
+     */
+    private val resolvingDependencies = ThreadLocal.withInitial { mutableSetOf<PsiPolyVariantReference>() }
   }
 
   override final fun resolve(ref: T, incomplete: Boolean): Array<out ResolveResult> {

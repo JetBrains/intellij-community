@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.java.*;
 
+/**
+ * @author max
+ */
 public class SourceStubPsiFactory extends StubPsiFactory {
   public static final SourceStubPsiFactory INSTANCE = new SourceStubPsiFactory();
 

@@ -15,14 +15,14 @@
  */
 class DecalredMethod2 {
   void foo() {
-    Test.class.getDeclaredMethod("method3");
+    Test.class.getDeclaredMethod("method1");
   }
 }
 
 class Test {
   void method(){}
   void method2(A a, B b){}
-  void method3(){}
+  void method1(){}
 }
 
 class A {}

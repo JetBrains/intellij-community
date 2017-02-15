@@ -18,21 +18,22 @@ package com.intellij.util
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.outputStream
 import com.intellij.util.text.CharSequenceReader
 import com.sun.org.apache.xerces.internal.impl.Constants
 import org.apache.xerces.util.SecurityManager
 import org.jdom.Document
 import org.jdom.Element
+import org.jdom.JDOMException
+import org.jdom.Parent
 import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
 import org.jdom.input.SAXHandler
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
-import java.io.CharArrayReader
-import java.io.InputStream
-import java.io.Reader
-import java.nio.file.Files
+import java.io.*
 import java.nio.file.Path
 
 private val cachedSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
@@ -57,13 +58,25 @@ private fun getSaxBuilder(): SAXBuilder {
   return saxBuilder
 }
 
+@JvmOverloads
+@Throws(IOException::class)
+fun Parent.write(file: Path, lineSeparator: String = "\n") {
+  BufferedOutputStream(file.outputStream()).use {
+    JDOMUtil.write(this, it, lineSeparator)
+  }
+}
+
+@Throws(IOException::class, JDOMException::class)
 fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
 
+@Throws(IOException::class, JDOMException::class)
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
 
+@Throws(IOException::class, JDOMException::class)
 fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).detachRootElement()
 
-fun loadElement(path: Path): Element = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
+@Throws(IOException::class, JDOMException::class)
+fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
 
 private fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
@@ -101,7 +114,7 @@ fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> 
 
 fun Element.toByteArray(): ByteArray {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, "\n")
+  JDOMUtil.write(this, out, "\n")
   return out.toByteArray()
 }
 

@@ -12,10 +12,11 @@ def update_globals_dict(globals_dict):
     globals_dict.update(new_globals)
 
 
-def handle_breakpoint(frame, info, global_debugger, breakpoint):
+def handle_breakpoint(frame, thread, global_debugger, breakpoint):
     # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
     new_frame = frame
     condition = breakpoint.condition
+    info = thread.additional_info
     if condition is not None:
         try:
             val = eval(condition, new_frame.f_globals, new_frame.f_locals)
@@ -58,6 +59,10 @@ def handle_breakpoint(frame, info, global_debugger, breakpoint):
         finally:
             if val is not None:
                 info.pydev_message = str(val)
+
+    if breakpoint.suspend_policy == "ALL":
+        global_debugger.suspend_all_other_threads(thread)
+
     return True
 
 
@@ -94,7 +99,7 @@ def _pydev_stop_at_break():
         except KeyError:
             pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, line))
             return
-        if breakpoint and handle_breakpoint(frame, t.additional_info, debugger, breakpoint):
+        if breakpoint and handle_breakpoint(frame, t, debugger, breakpoint):
             pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
             debugger.set_suspend(t, CMD_SET_BREAK)
             debugger.do_wait_suspend(t, frame, 'line', None)

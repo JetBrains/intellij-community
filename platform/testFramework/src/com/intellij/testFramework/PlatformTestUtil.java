@@ -847,7 +847,7 @@ public class PlatformTestUtil {
 
   public static void assertElementEquals(final String expected, final Element actual) {
     try {
-      assertElementsEqual(JDOMUtil.loadDocument(expected).getRootElement(), actual);
+      assertElementsEqual(JdomKt.loadElement(expected), actual);
     }
     catch (IOException | JDOMException e) {
       throw new AssertionError(e);

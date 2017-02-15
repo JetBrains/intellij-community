@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.HintHint;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,6 @@ public class DaemonTooltipUtil {
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth, final boolean requestFocus) {
     if (info.getToolTip() == null) return;
-    if (HighlightSeverity.INFORMATION.equals(info.getSeverity())) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 
     Point bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));

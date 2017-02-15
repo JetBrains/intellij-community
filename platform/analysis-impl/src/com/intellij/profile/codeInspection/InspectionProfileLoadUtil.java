@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.profile.codeInspection;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class InspectionProfileLoadUtil {
   public static InspectionProfileImpl load(@NotNull File file,
                                            @NotNull InspectionToolRegistrar registrar,
                                            @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    Element element = JDOMUtil.load(file);
+    Element element = JdomKt.loadElement(file.getPath());
     InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar,
                                                               (BaseInspectionProfileManager)profileManager);
     final Element profileElement = element.getChild("profile");

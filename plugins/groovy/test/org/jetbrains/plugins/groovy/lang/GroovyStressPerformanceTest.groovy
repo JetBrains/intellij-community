@@ -538,9 +538,9 @@ class Node {
 def a = new Node()
 """
     def data = [
-      "(a${'.nn' * 1000}).nn",                 // (a.nn.nn ...).nn ... .nn
-      "a${'.nn()' * 500}.nn",                            // a.nn().nn() ... .nn().nn
-      "a${' += a' * 1000} += new Node()",   // a += a += a ... += a += new Node()
+      "a${'.nn' * 500}.nn",               // a.nn.nn ... .nn
+      "a${'.nn()' * 250}.nn",             // a.nn() ... .nn().nn
+      "a${' += a' * 500} += new Node()",  // a += a ... += a += new Node()
     ]
     for (expressionText in data) {
       def file = (GroovyFile)fixture.configureByText('_.groovy', header + expressionText)

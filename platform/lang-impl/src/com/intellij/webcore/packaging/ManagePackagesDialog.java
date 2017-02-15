@@ -250,6 +250,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void handleInstallationStarted(String packageName) {
+    myNotificationArea.hide();
     setDownloadStatus(true);
     myCurrentlyInstalling.add(packageName);
     if (myPackageListener != null) {
