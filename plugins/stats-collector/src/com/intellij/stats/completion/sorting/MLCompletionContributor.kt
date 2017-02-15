@@ -28,14 +28,18 @@ import com.jetbrains.completion.ranker.features.CompletionState
 typealias RelevanceObjects = MutableList<Pair<String, Any>>
 typealias WeightedElement = Pair<LookupElement, Double>
 
+class PrefixCachedLookupWeight(val weight: Double, val prefix: String)
+
 class MLClassifier(next: Classifier<LookupElement>,
                    private val lookupArranger: LookupArranger,
                    private val lookup: LookupImpl,
                    private val ranker: MLRanker) : Classifier<LookupElement>(next, "MLClassifier") {
 
-  private val cachedScore = mutableMapOf<LookupElement, Double>()
+  private val cachedScore = mutableMapOf<LookupElement, PrefixCachedLookupWeight>()
 
   override fun classify(source: MutableIterable<LookupElement>, context: ProcessingContext): MutableIterable<LookupElement> {
+    println("Classifing current prefix length: ${lookup.additionalPrefix}")
+    
     val relevanceObjects: Map<LookupElement, MutableList<Pair<String, Any>>> = lookupArranger.getRelevanceObjects(source, false)
     
     var position = 0 
@@ -67,19 +71,21 @@ class MLClassifier(next: Classifier<LookupElement>,
   }
 
   fun getWeight(element: LookupElement, position: Int, relevance: RelevanceObjects): Double {
+    val currentPrefix = lookup.additionalPrefix
+    
     val cached = cachedScore[element]
-    if (cached != null) {
-      return cached
+    if (cached != null && currentPrefix == cached.prefix)  {
+      return cached.weight
     }
 
     val elementLength = element.lookupString.length
-    //todo get it from anywhere
-    val prefixLength = 0
+    val prefixLength = currentPrefix.length
+    
     val state = CompletionState(position, query_length = prefixLength, cerp_length = 0, result_length = elementLength)
     val relevanceMap = relevance.groupBy { it.first }
     
     val calculatedWeight = ranker.rank(state, relevanceMap)
-    cachedScore[element] = calculatedWeight
+    cachedScore[element] = PrefixCachedLookupWeight(calculatedWeight, currentPrefix)
 
     return calculatedWeight
   }
