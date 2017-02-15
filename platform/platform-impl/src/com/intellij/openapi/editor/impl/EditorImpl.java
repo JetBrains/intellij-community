@@ -1525,7 +1525,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         finally {
           updatingSize = false;
         }
-      }, __->isDisposed());
+      }, ModalityState.any(), __->isDisposed());
     }
   }
 

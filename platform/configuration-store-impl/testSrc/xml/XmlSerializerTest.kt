@@ -634,7 +634,7 @@ internal class XmlSerializerTest {
 
   private fun checkSmartSerialization(bean: Bean2, serialized: String) {
     val serializer = SmartSerializer()
-    serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).rootElement)
+    serializer.readExternal(bean, JDOMUtil.load(serialized))
     val serializedState = Element("Bean2")
     serializer.writeExternal(bean, serializedState)
     assertThat(JDOMUtil.writeElement(serializedState)).isEqualTo(serialized)

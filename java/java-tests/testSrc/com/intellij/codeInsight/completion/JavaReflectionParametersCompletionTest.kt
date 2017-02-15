@@ -31,7 +31,9 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 
 /**
@@ -42,26 +44,36 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   override fun getProjectDescriptor(): LightProjectDescriptor = com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_8
 
-  fun testAnnotation() = doTest(0, "Bar.class", "Foo.class", "aType")
+  fun testAnnotation() = doTest(0, "Bar.class", "Foo.class")
 
-  fun testInheritedAnnotation() = doTest(1, "Bar.class", "Foo.class", "aType")
+  fun testInheritedAnnotation() = doTest(1, "Bar.class", "Foo.class")
 
-  fun testDeclaredAnnotation() = doTest(0, "Bar.class", "Foo.class")
+  fun testDeclaredAnnotation() = doTest(0, "Foo.class", "Bar.class")
 
-  fun testInheritedDeclaredAnnotation() = doTest(1, "Bar.class", "Foo.class")
+  fun testInheritedDeclaredAnnotation() = doTest(1, "Foo.class", "Bar.class")
 
   fun testAnnotationsByType() = doTest(0, "Bar.class", "Foo.class")
 
-  fun testDeclaredAnnotationsByType() = doTest(1, "Bar.class", "Foo.class")
+  fun testDeclaredAnnotationsByType() = doTest(0, "Foo.class", "Bar.class")
 
   fun testConstructor() {
     addConstructors()
-    doTest(2, "Construct()", "Construct(int)", "Construct(int,java.lang.String)", "Construct(java.lang.String)")
+    doTest(3, "Construct()", "Construct(int n)", "Construct(java.lang.String s)", "Construct(int n,java.lang.String s)")
   }
 
   fun testDeclaredConstructor() {
     addConstructors()
-    doTest(0, "Construct()", "Construct(int)", "Construct(int,java.lang.String)", "Construct(java.lang.String)")
+    doTest(0, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
+  }
+
+  fun testImports() {
+    addMoreClasses()
+    doTest(1, "Bar.class", "Baz.class")
+  }
+
+  fun testVariable() {
+    addMoreClasses()
+    doTest(2, "Bar.class", "Foo.class", "aType")
   }
 
   private fun doTest(index: Int, vararg expected: String) {
@@ -69,11 +81,7 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
     configureByFile(getTestName(false) + ".java")
 
     val lookupItems = lookup.items
-    val texts = lookupItems.subList(0, Math.min(lookupItems.size, expected.size)).map {
-      val presentation = LookupElementPresentation()
-      it?.renderElement(presentation)
-      presentation.itemText ?: ""
-    }
+    val texts = lookupItemTexts(lookupItems, expected.size)
     assertOrderedEquals(texts, *expected)
     selectItem(lookupItems[index])
     myFixture.checkResultByFile(getTestName(false) + "_after.java")
@@ -82,9 +90,13 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
   private fun addClasses() {
     myFixture.addClass("package foo.bar; public @interface Foo {}")
     myFixture.addClass("package foo.bar; public @interface Bar {}")
-    myFixture.addClass("package foo.bar; public @interface Baz {}")
-    myFixture.addClass("package foo.bar; @Foo class Parent {}")
-    myFixture.addClass("package foo.bar; @Bar class Test extends Parent {}")
+    myFixture.addClass("package foo.bar; @Bar class Parent {}")
+    myFixture.addClass("package foo.bar; @Foo class Test extends Parent {}")
+  }
+
+  private fun addMoreClasses() {
+    myFixture.addClass("package foo.baz; public @interface Baz {}")
+    myFixture.addClass("package foo.bar; @foo.baz.Baz class More extends Parent {}")
   }
 
   private fun addConstructors() {
@@ -96,4 +108,20 @@ public class Construct {
   public Construct() {}
 }""")
   }
+
 }
+fun lookupItemTexts(lookupItems: List<LookupElement?>, maxSize: Int): List<String> =
+  lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
+    val obj = it?.`object`
+    when (obj) {
+      is PsiMethod -> {
+        obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
+          .joinToString(",", prefix = "(", postfix = ")")
+      }
+      else -> {
+        val presentation = LookupElementPresentation()
+        it?.renderElement(presentation)
+        presentation.itemText ?: ""
+      }
+    }
+  }

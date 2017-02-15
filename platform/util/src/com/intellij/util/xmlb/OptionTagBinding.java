@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
@@ -75,7 +74,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       else {
         Object node = myBinding.serialize(value, targetElement, filter);
         if (node != null && targetElement != node) {
-          JDOMUtil.addContent(targetElement, node);
+          addContent(targetElement, node);
         }
       }
     }

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Arrays.asList;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private PsiJavaModuleReferenceElement myReference;
@@ -93,16 +94,16 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
 
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaElementType.MODULE);
+
     PsiJavaModule mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
 
-    setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameIdentifier(), mirror.getNameIdentifier());
-    setMirror(getModifierList(), mirror.getModifierList());
+    //setMirror(getModifierList(), mirror.getModifierList());
 
-    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
+    setMirrors(asList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
                newArrayList(mirror.getRequires()));
-
-    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY)),
+    setMirrors(asList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY)),
                newArrayList(mirror.getExports()));
   }
 

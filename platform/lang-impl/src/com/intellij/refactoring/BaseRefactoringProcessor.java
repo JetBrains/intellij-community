@@ -23,6 +23,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -40,6 +42,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -149,6 +152,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    */
   protected abstract void performRefactoring(@NotNull UsageInfo[] usages);
 
+  @NotNull
   protected abstract String getCommandName();
 
   protected void doRun() {
@@ -464,34 +468,38 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable, "Prepare ...", false, myProject);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final String refactoringId = getRefactoringId();
+      Runnable performRefactoringRunnable = () -> {
+        final String refactoringId = getRefactoringId();
+        if (refactoringId != null) {
+          RefactoringEventData data = getBeforeData();
+          if (data != null) {
+            data.addUsages(usageInfoSet);
+          }
+          myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+        }
+
+        try {
           if (refactoringId != null) {
-            RefactoringEventData data = getBeforeData();
-            if (data != null) {
-              data.addUsages(usageInfoSet);
-            }
-            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+            UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
+            UndoManager.getInstance(myProject).undoableActionPerformed(action1);
           }
 
-          try {
-            if (refactoringId != null) {
-              UndoableAction action = new UndoRefactoringAction(myProject, refactoringId);
-              UndoManager.getInstance(myProject).undoableActionPerformed(action);
-            }
-
-            performRefactoring(writableUsageInfos);
-          }
-          finally {
-            if (refactoringId != null) {
-              myProject.getMessageBus()
-                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
-            }
+          performRefactoring(writableUsageInfos);
+        }
+        finally {
+          if (refactoringId != null) {
+            myProject.getMessageBus()
+              .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
           }
         }
-      });
+      };
+      ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+      }
+      else {
+        app.runWriteAction(performRefactoringRunnable);
+      }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
@@ -500,12 +508,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          performPsiSpoilingRefactoring();
-        }
-      });
+      app.runWriteAction(() -> performPsiSpoilingRefactoring());
     }
     finally {
       action.finish();

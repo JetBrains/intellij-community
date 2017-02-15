@@ -23,8 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor
-import com.intellij.openapi.vcs.Executor.cat
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
@@ -55,27 +54,42 @@ class GitBranchWorkerTest : GitPlatformTest() {
   public override fun setUp() {
     super.setUp()
 
-    Executor.cd(myProjectRoot)
-    val community = Executor.mkdir("community")
-    val contrib = Executor.mkdir("contrib")
+    cd(myProjectRoot)
+    val community = mkdir("community")
+    val contrib = mkdir("contrib")
 
     myUltimate = createRepository(myProjectPath)
     myCommunity = createRepository(community.path)
     myContrib = createRepository(contrib.path)
-    myRepositories = Arrays.asList<GitRepository>(myUltimate, myCommunity, myContrib)
+    myRepositories = listOf(myUltimate, myCommunity, myContrib)
 
-    Executor.cd(myProjectRoot)
-    Executor.touch(".gitignore", "community\ncontrib")
+    cd(myProjectRoot)
+    touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
+    myUltimate.update()
   }
 
   fun test_create_new_branch_without_problems() {
     checkoutNewBranch("feature", TestUiHandler())
 
     assertCurrentBranch("feature")
-    assertEquals("Notification about successful branch creation is incorrect",
-                 "Branch " + bcode("feature") + " was created", myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Branch ${bcode("feature")} was created")
+  }
+
+  fun `test create new branch without checkout not at HEAD`() {
+    val hashMap = myRepositories.map { it to it.currentRevision!! }.toMap()
+    myRepositories.forEach { cd(it); tac("f.txt") }
+
+    GitBranchWorker(myProject, myGit, TestUiHandler()).createBranch("feature", myRepositories.map{ it to "HEAD^" }.toMap())
+
+    assertCurrentBranch("master")
+    myRepositories.forEach {
+      val branch = it.branches.findLocalBranch("feature")
+      assertNotNull("Branch not created in $it", branch)
+      assertEquals("Branch feature created at wrong point", hashMap[it], it.branches.getHash(branch!!)!!.asString())
+    }
+    assertSuccessfulNotification("Branch ${bcode("feature")} was created")
   }
 
   fun test_create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() {
@@ -176,9 +190,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     unmergedFiles(myCommunity)
 
     checkoutBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        return true
-      }
+      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = true
     })
 
     assertCurrentBranch("master")
@@ -189,9 +201,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     unmergedFiles(myCommunity)
 
     checkoutBranch("feature", object : TestUiHandler() {
-      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
-        return false
-      }
+      override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = false
     })
 
     assertCurrentBranch(myUltimate, "feature")
@@ -205,8 +215,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     checkoutRevision("feature", TestUiHandler())
 
     assertDetachedState("feature")
-    assertEquals("Notification about successful branch checkout is incorrect", "Checked out " + bcode("feature"),
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Checked out ${bcode("feature")}")
   }
 
   fun test_checkout_revision_checkout_ref_with_complete_success() {
@@ -215,8 +224,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     checkoutRevision("feature~1", TestUiHandler())
 
     assertDetachedState("master")
-    assertEquals("Notification about successful branch checkout is incorrect", "Checked out " + bcode("feature~1"),
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Checked out ${bcode("feature~1")}")
   }
 
   fun test_checkout_revision_checkout_ref_with_complete_failure() {
@@ -226,13 +234,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertEquals("Notification about successful branch checkout is incorrect",
-                 "Revision not found in project, community and contrib",
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Revision not found in project, community and contrib")
   }
 
   fun test_checkout_revision_checkout_ref_with_partial_success() {
-    branchWithCommit(ContainerUtil.list<GitRepository>(myCommunity, myContrib), "feature")
+    branchWithCommit(listOf(myCommunity, myContrib), "feature")
 
     checkoutRevision("feature", TestUiHandler())
 
@@ -240,10 +246,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertDetachedState(myCommunity, "feature")
     assertDetachedState(myContrib, "feature")
 
-    assertEquals("Notification about successful branch checkout is incorrect",
-                 "Checked out " + bcode("feature") + " in community and contrib" + "<br>" +
-                     "Revision not found in project" + "<br><a href='rollback'>Rollback</a>",
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Checked out ${bcode("feature")} in community and contrib<br/>" +
+                                 "Revision not found in project<br><a href='rollback'>Rollback</a>")
   }
 
   fun test_checkout_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() {
@@ -368,13 +372,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun agree_to_smart_operation(operation: String, expectedSuccessMessage: String): List<String> {
     val localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
-
-    val handler = TestUiHandler()
-    checkoutOrMerge(operation, "feature", handler)
-
-    assertNotNull("No success notification was shown", myVcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect", expectedSuccessMessage, myVcsNotifier.lastNotification.content)
-
+    checkoutOrMerge(operation, "feature", TestUiHandler())
+    assertSuccessfulNotification(expectedSuccessMessage)
     return localChanges
   }
 
@@ -406,9 +405,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?): Int {
-        return GitSmartOperationDialog.CANCEL_EXIT_CODE
-      }
+                                            forceButton: String?) = GitSmartOperationDialog.CANCEL_EXIT_CODE
     })
 
     assertNull("Notification was unexpectedly shown:" + myVcsNotifier.lastNotification, myVcsNotifier.lastNotification)
@@ -435,9 +432,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?): Int {
-        return GitSmartOperationDialog.CANCEL_EXIT_CODE
-      }
+                                            forceButton: String?) = GitSmartOperationDialog.CANCEL_EXIT_CODE
 
       override fun notifyErrorWithRollbackProposal(title: String,
                                                    message: String,
@@ -459,21 +454,17 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?): Int {
-        return GitSmartOperationDialog.FORCE_EXIT_CODE
-      }
+                                            forceButton: String?) = GitSmartOperationDialog.FORCE_EXIT_CODE
     })
     brancher.checkoutNewBranchStartingFrom("new_branch", "feature", myRepositories)
 
-    assertEquals("Notification about successful branch creation is incorrect",
-                 "Checked out new branch <b><code>new_branch</code></b> from <b><code>feature</code></b>",
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Checked out new branch <b><code>new_branch</code></b> from <b><code>feature</code></b>")
     assertCurrentBranch("new_branch")
   }
 
   fun test_rollback_of_checkout_branch_as_new_branch_should_delete_branches() {
     branchWithCommit(myRepositories, "feature")
-    Executor.touch("feature.txt", "feature_content")
+    touch("feature.txt", "feature_content")
     git("add feature.txt")
     git("commit -m feature_changes")
     git("checkout master")
@@ -546,9 +537,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       override fun showBranchIsNotFullyMergedDialog(project: Project,
                                                     history: Map<GitRepository, List<GitCommit>>,
                                                     baseBranches: Map<GitRepository, String>,
-                                                    removedBranch: String): Boolean {
-        return true
-      }
+                                                    removedBranch: String) = true
     })
     assertBranchDeleted("todelete")
   }
@@ -597,7 +586,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("push -u origin $feature")
 
     // create a commit and merge it to master, but not to feature's upstream
-    Executor.touch("feature.txt", "feature content")
+    touch("feature.txt", "feature content")
     git("add feature.txt")
     git("commit -m feature_branch")
     git("checkout master")
@@ -638,9 +627,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler())
 
-    assertNotNull("Success message wasn't shown", myVcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect",
-                 "Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
+    assertSuccessfulNotification("Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
                  myVcsNotifier.lastNotification.content)
     assertFile(myUltimate, "branch_file.txt", "branch content")
     assertFile(myCommunity, "branch_file.txt", "branch content")
@@ -759,7 +746,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_checkout_in_detached_head() {
     cd(myCommunity)
-    Executor.touch("file.txt", "some content")
+    touch("file.txt", "some content")
     add("file.txt")
     commit("msg")
     git(myCommunity, "checkout HEAD^")
@@ -903,7 +890,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
     cd(unmergedRepo)
     git("checkout todelete")
-    Executor.touch("afile.txt", "content")
+    touch("afile.txt", "content")
     git("add afile.txt")
     git("commit -m unmerged_commit")
     git("checkout master")

@@ -164,14 +164,14 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
             PsiDocumentManager.getInstance(project).getLastCommittedText(document));
   }
 
-  @NotNull
-  private CommitTask doQueue(@NotNull Project project,
+  private void doQueue(@NotNull Project project,
                              @NotNull Document document,
                              @NotNull List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                              @NotNull Object reason,
                              @NotNull ModalityState currentModalityState,
                              @NotNull CharSequence lastCommittedText) {
     synchronized (lock) {
+      if (!project.isInitialized()) return;  // check the project is disposed under lock.
       CommitTask newTask = createNewTaskAndCancelSimilar(project, document, oldFileNodes, reason, currentModalityState,
                                                          lastCommittedText);
 
@@ -179,7 +179,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       log(project, "Queued", newTask, reason);
 
       wakeUpQueue();
-      return newTask;
     }
   }
 
@@ -556,10 +555,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
               if (task.reason.equals(SYNC_COMMIT_REASON)) {
                 throw new PsiInvalidElementAccessException(file, "File " + file + " invalidated during sync commit");
               }
-              else {
-                commitAsynchronously(project, document, "File " + file + " invalidated during background commit; task: "+task,
-                                     task.myCreationModalityState);
-              }
+              commitAsynchronously(project, document, "File " + file + " invalidated during background commit; task: "+task,
+                                   task.myCreationModalityState);
             }
           }
         }

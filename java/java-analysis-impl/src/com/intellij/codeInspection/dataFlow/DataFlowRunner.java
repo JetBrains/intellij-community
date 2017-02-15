@@ -49,6 +49,9 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
+  // Closures which were registered for previous instruction and can be queried by visitor
+  // to adjust them somehow
+  private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
   private final boolean myShouldCheckLimitTime;
@@ -90,6 +93,10 @@ public class DataFlowRunner {
     return Collections.singletonList(createMemoryState());
   }
 
+  List<DfaMemoryState> getStackTopClosures() {
+    return new ArrayList<>(myStackTopClosures);
+  }
+
   @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
@@ -109,6 +116,7 @@ public class DataFlowRunner {
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myNestedClosures.clear();
+      myStackTopClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
       for (int index = 0; index < myInstructions.length; index++) {
@@ -270,6 +278,9 @@ public class DataFlowRunner {
   @NotNull
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
+    DfaInstructionState[] states = instruction.accept(this, instructionState.getMemoryState(), visitor);
+
+    myStackTopClosures.clear();
     PsiElement closure = DfaUtil.getClosureInside(instruction);
     if (closure instanceof PsiClass) {
       registerNestedClosures(instructionState, (PsiClass)closure);
@@ -277,7 +288,7 @@ public class DataFlowRunner {
       registerNestedClosures(instructionState, (PsiLambdaExpression)closure);
     }
 
-    return instruction.accept(this, instructionState.getMemoryState(), visitor);
+    return states;
   }
 
   private void registerNestedClosures(@NotNull DfaInstructionState instructionState, @NotNull PsiClass nestedClass) {
@@ -285,14 +296,14 @@ public class DataFlowRunner {
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        myNestedClosures.putValue(body, state.createClosureState());
+        myNestedClosures.putValue(body, createClosureState(state));
       }
     }
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      myNestedClosures.putValue(initializer.getBody(), state.createClosureState());
+      myNestedClosures.putValue(initializer.getBody(), createClosureState(state));
     }
     for (PsiField field : nestedClass.getFields()) {
-      myNestedClosures.putValue(field, state.createClosureState());
+      myNestedClosures.putValue(field, createClosureState(state));
     }
   }
   
@@ -300,8 +311,15 @@ public class DataFlowRunner {
     DfaMemoryState state = instructionState.getMemoryState();
     PsiElement body = expr.getBody();
     if (body != null) {
-      myNestedClosures.putValue(body, state.createClosureState());
+      myNestedClosures.putValue(body, createClosureState(state));
     }
+  }
+
+  @NotNull
+  private DfaMemoryState createClosureState(DfaMemoryState state) {
+    DfaMemoryState closureState = state.createClosureState();
+    myStackTopClosures.add(closureState);
+    return closureState;
   }
 
   @NotNull

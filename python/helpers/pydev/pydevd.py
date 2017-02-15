@@ -670,6 +670,11 @@ class PyDB:
         if stop_reason == CMD_SET_BREAK and self.suspend_on_breakpoint_exception:
             self._send_breakpoint_condition_exception(thread)
 
+        if self.frame_eval_func is not None and stop_reason == CMD_THREAD_SUSPEND:
+            thread_id = get_thread_id(thread)
+            int_cmd = InternalSetTracingThread(thread_id)
+            self.post_internal_command(int_cmd, thread_id)
+
 
     def _send_breakpoint_condition_exception(self, thread):
         """If conditional breakpoint raises an exception during evaluation

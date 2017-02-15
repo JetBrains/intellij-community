@@ -261,14 +261,11 @@ public class TextDiffViewerUtil {
 
   public static class HighlightPolicySettingAction extends EnumPolicySettingAction<HighlightPolicy> {
     @NotNull protected final TextDiffSettings mySettings;
-    @NotNull private final Runnable myRediffRunnable;
 
     public HighlightPolicySettingAction(@NotNull TextDiffSettings settings,
-                                        @NotNull Runnable rediff,
                                         @NotNull HighlightPolicy... policies) {
       super(policies);
       mySettings = settings;
-      myRediffRunnable = rediff;
     }
 
     @Override
@@ -276,7 +273,6 @@ public class TextDiffViewerUtil {
       if (getValue() == option) return;
       UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + option.name());
       mySettings.setHighlightPolicy(option);
-      myRediffRunnable.run();
     }
 
     @NotNull
@@ -306,14 +302,11 @@ public class TextDiffViewerUtil {
 
   public static class IgnorePolicySettingAction extends EnumPolicySettingAction<IgnorePolicy> {
     @NotNull protected final TextDiffSettings mySettings;
-    @NotNull private final Runnable myRediffRunnable;
 
     public IgnorePolicySettingAction(@NotNull TextDiffSettings settings,
-                                     @NotNull Runnable rediff,
                                      @NotNull IgnorePolicy... policies) {
       super(policies);
       mySettings = settings;
-      myRediffRunnable = rediff;
     }
 
     @Override
@@ -321,7 +314,6 @@ public class TextDiffViewerUtil {
       if (getValue() == option) return;
       UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + option.name());
       mySettings.setIgnorePolicy(option);
-      myRediffRunnable.run();
     }
 
     @NotNull

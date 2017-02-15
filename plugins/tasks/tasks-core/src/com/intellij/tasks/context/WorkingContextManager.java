@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
+import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
@@ -183,9 +182,7 @@ public class WorkingContextManager {
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         byte[] bytes = entry.getData();
-        Document document = JDOMUtil.loadDocument(new String(bytes));
-        Element rootElement = document.getRootElement();
-        loadContext(rootElement);
+        loadContext(JdomKt.loadElement(new String(bytes)));
         return true;
       }
     }

@@ -1002,8 +1002,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 12);
-        setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.ALL);
+        toggleBreakpoint(getFilePath(getScriptName()), 17);
+        setBreakpointSuspendPolicy(getProject(), 17, SuspendPolicy.ALL);
       }
 
       @Override
@@ -1056,8 +1056,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 12);
-        setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.THREAD);
+        toggleBreakpoint(getFilePath(getScriptName()), 17);
+        setBreakpointSuspendPolicy(getProject(), 17, SuspendPolicy.THREAD);
       }
 
       @Override

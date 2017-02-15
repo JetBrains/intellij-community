@@ -1,7 +1,8 @@
 import dis
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_comm import get_global_debugger
+from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_THREAD_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
@@ -56,6 +57,9 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             return _PyEval_EvalFrameDefault(frame_obj, exc)
 
         main_debugger = get_global_debugger()
+        if additional_info.pydev_state == STATE_SUSPEND and t.stop_reason == CMD_THREAD_SUSPEND:
+            main_debugger.process_internal_commands()
+
         breakpoints = main_debugger.breakpoints.get(abs_path_real_path_and_base[1])
         if breakpoints:
             was_break = False

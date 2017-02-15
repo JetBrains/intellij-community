@@ -18,8 +18,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -71,7 +72,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
             case DECLARED_FIELD: {
               PsiField field = psiClass.findFieldByName(name, false);
-              return isReachable(field, psiClass) ? field : null;
+              return isPotentiallyAccessible(field, psiClass) ? field : null;
             }
 
             case METHOD: {
@@ -85,7 +86,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
             case DECLARED_METHOD: {
               final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-              return ContainerUtil.find(methods, method -> isRegularMethod(method) && isReachable(method, psiClass));
+              return ContainerUtil.find(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
             }
           }
         }
@@ -115,21 +116,30 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         switch (type) {
 
           case DECLARED_FIELD:
-            return psiClass.getFields();
+            return Arrays.stream(psiClass.getFields())
+              .sorted(Comparator.comparing(PsiField::getName))
+              .map(field -> lookupField(field))
+              .toArray();
 
           case FIELD:
-            return ContainerUtil.filter(psiClass.getAllFields(), field -> isReachable(field, psiClass)).toArray();
+            return Arrays.stream(psiClass.getAllFields())
+              .filter(field -> isPotentiallyAccessible(field, psiClass))
+              .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
+              .map(field -> withPriority(lookupField(field), isPublic(field)))
+              .toArray();
 
           case DECLARED_METHOD:
             return Arrays.stream(psiClass.getMethods())
               .filter(method -> isRegularMethod(method))
-              .map(this::lookupMethod)
+              .sorted(Comparator.comparing(PsiMethod::getName))
+              .map(method -> lookupMethod(method))
               .toArray();
 
           case METHOD:
             return Arrays.stream(psiClass.getAllMethods())
-              .filter(method -> isRegularMethod(method) && isReachable(method, psiClass) && !isJavaLangObject(method.getContainingClass()))
-              .map(this::lookupMethod)
+              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
+              .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
+              .map(method -> PrioritizedLookupElement.withPriority(lookupMethod(method), -getMethodSortOrder(method)))
               .toArray();
         }
       }
@@ -137,8 +147,17 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return EMPTY_ARRAY;
   }
 
+  private static int getMethodSortOrder(PsiMethod method) {
+    return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
+  }
+
   @NotNull
-  private LookupElementBuilder lookupMethod(PsiMethod method) {
+  private static LookupElement lookupField(PsiField field) {
+    return JavaLookupElementBuilder.forField(field);
+  }
+
+  @NotNull
+  private LookupElement lookupMethod(PsiMethod method) {
     return JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this);
   }
 

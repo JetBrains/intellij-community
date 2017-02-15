@@ -18,7 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.*;
 
-/*
+/**
  * @author max
  */
 public class ClsStubPsiFactory extends StubPsiFactory {

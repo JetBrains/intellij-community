@@ -70,9 +70,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         for (final ConfigurationFromContext fromContext : producers) {
           final ConfigurationType configurationType = fromContext.getConfigurationType();
           final RunConfiguration configuration = fromContext.getConfiguration();
-          final String actionName = configuration instanceof LocatableConfiguration
-                                    ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
-                                    : configurationType.getDisplayName();
+          final String actionName = childActionName(configurationType, configuration);
           final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
@@ -140,7 +138,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
             @Override
             @NotNull
             public String getTextFor(final ConfigurationFromContext producer) {
-              return StringUtil.notNullize(producer.getConfiguration().getName(), producer.getConfigurationType().getDisplayName());
+              return childActionName(producer.getConfigurationType(), producer.getConfiguration());
             }
 
             @Override
@@ -218,6 +216,13 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       }
     }
     return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
+  }
+
+  @NotNull
+  private static String childActionName(ConfigurationType configurationType, RunConfiguration configuration) {
+    return configuration instanceof LocatableConfiguration
+           ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
+           : configurationType.getDisplayName();
   }
 
   protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);

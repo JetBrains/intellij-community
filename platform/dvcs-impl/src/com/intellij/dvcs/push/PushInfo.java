@@ -22,28 +22,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Upcoming push information holder
+ * Upcoming push information holder for one repository
  */
-public interface PushDetail {
+public interface PushInfo {
   /**
    * Repository of the push source
    */
   @NotNull
-  Repository repository();
+  Repository getRepository();
 
   /**
-   * For a {@link #repository()} specifies what would be pushed and where
+   * Specifies what would be pushed and where for this repository
    *
    * @return push specification
    */
   @NotNull
-  PushSpec<PushSource, PushTarget> pushSpec();
+  PushSpec<PushSource, PushTarget> getPushSpec();
 
   /**
    * Returns list of commits to be pushed.
-   * a.e. result of `git log source..target` for updated git branches; empty list for newly created branches.
-   * Commits should be ordered by commit time (ex: committer time for git);
+   * Commits are ordered so that the most recent come last, e.g. as in the output of git log source..target but in reverse order
    */
   @NotNull
-  List<VcsFullCommitDetails> commits();
+  List<VcsFullCommitDetails> getCommits();
 }

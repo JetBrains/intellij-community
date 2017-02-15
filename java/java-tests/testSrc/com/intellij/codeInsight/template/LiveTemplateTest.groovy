@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.JdomKt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
@@ -658,11 +659,11 @@ class Outer {
   }
 
   void testDontSaveDefaultContexts() {
-    def defElement = JDOMUtil.loadDocument('''\
+    def defElement = JdomKt.loadElement('''\
 <context>
   <option name="JAVA_STATEMENT" value="false"/>
   <option name="JAVA_CODE" value="true"/>
-</context>''').rootElement
+</context>''')
     def defContext = new TemplateContext()
     defContext.readTemplateContext(defElement)
 
@@ -695,10 +696,10 @@ class Outer {
   }
 
   void "test adding new context to Other"() {
-    def defElement = JDOMUtil.loadDocument('''\
+    def defElement = JdomKt.loadElement('''\
 <context>
   <option name="OTHER" value="true"/>
-</context>''').rootElement
+</context>''')
     def context = new TemplateContext()
     context.readTemplateContext(defElement)
 

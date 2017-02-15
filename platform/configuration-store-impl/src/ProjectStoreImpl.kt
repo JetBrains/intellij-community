@@ -129,7 +129,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       wrapper.addContent(profile)
       val path = Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), if (isInspection) "inspectionProfiles" else "copyright",
           "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
-      JDOMUtil.writeParent(wrapper, path.outputStream(), "\n")
+      JDOMUtil.write(wrapper, path.outputStream(), "\n")
     }
   }
 
