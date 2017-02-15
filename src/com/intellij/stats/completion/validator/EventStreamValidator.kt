@@ -140,6 +140,11 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     }
 
     override fun visit(event: TypeEvent) {
+        val newIds = event.newCompletionIds()
+        val allIds = (completionList + newIds).toSet()
+        
+        updateValid(allIds.containsAll(event.completionListIds))
+        
         updateState(event)
         updateValid(allCompletionItemIds.containsAll(completionList))
     }

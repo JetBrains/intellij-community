@@ -115,13 +115,6 @@ class TypeBackspaceValidatorTest {
         state.accept(LogEventFixtures.backspace_event_pos_0_left_0_1_2)
         assertThat(state.isValid).isEqualTo(true)
     }
-    
-    @Test
-    fun `type and backspace 2`() {
-        state.accept(LogEventFixtures.type_event_current_pos_0_left_ids_0_1)
-        state.accept(LogEventFixtures.backspace_event_pos_0_left_1)
-        assertThat(state.isValid).isEqualTo(false)
-    }
 }
 
 
