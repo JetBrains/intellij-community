@@ -34,7 +34,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
 /**
@@ -64,7 +63,7 @@ public class ProgressIndicatorUtils {
   }
 
   @NotNull
-  public static Future<?> submitWithWriteActionPriority(@NotNull ReadTask task) {
+  public static CompletableFuture<?> submitWithWriteActionPriority(@NotNull ReadTask task) {
     return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
@@ -73,12 +72,12 @@ public class ProgressIndicatorUtils {
   }
 
   @NotNull
-  public static Future<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
     return scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
   }
 
   @NotNull
-  public static Future<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
     return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), executor, task);
   }
 
@@ -159,9 +158,9 @@ public class ProgressIndicatorUtils {
   }
 
   @NotNull
-  public static Future<?> scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
-                                                          @NotNull final Executor executor,
-                                                          @NotNull final ReadTask readTask) {
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
+                                                                     @NotNull final Executor executor,
+                                                                     @NotNull final ReadTask readTask) {
     final Application application = ApplicationManager.getApplication();
     // invoke later even if on EDT
     // to avoid tasks eagerly restarting immediately, allocating many pooled threads
