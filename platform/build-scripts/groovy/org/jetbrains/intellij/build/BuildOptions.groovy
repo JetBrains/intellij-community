@@ -47,7 +47,10 @@ class BuildOptions {
   /**
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  // Android Studio: disable build steps that are handled by ADRT
+  Set<String> buildStepsToSkip =
+    System.getProperty("intellij.build.skip.build.steps", "mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist")
+      .split(",") as Set<String>
   /** generate actual searchableOptions.xml file. If it is skipped the version of this file located in sources will be used, it may be outdated. */
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"

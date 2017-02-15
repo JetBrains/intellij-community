@@ -51,9 +51,35 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                   ] +
                                                   ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
                                                   ["jps-model-impl", "jps-model-serialization"]
-// TODO: adt-branding instead of community-resources?
-    productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
-    productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
+    productLayout.additionalPlatformJars.put("resources.jar", "adt-branding")
+
+    // Android Studio: including the common base library to avoid classloader issues (?)
+    productLayout.additionalPlatformJars.put("android-base-common.jar", "common")
+    // Android Studio: include metrics libraries in $install/lib
+    productLayout.additionalPlatformJars.putAll("google-analytics-library.jar",
+                                                "android-annotations",
+                                                "analytics-protos",
+                                                "analytics-shared",
+                                                "analytics-tracker",
+                                                "analytics-publisher")
+
+    productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES +
+                                         [
+                                           // Android Studio bundles these:
+                                           "android-ndk",
+                                           "firebase",
+                                           "firebase-testing",
+                                           "games",
+                                           "google-appindexing",
+                                           "google-login-as",
+                                           "google-cloud-tools-as",
+                                           "google-cloud-tools-core-as",
+                                           "google-samples",
+                                           "google-services",
+                                           "ndk-workspace",
+                                           "test-recorder",
+                                           "url-assistant",
+                                         ]
     productLayout.mainModules = ["community-main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       androidPluginInStudio([:]),
@@ -63,9 +89,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   static PluginLayout androidPluginInStudio(Map<String, String> additionalModulesToJars) {
-    plugin("android") {
+    plugin("android-plugin") {
       directoryName = "android"
-      // Does this conflict with the below jar packaging?
       mainJarName = "android.jar"
       withModule("android-common", "android-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
@@ -106,20 +131,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("perflib", "sdk-tools.jar")
       withModule("builder-model", "sdk-tools.jar")
       withModule("builder-test-api", "sdk-tools.jar")
-// Present in community edition but this doesn't look right:
-//      withModule("instant-run-runtime", "sdk-tools.jar")
-//      withModule("rpclib", "sdk-tools.jar")
       withModule("android-annotations", "sdk-tools.jar")
 
-// Note: there's a withJpsModule method
-      withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
-      withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
-
-      withModule("perfd-host", "android-profilers.jar")
-      withModule("profilers", "android-profilers.jar")
-      withModule("profilers-ui", "android-profilers.jar")
-
-      withModule("common", "android-base-common.jar")
+      withJpsModule("android-gradle-jps")
+      withJpsModule("android-jps-plugin")
 
       /*
       TODO:
@@ -137,32 +152,33 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
-      withResource("device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("layoutlib-resources", ".", "lib/layoutlib")
+      withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
       withResourceFromModule("sdklib", "../templates", "lib/templates")
-      withResourceArchive("annotations", "lib/androidAnnotations.jar")
-      withResource("lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResource("lib/asm-5.0.3.jar", "lib")
-      withResource("lib/asm-analysis-5.0.3.jar", "lib")
-      withResource("lib/asm-tree-5.0.3.jar", "lib")
-      withResource("lib/commons-io-2.4.jar", "lib")
-      withResource("lib/commons-compress-1.8.1.jar", "lib")
-      withResource("lib/javawriter-2.2.1.jar", "lib")
-      withResource("lib/juniversalchardet-1.0.3.jar", "lib")
-      withResource("lib/layoutlib.jar", "lib")
-      withResource("lib/gluegen-rt.jar", "lib")
-      withResource("lib/gluegen-rt-natives-linux-amd64.jar", "lib")
-      withResource("lib/gluegen-rt-natives-linux-i586.jar", "lib")
-      withResource("lib/gluegen-rt-natives-macosx-universal.jar", "lib")
-      withResource("lib/gluegen-rt-natives-windows-amd64.jar", "lib")
-      withResource("lib/gluegen-rt-natives-windows-i586.jar", "lib")
+      withResourceFromModule("android","annotations", "lib/androidAnnotations.jar")
+      withResourceFromModule("android","lib/antlr4-runtime-4.5.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/commons-io-2.4.jar", "lib")
+      withResourceFromModule("android","lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
+
+      withResource("../../../../prebuilts/studio/layoutlib/data/layoutlib.jar", "lib")
+
+      withResourceFromModule("android","lib/gluegen-rt.jar", "lib")
+      withResourceFromModule("android","lib/gluegen-rt-natives-linux-amd64.jar", "lib")
+      withResourceFromModule("android","lib/gluegen-rt-natives-linux-i586.jar", "lib")
+      withResourceFromModule("android","lib/gluegen-rt-natives-macosx-universal.jar", "lib")
+      withResourceFromModule("android","lib/gluegen-rt-natives-windows-amd64.jar", "lib")
+      withResourceFromModule("android","lib/gluegen-rt-natives-windows-i586.jar", "lib")
       withProjectLibrary("jogl-all") //todo[nik] move to module libraries
-      withResource("lib/jogl-all-natives-linux-amd64.jar", "lib")
-      withResource("lib/jogl-all-natives-linux-i586.jar", "lib")
-      withResource("lib/jogl-all-natives-macosx-universal.jar", "lib")
-      withResource("lib/jogl-all-natives-windows-amd64.jar", "lib")
-      withResource("lib/jogl-all-natives-windows-i586.jar", "lib")
-      withResource("lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("android","lib/jogl-all-natives-linux-amd64.jar", "lib")
+      withResourceFromModule("android","lib/jogl-all-natives-linux-i586.jar", "lib")
+      withResourceFromModule("android","lib/jogl-all-natives-macosx-universal.jar", "lib")
+      withResourceFromModule("android","lib/jogl-all-natives-windows-amd64.jar", "lib")
+      withResourceFromModule("android","lib/jogl-all-natives-windows-i586.jar", "lib")
+      withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }
@@ -275,7 +291,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 // TODO: In EAP include suffix to have separate icons!
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
-        icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/androidstudio.icns"
+        icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
       }
 
       @Override
