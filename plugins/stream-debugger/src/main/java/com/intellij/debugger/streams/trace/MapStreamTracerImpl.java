@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.remote.InvokeMethodProxy;
 import com.intellij.debugger.streams.remote.ProxyBase;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.IntegerValue;
@@ -33,6 +34,8 @@ import java.util.*;
  * @author Vitaliy.Bibaev
  */
 public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
+  private static final Logger LOG = Logger.getInstance(MapStreamTracerImpl.class);
+
   private static final String DEFS =
     "final java.util.Map<Integer, Object> map = new java.util.HashMap<>();\n" +
     "final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);\n" +
@@ -50,7 +53,9 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
   protected String getTraceExpression(@NotNull StreamChain chain) {
     final String call = "Object res = " + insertPeeks(chain).getText() + ";\n";
     final String saveResult = "map.put(-1, java.util.Collections.singletonMap(-1, res)); \n";
-    return DEFS + call + saveResult + RETURN_ACTION;
+    String result = DEFS + call + saveResult + RETURN_ACTION;
+    LOG.info(result);
+    return result;
   }
 
   @NotNull
@@ -141,7 +146,7 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
   }
 
   private static class MapEntryProxy extends ProxyBase {
-    public MapEntryProxy(@NotNull InvokeMethodProxy invoker) {
+    MapEntryProxy(@NotNull InvokeMethodProxy invoker) {
       super(invoker);
     }
 
@@ -163,7 +168,7 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
   private static class MyTracingPeekCall implements MethodCall {
     private final String myAction;
 
-    public MyTracingPeekCall(@NotNull String peekAction) {
+    MyTracingPeekCall(@NotNull String peekAction) {
       myAction = peekAction;
     }
 
@@ -184,9 +189,9 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
     private final Value myValue;
     private final List<Map<Integer, Value>> myCalls;
 
-    public MyResult(@Nullable Value streamResult, @NotNull List<Map<Integer, Value>> traces) {
+    MyResult(@Nullable Value streamResult, @NotNull List<Map<Integer, Value>> traces) {
       myValue = streamResult;
-      myCalls = traces;
+      myCalls = new ArrayList<>(traces);
     }
 
     @Nullable
