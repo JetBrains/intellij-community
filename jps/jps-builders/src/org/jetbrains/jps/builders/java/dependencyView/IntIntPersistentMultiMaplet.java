@@ -96,18 +96,15 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
         public void append(final DataOutput out) throws IOException {
           final Ref<IOException> exRef = new Ref<IOException>();
-          value.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int value) {
-              try {
-                DataInputOutputUtil.writeINT(out, value);
-              }
-              catch (IOException e) {
-                exRef.set(e);
-                return false;
-              }
-              return true;
+          value.forEach(value1 -> {
+            try {
+              DataInputOutputUtil.writeINT(out, value1);
             }
+            catch (IOException e) {
+              exRef.set(e);
+              return false;
+            }
+            return true;
           });
           final IOException exception = exRef.get();
           if (exception != null) {
@@ -237,15 +234,12 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void forEachEntry(final TIntObjectProcedure<TIntHashSet> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<Integer>() {
-        @Override
-        public boolean process(Integer key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }
@@ -258,18 +252,15 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     @Override
     public void save(@NotNull final DataOutput out, final TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = new Ref<IOException>(null);
-      value.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int elem) {
-          try {
-            DataInputOutputUtil.writeINT(out, elem);
-          }
-          catch (IOException e) {
-            exRef.set(e);
-            return false;
-          }
-          return true;
+      value.forEach(elem -> {
+        try {
+          DataInputOutputUtil.writeINT(out, elem);
         }
+        catch (IOException e) {
+          exRef.set(e);
+          return false;
+        }
+        return true;
       });
       final IOException exception = exRef.get();
       if (exception != null) {

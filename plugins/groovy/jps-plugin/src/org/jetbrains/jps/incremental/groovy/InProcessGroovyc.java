@@ -79,12 +79,9 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
-        return null;
-      }
+    final Future<Void> future = ourExecutor.submit(() -> {
+      runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
+      return null;
     });
     if (mailbox == null) {
       future.get();
@@ -216,12 +213,9 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        String fileName = StringUtil.getShortName(s, '/');
-        return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
-      }
+    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
+      String fileName = StringUtil.getShortName(s, '/');
+      return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
     });
 
     LOG.debug("Groovy jars: " + groovyJars);

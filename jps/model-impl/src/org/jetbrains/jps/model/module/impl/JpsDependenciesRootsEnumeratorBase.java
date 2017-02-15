@@ -50,42 +50,34 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
   @Override
   public Collection<File> getRoots() {
     final Set<File> files = new LinkedHashSet<File>();
-    processUrls(new Consumer<String>() {
-      @Override
-      public void consume(String url) {
-        files.add(JpsPathUtil.urlToFile(url));
-      }
-    });
+    processUrls(url -> files.add(JpsPathUtil.urlToFile(url)));
     return files;
   }
 
   private void processUrls(final Consumer<String> urlConsumer) {
-    myDependenciesEnumerator.processDependencies(new Processor<JpsDependencyElement>() {
-      @Override
-      public boolean process(JpsDependencyElement dependencyElement) {
-        if (dependencyElement instanceof JpsModuleSourceDependency) {
-          processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
-        }
-        else if (dependencyElement instanceof JpsModuleDependency) {
-          JpsModule dep = ((JpsModuleDependency)dependencyElement).getModule();
-          if (dep != null) {
-            processModuleRootUrls(dep, dependencyElement, urlConsumer);
-          }
-        }
-        else if (dependencyElement instanceof JpsLibraryDependency) {
-          JpsLibrary lib = ((JpsLibraryDependency)dependencyElement).getLibrary();
-          if (lib != null) {
-            processLibraryRootUrls(lib, urlConsumer);
-          }
-        }
-        else if (dependencyElement instanceof JpsSdkDependency) {
-          JpsLibrary lib = ((JpsSdkDependency)dependencyElement).resolveSdk();
-          if (lib != null) {
-            processLibraryRootUrls(lib, urlConsumer);
-          }
-        }
-        return true;
+    myDependenciesEnumerator.processDependencies(dependencyElement -> {
+      if (dependencyElement instanceof JpsModuleSourceDependency) {
+        processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
       }
+      else if (dependencyElement instanceof JpsModuleDependency) {
+        JpsModule dep = ((JpsModuleDependency)dependencyElement).getModule();
+        if (dep != null) {
+          processModuleRootUrls(dep, dependencyElement, urlConsumer);
+        }
+      }
+      else if (dependencyElement instanceof JpsLibraryDependency) {
+        JpsLibrary lib = ((JpsLibraryDependency)dependencyElement).getLibrary();
+        if (lib != null) {
+          processLibraryRootUrls(lib, urlConsumer);
+        }
+      }
+      else if (dependencyElement instanceof JpsSdkDependency) {
+        JpsLibrary lib = ((JpsSdkDependency)dependencyElement).resolveSdk();
+        if (lib != null) {
+          processLibraryRootUrls(lib, urlConsumer);
+        }
+      }
+      return true;
     });
   }
 

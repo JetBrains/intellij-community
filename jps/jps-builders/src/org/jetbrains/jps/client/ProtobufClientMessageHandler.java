@@ -111,12 +111,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
       }
       finally {
         // make sure the client is in disconnected state
-        myAsyncExec.execute(new Runnable() {
-          @Override
-          public void run() {
-            myClient.disconnect();
-          }
-        });
+        myAsyncExec.execute(() -> myClient.disconnect());
       }
     }
   }

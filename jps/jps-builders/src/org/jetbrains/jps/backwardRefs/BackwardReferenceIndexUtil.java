@@ -58,12 +58,8 @@ public class BackwardReferenceIndexUtil {
         LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
         definitions.put(result, null);
 
-        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType, new Factory<Collection<LightRef>>() {
-          @Override
-          public Collection<LightRef> create() {
-            return new SmartList<LightRef>();
-          }
-        }).add(result);
+        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
+                                  (Factory<Collection<LightRef>>)() -> new SmartList<LightRef>()).add(result);
       }
     }
 

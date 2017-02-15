@@ -191,11 +191,7 @@ public class GroovycOutputParser {
   }
 
   private static List<String> splitAndTrim(String compiled) {
-    return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), new Function<String, String>() {
-      public String fun(String s) {
-        return s.trim();
-      }
-    });
+    return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), s -> s.trim());
   }
 
   public List<OutputItem> getSuccessfullyCompiled() {

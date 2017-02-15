@@ -75,12 +75,9 @@ abstract class IntIntMultiMaplet implements Streamable, CloseableMaplet {
 
       final List<String> list = new LinkedList<String>();
 
-      b.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(final int value) {
-          list.add(context.getValue(value));
-          return true;
-        }
+      b.forEach(value -> {
+        list.add(context.getValue(value));
+        return true;
       });
 
       Collections.sort(list);

@@ -68,12 +68,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
       }
     });
 
-    Collections.sort(keys, new Comparator<Pair<K, String>>() {
-      @Override
-      public int compare(Pair<K, String> o1, Pair<K, String> o2) {
-        return o1.second.compareTo(o2.second);
-      }
-    });
+    Collections.sort(keys, (o1, o2) -> o1.second.compareTo(o2.second));
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);

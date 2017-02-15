@@ -248,13 +248,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
     List<JpsModule> modules = new ArrayList<JpsModule>();
     List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<Future<Pair<File, Element>>>();
     for (final File file : moduleFiles) {
-      futureModuleFilesContents.add(ourThreadPool.submit(new Callable<Pair<File, Element>>() {
-        @Override
-        public Pair<File, Element> call() throws Exception {
-          final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
-          final Element moduleRoot = loadRootElement(file, expander);
-          return Pair.create(file, moduleRoot);
-        }
+      futureModuleFilesContents.add(ourThreadPool.submit(() -> {
+        final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
+        final Element moduleRoot = loadRootElement(file, expander);
+        return Pair.create(file, moduleRoot);
       }));
     }
 
@@ -270,12 +267,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
       List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
       for (final Future<Pair<File, Element>> futureModuleFile : futureModuleFilesContents) {
         final Pair<File, Element> moduleFile = futureModuleFile.get();
-        futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
-          @Override
-          public JpsModule call() throws Exception {
-            return loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables);
-          }
-        }));
+        futures.add(ourThreadPool.submit(
+          () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
       }
       for (Future<JpsModule> future : futures) {
         JpsModule module = future.get();

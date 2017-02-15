@@ -217,15 +217,12 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   @Override
   public void forEachEntry(final TIntObjectProcedure<Collection<V>> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<Integer>() {
-        @Override
-        public boolean process(Integer key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }

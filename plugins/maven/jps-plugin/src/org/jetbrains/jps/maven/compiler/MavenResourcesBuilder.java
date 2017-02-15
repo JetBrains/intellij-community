@@ -69,26 +69,23 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     });
 
     MavenResourceRootDescriptor[] roots = files.keySet().toArray(new MavenResourceRootDescriptor[files.keySet().size()]);
-    Arrays.sort(roots, new Comparator<MavenResourceRootDescriptor>() {
-      @Override
-      public int compare(MavenResourceRootDescriptor r1, MavenResourceRootDescriptor r2) {
-        int res = r1.getIndexInPom() - r2.getIndexInPom();
+    Arrays.sort(roots, (r1, r2) -> {
+      int res = r1.getIndexInPom() - r2.getIndexInPom();
 
-        if (r1.isOverwrite()) {
-          assert r2.isOverwrite(); // 'overwrite' parameters is common for all roots in module.
-
-          return res;
-        }
-
-        if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
-        if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
-
-        if (!r1.getConfiguration().isFiltered) {
-          res = -res;
-        }
+      if (r1.isOverwrite()) {
+        assert r2.isOverwrite(); // 'overwrite' parameters is common for all roots in module.
 
         return res;
       }
+
+      if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
+      if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
+
+      if (!r1.getConfiguration().isFiltered) {
+        res = -res;
+      }
+
+      return res;
     });
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);

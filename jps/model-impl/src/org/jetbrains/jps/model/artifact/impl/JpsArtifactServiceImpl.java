@@ -44,12 +44,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project) {
     List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>(getArtifacts(project));
-    Collections.sort(artifacts, new Comparator<JpsArtifact>() {
-      @Override
-      public int compare(JpsArtifact o1, JpsArtifact o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Collections.sort(artifacts, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     return artifacts;
   }
 

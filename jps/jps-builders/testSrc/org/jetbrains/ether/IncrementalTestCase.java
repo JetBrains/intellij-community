@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -38,7 +37,6 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 
 /**
@@ -64,12 +62,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     baseDir = new File(PathManagerEx.getTestDataPath(getClass()) + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
     workDir = FileUtil.createTempDirectory("jps-build", null);
 
-    FileUtil.copyDir(baseDir, workDir, new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        String name = file.getName();
-        return !name.endsWith(".new") && !name.endsWith(".delete");
-      }
+    FileUtil.copyDir(baseDir, workDir, file -> {
+      String name = file.getName();
+      return !name.endsWith(".new") && !name.endsWith(".delete");
     });
 
     String outputPath = getAbsolutePath("out");
@@ -104,31 +99,25 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final String removedSuffix = stage == 0? ".remove" : ".remove" + stage;
     final String newSuffix = stage == 0? ".new" : ".new" + stage;
 
-    FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.getName().endsWith(removedSuffix)) {
-          FileUtil.delete(getTargetFile(file, removedSuffix));
-        }
-        return true;
+    FileUtil.processFilesRecursively(baseDir, file -> {
+      if (file.getName().endsWith(removedSuffix)) {
+        FileUtil.delete(getTargetFile(file, removedSuffix));
       }
+      return true;
     });
     final long[] timestamp = {0};
-    FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        try {
-          if (file.getName().endsWith(newSuffix)) {
-            File targetFile = getTargetFile(file, newSuffix);
-            FileUtil.copyContent(file, targetFile);
-            timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
-          }
+    FileUtil.processFilesRecursively(baseDir, file -> {
+      try {
+        if (file.getName().endsWith(newSuffix)) {
+          File targetFile = getTargetFile(file, newSuffix);
+          FileUtil.copyContent(file, targetFile);
+          timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        return true;
       }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return true;
     });
     sleepUntil(timestamp[0]);
   }

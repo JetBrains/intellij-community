@@ -17,14 +17,12 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.util.*;
 
@@ -124,12 +122,7 @@ public class ArtifactSorter {
       result.add(artifact);
     }
 
-    processIncludedArtifacts(artifact, new Consumer<JpsArtifact>() {
-      @Override
-      public void consume(JpsArtifact included) {
-        collectIncludedArtifacts(included, processed, result, withOutputPathOnly);
-      }
-    });
+    processIncludedArtifacts(artifact, included -> collectIncludedArtifacts(included, processed, result, withOutputPathOnly));
   }
 
   private Graph<JpsArtifact> createArtifactsGraph() {
@@ -137,18 +130,15 @@ public class ArtifactSorter {
   }
 
   private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<JpsArtifact> consumer) {
-    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
-      @Override
-      public boolean process(JpsPackagingElement element) {
-        if (element instanceof JpsArtifactOutputPackagingElement) {
-          JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
-          if (included != null) {
-            consumer.consume(included);
-          }
-          return false;
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
+      if (element instanceof JpsArtifactOutputPackagingElement) {
+        JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+        if (included != null) {
+          consumer.consume(included);
         }
-        return true;
+        return false;
       }
+      return true;
     });
   }
 
@@ -167,15 +157,11 @@ public class ArtifactSorter {
     @Override
     public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
       final Set<JpsArtifact> included = new LinkedHashSet<JpsArtifact>();
-      final Consumer<JpsArtifact> consumer = new Consumer<JpsArtifact>() {
-        @Override
-        public void consume(JpsArtifact artifact) {
-          if (myArtifactNodes.contains(artifact)) {
-            included.add(artifact);
-          }
+      processIncludedArtifacts(artifact, includedArtifact -> {
+        if (myArtifactNodes.contains(includedArtifact)) {
+          included.add(includedArtifact);
         }
-      };
-      processIncludedArtifacts(artifact, consumer);
+      });
       return included.iterator();
     }
   }
