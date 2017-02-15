@@ -20,7 +20,8 @@ import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 @JvmOverloads
-fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Boolean = false): Credentials? {
+// Android Studio: b/127990038
+fun askJBAccountCredentials(parent: Component?, project: Project?, authFailed: Boolean = false): Credentials? {
   val credentials = ErrorReportConfigurable.getCredentials()
   val remember = if (credentials?.userName == null) PasswordSafe.instance.isRememberPasswordByDefault  // EA credentials were never stored
                  else !credentials.password.isNullOrEmpty()  // a password was stored already
@@ -52,7 +53,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
     panel = panel,
     focusedComponent = if (credentials?.userName == null) userField else passwordField,
     project = project,
-    parent = if (parent.isShowing) parent else null)
+    parent = if (parent?.isShowing == true) parent else null)  // Android Studio: b/127990038
 
   if (!dialog.showAndGet()) {
     return null

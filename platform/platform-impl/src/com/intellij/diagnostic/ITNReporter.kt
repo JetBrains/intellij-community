@@ -42,7 +42,7 @@ open class ITNReporter : ErrorReportSubmitter() {
 
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
-                      parentComponent: Component,
+                      parentComponent: Component?,  // Android Studio: b/127990038
                       consumer: Consumer<SubmittedReportInfo>): Boolean {
     val event = events[0]
 
@@ -70,7 +70,8 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?): Boolean {
+// Android Studio: b/127990038
+private fun submit(errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component?, project: Project?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
     credentials = askJBAccountCredentials(parentComponent, project)
@@ -80,7 +81,8 @@ private fun submit(errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>
   return true
 }
 
-private fun submit(credentials: Credentials?, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
+// Android Studio: b/127990038
+private fun submit(credentials: Credentials?, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component?, project: Project?) {
   ITNProxy.sendError(project, credentials?.userName, credentials?.getPasswordAsString(), errorBean,
                      { threadId -> onSuccess(threadId, errorBean.event.data, callback, project) },
                      { e -> onError(e, errorBean, callback, parentComponent, project) })
@@ -104,14 +106,16 @@ private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<Submitt
   }
 }
 
-private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
+// Android Studio: b/127990038
+private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component?, project: Project?) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
       val title = CommonBundle.getWarningTitle()
       val icon = Messages.getWarningIcon()
-      if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
+      // Android Studio: b/127990038
+      if (parentComponent?.isShowing == true) Messages.showMessageDialog(parentComponent, message, title, icon)
                                 else Messages.showMessageDialog(project, message, title, icon)
       callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
     }
