@@ -154,12 +154,12 @@ class ImmediatePainter {
     //noinspection ConstantConditions
     final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
                                          : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
-    final int caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1;
-    final Rectangle caretRectangle = new Rectangle((int)(p2x + width2 - caretShift), p2y - topOverhang,
-                                                   caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
+    final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUI.sysScale((Graphics2D)g);
+    final Rectangle2D caretRectangle = new Rectangle2D.Float((int)(p2x + width2) - caretShift, p2y - topOverhang,
+                                                             caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
 
     final Rectangle rectangle1 = new Rectangle((int)(p2x - width1), p2y, width1i, lineHeight);
-    final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, width2i + caretWidth - caretShift, lineHeight);
+    final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, (int)(width2i + caretWidth - caretShift), lineHeight);
 
     final Consumer<Graphics> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
@@ -167,8 +167,7 @@ class ImmediatePainter {
       fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      graphics.setColor(getCaretColor(editor));
-      graphics.fillRect(caretRectangle.x, caretRectangle.y, caretRectangle.width, caretRectangle.height);
+      fillRect(graphics, caretRectangle, getCaretColor(editor));
 
       fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
@@ -176,7 +175,7 @@ class ImmediatePainter {
 
     final Shape originalClip = g.getClip();
 
-    g.setClip((int)p2x - caretShift, p2y, width2i + caretWidth, lineHeight);
+    g.setClip(new Rectangle2D.Float((int)p2x - caretShift, p2y, width2i + caretWidth, lineHeight));
 
     if (DOUBLE_BUFFERING.asBoolean()) {
       paintWithDoubleBuffering(g, painter);
