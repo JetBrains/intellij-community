@@ -73,10 +73,18 @@ public class PyTypeChecker {
         return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
       }
     }
+    if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
+        && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
+      return false;
+    }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
-      final PyType bound = generic.getBound();
+      PyType bound = generic.getBound();
+      // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
+      if (generic.isDefinition() && bound instanceof PyInstantiableType) {
+        bound = ((PyInstantiableType)bound).toClass();
+      }
       if (!match(bound, actual, context, substitutions, recursive)) {
         return false;
       }
