@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional
 
 class MyClass:
     pass
@@ -13,9 +13,9 @@ T1 = TypeVar('T1')
 def expects_any_class(x: Type[T1]):
     pass
     
-# expects_any_class(MyClass)
+expects_any_class(MyClass)
 expects_any_class(<warning descr="Expected type 'Type[TypeVar('T1')]', got 'MyClass' instead">MyClass()</warning>)
-# expects_any_class(object)
+expects_any_class(object)
 expects_any_class(<warning descr="Expected type 'Type[TypeVar('T1')]', got 'object' instead">object()</warning>)
 
 T2 = TypeVar('T2', MyClass)
@@ -26,3 +26,11 @@ expects_myclass_descendant(MyClass)
 expects_myclass_descendant(<warning descr="Expected type 'Type[TypeVar('T2', MyClass)]', got 'MyClass' instead">MyClass()</warning>)
 expects_myclass_descendant(<warning descr="Expected type 'Type[TypeVar('T2', MyClass)]', got 'Type[object]' instead">object</warning>)
 expects_myclass_descendant(<warning descr="Expected type 'Type[TypeVar('T2', MyClass)]', got 'object' instead">object()</warning>)
+
+def expects_myclass_descendant_or_none(x: Optional[Type[T2]]):
+    pass
+    
+expects_myclass_descendant_or_none(MyClass)
+expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Union[None, Any]' (matched generic type 'Optional[Type[TypeVar('T2', MyClass)]]'), got 'MyClass' instead">MyClass()</weak_warning>)
+expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Union[None, Any]' (matched generic type 'Optional[Type[TypeVar('T2', MyClass)]]'), got 'Type[object]' instead">object</weak_warning>)
+expects_myclass_descendant_or_none(<weak_warning descr="Expected type 'Union[None, Any]' (matched generic type 'Optional[Type[TypeVar('T2', MyClass)]]'), got 'object' instead">object()</weak_warning>)
