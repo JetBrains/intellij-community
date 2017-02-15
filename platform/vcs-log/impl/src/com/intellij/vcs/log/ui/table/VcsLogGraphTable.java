@@ -103,7 +103,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
+                          @NotNull VcsLogData logData,
+                          @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
     getEmptyText().setText("Changes Log");
 
@@ -115,8 +117,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
-    myGraphCommitCellRenderer =
-      new GraphCommitCellRenderer(logData, graphCellPainter, this, ui.isCompactReferencesView(), ui.isShowTagNames());
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, true, false);
     myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
