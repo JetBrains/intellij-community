@@ -1665,6 +1665,17 @@ public class PyTypeTest extends PyTestCase {
            "    print(expr)");
   }
 
+  public void testImportedPropertyResult() {
+    doMultiFileTest("Any",
+                    "from .temporary import get_class\n" +
+                    "class Example:\n" +
+                    "    def __init__(self):\n" +
+                    "        expr = self.ins_class\n" +
+                    "    @property\n" +
+                    "    def ins_class(self):\n" +
+                    "        return get_class()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
