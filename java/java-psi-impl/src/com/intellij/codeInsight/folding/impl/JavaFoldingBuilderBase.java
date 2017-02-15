@@ -60,7 +60,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (element instanceof PsiImportList) {
       return "...";
     }
-    if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
+    if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass ||
+        element instanceof PsiLambdaExpression) {
       return "{...}";
     }
     if (element instanceof PsiDocComment) {
@@ -167,6 +168,13 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       return new TextRange(startOffset, last.getTextRange().getEndOffset());
+    }
+
+    if (element instanceof PsiLambdaExpression) {
+      PsiElement body = ((PsiLambdaExpression)element).getBody();
+      if (body instanceof PsiCodeBlock) {
+        return body.getTextRange();
+      }
     }
     return null;
   }
@@ -675,6 +683,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiComment) {
       return settings.isCollapseEndOfLineComments();
     }
+    else if (element instanceof PsiLambdaExpression) {
+      return settings.isCollapseLambdas();
+    }
     else {
       LOG.error("Unknown element:" + element);
       return false;
@@ -712,6 +723,15 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
 
         super.visitNewExpression(expression);
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        PsiElement body = expression.getBody();
+        if (body instanceof PsiCodeBlock) {
+          addToFold(foldElements, expression, document, true);
+        }
+        super.visitLambdaExpression(expression);
       }
 
       @Override
