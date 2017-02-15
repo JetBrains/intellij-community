@@ -53,7 +53,7 @@ private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, St
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.tar.gz") }
   }
   else {
-    jdkFiles = jdkFiles.findAll { it.name.endsWith("_x64.tar.gz") }
+    jdkFiles = jdkFiles.findAll { it.name.endsWith("64.tar.gz") }
   }
   if (jdkFiles.empty) {
     projectBuilder.error("Cannot unpack JDK: $archiveFileNamePrefix not found in $osDir")
