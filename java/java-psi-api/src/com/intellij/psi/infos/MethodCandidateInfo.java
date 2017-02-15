@@ -25,9 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -129,26 +127,14 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod method = getElement();
     
     if (isToInferApplicability()) {
-      //ensure applicability check
-      PsiSubstitutor applicabilitySubstitutor = getSubstitutor(false);
+      if (!isOverloadCheck()) {
+        //ensure applicability check is performed
+        getSubstitutor(false);
+      }
 
       //already performed checks, so if inference failed, error message should be saved  
       if (myInferenceError != null || isPotentiallyCompatible() != ThreeState.YES) {
         return ApplicabilityLevel.NOT_APPLICABLE;
-      }
-
-      if (myArgumentList instanceof PsiExpressionList) {
-        PsiParameter[] parameters = getElement().getParameterList().getParameters();
-        PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
-        for (int i = 0; i < expressions.length; i++) {
-          if (!PsiPolyExpressionUtil.isPolyExpression(expressions[i])) {
-            PsiType expressionType = expressions[i].getType();
-            PsiType parameterType = applicabilitySubstitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, isVarargs()));
-            if (expressionType != null && parameterType != null && !parameterType.isAssignableFrom(expressionType)) {
-              return ApplicabilityLevel.NOT_APPLICABLE;
-            }
-          }
-        }
       }
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
     }
