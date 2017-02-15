@@ -16,6 +16,7 @@
 package git4idea.checkin
 
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.git
@@ -40,7 +41,7 @@ class GitAddTest : GitSingleRepoTest() {
   }
 
   private fun addUnversionedFile(file: VirtualFile) {
-    changeListManager.addUnversionedFiles(changeListManager.addChangeList("dummy", null), listOf(file))
+    (changeListManager as ChangeListManagerImpl).addUnversionedFiles(changeListManager.addChangeList("dummy", null), listOf(file))
   }
 
   private fun assertStatus(file: VirtualFile, status: Char) {
