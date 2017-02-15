@@ -13,211 +13,181 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
+@file:JvmName("GitTestUtil")
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsRef;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.config.GitVersion;
-import git4idea.log.GitLogProvider;
-import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
+package git4idea.test
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsRef
+import git4idea.GitUtil
+import git4idea.GitVcs
+import git4idea.log.GitLogProvider
+import git4idea.repo.GitRepository
+import org.junit.Assert.*
+import org.junit.Assume.assumeTrue
+import org.picocontainer.MutablePicoContainer
+import java.io.File
 
-import static com.intellij.openapi.util.text.StringUtil.splitByLines;
-import static com.intellij.openapi.vcs.Executor.*;
-import static com.intellij.openapi.vcs.Executor.cd;
-import static git4idea.test.GitExecutor.*;
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeTrue;
+const val USER_NAME = "John Doe"
+const val USER_EMAIL = "John.Doe@example.com"
 
-public class GitTestUtil {
-
-  public static final String USER_NAME = "John Doe";
-  public static final String USER_EMAIL = "John.Doe@example.com";
-
-  /**
-   * <p>Creates file structure for given paths. Path element should be a relative (from project root)
-   * path to a file or a directory. All intermediate paths will be created if needed.
-   * To create a dir without creating a file pass "dir/" as a parameter.</p>
-   * <p>Usage example:
-   * <code>createFileStructure("a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt", "anotherdir/");</code></p>
-   * <p>This will create files a.txt and b.txt in the project dir, create directories dir, dir/subdir and anotherdir,
-   * and create file c.txt in dir and d.txt in dir/subdir.</p>
-   * <p>Note: use forward slash to denote directories, even if it is backslash that separates dirs in your system.</p>
-   * <p>All files are populated with "initial content" string.</p>
-   */
-  public static void createFileStructure(@NotNull VirtualFile rootDir, String... paths) {
-    for (String path : paths) {
-      cd(rootDir);
-      boolean dir = path.endsWith("/");
-      if (dir) {
-        mkdir(path);
-      }
-      else {
-        touch(path, "initial_content_" + Math.random());
-      }
-    }
-  }
-
-  public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
-    cd(repoRoot);
-    git("init");
-    setupDefaultUsername();
-    if (makeInitialCommit) {
-      touch("initial.txt");
-      git("add initial.txt");
-      git("commit -m initial");
-    }
-  }
-
-  public static void cloneRepo(@NotNull String source, @NotNull String destination, boolean bare) {
-    cd(source);
-    if (bare) {
-      git("clone --bare -- . " + destination);
+/**
+ *
+ * Creates file structure for given paths. Path element should be a relative (from project root)
+ * path to a file or a directory. All intermediate paths will be created if needed.
+ * To create a dir without creating a file pass "dir/" as a parameter.
+ *
+ * Usage example:
+ * `createFileStructure("a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt", "anotherdir/");`
+ *
+ * This will create files a.txt and b.txt in the project dir, create directories dir, dir/subdir and anotherdir,
+ * and create file c.txt in dir and d.txt in dir/subdir.
+ *
+ * Note: use forward slash to denote directories, even if it is backslash that separates dirs in your system.
+ *
+ * All files are populated with "initial content" string.
+ */
+fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
+  for (path in paths) {
+    cd(rootDir)
+    val dir = path.endsWith("/")
+    if (dir) {
+      mkdir(path)
     }
     else {
-      git("clone -- . " + destination);
+      touch(path, "initial_content_" + Math.random())
     }
   }
+}
 
-  public static void setupDefaultUsername() {
-    setupUsername(USER_NAME, USER_EMAIL);
+fun initRepo(repoRoot: String, makeInitialCommit: Boolean) {
+  cd(repoRoot)
+  git("init")
+  setupDefaultUsername()
+  if (makeInitialCommit) {
+    touch("initial.txt")
+    git("add initial.txt")
+    git("commit -m initial")
   }
+}
 
-  public static void setupUsername(@NotNull String name, @NotNull String email) {
-    assertFalse("Can not set empty user name ", name.isEmpty());
-    assertFalse("Can not set empty user email ", email.isEmpty());
-    git("config user.name '" + name + "'");
-    git("config user.email '" + email + "'");
+fun cloneRepo(source: String, destination: String, bare: Boolean) {
+  cd(source)
+  if (bare) {
+    git("clone --bare -- . $destination")
   }
+  else {
+    git("clone -- . $destination")
+  }
+}
 
-  /**
-   * Creates a Git repository in the given root directory;
-   * registers it in the Settings;
-   * return the {@link GitRepository} object for this newly created repository.
-   */
-  @NotNull
-  public static GitRepository createRepository(@NotNull Project project, @NotNull String root) {
-    return createRepository(project, root, true);
-  }
+fun setupDefaultUsername() {
+  setupUsername(USER_NAME, USER_EMAIL)
+}
 
-  public static GitRepository createRepository(@NotNull Project project, @NotNull String root, boolean makeInitialCommit) {
-    initRepo(root, makeInitialCommit);
-    VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root, GitUtil.DOT_GIT));
-    assertNotNull(gitDir);
-    return registerRepo(project, root);
-  }
+fun setupUsername(name: String, email: String) {
+  assertFalse("Can not set empty user name ", name.isEmpty())
+  assertFalse("Can not set empty user email ", email.isEmpty())
+  git("config user.name '$name'")
+  git("config user.email '$email'")
+}
 
-  @NotNull
-  public static GitRepository registerRepo(Project project, String root) {
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
-    vcsManager.setDirectoryMapping(root, GitVcs.NAME);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
-    assertFalse(vcsManager.getAllVcsRoots().length == 0);
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
-    assertNotNull("Couldn't find repository for root " + root, repository);
-    return repository;
-  }
+/**
+ * Creates a Git repository in the given root directory;
+ * registers it in the Settings;
+ * return the [GitRepository] object for this newly created repository.
+ */
+fun createRepository(project: Project, root: String): GitRepository {
+  return createRepository(project, root, true)
+}
 
-  public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {
-    GitVersion version = vcs.getVersion();
-    assumeTrue("Unsupported Git version: " + version, version.isSupported());
-  }
+fun createRepository(project: Project, root: String, makeInitialCommit: Boolean): GitRepository {
+  initRepo(root, makeInitialCommit)
+  val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(root, GitUtil.DOT_GIT))
+  assertNotNull(gitDir)
+  return registerRepo(project, root)
+}
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T> T overrideService(@NotNull Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
-    String key = serviceInterface.getName();
-    MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, serviceImplementation);
-    return (T) ServiceManager.getService(project, serviceInterface);
-  }
+fun registerRepo(project: Project, root: String): GitRepository {
+  val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
+  vcsManager.setDirectoryMapping(root, GitVcs.NAME)
+  val file = LocalFileSystem.getInstance().findFileByIoFile(File(root))
+  assertFalse(vcsManager.allVcsRoots.isEmpty())
+  val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
+  assertNotNull("Couldn't find repository for root " + root, repository)
+  return repository!!
+}
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T> T overrideService(Class<? super T> serviceInterface, Class<T> serviceImplementation) {
-    String key = serviceInterface.getName();
-    MutablePicoContainer picoContainer = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
-    picoContainer.unregisterComponent(key);
-    picoContainer.registerComponentImplementation(key, serviceImplementation);
-    return (T) ServiceManager.getService(serviceInterface);
-  }
+fun assumeSupportedGitVersion(vcs: GitVcs) {
+  val version = vcs.version
+  assumeTrue("Unsupported Git version: " + version, version.isSupported)
+}
 
-  @NotNull
-  public static Set<VcsRef> readAllRefs(@NotNull VirtualFile root, @NotNull VcsLogObjectsFactory objectsFactory) {
-    String[] refs = splitByLines(git("log --branches --tags --no-walk --format=%H%d --decorate=full"));
-    Set<VcsRef> result = ContainerUtil.newHashSet();
-    for (String ref : refs) {
-      result.addAll(new RefParser(objectsFactory).parseCommitRefs(ref, root));
-    }
-    return result;
-  }
+inline fun <reified Int : Any, reified Impl : Int> overrideService(project: Project): Impl {
+  val key = Int::class.java.name
+  val picoContainer = project.picoContainer as MutablePicoContainer
+  picoContainer.unregisterComponent(key)
+  picoContainer.registerComponentImplementation(key, Impl::class.java)
+  return project.service<Int>() as Impl
+}
 
-  @NotNull
-  public static String makeCommit(String file) throws IOException {
-    append(file, "some content");
-    addCommit("some message");
-    return last();
-  }
+inline fun <reified Int : Any, reified Impl : Int> overrideService(): Impl {
+  val key = Int::class.java.name
+  val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+  picoContainer.unregisterComponent(key)
+  picoContainer.registerComponentImplementation(key, Impl::class.java)
+  return service<Int>() as Impl
+}
 
-  public static Notification assertNotification(@NotNull NotificationType type,
-                                                @NotNull String title,
-                                                @NotNull String content,
-                                                @NotNull Notification actual) {
-    assertEquals("Incorrect notification type: " + tos(actual), type, actual.getType());
-    assertEquals("Incorrect notification title: " + tos(actual), title, actual.getTitle());
-    assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.getContent()));
-    return actual;
+fun readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> {
+  val refs = git("log --branches --tags --no-walk --format=%H%d --decorate=full").lines()
+  val result = mutableSetOf<VcsRef>()
+  for (ref in refs) {
+    result.addAll(RefParser(objectsFactory).parseCommitRefs(ref, root))
   }
+  return result
+}
 
-  @NotNull
-  public static String cleanupForAssertion(@NotNull String content) {
-    String nobr = content.replace("<br/>", "\n").replace("<hr/>", "\n");
-    return Arrays.stream(splitByLines(nobr))
-      .map(line -> line.replaceAll(" href='[^']*'", "").trim())
-      .filter(line -> !line.isEmpty())
-      .collect(Collectors.joining(" "));
-  }
+fun makeCommit(file: String): String {
+  append(file, "some content")
+  addCommit("some message")
+  return last()
+}
 
-  @NotNull
-  private static String tos(@NotNull Notification notification) {
-    return notification.getTitle() + "|" + notification.getContent();
-  }
+fun assertNotification(type: NotificationType, title: String, content: String, actual: Notification): Notification {
+  assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)
+  assertEquals("Incorrect notification title: " + tos(actual), title, actual.title)
+  assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.content))
+  return actual
+}
 
-  public static GitLogProvider findGitLogProvider(@NotNull Project project) {
-    List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
-        @Override
-        public boolean value(VcsLogProvider provider) {
-          return provider.getSupportedVcs().equals(GitVcs.getKey());
-        }
-      });
-    assertEquals("Incorrect number of GitLogProviders", 1, providers.size());
-    return (GitLogProvider)providers.get(0);
-  }
+fun cleanupForAssertion(content: String): String {
+  val nobr = content.replace("<br/>", "\n").replace("<hr/>", "\n")
+  return nobr.lines()
+    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim({ it <= ' ' }) }
+    .filter { line -> !line.isEmpty() }
+    .joinToString(" ")
+}
+
+private fun tos(notification: Notification): String {
+  return "${notification.title}|${notification.content}"
+}
+
+fun findGitLogProvider(project: Project): GitLogProvider {
+  val providers = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project)
+    .filter { provider -> provider.supportedVcs == GitVcs.getKey() }
+  assertEquals("Incorrect number of GitLogProviders", 1, providers.size)
+  return providers[0] as GitLogProvider
 }

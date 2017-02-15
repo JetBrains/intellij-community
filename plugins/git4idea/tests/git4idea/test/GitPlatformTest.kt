@@ -52,14 +52,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
 
-    vcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
+    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
-    myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
+    myGit = overrideService<Git, TestGitImpl>()
     myVcs = GitVcs.getInstance(myProject)!!
     myVcs.doActivate()
 
-    GitTestUtil.assumeSupportedGitVersion(myVcs)
+    assumeSupportedGitVersion(myVcs)
     addSilently()
     removeSilently()
   }
@@ -84,7 +84,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {
-    return GitTestUtil.createRepository(myProject, rootDir)
+    return createRepository(myProject, rootDir)
   }
 
   /**
@@ -120,7 +120,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+    return assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
   }
 
   protected fun assertSuccessfulNotification(message: String) : Notification {
@@ -128,13 +128,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
-    GitTestUtil.assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+    assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
   }
 
   protected fun assertErrorNotification(title: String, message: String) : Notification {
     val notification = myVcsNotifier.lastNotification
     assertNotNull("No notification was shown", notification)
-    GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
+    assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
   }
 
