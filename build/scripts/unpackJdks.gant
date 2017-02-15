@@ -52,7 +52,7 @@ private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, St
     def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x86"
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.tar.gz") }
   }
-  else {
+  if (SystemInfo.isLinux) {
     jdkFiles = jdkFiles.findAll { it.name.endsWith("64.tar.gz") }
   }
   if (jdkFiles.empty) {
