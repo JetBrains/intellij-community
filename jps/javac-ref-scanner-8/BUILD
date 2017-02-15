@@ -1,7 +1,7 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "java-decompiler-engine",
+    name = "javac-ref-scanner-8",
     srcs = ["src"],
     tags = ["managed"],
     test_srcs = ["test"],
@@ -9,7 +9,9 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/jps/jps-builders[module]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/platform/core-api[module, test]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

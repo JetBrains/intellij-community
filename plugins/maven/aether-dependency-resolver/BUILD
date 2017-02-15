@@ -1,15 +1,14 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "vcs-api-core",
+    name = "aether-dependency-resolver",
     srcs = ["src"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/editor-ui-api[module]",
-        "//tools/idea/platform/diff-api[module]",
+        "//tools/idea/plugins/maven/lib:aether-1.1.0-all",
+        "//tools/idea/plugins/maven/lib:maven-aether-provider-3.3.9-all",
     ],
 )
