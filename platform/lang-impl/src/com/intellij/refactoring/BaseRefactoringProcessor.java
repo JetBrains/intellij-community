@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -413,15 +414,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
-    final Runnable refactoringRunnable = new Runnable() {
-      @Override
-      public void run() {
-        Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-        final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+    Runnable refactoringRunnable = () -> {
+      Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
+      final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         if (ensureElementsWritable(infos, viewDescriptor)) {
           execute(infos);
         }
-      }
+      });
     };
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
