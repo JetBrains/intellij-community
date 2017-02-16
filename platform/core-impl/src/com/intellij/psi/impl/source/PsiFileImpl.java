@@ -180,8 +180,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       LOG.error("Access to tree elements not allowed in tests. path='" + viewProvider.getVirtualFile().getPresentableUrl()+"'");
     }
 
-    Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(getViewProvider().getVirtualFile());
-
     FileElement treeElement = createFileElement(viewProvider.getContents());
     treeElement.setPsi(this);
 
@@ -189,7 +187,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     try {
       while (true) {
         FileTrees trees = myTrees;
-        List<Pair<StubBasedPsiElementBase, AstPath>> bindings = calcStubAstBindings(treeElement, cachedDocument, trees);
+        List<Pair<StubBasedPsiElementBase, AstPath>> bindings = calcStubAstBindings(treeElement, trees);
 
         FileElement savedTree = ensureTreeElement(viewProvider, treeElement, trees, bindings);
         if (savedTree != null) {
@@ -271,9 +269,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private List<Pair<StubBasedPsiElementBase, AstPath>> calcStubAstBindings(@NotNull FileElement root,
-                                                                           @Nullable final Document cachedDocument,
-                                                                           FileTrees trees) {
+  private List<Pair<StubBasedPsiElementBase, AstPath>> calcStubAstBindings(@NotNull FileElement root, FileTrees trees) {
     final StubTree stubTree = trees.derefStub();
     if (stubTree == null || trees.astLoaded) { // don't bind green stub to AST: the PSI should already be cached in myRefToPsi
       return Collections.emptyList();
@@ -298,13 +294,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         IElementType type = node.getElementType();
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
           if (!stubs.hasNext()) {
-            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
+            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree);
           }
 
           final StubElement stub = stubs.next();
           if (stub.getStubType() != node.getElementType()) {
             reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                                  node.getElementType() + "; " + node, stubTree, cachedDocument);
+                                  node.getElementType() + "; " + node, stubTree);
           }
 
           AstPath path = AstPath.getNodePath((CompositeElement)node);
@@ -316,7 +312,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
     });
     if (stubs.hasNext()) {
-      reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
+      reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree);
     }
     synchronized (PsiLock.LOCK) {
       return ContainerUtil.map(result, pair -> {
@@ -335,14 +331,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return type instanceof IStubFileElementType ? (IStubFileElementType)type : null;
   }
 
-  void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
+  void reportStubAstMismatch(String message, StubTree stubTree) {
     rebuildStub();
     updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
 
-    throw new AssertionError(message
-                             + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
-                                                                                          stubTree, cachedDocument)
-                             + "\n------------\n");
+    throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(message, stubTree, this);
   }
 
   @NotNull
