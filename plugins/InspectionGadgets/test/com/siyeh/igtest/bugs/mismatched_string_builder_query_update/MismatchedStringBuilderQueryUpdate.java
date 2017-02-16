@@ -69,7 +69,7 @@ public class MismatchedStringBuilderQueryUpdate {
   }
 
   static String testUselessQueryTernary(java.util.List<String> list) {
-    StringBuilder sb = new StringBuilder();
+    StringBuilder <warning descr="Contents of StringBuilder 'sb' are updated, but never queried">sb</warning> = new StringBuilder();
     for (String s : list) {
       if (s != null) {
         if(sb.length() > 0) {
