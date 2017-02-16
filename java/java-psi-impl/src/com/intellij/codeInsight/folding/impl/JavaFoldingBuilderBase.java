@@ -684,7 +684,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return settings.isCollapseEndOfLineComments();
     }
     else if (element instanceof PsiLambdaExpression) {
-      return settings.isCollapseLambdas();
+      return settings.isCollapseAnonymousClasses();
     }
     else {
       LOG.error("Unknown element:" + element);
