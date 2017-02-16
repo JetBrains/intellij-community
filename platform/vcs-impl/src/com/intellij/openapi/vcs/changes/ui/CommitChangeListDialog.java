@@ -296,18 +296,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
       //noinspection unchecked
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection,
-                                                                        new Runnable() {
-                                                                          @Override
-                                                                          public void run() {
-                                                                            updateWarning();
-                                                                          }
-                                                                        },
-                                                                        new Runnable() {
-                                                                          @Override
-                                                                          public void run() {
-                                                                            for (CheckinHandler handler : myHandlers) {
-                                                                              handler.includedChangesChanged();
-                                                                            }
+                                                                        () -> updateWarning(),
+                                                                        () -> {
+                                                                          for (CheckinHandler handler : myHandlers) {
+                                                                            handler.includedChangesChanged();
                                                                           }
                                                                         }, myShowVcsCommit);
       browser.addSelectedListChangeListener(new SelectedListChangeListener() {
@@ -320,17 +312,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = browser;
       myBrowser.setAlwayExpandList(false);
     }
-    myBrowser.getViewer().addSelectionListener(new Runnable() {
-      @Override
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeDetails();
-          }
-        });
-      }
-    });
+    myBrowser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
     myBrowser.setDiffBottomComponent(new DiffCommitMessageEditor(myProject, myCommitMessageArea));
 
     mySplitter = new Splitter(true);
@@ -574,12 +556,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (showDetails) {
       myDetailsSplitter.initOn();
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        changeDetails();
-      }
-    });
+    SwingUtilities.invokeLater(() -> changeDetails());
   }
 
   private void updateOnListSelection() {
@@ -732,9 +709,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
         try {
-          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-            session.execute(getIncludedChanges(), getCommitMessage());
-          }, commitExecutor.getActionText(), true, getProject());
+          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> session.execute(getIncludedChanges(), getCommitMessage()),
+            commitExecutor.getActionText(), true, getProject());
 
           if (completed) {
             for (CheckinHandler handler : myHandlers) {
@@ -890,53 +867,40 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private CheckinHandler.ReturnResult runBeforeCommitHandlers(@Nullable CommitExecutor executor) {
-    final Computable<CheckinHandler.ReturnResult> proceedRunnable = new Computable<CheckinHandler.ReturnResult>() {
-      @Override
-      public CheckinHandler.ReturnResult compute() {
-        FileDocumentManager.getInstance().saveAllDocuments();
+    final Computable<CheckinHandler.ReturnResult> proceedRunnable = () -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
 
-        for (CheckinHandler handler : myHandlers) {
-          if (!(handler.acceptExecutor(executor))) continue;
-          final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
-          if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-          if (result == CheckinHandler.ReturnResult.CANCEL) {
-            restartUpdate();
-            return CheckinHandler.ReturnResult.CANCEL;
-          }
-
-          if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-            final ChangeList changeList = myBrowser.getSelectedChangeList();
-            CommitHelper.moveToFailedList(changeList,
-                                          getCommitMessage(),
-                                          getIncludedChanges(),
-                                          VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
-                                          myProject);
-            doCancelAction();
-            return CheckinHandler.ReturnResult.CLOSE_WINDOW;
-          }
+      for (CheckinHandler handler : myHandlers) {
+        if (!(handler.acceptExecutor(executor))) continue;
+        final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
+        if (result == CheckinHandler.ReturnResult.COMMIT) continue;
+        if (result == CheckinHandler.ReturnResult.CANCEL) {
+          restartUpdate();
+          return CheckinHandler.ReturnResult.CANCEL;
         }
 
-        return CheckinHandler.ReturnResult.COMMIT;
+        if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+          final ChangeList changeList = myBrowser.getSelectedChangeList();
+          CommitHelper.moveToFailedList(changeList,
+                                        getCommitMessage(),
+                                        getIncludedChanges(),
+                                        VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
+                                        myProject);
+          doCancelAction();
+          return CheckinHandler.ReturnResult.CLOSE_WINDOW;
+        }
       }
+
+      return CheckinHandler.ReturnResult.COMMIT;
     };
 
     stopUpdate();
     final Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        compoundResultRef.set(proceedRunnable.compute());
-      }
-    };
+    Runnable runnable = () -> compoundResultRef.set(proceedRunnable.compute());
     for (final CheckinHandler handler : myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
         final Runnable previousRunnable = runnable;
-        runnable = new Runnable() {
-          @Override
-          public void run() {
-            ((CheckinMetaHandler)handler).runCheckinHandlers(previousRunnable);
-          }
-        };
+        runnable = () -> ((CheckinMetaHandler)handler).runCheckinHandlers(previousRunnable);
       }
     }
     runnable.run();
@@ -1107,13 +1071,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void refresh() {
-    ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        myBrowser.rebuildList();
-        for (RefreshableOnComponent component : myAdditionalComponents) {
-          component.refresh();
-        }
+    ChangeListManager.getInstance(myProject).invokeAfterUpdate(() -> {
+      myBrowser.rebuildList();
+      for (RefreshableOnComponent component : myAdditionalComponents) {
+        component.refresh();
       }
     }, InvokeAfterUpdateMode.SILENT, "commit dialog", ModalityState.current());   // title not shown for silently
   }
