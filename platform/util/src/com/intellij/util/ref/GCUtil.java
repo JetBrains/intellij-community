@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util.ref;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
@@ -32,7 +32,7 @@ public class GCUtil {
   @TestOnly
   public static void tryForceGC() {
     tryGcSoftlyReachableObjects();
-    WeakReference<Object> weakReference = new WeakReference<>(new Object());
+    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
     do {
       System.gc();
     }
@@ -47,8 +47,8 @@ public class GCUtil {
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
     //long started = System.nanoTime();
-    ReferenceQueue<Object> q = new ReferenceQueue<>();
-    SoftReference<Object> ref = new SoftReference<>(new Object(), q);
+    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
+    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
     ArrayList<SoftReference<?>> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
 
     System.gc();
@@ -61,7 +61,7 @@ public class GCUtil {
 
       // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
       int bytes = Math.min((int)(freeMemory * 0.45), Integer.MAX_VALUE / 2);
-      list.add(new SoftReference<>(new byte[bytes]));
+      list.add(new SoftReference<Object>(new byte[bytes]));
     }
 
     // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)

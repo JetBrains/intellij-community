@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.GCUtil
+import com.intellij.util.ref.GCUtil
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch

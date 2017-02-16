@@ -59,6 +59,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
