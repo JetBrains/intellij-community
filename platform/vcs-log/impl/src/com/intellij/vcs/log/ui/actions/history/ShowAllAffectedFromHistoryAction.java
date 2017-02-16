@@ -15,50 +15,34 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public class ShowAllAffectedFromHistoryAction extends AnAction implements DumbAware {
+public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    return e.getData(VcsDataKeys.VCS_FILE_REVISION) != null &&
+           e.getData(VcsDataKeys.VCS_VIRTUAL_FILE) != null &&
+           e.getData(VcsDataKeys.VCS) != null;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
     VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
     VirtualFile revisionVirtualFile = e.getRequiredData(VcsDataKeys.VCS_VIRTUAL_FILE);
-    Boolean isNonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
 
     AbstractVcsHelper.getInstance(project).loadAndShowCommittedChangesDetails(project, revision.getRevisionNumber(), revisionVirtualFile,
                                                                               vcsKey, revision.getChangedRepositoryPath(),
-                                                                              Boolean.TRUE.equals(isNonLocal));
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    if (project == null || vcsKey == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    Boolean isNonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
-    VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-    boolean enabled = (e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null);
-    enabled = enabled && (!Boolean.TRUE.equals(isNonLocal) || canPresentNonLocal(project, vcsKey, revisionVirtualFile));
-    e.getPresentation().setEnabled(enabled);
-  }
-
-  private static boolean canPresentNonLocal(Project project, VcsKey key, final VirtualFile file) {
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName());
-    if (vcs == null) return false;
-    CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-    if (provider == null) return false;
-    return provider.getForNonLocal(file) != null;
+                                                                              false);
   }
 }

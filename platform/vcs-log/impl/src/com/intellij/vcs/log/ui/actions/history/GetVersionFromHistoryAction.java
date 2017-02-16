@@ -15,37 +15,24 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
 
-public class GetVersionFromHistoryAction extends AnAction implements DumbAware {
-  public GetVersionFromHistoryAction() {
-    super(VcsBundle.message("action.name.get.file.content.from.repository"),
-          VcsBundle.message("action.description.get.file.content.from.repository"), AllIcons.Actions.Get);
-  }
+public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
 
-    if (e.getProject() == null || filePath == null || revision == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(!filePath.isDirectory());
-    }
+    return revision != null && filePath != null && !filePath.isDirectory();
   }
 
   @Override

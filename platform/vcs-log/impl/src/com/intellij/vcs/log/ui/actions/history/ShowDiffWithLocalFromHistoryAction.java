@@ -16,26 +16,40 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.history.CurrentRevision;
+import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowDiffWithLocalFromHistoryAction extends ShowDiffWithLocalAction {
-  @NotNull
+import static com.intellij.util.ObjectUtils.notNull;
+
+public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitAction {
+
   @Override
-  protected ContentRevision getCurrentRevision(@NotNull ContentRevision afterRevision, @NotNull AnActionEvent e) {
-    FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    return CurrentContentRevision.create(path);
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null || filePath.isDirectory() || filePath.getVirtualFile() == null) {
+      // currently not working for directories, to be fixed later
+      return false;
+    }
+    return e.getData(VcsDataKeys.VCS_FILE_REVISION) != null;
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    if (e.getData(VcsDataKeys.FILE_PATH) == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+
+    FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
+
+    StandardDiffFromHistoryHandler handler = new StandardDiffFromHistoryHandler();
+    handler.showDiffForTwo(project, path, revision, new CurrentRevision(notNull(path.getVirtualFile()), VcsRevisionNumber.NULL));
   }
 }

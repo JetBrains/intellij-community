@@ -78,14 +78,21 @@
             text="Match Case"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
-            use-shortcut-of="EditSource"/>
+            use-shortcut-of="EditSource"
+            text="Open Repository Version" description="Open editor with selected revision of the file"
+            icon="AllIcons.Actions.EditSource"/>
     <action class="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryAction" id="Vcs.Log.ShowDiff"
             use-shortcut-of="Diff.ShowDiff"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"/>
+    <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"
+            text="Show Diff with Local" description="Compare selected revision with the local version of the file"
+            icon="AllIcons.Actions.DiffWithCurrent"/>
     <action class="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction" id="Vcs.Log.CreatePatchFromHistory"
             use-shortcut-of="ChangesView.CreatePatch"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
+            text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
+    <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
+            use-shortcut-of="Annotate"
+            text="Annotate" description="Annotate Revision" icon="AllIcons.Actions.Annotate"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
             icon="AllIcons.Vcs.AllRevisions" text="Show All Affected Files" description="Show all changes made in the chosen revision"/>
 

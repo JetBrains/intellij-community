@@ -15,40 +15,46 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class AnnotateRevisionFromHistoryAction extends AnnotateRevisionActionBase implements DumbAware {
-  public AnnotateRevisionFromHistoryAction() {
-    super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
-    setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
-  }
+import static com.intellij.util.ObjectUtils.notNull;
 
-  @Nullable
+public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAction {
   @Override
-  protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    VcsFileRevision fileRevision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+    if (fileRevision == null) return false;
+
+    VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    if (file == null) return false;
+
     VcsKey key = e.getData(VcsDataKeys.VCS);
-    if (key == null) return null;
-    return ProjectLevelVcsManager.getInstance(e.getProject()).findVcsByName(key.getName());
+    if (key == null) return false;
+
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getProject()).findVcsByName(key.getName());
+    if (vcs == null) return false;
+
+    return AnnotateRevisionActionBase.isEnabled(vcs, file, fileRevision);
   }
 
-  @Nullable
   @Override
-  protected VirtualFile getFile(@NotNull AnActionEvent e) {
-    return e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsKey key = e.getRequiredData(VcsDataKeys.VCS);
 
-  @Nullable
-  @Override
-  protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    return e.getData(VcsDataKeys.VCS_FILE_REVISION);
+    AnnotateRevisionActionBase.annotate(e.getRequiredData(VcsDataKeys.VCS_VIRTUAL_FILE),
+                                        e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION),
+                                        notNull(ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName())),
+                                        null, 0);
   }
 }

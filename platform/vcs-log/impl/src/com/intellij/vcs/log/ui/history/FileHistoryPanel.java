@@ -134,6 +134,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Override
   public Object getData(String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      if (myGraphTable.getSelectedRowCount() == 0) return null;
       return ArrayUtil.toObjectArray(mySelectedChanges, Change.class);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
