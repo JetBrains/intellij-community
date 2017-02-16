@@ -324,7 +324,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       throw ex;
     }
     catch (RuntimeException ex) {
-      throw new IllegalStateException("Error updating " + this + " after " + e, ex);
+      throw new InvalidStateException(this, "Error updating  after " + e, ex);
     }
   }
 
@@ -523,7 +523,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         mySegmentIndex = mySegments.findSegmentIndex(startOffset);
       }
       catch (IllegalStateException e) {
-        throw new InvalidStateException(LexerEditorHighlighter.this, e);
+        throw new InvalidStateException(LexerEditorHighlighter.this, "wrong state", e);
       }
     }
 
@@ -579,11 +579,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public static class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
-    private InvalidStateException(LexerEditorHighlighter highlighter, Throwable cause) {
+    private InvalidStateException(LexerEditorHighlighter highlighter, String message, Throwable cause) {
       super(highlighter.getClass().getName() + "(" +
             (highlighter.myLexer.getClass() == FlexAdapter.class ? highlighter.myLexer.toString()
                                                                  : highlighter.myLexer.getClass().getName()) +
-            ")",
+            "): " + message,
             cause);
       myAttachments = new Attachment[] {new Attachment("content.txt", highlighter.myLexer.getBufferSequence().toString())};
     }
