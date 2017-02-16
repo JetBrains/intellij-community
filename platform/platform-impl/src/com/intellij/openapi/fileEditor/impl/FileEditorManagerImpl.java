@@ -1870,7 +1870,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
-        each.trimToSize(uiSettings.EDITOR_TAB_LIMIT);
+        each.trimToSize(uiSettings.getEditorTabLimit());
 
         // Tab layout policy
         if (uiSettings.getScrollTabLayoutInEditor()) {
