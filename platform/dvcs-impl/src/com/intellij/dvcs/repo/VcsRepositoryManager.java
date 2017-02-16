@@ -94,7 +94,11 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
     return getRepositoryForFile(file, false);
   }
 
+  /**
+   * @Deprecated to delete in 2017.X
+   */
   @Nullable
+  @Deprecated
   public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, true);
   }

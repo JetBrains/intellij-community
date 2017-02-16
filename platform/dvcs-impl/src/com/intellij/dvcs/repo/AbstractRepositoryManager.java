@@ -57,8 +57,12 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   public T getRepositoryForFile(@NotNull VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
-  
+
+  /**
+   * @Deprecated to delete in 2017.X
+   */
   @Nullable
+  @Deprecated
   public T getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }

@@ -422,7 +422,7 @@ public class GithubUtil {
         return repository;
       }
     }
-    return manager.getRepositoryForFile(project.getBaseDir());
+    return manager.getRepositoryForFileQuick(project.getBaseDir());
   }
 
   public static boolean addGithubRemote(@NotNull Project project,
