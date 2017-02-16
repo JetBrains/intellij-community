@@ -173,6 +173,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       assertFalse(f3.isDone());
     }
     else {
+      waitFor(f1::isDone);
+      waitFor(f2::isDone);
+      waitFor(f3::isDone);
       System.err.println("This agent is seriously thrashing. I give up.");
       return; // no no no no. something terribly wrong is happening right now. This agent is so crazily overloaded it makes no sense to test any further.
     }
