@@ -341,32 +341,39 @@ public class ModuleHighlightUtil {
       PsiElement implTarget = implRef.resolve();
       if (implTarget instanceof PsiClass) {
         PsiClass implClass = (PsiClass)implTarget;
-        if (!InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
-          String message = JavaErrorMessages.message("module.service.subtype");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+        PsiMethod provider;
+
+        if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
+          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+          }
+          else if (!PsiUtil.hasDefaultConstructor(implClass)) {
+            String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+          }
         }
-        else if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+        else if ((provider = findProvider(implClass)) != null) {
+          PsiType type = provider.getReturnType();
+          PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+          if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
+            String message = JavaErrorMessages.message("module.service.provider.type", implClass.getName());
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+          }
         }
         else {
-          PsiMethod[] constructors = implClass.getConstructors();
-          if (constructors.length > 0) {
-            PsiMethod constructor = JBIterable.of(constructors).find(c -> c.getParameterList().getParametersCount() == 0);
-            if (constructor == null) {
-              String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
-            }
-            else if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-              String message = JavaErrorMessages.message("module.service.hidden.ctor", implClass.getName());
-              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
-            }
-          }
+          String message = JavaErrorMessages.message("module.service.impl");
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
         }
       }
     }
 
     return results;
+  }
+
+  private static PsiMethod findProvider(PsiClass implClass) {
+    return JBIterable.of(implClass.findMethodsByName("provider", false))
+            .find(p -> p.hasModifierProperty(PsiModifier.PUBLIC) && p.hasModifierProperty(PsiModifier.STATIC) && p.getParameterList().getParametersCount() == 0);
   }
 
   @Nullable
