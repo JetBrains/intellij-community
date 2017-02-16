@@ -41,5 +41,10 @@ class PythonCommunityPluginBuilder {
                                                   ProprietaryBuildTools.DUMMY, options)
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.buildDistributions()
+    def pluginsPaths = new File("$buildContext.paths.buildOutputRoot/plugins-paths.txt")
+    pluginsPaths.text = new File("$buildContext.paths.artifacts/plugins")
+      .listFiles()
+      .collect { it.toString() }
+      .join("\n")
   }
 }
