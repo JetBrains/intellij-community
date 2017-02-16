@@ -107,17 +107,16 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void updateOkEnabled() {
     String text = myEditorTextField.getText();
-    List<String> rules = StringUtil.split(text, "\n");
-
+    List<String> rules = StringUtil.split(text, "\n", true, false);
 
     Stream<Integer> intStream = IntStream.iterate(0, i -> i + 1).boxed();
     List<Integer> invalidLines = StreamEx.of(rules)
-      .map((rule) -> MatcherConstructor.INSTANCE.createMatcher(rule))
       .zipWith(intStream)
-      .filter((entry) -> entry.getKey() == null)
-      .map((entry -> entry.getValue()))
+      .filterKeys((rule) -> !rule.isEmpty())
+      .mapKeys((rule) -> MatcherConstructor.INSTANCE.createMatcher(rule))
+      .filterKeys((matcher) -> matcher == null)
+      .values()
       .toList();
-
 
     getOKAction().setEnabled(invalidLines.isEmpty());
     highlightErrorLines(invalidLines);
