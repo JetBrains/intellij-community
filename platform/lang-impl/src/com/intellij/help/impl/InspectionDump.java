@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,6 +58,7 @@ public class InspectionDump implements ApplicationStarter {
       List<InspectionToolWrapper> tools = InspectionToolRegistrar.getInstance().createTools();
       for (InspectionToolWrapper tool : tools) {
         Element inspection = document.createElement("Inspection");
+        inspection.setAttribute("groupPath", StringUtil.join(tool.getGroupPath(), ";"));
         inspection.setAttribute("group", tool.getGroupDisplayName());
         inspection.setAttribute("name", tool.getDisplayName());
         inspection.setAttribute("level", tool.getDefaultLevel().getName());
