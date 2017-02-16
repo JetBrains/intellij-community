@@ -53,21 +53,21 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   @Override
-  public boolean canDeleteScheme(@NotNull InspectionProfileModifiableModel profile) {
+  public boolean canDeleteScheme(@NotNull InspectionProfileModifiableModel candidateToDelete) {
     boolean projectProfileFound = false;
     boolean ideProfileFound = false;
 
     for (SingleInspectionProfilePanel profilePanel : myProfilePanels) {
-      final InspectionProfileModifiableModel profile1 = profilePanel.getProfile();
-      if (profile == profile1) continue;
-      final boolean isProjectProfile = profile1.getProfileManager() == myProjectProfileManager;
+      final InspectionProfileModifiableModel profile = profilePanel.getProfile();
+      if (candidateToDelete == profile) continue;
+      final boolean isProjectProfile = profile.getProfileManager() == myProjectProfileManager;
       projectProfileFound |= isProjectProfile;
       ideProfileFound |= !isProjectProfile;
 
       if (ideProfileFound && projectProfileFound) break;
     }
 
-    return profile.getProfileManager() == myProjectProfileManager ? projectProfileFound : ideProfileFound;
+    return candidateToDelete.getProfileManager() == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
 
   @Override
