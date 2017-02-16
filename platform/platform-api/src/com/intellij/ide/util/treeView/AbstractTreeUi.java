@@ -2165,7 +2165,7 @@ public class AbstractTreeUi {
   private MutualMap<Object, Integer> loadElementsFromStructure(final NodeDescriptor descriptor,
                                                                @Nullable LoadedChildren preloadedChildren) {
     MutualMap<Object, Integer> elementToIndexMap = new MutualMap<>(true);
-    final Object element = getBuilder().getTreeStructureElement(descriptor);
+    final Object element = getElementFromDescriptor(descriptor);
     if (!isValid(element)) return elementToIndexMap;
 
 
@@ -2792,7 +2792,7 @@ public class AbstractTreeUi {
       return;
     }
 
-    final Object element = getBuilder().getTreeStructureElement(descriptor);
+    final Object element = getElementFromDescriptor(descriptor);
 
     boolean childrenReady = !isLoadedInBackground(element) && !isUpdatingChildrenNow(node);
 
@@ -2978,7 +2978,7 @@ public class AbstractTreeUi {
       final AtomicBoolean forceRemapping = new AtomicBoolean();
       final Ref<Object> newElement = new Ref<>(getElementFromDescriptor(childDesc.get()));
 
-      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
+      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
       Promise<Boolean> promise;
       if (index == null) {
         promise = Promise.resolve(false);
@@ -3068,7 +3068,7 @@ public class AbstractTreeUi {
             result.setResult(null);
           }
           else {
-            elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
+            elementToIndexMap.remove(getElementFromDescriptor(childDesc.get()));
             updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
               .doWhenDone(() -> result.setResult(null));
           }
