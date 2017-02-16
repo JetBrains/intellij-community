@@ -104,7 +104,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         module M {
           exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
-          exports pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
+          exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
         }""".trimIndent())
   }
 
@@ -116,7 +116,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         module M {
           opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
           opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
-          opens pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
+          opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
         }""".trimIndent())
   }
 

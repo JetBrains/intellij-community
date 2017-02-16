@@ -286,13 +286,13 @@ public class ModuleHighlightUtil {
       String refText = refElement.getReferenceText();
       PsiPolyVariantReference ref = refElement.getReference();
       assert ref != null : statement;
-      PsiElement target = ref.resolve();
-      if (!(target instanceof PsiJavaModule)) {
-        results.add(moduleResolveError(refElement, ref));
-      }
-      else if (!targets.add(refText)) {
+      if (!targets.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.export", refText);
         results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create());
+      }
+      else if (ref.multiResolve(true).length == 0) {
+        String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).description(message).create());
       }
     }
 
