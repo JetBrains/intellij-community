@@ -145,12 +145,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     Language language = (Language)myCurrentLanguageCombo.getModel().getSelectedItem();
     myBlackLists.put(language, myEditorTextField.getText());
 
-    myBlackLists.entrySet().forEach((entry) -> {
-      Language lang = entry.getKey();
-      String text = entry.getValue();
-      storeBlackListDiff(lang, text);
-    });
-    
+    myBlackLists.forEach((lang, text) -> storeBlackListDiff(lang, text));
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
   }
 
