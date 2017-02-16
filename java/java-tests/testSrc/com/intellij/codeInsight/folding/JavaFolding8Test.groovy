@@ -98,6 +98,7 @@ class Test {
   }
 
   void "test folding lambda with block body"() {
+    myFoldingSettings.collapseAnonymousClasses = true
     def text = """\
 class Test {
   void test() {
