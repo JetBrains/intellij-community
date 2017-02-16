@@ -269,7 +269,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
-  private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
+  private void buildWinZip(List<String> jdkDirectoryPaths, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
+
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
