@@ -109,7 +109,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testUses() {
-    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { void m(); }")
+    addFile("pkg/main/O.java", "package pkg.main;\npublic class O {\n public class I { void m(); }\n}")
     addFile("pkg/main/E.java", "package pkg.main;\npublic enum E { }")
     highlight("""
         module M {
@@ -117,6 +118,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           uses pkg.main.<error descr="Cannot resolve symbol 'X'">X</error>;
           uses pkg.main.<error descr="'pkg.main.C' is not public in 'pkg.main'. Cannot be accessed from outside package">C</error>;
           uses pkg.main.<error descr="The service definition is an enum: E">E</error>;
+          uses pkg.main.O.I;
+          uses pkg.main.O.I.<error descr="Cannot resolve symbol 'm'">m</error>;
         }""".trimIndent())
   }
 
