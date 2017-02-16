@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -628,8 +628,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void writeContext(@NotNull Element parentNode) {
-    Collection<RunnerAndConfigurationSettings> values = new ArrayList<>(myConfigurations.values());
-    for (RunnerAndConfigurationSettings configurationSettings : values) {
+    for (RunnerAndConfigurationSettings configurationSettings : new ArrayList<>(myConfigurations.values())) {
       if (configurationSettings.isTemporary()) {
         addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
       }
@@ -648,12 +647,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
     Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
-    try {
-      ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
 
     if (settings.getConfiguration() instanceof UnknownRunConfiguration) {
       return;
@@ -707,7 +701,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Override
-  public void loadState(Element parentNode) {
+  public void loadState(@NotNull Element parentNode) {
     clear(false);
 
     List<Element> children = parentNode.getChildren(CONFIGURATION);
@@ -719,10 +713,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
     });
 
-    // element could be detached, so, we must not use for each
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, length = sortedElements.length; i < length; i++) {
-      Element element = sortedElements[i];
+    for (Element element : sortedElements) {
       RunnerAndConfigurationSettings configurationSettings;
       try {
         configurationSettings = loadConfiguration(element, false);

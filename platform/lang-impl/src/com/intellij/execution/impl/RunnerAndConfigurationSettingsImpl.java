@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.*;
 /**
  * @author dyoma
  */
-public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings, Comparable {
+public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndConfigurationSettings, Comparable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
   @NonNls
@@ -336,11 +336,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return myManager.getFactory(typeName, factoryName, !myIsTemplate);
   }
 
-  @Override
   public void readExternal(Element element) {
-    myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
-    myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
-    myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
+    myIsTemplate = Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE));
+    myTemporary = Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION.equals(element.getName());
+    myEditBeforeRun = Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN));
     String value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN);
     myActivateToolWindowBeforeRun = value == null || Boolean.valueOf(value).booleanValue();
     myFolderName = element.getAttributeValue(FOLDER_NAME);
@@ -385,32 +384,33 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myConfigurationPerRunnerSettings.loadState(element);
   }
 
-  @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     final ConfigurationFactory factory = myConfiguration.getFactory();
     if (!(myConfiguration instanceof UnknownRunConfiguration)) {
-      element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));
-      if (!myIsTemplate) {
+      if (myIsTemplate) {
+        element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true");
+      }
+      else {
         element.setAttribute(NAME_ATTR, myConfiguration.getName());
       }
+
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
       if (myFolderName != null) {
         element.setAttribute(FOLDER_NAME, myFolderName);
       }
-      //element.setAttribute(UNIQUE_ID, getUniqueID());
 
       if (isEditBeforeRun()) {
-        element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
+        element.setAttribute(EDIT_BEFORE_RUN, "true");
       }
       if (!isActivateToolWindowBeforeRun()) {
-        element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, String.valueOf(false));
+        element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false");
       }
       if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
         element.setAttribute(SINGLETON, String.valueOf(mySingleton));
       }
       if (myTemporary) {
-        element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(true));
+        element.setAttribute(TEMPORARY_ATTRIBUTE, "true");
       }
     }
 
