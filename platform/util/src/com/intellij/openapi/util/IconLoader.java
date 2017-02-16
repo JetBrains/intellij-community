@@ -248,6 +248,26 @@ public final class IconLoader {
   }
 
   @Nullable
+  public static Image toImage(@NotNull Icon icon) {
+    if (icon instanceof CachedImageIcon) {
+      icon = ((CachedImageIcon)icon).getRealIcon();
+    }
+    if (icon instanceof ImageIcon) {
+      return ((ImageIcon)icon).getImage();
+    }
+    else {
+      final int w = icon.getIconWidth();
+      final int h = icon.getIconHeight();
+      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      final Graphics2D g = image.createGraphics();
+      icon.paintIcon(null, g, 0, 0);
+      g.dispose();
+      return image;
+    }
+  }
+
+  @Nullable
   private static ImageIcon checkIcon(final Image image, @NotNull URL url) {
     if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
