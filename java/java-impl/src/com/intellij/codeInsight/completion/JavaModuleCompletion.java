@@ -62,6 +62,7 @@ class JavaModuleCompletion {
         addProvidesStatementKeywords(position, result);
       }
       else if (context instanceof PsiJavaModuleReferenceElement) {
+        addRequiresStatementKeywords(context, position, result);
         addModuleReferences(context, result);
       }
       else if (context instanceof PsiJavaCodeReferenceElement) {
@@ -93,12 +94,15 @@ class JavaModuleCompletion {
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
+  private static void addRequiresStatementKeywords(PsiElement context, PsiElement position, Consumer<LookupElement> result) {
+    if (context.getParent() instanceof PsiRequiresStatement) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+  }
+
   private static void addModuleReferences(PsiElement context, Consumer<LookupElement> result) {
     PsiElement statement = context.getParent();
-    if (statement instanceof PsiRequiresStatement) {
-      result.consume(new OverrideableSpace(createKeyword(context, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeyword(context, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    }
     if (!(statement instanceof PsiJavaModule)) {
       PsiElement host = statement.getParent();
       if (host instanceof PsiJavaModule) {
