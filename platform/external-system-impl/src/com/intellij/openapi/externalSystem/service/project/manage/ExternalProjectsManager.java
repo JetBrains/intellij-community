@@ -244,7 +244,9 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   public void dispose() {
     myProjectsViews.clear();
     myRunManagerListener.detach();
-    myWatcher.stop();
+    if(myWatcher != null) {
+      myWatcher.stop();
+    }
     myWatcher = null;
   }
 
