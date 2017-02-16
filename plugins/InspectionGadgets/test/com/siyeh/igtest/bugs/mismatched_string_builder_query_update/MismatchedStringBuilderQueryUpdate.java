@@ -68,6 +68,20 @@ public class MismatchedStringBuilderQueryUpdate {
     return null;
   }
 
+  static String testUselessQueryTernary(java.util.List<String> list) {
+    StringBuilder sb = new StringBuilder();
+    for (String s : list) {
+      if (s != null) {
+        if(sb.length() > 0) {
+          assert sb.length() > 5;
+        }
+        sb.append(sb.length() > 0 ? ',' : "start");
+        sb.append(s.length());
+      }
+    }
+    return null;
+  }
+
   static String testQueryWithSideEffect(java.util.List<String> list) {
     StringBuilder sb = new StringBuilder();
     for (String s : list) {
