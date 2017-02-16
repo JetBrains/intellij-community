@@ -57,7 +57,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit by storedProperty(50)
 
-  @JvmField var CONSOLE_COMMAND_HISTORY_LIMIT = 300
+  @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT") var consoleCommandHistoryLimit by storedProperty(300)
   @JvmField var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
   @JvmField var CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024
   @JvmField var EDITOR_TAB_LIMIT = 10
@@ -67,6 +67,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField
   @Transient
   var HIDE_TOOL_STRIPES = true
+
+  @Suppress("unused")
+  @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
+  @JvmField
+  @Transient
+  var CONSOLE_COMMAND_HISTORY_LIMIT = 300
 
   @Suppress("unused")
   @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
@@ -136,7 +142,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
-  @get:OptionTag("COLOR_BLINDNESS") var colorBlindness: ColorBlindness? = null
+  @get:OptionTag("COLOR_BLINDNESS") var colorBlindness by storedProperty<ColorBlindness?>()
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton by storedProperty(false)
   @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode by storedProperty(false)
   @get:OptionTag("ALPHA_MODE_DELAY") var alphaModeDelay by storedProperty(1500)
@@ -228,6 +234,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     PRESENTATION_MODE = presentationMode
     OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
     PRESENTATION_MODE_FONT_SIZE = presentationModeFontSize
+    CONSOLE_COMMAND_HISTORY_LIMIT = consoleCommandHistoryLimit
   }
 
   private fun initDefFont() {
