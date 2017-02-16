@@ -207,7 +207,7 @@ public class IElementType {
    */
   @NotNull
   public static IElementType[] enumerate(@NotNull Predicate p) {
-    List<IElementType> matches = new ArrayList<IElementType>();
+    List<IElementType> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null && p.matches(value)) {
         matches.add(value);

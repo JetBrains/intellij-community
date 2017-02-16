@@ -46,7 +46,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
-  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<>();
 
   private volatile Document mySyncDocument;
 
@@ -236,11 +236,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if (pair == null) {
       final PsiFile psiFile = scope.getContainingFile();
-      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, psiFile), 0);
+      pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
       myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
     }
     else {
-      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
+      pair = new Pair<>(pair.getFirst(), pair.getSecond().intValue() + 1);
     }
     myTransactionsMap.put(doc, pair);
   }
@@ -312,7 +312,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public static class DocumentChangeTransaction{
-    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(
+    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<>(
       Comparator.comparingInt(TextRange::getStartOffset));
     private final PsiFile myChangeScope;
     private ImmutableCharSequence myPsiText;

@@ -214,7 +214,7 @@ public class ActionCallback implements Disposable {
   }
 
   public static class Chunk {
-    private final Set<ActionCallback> myCallbacks = new OrderedSet<ActionCallback>();
+    private final Set<ActionCallback> myCallbacks = new OrderedSet<>();
 
     public void add(@NotNull ActionCallback callback) {
       myCallbacks.add(callback);

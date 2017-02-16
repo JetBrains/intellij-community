@@ -189,7 +189,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     @Override
     public final Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
       return ContainerUtil.mapIterator(ContainerUtil.iterate(entries, Condition.NOT_NULL).iterator(),
-                                       entry -> new SimpleEntry<String, ArchiveHandler.EntryInfo>(getRelativePath(entry), entry));
+                                       entry -> new SimpleEntry<>(getRelativePath(entry), entry));
     }
 
     @Override

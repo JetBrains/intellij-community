@@ -109,7 +109,7 @@ public abstract class Language extends UserDataHolderBase {
   @NotNull
   public static Collection<Language> getRegisteredLanguages() {
     final Collection<Language> languages = ourRegisteredLanguages.values();
-    return Collections.unmodifiableCollection(new ArrayList<Language>(languages));
+    return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
   /**

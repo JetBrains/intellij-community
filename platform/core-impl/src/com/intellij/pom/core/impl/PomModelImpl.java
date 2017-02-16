@@ -68,9 +68,9 @@ import java.util.*;
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
   private final Project myProject;
-  private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
-  private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
-  private final Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
+  private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<>();
+  private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<>();
+  private final Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<>();
   private final Collection<PomModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public PomModelImpl(Project project) {
@@ -87,7 +87,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<PomModelAspect> dependencies) {
     myAspects.put(aClass, aspect);
     final Iterator<PomModelAspect> iterator = dependencies.iterator();
-    final List<PomModelAspect> deps = new ArrayList<PomModelAspect>();
+    final List<PomModelAspect> deps = new ArrayList<>();
     // todo: reorder dependencies
     while (iterator.hasNext()) {
       final PomModelAspect depend = iterator.next();
@@ -100,7 +100,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         pomModelAspects.add(aspect);
       }
       else {
-        myInvertedIncidence.put(pomModelAspect, new ArrayList<PomModelAspect>(Collections.singletonList(aspect)));
+        myInvertedIncidence.put(pomModelAspect, new ArrayList<>(Collections.singletonList(aspect)));
       }
     }
     myIncidence.put(aspect, deps);
@@ -138,7 +138,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     myListeners.remove(listener);
   }
 
-  private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
+  private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<>();
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
@@ -146,7 +146,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
     synchronized(PsiLock.LOCK){
-      List<Throwable> throwables = new ArrayList<Throwable>(0);
+      List<Throwable> throwables = new ArrayList<>(0);
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
@@ -177,7 +177,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
         { // update
           final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          final Collection<PomModelAspect> dependants = new LinkedHashSet<PomModelAspect>();
+          final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
           for (final PomModelAspect pomModelAspect : changedAspects) {
             dependants.addAll(getAllDependants(pomModelAspect));
           }

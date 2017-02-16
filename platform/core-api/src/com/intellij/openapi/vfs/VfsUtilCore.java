@@ -639,7 +639,7 @@ public class VfsUtilCore {
    */
   @NotNull
   static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
-    ArrayList<VirtualFile> componentsList = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
       file = file.getParent();
@@ -689,7 +689,7 @@ public class VfsUtilCore {
     if (!processor.process(root)) return;
 
     if (root.isDirectory() && directoryFilter.convert(root)) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+      final LinkedList<VirtualFile[]> queue = new LinkedList<>();
 
       queue.add(root.getChildren());
 

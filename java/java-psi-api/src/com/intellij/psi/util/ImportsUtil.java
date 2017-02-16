@@ -36,7 +36,7 @@ public class ImportsUtil {
   public static List<PsiJavaCodeReferenceElement> collectReferencesThrough(PsiFile file,
                                                                            @Nullable final PsiJavaCodeReferenceElement refExpr,
                                                                            final PsiImportStaticStatement staticImport) {
-    final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<PsiJavaCodeReferenceElement>();
+    final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {

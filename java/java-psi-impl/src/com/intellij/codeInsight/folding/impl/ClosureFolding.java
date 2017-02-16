@@ -127,7 +127,7 @@ class ClosureFolding {
     if (rangeStart >= rangeEnd) return null;
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
-    List<NamedFoldingDescriptor> foldElements = new ArrayList<NamedFoldingDescriptor>();
+    List<NamedFoldingDescriptor> foldElements = new ArrayList<>();
     foldElements.add(new NamedFoldingDescriptor(myNewExpression, getClosureStartOffset(), rangeStart, group, header));
     if (rangeEnd + 1 < getClosureEndOffset()) {
       foldElements.add(new NamedFoldingDescriptor(classRBrace, rangeEnd, getClosureEndOffset(), group, footer));

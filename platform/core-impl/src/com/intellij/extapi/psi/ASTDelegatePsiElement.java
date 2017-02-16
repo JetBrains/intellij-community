@@ -86,7 +86,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     while (psiChild != null) {
       if (psiChild.getNode() instanceof CompositeElement) {
         result.add(psiChild);
@@ -233,7 +233,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       final IElementType tt = child.getElementType();
       if (elementType.contains(tt)) {
         if (result == EMPTY) {
-          result = new ArrayList<T>();
+          result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
       }
@@ -248,7 +248,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     while (child != null) {
       if (elementType == child.getElementType()) {
         if (result == EMPTY) {
-          result = new ArrayList<T>();
+          result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
       }

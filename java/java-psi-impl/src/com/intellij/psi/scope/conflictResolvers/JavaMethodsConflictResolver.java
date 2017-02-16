@@ -126,13 +126,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, getActualParametersLength());
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    Set<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
+    Set<CandidateInfo> uniques = new THashSet<>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
   }
 
   private static void checkPotentiallyCompatibleMethods(@NotNull List<CandidateInfo> conflicts) {
-    List<CandidateInfo> partiallyApplicable = new ArrayList<CandidateInfo>();
+    List<CandidateInfo> partiallyApplicable = new ArrayList<>();
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
       if (conflict instanceof MethodCandidateInfo) {
@@ -222,8 +222,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts, FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
-    Map<MethodSignature, CandidateInfo> signatures = new THashMap<MethodSignature, CandidateInfo>(conflicts.size());
-    Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
+    Set<PsiMethod> superMethods = new HashSet<>();
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();

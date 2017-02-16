@@ -29,7 +29,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   @Override
   public RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<T>(this);
+    final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {

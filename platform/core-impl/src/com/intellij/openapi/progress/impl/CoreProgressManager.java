@@ -57,13 +57,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
-  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<ProgressIndicator, Set<Thread>>();
+  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
-  static final Set<Thread> threadsUnderCanceledIndicator = new THashSet<Thread>(); // guarded by threadsUnderIndicator
+  static final Set<Thread> threadsUnderCanceledIndicator = new THashSet<>(); // guarded by threadsUnderIndicator
   private static volatile boolean shouldCheckCanceled;
 
   /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
@@ -77,7 +77,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   /** true if running in non-cancelable section started with
    * {@link #startNonCancelableSection()} or {@link #executeNonCancelableSection(Runnable)} in this thread
    */
-  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<Boolean>(); // do not supply initial value to conserve memory
+  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>(); // do not supply initial value to conserve memory
 
   public CoreProgressManager() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
@@ -188,7 +188,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
-    final Ref<T> ref = new Ref<T>();
+    final Ref<T> ref = new Ref<>();
     runProcess(() -> ref.set(process.compute()), progress);
     return ref.get();
   }
@@ -227,8 +227,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                                         @NotNull @Nls String progressTitle,
                                                                         boolean canBeCanceled,
                                                                         @Nullable Project project) throws E {
-    final AtomicReference<T> result = new AtomicReference<T>();
-    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
+    final AtomicReference<T> result = new AtomicReference<>();
+    final AtomicReference<Throwable> exception = new AtomicReference<>();
 
     runProcessWithProgressSynchronously(new Task.Modal(project, progressTitle, canBeCanceled) {
       @Override
@@ -402,7 +402,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
-    final Ref<Throwable> exceptionRef = new Ref<Throwable>();
+    final Ref<Throwable> exceptionRef = new Ref<>();
     TaskContainer taskContainer = new TaskContainer(task) {
       @Override
       public void run() {
@@ -524,12 +524,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                        @NotNull Thread currentThread,
                                        ProgressIndicator oldIndicator,
                                        @NotNull Runnable process) {
-    List<Set<Thread>> threadsUnderThisIndicator = new ArrayList<Set<Thread>>();
+    List<Set<Thread>> threadsUnderThisIndicator = new ArrayList<>();
     synchronized (threadsUnderIndicator) {
       for (ProgressIndicator thisIndicator = indicator; thisIndicator != null; thisIndicator = thisIndicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator() : null) {
         Set<Thread> underIndicator = threadsUnderIndicator.get(thisIndicator);
         if (underIndicator == null) {
-          underIndicator = new SmartHashSet<Thread>();
+          underIndicator = new SmartHashSet<>();
           threadsUnderIndicator.put(thisIndicator, underIndicator);
         }
         boolean alreadyUnder = !underIndicator.add(currentThread);

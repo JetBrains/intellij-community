@@ -86,7 +86,7 @@ public class StubTreeBuilder {
             data = stubBuilder.buildStubTree(psi);
 
             final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
-            final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
+            final List<PsiFileStub> stubs = new ArrayList<>(stubbedRoots.size());
             stubs.add((PsiFileStub)data);
 
             for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
@@ -124,7 +124,7 @@ public class StubTreeBuilder {
   @NotNull
   public static List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     final List<Trinity<Language, IStubFileElementType, PsiFile>> roots =
-      new SmartList<Trinity<Language, IStubFileElementType, PsiFile>>();
+      new SmartList<>();
     final PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile file = viewProvider.getPsi(language);

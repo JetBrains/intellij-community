@@ -234,7 +234,7 @@ public class DebugUtil {
       buffer.append('\n');
 
       if (!isLeaf) {
-        final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
+        final Ref<LighterASTNode[]> kids = new Ref<>();
         final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
         if (numKids == 0) {
           StringUtil.repeatSymbol(buffer, ' ', indent + 2);
@@ -506,8 +506,8 @@ public class DebugUtil {
     }
   }
 
-  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
-  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
+  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<>();
+  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<>();
   private static final Set<Integer> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
 
   /**

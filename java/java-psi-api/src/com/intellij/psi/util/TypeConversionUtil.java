@@ -49,7 +49,7 @@ public class TypeConversionUtil {
     {false, false, false, false, false, false, true}, // double
   };
 
-  private static final TObjectIntHashMap<PsiType> TYPE_TO_RANK_MAP = new TObjectIntHashMap<PsiType>();
+  private static final TObjectIntHashMap<PsiType> TYPE_TO_RANK_MAP = new TObjectIntHashMap<>();
 
   public static final int BYTE_RANK = 1;
   public static final int SHORT_RANK = 2;
@@ -363,7 +363,7 @@ public class TypeConversionUtil {
       }
     }
 
-    if (visited == null) visited = new THashSet<PsiClass>();
+    if (visited == null) visited = new THashSet<>();
     visited.add(derived);
     for (PsiClass aSuper : supers) {
       PsiSubstitutor s = getSuperClassSubstitutor(aSuper, derived, derivedSubstitutor);
@@ -834,7 +834,7 @@ public class TypeConversionUtil {
       return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
-      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<PsiClassType>());
+      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<>());
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
@@ -936,7 +936,7 @@ public class TypeConversionUtil {
       project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
         () -> {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          final Set<String> set = new THashSet<String>();
+          final Set<String> set = new THashSet<>();
           for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
             final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
             InheritanceUtil.processSupers(boxedClass, true, psiClass1 -> {
@@ -1085,7 +1085,7 @@ public class TypeConversionUtil {
                                                         @NotNull PsiSubstitutor derivedSubstitutor) {
     if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization and protection against EJB queer hierarchy
 
-    Set<PsiClass> visited = new THashSet<PsiClass>();
+    Set<PsiClass> visited = new THashSet<>();
     PsiSubstitutor substitutor = getMaybeSuperClassSubstitutor(superClass, derivedClass, derivedSubstitutor, visited);
 
     if (substitutor == null) {
@@ -1168,7 +1168,7 @@ public class TypeConversionUtil {
     return type;
   }
 
-  private static final Set<String> INTEGER_NUMBER_TYPES = new THashSet<String>(5);
+  private static final Set<String> INTEGER_NUMBER_TYPES = new THashSet<>(5);
 
   static {
     INTEGER_NUMBER_TYPES.add(PsiType.BYTE.getCanonicalText());
@@ -1178,7 +1178,7 @@ public class TypeConversionUtil {
     INTEGER_NUMBER_TYPES.add(PsiType.SHORT.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_TYPES = new THashSet<String>(9);
+  private static final Set<String> PRIMITIVE_TYPES = new THashSet<>(9);
 
   static {
     PRIMITIVE_TYPES.add(PsiType.VOID.getCanonicalText());
@@ -1192,7 +1192,7 @@ public class TypeConversionUtil {
     PRIMITIVE_TYPES.add(PsiType.BOOLEAN.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new THashSet<String>(8);
+  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new THashSet<>(8);
 
   static {
     PRIMITIVE_WRAPPER_TYPES.add("java.lang.Byte");
@@ -1243,7 +1243,7 @@ public class TypeConversionUtil {
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
-        Set<PsiClass> visited = new THashSet<PsiClass>();
+        Set<PsiClass> visited = new THashSet<>();
         visited.add(psiClass);
         final PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
         if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
@@ -1862,7 +1862,7 @@ public class TypeConversionUtil {
     }
   };
 
-  private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<Class, PsiType>(8);
+  private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<>(8);
   static {
     WRAPPER_TO_PRIMITIVE.put(Boolean.class, PsiType.BOOLEAN);
     WRAPPER_TO_PRIMITIVE.put(Byte.class, PsiType.BYTE);

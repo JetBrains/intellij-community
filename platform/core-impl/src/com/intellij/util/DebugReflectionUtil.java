@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
+  private static final Map<Class, Field[]> allFields = new THashMap<>();
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
@@ -47,7 +47,7 @@ public class DebugReflectionUtil {
     if (cached == null) {
       try {
         Field[] declaredFields = aClass.getDeclaredFields();
-        List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
+        List<Field> fields = new ArrayList<>(declaredFields.length + 5);
         for (Field declaredField : declaredFields) {
           declaredField.setAccessible(true);
           Class<?> type = declaredField.getType();

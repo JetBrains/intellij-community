@@ -37,7 +37,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   public static final String ATTRIBUTE_AREA = "area";
 
-  private static final Map<String,String> ourDefaultEPs = new THashMap<String, String>();
+  private static final Map<String,String> ourDefaultEPs = new THashMap<>();
 
   static {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
@@ -48,9 +48,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaPicoContainer myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
-  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
+  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart();
-  private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
+  private final List<Runnable> mySuspendedListenerActions = new ArrayList<>();
   private boolean myAvailabilityNotificationsActive = true;
 
   private final AreaInstance myAreaInstance;

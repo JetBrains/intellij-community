@@ -36,9 +36,9 @@ import java.util.*;
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
-  private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<Pair<InferenceVariable[], PsiClassType>>();
+  private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<>();
   private final Map<InferenceVariable, Map<InferenceBound, Set<PsiType>>> myCurrentBounds =
-    new HashMap<InferenceVariable, Map<InferenceBound, Set<PsiType>>>();
+    new HashMap<>();
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
@@ -128,7 +128,7 @@ public class InferenceIncorporationPhase {
       PsiType[] typeArgs = right.getParameters();
       PsiSubstitutor restSubst = PsiSubstitutor.EMPTY;
       if (Registry.is("javac.fresh.variables.for.captured.wildcards.only")) {
-        List<PsiType> args = new ArrayList<PsiType>();
+        List<PsiType> args = new ArrayList<>();
         PsiTypeParameter[] typeParameters = gClass.getTypeParameters();
         for (int i = 0; i < typeArgs.length; i++) {
           PsiType arg = typeArgs[i];
@@ -372,12 +372,12 @@ public class InferenceIncorporationPhase {
   public void addBound(InferenceVariable variable, PsiType type, InferenceBound bound) {
     Map<InferenceBound, Set<PsiType>> bounds = myCurrentBounds.get(variable);
     if (bounds == null) {
-      bounds = new HashMap<InferenceBound, Set<PsiType>>();
+      bounds = new HashMap<>();
       myCurrentBounds.put(variable, bounds);
     }
     Set<PsiType> types = bounds.get(bound);
     if (types == null) {
-      types = new LinkedHashSet<PsiType>();
+      types = new LinkedHashSet<>();
       bounds.put(bound, types);
     }
     types.add(type);

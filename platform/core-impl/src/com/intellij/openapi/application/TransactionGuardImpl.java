@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
-  private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
+  private final Queue<Transaction> myQueue = new LinkedBlockingQueue<>();
   private final Map<ModalityState, TransactionIdImpl> myModality2Transaction = ContainerUtil.createConcurrentWeakMap();
 
   /**
@@ -343,7 +343,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static class TransactionIdImpl implements TransactionId {
     private static final AtomicLong ourTransactionCounter = new AtomicLong();
     final long myStartCounter = ourTransactionCounter.getAndIncrement();
-    final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
+    final Queue<Transaction> myQueue = new LinkedBlockingQueue<>();
     boolean myFinished;
     final TransactionIdImpl myParent;
 

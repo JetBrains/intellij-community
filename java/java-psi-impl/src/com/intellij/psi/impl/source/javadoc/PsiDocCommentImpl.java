@@ -60,7 +60,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == DOC_TAG) break;
@@ -100,7 +100,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   @Override
   @NotNull
   public PsiDocTag[] findTagsByName(String name) {
-    ArrayList<PsiDocTag> array = new ArrayList<PsiDocTag>();
+    ArrayList<PsiDocTag> array = new ArrayList<>();
     PsiDocTag[] tags = getTags();
     name = "@" + name;
     for (PsiDocTag tag : tags) {

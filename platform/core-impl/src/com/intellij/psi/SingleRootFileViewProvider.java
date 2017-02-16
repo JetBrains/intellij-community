@@ -436,7 +436,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = document == null ? null : new SoftReference<Document>(document);
+      myDocument = document == null ? null : new SoftReference<>(document);
     }
     return document;
   }
@@ -625,7 +625,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     private final long myModificationStamp;
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final List<FileElement> myFileElementHardRefs = new SmartList<FileElement>();
+    private final List<FileElement> myFileElementHardRefs = new SmartList<>();
 
     private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
       myFile = file;

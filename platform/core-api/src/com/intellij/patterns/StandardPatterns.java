@@ -48,7 +48,7 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
-    return new ObjectPattern.Capture<T>(aClass);
+    return new ObjectPattern.Capture<>(aClass);
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> ElementPattern save(final Key<T> key) {
-    return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
+    return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         context.put(key, (T)o);
@@ -85,7 +85,7 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> CollectionPattern<T> collection(Class<T> aClass) {
-    return new CollectionPattern<T>();
+    return new CollectionPattern<>();
   }
 
   @NotNull
@@ -105,12 +105,12 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> CollectionPattern<T> collection() {
-    return new CollectionPattern<T>();
+    return new CollectionPattern<>();
   }
 
   @NotNull
   public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
-    return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
+    return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
@@ -155,32 +155,32 @@ public class StandardPatterns {
 
   @NotNull
   private static <E> ObjectPattern.Capture<E> composeInitialConditions(final List<InitialPatternCondition> initial) {
-    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
-        @Override
-        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-          for (final InitialPatternCondition pattern : initial) {
-            if (!pattern.accepts(o, context)) return false;
-          }
-          return true;
+    return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
+      @Override
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        for (final InitialPatternCondition pattern : initial) {
+          if (!pattern.accepts(o, context)) return false;
         }
-  
-        @Override
-        public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
-          boolean first = true;
-          for (final InitialPatternCondition pattern : initial) {
-            if (!first) {
-              builder.append("\n").append(indent);
-            }
-            first = false;
-            pattern.append(builder, indent + "  ");
+        return true;
+      }
+
+      @Override
+      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+        boolean first = true;
+        for (final InitialPatternCondition pattern : initial) {
+          if (!first) {
+            builder.append("\n").append(indent);
           }
+          first = false;
+          pattern.append(builder, indent + "  ");
         }
-      });
+      }
+    });
   }
 
   @NotNull
   public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
-    return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
+    return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return !pattern.accepts(o, context);
@@ -201,7 +201,7 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
-    return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
+    return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         pattern.accepts(o, context);

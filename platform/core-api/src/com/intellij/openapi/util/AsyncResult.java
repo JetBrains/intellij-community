@@ -52,13 +52,13 @@ public class AsyncResult<T> extends ActionCallback {
 
   @NotNull
   public <DependentResult> AsyncResult<DependentResult> subResult(@NotNull Function<T, DependentResult> doneHandler) {
-    return subResult(new AsyncResult<DependentResult>(), doneHandler);
+    return subResult(new AsyncResult<>(), doneHandler);
   }
 
   @NotNull
   public <SubResult, SubAsyncResult extends AsyncResult<SubResult>> SubAsyncResult subResult(@NotNull SubAsyncResult subResult,
                                                                                              @NotNull Function<T, SubResult> doneHandler) {
-    doWhenDone(new SubResultDoneCallback<T, SubResult, SubAsyncResult>(subResult, doneHandler)).notifyWhenRejected(subResult);
+    doWhenDone(new SubResultDoneCallback<>(subResult, doneHandler)).notifyWhenRejected(subResult);
     return subResult;
   }
 
@@ -160,7 +160,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   @Deprecated
   public static <R> AsyncResult<R> rejected(@NotNull String errorMessage) {
-    AsyncResult<R> result = new AsyncResult<R>();
+    AsyncResult<R> result = new AsyncResult<>();
     result.reject(errorMessage);
     return result;
   }

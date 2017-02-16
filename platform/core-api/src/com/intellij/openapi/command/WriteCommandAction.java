@@ -146,7 +146,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       throw new IllegalStateException();
     }
 
-    final RunResult<T> result = new RunResult<T>(this);
+    final RunResult<T> result = new RunResult<>(this);
     if (dispatchThread) {
       performWriteCommandAction(result);
     }
@@ -192,8 +192,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public void performCommand() throws Throwable {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
-    final RunResult[] results = {new RunResult<T>(this)};
-    final Ref<Throwable> exception = new Ref<Throwable>();
+    final RunResult[] results = {new RunResult<>(this)};
+    final Ref<Throwable> exception = new Ref<>();
 
     doExecuteCommand(() -> {
       exception.set(results[0].run().getThrowable());

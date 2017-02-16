@@ -157,8 +157,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
     return context == newExpression
            ? CachedValuesManager.getCachedValue(newExpression,
-                                                () -> new CachedValueProvider.Result<JavaResolveResult>(getStaticFactoryCandidateInfo(newExpression, newExpression),
-                                                                                                        PsiModificationTracker.MODIFICATION_COUNT))
+                                                () -> new CachedValueProvider.Result<>(
+                                                  getStaticFactoryCandidateInfo(newExpression, newExpression),
+                                                  PsiModificationTracker.MODIFICATION_COUNT))
            : getStaticFactoryCandidateInfo(newExpression, context);
   }
 
@@ -244,7 +245,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         return staticFactoryCandidateInfo;
       }
 
-      final ArrayList<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
+      final ArrayList<CandidateInfo> conflicts = new ArrayList<>();
       conflicts.add(staticFactoryCandidateInfo);
       conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
       return resolver.resolveConflict(conflicts);
@@ -264,7 +265,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return null;
     }
 
-    final List<CandidateInfo> candidates = new ArrayList<CandidateInfo>();
+    final List<CandidateInfo> candidates = new ArrayList<>();
     PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) {
       //default constructor
@@ -408,7 +409,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
-    Set<PsiTypeParameter> params = new LinkedHashSet<PsiTypeParameter>();
+    Set<PsiTypeParameter> params = new LinkedHashSet<>();
     Collections.addAll(params, containingClass.getTypeParameters());
     if (listOwner != null) {
       Collections.addAll(params, listOwner.getTypeParameters());

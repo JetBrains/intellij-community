@@ -127,7 +127,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   @NotNull
   @Override
   protected RMNode<T> createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RMNode<T>(this, key, start, end, greedyToLeft, greedyToRight);
+    return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight);
   }
 
   @Override
@@ -184,7 +184,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       checkMax(true);
 
       modCount++;
-      List<IntervalNode<T>> affected = new SmartList<IntervalNode<T>>();
+      List<IntervalNode<T>> affected = new SmartList<>();
       collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
       checkMax(false);
 
@@ -321,8 +321,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<T>(5, Comparator.comparingInt(Segment::getEndOffset));
-    final List<T> starts = new ArrayList<T>();
+    final Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
+    final List<T> starts = new ArrayList<>();
     if (!generator.generateInStartOffsetOrder(marker -> {
       // decide whether previous marker ends here or new marker begins
       int start = marker.getStartOffset();
@@ -365,7 +365,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     try {
       checkMax(true);
 
-      List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
+      List<IntervalNode<T>> affected = new ArrayList<>();
       collectNodesToRetarget(getRoot(), start, end, affected);
       if (affected.isEmpty()) return;
       // remove all first because findOrInsert can remove gced nodes which could interfere with not-yet-removed nodes

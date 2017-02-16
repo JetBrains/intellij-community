@@ -239,7 +239,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
+  private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<>(); //accessed from EDT only
   private static final Object PERFORM_ALWAYS_KEY = new Object() {
     @Override
     @NonNls
@@ -282,7 +282,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     synchronized (ACTION_AFTER_COMMIT) {
       List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list == null) {
-        document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<Runnable>());
+        document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<>());
       }
       list.add(action);
     }
@@ -588,7 +588,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     synchronized (ACTION_AFTER_COMMIT) {
       list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list != null) {
-        list = new ArrayList<Runnable>(list);
+        list = new ArrayList<>(list);
         document.putUserData(ACTION_AFTER_COMMIT, null);
       }
     }
@@ -599,7 +599,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
-      List<Map.Entry<Object, Runnable>> entries = new ArrayList<Map.Entry<Object, Runnable>>(new LinkedHashMap<Object, Runnable>(actionsWhenAllDocumentsAreCommitted).entrySet());
+      List<Map.Entry<Object, Runnable>> entries = new ArrayList<>(
+        new LinkedHashMap<>(actionsWhenAllDocumentsAreCommitted).entrySet());
       beforeCommitHandler();
 
       try {

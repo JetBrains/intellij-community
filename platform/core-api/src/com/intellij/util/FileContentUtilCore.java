@@ -54,13 +54,13 @@ public class FileContentUtilCore {
   public static void reparseFiles(@NotNull final Collection<VirtualFile> files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       // files must be processed under one write action to prevent firing event for invalid files.
-      final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
+      final Set<VFilePropertyChangeEvent> events = new THashSet<>();
       for (VirtualFile file : files) {
         saveOrReload(file, events);
       }
 
       BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-      List<VFileEvent> eventList = new ArrayList<VFileEvent>(events);
+      List<VFileEvent> eventList = new ArrayList<>(events);
       publisher.before(eventList);
       publisher.after(eventList);
     });

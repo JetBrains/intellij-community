@@ -77,8 +77,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   private final ExecutorService executor = new BoundedTaskExecutor("Document committing pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final Object lock = new Object();
-  private final HashSetQueue<CommitTask> documentsToCommit = new HashSetQueue<CommitTask>();      // guarded by lock
-  private final HashSetQueue<CommitTask> documentsToApplyInEDT = new HashSetQueue<CommitTask>();  // guarded by lock
+  private final HashSetQueue<CommitTask> documentsToCommit = new HashSetQueue<>();      // guarded by lock
+  private final HashSetQueue<CommitTask> documentsToApplyInEDT = new HashSetQueue<>();  // guarded by lock
   private final ApplicationEx myApplication;
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by lock
@@ -370,7 +370,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
       else {
         final CommitTask commitTask = task;
-        final Ref<Pair<Runnable, Object>> result = new Ref<Pair<Runnable, Object>>();
+        final Ref<Pair<Runnable, Object>> result = new Ref<>();
         ProgressManager.getInstance().executeProcessUnderProgress(() -> result.set(commitUnderProgress(commitTask, false)), indicator);
         final Runnable finishRunnable = result.get().first;
         success = finishRunnable != null;
@@ -497,7 +497,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     final Document document = task.getDocument();
     final Project project = task.project;
     final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    final List<Processor<Document>> finishProcessors = new SmartList<Processor<Document>>();
+    final List<Processor<Document>> finishProcessors = new SmartList<>();
     Runnable runnable = () -> {
       myApplication.assertReadAccessAllowed();
       if (project.isDisposed()) return;
@@ -554,13 +554,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     }
     else if (!myApplication.tryRunReadAction(runnable)) {
       log(project, "Could not start read action", task, myApplication.isReadAccessAllowed(), Thread.currentThread());
-      return new Pair<Runnable, Object>(null, "Could not start read action");
+      return new Pair<>(null, "Could not start read action");
     }
 
     boolean canceled = task.indicator.isCanceled();
     assert !synchronously || !canceled;
     if (canceled) {
-      return new Pair<Runnable, Object>(null, "Indicator was canceled");
+      return new Pair<>(null, "Indicator was canceled");
     }
 
     Runnable result = createEdtRunnable(task, synchronously, finishProcessors);

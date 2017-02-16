@@ -54,7 +54,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
-    final List<PsiFile> roots = new ArrayList<PsiFile>();
+    final List<PsiFile> roots = new ArrayList<>();
     for (Language language : getLanguages()) {
       PsiFile psi = getPsi(language);
       if (psi != null) roots.add(psi);
@@ -116,7 +116,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   @NotNull
   @Override
   public List<FileElement> getKnownTreeRoots() {
-    List<FileElement> files = new ArrayList<FileElement>(myRoots.size());
+    List<FileElement> files = new ArrayList<>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
       final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
       if (treeElement != null) {

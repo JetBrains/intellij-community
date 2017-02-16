@@ -41,14 +41,14 @@ public abstract class CachedValueBase<T> {
     T value = result == null ? null : result.getValue();
     Object[] dependencies = getDependencies(result);
     if (dependencies == null) {
-      return new Data<T>(value, null, null);
+      return new Data<>(value, null, null);
     }
 
     TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-    List<Object> deps = new ArrayList<Object>(dependencies.length);
+    List<Object> deps = new ArrayList<>(dependencies.length);
     collectDependencies(timeStamps, deps, dependencies);
 
-    return new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
+    return new Data<>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
   }
 
   @Nullable
@@ -56,14 +56,14 @@ public abstract class CachedValueBase<T> {
     if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
-      myData = new SoftReference<Data<T>>(updatedValue);
+      myData = new SoftReference<>(updatedValue);
       return updatedValue;
     }
     return expected;
   }
 
   private synchronized void setData(@Nullable Data<T> data) {
-    myData = new SoftReference<Data<T>>(data);
+    myData = new SoftReference<>(data);
   }
 
   private synchronized boolean compareAndClearData(Data<T> expected) {

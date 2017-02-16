@@ -83,7 +83,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @NotNull
   private CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
     return CachedValuesManager.getManager(myManager.getProject()).createCachedValue(() -> {
-      Collection<PsiDirectory> result = new ArrayList<PsiDirectory>();
+      Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
       getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor, includeLibrarySources);
       return CachedValueProvider.Result
@@ -198,7 +198,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
     if (map == null) {
-      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = ContainerUtil.createConcurrentSoftValueMap());
+      myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
     }
     PsiClass[] classes = map.get(name);
     if (classes != null) {
@@ -214,7 +214,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private PsiClass[] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {
-      myDumbModeFullCache = new SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>>(scopeMap = ContainerUtil.newConcurrentMap());
+      myDumbModeFullCache = new SoftReference<>(scopeMap = ContainerUtil.newConcurrentMap());
     }
     Map<String, PsiClass[]> map = scopeMap.get(scope);
     if (map == null) {
@@ -222,7 +222,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       PsiClass[] array = findClassesHeuristically(name, scope);
       if (array != null) return array;
 
-      map = new HashMap<String, PsiClass[]>();
+      map = new HashMap<>();
       for (PsiClass psiClass : getClasses(scope)) {
         String psiClassName = psiClass.getName();
         if (psiClassName != null) {
@@ -244,7 +244,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = SoftReference.dereference(myDumbModePartialCache);
     if (partial == null) {
-      myDumbModePartialCache = new SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>>(partial = ContainerUtil.newConcurrentMap());
+      myDumbModePartialCache = new SoftReference<>(partial = ContainerUtil.newConcurrentMap());
     }
     PsiClass[] result = partial.get(Pair.create(scope, name));
     if (result == null) {
@@ -386,7 +386,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
 
       PsiCompositeModifierList result = modifiers.isEmpty() ? null : new PsiCompositeModifierList(getManager(), modifiers);
-      return new Result<PsiModifierList>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 

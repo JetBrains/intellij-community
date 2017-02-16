@@ -120,7 +120,7 @@ public class PsiClassImplUtil {
                                                         boolean stopOnFirst) {
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
     if (methodsByName.length == 0) return Collections.emptyList();
-    final List<PsiMethod> methods = new SmartList<PsiMethod>();
+    final List<PsiMethod> methods = new SmartList<>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
@@ -169,7 +169,7 @@ public class PsiClassImplUtil {
           break;
       }
 
-      List<PsiMember> list = new ArrayList<PsiMember>();
+      List<PsiMember> list = new ArrayList<>();
       for (PsiMember member : members) {
         if (name.equals(member.getName())) {
           list.add(member);
@@ -188,7 +188,7 @@ public class PsiClassImplUtil {
   private static <T extends PsiMember> List<T> getAllByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     List<Pair<T, PsiSubstitutor>> pairs = getAllWithSubstitutorsByMap(aClass, type);
 
-    final List<T> ret = new ArrayList<T>(pairs.size());
+    final List<T> ret = new ArrayList<>(pairs.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < pairs.size(); i++) {
       Pair<T, PsiSubstitutor> pair = pairs.get(i);
@@ -656,7 +656,7 @@ public class PsiClassImplUtil {
                                                              final boolean isRaw,
                                                              @NotNull final LanguageLevel languageLevel,
                                                              @NotNull final GlobalSearchScope resolveScope) {
-    if (visited == null) visited = new THashSet<PsiClass>();
+    if (visited == null) visited = new THashSet<>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -901,7 +901,7 @@ public class PsiClassImplUtil {
     if (referencedTypes.length == 0) {
       return PsiClass.EMPTY_ARRAY;
     }
-    final List<PsiClass> result = new ArrayList<PsiClass>(referencedTypes.length);
+    final List<PsiClass> result = new ArrayList<>(referencedTypes.length);
     for (PsiClassType referencedType : referencedTypes) {
       final PsiClass psiClass = referencedType.resolve();
       if (psiClass != null && psiClass.isInterface()) {
@@ -968,7 +968,7 @@ public class PsiClassImplUtil {
                                                                                             boolean checkBases) {
     if (!checkBases) {
       final PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
-      final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>(methodsByName.length);
+      final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<>(methodsByName.length);
       for (final PsiMethod method : methodsByName) {
         ret.add(Pair.create(method, PsiSubstitutor.EMPTY));
       }
@@ -1006,7 +1006,7 @@ public class PsiClassImplUtil {
     }
     if (upperBound instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
-      final List<PsiClassType> result = new ArrayList<PsiClassType>();
+      final List<PsiClassType> result = new ArrayList<>();
       for (PsiType conjunct : conjuncts) {
         if (conjunct instanceof PsiClassType) {
           result.add((PsiClassType)conjunct);
@@ -1228,7 +1228,7 @@ public class PsiClassImplUtil {
       PsiParameter parameter2 = parameters2[i];
       PsiType type1 = parameter1.getType();
       PsiType type2 = parameter2.getType();
-      if (!compareParamTypes(manager, type1, type2, new HashSet<String>())) return false;
+      if (!compareParamTypes(manager, type1, type2, new HashSet<>())) return false;
     }
     return true;
   }

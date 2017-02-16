@@ -126,11 +126,11 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
-    return new Immediate<T>(element, true, resolveTo);
+    return new Immediate<>(element, true, resolveTo);
   }
 
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, TextRange rangeInElement, final PsiElement resolveTo) {
-    return new Immediate<T>(element, rangeInElement, resolveTo);
+    return new Immediate<>(element, rangeInElement, resolveTo);
   }
 
   private ElementManipulator<T> getManipulator() {

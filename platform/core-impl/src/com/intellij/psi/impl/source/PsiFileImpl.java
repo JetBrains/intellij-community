@@ -78,9 +78,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private boolean myInvalidated;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private AstPathPsiMap myRefToPsi;
-  private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<FileElement>();
+  private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<>();
   protected final PsiManagerEx myManager;
-  public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
+  public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -595,7 +595,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @SuppressWarnings("unchecked")
   @NotNull
   public <T> T[] findChildrenByClass(Class<T> aClass) {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) result.add((T)child);
     }
@@ -801,8 +801,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return treeElement;
     }
     return myManager.isBatchFilesProcessingMode()
-                 ? new PatchedWeakReference<FileElement>(treeElement)
-                 : new SoftReference<FileElement>(treeElement);
+                 ? new PatchedWeakReference<>(treeElement)
+                 : new SoftReference<>(treeElement);
   }
 
   @Override

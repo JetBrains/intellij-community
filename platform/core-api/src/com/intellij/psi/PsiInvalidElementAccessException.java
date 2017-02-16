@@ -59,7 +59,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
   public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message, @Nullable Throwable cause) {
     super(null, cause);
-    myElementReference = new SoftReference<PsiElement>(element);
+    myElementReference = new SoftReference<>(element);
 
     if (element == null) {
       myMessage = message;
@@ -85,7 +85,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   }
 
   private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
-    myElementReference = new SoftReference<PsiElement>(null);
+    myElementReference = new SoftReference<>(null);
     final IElementType elementType = node.getElementType();
     myMessage = "Element " + node.getClass() + " of type " + elementType + " (" + elementType.getClass() + ")" +
                 (message == null ? "" : "; " + message);

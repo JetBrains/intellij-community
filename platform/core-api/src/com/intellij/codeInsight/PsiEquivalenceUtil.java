@@ -120,7 +120,7 @@ public class PsiEquivalenceUtil {
                                                  @Nullable Condition<PsiElement> isElementSignificantCondition,
                                                  boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (ASTNode node : children1) {
       final PsiElement child = node.getPsi();
       if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment)) &&

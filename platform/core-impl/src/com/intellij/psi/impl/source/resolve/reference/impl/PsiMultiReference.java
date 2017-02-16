@@ -162,7 +162,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @Override
   @NotNull
   public Object[] getVariants() {
-    Set<Object> variants = new HashSet<Object>();
+    Set<Object> variants = new HashSet<>();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
       ContainerUtil.addAll(variants, refVariants);
@@ -184,7 +184,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();
-    Collection<ResolveResult> result = new LinkedHashSet<ResolveResult>(refs.length);
+    Collection<ResolveResult> result = new LinkedHashSet<>(refs.length);
     PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {

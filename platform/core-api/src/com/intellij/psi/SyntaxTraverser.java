@@ -48,12 +48,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public static <T> SyntaxTraverser<T> syntaxTraverser(@NotNull Api<T> api) {
-    return new SyntaxTraverser<T>(api, null);
+    return new SyntaxTraverser<>(api, null);
   }
 
   @NotNull
   public static SyntaxTraverser<PsiElement> psiTraverser() {
-    return new SyntaxTraverser<PsiElement>(psiApi(), null);
+    return new SyntaxTraverser<>(psiApi(), null);
   }
 
   @NotNull
@@ -63,12 +63,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
-    return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
+    return new SyntaxTraverser<>(psiApiReversed(), null);
   }
 
   @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
-    return new SyntaxTraverser<ASTNode>(astApi(), null);
+    return new SyntaxTraverser<>(astApi(), null);
   }
 
   @NotNull
@@ -79,7 +79,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   public static SyntaxTraverser<LighterASTNode> lightTraverser(@NotNull PsiBuilder builder) {
     LighterASTApi api = new LighterASTApi(builder);
-    return new SyntaxTraverser<LighterASTNode>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.getStructure().getRoot())));
+    return new SyntaxTraverser<>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.getStructure().getRoot())));
   }
 
   public final Api<T> api;
@@ -92,7 +92,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   @Override
   protected SyntaxTraverser<T> newInstance(Meta<T> meta) {
-    return new SyntaxTraverser<T>(api, meta);
+    return new SyntaxTraverser<>(api, meta);
   }
 
   @Override

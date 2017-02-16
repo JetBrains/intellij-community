@@ -40,7 +40,7 @@ import java.util.Map;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement, CurrentCandidateProperties>>();
+  public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<>();
   @ApplicabilityLevelConstant private int myApplicabilityLevel; // benign race
   @ApplicabilityLevelConstant private int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;

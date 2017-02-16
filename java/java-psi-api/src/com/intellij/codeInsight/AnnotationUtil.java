@@ -79,7 +79,7 @@ public class AnnotationUtil {
       "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   static {
-    ALL_ANNOTATIONS = new HashSet<String>(2);
+    ALL_ANNOTATIONS = new HashSet<>(2);
     ALL_ANNOTATIONS.add(NULLABLE);
     ALL_ANNOTATIONS.add(NOT_NULL);
   }
@@ -181,7 +181,7 @@ public class AnnotationUtil {
     ArrayList<PsiAnnotation> result = null;
     for (final PsiAnnotation psiAnnotation : annotations) {
       if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
-        if (result == null) result = new ArrayList<PsiAnnotation>();
+        if (result == null) result = new ArrayList<>();
         result.add(psiAnnotation);
       }
     }
@@ -203,7 +203,7 @@ public class AnnotationUtil {
         collectSuperParameters(result, (PsiParameter)element);
       }
 
-      List<T> list = new ArrayList<T>();
+      List<T> list = new ArrayList<>();
       //noinspection unchecked
       list.addAll((Collection<? extends T>)result);
 
@@ -326,7 +326,7 @@ public class AnnotationUtil {
     if (checkHierarchy) {
       if (listOwner instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)listOwner;
-        if (processed == null) processed = new THashSet<PsiMember>();
+        if (processed == null) processed = new THashSet<>();
         if (!processed.add(method)) return false;
         final PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
@@ -334,7 +334,7 @@ public class AnnotationUtil {
         }
       } else if (listOwner instanceof PsiClass) {
         final PsiClass clazz = (PsiClass)listOwner;
-        if (processed == null) processed = new THashSet<PsiMember>();
+        if (processed == null) processed = new THashSet<>();
         if (!processed.add(clazz)) return false;
         final PsiClass[] superClasses = clazz.getSupers();
         for (PsiClass superClass : superClasses) {
@@ -380,7 +380,7 @@ public class AnnotationUtil {
       }
       else if (isPattern) {
         if (fqns == null) {
-          fqns = new ArrayList<String>();
+          fqns = new ArrayList<>();
           final PsiAnnotation[] ownAnnotations = modList.getAnnotations();
           for (PsiAnnotation anno : ownAnnotations) {
             final String qName = anno.getQualifiedName();
@@ -447,7 +447,7 @@ public class AnnotationUtil {
     if (inHierarchy) {
       if (owner instanceof PsiClass) {
         for (PsiClass superClass : ((PsiClass)owner).getSupers()) {
-          if (visited == null) visited = new THashSet<PsiModifierListOwner>();
+          if (visited == null) visited = new THashSet<>();
           if (visited.add(superClass)) annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superClass, true, visited, withInferred));
         }
       }
@@ -461,7 +461,7 @@ public class AnnotationUtil {
           PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
           for (final HierarchicalMethodSignature superSignature : superSignatures) {
             final PsiMethod superMethod = superSignature.getMethod();
-            if (visited == null) visited = new THashSet<PsiModifierListOwner>();
+            if (visited == null) visited = new THashSet<>();
             if (!visited.add(superMethod)) continue;
             if (!resolveHelper.isAccessible(superMethod, owner, null)) continue;
             annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superMethod, true, visited, withInferred));
@@ -483,7 +483,7 @@ public class AnnotationUtil {
             PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
             for (final HierarchicalMethodSignature superSignature : superSignatures) {
               final PsiMethod superMethod = superSignature.getMethod();
-              if (visited == null) visited = new THashSet<PsiModifierListOwner>();
+              if (visited == null) visited = new THashSet<>();
               if (!visited.add(superMethod)) continue;
               if (!resolveHelper.isAccessible(superMethod, owner, null)) continue;
               PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
@@ -567,8 +567,8 @@ public class AnnotationUtil {
     if (name == null || !name.equals(b.getQualifiedName())) {
       return false;
     }
-    final Map<String, PsiAnnotationMemberValue> valueMap1 = new THashMap<String, PsiAnnotationMemberValue>(2);
-    final Map<String, PsiAnnotationMemberValue> valueMap2 = new THashMap<String, PsiAnnotationMemberValue>(2);
+    final Map<String, PsiAnnotationMemberValue> valueMap1 = new THashMap<>(2);
+    final Map<String, PsiAnnotationMemberValue> valueMap2 = new THashMap<>(2);
     if (!fillValueMap(a.getParameterList(), valueMap1) || !fillValueMap(b.getParameterList(), valueMap2) ||
         valueMap1.size() != valueMap2.size()) {
       return false;
@@ -643,7 +643,7 @@ public class AnnotationUtil {
   }
 
   private static Map<String, PsiAnnotation> buildAnnotationMap(PsiAnnotation[] annotations) {
-    final Map<String, PsiAnnotation> map = new HashMap<String, PsiAnnotation>();
+    final Map<String, PsiAnnotation> map = new HashMap<>();
     for (PsiAnnotation annotation : annotations) {
       map.put(annotation.getQualifiedName(), annotation);
     }

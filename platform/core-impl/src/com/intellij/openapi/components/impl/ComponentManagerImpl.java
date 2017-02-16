@@ -64,7 +64,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private MessageBus myMessageBus;
 
-  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>(); // contents guarded by this
+  private final Map<String, BaseComponent> myNameToComponent = new THashMap<>(); // contents guarded by this
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
@@ -72,7 +72,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private int myInstantiatedComponentCount = -1;
   private boolean myComponentsCreated;
 
-  private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
+  private final List<BaseComponent> myBaseComponents = new ArrayList<>();
 
   private final ComponentManager myParentComponentManager;
   private final Condition myDisposedCondition = o -> isDisposed();
@@ -241,7 +241,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         T instance = (T)((ComponentConfigComponentAdapter)componentAdapter).myInitializedComponentInstance;
         if (instance != null) {
           if (result == null) {
-            result = new ArrayList<T>();
+            result = new ArrayList<>();
           }
           result.add(instance);
         }
@@ -296,7 +296,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
-    ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
+    ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins((message, progress) -> indicator.setFraction(progress))) {

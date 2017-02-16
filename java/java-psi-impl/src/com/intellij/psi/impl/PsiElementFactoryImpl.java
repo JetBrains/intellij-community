@@ -357,7 +357,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiTypeParameterListOwner owner) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(owner)) {
-      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
     return PsiSubstitutorImpl.createSubstitutor(substitutorMap);
@@ -368,7 +368,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiSubstitutor baseSubstitutor, @NotNull final PsiTypeParameter[] typeParameters) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : typeParameters) {
-      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
     return PsiSubstitutorImpl.createSubstitutor(substitutorMap).putAll(baseSubstitutor);

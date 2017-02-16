@@ -137,7 +137,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   @Override
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
     processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       for (final VirtualFile file : dir.getChildren()) {
         if (!file.isDirectory() && ArrayUtil.contains(file.getExtension(), myFileExtensions)) {
@@ -151,7 +151,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    final CommonProcessors.FindFirstProcessor<VirtualFile> processor = new CommonProcessors.FindFirstProcessor<VirtualFile>();
+    final CommonProcessors.FindFirstProcessor<VirtualFile> processor = new CommonProcessors.FindFirstProcessor<>();
     processDirectories(qualifiedName, ALL_SCOPE, processor);
     return processor.getFoundValue() != null ? createPackage(qualifiedName) : null;
   }
@@ -187,7 +187,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       return super.getSubPackages(psiPackage, scope);
     }
 
-    List<PsiPackage> result = new ArrayList<PsiPackage>();
+    List<PsiPackage> result = new ArrayList<>();
     for (String name : names) {
       result.add(createPackage(pkgName.isEmpty() ? name : pkgName + "." + name));
     }

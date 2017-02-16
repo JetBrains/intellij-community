@@ -51,7 +51,7 @@ public class RedundantCastUtil {
     } else {
       where.acceptChildren(visitor);
     }
-    return new ArrayList<PsiTypeCastExpression>(visitor.myFoundCasts);
+    return new ArrayList<>(visitor.myFoundCasts);
   }
 
   public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
@@ -98,7 +98,7 @@ public class RedundantCastUtil {
   }
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
-    private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
+    private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<>();
 
     private MyCollectingVisitor() {
       super(true);

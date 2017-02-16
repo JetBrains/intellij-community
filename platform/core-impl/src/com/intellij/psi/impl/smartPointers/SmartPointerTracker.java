@@ -35,7 +35,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 class SmartPointerTracker {
-  private static final ReferenceQueue<SmartPsiElementPointerImpl> ourQueue = new ReferenceQueue<SmartPsiElementPointerImpl>();
+  private static final ReferenceQueue<SmartPsiElementPointerImpl> ourQueue = new ReferenceQueue<>();
 
   private int nextAvailableIndex;
   private int size;
@@ -127,8 +127,8 @@ class SmartPointerTracker {
 
   private void ensureSorted() {
     if (!mySorted) {
-      List<SmartPsiElementPointerImpl> pointers = new ArrayList<SmartPsiElementPointerImpl>();
-      processAlivePointers(new CommonProcessors.CollectProcessor<SmartPsiElementPointerImpl>(pointers));
+      List<SmartPsiElementPointerImpl> pointers = new ArrayList<>();
+      processAlivePointers(new CommonProcessors.CollectProcessor<>(pointers));
       assert size == pointers.size();
 
       pointers

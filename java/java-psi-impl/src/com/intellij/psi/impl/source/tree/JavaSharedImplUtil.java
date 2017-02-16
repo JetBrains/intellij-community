@@ -97,7 +97,7 @@ public class JavaSharedImplUtil {
           modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
         TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
         if (type instanceof PsiArrayType) {
-          Stack<PsiArrayType> types = new Stack<PsiArrayType>();
+          Stack<PsiArrayType> types = new Stack<>();
           do {
             types.push((PsiArrayType)type);
             type = ((PsiArrayType)type).getComponentType();

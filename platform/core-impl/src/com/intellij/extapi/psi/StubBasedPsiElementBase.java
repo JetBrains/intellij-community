@@ -161,7 +161,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
     final String creationTraces = ourTraceStubAstBinding ? dumpCreationTraces(fileElement) : null;
 
-    List<Attachment> attachments = new ArrayList<Attachment>();
+    List<Attachment> attachments = new ArrayList<>();
     if (stubString != null) {
       attachments.add(new Attachment("stubTree.txt", stubString));
     }

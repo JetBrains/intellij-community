@@ -32,10 +32,10 @@ public class ConcurrencyAnnotationsManager {
   private static final String THREAD_SAFE = "ThreadSafe";
   private static final String NOT_THREAD_SAFE = "NotThreadSafe";
 
-  private final List<String> myImmutableList = new ArrayList<String>();
-  private final List<String> myGuardedByList = new ArrayList<String>();
-  private final List<String> myThreadSafeList = new ArrayList<String>();
-  private final List<String> myNotThreadSafeList = new ArrayList<String>();
+  private final List<String> myImmutableList = new ArrayList<>();
+  private final List<String> myGuardedByList = new ArrayList<>();
+  private final List<String> myThreadSafeList = new ArrayList<>();
+  private final List<String> myNotThreadSafeList = new ArrayList<>();
 
   public ConcurrencyAnnotationsManager() {
     fillDefaults(myImmutableList, IMMUTABLE);

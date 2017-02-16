@@ -144,7 +144,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     PsiImportList importList = getImportList();
     if (importList == null) return EMPTY_ARRAY;
 
-    List<PsiElement> array = new ArrayList<PsiElement>();
+    List<PsiElement> array = new ArrayList<>();
 
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
@@ -175,7 +175,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     PsiImportList importList = getImportList();
     if (importList == null) return PsiClass.EMPTY_ARRAY;
 
-    List<PsiClass> array = new ArrayList<PsiClass>();
+    List<PsiClass> array = new ArrayList<>();
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
       if (!statement.isOnDemand()) {
@@ -220,10 +220,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static class StaticImportFilteringProcessor implements PsiScopeProcessor {
     private final PsiScopeProcessor myDelegate;
     private boolean myIsProcessingOnDemand;
-    private final Collection<String> myHiddenFieldNames = new HashSet<String>();
-    private final Collection<String> myHiddenMethodNames = new HashSet<String>();
-    private final Collection<String> myHiddenTypeNames = new HashSet<String>();
-    private final Collection<PsiElement> myCollectedElements = new HashSet<PsiElement>();
+    private final Collection<String> myHiddenFieldNames = new HashSet<>();
+    private final Collection<String> myHiddenMethodNames = new HashSet<>();
+    private final Collection<String> myHiddenTypeNames = new HashSet<>();
+    private final Collection<PsiElement> myCollectedElements = new HashSet<>();
 
     public StaticImportFilteringProcessor(final PsiScopeProcessor delegate) {
       myDelegate = delegate;

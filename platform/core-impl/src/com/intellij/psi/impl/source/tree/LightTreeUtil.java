@@ -81,7 +81,7 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       LighterASTNode child = children.get(i);
       if (child.getTokenType() == type) {
-        if (result == null) result = new SmartList<LighterASTNode>();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }
@@ -97,7 +97,7 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       LighterASTNode child = children.get(i);
       if (types.contains(child.getTokenType())) {
-        if (result == null) result = new SmartList<LighterASTNode>();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }

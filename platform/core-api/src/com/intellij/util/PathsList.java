@@ -31,9 +31,9 @@ import java.io.File;
 import java.util.*;
 
 public class PathsList  {
-  private final List<String> myPath = new ArrayList<String>();
-  private final List<String> myPathTail = new ArrayList<String>();
-  private final Set<String> myPathSet = new HashSet<String>();
+  private final List<String> myPath = new ArrayList<>();
+  private final List<String> myPathTail = new ArrayList<>();
+  private final Set<String> myPathSet = new HashSet<>();
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE =
     (NullableFunction<String, VirtualFile>)path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
@@ -114,7 +114,7 @@ public class PathsList  {
 
   @NotNull
   public List<String> getPathList() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     result.addAll(myPath);
     result.addAll(myPathTail);
     return result;

@@ -95,7 +95,7 @@ public class CoreApplicationEnvironment {
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
-                                      new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
+                                      new StaticGetter<>(myFileTypeRegistry),
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();

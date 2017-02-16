@@ -47,7 +47,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP;
   private static final Map<IElementType, String> KEYWORD_TYPE_TO_NAME_MAP;
   static {
-    NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
+    NAME_TO_KEYWORD_TYPE_MAP = new THashMap<>();
     NAME_TO_KEYWORD_TYPE_MAP.put(PUBLIC, JavaTokenType.PUBLIC_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PROTECTED, JavaTokenType.PROTECTED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PRIVATE, JavaTokenType.PRIVATE_KEYWORD);
@@ -316,7 +316,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private static class ModifierCache {
-    static final WeakInterner<List<String>> ourInterner = new WeakInterner<List<String>>();
+    static final WeakInterner<List<String>> ourInterner = new WeakInterner<>();
     final PsiFile file;
     final List<String> modifiers;
     final long modCount;

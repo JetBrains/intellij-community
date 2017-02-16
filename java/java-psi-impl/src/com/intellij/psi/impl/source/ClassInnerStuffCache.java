@@ -107,7 +107,7 @@ public class ClassInnerStuffCache {
   public PsiMethod getValuesMethod() {
     return !myClass.isEnum() || myClass.getName() == null ? null : CachedValuesManager.getCachedValue(myClass, () -> {
       String text = "public static " + myClass.getName() + "[] values() { }";
-      return new CachedValueProvider.Result<PsiMethod>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      return new CachedValueProvider.Result<>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
     });
   }
 
@@ -115,7 +115,7 @@ public class ClassInnerStuffCache {
   public PsiMethod getValueOfMethod() {
     return !myClass.isEnum() || myClass.getName() == null ? null : CachedValuesManager.getCachedValue(myClass, () -> {
       String text = "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }";
-      return new CachedValueProvider.Result<PsiMethod>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      return new CachedValueProvider.Result<>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
     });
   }
 
@@ -145,7 +145,7 @@ public class ClassInnerStuffCache {
     PsiField[] fields = getFields();
     if (fields.length == 0) return Collections.emptyMap();
 
-    Map<String, PsiField> cachedFields = new THashMap<String, PsiField>();
+    Map<String, PsiField> cachedFields = new THashMap<>();
     for (PsiField field : fields) {
       String name = field.getName();
       if (!(field instanceof ExternallyDefinedPsiElement) || !cachedFields.containsKey(name)) {
@@ -182,7 +182,7 @@ public class ClassInnerStuffCache {
     PsiClass[] classes = getInnerClasses();
     if (classes.length == 0) return Collections.emptyMap();
 
-    Map<String, PsiClass> cachedInners = new THashMap<String, PsiClass>();
+    Map<String, PsiClass> cachedInners = new THashMap<>();
     for (PsiClass psiClass : classes) {
       String name = psiClass.getName();
       if (name == null) {

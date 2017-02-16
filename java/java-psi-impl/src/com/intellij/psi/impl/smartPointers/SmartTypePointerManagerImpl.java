@@ -127,7 +127,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     protected PsiClassType calcType() {
       final PsiElement classElement = myClass.getElement();
       if (!(classElement instanceof PsiClass)) return null;
-      Map<PsiTypeParameter, PsiType> resurrected = new HashMap<PsiTypeParameter, PsiType>();
+      Map<PsiTypeParameter, PsiType> resurrected = new HashMap<>();
       final Set<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> set = myMap.entrySet();
       for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
         PsiElement element = entry.getKey().getElement();
@@ -192,7 +192,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
         classType = ((PsiClassReferenceType)classType).createImmediateCopy();
       }
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final HashMap<SmartPsiElementPointer, SmartTypePointer> map = new HashMap<SmartPsiElementPointer, SmartTypePointer>();
+      final HashMap<SmartPsiElementPointer, SmartTypePointer> map = new HashMap<>();
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult != null) {

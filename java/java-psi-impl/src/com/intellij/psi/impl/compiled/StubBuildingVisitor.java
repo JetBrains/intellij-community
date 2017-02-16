@@ -254,7 +254,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myInternalName.equals(outerName)) {
       T innerClass = myInnersStrategy.findInnerClass(innerName, mySource);
       if (innerClass != null) {
-        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<T>(innerClass, myInnersStrategy, myResult, access, innerName));
+        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName));
       }
     }
   }

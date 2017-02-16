@@ -153,7 +153,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
   static {
-    PRIMITIVE_TYPES = new HashMap<String, PsiPrimitiveType>();
+    PRIMITIVE_TYPES = new HashMap<>();
     PRIMITIVE_TYPES.put(PsiType.BYTE.getCanonicalText(), PsiType.BYTE);
     PRIMITIVE_TYPES.put(PsiType.CHAR.getCanonicalText(), PsiType.CHAR);
     PRIMITIVE_TYPES.put(PsiType.DOUBLE.getCanonicalText(), PsiType.DOUBLE);

@@ -157,7 +157,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     PsiMethod[] methods = null;
     if (element instanceof PsiIdentifier) {
       final String identifierName = element.getText();
-      final List<PsiMethod> result = new ArrayList<PsiMethod>();
+      final List<PsiMethod> result = new ArrayList<>();
       for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
         if (identifierName.equals(signature.getName())) {
           result.add(signature.getMethod());

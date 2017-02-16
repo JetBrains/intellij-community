@@ -31,7 +31,7 @@ public interface BusyObject {
 
   abstract class Impl implements BusyObject {
 
-    private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
+    private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<>();
 
     public abstract boolean isReady();
 
@@ -101,10 +101,10 @@ public interface BusyObject {
         }
 
         myReadyCallbacks.remove(readyRequestor);
-        ArrayList<ActionCallback> rejected = new ArrayList<ActionCallback>();
+        ArrayList<ActionCallback> rejected = new ArrayList<>();
         rejected.addAll(myReadyCallbacks.values());
         myReadyCallbacks.clear();
-        return new Pair<ActionCallback, List<ActionCallback>>(done, rejected);
+        return new Pair<>(done, rejected);
       }
     }
 

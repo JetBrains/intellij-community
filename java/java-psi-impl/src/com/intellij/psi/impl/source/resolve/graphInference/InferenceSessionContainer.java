@@ -32,7 +32,7 @@ import java.util.*;
 
 public class InferenceSessionContainer {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSessionContainer.class.getName());
-  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
+  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<>();
 
   public InferenceSessionContainer() {
   }
@@ -92,7 +92,9 @@ public class InferenceSessionContainer {
           }
           else {
             session = CachedValuesManager.getCachedValue(topLevelCall,
-                                                         () -> new CachedValueProvider.Result<InferenceSession>(startTopLevelInference(topLevelCall, policy), PsiModificationTracker.MODIFICATION_COUNT));
+                                                         () -> new CachedValueProvider.Result<>(
+                                                           startTopLevelInference(topLevelCall, policy),
+                                                           PsiModificationTracker.MODIFICATION_COUNT));
 
             if (session != null) {
               //reject cached top level session if it was based on wrong candidate: check nested session if candidate (it's type parameters) are the same
@@ -209,7 +211,7 @@ public class InferenceSessionContainer {
 
   private static CompoundInitialState createState(InferenceSession topLevelSession) {
     final PsiSubstitutor topInferenceSubstitutor = replaceVariables(topLevelSession.getInferenceVariables());
-    final Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<PsiElement, InitialInferenceState>();
+    final Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<>();
 
     final InferenceSessionContainer copy = new InferenceSessionContainer() {
       @Override
@@ -271,7 +273,7 @@ public class InferenceSessionContainer {
 
   @NotNull
   private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
-    final List<InferenceVariable> targetVars = new ArrayList<InferenceVariable>();
+    final List<InferenceVariable> targetVars = new ArrayList<>();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[inferenceVariables.size()]);
     for (InferenceVariable variable : oldVars) {

@@ -126,7 +126,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
       return PsiType.EMPTY_ARRAY;
     }
 
-    List<PsiType> lst = new ArrayList<PsiType>();
+    List<PsiType> lst = new ArrayList<>();
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
       if (substituted == null) {

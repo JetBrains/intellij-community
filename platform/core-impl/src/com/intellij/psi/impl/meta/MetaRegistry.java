@@ -59,7 +59,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     CachedValue<PsiMetaData> value =
       CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
         data.init(element);
-        return new CachedValueProvider.Result<PsiMetaData>(data, data.getDependences());
+        return new CachedValueProvider.Result<>(data, data.getDependences());
       });
     element.putUserData(META_DATA_KEY, value);
   }
@@ -94,10 +94,10 @@ public class MetaRegistry extends MetaDataRegistrar {
                   LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
                 }
               }
-              return new CachedValueProvider.Result<PsiMetaData>(data, ArrayUtil.append(dependences, element));
+              return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependences, element));
             }
           }
-          return new CachedValueProvider.Result<PsiMetaData>(null, element);
+          return new CachedValueProvider.Result<>(null, element);
         }, false);
       }
     };

@@ -25,7 +25,7 @@ import java.util.*;
  */
 class PluginClassCache {
   private static final Object ourLock = new Object();
-  private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<PluginId>();
+  private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<>();
 
   public void addPluginClass(PluginId pluginId) {
     synchronized(ourLock) {

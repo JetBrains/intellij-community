@@ -126,8 +126,8 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void checkLanguageChange() {
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
-    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
@@ -350,7 +350,7 @@ public class FileManagerImpl implements FileManager {
 
   @TestOnly
   public void checkConsistency() {
-    Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
     for (VirtualFile vFile : fileToViewProvider.keySet()) {
       final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
@@ -364,7 +364,7 @@ public class FileManagerImpl implements FileManager {
       }
     }
 
-    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>(myVFileToPsiDirMap);
+    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new HashMap<>(myVFileToPsiDirMap);
     myVFileToPsiDirMap.clear();
 
     for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
@@ -505,7 +505,7 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   @Override
   public List<PsiFile> getAllCachedFiles() {
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = new ArrayList<>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
       if (provider instanceof SingleRootFileViewProvider) {
         ContainerUtil.addIfNotNull(files, ((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
@@ -515,7 +515,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void removeInvalidFilesAndDirs(boolean useFind) {
-    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<VirtualFile, PsiDirectory>(myVFileToPsiDirMap);
+    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<>(myVFileToPsiDirMap);
     if (useFind) {
       myVFileToPsiDirMap.clear();
     }
@@ -535,8 +535,8 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiDirMap.putAll(fileToPsiDirMap);
 
     // note: important to update directories map first - findFile uses findDirectory!
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
-    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
     if (useFind) {
       myVFileToViewProviderMap.clear();
     }

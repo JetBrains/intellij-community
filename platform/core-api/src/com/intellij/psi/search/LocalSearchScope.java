@@ -68,8 +68,8 @@ public class LocalSearchScope extends SearchScope {
   public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable final String displayName, final boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
-    Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
-    Set<VirtualFile> virtualFiles = new THashSet<VirtualFile>(scope.length);
+    Set<PsiElement> localScope = new LinkedHashSet<>(scope.length);
+    Set<VirtualFile> virtualFiles = new THashSet<>(scope.length);
     for (final PsiElement element : scope) {
       LOG.assertTrue(element != null, "null element");
       PsiFile containingFile = element.getContainingFile();
@@ -149,7 +149,7 @@ public class LocalSearchScope extends SearchScope {
 
   @NotNull
   private static LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element1 : scope1.myScope) {
       for (final PsiElement element2 : scope2.myScope) {
         final PsiElement element = intersectScopeElements(element1, element2);
@@ -226,7 +226,7 @@ public class LocalSearchScope extends SearchScope {
     PsiElement[] elements1 = getScope();
     PsiElement[] elements2 = scope2.getScope();
     boolean[] united = new boolean[elements2.length];
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     loop1:
     for (final PsiElement element1 : elements1) {
       for (int j = 0; j < elements2.length; j++) {
@@ -279,7 +279,7 @@ public class LocalSearchScope extends SearchScope {
     }
     return ApplicationManager.getApplication().runReadAction((Computable<LocalSearchScope>)() -> {
       PsiElement[] elements = scope.getScope();
-      List<PsiElement> result = new ArrayList<PsiElement>(elements.length);
+      List<PsiElement> result = new ArrayList<>(elements.length);
       for (PsiElement element : elements) {
         PsiFile containingFile = element.getContainingFile();
         FileType fileType = containingFile.getFileType();

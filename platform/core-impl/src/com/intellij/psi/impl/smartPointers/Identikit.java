@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class Identikit {
-  private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<ByType>();
-  private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<ByAnchor>();
+  private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
+  private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
 
   @Nullable
   public abstract PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);

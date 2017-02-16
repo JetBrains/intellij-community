@@ -59,7 +59,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected final PsiManager myPsiManager;
 
   private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<AnnotationData, AnnotationData>(); // guarded by myAnnotationDataCache
+  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<>(); // guarded by myAnnotationDataCache
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
@@ -106,8 +106,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
                                                              data -> data.getAnnotation(BaseExternalAnnotationsManager.this));
   }
 
-  private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
-  private final ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData> cache = new ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData>();
+  private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);
+  private final ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData> cache = new ConcurrentMostlySingularMultiMap<>();
 
   // interner for storing annotation FQN
   private final CharTableImpl charTable = new CharTableImpl();
@@ -188,7 +188,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) return NO_DATA;
 
-    SmartList<AnnotationData> result = new SmartList<AnnotationData>();
+    SmartList<AnnotationData> result = new SmartList<>();
     for (PsiFile file : files) {
       if (!file.isValid()) continue;
       if (onlyWritable && !file.isWritable()) continue;
@@ -227,7 +227,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       }
     }
 
-    Set<PsiFile> possibleAnnotationXmls = new THashSet<PsiFile>();
+    Set<PsiFile> possibleAnnotationXmls = new THashSet<>();
     String relativePath = ((PsiJavaFile)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
@@ -244,7 +244,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return null;
     }
 
-    List<PsiFile> result = new SmartList<PsiFile>(possibleAnnotationXmls);
+    List<PsiFile> result = new SmartList<>(possibleAnnotationXmls);
     // writable go first
     result.sort((f1, f2) -> {
       boolean w1 = f1.isWritable();
@@ -397,7 +397,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   };
 
   private class DataParsingSaxHandler extends DefaultHandler {
-    private final MostlySingularMultiMap<String, AnnotationData> myData = new MostlySingularMultiMap<String, AnnotationData>();
+    private final MostlySingularMultiMap<String, AnnotationData> myData = new MostlySingularMultiMap<>();
     private final PsiFile myFile;
 
     private String myExternalName;

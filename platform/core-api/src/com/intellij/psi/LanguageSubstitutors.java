@@ -92,7 +92,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
       synchronized (PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY) {
         key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
         if (key == null) {
-          key = new Key<Language>("Substituted lang key for " + project.getName());
+          key = new Key<>("Substituted lang key for " + project.getName());
           PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.set(project, key);
         }
       }

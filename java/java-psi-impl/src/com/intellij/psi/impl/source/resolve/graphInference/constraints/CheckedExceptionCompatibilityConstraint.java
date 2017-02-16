@@ -103,14 +103,14 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(),
                                                 (Function<PsiType, PsiType>)type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
-      final List<PsiType> expectedNonProperThrownTypes = new ArrayList<PsiType>();
+      final List<PsiType> expectedNonProperThrownTypes = new ArrayList<>();
       for (PsiType type : expectedThrownTypes) {
         if (!session.isProperType(type)) {
           expectedNonProperThrownTypes.add(type);
         }
       }
       
-      final List<PsiType> thrownTypes = new ArrayList<PsiType>();
+      final List<PsiType> thrownTypes = new ArrayList<>();
       final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
       if (body != null) {
         final List<PsiClassType> exceptions =  ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
@@ -127,7 +127,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
           }
         }
       } else {
-        final ArrayList<PsiType> expectedProperTypes = new ArrayList<PsiType>(expectedThrownTypes);
+        final ArrayList<PsiType> expectedProperTypes = new ArrayList<>(expectedThrownTypes);
         expectedProperTypes.removeAll(expectedNonProperThrownTypes);
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedProperTypes, thrownType)) {

@@ -127,9 +127,9 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   }
 
   private void initializeMaps() {
-    Map<String, PsiImportStatement> classNameToImportMap = new HashMap<String, PsiImportStatement>();
-    Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<String, PsiImportStatement>();
-    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<String, PsiImportStatementBase>();
+    Map<String, PsiImportStatement> classNameToImportMap = new HashMap<>();
+    Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<>();
+    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<>();
     PsiImportStatement[] imports = getImportStatements();
     for (PsiImportStatement anImport : imports) {
       String qName = anImport.getQualifiedName();

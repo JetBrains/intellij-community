@@ -30,7 +30,7 @@ import java.util.concurrent.*;
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
-    final Ref<T> result = new Ref<T>();
+    final Ref<T> result = new Ref<>();
     tryRunReadAction(() -> result.set(computable.compute()));
     return result.get();
   }

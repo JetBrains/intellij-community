@@ -39,7 +39,7 @@ import java.util.*;
  */
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
-  public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
+  public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
 
   @Nullable
@@ -284,7 +284,7 @@ public class LambdaUtil {
   public static List<HierarchicalMethodSignature> findFunctionCandidates(@Nullable final PsiClass psiClass) {
     if (!isPlainInterface(psiClass)) return null;
 
-    final List<HierarchicalMethodSignature> methods = new ArrayList<HierarchicalMethodSignature>();
+    final List<HierarchicalMethodSignature> methods = new ArrayList<>();
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalents = PsiSuperMethodUtil.collectOverrideEquivalents(psiClass);
     final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
     for (HierarchicalMethodSignature signature : visibleSignatures) {
@@ -496,7 +496,7 @@ public class LambdaUtil {
         }
 
         if (gParent instanceof PsiMethodCallExpression) {
-          final Set<PsiType> types = new HashSet<PsiType>();
+          final Set<PsiType> types = new HashSet<>();
           final JavaResolveResult[] results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
             final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
@@ -571,7 +571,7 @@ public class LambdaUtil {
       //if (((PsiExpression)body).getType() != PsiType.VOID) return Collections.emptyList();
       return Collections.singletonList((PsiExpression)body);
     }
-    final List<PsiExpression> result = new ArrayList<PsiExpression>();
+    final List<PsiExpression> result = new ArrayList<>();
     for (PsiReturnStatement returnStatement : getReturnStatements(lambdaExpression)) {
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
@@ -608,7 +608,7 @@ public class LambdaUtil {
         }
         
         if (resolve instanceof PsiTypeParameter) {
-          final Set<PsiClass> classes = new HashSet<PsiClass>();
+          final Set<PsiClass> classes = new HashSet<>();
           for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
             final PsiClass aClass = type.resolve();
             if (aClass != null) {
@@ -695,14 +695,14 @@ public class LambdaUtil {
   public static Map<PsiElement, PsiType> getFunctionalTypeMap() {
     Map<PsiElement, PsiType> map = ourFunctionTypes.get();
     if (map == null) {
-      map = new HashMap<PsiElement, PsiType>();
+      map = new HashMap<>();
       ourFunctionTypes.set(map);
     }
     return map;
   }
 
   public static Map<PsiElement, String> checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
-    Map<PsiElement, String> errors = new LinkedHashMap<PsiElement, String>();
+    Map<PsiElement, String> errors = new LinkedHashMap<>();
     if (PsiType.VOID.equals(functionalInterfaceReturnType)) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
@@ -937,7 +937,7 @@ public class LambdaUtil {
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
-    public final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<PsiTypeParameter>();
+    public final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<>();
 
     public TypeParamsChecker(PsiElement expression, PsiClass aClass) {
       myClass = aClass;

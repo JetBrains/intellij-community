@@ -35,7 +35,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
   @NotNull private final List<String> myComponents;
 
   private QualifiedName(int count) {
-    myComponents = new ArrayList<String>(count);
+    myComponents = new ArrayList<>(count);
   }
 
   public static QualifiedName fromComponents(Collection<String> components) {

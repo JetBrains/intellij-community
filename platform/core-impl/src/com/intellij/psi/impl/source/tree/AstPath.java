@@ -215,7 +215,7 @@ public abstract class AstPath extends SubstrateRef {
       if (node == null) {
         node = super.getNode();
         if (myFile.mayCacheAst()) {
-          myNode = new WeakReference<CompositeElement>(node);
+          myNode = new WeakReference<>(node);
         }
       }
       return node;

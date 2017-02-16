@@ -72,7 +72,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
 
     PsiType type = null;
-    List<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
+    List<PsiAnnotation> annotations = new SmartList<>();
 
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
@@ -155,10 +155,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   private Computable<PsiJavaCodeReferenceElement> getReferenceComputable(PsiJavaCodeReferenceElement ref) {
     final PsiElement parent = getParent();
     if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
-      return computeFromTypeOwner(parent, new WeakReference<PsiJavaCodeReferenceElement>(ref));
+      return computeFromTypeOwner(parent, new WeakReference<>(ref));
     }
 
-    return new Computable.PredefinedValueComputable<PsiJavaCodeReferenceElement>(ref);
+    return new Computable.PredefinedValueComputable<>(ref);
   }
 
   @NotNull
@@ -170,7 +170,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       public PsiJavaCodeReferenceElement compute() {
         PsiJavaCodeReferenceElement result = myCache.get();
         if (result == null) {
-          myCache = new WeakReference<PsiJavaCodeReferenceElement>(result = getParentTypeElement().getReferenceElement());
+          myCache = new WeakReference<>(result = getParentTypeElement().getReferenceElement());
         }
         return result;
       }
