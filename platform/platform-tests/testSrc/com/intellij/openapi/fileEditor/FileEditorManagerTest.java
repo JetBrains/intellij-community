@@ -52,16 +52,15 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testTabLimit() throws Exception {
-
-    int limit = UISettings.getInstance().EDITOR_TAB_LIMIT;
+    int limit = UISettings.getInstance().getEditorTabLimit();
     try {
-      UISettings.getInstance().EDITOR_TAB_LIMIT = 2;
+      UISettings.getInstance().setEditorTabLimit(2);
       openFiles(STRING);
       // note that foo.xml is pinned
       assertOpenFiles("foo.xml", "3.txt");
     }
     finally {
-      UISettings.getInstance().EDITOR_TAB_LIMIT = limit;
+      UISettings.getInstance().setEditorTabLimit(limit);
     }
   }
 

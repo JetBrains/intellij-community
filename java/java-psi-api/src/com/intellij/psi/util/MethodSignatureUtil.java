@@ -329,12 +329,12 @@ public class MethodSignatureUtil {
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
       PsiTypeParameter superTypeParameter = superTypeParameters[i];
-      final Set<PsiType> methodSupers = new HashSet<PsiType>();
+      final Set<PsiType> methodSupers = new HashSet<>();
       for (PsiClassType methodSuper : methodTypeParameter.getSuperTypes()) {
         methodSupers.add(methodSubstitutor.substitute(methodSuper));
       }
 
-      final Set<PsiType> superSupers = new HashSet<PsiType>();
+      final Set<PsiType> superSupers = new HashSet<>();
       for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
         superSupers.add(methodSubstitutor.substitute(result.substitute(superSuper)));
       }

@@ -98,8 +98,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   void cacheElement(@Nullable E element) {
     myElement = element == null ? null : 
-                PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<E>(element) :
-                new SoftReference<E>(element);
+                PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<>(element) :
+                new SoftReference<>(element);
   }
 
   @Override

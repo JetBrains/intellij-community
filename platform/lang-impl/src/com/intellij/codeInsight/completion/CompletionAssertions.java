@@ -24,8 +24,8 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -38,7 +38,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -222,7 +221,7 @@ class CompletionAssertions {
     @Override
     public int getTailOffset() {
       if (!getOffsetMap().containsOffset(TAIL_OFFSET) && invalidateTrace != null) {
-        throw new TailInvalidException(invalidateTrace);
+        throw new RuntimeExceptionWithAttachments("Tail offset invalid", new Attachment("invalidated.trace", invalidateTrace));
       }
 
       int offset = super.getTailOffset();
@@ -234,18 +233,4 @@ class CompletionAssertions {
     }
   }
 
-  private static class TailInvalidException extends IllegalStateException implements ExceptionWithAttachments {
-    private final String myInvalidationTrace;
-
-    TailInvalidException(@NotNull String invalidationTrace) {
-      super("Tail offset invalid");
-      myInvalidationTrace = invalidationTrace;
-    }
-
-    @NotNull
-    @Override
-    public Attachment[] getAttachments() {
-      return new Attachment[]{new Attachment("invalidated.trace", myInvalidationTrace)};
-    }
-  }
 }

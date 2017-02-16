@@ -78,7 +78,6 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     finally {
       try {
         myVcs.getGlobalSettings().setHgExecutable(null);
-        myVcs = null;
       }
       finally {
         super.tearDown();

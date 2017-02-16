@@ -26,7 +26,7 @@ import git4idea.changes.GitChangeUtils
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitHistoryUtils
 import git4idea.test.*
-import git4idea.test.GitTestUtil.createFileStructure
+import git4idea.test.createFileStructure
 import java.io.File
 import java.util.*
 

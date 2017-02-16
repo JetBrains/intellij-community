@@ -89,12 +89,10 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     synchronized (myTypesCacheLock) {
       if (myTypesCache == null) {
         final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
-        myTypesCache = cacheManager.createCachedValue(new CachedValueProvider<List<PsiType>>() {
-            @Override public Result<List<PsiType>> compute() {
-              final List<PsiType> types = computePreciseCatchTypes(getParameter());
-              return Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
-            }
-          }, false);
+        myTypesCache = cacheManager.createCachedValue(() -> {
+          final List<PsiType> types = computePreciseCatchTypes(getParameter());
+          return CachedValueProvider.Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
+        }, false);
       }
       return myTypesCache;
     }
@@ -118,15 +116,12 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
       final PsiParameter[] parameters = statement.getCatchBlockParameters();
       final int currentIdx = ArrayUtil.find(parameters, parameter);
-      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
-        @Override
-        public PsiType fun(final PsiClassType thrownType) {
-          for (int i = 0; i < currentIdx; i++) {
-            final PsiType catchType = parameters[i].getType();
-            if (catchType.isAssignableFrom(thrownType)) return null;
-          }
-          return thrownType;
+      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, (NullableFunction<PsiClassType, PsiType>)thrownType -> {
+        for (int i = 0; i < currentIdx; i++) {
+          final PsiType catchType = parameters[i].getType();
+          if (catchType.isAssignableFrom(thrownType)) return null;
         }
+        return thrownType;
       });
       // ... and T is assignable to Ej ...
       boolean passed = true;

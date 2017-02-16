@@ -112,6 +112,9 @@ public class Main {
            Comparing.strEqual(firstArg, "traverseUI") ||
            Comparing.strEqual(firstArg, "buildAppcodeCache") ||
            Comparing.strEqual(firstArg, "format") ||
+           Comparing.strEqual(firstArg, "keymap") ||
+           Comparing.strEqual(firstArg, "inspections") ||
+           Comparing.strEqual(firstArg, "intentions") ||
            (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 

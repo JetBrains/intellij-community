@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.env.python
+package com.jetbrains.env.python.typeshed
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -24,36 +24,26 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.EdtTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.env.PyEnvTaskRunner
 import com.jetbrains.env.PyEnvTestCase
-import com.jetbrains.python.codeInsight.typing.PyTypeShed
-import com.jetbrains.python.inspections.PyTypeCheckerInspection
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdkTools.PyTestSdkTools
-import junit.framework.TestCase
 import org.junit.After
 import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.io.File
 
 /**
  * @author vlan
  */
-@RunWith(Parameterized::class)
-class PyTypeShedTest(private val path: String, private val sdkPath: String) : PyEnvTestCase() {
-  private var fixture: CodeInsightTestFixture? = null
+abstract class PyTypeShedTestCase(protected val path: String, protected val sdkPath: String) : PyEnvTestCase() {
+  protected var fixture: CodeInsightTestFixture? = null
 
   @Before
   fun initialize() {
@@ -108,48 +98,23 @@ class PyTypeShedTest(private val path: String, private val sdkPath: String) : Py
     fixture?.tearDown()
   }
 
-  @Test
-  fun test() {
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
-      val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
-      val importablePath = path.split("/").drop(2).joinToString("/")
-      fixture?.copyFileToProject("$typeShedPath/$path", importablePath)
-      fixture?.configureFromTempProjectFile(importablePath)
-      fixture?.enableInspections(PyUnresolvedReferencesInspection::class.java)
-      fixture?.enableInspections(PyTypeCheckerInspection::class.java)
-      fixture?.checkHighlighting(true, false, true)
-      val moduleSdk = PythonSdkType.findPythonSdk(fixture?.module)
-      TestCase.assertNotNull(moduleSdk)
-    })
-  }
-
   companion object {
     private val sdkCache = mutableMapOf<String, Sdk>()
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    @JvmStatic fun params(): List<Array<Any>> {
-      LightPlatformTestCase.initApplication()
+    internal fun getSdkPaths(): List<String> {
       val tags = setOf("typeshed")
-      val typeShedPath = PyTypeShed.directoryPath ?: return emptyList()
-      val typeShedFile = File(typeShedPath)
       return getPythonRoots()
         .asSequence()
         .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
         .map { PythonSdkType.getPythonExecutable(it) }
         .filterNotNull()
-        .flatMap { sdkPath ->
-          val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
-          val versionString = flavor.getVersionString(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
-          val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name).trim())
-          PyTypeShed.findRootsForLanguageLevel(level).asSequence()
-            .flatMap { root: String ->
-              val results = File("$typeShedPath/$root").walk()
-                .filter { it.isFile && it.extension == "pyi" && "third_party" !in it.absolutePath }
-                .map { arrayOf<Any>(it.relativeTo(typeShedFile).toString(), sdkPath) }
-              results
-            }
-        }
         .toList()
+    }
+
+    internal fun getLanguageLevel(sdkPath: String): LanguageLevel? {
+      val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return null
+      val versionString = flavor.getVersionString(sdkPath) ?: return null
+      return LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name).trim())
     }
   }
 }

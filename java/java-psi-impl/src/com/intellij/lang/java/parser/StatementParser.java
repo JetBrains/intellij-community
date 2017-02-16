@@ -80,7 +80,7 @@ public class StatementParser {
       }
       else if (braceCount == 1 && (tokenType == JavaTokenType.SEMICOLON || tokenType == JavaTokenType.RBRACE)) {
         final PsiBuilder.Marker position = builder.mark();
-        final List<IElementType> list = new SmartList<IElementType>();
+        final List<IElementType> list = new SmartList<>();
         while (true) {
           final IElementType type = builder.getTokenType();
           if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || ElementType.MODIFIER_BIT_SET.contains(type) ||

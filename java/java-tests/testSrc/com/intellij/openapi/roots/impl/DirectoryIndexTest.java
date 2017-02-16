@@ -160,7 +160,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
         @Override
         public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
           return myProject == project ? Collections.singletonList(
-            SyntheticLibrary.newImmutableLibrary(null, Collections.singletonList(myLibAdditionalSrcDir))
+            SyntheticLibrary.newImmutableLibrary(Collections.singletonList(myLibAdditionalSrcDir))
           ) : Collections.emptyList();
         }
       }, getTestRootDisposable());

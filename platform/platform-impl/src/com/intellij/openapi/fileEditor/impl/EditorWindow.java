@@ -106,7 +106,7 @@ public class EditorWindow {
   private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
-      if (size() >= UISettings.getInstance().EDITOR_TAB_LIMIT) {
+      if (size() >= UISettings.getInstance().getEditorTabLimit()) {
         remove(0);
       }
       super.push(pair);
@@ -675,7 +675,7 @@ public class EditorWindow {
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
         myTabbedPane.insertTab(file, EmptyIcon.create(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
-        trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
+        trimToSize(UISettings.getInstance().getEditorTabLimit(), file, false);
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
@@ -959,7 +959,7 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null &&
-        getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT &&
+        getTabCount() < UISettings.getInstance().getEditorTabLimit() &&
         findFileComposite(siblingEditor.getFile()) == null || myTabbedPane == null && getTabCount() == 0) {
       setEditor(siblingEditor, true);
     }

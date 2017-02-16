@@ -99,7 +99,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @NotNull
   public List<T> allForLanguageOrAny(@NotNull Language l) {
-    List<T> providers = new ArrayList<T>(allForLanguage(l));
+    List<T> providers = new ArrayList<>(allForLanguage(l));
     if (l != Language.ANY) {
       providers.addAll(allForLanguage(Language.ANY));
     }
@@ -123,7 +123,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @NotNull
   protected Set<String> getAllBaseLanguageIdsWithAny(@NotNull Language key) {
-    Set<String> allowed = new THashSet<String>();
+    Set<String> allowed = new THashSet<>();
     while (key != null) {
       allowed.add(keyToString(key));
       key = key.getBaseLanguage();

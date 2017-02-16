@@ -130,7 +130,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return null;
     }
 
-    List<Element> result = new SmartList<Element>();
+    List<Element> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
       for (Element element : extensionsRoot.getChildren()) {
         JDOMUtil.internElement(element, interner);
@@ -240,10 +240,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
-    Set<PluginId> dependentPlugins = new LinkedHashSet<PluginId>();
-    Set<PluginId> optionalDependentPlugins = new LinkedHashSet<PluginId>();
+    Set<PluginId> dependentPlugins = new LinkedHashSet<>();
+    Set<PluginId> optionalDependentPlugins = new LinkedHashSet<>();
     if (pluginBean.dependencies != null) {
-      myOptionalConfigs = new THashMap<PluginId, String>();
+      myOptionalConfigs = new THashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
         if (!StringUtil.isEmpty(text)) {
@@ -418,7 +418,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @NotNull
   public List<File> getClassPath() {
     if (myPath.isDirectory()) {
-      final List<File> result = new ArrayList<File>();
+      final List<File> result = new ArrayList<>();
       final File classesDir = new File(myPath, "classes");
 
       if (classesDir.exists()) {

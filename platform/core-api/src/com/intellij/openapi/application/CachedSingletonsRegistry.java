@@ -29,8 +29,8 @@ import java.util.List;
 
 public class CachedSingletonsRegistry {
   private static final Object LOCK = new CachedSingletonsRegistry();
-  private static final List<Class<?>> ourRegisteredClasses = new ArrayList<Class<?>>();
-  private static final List<ClearableLazyValue<?>> ourRegisteredLazyValues = new ArrayList<ClearableLazyValue<?>>();
+  private static final List<Class<?>> ourRegisteredClasses = new ArrayList<>();
+  private static final List<ClearableLazyValue<?>> ourRegisteredLazyValues = new ArrayList<>();
 
   private CachedSingletonsRegistry() {}
 

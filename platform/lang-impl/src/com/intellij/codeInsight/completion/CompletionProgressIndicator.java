@@ -80,6 +80,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +107,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private final Semaphore myFreezeSemaphore;
   private final OffsetMap myOffsetMap;
-  private final List<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
     public void lookupCanceled(final LookupEvent event) {
@@ -656,9 +657,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
-      closeAndFinish(true);
+      closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      new CodeCompletionHandlerBase(myParameters.getCompletionType()).invokeCompletion(getProject(), myEditor, myParameters.getInvocationCount());
+      new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, false, true).invokeCompletion(getProject(), myEditor, myParameters.getInvocationCount());
       return;
     }
 

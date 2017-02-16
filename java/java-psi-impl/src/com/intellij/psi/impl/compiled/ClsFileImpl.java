@@ -369,13 +369,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
 
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiElement>() {
-      @Override
-      public Result<PsiElement> compute() {
-        PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
-        ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-        return Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
-      }
+    return CachedValuesManager.getCachedValue(this, () -> {
+      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
+      ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
+      return CachedValueProvider.Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
     });
   }
 
@@ -402,12 +399,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
           try {
             final TreeElement finalMirrorTreeElement = mirrorTreeElement;
-            ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-              @Override
-              public void run() {
-                setMirror(finalMirrorTreeElement);
-                putUserData(CLS_DOCUMENT_LINK_KEY, document);
-              }
+            ProgressManager.getInstance().executeNonCancelableSection(() -> {
+              setMirror(finalMirrorTreeElement);
+              putUserData(CLS_DOCUMENT_LINK_KEY, document);
             });
           }
           catch (InvalidMirrorException e) {
@@ -416,7 +410,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           }
 
           ((PsiFileImpl)mirror).setOriginalFile(this);
-          myMirrorFileElement = new SoftReference<TreeElement>(mirrorTreeElement);
+          myMirrorFileElement = new SoftReference<>(mirrorTreeElement);
         }
       }
     }
@@ -556,7 +550,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       @SuppressWarnings("unchecked") PsiFileStubImpl<PsiFile> fileStub = (PsiFileStubImpl)stubTree.getRoot();
       fileStub.setPsi(this);
 
-      myStub = new SoftReference<StubTree>(stubTree);
+      myStub = new SoftReference<>(stubTree);
     }
 
     return stubTree;
@@ -626,12 +620,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
     final ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
     final StringBuilder buffer = new StringBuilder();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        clsFile.appendMirrorText(0, buffer);
-      }
-    });
+    ApplicationManager.getApplication().runReadAction(() -> clsFile.appendMirrorText(0, buffer));
     return buffer;
   }
 
@@ -658,7 +647,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, getPackageName(internalName), level, true);
         try {
           FileContentPair source = new FileContentPair(file, bytes);
-          StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<FileContentPair>(source, STRATEGY, stub, 0, className);
+          StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<>(source, STRATEGY, stub, 0, className);
           reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
           if (visitor.getResult() != null) return stub;
         }

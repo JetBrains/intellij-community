@@ -129,7 +129,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
-        myCachedType = new SoftReference<PsiType>(type);
+        myCachedType = new SoftReference<>(type);
       }
       return type;
     }
@@ -287,7 +287,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new HashSet<PsiVariable>(2));
+    return computeConstantValue(new HashSet<>(2));
   }
 
   @Override

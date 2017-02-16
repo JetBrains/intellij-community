@@ -1387,12 +1387,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (variable instanceof PsiParameter) {
       final PsiModifierList modifierList = variable.getModifierList();
       if (modifierList != null) {
-        for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-          if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
-          final PsiModifierList parmModifierList = parm.getModifierList();
-          LOG.assertTrue(parmModifierList != null, parm);
-          parmModifierList.add(annotation);
-        }
+        PsiModifierList parmModifierList = parm.getModifierList();
+        LOG.assertTrue(parmModifierList != null);
+        GenerateMembersUtil.copyAnnotations(modifierList, parmModifierList, SuppressWarnings.class.getName());
       }
     }
   }

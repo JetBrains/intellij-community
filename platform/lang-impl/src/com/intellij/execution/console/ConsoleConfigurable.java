@@ -110,10 +110,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getNegativePatterns()));
     isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getPositivePatterns()));
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
-    isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().getConsoleCommandHistoryLimit());
+    UISettings uiSettings = UISettings.getInstance();
+    isModified |= isModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit());
     if (ConsoleBuffer.useCycleBuffer()) {
-      isModified |= isModified(myCbOverrideConsoleCycleBufferSize, UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-      isModified |= isModified(myConsoleCycleBufferSizeField, UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB);
+      isModified |= isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize());
+      isModified |= isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb());
     }
 
     return isModified;
@@ -141,12 +142,12 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       uiSettingsChanged = true;
     }
     if (ConsoleBuffer.useCycleBuffer()) {
-      if (isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE)) {
-        uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = myCbOverrideConsoleCycleBufferSize.isSelected();
+      if (isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize())) {
+        uiSettings.setOverrideConsoleCycleBufferSize(myCbOverrideConsoleCycleBufferSize.isSelected());
         uiSettingsChanged = true;
       }
-      if (isModified(myConsoleCycleBufferSizeField, uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB)) {
-        uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB = Math.max(0, Math.min(1024*100, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim())));
+      if (isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb())) {
+        uiSettings.setConsoleCycleBufferSizeKb(Math.max(0, Math.min(1024*100, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim()))));
         uiSettingsChanged = true;
       }
     }
@@ -168,9 +169,9 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.getConsoleCommandHistoryLimit()));
 
     myCbOverrideConsoleCycleBufferSize.setEnabled(ConsoleBuffer.useCycleBuffer());
-    myCbOverrideConsoleCycleBufferSize.setSelected(uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-    myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-    myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB));
+    myCbOverrideConsoleCycleBufferSize.setSelected(uiSettings.getOverrideConsoleCycleBufferSize());
+    myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.getOverrideConsoleCycleBufferSize());
+    myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.getConsoleCycleBufferSizeKb()));
 
 
     myNegativePanel.resetFrom(mySettings.getNegativePatterns());

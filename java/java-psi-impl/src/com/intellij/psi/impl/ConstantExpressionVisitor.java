@@ -552,7 +552,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
 
       Set<PsiVariable> oldVisitedVars = myVisitedVars;
-      if (myVisitedVars == null) { myVisitedVars = new THashSet<PsiVariable>(); }
+      if (myVisitedVars == null) { myVisitedVars = new THashSet<>(); }
 
       myVisitedVars.add(variable);
       try {

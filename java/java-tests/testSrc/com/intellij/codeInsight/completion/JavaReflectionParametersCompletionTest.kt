@@ -81,7 +81,7 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
     configureByFile(getTestName(false) + ".java")
 
     val lookupItems = lookup.items
-    val texts = lookupItemTexts(lookupItems, expected.size)
+    val texts = lookupFirstItemsTexts(lookupItems, expected.size)
     assertOrderedEquals(texts, *expected)
     selectItem(lookupItems[index])
     myFixture.checkResultByFile(getTestName(false) + "_after.java")
@@ -110,7 +110,7 @@ public class Construct {
   }
 
 }
-fun lookupItemTexts(lookupItems: List<LookupElement?>, maxSize: Int): List<String> =
+fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List<String> =
   lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
     val obj = it?.`object`
     when (obj) {

@@ -1805,4 +1805,32 @@ ita<caret>
     assert lookup
     assert myFixture.lookupElementStrings == ['itar']
   }
+
+  void "test expand class list when typing more or moving caret"() {
+    myFixture.addClass 'package foo; public class KimeFamilyRange {}'
+    myFixture.addClass 'package foo; public class FamiliesRangesMetaData {}'
+    myFixture.addClass 'public class KSomethingInCurrentPackage {}'
+    myFixture.configureByText 'a.java', 'class Foo { <caret> }'
+
+    type 'F'
+    assert !myFixture.lookupElementStrings.contains('KimeFamilyRange')
+
+    type 'aRa'
+    myFixture.assertPreferredCompletionItems 0, 'FamiliesRangesMetaData', 'KimeFamilyRange'
+
+    4.times {
+      edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+      joinCompletion()
+    }
+    assert !myFixture.lookupElementStrings.contains('KimeFamilyRange')
+
+    type 'K'
+
+    4.times {
+      edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+      joinCompletion()
+    }
+
+    myFixture.assertPreferredCompletionItems 0, 'KimeFamilyRange'
+  }
 }

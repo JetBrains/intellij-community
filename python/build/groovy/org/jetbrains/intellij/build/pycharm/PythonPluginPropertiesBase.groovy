@@ -42,7 +42,7 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
     super()
   }
 
-  PluginLayout pythonCommunityPluginLayout(String pluginVersion) {
+  PluginLayout pythonCommunityPluginLayout(String pluginVersion, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     def pluginXmlModules = [
       "IntelliLang-python",
       "ipnb",
@@ -53,6 +53,8 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
         excludeFromModule(module, "META-INF/plugin.xml")
       }
       excludeFromModule(pythonCommunityPluginModule, "META-INF/python-plugin-dependencies.xml")
+      body.delegate = delegate
+      body()
     }
   }
 

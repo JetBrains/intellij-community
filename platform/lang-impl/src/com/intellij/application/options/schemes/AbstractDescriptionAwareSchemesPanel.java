@@ -59,13 +59,15 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     myDescriptionTextField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        applyDescription();
+        showDescription();
+        getConfigurableFocusComponent().requestFocus();
       }
     }, ESC_KEY_STROKE, JComponent.WHEN_FOCUSED);
     myDescriptionTextField.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        showDescription();
+        applyDescription();
+        getConfigurableFocusComponent().requestFocus();
       }
     }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
 
@@ -122,6 +124,9 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     myDescriptionTextField.setText(StringUtil.notNullize(startValue));
     myDescriptionTextField.requestFocus();
   }
+
+  @NotNull
+  protected abstract JComponent getConfigurableFocusComponent();
 
   private void applyDescription() {
     (((DescriptionAwareSchemeActions<T>)getActions())).setDescription(getSelectedScheme(), myDescriptionTextField.getText());

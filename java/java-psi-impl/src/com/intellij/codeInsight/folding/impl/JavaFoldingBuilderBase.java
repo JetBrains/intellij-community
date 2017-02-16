@@ -502,7 +502,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     addAnnotationsToFold(aClass.getModifierList(), list, document);
 
     PsiElement[] children = aClass.getChildren();
-    Set<PsiElement> processedComments = new HashSet<PsiElement>();
+    Set<PsiElement> processedComments = new HashSet<>();
     for (PsiElement child : children) {
       ProgressIndicatorProvider.checkCanceled();
 

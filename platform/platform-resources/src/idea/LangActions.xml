@@ -413,7 +413,7 @@
       <separator/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
-
+      <reference ref="Stop"/>
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 

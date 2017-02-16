@@ -44,9 +44,9 @@ public final class ModifierFlags {
   public static final int OPEN_MASK = 0x2000;
   public static final int TRANSITIVE_MASK = 0x4000;
 
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
-  public static final TIntObjectHashMap<String> MODIFIER_FLAG_TO_NAME_MAP = new TIntObjectHashMap<String>();
-  public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<IElementType>();
+  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
+  public static final TIntObjectHashMap<String> MODIFIER_FLAG_TO_NAME_MAP = new TIntObjectHashMap<>();
+  public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, PUBLIC_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PRIVATE, PRIVATE_MASK);

@@ -39,7 +39,13 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
 
       @Override
       public void update(AnActionEvent e) {
-        final String text = getDescription(getSchemesPanel().getSelectedScheme()) == null ? "Add Description..." : "Edit Description...";
+        T scheme = getSchemesPanel().getSelectedScheme();
+        if (scheme == null) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+        final String text = getDescription(scheme) == null ? "Add Description..." : "Edit Description...";
+        e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(text);
       }
 

@@ -212,7 +212,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
     for (ProgressIndicator i = original; i instanceof WrappedProgressIndicator; i = ((WrappedProgressIndicator)i).getOriginalProgressIndicator()) {
-      if (wrappedParents == null) wrappedParents = new THashSet<ProgressIndicator>();
+      if (wrappedParents == null) wrappedParents = new THashSet<>();
       if (!wrappedParents.add(i)) {
         throw new IllegalArgumentException(i + " wraps itself");
       }

@@ -1651,8 +1651,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       imageGraphics.dispose();
       Graphics2D g2d = (Graphics2D)g.create();
       try {
-        if (UIUtil.isJDKManagedHiDPIScreen(g2d)) {
-          g2d.scale(1/JBUI.sysScale(g2d), 1 / JBUI.sysScale(g2d));
+        if (UIUtil.isJreHiDPI(this)) {
+          float s = 1 / JBUI.sysScale(this);
+          g2d.scale(s, s);
         }
         UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
       }
@@ -1716,11 +1717,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     private void paintShadow(Graphics graphics) {
       if (myShadow != null) {
-        if (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)graphics)) {
-          graphics = graphics.create();
-          ((Graphics2D)graphics).scale(1/JBUI.sysScale((Graphics2D)graphics), 1/JBUI.sysScale((Graphics2D)graphics));
+        Graphics2D g2d = (Graphics2D)graphics;
+        try {
+          if (UIUtil.isJreHiDPI(this)) {
+            g2d = (Graphics2D)graphics.create();
+            float s = 1 / JBUI.sysScale(this);
+            g2d.scale(s, s);
+          }
+          UIUtil.drawImage(g2d, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
         }
-        UIUtil.drawImage(graphics, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
+        finally {
+          if (g2d != graphics) g2d.dispose();
+        }
       }
     }
 

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 
 public class Extensions {
-  public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
+  public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<>("com.intellij.arealistener");
   private static LogProvider ourLogger = new SimpleLogProvider();
   private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
   private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();

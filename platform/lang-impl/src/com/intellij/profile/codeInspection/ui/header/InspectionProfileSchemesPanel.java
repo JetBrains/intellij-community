@@ -42,6 +42,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -274,5 +275,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     getModel().addProfile(profile);
     getModel().updatePanel(this);
     selectScheme(selected);
+  }
+
+  @NotNull
+  @Override
+  protected JComponent getConfigurableFocusComponent() {
+    return myConfigurable.getPreferredFocusedComponent();
   }
 }

@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
+  private static final Map<Class, Field[]> allFields = new THashMap<>();
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
@@ -47,7 +47,7 @@ public class DebugReflectionUtil {
     if (cached == null) {
       try {
         Field[] declaredFields = aClass.getDeclaredFields();
-        List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
+        List<Field> fields = new ArrayList<>(declaredFields.length + 5);
         for (Field declaredField : declaredFields) {
           declaredField.setAccessible(true);
           Class<?> type = declaredField.getType();
@@ -157,34 +157,31 @@ public class DebugReflectionUtil {
     @Override
     public String toString() {
       return
-      ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          String result = "";
-          BackLink backLink = BackLink.this;
-          while (backLink != null) {
-            String valueStr;
-            AccessToken token = ReadAction.start();
-            try {
-              valueStr = backLink.value instanceof FList
-                         ? "FList (size=" + ((FList)backLink.value).size() + ")" :
-                         backLink.value instanceof Collection ? "Collection (size=" + ((Collection)backLink.value).size() + ")" :
-                         String.valueOf(backLink.value);
-              valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
-            }
-            catch (Throwable e) {
-              valueStr = "(" + e.getMessage() + " while computing .toString())";
-            }
-            finally {
-              token.finish();
-            }
-            Field field = backLink.field;
-            String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
-            result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
-            backLink = backLink.backLink;
+      ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+        String result = "";
+        BackLink backLink = BackLink.this;
+        while (backLink != null) {
+          String valueStr;
+          AccessToken token = ReadAction.start();
+          try {
+            valueStr = backLink.value instanceof FList
+                       ? "FList (size=" + ((FList)backLink.value).size() + ")" :
+                       backLink.value instanceof Collection ? "Collection (size=" + ((Collection)backLink.value).size() + ")" :
+                       String.valueOf(backLink.value);
+            valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
           }
-          return result;
+          catch (Throwable e) {
+            valueStr = "(" + e.getMessage() + " while computing .toString())";
+          }
+          finally {
+            token.finish();
+          }
+          Field field = backLink.field;
+          String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
+          result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
+          backLink = backLink.backLink;
         }
+        return result;
       });
     }
   }
