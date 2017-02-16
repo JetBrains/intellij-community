@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -202,14 +201,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    classMember = resolveClassMember(myClass, myIsDefinition, name, location);
+    final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location);
 
     if (PyNames.__CLASS__.equals(name)) {
-      return resolveDunderClass(context, classMember);
+      return resolveDunderClass(context, classMembers);
     }
 
-    if (classMember != null) {
-      return ResolveResultList.to(classMember);
+    if (!classMembers.isEmpty()) {
+      return classMembers;
     }
 
     if (PyNames.DOC.equals(name)) {
@@ -237,9 +236,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           if (!myIsDefinition) {
             type = type.toInstance();
           }
-          PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
-          if (superMember != null) {
-            return ResolveResultList.to(superMember);
+          final List<? extends RatedResolveResult> superMembers =
+            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location);
+          if (!superMembers.isEmpty()) {
+            return superMembers;
           }
         }
         if (type != null) {
@@ -358,12 +358,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @Nullable PsiElement classMember) {
+  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @NotNull List<? extends RatedResolveResult> classMembers) {
     final boolean newStyleClass = myClass.isNewStyleClass(context);
 
     if (!myIsDefinition) {
-      if (newStyleClass && classMember != null) {
-        return ResolveResultList.to(classMember);
+      if (newStyleClass && !classMembers.isEmpty()) {
+        return classMembers;
       }
 
       return ResolveResultList.to(
@@ -378,7 +378,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
-      return ResolveResultList.to(classMember);
+      return classMembers;
     }
 
     return Optional
@@ -500,18 +500,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(@NotNull PyClass cls,
-                                               boolean isDefinition,
-                                               @NotNull String name,
-                                               @Nullable PyExpression location) {
-    PsiElement result = resolveInner(cls, isDefinition, name, location);
-    if (result != null) {
-      return result;
-    }
-    return null;
-  }
-
-  @Nullable
   private static PsiElement resolveByMembersProviders(PyClassType aClass,
                                                       String name,
                                                       @Nullable PsiElement location,
@@ -550,19 +538,23 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
-  @Nullable
-  private static PsiElement resolveInner(@NotNull PyClass cls,
-                                         boolean isDefinition,
-                                         @NotNull String name,
-                                         @Nullable PyExpression location) {
+  @NotNull
+  private static List<? extends RatedResolveResult> resolveInner(@NotNull PyClass cls,
+                                                                 boolean isDefinition,
+                                                                 @NotNull String name,
+                                                                 @Nullable PyExpression location) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    if (!isDefinition) {
-      if (!cls.processInstanceLevelDeclarations(processor, location)) {
-        return Iterables.getFirst(processor.getElements(), null);
-      }
+    final Collection<PsiElement> result;
+
+    if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
+      result = processor.getElements();
     }
-    cls.processClassLevelDeclarations(processor);
-    return Iterables.getFirst(processor.getElements(), null);
+    else {
+      cls.processClassLevelDeclarations(processor);
+      result = processor.getElements();
+    }
+
+    return ContainerUtil.map(result, element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element));
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
