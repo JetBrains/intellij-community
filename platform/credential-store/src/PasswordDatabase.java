@@ -29,7 +29,7 @@ import java.util.Map;
 
 @Deprecated
 @State(name = "PasswordDatabase", storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED, deprecated = true))
-class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
+public class PasswordDatabase implements PersistentStateComponent<PasswordDatabase.State> {
   private final static Logger LOG = Logger.getInstance(PasswordDatabase.class.getName());
 
   public transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<>();

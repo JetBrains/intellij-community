@@ -37,7 +37,7 @@ private const val GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal val DB_FILE_NAME = "c.kdbx"
 
-internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
+class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
                                       var memoryOnly: Boolean = false,
                                       dbFile: Path? = null,
@@ -203,14 +203,14 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
   }
 }
 
-internal fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory: Path = Paths.get(PathManager.getConfigPath())): KeePassCredentialStore {
+fun copyFileDatabase(path: Path, masterPassword: String, baseDirectory: Path = Paths.get(PathManager.getConfigPath())): KeePassCredentialStore {
   val dbFile = baseDirectory.resolve(DB_FILE_NAME)
   Files.copy(path, dbFile, StandardCopyOption.REPLACE_EXISTING)
   dbFile.setOwnerPermissions()
   return KeePassCredentialStore(baseDirectory = baseDirectory, dbFile = dbFile, existingMasterPassword = masterPassword.toByteArray())
 }
 
-internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
+fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
   for ((k, v) in from) {
     store.set(k, v)
   }
