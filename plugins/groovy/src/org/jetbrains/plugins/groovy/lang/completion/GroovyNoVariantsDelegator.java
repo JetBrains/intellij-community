@@ -52,8 +52,8 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     result.runRemainingContributors(parameters, tracker);
     final boolean empty = tracker.containsOnlyPackages || suggestAnnotations(parameters);
 
-    if (!empty && parameters.getInvocationCount() == 0) {
-      result.restartCompletionWhenNothingMatches();
+    if (GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) && !JavaCompletionContributor.mayStartClassName(result)) {
+      result.restartCompletionOnAnyPrefixChange();
     }
 
     if (empty) {
