@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -86,23 +87,15 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     actions.add(new DeleteAction());
     addAdditionalActions(actions);
     if (!mySchemeExporterNames.isEmpty()) {
-      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.export"), mySchemeExporterNames) {
-        @NotNull
-        @Override
-        protected AnAction createAction(@NotNull String actionName) {
-          return new ExportAction(actionName);
-        }
-      });
+      actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.export"),
+                                           mySchemeExporterNames,
+                                           ExportAction::new));
     }
     actions.add(new Separator());
     if (!mySchemeImportersNames.isEmpty()) {
-      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()), mySchemeImportersNames) {
-        @NotNull
-        @Override
-        protected AnAction createAction(@NotNull String actionName) {
-          return new ImportAction(actionName);
-        }
-      });
+      actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()),
+                                           mySchemeImportersNames,
+                                           ImportAction::new));
     }
     return actions;
   }
@@ -256,6 +249,22 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme(); 
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme));
+    }
+  }
+
+  private AnAction createImportExportAction(@NotNull String groupName,
+                                            @NotNull Collection<String> actionNames,
+                                            @NotNull Function<String, AnAction> createActionByName) {
+    if (actionNames.size() == 1) {
+      return createActionByName.apply(groupName);
+    } else {
+      return new ActionGroupPopupAction(groupName, actionNames) {
+        @NotNull
+        @Override
+        protected AnAction createAction(@NotNull String actionName) {
+          return createActionByName.apply(actionName);
+        }
+      };
     }
   }
 
