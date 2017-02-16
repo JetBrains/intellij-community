@@ -28,6 +28,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M3 { }", M3)
   }
 
+  fun testPackageStatement() {
+    highlight("package pkg;")
+    highlight("""
+        <error descr="A module file should not have 'package' statement">package pkg;</error>
+        module M { }""".trimIndent())
+    fixes("<caret>package pkg;\nmodule M { }", "DeleteElementFix")
+  }
+
   fun testSoftKeywords() {
     addFile("pkg/module/C.java", "package pkg.module;\npublic class C { }")
     myFixture.configureByText("module-info.java", "module M { exports pkg.module; }")

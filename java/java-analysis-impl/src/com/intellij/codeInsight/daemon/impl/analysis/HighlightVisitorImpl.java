@@ -983,6 +983,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitPackageStatement(PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
     myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement, myFile));
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile));
+    }
   }
 
   @Override

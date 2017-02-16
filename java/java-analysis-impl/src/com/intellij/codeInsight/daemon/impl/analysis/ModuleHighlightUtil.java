@@ -92,6 +92,17 @@ public class ModuleHighlightUtil {
       .orElse(null);
   }
 
+  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file) {
+    if (PsiUtil.isModuleFile(file)) {
+      String message = JavaErrorMessages.message("module.no.package");
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+      QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+      return info;
+    }
+
+    return null;
+  }
+
   @Nullable
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     if (!MODULE_INFO_FILE.equals(file.getName())) {
