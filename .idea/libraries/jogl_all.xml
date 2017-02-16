@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="jogl-all">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
