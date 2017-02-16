@@ -630,7 +630,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void applyIsPresentCheck(boolean present, DfaValue qualifier) {
-    if (qualifier instanceof DfaVariableValue) {
+    if (qualifier instanceof DfaVariableValue && !isUnknownState(qualifier)) {
       setVariableState((DfaVariableValue)qualifier, getVariableState((DfaVariableValue)qualifier).withOptionalPresense(present));
     }
   }
