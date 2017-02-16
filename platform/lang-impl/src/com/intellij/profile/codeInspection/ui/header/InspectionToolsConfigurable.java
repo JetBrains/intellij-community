@@ -269,8 +269,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       Disposer.dispose(mySelectionAlarm);
       mySelectionAlarm = null;
     }
-    myProfilePanelHolder.removeAll();
-    myAbstractSchemesPanel.getModel().disposeUI();
+    if (myProfilePanelHolder != null) {
+      myProfilePanelHolder.removeAll();
+    }
+    if (myAbstractSchemesPanel != null) {
+      myAbstractSchemesPanel.getModel().disposeUI();
+    }
   }
 
   @Override
