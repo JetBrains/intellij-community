@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -1699,28 +1700,31 @@ public class UIUtil {
   }
 
   public static void drawSearchMatch(final Graphics2D g,
-                                     final int startX,
-                                     final int endX,
+                                     final float startX,
+                                     final float endX,
                                      final int height) {
     Color c1 = new Color(255, 234, 162);
     Color c2 = new Color(255, 208, 66);
     drawSearchMatch(g, startX, endX, height, c1, c2);
   }
 
-  public static void drawSearchMatch(Graphics2D g, int startX, int endX, int height, Color c1, Color c2) {
-    final boolean drawRound = endX - startX > 4;
+  public static void drawSearchMatch(Graphics2D g, float startXf, float endXf, int height, Color c1, Color c2) {
+    final boolean drawRound = endXf - startXf > 4;
 
     GraphicsConfig config = new GraphicsConfig(g);
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
+    g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
     if (isJDKManagedHiDPIScreen()) {
       GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
-      g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
+      g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
       c.restore();
       config.restore();
       return;
     }
+
+    int startX = (int)startXf;
+    int endX = (int)endXf;
 
     g.fillRect(startX, 3, endX - startX, height - 5);
 
