@@ -43,8 +43,8 @@ if (new File(envs.envsDirectory, "django_latest").exists() &&
 }
 
 def bootstrapDirNotEmpty = envs.bootstrapDirectory.exists() &&
-                        (new File(envs.bootstrapDirectory, "latest_64/bin/conda").exists() ||
-                         new File(envs.bootstrapDirectory, "latest_64/Scripts/conda.exe").exists())
+                        (new File(envs.bootstrapDirectory, "latest64/bin/conda").exists() ||
+                         new File(envs.bootstrapDirectory, "latest64/Scripts/conda.exe").exists())
 
 if (!bootstrapDirNotEmpty || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
     envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
