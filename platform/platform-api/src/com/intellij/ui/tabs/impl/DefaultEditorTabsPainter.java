@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -66,7 +65,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return Registry.is("ide.new.editor.tabs.selection") ? new JBColor(Gray._255, Gray._60) : UIUtil.CONTRAST_BORDER_COLOR;
+    return myTabs.hasUnderlineSelection() ? new JBColor(Gray._255, Gray._60) : UIUtil.CONTRAST_BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {
