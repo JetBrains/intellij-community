@@ -68,13 +68,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.buildTarGzWithoutBundledJre) {
       buildTarGz(null, osSpecificDistPath)
     }
-    def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
-    if (jreDirectoryPath != null) {
-      buildTarGz(jreDirectoryPath, osSpecificDistPath)
-    }
-    else {
-      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-    }
+    buildTarGz(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath)
   }
 
   private void generateScripts(String unixDistPath) {
@@ -143,7 +137,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     if (jreDirectoryPath != null) {
-      paths += jreDirectoryPath
       extraBins += "jre/jre/bin/*"
     }
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
@@ -172,6 +165,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
             }
             type(type: "file")
           }
+        }
+
+        tarfileset(dir: jreDirectoryPath, prefix: "$tarRoot/jre") {
+          exclude(name: "src.zip")
+          type(type: "file")
         }
       }
 
