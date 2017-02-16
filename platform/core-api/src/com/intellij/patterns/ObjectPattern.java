@@ -163,6 +163,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self isNull() {
+    //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o == null;
@@ -172,6 +173,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self notNull() {
+    //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o != null;
