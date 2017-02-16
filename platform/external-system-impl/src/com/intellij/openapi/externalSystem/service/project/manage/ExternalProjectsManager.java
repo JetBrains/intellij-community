@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
@@ -65,6 +66,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
+  private ExternalSystemProjectsWatcher myWatcher;
 
 
   public static ExternalProjectsManager getInstance(@NotNull Project project) {
@@ -115,6 +117,9 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   public void init() {
     synchronized (isInitialized) {
       if (isInitialized.getAndSet(true)) return;
+
+      myWatcher = new ExternalSystemProjectsWatcher(myProject);
+      myWatcher.start();
 
       // load external projects data
       ExternalProjectsDataStorage.getInstance(myProject).load();
@@ -239,6 +244,8 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   public void dispose() {
     myProjectsViews.clear();
     myRunManagerListener.detach();
+    myWatcher.stop();
+    myWatcher = null;
   }
 
   public interface ExternalProjectsStateProvider {
