@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.InheritanceUtil;
@@ -254,23 +255,22 @@ public class ModuleHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkPackageReference(@Nullable PsiJavaCodeReferenceElement refElement) {
+  static HighlightInfo checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
+    PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
     if (refElement != null) {
       PsiElement target = refElement.resolve();
-      if (target instanceof PsiPackage) {
-        Module module = findModule(refElement);
-        if (module != null) {
-          String packageName = ((PsiPackage)target).getQualifiedName();
-          PsiDirectory[] directories = ((PsiPackage)target).getDirectories(module.getModuleScope(false));
-          if (directories.length == 0) {
-            String message = JavaErrorMessages.message("package.not.found", packageName);
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
-          }
-          if (PsiUtil.isPackageEmpty(directories, packageName)) {
-            String message = JavaErrorMessages.message("package.is.empty", packageName);
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
-          }
-        }
+      Module module = findModule(refElement);
+      PsiDirectory[] directories =
+        target instanceof PsiPackage && module != null ? ((PsiPackage)target).getDirectories(module.getModuleScope(false)) : null;
+      String packageName = refText(refElement);
+      HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+      if (directories == null || directories.length == 0) {
+        String message = JavaErrorMessages.message("package.not.found", packageName);
+        return HighlightInfo.newHighlightInfo(type).range(refElement).description(message).create();
+      }
+      if (PsiUtil.isPackageEmpty(directories, packageName)) {
+        String message = JavaErrorMessages.message("package.is.empty", packageName);
+        return HighlightInfo.newHighlightInfo(type).range(refElement).description(message).create();
       }
     }
 
@@ -278,7 +278,7 @@ public class ModuleHighlightUtil {
   }
 
   @NotNull
-  static List<HighlightInfo> checkExportTargets(@NotNull PsiPackageAccessibilityStatement statement) {
+  static List<HighlightInfo> checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> targets = ContainerUtil.newTroveSet();

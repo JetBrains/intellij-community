@@ -102,9 +102,21 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     highlight("""
         module M {
-          exports pkg.<error descr="Cannot resolve symbol 'missing'">missing</error>;
+          exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
           exports pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
+        }""".trimIndent())
+  }
+
+  fun testOpens() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    highlight("""
+        module M {
+          opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
+          opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
+          opens pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
         }""".trimIndent())
   }
 
