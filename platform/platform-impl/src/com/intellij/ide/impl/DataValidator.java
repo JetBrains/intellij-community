@@ -73,7 +73,14 @@ public abstract class DataValidator<T> {
   public static <T> T findInvalidData(String dataId, Object data, final Object dataSource) {
     if (data == null) return null;
     DataValidator<T> validator = getValidator(dataId);
-    if (validator != null) return validator.findInvalid(dataId, (T)data, dataSource);
+    if (validator != null) {
+      try {
+        return validator.findInvalid(dataId, (T)data, dataSource);
+      }
+      catch (ClassCastException e) {
+        throw new AssertionError("Object of incorrect type returned for key '" + dataId + "' by " + dataSource, e);
+      }
+    }
     return null;
   }
 
