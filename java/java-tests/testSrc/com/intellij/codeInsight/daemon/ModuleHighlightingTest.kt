@@ -137,13 +137,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testProvides() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic interface C { }")
-    addFile("pkg/main/I.java", "package pkg.main;\npublic interface I { }")
     addFile("pkg/main/Impl1.java", "package pkg.main;\nclass Impl1 { }")
     addFile("pkg/main/Impl2.java", "package pkg.main;\npublic class Impl2 { }")
     addFile("pkg/main/Impl3.java", "package pkg.main;\npublic abstract class Impl3 implements C { }")
     addFile("pkg/main/Impl4.java", "package pkg.main;\npublic class Impl4 implements C {\n public Impl4(String s) { }\n}")
     addFile("pkg/main/Impl5.java", "package pkg.main;\npublic class Impl5 implements C {\n protected Impl5() { }\n}")
-    addFile("pkg/main/Impl6.java", "package pkg.main;\npublic class Impl6 implements I { }")
+    addFile("pkg/main/Impl6.java", "package pkg.main;\npublic class Impl6 implements C { }")
     highlight("""
         module M {
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
@@ -151,7 +150,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.<error descr="The service implementation is an abstract class: Impl3">Impl3</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a default constructor: Impl4">Impl4</error>;
           provides pkg.main.C with pkg.main.<error descr="The default constructor of the service implementation is not public: Impl5">Impl5</error>;
-          provides pkg.main.I with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
+          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
         }""".trimIndent())
   }
 
