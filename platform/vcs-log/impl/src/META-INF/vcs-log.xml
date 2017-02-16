@@ -35,6 +35,7 @@
                         serviceImplementation="com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
+    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.ui.history.FileHistoryUiDataRule"/>
   </extensions>
 
   <actions>
