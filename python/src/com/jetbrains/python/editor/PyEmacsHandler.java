@@ -94,7 +94,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     int caretLine = document.getLineNumber(caretOffset);
-    if (caretLine == 0 || isLineContainsWhiteSpacesOnlyEmpty(document, caretLine)) {
+    if (isLineContainsWhiteSpacesOnlyEmpty(document, caretLine)) {
       return Result.CONTINUE;
     }
     
@@ -215,7 +215,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     int start = context.document.getLineStartOffset(context.targetLine);
     int end = DocumentUtil.getFirstNonSpaceCharOffset(context.document, context.targetLine);
     context.editor.getDocument().replaceString(start, end, newIndentString);
-    if (caretOffset > start && caretOffset < end) {
+    if (caretOffset >= start && caretOffset < end) {
       context.editor.getCaretModel().moveToOffset(start + newIndentString.length());
     }
   }

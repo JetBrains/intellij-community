@@ -39,6 +39,15 @@ public class PyEmacsTabTest extends PyTestCase {
     doTest(
       "def test(name):\n" +
       "    if name != \"\":\n" +
+      "<caret>  print name",
+      "def test(name):\n" +
+      "    if name != \"\":\n" +
+      "        <caret>print name"
+    );
+
+    doTest(
+      "def test(name):\n" +
+      "    if name != \"\":\n" +
       "     <caret>print name",
       "def test(name):\n" +
       "    if name != \"\":\n" +
