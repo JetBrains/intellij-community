@@ -1415,7 +1415,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   public void stop(boolean forceTerminate) {
     stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
-    getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
+    getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), ApplicationManager.getApplication().isUnitTestMode() ? 0 : DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
   @NotNull

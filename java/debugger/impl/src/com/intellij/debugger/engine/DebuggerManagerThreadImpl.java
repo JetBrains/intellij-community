@@ -112,7 +112,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     invoke(command);
 
     if (currentCommand != null) {
-      final ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(
         () -> {
           if (currentCommand == myEvents.getCurrentEvent()) {
             // if current command is still in progress, cancel it
@@ -132,17 +132,6 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
             }
           }
         }, terminateTimeoutMillis, TimeUnit.MILLISECONDS);
-
-      // register on project instead of this because it would cause significant delays on each session termination otherwise
-      Disposer.register(myProject, () -> {
-        if (!future.cancel(true)) {
-          WorkerThreadRequest request = getCurrentThreadRequest();
-          if (request != null) {
-            request.requestStop();
-          }
-        }
-        // else scheduled future was de-scheduled successfully before starting
-      });
     }
   }
 
