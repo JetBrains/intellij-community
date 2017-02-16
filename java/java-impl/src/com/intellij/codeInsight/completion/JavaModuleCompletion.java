@@ -71,7 +71,12 @@ class JavaModuleCompletion {
   }
 
   private static void addFileHeaderKeywords(PsiElement position, Consumer<LookupElement> result) {
-    if (PsiTreeUtil.prevVisibleLeaf(position) == null) {
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev == null) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    else if (PsiUtil.isJavaToken(prev, JavaTokenType.OPEN_KEYWORD)) {
       result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
@@ -79,6 +84,7 @@ class JavaModuleCompletion {
   private static void addModuleStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
@@ -89,6 +95,10 @@ class JavaModuleCompletion {
 
   private static void addModuleReferences(PsiElement context, Consumer<LookupElement> result) {
     PsiElement statement = context.getParent();
+    if (statement instanceof PsiRequiresStatement) {
+      result.consume(new OverrideableSpace(createKeyword(context, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(context, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
     if (!(statement instanceof PsiJavaModule)) {
       PsiElement host = statement.getParent();
       if (host instanceof PsiJavaModule) {
