@@ -143,6 +143,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
+    { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "F5",                       "CopyElement", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},

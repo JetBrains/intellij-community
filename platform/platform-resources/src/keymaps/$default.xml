@@ -1041,4 +1041,8 @@
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="control shift M" />
   </action>
+
+  <action id="QuickActionPopup">
+    <keyboard-shortcut first-keystroke="control alt ENTER"/>
+  </action>
 </keymap>
