@@ -149,12 +149,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
       // First bound
-      return ourGuard.doPreventingRecursion(extendsTypes[0], true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return substitute(extendsTypes[0]);
-        }
-      });
+      return ourGuard.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());

@@ -187,12 +187,8 @@ public class DebugUtil {
         }
       }
       if (psiElement != null && extra != null ) {
-        extra.consume(psiElement, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null);
-          }
-        });
+        extra.consume(psiElement,
+                      element -> treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null));
       }
     }
     catch (IOException e) {
@@ -477,12 +473,8 @@ public class DebugUtil {
         child = child.getNextSibling();
       }
       if (extra != null) {
-        extra.consume(root, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null);
-          }
-        });
+        extra.consume(root,
+                      element -> psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null));
       }
     }
     catch (IOException e) {

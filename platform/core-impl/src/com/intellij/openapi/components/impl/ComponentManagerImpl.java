@@ -75,12 +75,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final List<BaseComponent> myBaseComponents = new ArrayList<BaseComponent>();
 
   private final ComponentManager myParentComponentManager;
-  private final Condition myDisposedCondition = new Condition() {
-    @Override
-    public boolean value(final Object o) {
-      return isDisposed();
-    }
-  };
+  private final Condition myDisposedCondition = o -> isDisposed();
 
   protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
@@ -304,12 +299,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(new StartupProgress() {
-      @Override
-      public void showProgress(String message, float progress) {
-        indicator.setFraction(progress);
-      }
-    })) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins((message, progress) -> indicator.setFraction(progress))) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }

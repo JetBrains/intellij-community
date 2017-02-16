@@ -519,19 +519,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (seemsScrambled(aClass.getName())) {
-      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !method.hasModifierProperty(PsiModifier.PRIVATE);
-        }
-      });
+      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE));
 
-      return !methods.isEmpty() && ContainerUtil.and(methods, new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return seemsScrambled(method.getName());
-        }
-      });
+      return !methods.isEmpty() && ContainerUtil.and(methods, method -> seemsScrambled(method.getName()));
     }
 
     return false;

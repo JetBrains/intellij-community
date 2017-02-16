@@ -31,12 +31,7 @@ public class ApplicationUtil {
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<T>();
-    tryRunReadAction(new Runnable() {
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    });
+    tryRunReadAction(() -> result.set(computable.compute()));
     return result.get();
   }
 
@@ -54,22 +49,14 @@ public class ApplicationUtil {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
-    Future<?> future = PooledThreadExecutor.INSTANCE.submit(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              result.set(callable.call());
-            }
-            catch (Throwable t) {
-              error.set(t);
-            }
-          }
-        }, indicator);
+    Future<?> future = PooledThreadExecutor.INSTANCE.submit(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        result.set(callable.call());
       }
-    });
+      catch (Throwable t) {
+        error.set(t);
+      }
+    }, indicator));
 
     while (true) {
       try {

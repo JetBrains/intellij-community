@@ -110,13 +110,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @Override
   public List<PsiFile> getCachedPsiFiles() {
-    return ContainerUtil.mapNotNull(myRoots.keySet(), new NullableFunction<Language, PsiFile>() {
-      @Nullable
-      @Override
-      public PsiFile fun(Language language) {
-        return getCachedPsi(language);
-      }
-    });
+    return ContainerUtil.mapNotNull(myRoots.keySet(), (NullableFunction<Language, PsiFile>)language -> getCachedPsi(language));
   }
 
   @NotNull

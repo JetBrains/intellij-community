@@ -276,21 +276,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
     finally {
-      caretMarkers.forEachValue(new TObjectProcedure<List<RangeMarker>>() {
-        @Override
-        public boolean execute(List<RangeMarker> markerList) {
-          if (markerList != null) {
-            for (RangeMarker marker : markerList) {
-              try {
-                marker.dispose();
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+      caretMarkers.forEachValue(markerList -> {
+        if (markerList != null) {
+          for (RangeMarker marker : markerList) {
+            try {
+              marker.dispose();
+            }
+            catch (Exception e) {
+              LOG.error(e);
             }
           }
-          return true;
         }
+        return true;
       });
     }
     return markAsNeedsStrippingLater;
@@ -812,12 +809,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   @Override
   public String getText() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return doGetText();
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> doGetText());
   }
 
   @NotNull
@@ -832,12 +824,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   @Override
   public String getText(@NotNull final TextRange range) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<String>)() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
   }
 
   @Override
@@ -983,12 +971,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void setText(@NotNull final CharSequence text) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
-      }
-    };
+    Runnable runnable = () -> replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
     if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
       runnable.run();
     }

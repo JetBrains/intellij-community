@@ -134,13 +134,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
   @Override
   public PsiMember getPotentiallyApplicableMember() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMember>() {
-      @Nullable
-      @Override
-      public Result<PsiMember> compute() {
-        return Result.create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
+      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this));
   }
 
   private PsiMember getPotentiallyApplicableMemberInternal() {

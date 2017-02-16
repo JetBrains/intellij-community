@@ -437,13 +437,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     if (root == null) return true;
 
     WalkingState.TreeGuide<IntervalNode<T>> guide = getGuide();
-    return WalkingState.processAll(root, guide, new Processor<IntervalNode<T>>() {
-      @Override
-      public boolean process(IntervalNode<T> node) {
-        if (!node.processAliveKeys(processor)) return false;
-        if (modCount != modCountBefore) throw new ConcurrentModificationException();
-        return true;
-      }
+    return WalkingState.processAll(root, guide, node -> {
+      if (!node.processAliveKeys(processor)) return false;
+      if (modCount != modCountBefore) throw new ConcurrentModificationException();
+      return true;
     });
   }
 
@@ -1277,12 +1274,9 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   @Override
   public void clear() {
     l.writeLock().lock();
-    process(new Processor<T>() {
-      @Override
-      public boolean process(T t) {
-        beforeRemove(t, "Clear all");
-        return true;
-      }
+    process(t -> {
+      beforeRemove(t, "Clear all");
+      return true;
     });
     try {
       super.clear();

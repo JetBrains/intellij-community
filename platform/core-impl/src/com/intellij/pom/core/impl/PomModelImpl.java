@@ -300,18 +300,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, treeElement, changedPsiRange, newText, new EmptyProgressIndicator(),
                                                                          treeElement.getText());
-    return new Runnable() {
+    return () -> runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
+      @Nullable
       @Override
-      public void run() {
-        runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
-          @Nullable
-          @Override
-          public PomModelEvent runInner() throws IncorrectOperationException {
-            return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
-          }
-        });
+      public PomModelEvent runInner() throws IncorrectOperationException {
+        return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
       }
-    };
+    });
   }
 
   @Nullable
@@ -323,12 +318,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     CharSequence newLeafText = getLeafChangedText(leaf, treeElement, newText, changedPsiRange);
     //noinspection unchecked
     final ASTNode copy = newLeafText == null ? null : ((IReparseableLeafElementType)leafType).reparseLeaf(leaf, newLeafText);
-    return copy == null ? null : new Runnable() {
-      @Override
-      public void run() {
-        leaf.getTreeParent().replaceChild(leaf, copy);
-      }
-    };
+    return copy == null ? null : () -> leaf.getTreeParent().replaceChild(leaf, copy);
   }
 
   private static CharSequence getLeafChangedText(LeafElement leaf, FileElement treeElement, CharSequence newFileText, TextRange changedPsiRange) {

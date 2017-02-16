@@ -405,12 +405,7 @@ public class GenericsUtil {
     final List<PsiType> result = new ArrayList<PsiType>(substitutionMap.size());
     for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
       final String name = typeParameter.getName();
-      final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), new Condition<PsiTypeParameter>() {
-        @Override
-        public boolean value(final PsiTypeParameter psiTypeParameter) {
-          return name.equals(psiTypeParameter.getName());
-        }
-      });
+      final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), psiTypeParameter -> name.equals(psiTypeParameter.getName()));
       if (key != null) {
         result.add(substitutionMap.get(key));
       }

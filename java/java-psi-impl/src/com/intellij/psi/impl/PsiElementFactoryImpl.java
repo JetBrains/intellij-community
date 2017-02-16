@@ -70,12 +70,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
-    manager.registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        myCachedObjectType.clear();
-      }
-    });
+    manager.registerRunnableToRunOnChange(() -> myCachedObjectType.clear());
   }
 
   @NotNull

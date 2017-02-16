@@ -66,12 +66,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        dropCache();
-      }
-    }, psiManager.getProject());
+    LowMemoryWatcher.register(() -> dropCache(), psiManager.getProject());
   }
 
   @Nullable
@@ -102,24 +97,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, @NotNull final String annotationFQN) {
-    return ContainerUtil.find(map, new Condition<AnnotationData>() {
-      @Override
-      public boolean value(AnnotationData data) {
-        return data.annotationClassFqName.equals(annotationFQN);
-      }
-    });
+    return ContainerUtil.find(map, data -> data.annotationClassFqName.equals(annotationFQN));
   }
 
   @Override
   @Nullable
   public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
-    return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
-      @Override
-      public PsiAnnotation fun(AnnotationData data) {
-        return data.getAnnotation(BaseExternalAnnotationsManager.this);
-      }
-    });
+    return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
+                                                             data -> data.getAnnotation(BaseExternalAnnotationsManager.this));
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
@@ -262,13 +248,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     List<PsiFile> result = new SmartList<PsiFile>(possibleAnnotationXmls);
     // writable go first
-    Collections.sort(result, new Comparator<PsiFile>() {
-      @Override
-      public int compare(PsiFile f1, PsiFile f2) {
-        boolean w1 = f1.isWritable();
-        boolean w2 = f2.isWritable();
-        return w1 == w2 ? 0 : w1 ? -1 : 1;
-      }
+    Collections.sort(result, (f1, f2) -> {
+      boolean w1 = f1.isWritable();
+      boolean w2 = f2.isWritable();
+      return w1 == w2 ? 0 : w1 ? -1 : 1;
     });
     myExternalAnnotationsCache.put(virtualFile, result);
     return result;

@@ -64,15 +64,12 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private void pollQueueLater() {
-    invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Queue<Transaction> queue = getQueue(myCurrentTransaction);
-        Transaction next = queue.peek();
-        if (next != null && canRunTransactionNow(next, false)) {
-          queue.remove();
-          runSyncTransaction(next);
-        }
+    invokeLater(() -> {
+      Queue<Transaction> queue = getQueue(myCurrentTransaction);
+      Transaction next = queue.peek();
+      if (next != null && canRunTransactionNow(next, false)) {
+        queue.remove();
+        runSyncTransaction(next);
       }
     });
   }
@@ -107,16 +104,13 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Transaction transaction = new Transaction(_transaction, expectedId, parentDisposable);
     final Application app = ApplicationManager.getApplication();
     final boolean isDispatchThread = app.isDispatchThread();
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (canRunTransactionNow(transaction, isDispatchThread)) {
-          runSyncTransaction(transaction);
-        }
-        else {
-          getQueue(expectedId).offer(transaction);
-          pollQueueLater();
-        }
+    Runnable runnable = () -> {
+      if (canRunTransactionNow(transaction, isDispatchThread)) {
+        runSyncTransaction(transaction);
+      }
+      else {
+        getQueue(expectedId).offer(transaction);
+        pollQueueLater();
       }
     };
 
@@ -164,18 +158,15 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-        }
-        catch (Throwable e) {
-          exception[0] = e;
-        }
-        finally {
-          semaphore.up();
-        }
+    submitTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), () -> {
+      try {
+        runnable.run();
+      }
+      catch (Throwable e) {
+        exception[0] = e;
+      }
+      finally {
+        semaphore.up();
       }
     });
     semaphore.waitFor();
@@ -261,17 +252,14 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     final TransactionIdImpl id = getContextTransaction();
     final ModalityState startModality = ModalityState.defaultModalityState();
-    invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        boolean allowWriting = ModalityState.current() == startModality;
-        AccessToken token = startActivity(allowWriting);
-        try {
-          submitTransaction(parentDisposable, id, transaction);
-        }
-        finally {
-          token.finish();
-        }
+    invokeLater(() -> {
+      boolean allowWriting = ModalityState.current() == startModality;
+      AccessToken token = startActivity(allowWriting);
+      try {
+        submitTransaction(parentDisposable, id, transaction);
+      }
+      finally {
+        token.finish();
       }
     });
   }

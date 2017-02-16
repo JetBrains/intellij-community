@@ -140,12 +140,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         }
         List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
                                                                      : Arrays.asList(((PsiClass)parent).getFields());
-        boolean hasSubClass = ContainerUtil.find(fields, new Condition<PsiField>() {
-          @Override
-          public boolean value(PsiField field) {
-            return field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null;
-          }
-        }) != null;
+        boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
         if (!hasSubClass) {
           implicitModifiers.add(FINAL);
         }
@@ -286,12 +281,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
-    List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
-      @Override
-      public boolean value(PsiAnnotation annotation) {
-        PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
-        return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
-      }
+    List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), annotation -> {
+      PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
+      return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
     });
 
     return filtered.toArray(new PsiAnnotation[filtered.size()]);

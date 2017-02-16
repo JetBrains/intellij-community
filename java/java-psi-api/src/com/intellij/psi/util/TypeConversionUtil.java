@@ -933,24 +933,19 @@ public class TypeConversionUtil {
     final Project project = psiClass.getProject();
     CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
     if (boxedHolderTypes == null) {
-      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
-        @Override
-        public Result<Set<String>> compute() {
+      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
+        () -> {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           final Set<String> set = new THashSet<String>();
           for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
             final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
-            InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass psiClass) {
-                ContainerUtil.addIfNotNull(set, psiClass.getQualifiedName());
-                return true;
-              }
+            InheritanceUtil.processSupers(boxedClass, true, psiClass1 -> {
+              ContainerUtil.addIfNotNull(set, psiClass1.getQualifiedName());
+              return true;
             });
           }
-          return Result.create(set, ProjectRootModificationTracker.getInstance(project));
-        }
-      }, false));
+          return CachedValueProvider.Result.create(set, ProjectRootModificationTracker.getInstance(project));
+        }, false));
     }
 
     return boxedHolderTypes.getValue();
@@ -1031,13 +1026,8 @@ public class TypeConversionUtil {
         }
         else { //isSuper
           if (rightWildcard.isSuper()) {
-            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true, new NotNullComputable<Boolean>() {
-              @NotNull
-              @Override
-              public Boolean compute() {
-                return isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion, false);
-              }
-            });
+            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true,
+                                                                      (NotNullComputable<Boolean>)() -> isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion, false));
             if (assignable != null && assignable) {
               return true;
             }
@@ -1050,13 +1040,8 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, false, false);
         }
         else { // isSuper
-          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, new NotNullComputable<Boolean>() {
-            @NotNull
-            @Override
-            public Boolean compute() {
-              return isAssignable(typeRight, leftBound, false, false);
-            }
-          });
+          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true,
+                                                                    (NotNullComputable<Boolean>)() -> isAssignable(typeRight, leftBound, false, false));
           return assignable == null || assignable.booleanValue(); 
         }
       }
@@ -1129,12 +1114,9 @@ public class TypeConversionUtil {
     }
     msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
     msg.append("\nhierarchy:\n");
-    InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass psiClass) {
-        msg.append("each: " + classInfo(psiClass));
-        return true;
-      }
+    InheritanceUtil.processSupers(derivedClass, true, psiClass -> {
+      msg.append("each: " + classInfo(psiClass));
+      return true;
     });
     LOG.error(msg.toString());
   }

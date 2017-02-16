@@ -277,20 +277,17 @@ public class LocalSearchScope extends SearchScope {
     if (scope == EMPTY) {
       return EMPTY;
     }
-    return ApplicationManager.getApplication().runReadAction(new Computable<LocalSearchScope>() {
-      @Override
-      public LocalSearchScope compute() {
-        PsiElement[] elements = scope.getScope();
-        List<PsiElement> result = new ArrayList<PsiElement>(elements.length);
-        for (PsiElement element : elements) {
-          PsiFile containingFile = element.getContainingFile();
-          FileType fileType = containingFile.getFileType();
-          if (ArrayUtil.contains(fileType, fileTypes)) {
-            result.add(element);
-          }
+    return ApplicationManager.getApplication().runReadAction((Computable<LocalSearchScope>)() -> {
+      PsiElement[] elements = scope.getScope();
+      List<PsiElement> result = new ArrayList<PsiElement>(elements.length);
+      for (PsiElement element : elements) {
+        PsiFile containingFile = element.getContainingFile();
+        FileType fileType = containingFile.getFileType();
+        if (ArrayUtil.contains(fileType, fileTypes)) {
+          result.add(element);
         }
-        return result.isEmpty() ? EMPTY : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
       }
+      return result.isEmpty() ? EMPTY : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
     });
 
 

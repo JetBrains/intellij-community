@@ -42,12 +42,7 @@ public class SofterReference<T> {
   }
 
   static {
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        onLowMemory();
-      }
-    }, ApplicationManager.getApplication());
+    LowMemoryWatcher.register(() -> onLowMemory(), ApplicationManager.getApplication());
   }
 
   public SofterReference(@NotNull T referent) {

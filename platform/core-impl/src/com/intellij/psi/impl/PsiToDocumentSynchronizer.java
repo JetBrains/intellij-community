@@ -103,12 +103,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     final DocumentEx document = getCachedDocument(psiFile, force);
     if (document == null) return;
 
-    performAtomically(psiFile, new Runnable() {
-      @Override
-      public void run() {
-        syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-      }
-    });
+    performAtomically(psiFile, () -> syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event));
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if (!insideTransaction) {
@@ -318,12 +313,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public static class DocumentChangeTransaction{
-    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(new Comparator<TextRange>() {
-      @Override
-      public int compare(TextRange o1, TextRange o2) {
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-    });
+    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(
+      (o1, o2) -> o1.getStartOffset() - o2.getStartOffset());
     private final PsiFile myChangeScope;
     private ImmutableCharSequence myPsiText;
 
@@ -430,12 +421,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
 
     private TextRange findFragment(final int docOffset) {
-      return ContainerUtil.find(myAffectedFragments.keySet(), new Condition<TextRange>() {
-        @Override
-        public boolean value(TextRange range) {
-          return range.containsOffset(docOffset);
-        }
-      });
+      return ContainerUtil.find(myAffectedFragments.keySet(), range -> range.containsOffset(docOffset));
     }
 
     private int psiToDocumentOffset(int offset) {

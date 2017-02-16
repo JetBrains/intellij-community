@@ -33,13 +33,8 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private volatile Map<String,PsiImportStatement> myPackageNameToImportMap;
   private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap;
   private static final PsiImportStatementBase[] EMPTY_ARRAY = PsiImportStatementBase.EMPTY_ARRAY;
-  private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
-    @NotNull
-    @Override
-    public PsiImportStatementBase[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
-    }
-  };
+  private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
 
   public PsiImportListImpl(final PsiImportListStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_LIST);

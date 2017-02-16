@@ -68,34 +68,19 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   @Deprecated
   public AsyncResult<T> doWhenDone(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
-    doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        handler.run(myResult);
-      }
-    });
+    doWhenDone(() -> handler.run(myResult));
     return this;
   }
 
   @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Consumer<T> consumer) {
-    doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        consumer.consume(myResult);
-      }
-    });
+    doWhenDone(() -> consumer.consume(myResult));
     return this;
   }
 
   @NotNull
   public AsyncResult<T> doWhenRejected(@NotNull final PairConsumer<T, String> consumer) {
-    doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        consumer.consume(myResult, myError);
-      }
-    });
+    doWhenRejected(() -> consumer.consume(myResult, myError));
     return this;
   }
 
@@ -123,12 +108,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public final ActionCallback doWhenProcessed(@NotNull final Consumer<T> consumer) {
     doWhenDone(consumer);
-    doWhenRejected(new PairConsumer<T, String>() {
-      @Override
-      public void consume(T result, String error) {
-        consumer.consume(result);
-      }
-    });
+    doWhenRejected((result, error) -> consumer.consume(result));
     return this;
   }
 

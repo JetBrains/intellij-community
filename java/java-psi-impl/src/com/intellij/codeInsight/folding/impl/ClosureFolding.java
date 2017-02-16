@@ -149,12 +149,7 @@ class ClosureFolding {
   private String getFoldingHeader() {
     String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
-    String params = StringUtil.join(myMethod.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter psiParameter) {
-        return psiParameter.getName();
-      }
-    }, ", ");
+    String params = StringUtil.join(myMethod.getParameterList().getParameters(), psiParameter -> psiParameter.getName(), ", ");
     return type + methodName + "(" + params + ") " + myBuilder.rightArrow() + " {";
   }
 

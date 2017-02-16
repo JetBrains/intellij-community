@@ -355,16 +355,13 @@ public class InferenceIncorporationPhase {
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
-    return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
-      @Override
-      public boolean process(Pair<PsiType, PsiType> pair) {
-        final PsiType sType = pair.first;
-        final PsiType tType = pair.second;
-        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-          addConstraint(new TypeEqualityConstraint(sType, tType));
-        }
-        return false;
+    return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {
+      final PsiType sType = pair.first;
+      final PsiType tType = pair.second;
+      if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+        addConstraint(new TypeEqualityConstraint(sType, tType));
       }
+      return false;
     }) != null;
   }
 

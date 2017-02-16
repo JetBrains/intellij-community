@@ -69,12 +69,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
           final PsiType functionalInterfaceType = LambdaUtil.ourParameterGuard.doPreventingRecursion(param, false,
-                                                                                                     new Computable<PsiType>() {
-                                                                                                         @Override
-                                                                                                         public PsiType compute() {
-                                                                                                           return LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true);
-                                                                                                         }
-                                                                                                       });
+                                                                                                     () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
           PsiType type = FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, lambdaExpression);
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();

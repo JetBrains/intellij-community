@@ -152,12 +152,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
     final String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : null;
-    final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true, new Computable<String>() {
-      @Override
-      public String compute() {
-        return DebugUtil.treeToString(fileElement, true);
-      }
-    });
+    final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true,
+                                                                    () -> DebugUtil.treeToString(fileElement, true));
 
     @NonNls final String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                                    (vFile == null ? "<unknown file>" : vFile.getPath()) +

@@ -42,13 +42,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
-  private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = new ArrayFactory<PsiDocTag>() {
-    @NotNull
-    @Override
-    public PsiDocTag[] create(final int count) {
-      return count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
-    }
-  };
+  private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = count -> count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Pattern WS_PATTERN = Pattern.compile("\\s*");

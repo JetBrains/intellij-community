@@ -167,12 +167,7 @@ class ProfileViewer {
 
     List<Ref> refs = new ArrayList<Ref>(map.values());
 
-    ContainerUtil.sort(refs, new Comparator<Ref>() {
-      @Override
-      public int compare(Ref ref1, Ref ref2) {
-        return ref2.totalTime - ref1.totalTime;
-      }
-    });
+    ContainerUtil.sort(refs, (ref1, ref2) -> ref2.totalTime - ref1.totalTime);
 
     int var = 1;
   }

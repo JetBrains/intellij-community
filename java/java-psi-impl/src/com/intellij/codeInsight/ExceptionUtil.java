@@ -103,12 +103,7 @@ public class ExceptionUtil {
       if (expr == null) return Collections.emptyList();
       final List<PsiType> types = getPreciseThrowTypes(expr);
       List<PsiClassType> classTypes =
-        new ArrayList<PsiClassType>(ContainerUtil.mapNotNull(types, new NullableFunction<PsiType, PsiClassType>() {
-          @Override
-          public PsiClassType fun(PsiType type) {
-            return type instanceof PsiClassType ? (PsiClassType)type : null;
-          }
-        }));
+        new ArrayList<PsiClassType>(ContainerUtil.mapNotNull(types, (NullableFunction<PsiType, PsiClassType>)type -> type instanceof PsiClassType ? (PsiClassType)type : null));
       addExceptions(classTypes, getThrownExceptions(expr));
       return classTypes;
     }
@@ -470,18 +465,15 @@ public class ExceptionUtil {
       try {
         PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
         final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
-          processor.getResults(), new Function<CandidateInfo, Pair<PsiMethod, PsiSubstitutor>>() {
-          @Override
-          public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
-            PsiElement element = info.getElement();
+          processor.getResults(), info -> {
+            PsiElement element1 = info.getElement();
             if (info instanceof MethodCandidateInfo &&
-                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
-                !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-              return Pair.create((PsiMethod)element, ((MethodCandidateInfo)info).getSubstitutor(false));
+                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
+                !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method)) {
+              return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));
             }
             return null;
-          }
-        });
+          });
         if (candidates.size() > 1) {
           GlobalSearchScope scope = methodCall.getResolveScope();
           final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions, scope);

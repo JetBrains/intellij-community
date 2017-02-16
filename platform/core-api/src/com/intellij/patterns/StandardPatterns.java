@@ -53,12 +53,7 @@ public class StandardPatterns {
 
   @NotNull
   public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
-    ElementPattern[] patterns = ContainerUtil.map(classes, new Function<Class<T>, ElementPattern>() {
-      @Override
-      public ElementPattern fun(Class<T> aClass) {
-        return instanceOf(aClass);
-      }
-    }, new ElementPattern[0]);
+    ElementPattern[] patterns = ContainerUtil.map(classes, aClass -> instanceOf(aClass), new ElementPattern[0]);
     return or(patterns);
   }
 

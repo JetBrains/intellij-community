@@ -121,13 +121,10 @@ public interface BusyObject {
       public ActionCallback execute(@NotNull ActiveRunnable runnable) {
         myBusyCount.addAndGet(1);
         ActionCallback cb = runnable.run();
-        cb.doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            myBusyCount.addAndGet(-1);
-            if (isReady()) {
-              onReady();
-            }
+        cb.doWhenProcessed(() -> {
+          myBusyCount.addAndGet(-1);
+          if (isReady()) {
+            onReady();
           }
         });
         return cb;

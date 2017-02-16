@@ -127,13 +127,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
-  private static final ArrayFactory<IElementType> myElementTypeArrayFactory = new ArrayFactory<IElementType>() {
-    @NotNull
-    @Override
-    public IElementType[] create(int count) {
-      return count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
-    }
-  };
+  private static final ArrayFactory<IElementType> myElementTypeArrayFactory =
+    count -> count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));

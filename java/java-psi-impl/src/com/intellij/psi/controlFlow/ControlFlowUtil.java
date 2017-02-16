@@ -597,13 +597,10 @@ public class ControlFlowUtil {
         };
         graph.buildFrom(flow);
 
-        return new Function<Integer, BitSet>() {
-          @Override
-          public BitSet fun(Integer startOffset) {
-            BitSet visitedOffsets = new BitSet(flowEnd);
-            graph.depthFirstSearch(startOffset, visitedOffsets);
-            return visitedOffsets;
-          }
+        return startOffset -> {
+          BitSet visitedOffsets = new BitSet(flowEnd);
+          graph.depthFirstSearch(startOffset, visitedOffsets);
+          return visitedOffsets;
         };
       }
     }

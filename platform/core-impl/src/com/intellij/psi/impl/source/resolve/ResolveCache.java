@@ -136,12 +136,8 @@ public class ResolveCache {
     }
 
     RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true, new Computable<TResult>() {
-      @Override
-      public TResult compute() {
-        return resolver.resolve(ref, incompleteCode);
-      }
-    }) : resolver.resolve(ref, incompleteCode);
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true,
+                                                                    () -> resolver.resolve(ref, incompleteCode)) : resolver.resolve(ref, incompleteCode);
     PsiElement element = result instanceof ResolveResult ? ((ResolveResult)result).getElement() : null;
     LOG.assertTrue(element == null || element.isValid(), result);
 
@@ -185,12 +181,8 @@ public class ResolveCache {
     }
 
     RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true, new Computable<ResolveResult[]>() {
-      @Override
-      public ResolveResult[] compute() {
-        return resolver.resolve(ref, containingFile, incompleteCode);
-      }
-    }) : resolver.resolve(ref, containingFile, incompleteCode);
+    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
+                                                                    () -> resolver.resolve(ref, containingFile, incompleteCode)) : resolver.resolve(ref, containingFile, incompleteCode);
 
     if (stamp.mayCacheNow()) {
       cache(ref, map, result);

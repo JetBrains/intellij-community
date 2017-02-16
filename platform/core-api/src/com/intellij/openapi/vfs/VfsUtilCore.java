@@ -24,7 +24,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -388,12 +387,7 @@ public class VfsUtilCore {
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
-    return ContainerUtil.map2List(scope, new Function<VirtualFile, File>() {
-      @Override
-      public File fun(VirtualFile file) {
-        return virtualToIoFile(file);
-      }
-    });
+    return ContainerUtil.map2List(scope, file -> virtualToIoFile(file));
   }
 
   @NotNull

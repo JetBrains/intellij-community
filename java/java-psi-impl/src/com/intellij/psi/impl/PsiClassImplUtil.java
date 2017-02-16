@@ -250,20 +250,17 @@ public class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new NullableFunction<ClassIconRequest, Icon>() {
-    @Override
-    public Icon fun(ClassIconRequest r) {
-      if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
+  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = (NullableFunction<ClassIconRequest, Icon>)r -> {
+    if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
-      final boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
-      Icon symbolIcon = r.symbolIcon != null
-                        ? r.symbolIcon
-                        : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
-      RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
-      Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
-      Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
-      return result;
-    }
+    final boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
+    Icon symbolIcon = r.symbolIcon != null
+                      ? r.symbolIcon
+                      : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
+    Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+    Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+    return result;
   };
 
   public static Icon getClassIcon(final int flags, @NotNull PsiClass aClass) {
@@ -718,13 +715,9 @@ public class PsiClassImplUtil {
     if (last instanceof PsiReferenceList) return true;
 
     final Set<PsiClass> visited1 = visited;
-    return processSuperTypes(aClass, state.get(PsiSubstitutor.KEY), factory, languageLevel, resolveScope, new PairProcessor<PsiClass, PsiSubstitutor>() {
-      @Override
-      public boolean process(PsiClass superClass, PsiSubstitutor finalSubstitutor) {
-        return processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited1, last, place,
-                                          languageLevel, isRaw, resolveScope);
-      }
-    });
+    return processSuperTypes(aClass, state.get(PsiSubstitutor.KEY), factory, languageLevel, resolveScope,
+                             (superClass, finalSubstitutor) -> processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited1, last, place,
+                                                                                                               languageLevel, isRaw, resolveScope));
   }
 
   @Nullable
@@ -990,14 +983,11 @@ public class PsiClassImplUtil {
   private static <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull final PsiClass psiClass, PsiMember[] members) {
     final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(psiClass, psiClass.getResolveScope());
     final LanguageLevel level = PsiUtil.getLanguageLevel(psiClass);
-    return ContainerUtil.map(members, new Function<PsiMember, Pair<T, PsiSubstitutor>>() {
-      @Override
-      public Pair<T, PsiSubstitutor> fun(PsiMember member) {
-        PsiClass containingClass = member.getContainingClass();
-        PsiSubstitutor substitutor = containingClass == null ? null : hierarchy.getSuperMembersSubstitutor(containingClass, level);
-        //noinspection unchecked
-        return Pair.create((T)member, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
-      }
+    return ContainerUtil.map(members, member -> {
+      PsiClass containingClass = member.getContainingClass();
+      PsiSubstitutor substitutor = containingClass == null ? null : hierarchy.getSuperMembersSubstitutor(containingClass, level);
+      //noinspection unchecked
+      return Pair.create((T)member, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
     });
   }
 

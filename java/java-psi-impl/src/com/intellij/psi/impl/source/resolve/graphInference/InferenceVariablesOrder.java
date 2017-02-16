@@ -50,12 +50,7 @@ public class InferenceVariablesOrder {
       }
     }
     final ArrayList<InferenceGraphNode<InferenceVariable>> acyclicNodes = initNodes(nodes.values());
-    return ContainerUtil.map(acyclicNodes, new Function<InferenceGraphNode<InferenceVariable>, List<InferenceVariable>>() {
-      @Override
-      public List<InferenceVariable> fun(InferenceGraphNode<InferenceVariable> node) {
-        return node.getValue();
-      }
-    }).iterator();
+    return ContainerUtil.map(acyclicNodes, node -> node.getValue()).iterator();
   }
 
   public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<InferenceGraphNode<T>> nodes) {

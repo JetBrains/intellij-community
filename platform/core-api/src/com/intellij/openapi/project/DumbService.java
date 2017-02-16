@@ -89,12 +89,7 @@ public abstract class DumbService {
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<T>();
-    runReadActionInSmartMode(new Runnable() {
-      @Override
-      public void run() {
-        result.set(r.compute());
-      }
-    });
+    runReadActionInSmartMode(() -> result.set(r.compute()));
     return result.get();
   }
 
@@ -128,15 +123,12 @@ public abstract class DumbService {
 
     while (true) {
       waitForSmartMode();
-      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (isDumb()) {
-            return false;
-          }
-          r.run();
-          return true;
+      boolean success = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        if (isDumb()) {
+          return false;
         }
+        r.run();
+        return true;
       });
       if (success) break;
     }

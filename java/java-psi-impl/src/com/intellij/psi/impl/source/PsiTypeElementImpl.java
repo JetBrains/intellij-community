@@ -62,13 +62,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiType getType() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiType>() {
-      @Nullable
-      @Override
-      public Result<PsiType> compute() {
-        return Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private PsiType calculateType() {
@@ -196,12 +190,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   private List<PsiType> collectTypes() {
     List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
-    return ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
-      @Override
-      public PsiType fun(PsiTypeElement typeElement) {
-        return typeElement.getType();
-      }
-    });
+    return ContainerUtil.map(typeElements, typeElement -> typeElement.getType());
   }
 
   @Override

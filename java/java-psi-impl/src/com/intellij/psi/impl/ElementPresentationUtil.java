@@ -102,12 +102,8 @@ public class ElementPresentationUtil implements PlatformIcons {
 
     CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
     if (value == null) {
-      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<Integer>() {
-        @Override
-        public Result<Integer> compute() {
-          return Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass);
-        }
-      }, false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(
+        () -> CachedValueProvider.Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false);
       aClass.putUserData(CLASS_KIND_KEY, value);
     }
     return value.getValue().intValue();

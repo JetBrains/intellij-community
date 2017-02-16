@@ -587,12 +587,7 @@ public class PsiUtilCore {
   }
 
   public static Project getProjectInReadAction(@NotNull final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-      @Override
-      public Project compute() {
-        return element.getProject();
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction((Computable<Project>)() -> element.getProject());
   }
 
   @Contract("null -> null;!null -> !null")

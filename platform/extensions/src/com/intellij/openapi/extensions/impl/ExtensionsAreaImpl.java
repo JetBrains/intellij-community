@@ -307,12 +307,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void notifyAvailableListener(final ExtensionPointAvailabilityListener listener, final ExtensionPoint extensionPoint) {
-    queueNotificationAction(new Runnable() {
-      @Override
-      public void run() {
-        listener.extensionPointRegistered(extensionPoint);
-      }
-    });
+    queueNotificationAction(() -> listener.extensionPointRegistered(extensionPoint));
   }
 
   private void queueNotificationAction(final Runnable action) {
@@ -365,12 +360,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void notifyUnavailableListener(final ExtensionPoint extensionPoint, final ExtensionPointAvailabilityListener listener) {
-    queueNotificationAction(new Runnable() {
-      @Override
-      public void run() {
-        listener.extensionPointRemoved(extensionPoint);
-      }
-    });
+    queueNotificationAction(() -> listener.extensionPointRemoved(extensionPoint));
   }
 
   @Override

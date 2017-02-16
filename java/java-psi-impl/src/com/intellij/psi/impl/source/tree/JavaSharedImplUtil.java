@@ -213,12 +213,7 @@ public class JavaSharedImplUtil {
       PsiAnnotation[] result = myCache;
       if (result == null) {
         List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
-          .filter(new Condition<PsiAnnotation>() {
-            @Override
-            public boolean value(PsiAnnotation annotation) {
-              return AnnotationTargetUtil.isTypeAnnotation(annotation);
-            }
-          })
+          .filter(annotation -> AnnotationTargetUtil.isTypeAnnotation(annotation))
           .append(myOriginalProvider.getAnnotations())
           .toList();
         myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(new PsiAnnotation[filtered.size()]);

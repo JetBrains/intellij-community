@@ -167,12 +167,7 @@ public class LightTreeUtil {
   }
 
   private static LighterASTNode findChildAtOffset(final int offset, List<LighterASTNode> children) {
-    return ContainerUtil.find(children, new Condition<LighterASTNode>() {
-      @Override
-      public boolean value(LighterASTNode node) {
-        return containsOffset(node, offset);
-      }
-    });
+    return ContainerUtil.find(children, node -> containsOffset(node, offset));
   }
 
   private static boolean containsOffset(LighterASTNode node, int offset) {

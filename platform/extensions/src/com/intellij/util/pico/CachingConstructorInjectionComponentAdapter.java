@@ -199,11 +199,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     }
     // optimize list of constructors moving the longest at the beginning
     if (parameters == null) {
-      Collections.sort(matchingConstructors, new Comparator<Constructor>() {
-        public int compare(Constructor arg0, Constructor arg1) {
-          return arg1.getParameterTypes().length - arg0.getParameterTypes().length;
-        }
-      });
+      Collections.sort(matchingConstructors, (arg0, arg1) -> arg1.getParameterTypes().length - arg0.getParameterTypes().length);
     }
     return matchingConstructors;
   }

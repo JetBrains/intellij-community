@@ -90,13 +90,7 @@ public class IElementType {
     this(debugName, language, true);
   }
 
-  private static final ArrayFactory<IElementType> FACTORY = new ArrayFactory<IElementType>() {
-    @NotNull
-    @Override
-    public IElementType[] create(int count) {
-      return new IElementType[count];
-    }
-  };
+  private static final ArrayFactory<IElementType> FACTORY = count -> new IElementType[count];
 
   /**
    * Allows to construct element types for some temporary purposes without registering them.

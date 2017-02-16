@@ -342,12 +342,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (hasSignature) {
           newText.append('(');
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-            @Override
-            public String fun(PsiParameter parameter) {
-              return TypeConversionUtil.erasure(parameter.getType()).getCanonicalText();
-            }
-          }, ","));
+          newText.append(StringUtil.join(parameters, parameter -> TypeConversionUtil.erasure(parameter.getType()).getCanonicalText(), ","));
           newText.append(')');
         }
         newText.append("*/");

@@ -75,12 +75,7 @@ public class FileManagerImpl implements FileManager {
     myFileDocumentManager = fileDocumentManager;
 
     Disposer.register(manager.getProject(), this);
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        processQueue();
-      }
-    }, this);
+    LowMemoryWatcher.register(() -> processQueue(), this);
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();
@@ -203,12 +198,7 @@ public class FileManagerImpl implements FileManager {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        clearViewProviders();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders());
 
     myVFileToPsiDirMap.clear();
     ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();

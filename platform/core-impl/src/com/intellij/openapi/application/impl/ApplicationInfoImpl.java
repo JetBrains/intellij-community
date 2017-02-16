@@ -879,12 +879,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
-    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
-      @Override
-      public String fun(Element element) {
-        String id = element.getTextTrim();
-        return StringUtil.isNotEmpty(id) ? id : null;
-      }
+    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, element -> {
+      String id = element.getTextTrim();
+      return StringUtil.isNotEmpty(id) ? id : null;
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
 

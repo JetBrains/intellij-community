@@ -42,12 +42,8 @@ public final class LanguageUtil {
   private LanguageUtil() {
   }
 
-  public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
-    @Override
-    public int compare(Language o1, Language o2) {
-      return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-    }
-  };
+  public static final Comparator<Language> LANGUAGE_COMPARATOR =
+    (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
 
 
   @Nullable
@@ -88,12 +84,7 @@ public final class LanguageUtil {
 
   @NotNull
   public static Language[] getLanguageDialects(@NotNull final Language base) {
-    final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
-      @Override
-      public boolean value(final Language language) {
-        return language.getBaseLanguage() == base;
-      }
-    });
+    final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
     return list.toArray(new Language[list.size()]);
   }
 

@@ -78,12 +78,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                 myArgumentsList.getText() + "; " +
                 "file=" + (method == null ? "<unknown>" : method.getContainingFile()));
     }
-    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, false, new Computable<CandidateInfo>() {
-      @Override
-      public CandidateInfo compute() {
-        return guardedOverloadResolution(conflicts);
-      }
-    });
+    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, false, () -> guardedOverloadResolution(conflicts));
   }
 
   @Nullable

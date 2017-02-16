@@ -107,30 +107,11 @@ public abstract class StubTreeLoader {
   }
   
   public static String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
-    final Function<Language, String> languageID = new Function<Language, String>() {
-      @Override
-      public String fun(Language language) {
-        return language.getID();
-      }
-    };
-    final Function<PsiFile, String> fileClassName = new Function<PsiFile, String>() {
-      @Override
-      public String fun(PsiFile file) {
-        return file.getClass().getSimpleName();
-      }
-    };
-    final Function<PsiFile, String> fileToFileType = new Function<PsiFile, String>() {
-      @Override
-      public String fun(PsiFile file) {
-        return file.getFileType().getName();
-      }
-    };
-    final Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString = new Function<Pair<IStubFileElementType, PsiFile>, String>() {
-      @Override
-      public String fun(Pair<IStubFileElementType, PsiFile> pair) {
-        return "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
-      }
-    };
+    final Function<Language, String> languageID = language -> language.getID();
+    final Function<PsiFile, String> fileClassName = file -> file.getClass().getSimpleName();
+    final Function<PsiFile, String> fileToFileType = file -> file.getFileType().getName();
+    final Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
+      pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
     return "path = " + provider.getVirtualFile().getPath() +
            ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +

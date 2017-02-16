@@ -45,12 +45,7 @@ public class ConcurrencyAnnotationsManager {
   }
 
   private static void fillDefaults(List<String> list, final String annoName) {
-    list.addAll(ContainerUtil.map(FRAMEWORKS, new Function<String, String>() {
-      @Override
-      public String fun(String framework) {
-        return framework + "." + annoName;
-      }
-    }));
+    list.addAll(ContainerUtil.map(FRAMEWORKS, framework -> framework + "." + annoName));
   }
 
   public static ConcurrencyAnnotationsManager getInstance(Project project) {

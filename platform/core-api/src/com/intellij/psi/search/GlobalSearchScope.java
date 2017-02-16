@@ -462,12 +462,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, new Function<GlobalSearchScope, Project>() {
-        @Override
-        public Project fun(GlobalSearchScope scope) {
-          return scope.getProject();
-        }
-      }), null));
+      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, scope -> scope.getProject()), null));
       if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
       myScopes = scopes;
       final int[] nested = {0};
@@ -492,73 +487,45 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.contains(file);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
     }
 
     @Override
     public boolean isSearchOutsideRootModel() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchOutsideRootModel();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchOutsideRootModel()) != null;
     }
 
     @Override
     public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final int[] result = {0};
-      ContainerUtil.process(myScopes, new Processor<GlobalSearchScope>() {
-        @Override
-        public boolean process(GlobalSearchScope scope) {
-          int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
-          if (result[0] == 0) {
-            result[0] = res1;
-            return true;
-          }
-          if (result[0] > 0 != res1 > 0) {
-            result[0] = 0;
-            return false;
-          }
+      ContainerUtil.process(myScopes, scope -> {
+        int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
+        if (result[0] == 0) {
+          result[0] = res1;
           return true;
         }
+        if (result[0] > 0 != res1 > 0) {
+          result[0] = 0;
+          return false;
+        }
+        return true;
       });
       return result[0];
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module)) != null;
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module, final boolean testSources) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module, testSources);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module, testSources)) != null;
     }
 
     @Override
     public boolean isSearchInLibraries() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInLibraries();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInLibraries()) != null;
     }
 
     @Override

@@ -143,12 +143,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public final SyntaxTraverser<T> onRange(@NotNull final TextRange range) {
-    return onRange(new Condition<T>() {
-      @Override
-      public boolean value(T e){
-        return api.rangeOf(e).intersects(range);
-      }
-    });
+    return onRange(e -> api.rangeOf(e).intersects(range));
   }
 
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
@@ -174,12 +169,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
     @NotNull
     public JBIterable<T> parents(@Nullable final T element) {
-      return JBIterable.generate(element, new Function<T, T>() {
-        @Override
-        public T fun(T t) {
-          return parent(t);
-        }
-      });
+      return JBIterable.generate(element, t -> parent(t));
     }
 
     public final Function<T, IElementType> TO_TYPE = new Function<T, IElementType>() {

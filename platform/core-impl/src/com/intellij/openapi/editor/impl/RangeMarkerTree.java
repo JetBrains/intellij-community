@@ -113,12 +113,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   private String errMsg(@NotNull RMNode<T> node) {
     System.gc();
     final AtomicInteger alive = new AtomicInteger();
-    node.processAliveKeys(new Processor<Object>() {
-      @Override
-      public boolean process(Object t) {
-        alive.incrementAndGet();
-        return true;
-      }
+    node.processAliveKeys(t -> {
+      alive.incrementAndGet();
+      return true;
     });
     if (alive.get() > DUPLICATE_LIMIT) {
       return "Too many range markers (" + alive + ") registered for interval "+node;
@@ -324,39 +321,31 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
-      @Override
-      public int compare(@NotNull T o1, @NotNull T o2) {
-        return o1.getEndOffset() - o2.getEndOffset();
-      }
-    });
+    final Queue<T> ends = new PriorityQueue<T>(5, (o1, o2) -> o1.getEndOffset() - o2.getEndOffset());
     final List<T> starts = new ArrayList<T>();
-    if (!generator.generateInStartOffsetOrder(new Processor<T>() {
-      @Override
-      public boolean process(T marker) {
-        // decide whether previous marker ends here or new marker begins
-        int start = marker.getStartOffset();
-        while (true) {
-          assert ends.size() == starts.size();
-          T previous = ends.peek();
-          if (previous != null) {
-            int prevEnd = previous.getEndOffset();
-            if (prevEnd <= start) {
-              if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-              ends.remove();
-              boolean removed = starts.remove(previous);
-              assert removed;
-              continue;
-            }
+    if (!generator.generateInStartOffsetOrder(marker -> {
+      // decide whether previous marker ends here or new marker begins
+      int start = marker.getStartOffset();
+      while (true) {
+        assert ends.size() == starts.size();
+        T previous = ends.peek();
+        if (previous != null) {
+          int prevEnd = previous.getEndOffset();
+          if (prevEnd <= start) {
+            if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
+            ends.remove();
+            boolean removed = starts.remove(previous);
+            assert removed;
+            continue;
           }
-          break;
         }
-        if (!sweepProcessor.process(start, marker, true, ends)) return false;
-        starts.add(marker);
-        ends.offer(marker);
-
-        return true;
+        break;
       }
+      if (!sweepProcessor.process(start, marker, true, ends)) return false;
+      starts.add(marker);
+      ends.offer(marker);
+
+      return true;
     })) return false;
 
     while (!ends.isEmpty()) {

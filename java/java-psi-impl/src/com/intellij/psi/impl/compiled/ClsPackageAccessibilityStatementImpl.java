@@ -52,12 +52,8 @@ public class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsiElemen
       @NotNull
       @Override
       protected Iterable<PsiJavaModuleReferenceElement> compute() {
-        return ContainerUtil.map(getStub().getTargets(), new Function<String, PsiJavaModuleReferenceElement>() {
-          @Override
-          public PsiJavaModuleReferenceElement fun(String target) {
-            return new ClsJavaModuleReferenceElementImpl(ClsPackageAccessibilityStatementImpl.this, target);
-          }
-        });
+        return ContainerUtil.map(getStub().getTargets(),
+                                 target -> new ClsJavaModuleReferenceElementImpl(ClsPackageAccessibilityStatementImpl.this, target));
       }
     };
   }

@@ -157,34 +157,31 @@ public class DebugReflectionUtil {
     @Override
     public String toString() {
       return
-      ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          String result = "";
-          BackLink backLink = BackLink.this;
-          while (backLink != null) {
-            String valueStr;
-            AccessToken token = ReadAction.start();
-            try {
-              valueStr = backLink.value instanceof FList
-                         ? "FList (size=" + ((FList)backLink.value).size() + ")" :
-                         backLink.value instanceof Collection ? "Collection (size=" + ((Collection)backLink.value).size() + ")" :
-                         String.valueOf(backLink.value);
-              valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
-            }
-            catch (Throwable e) {
-              valueStr = "(" + e.getMessage() + " while computing .toString())";
-            }
-            finally {
-              token.finish();
-            }
-            Field field = backLink.field;
-            String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
-            result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
-            backLink = backLink.backLink;
+      ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+        String result = "";
+        BackLink backLink = BackLink.this;
+        while (backLink != null) {
+          String valueStr;
+          AccessToken token = ReadAction.start();
+          try {
+            valueStr = backLink.value instanceof FList
+                       ? "FList (size=" + ((FList)backLink.value).size() + ")" :
+                       backLink.value instanceof Collection ? "Collection (size=" + ((Collection)backLink.value).size() + ")" :
+                       String.valueOf(backLink.value);
+            valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
           }
-          return result;
+          catch (Throwable e) {
+            valueStr = "(" + e.getMessage() + " while computing .toString())";
+          }
+          finally {
+            token.finish();
+          }
+          Field field = backLink.field;
+          String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
+          result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
+          backLink = backLink.backLink;
         }
+        return result;
       });
     }
   }

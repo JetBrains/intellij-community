@@ -1096,12 +1096,7 @@ public final class PsiUtil extends PsiUtilCore {
     return type;
   }
 
-  public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {
-    @Override
-    public int compare(PsiElement o1, PsiElement o2) {
-      return compareElementsByPosition(o1, o2);
-    }
-  };
+  public static final Comparator<PsiElement> BY_POSITION = (o1, o2) -> compareElementsByPosition(o1, o2);
 
   public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @PsiModifier.ModifierConstant String property, boolean value) {
     final PsiModifierList modifierList = owner.getModifierList();

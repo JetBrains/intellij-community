@@ -103,26 +103,23 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   private static void requestReparsing(@NotNull VirtualFile file, @NotNull Language prevLang, @NotNull Language substitutedLang) {
     ourReparsingRequests.put(file, new SubstitutionInfo(prevLang, substitutedLang));
     if (REQUESTS_DRAIN_NEEDED.compareAndSet(true, false)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          REQUESTS_DRAIN_NEEDED.set(true);
-          List<Map.Entry<VirtualFile, SubstitutionInfo>> set = ContainerUtil.newArrayList(ourReparsingRequests.entrySet());
-          List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(set.size());
-          int id = 1;
-          for (Map.Entry<VirtualFile, SubstitutionInfo> entry : set) {
-            VirtualFile f = entry.getKey();
-            SubstitutionInfo info = entry.getValue();
-            ourReparsingRequests.remove(f);
-            if (f.isValid()) {
-              LOG.info("Reparsing " + f.getPath() + " because of language substitution " +
-                       info.myPrevLang.getID() + "->" + info.mySubstitutedLang.getID() + ", #" + (id++));
-              files.add(f);
-            }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        REQUESTS_DRAIN_NEEDED.set(true);
+        List<Map.Entry<VirtualFile, SubstitutionInfo>> set = ContainerUtil.newArrayList(ourReparsingRequests.entrySet());
+        List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(set.size());
+        int id = 1;
+        for (Map.Entry<VirtualFile, SubstitutionInfo> entry : set) {
+          VirtualFile f = entry.getKey();
+          SubstitutionInfo info = entry.getValue();
+          ourReparsingRequests.remove(f);
+          if (f.isValid()) {
+            LOG.info("Reparsing " + f.getPath() + " because of language substitution " +
+                     info.myPrevLang.getID() + "->" + info.mySubstitutedLang.getID() + ", #" + (id++));
+            files.add(f);
           }
-          if (files.size() > 0) {
-            FileContentUtilCore.reparseFiles(files);
-          }
+        }
+        if (files.size() > 0) {
+          FileContentUtilCore.reparseFiles(files);
         }
       }, ModalityState.defaultModalityState());
     }

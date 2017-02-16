@@ -151,19 +151,13 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
     private DisjunctionTypePointer(@NotNull PsiDisjunctionType type) {
       super(type);
-      myPointers = ContainerUtil.map(type.getDisjunctions(), new Function<PsiType, SmartTypePointer>() {
-        @Override
-        public SmartTypePointer fun(PsiType psiType) {
-          return createSmartTypePointer(psiType);
-        }
-      });
+      myPointers = ContainerUtil.map(type.getDisjunctions(), psiType -> createSmartTypePointer(psiType));
     }
 
     @Override
     protected PsiDisjunctionType calcType() {
-      final List<PsiType> types = ContainerUtil.map(myPointers, new NullableFunction<SmartTypePointer, PsiType>() {
-        @Override public PsiType fun(SmartTypePointer typePointer) { return typePointer.getType(); }
-      });
+      final List<PsiType> types = ContainerUtil.map(myPointers,
+                                                    (NullableFunction<SmartTypePointer, PsiType>)typePointer -> typePointer.getType());
       return new PsiDisjunctionType(types, PsiManager.getInstance(myProject));
     }
   }

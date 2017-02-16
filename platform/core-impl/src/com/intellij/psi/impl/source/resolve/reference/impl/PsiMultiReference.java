@@ -35,27 +35,24 @@ import java.util.*;
  */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
-  public static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
-    @Override
-    public int compare(final PsiReference ref1, final PsiReference ref2) {
-      boolean soft1 = ref1.isSoft();
-      boolean soft2 = ref2.isSoft();
-      if (soft1 != soft2) return soft1 ? 1 : -1;
+  public static final Comparator<PsiReference> COMPARATOR = (ref1, ref2) -> {
+    boolean soft1 = ref1.isSoft();
+    boolean soft2 = ref2.isSoft();
+    if (soft1 != soft2) return soft1 ? 1 : -1;
 
-      boolean resolves1 = resolves(ref1);
-      boolean resolves2 = resolves(ref2);
-      if (resolves1 && !resolves2) return -1;
-      if (!resolves1 && resolves2) return 1;
+    boolean resolves1 = resolves(ref1);
+    boolean resolves2 = resolves(ref2);
+    if (resolves1 && !resolves2) return -1;
+    if (!resolves1 && resolves2) return 1;
 
-      final TextRange range1 = ref1.getRangeInElement();
-      final TextRange range2 = ref2.getRangeInElement();
+    final TextRange range1 = ref1.getRangeInElement();
+    final TextRange range2 = ref2.getRangeInElement();
 
-      if(TextRange.areSegmentsEqual(range1, range2)) return 0;
-      if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
-      if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
+    if(TextRange.areSegmentsEqual(range1, range2)) return 0;
+    if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
+    if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
 
-      return 0;
-    }
+    return 0;
   };
 
   private static boolean resolves(final PsiReference ref1) {

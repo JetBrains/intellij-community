@@ -75,12 +75,9 @@ class CachedValueLeakChecker {
     }
 
     final Ref<BackLink> result = Ref.create();
-    DebugReflectionUtil.processStronglyReferencedValues(o, new PairProcessor<Object, Field>() {
-      @Override
-      public boolean process(Object next, Field field) {
-        result.set(findReferencedPsi(next, toIgnore, depth - 1, visited, new BackLink(next, field, backLink)));
-        return result.isNull();
-      }
+    DebugReflectionUtil.processStronglyReferencedValues(o, (next, field) -> {
+      result.set(findReferencedPsi(next, toIgnore, depth - 1, visited, new BackLink(next, field, backLink)));
+      return result.isNull();
     });
     return result.get();
   }

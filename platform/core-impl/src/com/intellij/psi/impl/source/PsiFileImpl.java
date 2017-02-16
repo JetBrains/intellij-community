@@ -257,12 +257,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void switchFromStubToAst(List<Pair<StubBasedPsiElementBase, AstPath>> bindings, FileTrees trees) {
     if (!bindings.isEmpty() && trees.useStrongRefs) {
-      List<String> psiStrings = ContainerUtil.map(bindings, new Function<Pair<StubBasedPsiElementBase, AstPath>, String>() {
-        @Override
-        public String fun(Pair<StubBasedPsiElementBase, AstPath> pair) {
-          return pair.first.getClass().getName();
-        }
-      });
+      List<String> psiStrings = ContainerUtil.map(bindings, pair -> pair.first.getClass().getName());
       LOG.error(this + " of " + getClass() + "; " + psiStrings);
     }
 
@@ -324,14 +319,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
     }
     synchronized (PsiLock.LOCK) {
-      return ContainerUtil.map(result, new Function<Pair<StubElement, AstPath>, Pair<StubBasedPsiElementBase, AstPath>>() {
-        @Override
-        public Pair<StubBasedPsiElementBase, AstPath> fun(Pair<StubElement, AstPath> pair) {
-          StubElement stub = pair.first;
-          PsiElement psi = stub.getPsi();
-          assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
-          return Pair.create((StubBasedPsiElementBase)psi, pair.second);
-        }
+      return ContainerUtil.map(result, pair -> {
+        StubElement stub = pair.first;
+        PsiElement psi = stub.getPsi();
+        assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
+        return Pair.create((StubBasedPsiElementBase)psi, pair.second);
       });
     }
   }
@@ -567,12 +559,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     return roots;
   }
-  private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = new Comparator<PsiFile>() {
-    @Override
-    public int compare(@NotNull PsiFile o1, @NotNull PsiFile o2) {
-      return o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
-    }
-  };
+  private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = (o1, o2) -> o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
 
   @Override
   public boolean isPhysical() {
@@ -722,12 +709,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
       final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
-        final Function<PsiFileStub, String> stubToString = new Function<PsiFileStub, String>() {
-          @Override
-          public String fun(PsiFileStub stub) {
-            return stub.getClass().getSimpleName();
-          }
-        };
+        final Function<PsiFileStub, String> stubToString = stub -> stub.getClass().getSimpleName();
         LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                   StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
         rebuildStub();
@@ -1125,24 +1107,21 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void rebuildStub() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myManager.isDisposed()) {
-          myManager.dropResolveCaches();
-          ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!myManager.isDisposed()) {
+        myManager.dropResolveCaches();
+        ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+      }
+
+      final VirtualFile vFile = getVirtualFile();
+      if (vFile != null && vFile.isValid()) {
+        final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+        if (doc != null) {
+          FileDocumentManager.getInstance().saveDocument(doc);
         }
 
-        final VirtualFile vFile = getVirtualFile();
-        if (vFile != null && vFile.isValid()) {
-          final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
-          if (doc != null) {
-            FileDocumentManager.getInstance().saveDocument(doc);
-          }
-
-          FileContentUtilCore.reparseFiles(vFile);
-          StubTreeLoader.getInstance().rebuildStubTree(vFile);
-        }
+        FileContentUtilCore.reparseFiles(vFile);
+        StubTreeLoader.getInstance().rebuildStubTree(vFile);
       }
     }, ModalityState.NON_MODAL);
   }

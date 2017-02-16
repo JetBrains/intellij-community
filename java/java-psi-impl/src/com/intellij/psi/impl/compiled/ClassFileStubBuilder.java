@@ -82,12 +82,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     return null;
   }
 
-  private static final Comparator<Object> CLASS_NAME_COMPARATOR = new Comparator<Object>() {
-    @Override
-    public int compare(Object o1, Object o2) {
-      return o1.getClass().getName().compareTo(o2.getClass().getName());
-    }
-  };
+  private static final Comparator<Object> CLASS_NAME_COMPARATOR = (o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName());
 
   @Override
   public int getStubVersion() {

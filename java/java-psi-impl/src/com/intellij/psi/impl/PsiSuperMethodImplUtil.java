@@ -44,24 +44,14 @@ import java.util.*;
 public class PsiSuperMethodImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSuperMethodImplUtil");
   private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_FOR_CLASS_KEY = PsiCacheKey
-    .create("SIGNATURES_FOR_CLASS_KEY", new NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>() {
-      @NotNull
-      @Override
-      public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
-        return buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope());
-      }
-    });
+    .create("SIGNATURES_FOR_CLASS_KEY",
+            (NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>)dom -> buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope()));
   private static final PsiCacheKey<FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
-    .create("SIGNATURES_BY_NAME_KEY", new Function<PsiClass, FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>>() {
+    .create("SIGNATURES_BY_NAME_KEY", psiClass -> new ConcurrentFactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>() {
+      @Nullable
       @Override
-      public FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>> fun(final PsiClass psiClass) {
-        return new ConcurrentFactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>() {
-          @Nullable
-          @Override
-          protected Map<MethodSignature, HierarchicalMethodSignature> create(String methodName) {
-            return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, psiClass.getResolveScope());
-          }
-        };
+      protected Map<MethodSignature, HierarchicalMethodSignature> create(String methodName) {
+        return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, psiClass.getResolveScope());
       }
     });
 

@@ -45,12 +45,8 @@ public class LightParameterListWrapper extends LightElement implements PsiParame
   public PsiParameter[] getParameters() {
     return mySubstitutor == PsiSubstitutor.EMPTY
            ? myDelegate.getParameters()
-           : ContainerUtil.map2Array(myDelegate.getParameters(), PsiParameter.class, new Function<PsiParameter, PsiParameter>() {
-             @Override
-             public PsiParameter fun(PsiParameter parameter) {
-               return new LightParameterWrapper(parameter, mySubstitutor);
-             }
-           });
+           : ContainerUtil.map2Array(myDelegate.getParameters(), PsiParameter.class,
+                                     (Function<PsiParameter, PsiParameter>)parameter -> new LightParameterWrapper(parameter, mySubstitutor));
   }
 
   @Override

@@ -641,12 +641,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public CharSequence getText() {
       String content = myContent;
       if (content == null) {
-        myContent = content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return myFile.calcTreeElement().getText();
-          }
-        });
+        myContent = content = ApplicationManager.getApplication().runReadAction(
+          (Computable<String>)() -> myFile.calcTreeElement().getText());
       }
       return content;
     }

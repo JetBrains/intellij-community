@@ -423,34 +423,21 @@ public class RedundantCastUtil {
                 PsiExpression returnExpression = deparenthesizeExpression(expressions.get(returnExprIdx));
                 if (returnExpression instanceof PsiTypeCastExpression) {
                   processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)returnExpression, returnExprIdx,
-                                                    new Function<PsiExpression, PsiTypeCastExpression>() {
-                                                      @Override
-                                                      public PsiTypeCastExpression fun(PsiExpression expression) {
-                                                        return (PsiTypeCastExpression)expression;
-                                                      }
-                                                    });
+                                                expression13 -> (PsiTypeCastExpression)expression13);
                 }
                 else if (returnExpression instanceof PsiConditionalExpression) {
                   final PsiExpression thenExpression = ((PsiConditionalExpression)returnExpression).getThenExpression();
                   if (thenExpression instanceof PsiTypeCastExpression) {
                     processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)thenExpression,
-                                                  returnExprIdx, new Function<PsiExpression, PsiTypeCastExpression>() {
-                                                    @Override
-                                                    public PsiTypeCastExpression fun(PsiExpression expression) {
-                                                      return (PsiTypeCastExpression)((PsiConditionalExpression)expression).getThenExpression();
-                                                    }
-                                                  });
+                                                  returnExprIdx,
+                                                  expression12 -> (PsiTypeCastExpression)((PsiConditionalExpression)expression12).getThenExpression());
                   }
 
                   final PsiExpression elseExpression = ((PsiConditionalExpression)returnExpression).getElseExpression();
                   if (elseExpression instanceof PsiTypeCastExpression) {
                     processLambdaReturnExpression(expression, i, interfaceType, (PsiTypeCastExpression)elseExpression,
-                                                  returnExprIdx, new Function<PsiExpression, PsiTypeCastExpression>() {
-                                                    @Override
-                                                    public PsiTypeCastExpression fun(PsiExpression expression) {
-                                                      return (PsiTypeCastExpression)((PsiConditionalExpression)expression).getElseExpression();
-                                                    }
-                                                  });
+                                                  returnExprIdx,
+                                                  expression1 -> (PsiTypeCastExpression)((PsiConditionalExpression)expression1).getElseExpression());
                   }
                 }
               }

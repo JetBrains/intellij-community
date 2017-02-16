@@ -597,29 +597,25 @@ public class InferenceSession {
   public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
     if (callExpression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)callExpression)) {
       PsiUtilCore.ensureValid(callExpression);
-      return CachedValuesManager.getCachedValue(callExpression, new CachedValueProvider<JavaResolveResult>() {
-        @Nullable
-        @Override
-        public Result<JavaResolveResult> compute() {
-          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-          JavaResolveResult constructor = JavaResolveResult.EMPTY;
-          JavaResolveResult resolveResult = null;
-          if (classReference != null) {
-            resolveResult = classReference.advancedResolve(false);
-            final PsiElement psiClass = resolveResult.getElement();
-            if (psiClass != null) {
-              final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-              final PsiExpressionList argumentList = callExpression.getArgumentList();
-              if (argumentList != null) {
-                constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
-                                                                           argumentList,
-                                                                           callExpression);
-              }
+      return CachedValuesManager.getCachedValue(callExpression, () -> {
+        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
+        JavaResolveResult constructor = JavaResolveResult.EMPTY;
+        JavaResolveResult resolveResult = null;
+        if (classReference != null) {
+          resolveResult = classReference.advancedResolve(false);
+          final PsiElement psiClass = resolveResult.getElement();
+          if (psiClass != null) {
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
+            final PsiExpressionList argumentList = callExpression.getArgumentList();
+            if (argumentList != null) {
+              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
+                                                                         argumentList,
+                                                                         callExpression);
             }
           }
-          return new Result<JavaResolveResult>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
-                                               PsiModificationTracker.MODIFICATION_COUNT);
         }
+        return new CachedValueProvider.Result<JavaResolveResult>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
+                                                                 PsiModificationTracker.MODIFICATION_COUNT);
       });
     }
     return callExpression.resolveMethodGenerics();
@@ -848,12 +844,8 @@ public class InferenceSession {
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
     if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-      final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
-        @Override
-        public boolean process(Pair<PsiType, PsiType> pair) {
-          return pair.first == null || pair.second == null || !TypesDistinctProver.provablyDistinct(pair.first, pair.second);
-        }
-      };
+      final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor =
+        pair -> pair.first == null || pair.second == null || !TypesDistinctProver.provablyDistinct(pair.first, pair.second);
       if (findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor) != null) return true;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> boundsToCheck = new ArrayList<PsiType>(bounds);
@@ -978,12 +970,7 @@ public class InferenceSession {
 
   public boolean collectDependencies(@Nullable PsiType type,
                                      @Nullable final Set<InferenceVariable> dependencies) {
-    return collectDependencies(type, dependencies, new Function<PsiClassType, InferenceVariable>() {
-      @Override
-      public InferenceVariable fun(PsiClassType classType) {
-        return getInferenceVariable(classType);
-      }
-    });
+    return collectDependencies(type, dependencies, classType -> getInferenceVariable(classType));
   }
 
   public static boolean collectDependencies(@Nullable PsiType type,
@@ -1307,18 +1294,8 @@ public class InferenceSession {
 
   public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
     variables = new ArrayList<InferenceVariable>(variables);
-    Collections.sort((ArrayList<InferenceVariable>)variables, new Comparator<InferenceVariable>() {
-      @Override
-      public int compare(InferenceVariable v1, InferenceVariable v2) {
-        return Comparing.compare(v1.getName(), v2.getName());
-      }
-    });
-    final String variablesEnumeration = StringUtil.join(variables, new Function<InferenceVariable, String>() {
-      @Override
-      public String fun(InferenceVariable variable) {
-        return variable.getParameter().getName();
-      }
-    }, ", ");
+    Collections.sort((ArrayList<InferenceVariable>)variables, (v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
+    final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
     registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
   }
   
@@ -1337,12 +1314,9 @@ public class InferenceSession {
                                                   final String lowBoundName,
                                                   final InferenceBound upperBound,
                                                   final String upperBoundName) {
-    final Function<PsiType, String> typePresentation = new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType type) {
-        final PsiType substituted = substituteNonProperBound(type, substitutor);
-        return getPresentableText(substituted != null ? substituted : type);
-      }
+    final Function<PsiType, String> typePresentation = type -> {
+      final PsiType substituted = substituteNonProperBound(type, substitutor);
+      return getPresentableText(substituted != null ? substituted : type);
     };
     return "inference variable " + var.getParameter().getName() + " has incompatible bounds:\n " + 
            lowBoundName  + ": " + StringUtil.join(var.getBounds(lowBound), typePresentation, ", ") + "\n" + 
@@ -1350,12 +1324,7 @@ public class InferenceSession {
   }
 
   private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
-    return composeBound(var, InferenceBound.LOWER, new Function<Pair<PsiType, PsiType>, PsiType>() {
-      @Override
-      public PsiType fun(Pair<PsiType, PsiType> pair) {
-        return GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager);
-      }
-    }, substitutor);
+    return composeBound(var, InferenceBound.LOWER, pair -> GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager), substitutor);
   }
 
   private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
@@ -1363,12 +1332,7 @@ public class InferenceSession {
   }
 
   public PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {
-    return composeBound(var, InferenceBound.EQ, new Function<Pair<PsiType, PsiType>, PsiType>() {
-      @Override
-      public PsiType fun(Pair<PsiType, PsiType> pair) {
-        return !Comparing.equal(pair.first, pair.second) ? null : pair.first;
-      }
-    }, substitutor);
+    return composeBound(var, InferenceBound.EQ, pair -> !Comparing.equal(pair.first, pair.second) ? null : pair.first, substitutor);
   }
 
   private PsiType composeBound(InferenceVariable variable,
@@ -1704,13 +1668,8 @@ public class InferenceSession {
                                        final PsiExpression[] args,
                                        final PsiElement context,
                                        final boolean varargs) {
-    return LambdaUtil.performWithSubstitutedParameterBounds(m1.getTypeParameters(), siteSubstitutor1, new Producer<Boolean>() {
-      @Nullable
-      @Override
-      public Boolean produce() {
-        return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
-      }
-    });
+    return LambdaUtil.performWithSubstitutedParameterBounds(m1.getTypeParameters(), siteSubstitutor1,
+                                                            () -> isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs));
   }
 
   private static boolean isMoreSpecificInternal(PsiMethod m1,
