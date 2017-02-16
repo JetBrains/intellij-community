@@ -93,7 +93,7 @@ class BuildContextImpl extends BuildContext {
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
     String buildOutputRoot = options.outputRootPath ?: "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
-    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
+    bundledJreManager = new BundledJreManager(this, communityHome)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$productProperties.productCode-$buildNumber"
@@ -288,7 +288,7 @@ class BuildContextImpl extends BuildContext {
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools, options)
     child.paths.artifacts = paths.artifacts
-    child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
+    child.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
     return child
   }
 
@@ -303,7 +303,7 @@ class BuildContextImpl extends BuildContext {
     def copy = new BuildContextImpl(ant, messages, paths.communityHome, paths.projectHome, paths.jdkHome, project, global, projectBuilder, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools, options)
     copy.paths.artifacts = paths.artifacts
-    copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
+    copy.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
     copy.prepareForBuild()
     return copy
   }

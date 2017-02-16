@@ -79,7 +79,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    def macZipPath = buildMacZip(osSpecificDistPath)
+    def macZipPath = buildMacZip(buildContext.bundledJreManager.findMacJdk(), osSpecificDistPath)
     if (buildContext.proprietaryBuildTools.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
       buildContext.notifyArtifactBuilt(macZipPath)
@@ -233,7 +233,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
-  private String buildMacZip(String macDistPath) {
+  private String buildMacZip(String jdkDirectoryPath, String macDistPath) {
     return buildContext.messages.block("Build zip archive for Mac OS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
@@ -274,6 +274,20 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           zipfileset(dir: it, prefix: "$zipRoot/Resources") {
             include(name: "build.txt")
             include(name: "NOTICE.txt")
+          }
+        }
+
+        // Bundle JDK
+        def binaries = ["Contents/Home/bin/*", "Contents/Home/jre/bin/*", "Contents/Home/jre/lib/jspawnhelper", "Contents/Home/jre/lib/*.dylib.*"]
+        zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {
+          binaries.each {
+            exclude(name: it)
+          }
+          exclude(name: "Contents/Home/src.zip")
+        }
+        zipfileset(dir: jdkDirectoryPath, filemode: "755", prefix: "$zipRoot/jre/jdk") {
+          binaries.each {
+            include(name: it)
           }
         }
 

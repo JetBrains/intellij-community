@@ -32,11 +32,6 @@ class AndroidStudioBuilder {
                                               options)
   }
 
-  AndroidStudioBuilder(GantBinding binding, BuildContext buildContext) {
-    this.binding = binding
-    this.buildContext = buildContext
-  }
-
   void compileModules() {
     BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
   }
