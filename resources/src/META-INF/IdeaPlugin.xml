@@ -857,6 +857,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
                      displayName="Replace with Map.forEach"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java9CollectionFactory"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection"
+                     displayName="Immutable collection creation can be replaced with collection factory call"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"

@@ -17,6 +17,7 @@ package com.siyeh.ig.callMatcher;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -43,6 +44,18 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
   @Contract("null -> false")
   boolean test(@Nullable PsiMethodCallExpression call);
+
+  /**
+   * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
+   *
+   * @param expression expression to test
+   * @return true if the supplied expression matches this matcher
+   */
+  @Contract("null -> false")
+  default boolean matches(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiMethodCallExpression && test((PsiMethodCallExpression)expression);
+  }
 
   /**
    * Returns a new matcher which will return true if any of supplied matchers return true
