@@ -18,6 +18,7 @@ package git4idea.test
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -49,8 +50,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     myGitSettings = GitVcsSettings.getInstance(myProject)
     myGitSettings.appSettings.setPathToGit(gitExecutable())
 
-    myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
-    myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
+    myDialogManager = service<DialogManager>() as TestDialogManager
+    myVcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
 
     vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
@@ -141,7 +142,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun assertNoNotification() {
     val notification = myVcsNotifier.lastNotification
     if (notification != null) {
-      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
+      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
     }
   }
 
