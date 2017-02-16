@@ -31,6 +31,7 @@ iml_module(
         "//tools/idea/plugins/svn4idea/lib:jsch.agentproxy.svnkit-trilead-ssh2",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/.idea/libraries:sqlite",
+        "//tools/idea/.idea/libraries:Guava",
     ],
 )
 

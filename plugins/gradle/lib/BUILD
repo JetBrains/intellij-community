@@ -111,15 +111,22 @@ java_import(
 )
 
 java_import(
-    name = "jna-3.2.7",
-    jars = ["jna-3.2.7.jar"],
+    name = "native-platform-0.11",
+    jars = ["native-platform-0.11.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "native-platform-0.11",
-    jars = ["native-platform-0.11.jar"],
+    name = "commons-lang-2.6",
+    jars = ["commons-lang-2.6.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "gradle-reporting-3.2",
+    jars = ["gradle-reporting-3.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

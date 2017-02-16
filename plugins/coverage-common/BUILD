@@ -7,7 +7,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Coverage",
         "//tools/idea/.idea/libraries:Trove4j",
     ],
@@ -18,7 +18,7 @@ iml_module(
         "//tools/idea/platform/util[module]",
         "//tools/idea/platform/extensions[module]",
         "//tools/idea/platform/annotations[module]",
-        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Coverage",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/testRunner[module]",

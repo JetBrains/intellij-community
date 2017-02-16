@@ -24,7 +24,7 @@ import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
+private val LOGGER: Logger = Logger.getInstance(StateStorageBase::class.java)
 
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var mySavingDisabled = false
@@ -69,17 +69,17 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   fun disableSaving() {
-    LOG.debug { "Disabled saving for ${toString()}" }
+    LOGGER.debug { "Disabled saving for ${toString()}" }
     mySavingDisabled = true
   }
 
   fun enableSaving() {
-    LOG.debug { "Enabled saving ${toString()}" }
+    LOGGER.debug { "Enabled saving ${toString()}" }
     mySavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    LOG.debug { "Saving disabled for ${toString()}" }
+    LOGGER.debug { "Saving disabled for ${toString()}" }
     return mySavingDisabled
   }
 }

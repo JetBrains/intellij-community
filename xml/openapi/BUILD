@@ -17,5 +17,6 @@ iml_module(
         "//tools/idea/xml/xml-psi-api[module]",
         "//tools/idea/xml/xml-analysis-api[module]",
         "//tools/idea/xml/xml-structure-view-api[module]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

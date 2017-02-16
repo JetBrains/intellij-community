@@ -37,7 +37,7 @@ private const val errUserNameNotCorrect = -25293
 private const val kSecFormatUnknown = 0
 private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
 
-internal class KeyChainCredentialStore() : CredentialStore {
+class KeyChainCredentialStore() : CredentialStore {
   override fun get(attributes: CredentialAttributes): Credentials? {
     return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName)
   }

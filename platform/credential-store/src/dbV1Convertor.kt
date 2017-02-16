@@ -46,7 +46,7 @@ internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION")
   return if (isMasterPasswordValid(password, db)) convertOldDb(password, db) else null
 }
 
-internal fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
+fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<CredentialAttributes, Credentials>? {
   if (db.myDatabase.size <= 1) {
     return null
   }
