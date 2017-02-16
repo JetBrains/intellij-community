@@ -15,5 +15,5 @@
  */
 package com.intellij.psi;
 
-public interface PsiTextLargeFile extends PsiPlainTextFile {
+public interface PsiTextLargeFile extends PsiPlainTextFile, PsiLargeFile {
 }

@@ -366,9 +366,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static byte[] loadBytes(@NotNull VirtualFile file) throws IOException {
-    return FileUtilRt.isTooLarge(file.getLength()) ?
-           FileUtil.loadFirst(file.getInputStream(), FileUtilRt.getLargeFilePreviewSize()) :
-           file.contentsToByteArray();
+    return FileUtilRt.isTooLarge(file.getLength()) ? loadFirstBytes(file) : file.contentsToByteArray();
   }
 
   @NotNull
@@ -673,6 +671,17 @@ public class VfsUtilCore {
       }
     }
     return false;
+  }
+
+  private static byte[] loadFirstBytes(@NotNull VirtualFile file) throws IOException {
+    InputStream stream = null;
+    try {
+      stream = file.getInputStream();
+      return FileUtil.loadFirst(stream, FileUtilRt.getLargeFilePreviewSize());
+    }
+    finally {
+      if (stream != null) stream.close();
+    }
   }
 
   /**

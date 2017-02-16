@@ -19,9 +19,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiBinaryLargeFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 
-/**
- * @author peter
- */
 public class PsiBinaryLargeFileImpl extends PsiBinaryFileImpl implements PsiBinaryLargeFile {
   public PsiBinaryLargeFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
     super(manager, viewProvider);

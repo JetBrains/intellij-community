@@ -95,7 +95,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
 
     final byte[] bytes;
     try {
-      bytes = VfsUtilCore.loadBytes(virtualFile);
+      bytes = virtualFile.isDirectory() ? null : VfsUtilCore.loadBytes(virtualFile);
     }
     catch (IOException e) {
       return null;

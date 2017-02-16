@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author peter
- */
 public class LargeFileEditorProvider extends TextEditorProvider {
 
   @Override

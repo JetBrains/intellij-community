@@ -102,8 +102,6 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public InputStream getInputStream() throws IOException {
-    if (isTooLarge()) return new FileInputStream(getPath());
-
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(

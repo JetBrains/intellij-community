@@ -363,7 +363,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       try {
         final byte[] content;
         try {
-          content = VfsUtil.loadBytes(this);
+          content = VfsUtilCore.loadBytes(this);
         }
         catch (FileNotFoundException e) {
           // file has already been deleted on disk

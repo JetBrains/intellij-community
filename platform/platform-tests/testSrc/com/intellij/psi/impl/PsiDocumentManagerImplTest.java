@@ -39,6 +39,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -426,6 +427,27 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals("abc", document.getText());
   }
 
+  public void testFileBecomesTooLarge() throws Exception {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    makeFileTooLarge(vFile);
+    assertFalse(psiFile.isValid());
+    psiFile = findFile(vFile);
+
+    assertInstanceOf(psiFile, PsiTextLargeFile.class);
+    assertLargeFileContentLimited(getTooLargeContent(), vFile, document);
+  }
+
+  private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
+    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
+      setFileText(vFile, getTooLargeContent());
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return null;
+    });
+  }
+
   public void testFileTooLarge() throws Exception {
     String content = getTooLargeContent();
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", content));
@@ -436,11 +458,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertFalse(psiFile.isWritable());
     assertInstanceOf(psiFile, PsiTextLargeFile.class);
 
-    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
-    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    int contentSize = (int)(FileUtilRt.getLargeFilePreviewSize() / bytesPerChar);
-    String substring = content.substring(0, contentSize);
-    assertEquals(substring, document.getText());
+    assertLargeFileContentLimited(content, vFile, document);
   }
 
   public void testBinaryFileTooLarge() throws Exception {
@@ -756,6 +774,14 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     PsiFile file2 = getPsiManager().findFile(virtualFile);
     assertEquals(PlainTextLanguage.INSTANCE, file2.getLanguage());
+  }
+
+  private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
+    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
+    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
+    int contentSize = (int)(FileUtilRt.getLargeFilePreviewSize() / bytesPerChar);
+    String substring = content.substring(0, contentSize);
+    assertEquals(substring, document.getText());
   }
 
   @NotNull
