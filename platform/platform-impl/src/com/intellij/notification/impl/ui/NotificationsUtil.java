@@ -130,7 +130,7 @@ public class NotificationsUtil {
   public static Pair<String, Integer> getFontData() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
-      return Pair.create(uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
+      return Pair.create(uiSettings.getFontFace(), uiSettings.getFontSize());
     }
     return UIUtil.getSystemFontData();
   }

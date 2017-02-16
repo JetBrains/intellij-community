@@ -152,15 +152,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
-    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
+    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.FONT_SIZE || !Comparing.equal(settings.FONT_FACE, _fontFace)) {
-      settings.FONT_SIZE = _fontSize;
-      settings.FONT_FACE = _fontFace;
+    if (_fontSize != settings.getFontSize() || !Comparing.equal(settings.getFontFace(), _fontFace)) {
+      settings.setFontSize(_fontSize);
+      settings.setFontFace(_fontFace);
       shouldUpdateUI = true;
       update = true;
     }
@@ -314,7 +314,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     if (settings.getOverrideLafFonts()) {
-      myComponent.myFontCombo.setFontName(settings.FONT_FACE);
+      myComponent.myFontCombo.setFontName(settings.getFontFace());
     } else {
       myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
     }
@@ -325,7 +325,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
     myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
 
-    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
+    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
@@ -388,8 +388,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
-    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
+    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
 
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
     isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
