@@ -20,6 +20,8 @@
        on how to target different products -->
 
   <depends>com.intellij.modules.lang</depends>
+  <depends optional="true" config-file="android-dependencies.xml">com.intellij.modules.androidstudio</depends>
+  <depends optional="true" config-file="edu-intellij.xml">com.intellij.modules.java</depends>
 
   <project-components>
     <component>
@@ -35,6 +37,10 @@
   </application-components>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate" interface="com.jetbrains.edu.intellij.EduIntelliJProjectTemplate"/>
+    <extensionPoint qualifiedName="Edu.courseConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.intellij.EduCourseConfigurator"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
     </extensionPoint>

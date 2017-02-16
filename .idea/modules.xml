@@ -56,7 +56,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/core-impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/core-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-core/course-creator/course-creator.iml" filepath="$PROJECT_DIR$/python/educational-core/course-creator/course-creator.iml" group="python/educational/educational-core" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/course-creator-python/course-creator-python.iml" filepath="$PROJECT_DIR$/python/educational-python/course-creator-python/course-creator-python.iml" group="python/educational/educational-python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" group="plugins/coverage" />
@@ -257,6 +256,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-core/student/student.iml" filepath="$PROJECT_DIR$/python/educational-core/student/student.iml" group="python/educational/educational-core" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/student-python/student-python.iml" filepath="$PROJECT_DIR$/python/educational-python/student-python/student-python.iml" group="python/educational/educational-python" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-core/edu-intellij/edu-intellij.iml" filepath="$PROJECT_DIR$/python/educational-core/edu-intellij/edu-intellij.iml" group="plugins/python/educational/educational-core" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />

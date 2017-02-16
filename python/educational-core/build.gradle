@@ -79,6 +79,7 @@ private static String getIdeaPath() {
 project(':student') {
 
   dependencies {
+    compile project(':edu-intellij')
     compile fileTree(dir: 'lib', include: ['*.jar'])
   }
 

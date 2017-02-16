@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectTemplatesFactory implementation="com.jetbrains.edu.intellij.EduIntelliJTemplateFactory"/>
+  </extensions>
+</idea-plugin>
+

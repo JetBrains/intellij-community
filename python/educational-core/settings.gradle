@@ -1,1 +1,1 @@
-include 'student', 'course-creator'
+include 'student', 'course-creator', 'edu-intellij'
