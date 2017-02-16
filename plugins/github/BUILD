@@ -30,5 +30,6 @@ iml_module(
         "//tools/idea/platform/vcs-log/impl:vcs-log-impl[module]",
         "//tools/idea/plugins/tasks/tasks-core/jira[module, test]",
         "//tools/idea/platform/vcs-tests[module, test]",
+        "//tools/idea/.idea/libraries:Guava",
     ],
 )

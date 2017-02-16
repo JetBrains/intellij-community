@@ -5,5 +5,5 @@ iml_module(
     srcs = ["src"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/.idea/libraries:asm5"],
+    deps = ["//tools/idea/.idea/libraries:ASM"],
 )

@@ -13,23 +13,24 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
+        "//tools/idea:jps-builders-6",
         "//tools/idea/platform/util",
-        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:protobuf",
     ],
     # do not sort: must match IML order
     deps = [
+        "//tools/idea:jps-builders-6[module]",
         "//tools/idea/platform/util[module]",
         "//tools/idea/platform/forms_rt[module]",
         "//tools/idea/java/compiler/forms-compiler[module]",
         "//tools/idea/java/compiler/instrumentation-util[module]",
-        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:protobuf",
-        "//tools/idea/jps/lib:optimizedFileManager",
         "//tools/idea/java/java-runtime[module]",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:JUnit4[test]",
@@ -41,5 +42,6 @@ iml_module(
         "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:Xerces",
     ],
 )

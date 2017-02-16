@@ -4,9 +4,10 @@ iml_module(
     name = "git4idea",
     # do not sort: must match IML order
     srcs = [
-        "resources",
         "src",
+        "gen",
     ],
+    resources = ["resources"],
     tags = ["managed"],
     test_srcs = [
         "tests",
@@ -19,6 +20,7 @@ iml_module(
     exports = [
         "//tools/idea/platform/dvcs-impl",
         "//tools/idea/platform/dvcs-api",
+        "//tools/idea/.idea/libraries:cucumber-testing",
     ],
     # do not sort: must match IML order
     deps = [
@@ -48,5 +50,7 @@ iml_module(
         "//tools/idea/.idea/libraries:cucumber-java[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/platform/vcs-tests[module, test]",
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/.idea/libraries:cucumber-testing[test]",
     ],
 )
