@@ -27,6 +27,8 @@ public class ModuleParserTest extends JavaParsingTestCase {
   public void testSimple1() { doParserTest("module a.b. /*here!*/ c { }"); }
   public void testSimple2() { doParserTest("/* comment */\nmodule X { }"); }
 
+  public void testPackaged() { doParserTest("package pkg;\nmodule M { }"); }
+
   public void testModifierList0() { doParserTest("open module M { }"); }
   public void testModifierList1() { doParserTest("@Deprecated module M { }"); }
 
