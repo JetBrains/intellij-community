@@ -56,7 +56,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private void createUIComponents() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(getTitle()));
+    controlsPanel.add(new JLabel(getSchemeTypeName() + ":"));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<T>(this);
@@ -148,8 +148,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   @NotNull
   protected abstract InfoComponent createInfoComponent();
 
-  protected String getTitle() {
-    return ApplicationBundle.message("editbox.scheme.name");
+  protected String getSchemeTypeName() {
+    return ApplicationBundle.message("editbox.scheme.type.name");
   }
 
   /**

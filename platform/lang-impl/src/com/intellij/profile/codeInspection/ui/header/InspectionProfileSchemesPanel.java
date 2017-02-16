@@ -226,8 +226,8 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
-  protected String getTitle() {
-    return "Profile:";
+  protected String getSchemeTypeName() {
+    return "Profile";
   }
 
   void apply() {

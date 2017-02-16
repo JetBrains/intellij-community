@@ -96,7 +96,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
     actions.add(new Separator());
     if (!mySchemeImportersNames.isEmpty()) {
-      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.import"), mySchemeImportersNames) {
+      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()), mySchemeImportersNames) {
         @NotNull
         @Override
         protected AnAction createAction(@NotNull String actionName) {
