@@ -229,8 +229,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
 
     if (fontScale <= 0) {
-      // Reset font to default on switch from IDEA-managed HiDPI to JDK-managed HiDPI. Doesn't affect OSX.
-      if (UIUtil.isJDKManagedHiDPI() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+      // Reset font to default on switch from IDEA-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
+      if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
     }
     else {
       fontSize = JBUI.scale(fontSize / fontScale).toInt()
