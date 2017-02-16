@@ -79,7 +79,6 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
   private static void addPythonConsoleListener(@NotNull Project project) {
     final ToolWindow pythonConsole = ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.Companion.getID());
     if (pythonConsole == null) {
-      LOG.error("No Python Console tool window");
       return;
     }
     pythonConsole.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
