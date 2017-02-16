@@ -417,7 +417,7 @@ public class GithubUtil {
       return repositories.get(0);
     }
     if (file != null) {
-      GitRepository repository = manager.getRepositoryForFile(file);
+      GitRepository repository = manager.getRepositoryForFileQuick(file);
       if (repository != null) {
         return repository;
       }

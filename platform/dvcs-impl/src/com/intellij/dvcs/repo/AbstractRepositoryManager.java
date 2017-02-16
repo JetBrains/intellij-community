@@ -57,6 +57,11 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   public T getRepositoryForFile(@NotNull VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
+  
+  @Nullable
+  public T getRepositoryForFileQuick(@NotNull VirtualFile file) {
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
+  }
 
   @Override
   @Nullable

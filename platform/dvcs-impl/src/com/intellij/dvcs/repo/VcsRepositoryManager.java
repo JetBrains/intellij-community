@@ -91,8 +91,19 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
 
   @Nullable
   public Repository getRepositoryForFile(@NotNull VirtualFile file) {
+    return getRepositoryForFile(file, false);
+  }
+
+  @Nullable
+  public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
+    return getRepositoryForFile(file, true);
+  }
+
+  @Nullable
+  public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    return vcsRoot != null ? getRepositoryForRoot(vcsRoot.getPath()) : null;
+    if (vcsRoot == null) return null;
+    return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
   @Nullable
