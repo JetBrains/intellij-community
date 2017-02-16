@@ -174,7 +174,7 @@ fun assertNotification(type: NotificationType, title: String, content: String, a
 }
 
 fun cleanupForAssertion(content: String): String {
-  val nobr = content.replace("<br/>", "\n").replace("<hr/>", "\n")
+  val nobr = content.replace("<br/>", "\n").replace("<br>", "\n").replace("<hr/>", "\n")
   return nobr.lines()
     .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim({ it <= ' ' }) }
     .filter { line -> !line.isEmpty() }
