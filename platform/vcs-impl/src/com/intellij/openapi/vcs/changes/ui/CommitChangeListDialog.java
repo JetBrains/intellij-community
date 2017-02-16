@@ -295,7 +295,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     } else {
       myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
       //noinspection unchecked
-      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
+      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection,
                                                                         new Runnable() {
                                                                           @Override
                                                                           public void run() {
