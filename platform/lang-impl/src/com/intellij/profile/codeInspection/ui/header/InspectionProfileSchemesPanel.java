@@ -32,18 +32,20 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -169,14 +171,14 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
           try {
             LOG.assertTrue(true);
             Element element = scheme.writeScheme(false);
-            File file = new File(FileUtil.toSystemDependentName(dir.getPath()), sanitizeFileName(scheme.getName()) + ".xml");
-            if (file.isFile() &&
+            Path file = Paths.get(dir.getPath(), sanitizeFileName(scheme.getName()) + ".xml");
+            if (Files.isRegularFile(file.toAbsolutePath()) &&
                 Messages.showOkCancelDialog(myProject, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
                                             Messages.getQuestionIcon()) != Messages.OK) {
               return;
             }
 
-            JDOMUtil.writeParent(element, file, "\n");
+            JdomKt.write(element, file);
           }
           catch (IOException e1) {
             LOG.error(e1);
