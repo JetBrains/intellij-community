@@ -1294,7 +1294,7 @@ public class InferenceSession {
 
   public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
     variables = new ArrayList<InferenceVariable>(variables);
-    Collections.sort((ArrayList<InferenceVariable>)variables, (v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
+    ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
     final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
     registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
   }

@@ -20,7 +20,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -33,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -134,7 +132,7 @@ public final class LanguageUtil {
       if (!isFileLanguage(language)) continue;
       result.add(language);
     }
-    Collections.sort(result, LANGUAGE_COMPARATOR);
+    result.sort(LANGUAGE_COMPARATOR);
     return result;
   }
 

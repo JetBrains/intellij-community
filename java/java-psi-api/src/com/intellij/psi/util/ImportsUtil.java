@@ -58,7 +58,7 @@ public class ImportsUtil {
     if (refExpr != null) {
       expressionToExpand.add(refExpr);
     }
-    Collections.sort(expressionToExpand, (o1, o2) -> o2.getTextOffset() - o1.getTextOffset());
+    expressionToExpand.sort((o1, o2) -> o2.getTextOffset() - o1.getTextOffset());
     for (PsiJavaCodeReferenceElement expression : expressionToExpand) {
       expand(expression, staticImport);
     }

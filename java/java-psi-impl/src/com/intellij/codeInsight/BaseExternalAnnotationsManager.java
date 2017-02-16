@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +29,6 @@ import com.intellij.psi.impl.source.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
@@ -248,7 +246,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     List<PsiFile> result = new SmartList<PsiFile>(possibleAnnotationXmls);
     // writable go first
-    Collections.sort(result, (f1, f2) -> {
+    result.sort((f1, f2) -> {
       boolean w1 = f1.isWritable();
       boolean w2 = f2.isWritable();
       return w1 == w2 ? 0 : w1 ? -1 : 1;

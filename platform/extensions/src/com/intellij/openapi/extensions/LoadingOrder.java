@@ -191,7 +191,7 @@ public class LoadingOrder {
       throw new SortingException("Could not satisfy sorting requirements", p.first.getDescribingElement(), p.second.getDescribingElement());
     }
 
-    Collections.sort(orderable, builder.comparator());
+    orderable.sort(builder.comparator());
   }
 
   public static LoadingOrder readOrder(@NonNls String orderAttr) {

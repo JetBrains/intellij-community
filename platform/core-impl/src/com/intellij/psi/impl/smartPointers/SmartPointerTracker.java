@@ -131,7 +131,8 @@ class SmartPointerTracker {
       processAlivePointers(new CommonProcessors.CollectProcessor<SmartPsiElementPointerImpl>(pointers));
       assert size == pointers.size();
 
-      Collections.sort(pointers, (p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));
+      pointers
+        .sort((p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));
 
       for (int i = 0; i < pointers.size(); i++) {
         storePointerReference(references, i, pointers.get(i).pointerReference);

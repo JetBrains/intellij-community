@@ -61,7 +61,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     if (myChangedInOrder == null) {
       myChangedInOrder = new ArrayList<ASTNode>(myChangedElements.keySet());
 
-      Collections.sort(myChangedInOrder, new Comparator<ASTNode>() {
+      myChangedInOrder.sort(new Comparator<ASTNode>() {
         final Map<ASTNode, int[]> routeMap = new THashMap<ASTNode, int[]>(myChangedElements.size());
         final TObjectIntHashMap<ASTNode> nodeIndex = new TObjectIntHashMap<ASTNode>(myChangedElements.size());
 

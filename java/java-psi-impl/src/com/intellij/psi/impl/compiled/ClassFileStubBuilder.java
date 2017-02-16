@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -82,14 +81,14 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     return null;
   }
 
-  private static final Comparator<Object> CLASS_NAME_COMPARATOR = (o1, o2) -> o1.getClass().getName().compareTo(o2.getClass().getName());
+  private static final Comparator<Object> CLASS_NAME_COMPARATOR = Comparator.comparing(o -> o.getClass().getName());
 
   @Override
   public int getStubVersion() {
     int version = STUB_VERSION;
 
     List<ClassFileDecompilers.Decompiler> decompilers = ContainerUtil.newArrayList(ClassFileDecompilers.EP_NAME.getExtensions());
-    Collections.sort(decompilers, CLASS_NAME_COMPARATOR);
+    decompilers.sort(CLASS_NAME_COMPARATOR);
     for (ClassFileDecompilers.Decompiler decompiler : decompilers) {
       if (decompiler instanceof Full) {
         version = version * 31 + ((Full)decompiler).getStubBuilder().getStubVersion() + decompiler.getClass().getName().hashCode();

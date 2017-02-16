@@ -42,7 +42,7 @@ class PluginClassCache {
       counters = new ArrayList(Arrays.asList(myClassCounts.keys()));
     }
 
-    Collections.sort(counters, (o1, o2) -> myClassCounts.get(o2) - myClassCounts.get(o1));
+    counters.sort((o1, o2) -> myClassCounts.get(o2) - myClassCounts.get(o1));
     for (PluginId id : counters) {
       PluginManagerCore.getLogger().info(id + " loaded " + myClassCounts.get(id) + " classes");
     }

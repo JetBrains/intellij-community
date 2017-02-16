@@ -321,7 +321,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<T>(5, (o1, o2) -> o1.getEndOffset() - o2.getEndOffset());
+    final Queue<T> ends = new PriorityQueue<T>(5, Comparator.comparingInt(Segment::getEndOffset));
     final List<T> starts = new ArrayList<T>();
     if (!generator.generateInStartOffsetOrder(marker -> {
       // decide whether previous marker ends here or new marker begins

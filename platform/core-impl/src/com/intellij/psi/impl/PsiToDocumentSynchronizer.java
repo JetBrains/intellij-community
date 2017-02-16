@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -314,7 +313,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   public static class DocumentChangeTransaction{
     private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(
-      (o1, o2) -> o1.getStartOffset() - o2.getStartOffset());
+      Comparator.comparingInt(TextRange::getStartOffset));
     private final PsiFile myChangeScope;
     private ImmutableCharSequence myPsiText;
 

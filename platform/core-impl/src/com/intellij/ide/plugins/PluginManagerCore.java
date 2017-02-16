@@ -612,7 +612,7 @@ public class PluginManagerCore {
     final List<PluginId> ids = new ArrayList<PluginId>(idToDescriptorMap.keySet());
     // this magic ensures that the dependent plugins always follow their dependencies in lexicographic order
     // needed to make sure that extensions are always in the same order
-    Collections.sort(ids, (o1, o2) -> o2.getIdString().compareTo(o1.getIdString()));
+    ids.sort((o1, o2) -> o2.getIdString().compareTo(o1.getIdString()));
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PluginId>() {
       @Override
       public Collection<PluginId> getNodes() {
@@ -1205,7 +1205,7 @@ public class PluginManagerCore {
 
     final Comparator<PluginId> idComparator = builder.comparator();
     // sort descriptors according to plugin dependencies
-    Collections.sort(result, (o1, o2) -> idComparator.compare(o1.getPluginId(), o2.getPluginId()));
+    result.sort((o1, o2) -> idComparator.compare(o1.getPluginId(), o2.getPluginId()));
 
     for (int i = 0; i < result.size(); i++) {
       ourId2Index.put(result.get(i).getPluginId(), i);
