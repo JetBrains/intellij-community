@@ -1,9 +1,8 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -11,11 +10,11 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +46,9 @@ import java.util.stream.Collectors;
  * we will be able to iterate variants, not collections of variants
  */
 public class JsonSchemaWalker {
+
+  public static final JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
+
   public interface CompletionSchemesConsumer {
     void consume(boolean isName,
                  @NotNull JsonSchemaObject schema,
@@ -276,61 +278,75 @@ public class JsonSchemaWalker {
   }
 
   @Nullable
-  private static PsiElement goUpToCheckable(@NotNull final PsiElement element) {
-    PsiElement current = element;
-    while (current != null && !(current instanceof PsiFile)) {
-      if (current instanceof JsonValue || current instanceof JsonProperty) {
-        return current;
-      }
-      current = current.getParent();
+  private static <T> T getJsonLikeThing(@NotNull final PsiElement element,
+                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor) {
+    final List<JsonLikePsiWalker> list = new ArrayList<>();
+    list.add(JSON_ORIGINAL_PSI_WALKER);
+    final JsonLikePsiWalker[] extensions = Extensions.getExtensions(JsonLikePsiWalker.EXTENSION_POINT_NAME);
+    list.addAll(Arrays.asList(extensions));
+    for (JsonLikePsiWalker walker : list) {
+      if (walker.handles(element)) return convertor.convert(walker);
     }
     return null;
   }
 
+  @Nullable
+  private static PsiElement goUpToCheckable(@NotNull final PsiElement element) {
+    return getJsonLikeThing(element, walker -> walker.goUpToCheckable(element));
+    //PsiElement current = element;
+    //while (current != null && !(current instanceof PsiFile)) {
+    //  if (current instanceof JsonValue || current instanceof JsonProperty) {
+    //    return current;
+    //  }
+    //  current = current.getParent();
+    //}
+    //return null;
+  }
+
   public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition) {
-    final List<Step> steps = new ArrayList<>();
-    if (!isName) {
-      steps.add(new Step(StateType._value, null));
-    }
-    PsiElement current = element;
-    //PsiElement current = element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element;
-    while (! (current instanceof PsiFile)) {
-      final PsiElement position = current;
-      current = current.getParent();
-      if (current instanceof JsonArray) {
-        JsonArray array = (JsonArray)current;
-        final List<JsonValue> list = array.getValueList();
-        int idx = -1;
-        for (int i = 0; i < list.size(); i++) {
-          final JsonValue value = list.get(i);
-          if (value.equals(position)) {
-            idx = i;
-            break;
-          }
-        }
-        steps.add(new Step(StateType._array, new ArrayTransition(idx)));
-      } else if (current instanceof JsonProperty) {
-        final String propertyName = ((JsonProperty)current).getName();
-        current = current.getParent();
-        if (!(current instanceof JsonObject)) return null;//incorrect syntax?
-        // if either value or not first in the chain - needed for completion variant
-        if (position != element || forceLastTransition) {
-          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-        }
-      } else if (current instanceof JsonObject && position instanceof JsonProperty) {
-        // if either value or not first in the chain - needed for completion variant
-        if (position != element || forceLastTransition) {
-          final String propertyName = ((JsonProperty)position).getName();
-          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-        }
-      } else if (current instanceof PsiFile) {
-        break;
-      } else {
-        return null;//something went wrong
-      }
-    }
-    Collections.reverse(steps);
-    return steps;
+    return getJsonLikeThing(element, walker -> walker.findPosition(element, isName, forceLastTransition));
+    //final List<Step> steps = new ArrayList<>();
+    //if (!isName) {
+    //  steps.add(new Step(StateType._value, null));
+    //}
+    //PsiElement current = element;
+    //while (! (current instanceof PsiFile)) {
+    //  final PsiElement position = current;
+    //  current = current.getParent();
+    //  if (current instanceof JsonArray) {
+    //    JsonArray array = (JsonArray)current;
+    //    final List<JsonValue> list = array.getValueList();
+    //    int idx = -1;
+    //    for (int i = 0; i < list.size(); i++) {
+    //      final JsonValue value = list.get(i);
+    //      if (value.equals(position)) {
+    //        idx = i;
+    //        break;
+    //      }
+    //    }
+    //    steps.add(new Step(StateType._array, new ArrayTransition(idx)));
+    //  } else if (current instanceof JsonProperty) {
+    //    final String propertyName = ((JsonProperty)current).getName();
+    //    current = current.getParent();
+    //    if (!(current instanceof JsonObject)) return null;//incorrect syntax?
+    //    // if either value or not first in the chain - needed for completion variant
+    //    if (position != element || forceLastTransition) {
+    //      steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+    //    }
+    //  } else if (current instanceof JsonObject && position instanceof JsonProperty) {
+    //    // if either value or not first in the chain - needed for completion variant
+    //    if (position != element || forceLastTransition) {
+    //      final String propertyName = ((JsonProperty)position).getName();
+    //      steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+    //    }
+    //  } else if (current instanceof PsiFile) {
+    //    break;
+    //  } else {
+    //    return null;//something went wrong
+    //  }
+    //}
+    //Collections.reverse(steps);
+    //return steps;
   }
 
   public static class Step {
@@ -356,7 +372,7 @@ public class JsonSchemaWalker {
   public static class PropertyTransition implements Transition {
     @NotNull private final String myName;
 
-    protected PropertyTransition(@NotNull String name) {
+    public PropertyTransition(@NotNull String name) {
       myName = name;
     }
 
@@ -407,10 +423,10 @@ public class JsonSchemaWalker {
     }
   }
 
-  private static class ArrayTransition implements Transition {
+  public static class ArrayTransition implements Transition {
     private final int myIdx;
 
-    private ArrayTransition(int idx) {
+    public ArrayTransition(int idx) {
       myIdx = idx;
     }
 
