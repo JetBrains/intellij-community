@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.actions;
+package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -35,18 +35,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class CompareRevisionsAction extends AnAction {
+public class CompareRevisionsFromHistoryAction extends AnAction {
   private static final String COMPARE_TEXT = "Compare";
   private static final String COMPARE_DESCRIPTION = "Compare selected versions";
   private static final String DIFF_TEXT = "Show Diff";
   private static final String DIFF_DESCRIPTION = "Show diff with previous version";
   @NotNull private final DiffFromHistoryHandler myDiffHandler;
 
-  public CompareRevisionsAction() {
+  public CompareRevisionsFromHistoryAction() {
     this(new StandardDiffFromHistoryHandler());
   }
 
-  public CompareRevisionsAction(@NotNull DiffFromHistoryHandler diffHandler) {
+  public CompareRevisionsFromHistoryAction(@NotNull DiffFromHistoryHandler diffHandler) {
     super(DIFF_TEXT, DIFF_DESCRIPTION, AllIcons.Actions.Diff);
     myDiffHandler = diffHandler;
   }

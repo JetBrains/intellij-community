@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,44 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.actions;
+package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
-import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
-  public OpenRepositoryVersionAction() {
-    // TODO[yole]: real icon
+import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction.hasValidChanges;
+import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction.openRepositoryVersion;
+
+public class OpenRepositoryVersionFromHistoryAction extends AnAction implements DumbAware {
+  public OpenRepositoryVersionFromHistoryAction() {
     super(VcsBundle.message("open.repository.version.text"), VcsBundle.message("open.repository.version.description"),
-          AllIcons.ObjectBrowser.ShowEditorHighlighting);
+          AllIcons.Actions.EditSource);
   }
 
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES);
     openRepositoryVersion(project, changes);
   }
 
-  public void update(@NotNull AnActionEvent e) {
+  public void update(final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     e.getPresentation().setEnabled(project != null && changes != null &&
@@ -58,21 +50,5 @@ public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
                                      .equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()))) &&
                                    hasValidChanges(changes) &&
                                    ModalityState.NON_MODAL.equals(ModalityState.current()));
-  }
-
-  public static boolean hasValidChanges(@NotNull Change[] changes) {
-    return ContainerUtil.exists(changes, c -> c.getAfterRevision() != null && !c.getAfterRevision().getFile().isDirectory());
-  }
-
-  public static void openRepositoryVersion(@NotNull Project project, @NotNull Change[] changes) {
-    for (Change change : changes) {
-      ContentRevision revision = change.getAfterRevision();
-
-      if (revision == null || revision.getFile().isDirectory()) continue;
-
-      VirtualFile vFile = ContentRevisionVirtualFile.create(revision);
-      Navigatable navigatable = new OpenFileDescriptor(project, vFile);
-      navigatable.navigate(true);
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.actions;
+package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {
-  public AnnotateRevisionAction() {
+public class AnnotateRevisionFromHistoryAction extends AnnotateRevisionActionBase implements DumbAware {
+  public AnnotateRevisionFromHistoryAction() {
     super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
     setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
   }

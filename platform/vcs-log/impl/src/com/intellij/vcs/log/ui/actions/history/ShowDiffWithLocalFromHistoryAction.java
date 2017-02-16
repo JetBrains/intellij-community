@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.actions;
+package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.FilePath;
@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowDiffWithLocalFromFileHistory extends ShowDiffWithLocalAction {
+public class ShowDiffWithLocalFromHistoryAction extends ShowDiffWithLocalAction {
   @NotNull
   @Override
   protected ContentRevision getCurrentRevision(@NotNull ContentRevision afterRevision, @NotNull AnActionEvent e) {
