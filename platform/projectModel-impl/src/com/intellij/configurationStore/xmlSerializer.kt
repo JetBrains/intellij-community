@@ -31,6 +31,7 @@ import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.primaryConstructor
 
 @JvmOverloads
@@ -184,6 +185,12 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
   private fun createUsingKotlin(clazz: Class<*>): Any? {
     // if cannot create data class
     val kClass = clazz.kotlin
-    return (kClass.primaryConstructor ?: kClass.constructors.firstOrNull())?.callBy(emptyMap())
+    val kFunction = kClass.primaryConstructor ?: kClass.constructors.first()
+    try {
+      kFunction.isAccessible = true
+    }
+    catch (e: SecurityException) {
+    }
+    return kFunction.callBy(emptyMap())
   }
 }
