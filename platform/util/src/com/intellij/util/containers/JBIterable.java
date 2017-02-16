@@ -391,7 +391,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
           public T nextImpl() {
             if (cur != null && cur.hasNext()) return cur.next();
             if (!iterator.hasNext()) return stop();
-            cur = fun.fun(iterator.next()).iterator();
+            Iterable<? extends T> next = fun.fun(iterator.next());
+            cur = next == null ? null : next.iterator();
             return skip();
           }
         };
