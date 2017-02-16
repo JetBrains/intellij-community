@@ -29,6 +29,10 @@ import java.awt.*;
 @SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
+  public DefaultEditorTabsPainter(JBEditorTabs tabs) {
+    super(tabs);
+  }
+
   @Override
   public void doPaintInactive(Graphics2D g2d,
                               Rectangle effectiveBounds,
@@ -43,14 +47,14 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     ;
     g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g2d.fillRect(x, y, w, h);
-    if (Registry.is("ide.new.editor.tabs.selection")) return;
+    if (myTabs.hasUnderlineSelection()) return;
     g2d.setColor(getInactiveMaskColor());
     g2d.fillRect(x, y, w, h);
   }
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
-    g.setColor(Registry.is("ide.new.editor.tabs.selection") ? new JBColor(() -> UIUtil.getPanelBackground()) : getBackgroundColor());
+    g.setColor(myTabs.hasUnderlineSelection() ? new JBColor(() -> UIUtil.getPanelBackground()) : getBackgroundColor());
     g.fill(clip);
   }
 
