@@ -308,7 +308,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @Override
   public void readExternal(@NotNull Element parentNode) {
     UISettings settings = UISettings.getInstanceOrNull();
-    ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
+    ColorBlindness blindness = settings == null ? null : settings.getColorBlindness();
     myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);

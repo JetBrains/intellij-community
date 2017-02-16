@@ -227,8 +227,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
     boolean updateEditorScheme = false;
-    if (settings.COLOR_BLINDNESS != blindness) {
-      settings.COLOR_BLINDNESS = blindness;
+    if (settings.getColorBlindness() != blindness) {
+      settings.setColorBlindness(blindness);
       update = true;
       ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       updateEditorScheme = true;
@@ -348,7 +348,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
-    myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
+    myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -412,7 +412,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
-    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
+    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 

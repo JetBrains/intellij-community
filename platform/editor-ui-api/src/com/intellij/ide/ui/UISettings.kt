@@ -136,7 +136,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
-  @JvmField var COLOR_BLINDNESS: ColorBlindness? = null
+  @get:OptionTag("COLOR_BLINDNESS") var colorBlindness: ColorBlindness? = null
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton by storedProperty(false)
   @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode by storedProperty(false)
   @get:OptionTag("ALPHA_MODE_DELAY") var alphaModeDelay by storedProperty(1500)
@@ -209,7 +209,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     // todo remove when all old properties will be converted
     incrementModificationCount()
 
-    IconLoader.setFilter(ColorBlindnessSupport.get(COLOR_BLINDNESS)?.filter)
+    IconLoader.setFilter(ColorBlindnessSupport.get(colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
     if (this === _instance) {
