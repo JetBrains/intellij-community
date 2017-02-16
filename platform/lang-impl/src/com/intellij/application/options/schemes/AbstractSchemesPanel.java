@@ -42,12 +42,11 @@ import java.util.Collection;
  * @see AbstractSchemeActions
  * @see SchemesModel
  */
-public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
-  
-  private SchemesCombo<T> mySchemesCombo;
+public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
+  private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
-  private JLabel myInfoLabel;
+  protected InfoComponent myInfoComponent;
 
   public AbstractSchemesPanel() {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -57,15 +56,15 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   private void createUIComponents() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")));
+    controlsPanel.add(new JLabel(getTitle()));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
-    mySchemesCombo = new SchemesCombo<>(this);
+    mySchemesCombo = new EditableSchemesCombo<T>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
     controlsPanel.add(myToolbar);
-    myInfoLabel = new JLabel();
-    controlsPanel.add(myInfoLabel);
+    myInfoComponent = createInfoComponent();
+    controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
@@ -74,7 +73,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     add(Box.createVerticalGlue());
     add(Box.createRigidArea(new Dimension(0, 10)));
   }
-  
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     toolbarActionGroup.add(new TopActionGroup());
@@ -119,7 +117,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     return mySchemesCombo.getSelectedScheme();
   }
   
-  public final void selectScheme(@Nullable T scheme) {
+  public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
   }
   
@@ -139,17 +137,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
-    myInfoLabel.setText(message);
-    myInfoLabel.setForeground(messageTypeToColor(messageType));
-  }
+  public abstract void showInfo(@Nullable String message, @NotNull MessageType messageType);
 
-  public final void clearInfo() {
-    myInfoLabel.setText(null);
-  }
+  public abstract void clearInfo();
 
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
+  }
+
+  @NotNull
+  protected abstract InfoComponent createInfoComponent();
+
+  protected String getTitle() {
+    return ApplicationBundle.message("editbox.scheme.name");
   }
 
   /**
@@ -166,13 +166,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     mySchemesCombo.updateSelected();
   }
 
-  /**
-   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be 
-   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes 
-   *         separators.
-   */
-  public abstract boolean supportsProjectSchemes();
-  
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),

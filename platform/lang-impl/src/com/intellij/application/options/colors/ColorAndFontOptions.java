@@ -184,7 +184,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public boolean containsScheme(@NotNull String name) {
+  public boolean containsScheme(@NotNull String name, boolean projectScheme) {
+    assert !projectScheme;
     return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
   }
 
@@ -273,6 +274,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     mySchemes.remove(schemeName);
     resetSchemesCombo(null);
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
+  }
+
+  @Override
+  public boolean supportsProjectSchemes() {
+    return false;
   }
 
 

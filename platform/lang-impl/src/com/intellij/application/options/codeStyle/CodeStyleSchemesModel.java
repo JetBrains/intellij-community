@@ -76,6 +76,11 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     }
   }
 
+  @Override
+  public boolean supportsProjectSchemes() {
+    return true;
+  }
+
   public CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
     if (!mySettingsToClone.containsKey(scheme)) {
       mySettingsToClone.put(scheme, scheme.getCodeStyleSettings().clone());
@@ -210,15 +215,16 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
-    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> containsScheme(name)),
+    final boolean isProjectScheme = isProjectScheme(parentScheme);
+    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> containsScheme(name, isProjectScheme)),
                                    false,
                                    parentScheme);
   }
 
   @Nullable
-  private CodeStyleScheme findSchemeByName(final String name) {
+  private CodeStyleScheme findSchemeByName(final String name, boolean isProjectScheme) {
     for (CodeStyleScheme scheme : mySchemes) {
-      if (name.equals(scheme.getName())) return scheme;
+      if (isProjectScheme == isProjectScheme(scheme) && name.equals(scheme.getName())) return scheme;
     }
     return null;
   }
@@ -253,8 +259,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   @Override
-  public boolean containsScheme(@NotNull String name) {
-    return findSchemeByName(name) != null;
+  public boolean containsScheme(@NotNull String name, boolean isProjectScheme) {
+    return findSchemeByName(name, isProjectScheme) != null;
   }
 
   @Override

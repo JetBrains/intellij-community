@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.codeStyle;
+package com.intellij.application.options.schemes;
 
+import com.intellij.configurationStore.SerializableScheme;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporter;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -27,15 +28,15 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
 /**
- * Exports (copies) a code style scheme to an external file as is.
+ * Exports (copies) a scheme to an external file as is.
  *
  * @author Rustam Vishnyakov
  */
-public class CodeStyleSchemeCopyExporter extends SchemeExporter<CodeStyleScheme> {
+public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   @Override
-  public void exportScheme(@NotNull final CodeStyleScheme scheme, @NotNull OutputStream outputStream) throws Exception {
-    assert scheme instanceof CodeStyleSchemeImpl;
-    writeToStream(outputStream, ((CodeStyleSchemeImpl)scheme).writeScheme());
+  public void exportScheme(@NotNull Scheme scheme, @NotNull OutputStream outputStream) throws Exception {
+    assert scheme instanceof SerializableScheme;
+    writeToStream(outputStream, ((SerializableScheme)scheme).writeScheme());
   }
 
   @Override
