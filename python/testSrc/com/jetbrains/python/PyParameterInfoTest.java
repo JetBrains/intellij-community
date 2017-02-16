@@ -487,6 +487,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  public void testOverloadsInImportedModule() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("a: int, b: int", "a: str, b: str");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: int, "}, new String[]{"a: str, "});
+
+        feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY));
+      }
+    );
+  }
+
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
     myFixture.copyDirectoryToProject("typing", "");
 
@@ -500,6 +516,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final List<String[]> disabled = Arrays.asList(new String[]{"self: C, "}, new String[]{"self: C, "});
 
         feignCtrlP(offset).check(texts, highlighted, disabled);
+      }
+    );
+  }
+
+  public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("a: int", "a: str, b: str");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: int"}, new String[]{"a: str, "});
+
+        feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY));
       }
     );
   }
