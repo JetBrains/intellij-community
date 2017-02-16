@@ -817,18 +817,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    final List<PsiFile> files = viewProvider.getAllFiles();
-    boolean commitNecessary = true;
-    for (PsiFile file : files) {
-
-      if (PsiToDocumentSynchronizer.isInsideAtomicChange(file)) {
-        commitNecessary = false;
-        continue;
-      }
-
-      assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
-        event + "; file=" + file + "; allFiles=" + files + "; viewProvider=" + viewProvider;
-    }
+    List<PsiFile> files = viewProvider.getAllFiles();
+    boolean commitNecessary = files.stream().noneMatch(file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
                           (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
