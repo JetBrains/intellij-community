@@ -133,6 +133,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.startEdit();
   }
   
+
   public final void cancelEdit() {
     mySchemesCombo.cancelEdit();
   }
@@ -165,6 +166,13 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   public final void updateOnCurrentSettingsChange() {
     mySchemesCombo.updateSelected();
   }
+
+  /**
+   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be
+   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes
+   *         separators.
+   */
+  protected abstract boolean supportsProjectSchemes();
 
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()

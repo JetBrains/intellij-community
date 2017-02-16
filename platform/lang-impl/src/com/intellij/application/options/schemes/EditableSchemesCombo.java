@@ -151,7 +151,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     myComboBox = new SchemesCombo<T>() {
       @Override
       protected boolean supportsProjectSchemes() {
-        return mySchemesPanel.getModel().supportsProjectSchemes();
+        return mySchemesPanel.supportsProjectSchemes();
       }
 
       @Override

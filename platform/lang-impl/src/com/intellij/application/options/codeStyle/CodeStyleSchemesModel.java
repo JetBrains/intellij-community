@@ -76,11 +76,6 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     }
   }
 
-  @Override
-  public boolean supportsProjectSchemes() {
-    return true;
-  }
-
   public CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
     if (!mySettingsToClone.containsKey(scheme)) {
       mySettingsToClone.put(scheme, scheme.getCodeStyleSettings().clone());

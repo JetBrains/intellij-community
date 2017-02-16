@@ -75,11 +75,4 @@ public interface SchemesModel<T extends Scheme> {
   boolean differsFromDefault(@NotNull T scheme);
 
   void removeScheme(@NotNull T scheme);
-
-  /**
-   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be
-   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes
-   *         separators.
-   */
-  boolean supportsProjectSchemes();
 }

@@ -100,11 +100,6 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   protected abstract void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel);
 
-  @Override
-  public boolean supportsProjectSchemes() {
-    return true;
-  }
-
   void addProfile(InspectionProfileModifiableModel profile) {
     myProfilePanels.add(createPanel(profile));
   }

@@ -122,4 +122,9 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   public SchemesModel<CodeStyleScheme> getModel() {
     return myModel;
   }
+
+  @Override
+  protected boolean supportsProjectSchemes() {
+    return true;
+  }
 }
