@@ -175,12 +175,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withResourceFromModule("android","lib/gluegen-rt-natives-macosx-universal.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-windows-amd64.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-windows-i586.jar", "lib")
-      withProjectLibrary("jogl-all") //todo[nik] move to module libraries
-      withResourceFromModule("android","lib/jogl-all-natives-linux-amd64.jar", "lib")
-      withResourceFromModule("android","lib/jogl-all-natives-linux-i586.jar", "lib")
-      withResourceFromModule("android","lib/jogl-all-natives-macosx-universal.jar", "lib")
-      withResourceFromModule("android","lib/jogl-all-natives-windows-amd64.jar", "lib")
-      withResourceFromModule("android","lib/jogl-all-natives-windows-i586.jar", "lib")
       withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)

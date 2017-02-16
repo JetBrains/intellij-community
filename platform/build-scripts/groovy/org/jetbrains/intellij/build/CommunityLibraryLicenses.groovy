@@ -213,8 +213,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "jsch-agent-proxy", libraryName: "jsch-agent-proxy", version: "0.0.7", license: "BSD",
                        url: "https://github.com/ymnk/jsch-agent-proxy",
                        licenseUrl: "https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "JOGL", libraryName: "jogl-all", license: "Creative Commons Attribution License",
-                       url: "https://jogamp.org/jogl/www/", licenseUrl: "http://creativecommons.org/licenses/by/3.0"),
     new LibraryLicense(name: "JSch", libraryName: "JSch", version: "0.1.53", license: "BSD", url: "http://www.jcraft.com/jsch/",
                        licenseUrl: "http://www.jcraft.com/jsch/LICENSE.txt"),
     new LibraryLicense(name: "JSON", libraryName: "json.jar", license: "JSON License", licenseUrl: "http://www.json.org/license.html",
