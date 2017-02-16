@@ -59,8 +59,8 @@ public abstract class ArchiveHandler {
 
   private final File myPath;
   private final Object myLock = new Object();
-  private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<AddonlyKeylessHash<EntryInfo, Object>>(null);
+  private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
+  private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
   private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
@@ -116,7 +116,7 @@ public abstract class ArchiveHandler {
 
         if (map == null) {
           if (myCorrupted) {
-            map = new AddonlyKeylessHash<EntryInfo, Object>(ourKeyValueMapper);
+            map = new AddonlyKeylessHash<>(ourKeyValueMapper);
           }
           else {
             try {
@@ -125,11 +125,11 @@ public abstract class ArchiveHandler {
             catch (Exception e) {
               myCorrupted = true;
               Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
-              map = new AddonlyKeylessHash<EntryInfo, Object>(ourKeyValueMapper);
+              map = new AddonlyKeylessHash<>(ourKeyValueMapper);
             }
           }
 
-          myChildrenEntries = new SoftReference<AddonlyKeylessHash<EntryInfo, Object>>(map);
+          myChildrenEntries = new SoftReference<>(map);
         }
       }
     }
@@ -137,17 +137,17 @@ public abstract class ArchiveHandler {
   }
 
   private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
-    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<EntryInfo, List<EntryInfo>>();
+    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
-      if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<EntryInfo>());
+      if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
       if (info.parent != null) {
         List<EntryInfo> parentChildren = map.get(info.parent);
-        if (parentChildren == null) map.put(info.parent, parentChildren = new SmartList<EntryInfo>());
+        if (parentChildren == null) map.put(info.parent, parentChildren = new SmartList<>());
         parentChildren.add(info);
       }
     }
 
-    final AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<EntryInfo, Object>(map.size(), ourKeyValueMapper);
+    final AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
     map.forEachEntry(new TObjectObjectProcedure<EntryInfo, List<EntryInfo>>() {
       @Override
       public boolean execute(EntryInfo a, List<EntryInfo> b) {
@@ -196,7 +196,7 @@ public abstract class ArchiveHandler {
             }
           }
 
-          myEntries = new SoftReference<Map<String, EntryInfo>>(map);
+          myEntries = new SoftReference<>(map);
         }
       }
     }

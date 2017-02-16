@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -98,7 +99,8 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
-        if (library.getName() != null) {
+        //noinspection InstanceofIncompatibleInterface
+        if (library instanceof ItemPresentation) {
           children.add(new SyntheticLibraryElementNode(project, library, getSettings()));
         }
       }

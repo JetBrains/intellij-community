@@ -83,17 +83,22 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
 
   @NotNull
   public static BufferedImage create(Graphics2D g, final int width, int height, int type) {
-    return create(g, null, width, height, type);
+    return create(g != null ? g.getDeviceConfiguration() : null, null, width, height, type);
   }
 
   @NotNull
-  private static BufferedImage create(Graphics2D g, Image image, final int width, int height, int type) {
+  public static BufferedImage create(GraphicsConfiguration gc, final int width, int height, int type) {
+    return create(gc, null, width, height, type);
+  }
+
+  @NotNull
+  private static BufferedImage create(GraphicsConfiguration gc, Image image, final int width, int height, int type) {
     if (SystemInfo.isAppleJvm) {
       return AppleHiDPIScaledImage.create(width, height, type);
     } else {
       if (image == null) {
-        return g == null ? new JBHiDPIScaledImage(width, height, type) :
-                           new JBHiDPIScaledImage(g, width, height, type);
+        return gc == null ? new JBHiDPIScaledImage(width, height, type) :
+                            new JBHiDPIScaledImage(gc, width, height, type);
       } else {
         return new JBHiDPIScaledImage(image, width, height, type);
       }

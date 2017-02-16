@@ -31,7 +31,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -113,7 +115,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
                                                     PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                     if (processor.isCreateInnerClass()) {
-                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.moveUsedMethodsToInner());
+                                                      processor.moveUsedMethodsToInner();
                                                       PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                       if (editor != null) {
                                                         DuplicatesImpl.processDuplicates(extractProcessor, project, editor);

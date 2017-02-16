@@ -180,6 +180,11 @@ class JavaReflectionReferenceUtil {
 
   @NotNull
   static LookupElement withPriority(LookupElement lookupElement, boolean hasPriority) {
-    return PrioritizedLookupElement.withPriority(lookupElement, hasPriority ? 1 : -1);
+    return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
+  }
+
+  @NotNull
+  static LookupElement withPriority(LookupElement lookupElement, int priority) {
+    return priority == 0 ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
   }
 }

@@ -18,6 +18,7 @@ package git4idea.test
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -49,17 +50,17 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     myGitSettings = GitVcsSettings.getInstance(myProject)
     myGitSettings.appSettings.setPathToGit(gitExecutable())
 
-    myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
-    myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
+    myDialogManager = service<DialogManager>() as TestDialogManager
+    myVcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
 
-    vcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
+    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
-    myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
+    myGit = overrideService<Git, TestGitImpl>()
     myVcs = GitVcs.getInstance(myProject)!!
     myVcs.doActivate()
 
-    GitTestUtil.assumeSupportedGitVersion(myVcs)
+    assumeSupportedGitVersion(myVcs)
     addSilently()
     removeSilently()
   }
@@ -84,7 +85,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {
-    return GitTestUtil.createRepository(myProject, rootDir)
+    return createRepository(myProject, rootDir)
   }
 
   /**
@@ -120,7 +121,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+    return assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
   }
 
   protected fun assertSuccessfulNotification(message: String) : Notification {
@@ -128,20 +129,20 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
-    GitTestUtil.assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+    assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
   }
 
   protected fun assertErrorNotification(title: String, message: String) : Notification {
     val notification = myVcsNotifier.lastNotification
     assertNotNull("No notification was shown", notification)
-    GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
+    assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
   }
 
   protected fun assertNoNotification() {
     val notification = myVcsNotifier.lastNotification
     if (notification != null) {
-      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
+      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
     }
   }
 

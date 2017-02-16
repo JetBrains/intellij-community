@@ -24,7 +24,9 @@ class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
 
-  fun testOverloadMethods() = doTest(2, "method()", "method(C c)", "method(A a,B b)")
+  fun testOverloadMethods() = doTest(2,
+                                     "method()", "method(C c)", "method(A a,B b)",
+                                     "equals(java.lang.Object obj)")
 
   fun testJavaLangObjectMethods() = doTest(6,
                                            "method()",
@@ -37,15 +39,18 @@ class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
                                               "clone()", "equals(java.lang.Object obj)", "hashCode()",
                                               "toString()", "finalize()", "getClass()",
                                               "notify()", "notifyAll()",
-                                              "wait()", "wait(long timeout)", "wait(long timeout,int nanos)",
-                                              "registerNatives()")
+                                              "wait()", "wait(long timeout)", "wait(long timeout,int nanos)")
+
+  fun testOverriddenMethod() = doTest(2,
+                                      "gpMethod(A a,B b)", "method()", "pMethod(C c)",
+                                      "equals(java.lang.Object obj)")
 
 
   private fun doTest(index: Int, vararg expected: String) {
     configureByFile(getTestName(false) + ".java")
 
     val lookupItems = lookup.items
-    val texts = lookupItemTexts(lookupItems, expected.size)
+    val texts = lookupFirstItemsTexts(lookupItems, expected.size)
     assertOrderedEquals(texts, *expected)
     if (index >= 0) selectItem(lookupItems[index])
     myFixture.checkResultByFile(getTestName(false) + "_after.java")

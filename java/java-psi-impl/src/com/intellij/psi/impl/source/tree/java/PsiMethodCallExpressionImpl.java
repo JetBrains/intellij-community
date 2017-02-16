@@ -209,12 +209,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
-                                                                                    new Condition<IElementType>() {
-                                                                                      @Override
-                                                                                      public boolean value(IElementType type) {
-                                                                                        return type != JavaElementType.CLASS;
-                                                                                      }
-                                                                                    }, languageLevel);
+                                                                                    type -> type != JavaElementType.CLASS, languageLevel);
 
       if (getClassReturnType != null) {
         return getClassReturnType;

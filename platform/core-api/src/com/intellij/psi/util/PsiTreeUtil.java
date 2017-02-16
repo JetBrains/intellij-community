@@ -364,7 +364,7 @@ public class PsiTreeUtil {
     List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        if (result == null) result = new SmartList<T>();
+        if (result == null) result = new SmartList<>();
         //noinspection unchecked
         result.add((T)child);
       }
@@ -394,7 +394,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return Collections.emptyList();
 
-    List<T> result = new SmartList<T>();
+    List<T> result = new SmartList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
         //noinspection unchecked
@@ -429,7 +429,7 @@ public class PsiTreeUtil {
       return getChildrenOfTypeAsList(element, aClass);
     }
 
-    List<T> result = new SmartList<T>();
+    List<T> result = new SmartList<>();
     for (StubElement childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
@@ -717,7 +717,7 @@ public class PsiTreeUtil {
 
   @NotNull
   public static PsiElement[] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {
-    CollectFilteredElements<PsiElement> processor = new CollectFilteredElements<PsiElement>(filter);
+    CollectFilteredElements<PsiElement> processor = new CollectFilteredElements<>(filter);
     processElements(element, processor);
     return processor.toArray();
   }
@@ -725,7 +725,7 @@ public class PsiTreeUtil {
   @NotNull
   public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable final PsiElement element,
                                                                            @NotNull final Class<T>... classes) {
-    CollectFilteredElements<T> processor = new CollectFilteredElements<T>(new PsiElementFilter() {
+    CollectFilteredElements<T> processor = new CollectFilteredElements<>(new PsiElementFilter() {
 
       @Override
       public boolean isAccepted(PsiElement element) {
@@ -781,7 +781,7 @@ public class PsiTreeUtil {
 
   @NotNull
   public static PsiElement[] copyElements(@NotNull PsiElement[] elements) {
-    ArrayList<PsiElement> roots = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> roots = new ArrayList<>();
     for (int i = 0; i < elements.length; i++) {
       PsiElement rootCandidate = elements[i];
       boolean failed = false;
@@ -1024,7 +1024,7 @@ public class PsiTreeUtil {
       }
     }
 
-    ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> filteredElements = new ArrayList<>();
     ContainerUtil.addAll(filteredElements, elements);
 
     int previousSize;

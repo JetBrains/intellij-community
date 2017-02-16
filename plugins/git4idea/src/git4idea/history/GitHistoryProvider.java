@@ -223,7 +223,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   @Override
   public boolean canShowHistoryFor(@NotNull VirtualFile file) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-    GitRepository repository = manager.getRepositoryForFile(file);
+    GitRepository repository = manager.getRepositoryForFileQuick(file);
     return repository != null && !repository.isFresh();
   }
 

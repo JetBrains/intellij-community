@@ -39,7 +39,7 @@ public class FilteredQuery<T> implements Query<T> {
 
   @Override
   public T findFirst() {
-    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
+    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
     return processor.getFoundValue();
   }
@@ -59,7 +59,7 @@ public class FilteredQuery<T> implements Query<T> {
   @Override
   @NotNull
   public Collection<T> findAll() {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     Processor<T> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
     return result;

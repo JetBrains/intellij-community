@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -33,7 +32,6 @@ import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import java.io.File
@@ -51,7 +49,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   private lateinit var myTestStartedIndicator: String
   private val asyncTasks = mutableSetOf<AsyncTask>()
 
-  protected lateinit var changeListManager: ChangeListManagerEx
+  protected lateinit var changeListManager: ChangeListManagerImpl
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -75,10 +73,9 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { waitForPendingTasks() })
-      .append(ThrowableRunnable { changeListManager = MockChangeListManager() })
-      .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() }})
       .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) })
       .append(ThrowableRunnable { clearFields(this) })
+      .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
   }
 
@@ -140,7 +137,6 @@ abstract class VcsPlatformTest : PlatformTestCase() {
         future.get(10, TimeUnit.SECONDS)
       }
     }
-    asyncTasks.clear()
   }
 
   protected fun executeOnPooledThread(runnable: () -> Unit){

@@ -57,28 +57,20 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
   @Override
   public final boolean execute(@NotNull final Params queryParameters, @NotNull final Processor<Result> consumer) {
     final AtomicBoolean toContinue = new AtomicBoolean(true);
-    final Processor<Result> wrapper = new Processor<Result>() {
-      @Override
-      public boolean process(Result result) {
-        if (!toContinue.get()) {
-          return false;
-        }
-
-        if (!consumer.process(result)) {
-          toContinue.set(false);
-          return false;
-        }
-        return true;
+    final Processor<Result> wrapper = result -> {
+      if (!toContinue.get()) {
+        return false;
       }
+
+      if (!consumer.process(result)) {
+        toContinue.set(false);
+        return false;
+      }
+      return true;
     };
 
     if (myRequireReadAction && !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          processQuery(queryParameters, wrapper);
-        }
-      };
+      Runnable runnable = () -> processQuery(queryParameters, wrapper);
       
       if (!DumbService.isDumbAware(this)) {
         Project project = queryParameters instanceof DumbAwareSearchParameters ? ((DumbAwareSearchParameters)queryParameters).getProject()

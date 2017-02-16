@@ -130,40 +130,37 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
-    @Override
-    public Icon fun(final FileIconKey key) {
-      final VirtualFile file = key.getFile();
-      final int flags = key.getFlags();
-      final Project project = key.getProject();
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
+    final VirtualFile file = key.getFile();
+    final int flags = key.getFlags();
+    final Project project = key.getProject();
 
-      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-      final Icon providersIcon = getProvidersIcon(file, flags, project);
-      Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
+    final Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
 
-      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-      for (FileIconPatcher patcher : getPatchers()) {
-        if (dumb && !DumbService.isDumbAware(patcher)) {
-          continue;
-        }
-
-        // render without locked icon patch since we are going to apply it later anyway
-        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
+    final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    for (FileIconPatcher patcher : getPatchers()) {
+      if (dumb && !DumbService.isDumbAware(patcher)) {
+        continue;
       }
 
-      if (file.is(VFileProperty.SYMLINK)) {
-        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-      }
-      if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-      }
-
-      Iconable.LastComputedIcon.put(file, icon, flags);
-
-      return icon;
+      // render without locked icon patch since we are going to apply it later anyway
+      icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
     }
+
+    if (file.is(VFileProperty.SYMLINK)) {
+      icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+    }
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+        (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+      icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+    }
+
+    Iconable.LastComputedIcon.put(file, icon, flags);
+
+    return icon;
   };
 
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {

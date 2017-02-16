@@ -141,6 +141,11 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       if (!injectedLanguage.equals(myFile.getLanguage())) {
         WhiteSpaceFormattingStrategy localStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(injectedLanguage);
         if (localStrategy != null) {
+          String unescapedText = InjectedLanguageUtil.getUnescapedLeafText(injectedElement, true);
+          if (unescapedText != null) {
+            return localStrategy.check(unescapedText, 0, unescapedText.length()) >= unescapedText.length();
+          }
+
           return localStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
         }
       }

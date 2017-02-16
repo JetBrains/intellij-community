@@ -47,7 +47,7 @@ public abstract class DumbService {
   /**
    * @see Project#getMessageBus()
    */
-  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
+  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<>("dumb mode", DumbModeListener.class);
 
   /**
    * The tracker is advanced each time we enter/exit from dumb mode.
@@ -88,13 +88,8 @@ public abstract class DumbService {
    * unless this method is already called with read access allowed.
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
-    final Ref<T> result = new Ref<T>();
-    runReadActionInSmartMode(new Runnable() {
-      @Override
-      public void run() {
-        result.set(r.compute());
-      }
-    });
+    final Ref<T> result = new Ref<>();
+    runReadActionInSmartMode(() -> result.set(r.compute()));
     return result.get();
   }
 
@@ -128,15 +123,12 @@ public abstract class DumbService {
 
     while (true) {
       waitForSmartMode();
-      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (isDumb()) {
-            return false;
-          }
-          r.run();
-          return true;
+      boolean success = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        if (isDumb()) {
+          return false;
         }
+        r.run();
+        return true;
       });
       if (success) break;
     }
@@ -193,7 +185,7 @@ public abstract class DumbService {
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<T>(collection.size());
+      final ArrayList<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {
         if (isDumbAware(element)) {
           result.add(element);
@@ -206,7 +198,7 @@ public abstract class DumbService {
       return (List<T>)collection;
     }
 
-    return new ArrayList<T>(collection);
+    return new ArrayList<>(collection);
   }
 
   /**

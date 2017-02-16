@@ -188,9 +188,9 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     }
 
     UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
-    if (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)g) && !UIUtil.isUnderDarcula()) {
+    if (UIUtil.isJreHiDPI(this) && !UIUtil.isUnderDarcula()) {
       Graphics2D g2 = (Graphics2D)g.create(0, 0, getWidth(), getHeight());
-      float s = JBUI.sysScale((Graphics2D)g);
+      float s = JBUI.sysScale(this);
       g2.scale(1/s, 1/s);
       g2.setColor(UIUtil.isUnderIntelliJLaF() ? Gray.xC9 : Gray.x91);
       g2.drawLine(0, 0, (int)(s * getWidth()), 0);

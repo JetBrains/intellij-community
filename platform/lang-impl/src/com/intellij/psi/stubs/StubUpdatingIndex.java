@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -262,31 +261,29 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   }
 
   private static void rememberIndexingStamp(final VirtualFile file, long contentLength) {
-    try {
-      DataOutputStream stream = INDEXED_STAMP.writeAttribute(file);
+    try (DataOutputStream stream = INDEXED_STAMP.writeAttribute(file)) {
       DataInputOutputUtil.writeTIME(stream, file.getTimeStamp());
       DataInputOutputUtil.writeLONG(stream, contentLength);
-      stream.close();
     }
     catch (IOException e) {
       LOG.error(e);
     }
   }
 
-  public static String getIndexingStampInfo(VirtualFile file) {
-    try {
-      DataInputStream stream = INDEXED_STAMP.readAttribute(file);
+  @Nullable
+  public static IndexingStampInfo getIndexingStampInfo(VirtualFile file) {
+    try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
       if (stream == null) {
-        return "no data";
+        return null;
       }
 
       long stamp = DataInputOutputUtil.readTIME(stream);
       long size = DataInputOutputUtil.readLONG(stream);
-      stream.close();
-      return "indexed at " + stamp + " with size " + size;
+      return new IndexingStampInfo(stamp, size);
     }
     catch (IOException e) {
-      return ExceptionUtil.getThrowableText(e);
+      LOG.error(e);
+      return null;
     }
   }
 

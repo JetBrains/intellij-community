@@ -55,13 +55,15 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("FONT_SIZE")
   var fontSize by storedProperty(0)
 
-  @Property(filter = FontFilter::class) private var FONT_SCALE: Float = 0.toFloat()
+  @get:Property(filter = FontFilter::class)
+  @get:OptionTag("FONT_SCALE")
+  private var fontScale by storedProperty(0f)
 
   @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit by storedProperty(50)
   @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT") var consoleCommandHistoryLimit by storedProperty(300)
-  @JvmField var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
-  @JvmField var CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024
-  @JvmField var EDITOR_TAB_LIMIT = 10
+  @get:OptionTag("OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE") var overrideConsoleCycleBufferSize by storedProperty(false)
+  @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB") var consoleCycleBufferSizeKb by storedProperty(1024)
+  @get:OptionTag("EDITOR_TAB_LIMIT") var editorTabLimit by storedProperty(10)
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
@@ -113,16 +115,11 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
+  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
+  @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by storedProperty(true)
+  @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks by storedProperty(false)
+
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
-
-  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
-  var sortLookupElementsLexicographically by storedProperty(false)
-
-  @get:OptionTag("MERGE_EQUAL_STACKTRACES")
-  var mergeEqualStackTraces by storedProperty(true)
-
-  @get:OptionTag("SORT_BOOKMARKS")
-  var sortBookmarks by storedProperty(false)
 
   init {
     tweakPlatformDefaults()
@@ -145,7 +142,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       showIconsInMenus = false
     }
   }
-
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
@@ -184,13 +180,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     CONSOLE_COMMAND_HISTORY_LIMIT = consoleCommandHistoryLimit
     FONT_SIZE = fontSize
     FONT_FACE = fontFace
+    EDITOR_TAB_LIMIT = editorTabLimit
+    OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = overrideConsoleCycleBufferSize
+    CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   }
 
   private fun initDefFont() {
     val fontData = systemFontFaceAndSize
     if (fontFace == null) fontFace = fontData.first
     if (fontSize <= 0) fontSize = fontData.second
-    if (FONT_SCALE <= 0) FONT_SCALE = JBUI.scale(1f)
+    if (fontScale <= 0) fontScale = JBUI.scale(1f)
   }
 
   class FontFilter : SerializationFilter {
@@ -201,7 +200,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
         return fontData.first != settings.fontFace
       }
       // store only in pair
-      return !(fontData.second == settings.fontSize && 1f == settings.FONT_SCALE)
+      return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
     }
   }
 
@@ -229,14 +228,14 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       alphaModeRatio = 0.5f
     }
 
-    if (FONT_SCALE <= 0) {
-      // Reset font to default on switch from IDEA-managed HiDPI to JDK-managed HiDPI. Doesn't affect OSX.
-      if (UIUtil.isJDKManagedHiDPI() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+    if (fontScale <= 0) {
+      // Reset font to default on switch from IDEA-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
+      if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
     }
     else {
-      fontSize = JBUI.scale(fontSize / FONT_SCALE).toInt()
+      fontSize = JBUI.scale(fontSize / fontScale).toInt()
     }
-    FONT_SCALE = JBUI.scale(1f)
+    fontScale = JBUI.scale(1f)
     initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -435,5 +434,23 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @JvmField
   @Transient
   var PRESENTATION_MODE_FONT_SIZE = 24
+
+  @Suppress("unused")
+  @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
+  @JvmField
+  @Transient
+  var EDITOR_TAB_LIMIT = editorTabLimit
+
+  @Suppress("unused")
+  @Deprecated("Use overrideConsoleCycleBufferSize", replaceWith = ReplaceWith("overrideConsoleCycleBufferSize"))
+  @JvmField
+  @Transient
+  var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
+
+  @Suppress("unused")
+  @Deprecated("Use consoleCycleBufferSizeKb", replaceWith = ReplaceWith("consoleCycleBufferSizeKb"))
+  @JvmField
+  @Transient
+  var CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   //</editor-fold>
 }

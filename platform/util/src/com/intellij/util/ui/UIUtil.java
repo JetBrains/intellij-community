@@ -339,36 +339,43 @@ public class UIUtil {
   }
 
   /**
-   * Returns whether the JDK-managed HiDPI mode is enabled and the default monitor device is HiDPI.
-   * (Equivalent of {@link #isRetina()} on macOS)
+   * Returns whether the JRE-managed HiDPI mode is enabled and the default monitor device is HiDPI.
+   * (analogue of {@link #isRetina()} on macOS)
    */
-  public static boolean isJDKManagedHiDPIScreen() {
-    return isJDKManagedHiDPI() && JBUI.sysScale() > 1.0f;
+  public static boolean isJreHiDPI() {
+    return isJreHiDPI((GraphicsConfiguration)null);
   }
 
   /**
-   * Returns whether the JDK-managed HiDPI mode is enabled and the graphics device is HiDPI.
-   * (Equivalent of {@link #isRetina(Graphics2D)} on macOS)
+   * Returns whether the JRE-managed HiDPI mode is enabled and the graphics configuration represents a HiDPI device.
+   * (analogue of {@link #isRetina(Graphics2D)} on macOS)
    */
-  public static boolean isJDKManagedHiDPIScreen(Graphics2D g) {
-    return isJDKManagedHiDPI() && JBUI.sysScale(g) > 1.0f;
+  public static boolean isJreHiDPI(@Nullable GraphicsConfiguration gc) {
+    return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(gc));
   }
 
-  private static Boolean jdkManagedHiDPI;
-  private static boolean jdkManagedHiDPI_earlierVersion;
+  /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
+   */
+  public static boolean isJreHiDPI(@Nullable Component comp) {
+    return isJreHiDPI(comp != null ? comp.getGraphicsConfiguration() : null);
+  }
+
+  private static Boolean jreHiDPI;
+  private static boolean jreHiDPI_earlierVersion;
 
   /**
-   * Returns whether the JDK-managed HiDPI mode is enabled.
+   * Returns whether the JRE-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
    *
    * @see JBUI.ScaleType
    */
-  public static boolean isJDKManagedHiDPI() {
-    if (jdkManagedHiDPI != null) {
-      return jdkManagedHiDPI;
+  public static boolean isJreHiDPIEnabled() {
+    if (jreHiDPI != null) {
+      return jreHiDPI;
     }
-    jdkManagedHiDPI = false;
-    jdkManagedHiDPI_earlierVersion = true;
+    jreHiDPI = false;
+    jreHiDPI_earlierVersion = true;
     if (SystemInfo.isLinux) {
       return false; // pending support
     }
@@ -376,25 +383,25 @@ public class UIUtil {
       GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
       if (ge instanceof SunGraphicsEnvironment) {
         Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-        jdkManagedHiDPI = (Boolean)m.invoke(ge);
-        jdkManagedHiDPI_earlierVersion = false;
+        jreHiDPI = (Boolean)m.invoke(ge);
+        jreHiDPI_earlierVersion = false;
       }
     } catch (Throwable ignore) {
     }
     if (SystemInfo.isMac) {
-      return jdkManagedHiDPI = (SystemInfo.isAppleJvm ? false : true);
+      return jreHiDPI = (SystemInfo.isAppleJvm ? false : true);
     }
-    return jdkManagedHiDPI;
+    return jreHiDPI;
   }
 
   /**
    * Indicates earlier JBSDK version, not containing HiDPI changes.
-   * On macOS that JBSDK supports jdkManagedHiDPI, but it's not capable to provide device scale
+   * On macOS such JBSDK supports jreHiDPI, but it's not capable to provide device scale
    * via GraphicsDevice transform matrix (the scale should be retrieved via DetectRetinaKit).
    */
-  static boolean isJDKManagedHiDPI_earlierVersion() {
-    isJDKManagedHiDPI();
-    return jdkManagedHiDPI_earlierVersion;
+  static boolean isJreHiDPI_earlierVersion() {
+    isJreHiDPIEnabled();
+    return jreHiDPI_earlierVersion;
   }
 
   /**
@@ -1715,7 +1722,7 @@ public class UIUtil {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
-    if (isJDKManagedHiDPIScreen()) {
+    if (isJreHiDPI(g.getDeviceConfiguration())) {
       GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
       g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
       c.restore();
@@ -1812,7 +1819,7 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJDKManagedHiDPIScreen((Graphics2D)g);
+      boolean jmHiDPI = isJreHiDPI(((Graphics2D)g).getDeviceConfiguration());
       if (jmHiDPI) {
         ((Graphics2D)g).setStroke(new BasicStroke(2f));
       }
@@ -1904,8 +1911,27 @@ public class UIUtil {
    */
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
-    if (isJDKManagedHiDPIScreen()) {
+    if (isJreHiDPI()) {
       return RetinaImage.create(width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics config scale.
+   *
+   * @param gc the graphics config
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   */
+  @NotNull
+  public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
+    if (isJreHiDPI(gc)) {
+      return RetinaImage.create(gc, width, height, type);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
@@ -1924,12 +1950,7 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
     if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
-      if (isJDKManagedHiDPIScreen(g2d)) {
-        return RetinaImage.create(g2d, width, height, type);
-      }
-      //noinspection UndesirableClassUsage
-      return new BufferedImage(width, height, type);
+      return createImage(((Graphics2D)g).getDeviceConfiguration(), width, height, type);
     }
     return createImage(width, height, type);
   }
@@ -1947,7 +1968,7 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(GraphicsUtil.safelyGetGraphics(comp), width, height, type) :
+           createImage(comp != null ? comp.getGraphicsConfiguration() : null, width, height, type) :
            createImage(width, height, type);
   }
 
@@ -2016,7 +2037,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isJDKManagedHiDPIScreen((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || !isJreHiDPI(((Graphics2D)g).getDeviceConfiguration()) || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
@@ -2167,9 +2188,10 @@ public class UIUtil {
 
   public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    boolean isRetina = isJDKManagedHiDPIScreen();
-    for (float i = x - 1; i <= x + 1; i += isRetina ? 1/JBUI.sysScale() : 1) {
-      for (float j = y - 1; j <= y + 1; j += isRetina ? 1/JBUI.sysScale() : 1) {
+    GraphicsConfiguration gc = ((Graphics2D)g).getDeviceConfiguration();
+    boolean isRetina = isJreHiDPI(gc);
+    for (float i = x - 1; i <= x + 1; i += isRetina ? 1/JBUI.sysScale(gc) : 1) {
+      for (float j = y - 1; j <= y + 1; j += isRetina ? 1/JBUI.sysScale(gc) : 1) {
         ((Graphics2D)g).drawString(s, i, j);
       }
     }

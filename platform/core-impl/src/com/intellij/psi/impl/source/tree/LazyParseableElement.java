@@ -38,7 +38,7 @@ import org.jetbrains.annotations.TestOnly;
 
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
-  private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<CharSequence>(null);
+  private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
 
   private static class ChameleonLock {
     private ChameleonLock() {}
@@ -68,7 +68,7 @@ public class LazyParseableElement extends CompositeElement {
         myText = NO_TEXT;
       }
       else {
-        myText = new StaticGetter<CharSequence>(ImmutableCharSequence.asImmutable(text));
+        myText = new StaticGetter<>(ImmutableCharSequence.asImmutable(text));
         setCachedLength(text.length());
       }
     }
@@ -96,7 +96,7 @@ public class LazyParseableElement extends CompositeElement {
     }
     String s = super.getText();
     synchronized (lock) {
-      myText = new SoftReference<CharSequence>(s);
+      myText = new SoftReference<>(s);
     }
     return s;
   }
@@ -211,7 +211,7 @@ public class LazyParseableElement extends CompositeElement {
         AstPath.cacheNodePaths(this);
 
         assertTextLengthIntact(text.length());
-        myText = new SoftReference<CharSequence>(text);
+        myText = new SoftReference<>(text);
       }
     }
     finally {

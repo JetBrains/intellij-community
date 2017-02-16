@@ -18,18 +18,20 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -135,12 +137,21 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .map(method -> lookupMethod(method))
               .toArray();
 
-          case METHOD:
-            return Arrays.stream(psiClass.getAllMethods())
-              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
+          case METHOD: {
+            final List<PsiMethod> methods = ContainerUtil.filter(
+              psiClass.getAllMethods(), method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
+
+            final Set<PsiMethod> superMethods = new THashSet<>();
+            for (PsiMethod method : methods) {
+              ContainerUtil.addAll(superMethods, method.findSuperMethods());
+            }
+
+            return methods.stream()
+              .filter(method -> !superMethods.contains(method))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-              .map(method -> PrioritizedLookupElement.withPriority(lookupMethod(method), -getMethodSortOrder(method)))
+              .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
               .toArray();
+          }
         }
       }
     }

@@ -264,9 +264,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       myNonCancelableCount = stacked.getNonCancelableCount();
 
-      myTextStack = new Stack<String>(stacked.getTextStack());
+      myTextStack = new Stack<>(stacked.getTextStack());
 
-      myText2Stack = new Stack<String>(stacked.getText2Stack());
+      myText2Stack = new Stack<>(stacked.getText2Stack());
 
       myFractionStack = new DoubleArrayList(stacked.getFractionStack());
     }
@@ -276,7 +276,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   @NotNull
   public synchronized Stack<String> getTextStack() {
-    if (myTextStack == null) myTextStack = new Stack<String>(2);
+    if (myTextStack == null) myTextStack = new Stack<>(2);
     return myTextStack;
   }
 
@@ -290,7 +290,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   @NotNull
   public synchronized Stack<String> getText2Stack() {
-    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
+    if (myText2Stack == null) myText2Stack = new Stack<>(2);
     return myText2Stack;
   }
 

@@ -16,7 +16,6 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -90,11 +89,7 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
     });
     final boolean conflictsDialogOK;
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts,
-                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                                    modifierList.setModifierProperty(FINAL, true);
-                                                                    modifierList.setModifierProperty(ABSTRACT, false);
-                                                                  }));
+      ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts, () -> doMakeFinal(modifierList));
       conflictsDialogOK = conflictsDialog.showAndGet();
     } else {
       conflictsDialogOK = true;

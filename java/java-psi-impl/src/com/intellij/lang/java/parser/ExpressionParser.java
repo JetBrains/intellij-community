@@ -612,12 +612,7 @@ public class ExpressionParser {
 
   @NotNull
   private PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
-    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, new Function<PsiBuilder, Boolean>() {
-      @Override
-      public Boolean fun(PsiBuilder builder) {
-        return parse(builder) != null;
-      }
-    }, "expected.expression");
+    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, builder1 -> parse(builder1) != null, "expected.expression");
   }
 
   @NotNull

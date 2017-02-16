@@ -47,12 +47,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private void doIncCounter() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            incCounter();
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> incCounter());
       }
 
       @Override

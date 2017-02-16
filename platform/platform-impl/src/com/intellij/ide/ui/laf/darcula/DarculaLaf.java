@@ -183,7 +183,7 @@ public class DarculaLaf extends BasicLookAndFeel {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }
-      if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+      if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
@@ -237,7 +237,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUI.isHiDPI() ? "@2x.css" : ".css"));
+    URL url = getClass().getResource(getPrefix() + (JBUI.isUsrHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
