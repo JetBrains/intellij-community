@@ -19,6 +19,8 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -36,6 +38,10 @@ public class ModulePathMacroManager extends BasePathMacroManager {
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
+    VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getContentRoots();
+    if(roots.length==1) {
+      addFileHierarchyReplacements(result, PathMacroUtil.MODULE_CONTENT_ROOT_MACRO_NAME, PathMacroUtil.getModuleContentRoot(roots[0].getCanonicalPath()));
+    }
     return result;
   }
 

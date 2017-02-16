@@ -35,6 +35,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
 public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @NonNls public static final String MODULE_CONTENT_ROOT_MACRO_NAME = "MODULE_ROOT";
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
@@ -81,5 +82,22 @@ public class PathMacroUtil {
   @Nullable
   public static String getGlobalSystemMacroValue(String name) {
     return ourGlobalMacros.get(name);
+  }
+
+  public static String getModuleContentRoot(String moduleContentRootPath) {
+    String moduleContentRoot = PathUtilRt.getParentPath(moduleContentRootPath);
+    if (StringUtil.isEmpty(moduleContentRoot)) {
+      return null;
+    }
+
+    // hack so that, if a module is stored inside the .idea directory, the base directory
+    // rather than the .idea directory itself is considered the module root
+    // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
+
+    moduleContentRoot = toSystemIndependentName(moduleContentRoot);
+    if (moduleContentRoot.endsWith(":/")) {
+      moduleContentRoot = moduleContentRoot.substring(0, moduleContentRoot.length() - 1);
+    }
+    return moduleContentRoot;
   }
 }
