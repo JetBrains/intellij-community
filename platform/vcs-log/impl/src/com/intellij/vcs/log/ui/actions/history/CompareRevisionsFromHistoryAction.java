@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,76 +28,90 @@ import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 public class CompareRevisionsFromHistoryAction extends AnAction {
   private static final String COMPARE_TEXT = "Compare";
   private static final String COMPARE_DESCRIPTION = "Compare selected versions";
   private static final String DIFF_TEXT = "Show Diff";
   private static final String DIFF_DESCRIPTION = "Show diff with previous version";
-  @NotNull private final DiffFromHistoryHandler myDiffHandler;
-
-  public CompareRevisionsFromHistoryAction() {
-    this(new StandardDiffFromHistoryHandler());
-  }
-
-  public CompareRevisionsFromHistoryAction(@NotNull DiffFromHistoryHandler diffHandler) {
-    super(DIFF_TEXT, DIFF_DESCRIPTION, AllIcons.Actions.Diff);
-    myDiffHandler = diffHandler;
-  }
+  @NotNull private final DiffFromHistoryHandler myDiffHandler = new StandardDiffFromHistoryHandler();
 
   public void update(@NotNull AnActionEvent e) {
-    if (e.getProject() == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    Project project = e.getProject();
+    FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    if (filePath == null) {
+    if (project == null || ui == null || filePath == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    boolean severalRevisionsSelected = revisions != null && revisions.length > 1;
-    if (severalRevisionsSelected) {
+    List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
+    e.getPresentation().setVisible(!details.isEmpty());
+
+    if (details.size() == 2) {
+      VcsFullCommitDetails detail0 = details.get(0);
+      VcsFullCommitDetails detail1 = details.get(1);
+      if (detail0 != null && !(detail0 instanceof LoadingDetails) &&
+          detail1 != null && !(detail1 instanceof LoadingDetails)) {
+        VcsFileRevision newestRevision = ui.createRevision(detail0);
+        VcsFileRevision olderRevision = ui.createRevision(detail1);
+        e.getPresentation().setEnabled(newestRevision != null && olderRevision != null && !filePath.isDirectory());
+      }
+      else {
+        e.getPresentation().setEnabled(!filePath.isDirectory());
+      }
+
       e.getPresentation().setText(COMPARE_TEXT);
       e.getPresentation().setDescription(COMPARE_DESCRIPTION);
     }
     else {
+      e.getPresentation().setEnabled(details.size() == 1);
       e.getPresentation().setText(DIFF_TEXT);
       e.getPresentation().setDescription(DIFF_DESCRIPTION);
     }
-
-    e.getPresentation().setEnabledAndVisible((severalRevisionsSelected && !filePath.isDirectory()) ||
-                                             e.getData(VcsDataKeys.CHANGES) != null && e.getData(VcsDataKeys.VCS_REVISION_NUMBER) != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
 
-    if (revisions != null && revisions.length > 1) {
-      VcsFileRevision olderRevision = revisions[revisions.length - 1];
-      VcsFileRevision newestRevision = revisions[0];
-      myDiffHandler.showDiffForTwo(project, filePath, olderRevision, newestRevision);
-    }
-    else {
-      Collection<Change> changes = Arrays.asList(e.getRequiredData(VcsDataKeys.CHANGES));
-      if (filePath.isDirectory()) {
-        VcsDiffUtil.showChangesDialog(project, "Changes in " +
-                                               e.getRequiredData(VcsDataKeys.VCS_REVISION_NUMBER).asString() +
-                                               " for " + filePath.getName(),
-                                      ContainerUtil.newArrayList(changes));
+    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
+    if (commits.size() != 1 && commits.size() != 2) return;
+
+    List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
+    ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
+      if (details.size() == 2) {
+        VcsFileRevision newestRevision = ui.createRevision(details.get(0));
+        VcsFileRevision olderRevision = ui.createRevision(details.get(1));
+        if (olderRevision != null && newestRevision != null) {
+          // if in one of the revisions file was deleted, we can not compare
+          // to fix this later
+          myDiffHandler.showDiffForTwo(project, filePath, olderRevision, newestRevision);
+        }
       }
-      else {
-        ShowDiffAction.showDiffForChange(project, changes, 0, new ShowDiffContext());
+      else if (details.size() == 1) {
+        VcsFullCommitDetails detail = ObjectUtils.notNull(ContainerUtil.getFirstItem(details));
+        List<Change> changes = ui.collectRelevantChanges(detail);
+        if (filePath.isDirectory()) {
+          VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),
+                                        ContainerUtil.newArrayList(changes));
+        }
+        else {
+          ShowDiffAction.showDiffForChange(project, changes, 0, new ShowDiffContext());
+        }
       }
-    }
+    }, null);
   }
 }
