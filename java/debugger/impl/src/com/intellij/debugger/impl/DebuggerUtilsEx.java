@@ -600,6 +600,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  @NotNull
+  public static List<Location> allLineLocations(ReferenceType cls) {
+    try {
+      return cls.allLineLocations();
+    }
+    catch (AbsentInformationException | ObjectCollectedException ignored) {
+      return Collections.emptyList();
+    }
+  }
+
   public static int getLineNumber(Location location, boolean zeroBased) {
     try {
       return location.lineNumber() - (zeroBased ? 1 : 0);
