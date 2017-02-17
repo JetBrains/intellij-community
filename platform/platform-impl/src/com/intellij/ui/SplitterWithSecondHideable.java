@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public abstract class SplitterWithSecondHideable {
     void off(T t);
   }
 
-  private final PseudoSplitter mySplitter;
+  @NotNull private final PseudoSplitter mySplitter;
   private final AbstractTitledSeparatorWithIcon myTitledSeparator;
   private final OnOffListener<Integer> myListener;
   private final JPanel myFictivePanel;
@@ -202,6 +203,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.setText(value);
   }
 
+  @NotNull
   public Splitter getComponent() {
     return mySplitter;
   }
