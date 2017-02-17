@@ -80,7 +80,7 @@
         @@idea_properties@@
 
         <key>idea.java.redist</key>
-        <string>NoJavaDistribution</string>
+        <string>Bundled</string>
 
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
