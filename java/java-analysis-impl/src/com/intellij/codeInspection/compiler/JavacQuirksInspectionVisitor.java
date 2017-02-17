@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -56,7 +57,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     if (lastElement != null && PsiUtil.isJavaToken(lastElement, JavaTokenType.COMMA)) {
       final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
       final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.fix");
-      myHolder.registerProblem(lastElement, message, new RemoveElementQuickFix(fixName));
+      myHolder.registerProblem(lastElement, message, new DeleteElementFix(lastElement, fixName));
     }
   }
 
@@ -72,7 +73,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
           if (list.getFirstChild() != null && QUALIFIER_REFERENCE.accepts(list)) {
             final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.problem");
             final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.fix");
-            myHolder.registerProblem(list, message, new RemoveElementQuickFix(fixName));
+            myHolder.registerProblem(list, message, new DeleteElementFix(list, fixName));
           }
         }
       });

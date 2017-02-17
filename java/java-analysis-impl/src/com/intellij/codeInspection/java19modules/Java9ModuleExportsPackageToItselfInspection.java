@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInspection.java19modules;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +31,6 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalInspectionTool {
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -60,40 +59,11 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
         for (PsiJavaModuleReferenceElement referenceElement : referenceElements) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
             String message = InspectionsBundle.message("inspection.module.exports.package.to.itself.message");
-            myHolder.registerProblem(referenceElement, message,
-                                     new DeleteExportsToModuleFix(referenceElement));
+            String fixText = InspectionsBundle.message("exports.to.itself.delete.module.fix.name", moduleName);
+            myHolder.registerProblem(referenceElement, message, new DeleteElementFix(referenceElement, fixText));
           }
         }
       }
-    }
-  }
-
-  private static class DeleteExportsToModuleFix implements LocalQuickFix {
-    private final String myModuleName;
-
-    public DeleteExportsToModuleFix(PsiJavaModuleReferenceElement reference) {
-      myModuleName = reference.getReferenceText();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionsBundle.message("exports.to.itself.delete.module.fix.name", myModuleName);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return InspectionsBundle.message("exports.to.itself.delete.module.fix.family.name");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
-      psiElement.delete();
     }
   }
 }
