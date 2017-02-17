@@ -17,7 +17,6 @@ package com.intellij.vcs.log.ui.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -26,11 +25,9 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -52,7 +49,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(FileHistoryPanel.class);
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
@@ -61,7 +57,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final FileHistoryUi myUi;
 
   @NotNull private List<Change> mySelectedChanges = Collections.emptyList();
-  @NotNull private IndexDataGetter myIndexDataGetter;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
                           @NotNull VcsLogData logData,
@@ -69,7 +64,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                           @NotNull FilePath filePath) {
     myUi = ui;
     myLogData = logData;
-    myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
     myFilePath = filePath;
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack) {
       @Override
