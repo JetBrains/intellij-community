@@ -1695,7 +1695,7 @@ public class AbstractTreeUi {
             public Promise<?> run() {
               NodeDescriptor descriptor = preloaded != null ? preloaded.getDescriptor(getElementFor(eachChild)) : null;
               NodeDescriptor descriptorFromNode = getDescriptorFrom(eachChild);
-              if (descriptor != null) {
+              if (isValid(descriptor)) {
                 eachChild.setUserObject(descriptor);
                 if (descriptorFromNode != null) {
                   descriptor.setChildrenSortingStamp(descriptorFromNode.getChildrenSortingStamp());
@@ -2203,7 +2203,7 @@ public class AbstractTreeUi {
       boolean needToUpdate = false;
       NodeDescriptor loadedDesc = loadedChildren.getDescriptor(child);
       final NodeDescriptor childDescr;
-      if (loadedDesc == null) {
+      if (!isValid(loadedDesc)) {
         childDescr = getTreeStructure().createDescriptor(child, descriptor);
         needToUpdate = true;
       }
@@ -2963,7 +2963,7 @@ public class AbstractTreeUi {
     }
 
     Promise<Boolean> update;
-    if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) != null) {
+    if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) == childDescriptor) {
       update = Promise.resolve(parentPreloadedChildren.isUpdated(oldElement));
     }
     else {
@@ -2993,7 +2993,7 @@ public class AbstractTreeUi {
             if (parentDescriptor != null) {
               childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
               NodeDescriptor oldDesc = getDescriptorFrom(childNode);
-              if (oldDesc != null) {
+              if (isValid(oldDesc)) {
                 childDesc.get().applyFrom(oldDesc);
               }
 
