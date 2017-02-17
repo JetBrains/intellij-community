@@ -21,22 +21,22 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -88,12 +88,12 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
 
   static class PrepopulatedCollectionModel {
     final List<PsiExpression> myContent;
-    final List<PsiStatement> myStatementsToDelete;
+    final List<PsiElement> myElementsToDelete;
     final String myType;
 
-    PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiStatement> delete, String type) {
+    PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiElement> delete, String type) {
       myContent = content;
-      myStatementsToDelete = delete;
+      myElementsToDelete = delete;
       myType = type;
     }
 
@@ -115,6 +115,12 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if(listDefinition instanceof PsiNewExpression) {
         return fromNewExpression((PsiNewExpression)listDefinition, "List", CommonClassNames.JAVA_UTIL_ARRAY_LIST);
       }
+      if (listDefinition instanceof PsiReferenceExpression) {
+        PsiLocalVariable variable = tryCast(((PsiReferenceExpression)listDefinition).resolve(), PsiLocalVariable.class);
+        if (variable != null) {
+          return fromVariable(variable, listDefinition, "List", CommonClassNames.JAVA_UTIL_ARRAY_LIST);
+        }
+      }
       return null;
     }
 
@@ -132,6 +138,47 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
                                                    "Set");
           }
         }
+      }
+      if (setDefinition instanceof PsiReferenceExpression) {
+        PsiLocalVariable variable = tryCast(((PsiReferenceExpression)setDefinition).resolve(), PsiLocalVariable.class);
+        if (variable != null) {
+          return fromVariable(variable, setDefinition, "Set", CommonClassNames.JAVA_UTIL_HASH_SET);
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PrepopulatedCollectionModel fromVariable(PsiLocalVariable variable,
+                                                            PsiExpression expression,
+                                                            String typeName, String collectionClass) {
+      PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+      if (block == null || declaration == null) return null;
+      PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
+      if (defs.length == 1 && defs[0] == variable) {
+        PsiExpression initializer = variable.getInitializer();
+        if (!ConstructionUtils.isEmptyCollectionInitializer(initializer)) return null;
+        PsiClassType type = tryCast(initializer.getType(), PsiClassType.class);
+        if (type == null || !type.rawType().equalsToText(collectionClass)) return null;
+        Set<PsiElement> refs = ContainerUtil.set(DefUseUtil.getRefs(block, variable, initializer));
+        refs.remove(expression);
+        PsiStatement cur = declaration;
+        List<PsiExpression> contents = new ArrayList<>();
+        List<PsiElement> elementsToRemove = new ArrayList<>();
+        elementsToRemove.add(initializer);
+        while (true) {
+          cur = tryCast(PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class), PsiStatement.class);
+          if (PsiTreeUtil.isAncestor(cur, expression, false)) break;
+          if (!(cur instanceof PsiExpressionStatement)) return null;
+          PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)cur).getExpression(), PsiMethodCallExpression.class);
+          if (!COLLECTION_ADD.test(call)) return null;
+          if (!refs.remove(call.getMethodExpression().getQualifierExpression())) return null;
+          contents.add(call.getArgumentList().getExpressions()[0]);
+          elementsToRemove.add(cur);
+        }
+        if (!refs.isEmpty()) return null;
+        return new PrepopulatedCollectionModel(contents, elementsToRemove, typeName);
       }
       return null;
     }
@@ -212,7 +259,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;
       CommentTracker ct = new CommentTracker();
-      model.myStatementsToDelete.forEach(ct::delete);
+      model.myElementsToDelete.forEach(ct::delete);
       ct.replaceAndRestoreComments(call, StreamEx.of(model.myContent).map(ct::text)
         .joining(",", "java.util." + model.myType + ".of(", ")"));
     }
