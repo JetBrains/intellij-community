@@ -106,10 +106,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
     FileEditor[] editors = editorsWithProviders.getFirst();
     FileEditorProvider[] oldProviders = editorsWithProviders.getSecond();
-    if (editors.length <= 0 && fallbackEditor != null) {
+    LOG.assertTrue(editors.length == oldProviders.length, "Different number of editors and providers");
+    if (editors.length <= 0 && fallbackEditor != null && fallbackProvider != null) {
       editors = new FileEditor[] { fallbackEditor };
-    }
-    if (oldProviders.length <= 0 && fallbackProvider != null) {
       oldProviders = new FileEditorProvider[] { fallbackProvider };
     }
     if (editors.length <= 0) {
