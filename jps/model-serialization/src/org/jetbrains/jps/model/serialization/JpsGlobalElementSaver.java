@@ -65,10 +65,7 @@ public class JpsGlobalElementSaver {
     try {
       return JDOMUtil.load(configFile);
     }
-    catch (JDOMException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new RuntimeException(e);
     }
   }

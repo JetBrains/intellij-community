@@ -42,7 +42,7 @@ import java.util.Set;
  * @since 9.0
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
-  public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
+  public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 
   CompositeFoldingBuilder(List<FoldingBuilder> builders) {
@@ -56,7 +56,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    final List<FoldingDescriptor> descriptors = new ArrayList<>();
     final Set<TextRange> rangesCoveredByDescriptors = ContainerUtil.newHashSet();
 
     for (FoldingBuilder builder : DumbService.getInstance(root.getProject()).filterByDumbAwareness(myBuilders)) {

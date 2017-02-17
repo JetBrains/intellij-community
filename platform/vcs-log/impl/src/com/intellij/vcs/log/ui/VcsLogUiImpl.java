@@ -97,14 +97,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
-  public boolean isCompactReferencesView() {
-    return myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW);
-  }
-
-  public boolean isShowTagNames() {
-    return myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES);
-  }
-
   @Override
   public boolean isMultipleRoots() {
     return myColorManager.isMultipleRoots(); // somewhy color manager knows about this

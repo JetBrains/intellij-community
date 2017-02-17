@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +41,7 @@ public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<Psi
   @NotNull
   @Override
   public Role getRole() {
-    PsiPackageAccessibilityStatementStub stub = getGreenStub();
-    IElementType type = stub != null ? stub.getStubType() : getNode().getElementType();
-    return JavaPackageAccessibilityStatementElementType.typeToRole(type);
+    return JavaPackageAccessibilityStatementElementType.typeToRole(getElementType());
   }
 
   @Nullable

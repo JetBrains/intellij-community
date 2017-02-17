@@ -21,7 +21,6 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -97,11 +96,13 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
       protected boolean setActiveProfileAsDefaultOnApply() {
         return false;
       }
+
+      @Override
+      protected InspectionProfileImpl getCurrentProfile() {
+        return inspectionProfile;
+      }
     };
-    return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
-      errorsConfigurable.selectProfile(inspectionProfile);
-      ApplicationManager.getApplication().invokeLater(() -> configurableAction.accept(errorsConfigurable));
-    });
+    return settingsUtil.editConfigurable(project, errorsConfigurable, () -> configurableAction.accept(errorsConfigurable));
   }
 
   @Override

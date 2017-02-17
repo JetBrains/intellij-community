@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,10 +74,9 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
-    final String[] names = getStub().getReferencedNames();
+    String[] names = getStub().getReferencedNames();
     if (names.length != 0) {
-      final Role role = getStub().getRole();
-      switch (role) {
+      switch (getRole()) {
         case EXTENDS_BOUNDS_LIST:
         case EXTENDS_LIST:
           buffer.append(PsiKeyword.EXTENDS).append(' ');
@@ -87,6 +86,9 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
           break;
         case THROWS_LIST:
           buffer.append(PsiKeyword.THROWS).append(' ');
+          break;
+        case PROVIDES_WITH_LIST:
+          buffer.append(PsiKeyword.WITH).append(' ');
           break;
       }
       for (int i = 0; i < names.length; i++) {

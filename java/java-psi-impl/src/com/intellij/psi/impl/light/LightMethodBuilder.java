@@ -185,7 +185,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   public LightMethodBuilder setMethodReturnType(PsiType returnType) {
-    return setMethodReturnType(new Computable.PredefinedValueComputable<PsiType>(returnType));
+    return setMethodReturnType(new Computable.PredefinedValueComputable<>(returnType));
   }
 
   public LightMethodBuilder setMethodReturnType(@NotNull final String returnType) {

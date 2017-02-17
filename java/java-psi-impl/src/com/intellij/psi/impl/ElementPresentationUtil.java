@@ -81,7 +81,7 @@ public class ElementPresentationUtil implements PlatformIcons {
   private static final int FLAGS_JUNIT_TEST = 0x2000;
   public static final int FLAGS_RUNNABLE = 0x4000;
 
-  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
+  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND_KEY");
 
   public static int getBasicClassKind(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
@@ -102,12 +102,8 @@ public class ElementPresentationUtil implements PlatformIcons {
 
     CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
     if (value == null) {
-      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<Integer>() {
-        @Override
-        public Result<Integer> compute() {
-          return Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass);
-        }
-      }, false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(
+        () -> CachedValueProvider.Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false);
       aClass.putUserData(CLASS_KIND_KEY, value);
     }
     return value.getValue().intValue();
@@ -148,7 +144,7 @@ public class ElementPresentationUtil implements PlatformIcons {
     return CLASS_KIND_CLASS;
   }
 
-  private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<Icon>(20);
+  private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<>(20);
   static {
     BASE_ICON.put(CLASS_KIND_CLASS, CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);

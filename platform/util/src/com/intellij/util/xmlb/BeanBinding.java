@@ -63,13 +63,15 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @Override
-  public synchronized void init(@NotNull Type originalType) {
+  public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      myBindings[i] = createBinding(accessors.get(i));
+      Binding binding = createBinding(accessors.get(i), serializer);
+      binding.init(originalType, serializer);
+      myBindings[i] = binding;
     }
   }
 
@@ -415,8 +417,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private Binding createBinding(@NotNull MutableAccessor accessor) {
-    Binding binding = getBinding(accessor);
+  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer) {
+    Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
     }
@@ -454,10 +456,5 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
-  }
-
-
-  protected Binding getBinding(@NotNull MutableAccessor accessor) {
-    return XmlSerializerImpl.getBinding(accessor);
   }
 }

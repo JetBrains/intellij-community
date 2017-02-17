@@ -122,7 +122,7 @@ public class VcsProjectLog {
       }
     }
     else {
-      LOG.debug(t);
+      LOG.debug("Recreating VCS Log after storage corruption", t);
     }
 
     recreateLog();

@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -33,12 +33,12 @@ import java.util.Collection;
  *   {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} returns {@code true} for them.
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
- *   <li>An item in "External Libraries" in Project view if {@link #getName()} is not-null</li>
+ *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
  * </ul>
  * <p/>
  * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
  * <ul>
- *   <li>{@link com.intellij.navigation.ItemPresentation} or {@link com.intellij.navigation.ColoredItemPresentation}</li>
+ *   <li>{@link ItemPresentation} or {@link com.intellij.navigation.ColoredItemPresentation}</li>
  *   <li>{@link com.intellij.navigation.LocationPresentation}</li>
  *   <li>{@link com.intellij.pom.Navigatable} or {@link com.intellij.pom.NavigatableWithText}</li>
  * </ul>
@@ -46,21 +46,13 @@ import java.util.Collection;
  */
 @ApiStatus.Experimental
 public abstract class SyntheticLibrary {
-  @Nullable
-  public abstract String getName();
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@Nullable String name, @NotNull Collection<VirtualFile> sourceRoots) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
     return new SyntheticLibrary() {
-      @Nullable
-      @Override
-      public String getName() {
-        return name;
-      }
-
       @NotNull
       @Override
       public Collection<VirtualFile> getSourceRoots() {

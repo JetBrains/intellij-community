@@ -37,15 +37,12 @@ public class SharedThreadPoolImpl extends SharedThreadPool {
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
-    return myService.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.run();
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
+    return myService.submit(() -> {
+      try {
+        action.run();
+      }
+      finally {
+        Thread.interrupted(); // reset interrupted status
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,11 +251,11 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
-    boolean oldUse = UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE;
-    int oldSize = UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB;
+    boolean oldUse = UISettings.getInstance().getOverrideConsoleCycleBufferSize();
+    int oldSize = UISettings.getInstance().getConsoleCycleBufferSizeKb();
 
-    UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = true;
-    UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB = capacityKB;
+    UISettings.getInstance().setOverrideConsoleCycleBufferSize(true);
+    UISettings.getInstance().setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
     ConsoleViewImpl console = createConsole();
     try {
@@ -267,8 +267,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
     finally {
       Disposer.dispose(console);
-      UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = oldUse;
-      UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB = oldSize;
+      UISettings.getInstance().setOverrideConsoleCycleBufferSize(oldUse);
+      UISettings.getInstance().setConsoleCycleBufferSizeKb(oldSize);
     }
 
   }

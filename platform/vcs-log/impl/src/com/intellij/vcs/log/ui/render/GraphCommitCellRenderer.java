@@ -130,7 +130,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
-    private static final int FREE_SPACE = 20;
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;

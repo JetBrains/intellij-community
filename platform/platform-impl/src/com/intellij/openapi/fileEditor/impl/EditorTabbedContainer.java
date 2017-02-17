@@ -95,7 +95,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myWindow = window;
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
+    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
+      @Override
+      public boolean hasUnderlineSelection() {
+        return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
+      }
+    };
     myTabs.setBorder(new MyShadowBorder(myTabs));
     myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(
@@ -419,13 +424,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void update(final AnActionEvent e) {
-      if (Registry.is("ide.new.editor.tabs.selection")) {
-        e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
-        e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
-      } else {
-        e.getPresentation().setIcon(AllIcons.Actions.Close);
-        e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
-      }
+      e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
+      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Close. Alt-click to close others.");
     }

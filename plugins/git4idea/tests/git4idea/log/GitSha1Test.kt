@@ -26,7 +26,7 @@ class GitSha1Test : GitSingleRepoTest() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    GitTestUtil.createFileStructure(myProjectRoot, A_FILE)
+    createFileStructure(myProjectRoot, A_FILE)
     addCommit("initial")
   }
 

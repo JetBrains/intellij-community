@@ -293,7 +293,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
-      InspectionToolsConfigurable.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject(), null);
+      InspectionToolsConfigurable.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
 
     //check merged
     Element mergedElement = JdomKt.loadElement(mergedText);

@@ -304,6 +304,11 @@ public class TreeTraverserTest extends TestCase {
     }
   }
 
+  public void testFlatten() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(3).flatten(i -> i % 2 == 0 ? null : JBIterable.of(i - 1, i));
+    assertEquals(Arrays.asList(0, 1, 2, 3), it.toList());
+  }
+
   public void testStatefulFilter() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(5).filter(new JBIterable.StatefulFilter<Integer>() {
       int prev;

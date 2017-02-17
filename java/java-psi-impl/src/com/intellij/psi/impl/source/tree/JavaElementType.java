@@ -89,6 +89,9 @@ public interface JavaElementType {
   IElementType REQUIRES_STATEMENT = JavaStubElementTypes.REQUIRES_STATEMENT;
   IElementType EXPORTS_STATEMENT = JavaStubElementTypes.EXPORTS_STATEMENT;
   IElementType OPENS_STATEMENT = JavaStubElementTypes.OPENS_STATEMENT;
+  IElementType USES_STATEMENT = JavaStubElementTypes.USES_STATEMENT;
+  IElementType PROVIDES_STATEMENT = JavaStubElementTypes.PROVIDES_STATEMENT;
+  IElementType PROVIDES_WITH_LIST = JavaStubElementTypes.PROVIDES_WITH_LIST;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);
@@ -143,8 +146,6 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl.class);
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", PsiJavaModuleReferenceElementImpl.class);
-  IElementType USES_STATEMENT = new JavaCompositeElementType("USES_STATEMENT", PsiUsesStatementImpl.class);
-  IElementType PROVIDES_STATEMENT = new JavaCompositeElementType("PROVIDES_STATEMENT", PsiProvidesStatementImpl.class);
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {

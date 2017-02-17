@@ -40,7 +40,7 @@ class InitialInferenceState {
                         boolean erased, 
                         InferenceSessionContainer inferenceSessionContainer) {
     myErased = erased;
-    myInferenceVariables = new HashSet<InferenceVariable>();
+    myInferenceVariables = new HashSet<>();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     for (InferenceVariable variable : inferenceVariables) {
@@ -57,7 +57,7 @@ class InitialInferenceState {
     myInferenceSubstitutor = substitutor;
     myContext = context;
     mySiteSubstitutor = siteSubstitutor;
-    myCaptures = new ArrayList<Pair<InferenceVariable[], PsiClassType>>();
+    myCaptures = new ArrayList<>();
     for (Pair<InferenceVariable[], PsiClassType> capture : captures) {
       InferenceVariable[] newParameters = new InferenceVariable[capture.first.length];
       InferenceVariable[] parameters = capture.first;

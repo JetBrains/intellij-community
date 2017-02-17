@@ -37,7 +37,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myRepo = GitTestUtil.createRepository(myProject, myProjectPath, makeInitialCommit())
+    myRepo = createRepository(myProject, myProjectPath, makeInitialCommit())
     cd(myProjectPath)
   }
 

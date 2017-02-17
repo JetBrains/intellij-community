@@ -928,11 +928,7 @@ public class DeclarationParser {
 
   @NotNull
   private PsiBuilder.Marker parseAnnotationArrayInitializer(PsiBuilder builder) {
-    return myParser.getExpressionParser().parseArrayInitializer(builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, new Function<PsiBuilder, Boolean>() {
-      @Override
-      public Boolean fun(PsiBuilder builder) {
-        return doParseAnnotationValue(builder) != null;
-      }
-    }, "expected.value");
+    return myParser.getExpressionParser().parseArrayInitializer(builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER,
+                                                                builder1 -> doParseAnnotationValue(builder1) != null, "expected.value");
   }
 }

@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
   private final NotNullLazyValue<PsiJavaModuleReferenceElement> myModuleReference;
@@ -44,37 +43,28 @@ public class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiRequire
     };
   }
 
-  @Nullable
   @Override
   public PsiJavaModuleReferenceElement getReferenceElement() {
     return myModuleReference.getValue();
   }
 
-  @Nullable
   @Override
   public String getModuleName() {
     return getStub().getModuleName();
   }
 
   @Override
-  public boolean isPublic() {
-    return getStub().isPublic();
-  }
-
-  @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     StringUtil.repeatSymbol(buffer, ' ', indentLevel);
-    PsiRequiresStatementStub stub = getStub();
     buffer.append("requires ");
-    if (stub.isPublic()) buffer.append("public ");
-    if (stub.isStatic()) buffer.append("static ");
-    buffer.append(stub.getModuleName()).append(";\n");
+    appendText(getModifierList(), indentLevel, buffer);
+    buffer.append(getModuleName()).append(";\n");
   }
 
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.REQUIRES_STATEMENT);
-    //setMirror(getModifierList(), SourceTreeToPsiMap.<PsiRequiresStatement>treeToPsiNotNull(element).getModifierList());
+    setMirror(getModifierList(), SourceTreeToPsiMap.<PsiRequiresStatement>treeToPsiNotNull(element).getModifierList());
   }
 
   @Override

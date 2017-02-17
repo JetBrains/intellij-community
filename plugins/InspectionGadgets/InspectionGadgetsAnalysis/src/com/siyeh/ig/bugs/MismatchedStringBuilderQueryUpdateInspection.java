@@ -268,9 +268,11 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
         return;
       }
       if (hasReferenceToVariable(variable, qualifierExpression)) {
-        PsiIfStatement ifStatement =
-          PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class, true, PsiStatement.class, PsiLambdaExpression.class);
-        if (ifStatement != null && !SideEffectChecker.mayHaveSideEffects(ifStatement, this::isSideEffectFreeBuilderMethodCall)) return;
+        PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiStatement.class, PsiLambdaExpression.class);
+        if (parent instanceof PsiStatement &&
+            !SideEffectChecker.mayHaveSideEffects((PsiStatement)parent, this::isSideEffectFreeBuilderMethodCall)) {
+          return;
+        }
         queried = true;
       }
     }

@@ -538,8 +538,9 @@ public class PyTypeChecker {
           }
           for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
             final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
-            if (genericKey != null && !substitutions.containsKey(genericKey)) {
-              substitutions.put(genericKey, entry.getValue());
+            final PyType value = entry.getValue();
+            if (genericKey != null && value != null && !substitutions.containsKey(genericKey)) {
+              substitutions.put(genericKey, value);
             }
           }
         }

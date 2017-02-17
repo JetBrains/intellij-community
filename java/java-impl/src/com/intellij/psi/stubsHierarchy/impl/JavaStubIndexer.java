@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Set;
 
 public class JavaStubIndexer extends StubHierarchyIndexer {
-
   @Override
   public int getVersion() {
     return JavaFileElementType.STUB_VERSION + 1;
@@ -70,17 +69,14 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     PsiJavaFileStub javaFileStub = (PsiJavaFileStub)stubTree;
     new StubTree(javaFileStub, false);
 
-    ArrayList<ClassDecl> classList = new ArrayList<>();
+    List<ClassDecl> classList = new ArrayList<>();
     Set<String> usedNames = new HashSet<>();
     for (StubElement<?> el : javaFileStub.getChildrenStubs()) {
       if (el instanceof PsiClassStubImpl) {
-        ClassDecl classDecl = processClassDecl((PsiClassStubImpl<?>)el, usedNames);
-        if (classDecl != null) {
-          classList.add(classDecl);
-        }
+        classList.add(processClassDecl((PsiClassStubImpl<?>)el, usedNames));
       }
     }
-    ArrayList<IndexTree.Import> importList = new ArrayList<>();
+    List<IndexTree.Import> importList = new ArrayList<>();
     for (StubElement<?> el : javaFileStub.getChildrenStubs()) {
       if (el instanceof PsiImportListStub) {
         processImport((PsiImportListStub) el, importList, usedNames);
@@ -97,7 +93,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     if (el instanceof PsiClassStubImpl) {
       return processClassDecl((PsiClassStubImpl)el, namesCache);
     }
-    ArrayList<Decl> innerList = new ArrayList<>();
+    List<Decl> innerList = new ArrayList<>();
     for (StubElement childElement : el.getChildrenStubs()) {
       Decl innerDef = processMember(childElement, namesCache);
       if (innerDef != null) {
@@ -107,40 +103,29 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     return innerList.isEmpty() ? null : new MemberDecl(innerList.toArray(new Decl[innerList.size()]));
   }
 
-  @Nullable
+  @NotNull
   private static ClassDecl processClassDecl(PsiClassStubImpl<?> classStub, Set<String> namesCache) {
-    ArrayList<String> superList = new ArrayList<>();
-    ArrayList<Decl> innerList = new ArrayList<>();
-    int accessModifiers = 0;
+    List<String> superList = new ArrayList<>();
+    List<Decl> innerList = new ArrayList<>();
     if (classStub.isAnonymous()) {
       if (classStub.getBaseClassReferenceText() != null) {
-        superList.add(id(classStub.getBaseClassReferenceText(), true, namesCache));
+        superList.add(id(classStub.getBaseClassReferenceText(), namesCache));
       }
     }
     for (StubElement el : classStub.getChildrenStubs()) {
       if (el instanceof PsiClassReferenceListStub) {
         PsiClassReferenceListStub refList = (PsiClassReferenceListStub)el;
-        if (refList.getRole() == PsiReferenceList.Role.EXTENDS_LIST) {
-          String[] extendNames = refList.getReferencedNames();
-          for (String extName : extendNames) {
-            superList.add(id(extName, true, namesCache));
+        PsiReferenceList.Role role = refList.getRole();
+        if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
+          for (String extName : refList.getReferencedNames()) {
+            superList.add(id(extName, namesCache));
           }
         }
-        if (refList.getRole() == PsiReferenceList.Role.IMPLEMENTS_LIST) {
-          String[] implementNames = refList.getReferencedNames();
-          for (String impName : implementNames) {
-            superList.add(id(impName, true, namesCache));
-          }
-        }
-      }
-      if (el instanceof PsiModifierListStub) {
-        accessModifiers = ((PsiModifierListStub)el).getModifiersMask();
       }
       Decl member = processMember(el, namesCache);
       if (member != null) {
         innerList.add(member);
       }
-
     }
     int flags = translateFlags(classStub);
     if (classStub.isAnonymousInQualifiedNew()) {
@@ -171,13 +156,11 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     }
   }
 
-  private static String id(String s, boolean cacheFirstId, Set<String> namesCache) {
+  private static String id(String s, Set<String> namesCache) {
     String id = PsiNameHelper.getQualifiedClassName(s, true);
-    if (cacheFirstId) {
-      int index = id.indexOf('.');
-      String firstId = index > 0 ? s.substring(0, index) : id;
-      namesCache.add(firstId);
-    }
+    int index = id.indexOf('.');
+    String firstId = index > 0 ? s.substring(0, index) : id;
+    namesCache.add(firstId);
     return id;
   }
 

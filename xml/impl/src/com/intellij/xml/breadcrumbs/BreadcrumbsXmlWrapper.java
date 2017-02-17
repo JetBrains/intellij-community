@@ -291,7 +291,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         result.addFirst(new BreadcrumbsPsiItem(element, provider));
       }
 
-      element = (provider != null) ? provider.getParent(element) : element.getParent();
+      element = getParent(element, provider);
     }
     return result;
   }
@@ -320,10 +320,15 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         return element;
       }
       if (!(element instanceof PsiFile)) {
-        ContainerUtil.addIfNotNull(leafs, element.getParent());
+        ContainerUtil.addIfNotNull(leafs, getParent(element, provider));
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiElement getParent(@NotNull PsiElement element, @Nullable BreadcrumbsInfoProvider provider) {
+    return provider != null ? provider.getParent(element) : element.getParent();
   }
 
   @Nullable

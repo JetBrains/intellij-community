@@ -382,7 +382,7 @@ Function downloadJre
     inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jre" "$TEMP\jre.tar.gz"
+      untgz::extract "-d" "$INSTDIR" "$TEMP\jre.tar.gz"
       StrCmp $R0 "success" removeTempJre
       DetailPrint "Failed to extract jre.tar.gz"
       MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"

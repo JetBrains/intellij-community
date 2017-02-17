@@ -27,6 +27,4 @@ public interface PsiRequiresStatement extends PsiModifierListOwner {
 
   @Nullable PsiJavaModuleReferenceElement getReferenceElement();
   @Nullable String getModuleName();
-
-  boolean isPublic();
 }

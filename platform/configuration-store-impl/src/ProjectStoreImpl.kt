@@ -52,6 +52,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
+import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
@@ -444,6 +445,7 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
     return
   }
 
+  val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
   @Suppress("DEPRECATION")
   val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
@@ -457,12 +459,14 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
       return@forEachGuaranteed
     }
 
-    val iterator = componentElements.iterator()
-    for (componentElement in iterator) {
-      if (componentElement.getAttributeValue("name") == stateAnnotation.name) {
-        iterator.remove()
-        break
-      }
+    workspaceComponentNames.add(stateAnnotation.name)
+  }
+
+  val iterator = componentElements.iterator()
+  for (componentElement in iterator) {
+    val name = componentElement.getAttributeValue("name")
+    if (name != null && workspaceComponentNames.contains(name)) {
+      iterator.remove()
     }
   }
   return

@@ -15,21 +15,17 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -56,18 +52,9 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    final InspectionProfileImpl inspectionProfile = getInspectionProfile();
-    final Icon icon = AllIcons.General.Gear;
-    e.getPresentation().setIcon(
-      (inspectionProfile != null && inspectionProfile.isProfileLocked()) ? LayeredIcon.create(icon, PlatformIcons.LOCKED_ICON) : icon);
-  }
-
-  @Override
   public void actionPerformed(AnActionEvent e) {
     final ListPopupImpl actionGroupPopup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(
-      new BaseListPopupStep<MyAction>(null, ContainerUtil.list(new MyDisableNewInspectionsAction(), new MyResetAction())) {
+      new BaseListPopupStep<MyAction>(null, ContainerUtil.list(new MyResetAction())) {
         @Override
         public PopupStep onChosen(MyAction selectedValue, boolean finalChoice) {
           if (selectedValue.enabled()) {
@@ -115,38 +102,6 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
     @Override
     protected boolean enabled() {
       return myRoot.isProperSetting();
-    }
-  }
-
-  private class MyDisableNewInspectionsAction extends MyAction {
-    public MyDisableNewInspectionsAction() {
-      super("New inspections may appear when " + ApplicationNamesInfo.getInstance().getFullProductName() + " is updated");
-    }
-
-    @Override
-    protected JComponent createBaseComponent() {
-      final JCheckBox checkBox = new JCheckBox("Disable new inspections by default");
-      final InspectionProfileImpl profile = getInspectionProfile();
-      checkBox.setEnabled(profile != null);
-      if (profile != null) {
-        checkBox.setSelected(profile.isProfileLocked());
-      }
-      checkBox.setOpaque(false);
-      return checkBox;
-    }
-
-    @Override
-    public void actionPerformed() {
-      final InspectionProfileImpl profile = getInspectionProfile();
-      if (profile != null) {
-        profile.lockProfile(!profile.isProfileLocked());
-      }
-    }
-
-
-    @Override
-    protected boolean enabled() {
-      return true;
     }
   }
 

@@ -140,6 +140,8 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static void addWordRange(CharSequence editorText, int cursorOffset, ArrayList<TextRange> result) {
     SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
                                     ch -> Character.isJavaIdentifierPart(ch) || ch == '\'');
+    SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
+                                    ch -> Character.isJavaIdentifierPart(ch) || ch == '\'' || ch == '-');
   }
 
   @Nullable

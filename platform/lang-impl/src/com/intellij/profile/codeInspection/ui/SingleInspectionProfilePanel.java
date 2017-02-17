@@ -53,6 +53,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,6 +76,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
@@ -1090,9 +1093,25 @@ public class SingleInspectionProfilePanel extends JPanel {
     mainSplitter.setSecondComponent(rightSplitter);
     mainSplitter.setHonorComponentsMinimumSize(false);
 
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(northPanel, BorderLayout.NORTH);
-    panel.add(mainSplitter, BorderLayout.CENTER);
+    final JPanel inspectionTreePanel = new JPanel(new BorderLayout());
+    inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
+    inspectionTreePanel.add(mainSplitter, BorderLayout.CENTER);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(inspectionTreePanel, BorderLayout.CENTER);
+    final JBCheckBox disableNewInspectionsCheckBox = new JBCheckBox("Disable new inspections by default",
+                                                                    getProfile().isProfileLocked());
+    panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
+    disableNewInspectionsCheckBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        final boolean enabled = disableNewInspectionsCheckBox.isSelected();
+        final InspectionProfileImpl profile = getProfile();
+        if (profile != null) {
+          profile.lockProfile(enabled);
+        }
+      }
+    });
     return panel;
   }
 

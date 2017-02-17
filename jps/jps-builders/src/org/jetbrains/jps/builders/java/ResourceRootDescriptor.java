@@ -70,12 +70,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   public FileFilter createFileFilter() {
     final JpsProject project = getTarget().getModule().getProject();
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
-    return new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return !excludes.isExcluded(file);
-      }
-    };
+    return file -> !excludes.isExcluded(file);
   }
 
   @Override

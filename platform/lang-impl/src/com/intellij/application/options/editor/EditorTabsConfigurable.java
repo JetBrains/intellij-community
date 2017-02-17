@@ -125,7 +125,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myEditorTabPlacement.setSelectedItem(uiSettings.getEditorTabPlacement());
     myHideKnownExtensions.setSelected(uiSettings.getHdeKnownExtensionInTabs());
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.getShowDirectoryForNonUniqueFilenames());
-    myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
+    myEditorTabLimitField.setText(Integer.toString(uiSettings.getEditorTabLimit()));
     myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.getReuseNotModifiedTabs());
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.getShowCloseButton());
 
@@ -184,9 +184,9 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs())) uiSettingsChanged = true;
     uiSettings.setReuseNotModifiedTabs(myReuseNotModifiedTabsCheckBox.isSelected());
 
-    if (isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT, EDITOR_TABS_RANGE)) uiSettingsChanged = true;
+    if (isModified(myEditorTabLimitField, uiSettings.getEditorTabLimit(), EDITOR_TABS_RANGE)) uiSettingsChanged = true;
     try {
-      uiSettings.EDITOR_TAB_LIMIT = EDITOR_TABS_RANGE.fit(Integer.parseInt(myEditorTabLimitField.getText().trim()));
+      uiSettings.setEditorTabLimit(EDITOR_TABS_RANGE.fit(Integer.parseInt(myEditorTabLimitField.getText().trim())));
     }
     catch (NumberFormatException ignored) {
     }
@@ -200,7 +200,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     final UISettings uiSettings = UISettings.getInstance();
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.getMarkModifiedTabsWithAsterisk());
     isModified |= isModified(myShowTabsTooltipsCheckBox, uiSettings.getShowTabsTooltips());
-    isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
+    isModified |= isModified(myEditorTabLimitField, uiSettings.getEditorTabLimit());
     isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs());
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.getEditorTabPlacement();

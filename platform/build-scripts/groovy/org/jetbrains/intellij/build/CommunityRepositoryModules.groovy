@@ -194,15 +194,6 @@ class CommunityRepositoryModules {
       withModule("gradle-tooling-extension-impl")
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
-      //todo[nik] add these jars to some library instead?
-      withResource("lib/native-platform-freebsd-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-freebsd-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-linux-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-linux-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-osx-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-osx-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-windows-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-windows-i386-0.11.jar", "lib")
     },
     plugin("junit") {
       mainJarName = "idea-junit.jar"

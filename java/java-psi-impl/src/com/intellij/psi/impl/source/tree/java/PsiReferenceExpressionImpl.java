@@ -136,7 +136,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   private static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
+    final List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       final PsiClass psiClass = staticStatement.resolveTargetClass();
       if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
@@ -212,7 +212,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       PsiElement qualifier = expression.getQualifier();
       if (qualifier == null) return Collections.emptyList();
 
-      final List<ResolveResult[]> qualifiers = new SmartList<ResolveResult[]>();
+      final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -464,7 +464,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
       private PsiElement myResolveContext;
-      private final Set<String> myVarNames = new THashSet<String>();
+      private final Set<String> myVarNames = new THashSet<>();
 
       @Override
       public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
@@ -519,19 +519,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (seemsScrambled(aClass.getName())) {
-      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !method.hasModifierProperty(PsiModifier.PRIVATE);
-        }
-      });
+      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE));
 
-      return !methods.isEmpty() && ContainerUtil.and(methods, new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return seemsScrambled(method.getName());
-        }
-      });
+      return !methods.isEmpty() && ContainerUtil.and(methods, method -> seemsScrambled(method.getName()));
     }
 
     return false;

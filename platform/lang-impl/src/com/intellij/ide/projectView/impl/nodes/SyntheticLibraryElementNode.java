@@ -23,7 +23,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -80,7 +79,8 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
   @Override
   public String getName() {
     SyntheticLibrary library = getLibrary();
-    return StringUtil.notNullize(library.getName());
+    //noinspection CastToIncompatibleInterface
+    return ((ItemPresentation)library).getPresentableText();
   }
 
   @NotNull

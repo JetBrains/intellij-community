@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -50,48 +49,50 @@ public class FileParser {
                         @NotNull TokenSet importListStoppers,
                         @NotNull AbstractBundle bundle,
                         @NotNull String errorMessageKey) {
-    if (PsiKeyword.MODULE.equals(builder.getTokenText())) {
-      ModuleParser.parseModule(builder);
-      return;
-    }
-
     parsePackageStatement(builder);
 
-    Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
-
+    Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);  // (importList, isEmpty)
     Boolean firstDeclarationOk = null;
     PsiBuilder.Marker firstDeclaration = null;
-    PsiBuilder.Marker invalidElements = null;
-    while (!builder.eof()) {
-      if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
-        builder.advanceLexer();
-        continue;
-      }
 
-      final PsiBuilder.Marker declaration = parseInitial(builder);
-      if (declaration != null) {
-        if (invalidElements != null) {
-          invalidElements.errorBefore(error(bundle, errorMessageKey), declaration);
-          invalidElements = null;
-        }
-        if (firstDeclarationOk == null) {
-          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
-          if (firstDeclarationOk) {
-            firstDeclaration = declaration;
-          }
-        }
-        continue;
-      }
-
-      if (invalidElements == null) {
-        invalidElements = builder.mark();
-      }
-      builder.advanceLexer();
-      if (firstDeclarationOk == null) firstDeclarationOk = false;
+    PsiBuilder.Marker module = myParser.getModuleParser().parse(builder);
+    if (module != null) {
+      firstDeclarationOk = true;
+      firstDeclaration = module;
     }
+    else {
+      PsiBuilder.Marker invalidElements = null;
+      while (!builder.eof()) {
+        if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
+          builder.advanceLexer();
+          continue;
+        }
 
-    if (invalidElements != null) {
-      invalidElements.error(error(bundle, errorMessageKey));
+        final PsiBuilder.Marker declaration = parseInitial(builder);
+        if (declaration != null) {
+          if (invalidElements != null) {
+            invalidElements.errorBefore(error(bundle, errorMessageKey), declaration);
+            invalidElements = null;
+          }
+          if (firstDeclarationOk == null) {
+            firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
+            if (firstDeclarationOk) {
+              firstDeclaration = declaration;
+            }
+          }
+          continue;
+        }
+
+        if (invalidElements == null) {
+          invalidElements = builder.mark();
+        }
+        builder.advanceLexer();
+        if (firstDeclarationOk == null) firstDeclarationOk = false;
+      }
+
+      if (invalidElements != null) {
+        invalidElements.error(error(bundle, errorMessageKey));
+      }
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {

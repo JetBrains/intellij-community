@@ -84,7 +84,8 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     PsiElement parent = getParent();
     PsiAnnotation[] annotations = getAnnotations();
-    boolean separateAnnotations = parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiField;
+    boolean separateAnnotations =
+      parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiField || parent instanceof PsiJavaModule;
 
     for (PsiAnnotation annotation : annotations) {
       appendText(annotation, indentLevel, buffer, separateAnnotations ? NEXT_LINE : " ");
@@ -135,6 +136,12 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     }
     if (hasModifierProperty(PsiModifier.DEFAULT)) {
       buffer.append(PsiModifier.DEFAULT).append(' ');
+    }
+    if (hasModifierProperty(PsiModifier.OPEN)) {
+      buffer.append(PsiModifier.OPEN).append(' ');
+    }
+    if (hasModifierProperty(PsiModifier.TRANSITIVE)) {
+      buffer.append(PsiModifier.TRANSITIVE).append(' ');
     }
   }
 

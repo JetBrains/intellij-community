@@ -133,8 +133,7 @@ public class ConstructionUtils {
       PsiClass aClass = constructor.getContainingClass();
       if (aClass == null || aClass.getQualifiedName() == null || !aClass.getQualifiedName().startsWith("java.util.")) return false;
       Predicate<PsiType> allowedParameterType = t -> t instanceof PsiPrimitiveType ||
-                                                     (t instanceof PsiClassType &&
-                                                      ((PsiClassType)t).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS));
+                                                     com.intellij.psi.util.InheritanceUtil.isInheritor(t, CommonClassNames.JAVA_LANG_CLASS);
       return Stream.of(constructor.getParameterList().getParameters()).map(PsiParameter::getType).allMatch(allowedParameterType);
     }
     if (expression instanceof PsiMethodCallExpression) {

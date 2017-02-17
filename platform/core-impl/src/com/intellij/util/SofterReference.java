@@ -33,7 +33,7 @@ import java.lang.ref.WeakReference;
  */
 public class SofterReference<T> {
   private volatile Reference<T> myRef;
-  private static final WeakList<SofterReference> ourRegistry = new WeakList<SofterReference>();
+  private static final WeakList<SofterReference> ourRegistry = new WeakList<>();
 
   private static void onLowMemory() {
     for (SofterReference reference : ourRegistry.copyAndClear()) {
@@ -42,23 +42,18 @@ public class SofterReference<T> {
   }
 
   static {
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        onLowMemory();
-      }
-    }, ApplicationManager.getApplication());
+    LowMemoryWatcher.register(() -> onLowMemory(), ApplicationManager.getApplication());
   }
 
   public SofterReference(@NotNull T referent) {
     ourRegistry.add(this);
-    myRef = new SoftReference<T>(referent);
+    myRef = new SoftReference<>(referent);
   }
 
   private void weaken() {
     T o = myRef.get();
     if (o != null) {
-      myRef = new WeakReference<T>(o);
+      myRef = new WeakReference<>(o);
     }
   }
 
@@ -68,7 +63,7 @@ public class SofterReference<T> {
     T referent = ref.get();
     if (referent != null && ref instanceof WeakReference) {
       ourRegistry.add(this);
-      myRef = new SoftReference<T>(referent);
+      myRef = new SoftReference<>(referent);
     }
     return referent;
   }

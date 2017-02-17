@@ -238,9 +238,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
 
       if (qualified) {
-        final PyType qualifiedReferenceType = getQualifiedReferenceType(context);
+        final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
         if (qualifiedReferenceType != null) {
-          return qualifiedReferenceType;
+          return qualifiedReferenceType.get();
         }
       }
 
@@ -256,22 +256,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getQualifiedReferenceType(@NotNull TypeEvalContext context) {
+  private Ref<PyType> getQualifiedReferenceType(@NotNull TypeEvalContext context) {
     if (!context.maySwitchToAST(this)) {
       return null;
     }
 
     final PyType maybe_type = PyUtil.getSpecialAttributeType(this, context);
-    if (maybe_type != null) return maybe_type;
+    if (maybe_type != null) return Ref.create(maybe_type);
 
     final Ref<PyType> typeOfProperty = getTypeOfProperty(context);
     if (typeOfProperty != null) {
-      return typeOfProperty.get();
+      return typeOfProperty;
     }
 
     final PyType typeByControlFlow = getQualifiedReferenceTypeByControlFlow(context);
     if (typeByControlFlow != null) {
-      return typeByControlFlow;
+      return Ref.create(typeByControlFlow);
     }
 
     return null;

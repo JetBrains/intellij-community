@@ -43,7 +43,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
   @Override
   public Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map(final ClassReader inputData, final Mappings mappings) {
     final Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map =
-      new HashMap<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>>();
+      new HashMap<>();
     final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.API_VERSION) {
       @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
@@ -59,7 +59,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
           final int enumeratedClassName = mappings.getName(returnClassName);
           TObjectIntHashMap<EnumeratedMethodIncompleteSignature> occurrences = map.get(enumeratedClassName);
           if (occurrences == null) {
-            occurrences = new TObjectIntHashMap<EnumeratedMethodIncompleteSignature>();
+            occurrences = new TObjectIntHashMap<>();
             map.put(enumeratedClassName, occurrences);
           }
           if (!occurrences.increment(mi)) {
@@ -88,6 +88,6 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
 
   @Override
   public DataExternalizer<TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> getDataExternalizer() {
-    return new TObjectIntHashMapExternalizer<EnumeratedMethodIncompleteSignature>(EnumeratedMethodIncompleteSignature.createDataExternalizer());
+    return new TObjectIntHashMapExternalizer<>(EnumeratedMethodIncompleteSignature.createDataExternalizer());
   }
 }

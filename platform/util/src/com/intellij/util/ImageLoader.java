@@ -224,7 +224,7 @@ public class ImageLoader implements Serializable {
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {
-          if (source != null && UIUtil.isJDKManagedHiDPI() && desc.scale > 1) {
+          if (source != null && UIUtil.isJreHiDPIEnabled() && desc.scale > 1) {
             return RetinaImage.createFrom(source, (int)desc.scale, ourComponent);
           }
           return source;
@@ -279,7 +279,7 @@ public class ImageLoader implements Serializable {
 
   /**
    * Loads an image by the passed url in scale (1x, 2x, ...) possibly closed to the passed JBUI pix scale,
-   * then simply returns it in the JDK-managed HiDPI mode, otherwise scales the image
+   * then simply returns it in the JRE-managed HiDPI mode, otherwise scales the image
    * according to the passed scale and returns.
    */
   @Nullable
@@ -287,10 +287,10 @@ public class ImageLoader implements Serializable {
     final float scaleFactor = adjustScaleFactor(allowFloatScaling, pixScale); // valid for Retina as well
 
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
-    // (scaleFactor > 1.0) != isJDKManagedHiDPI() => we should scale images manually.
-    // Note we never scale images on JDKManagedHiDPI displays because scaling is handled by the system.
+    // In IDE-managed HiDPI mode with (scaleFactor > 1.0) we should scale images manually.
+    // Note we never scale images in JRE-managed HiDPI mode because scaling is handled by JRE.
 
-    final boolean scaleImages = (scaleFactor > 1.0f && !UIUtil.isJDKManagedHiDPI());
+    final boolean scaleImages = (scaleFactor > 1.0f && !UIUtil.isJreHiDPIEnabled());
 
     // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than upscaling non-retina images.

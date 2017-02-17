@@ -71,7 +71,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       if (commits.isEmpty()) return Data.Invisible()
       if (commits.size > 1) return Data.Disabled()
       val commit = commits.first()
-      val repository = manager.getRepositoryForRoot(commit.root)
+      val repository = manager.getRepositoryForRootQuick(commit.root)
       if (repository != null) {
         return Data.WithCommit(repository, commit.hash)
       }
@@ -81,7 +81,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       if (manager.moreThanOneRoot()) {
         if (GitVcsSettings.getInstance(project).syncSetting == SYNC) manager.repositories
         else {
-          val repository = manager.getRepositoryForRoot(guessVcsRoot(project, e.getData(VIRTUAL_FILE)))
+          val repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, e.getData(VIRTUAL_FILE)))
           repository?.let { listOf(repository) }
         }
       }

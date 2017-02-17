@@ -109,6 +109,6 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
   @NotNull
   @Override
   public JpsModuleSourceRootImpl<P> createCopy() {
-    return new JpsModuleSourceRootImpl<P>(this);
+    return new JpsModuleSourceRootImpl<>(this);
   }
 }

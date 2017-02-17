@@ -62,4 +62,12 @@ public abstract class StubPsiFactory {
   public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
     return null;
   }
+
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return null;
+  }
+
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return null;
+  }
 }

@@ -71,11 +71,11 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    RunAll().append(ThrowableRunnable
-      { waitForPendingTasks() }).append(ThrowableRunnable
-      { runInEdtAndWait { super@VcsPlatformTest.tearDown() }}).append(ThrowableRunnable
-      { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) }).append(ThrowableRunnable
-      { clearFields(this) })
+    RunAll()
+      .append(ThrowableRunnable { waitForPendingTasks() })
+      .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) })
+      .append(ThrowableRunnable { clearFields(this) })
+      .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
   }
 

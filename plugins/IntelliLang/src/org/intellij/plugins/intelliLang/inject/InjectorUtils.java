@@ -249,13 +249,13 @@ public class InjectorUtils {
   }
 
   @Nullable
-  public static BaseInjection findCommentInjection(@NotNull PsiElement context, @NotNull String supportId, @Nullable Ref<PsiElement> causeRef) {
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
     if (file == null) return null;
-    TreeMap<TextRange, BaseInjection> map = getInjectionMap(file);
+    TreeMap<TextRange, CommentInjectionData> map = getInjectionMap(file);
     if (map == null) return null;
-    Map.Entry<TextRange, BaseInjection> entry = map.lowerEntry(target.getTextRange());
+    Map.Entry<TextRange, CommentInjectionData> entry = map.lowerEntry(target.getTextRange());
     if (entry == null) return null;
 
     PsiComment psiComment = PsiTreeUtil.findElementOfClassAtOffset(file, entry.getKey().getStartOffset(), PsiComment.class, false);
@@ -290,20 +290,34 @@ public class InjectorUtils {
     if (causeRef != null) {
       causeRef.set(psiComment);
     }
-    return new BaseInjection(supportId).copyFrom(entry.getValue());
+    return entry.getValue();
   }
 
   @Nullable
-  private static TreeMap<TextRange, BaseInjection> getInjectionMap(@NotNull final PsiFile file) {
+  public static BaseInjection findCommentInjection(@NotNull PsiElement context,
+                                                   @NotNull String supportId,
+                                                   @Nullable Ref<PsiElement> causeRef) {
+    CommentInjectionData data = findCommentInjectionData(context, causeRef);
+    if (data == null) return null;
+    BaseInjection injection = new BaseInjection(supportId);
+    injection.setPrefix(data.getPrefix());
+    injection.setSuffix(data.getSuffix());
+    injection.setInjectedLanguageId(data.getInjectedLanguageId());
+    injection.setDisplayName(data.getDisplayName());
+    return injection;
+  }
+
+  @Nullable
+  private static TreeMap<TextRange, CommentInjectionData> getInjectionMap(@NotNull final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
-      TreeMap<TextRange, BaseInjection> map = calcInjections(file);
+      TreeMap<TextRange, CommentInjectionData> map = calcInjections(file);
       return CachedValueProvider.Result.create(map.isEmpty() ? null : map, file);
     });
   }
 
   @NotNull
-  protected static TreeMap<TextRange, BaseInjection> calcInjections(PsiFile file) {
-    final TreeMap<TextRange, BaseInjection> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
+  protected static TreeMap<TextRange,CommentInjectionData> calcInjections(PsiFile file) {
+    final TreeMap<TextRange, CommentInjectionData> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
     TIntArrayList ints = new TIntArrayList();
     StringSearcher searcher = new StringSearcher("language=", true, true, false);
@@ -318,7 +332,7 @@ public class InjectorUtils {
       PsiComment element = PsiTreeUtil.findElementOfClassAtOffset(file, idx, PsiComment.class, false);
       if (element != null) {
         String str = ElementManipulators.getValueText(element).trim();
-        BaseInjection injection = detectInjectionFromText("", str);
+        CommentInjectionData injection = str.startsWith("language=") ? new CommentInjectionData(decodeMap(str), str) : null;
         if (injection != null) {
           injectionMap.put(element.getTextRange(), injection);
         }
@@ -328,7 +342,7 @@ public class InjectorUtils {
   }
 
   private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
-  public static Map<String, String> decodeMap(CharSequence charSequence) {
+  private static Map<String, String> decodeMap(CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
     final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
     final LinkedHashMap<String, String> map = new LinkedHashMap<>();
@@ -337,21 +351,6 @@ public class InjectorUtils {
               StringUtil.unescapeStringCharacters(StringUtil.unquoteString(matcher.group(2))));
     }
     return map;
-  }
-
-  @Nullable
-  public static BaseInjection detectInjectionFromText(String supportId, String text) {
-    if (text == null || !text.startsWith("language=")) return null;
-    Map<String, String> map = decodeMap(text);
-    String languageId = map.get("language");
-    String prefix = ObjectUtils.notNull(map.get("prefix"), "");
-    String suffix = ObjectUtils.notNull(map.get("suffix"), "");
-    BaseInjection injection = new BaseInjection(supportId);
-    injection.setDisplayName(text);
-    injection.setInjectedLanguageId(languageId);
-    injection.setPrefix(prefix);
-    injection.setSuffix(suffix);
-    return injection;
   }
 
   private static Producer<PsiElement> prevWalker(final PsiElement element, final PsiElement scope) {
@@ -372,5 +371,38 @@ public class InjectorUtils {
         }
       }
     };
+  }
+
+  public static class CommentInjectionData {
+    private final String myDisplayName;
+    private Map<String, String> myMap;
+
+    public CommentInjectionData(@NotNull Map<String, String> map, String displayName) {
+      myMap = Collections.unmodifiableMap(map);
+      myDisplayName = displayName;
+    }
+    
+    @NotNull
+    public String getPrefix() {
+      return ObjectUtils.notNull(myMap.get("prefix"), "");
+    }
+
+    @NotNull
+    public String getSuffix() {
+      return ObjectUtils.notNull(myMap.get("suffix"), "");
+    }
+
+    @NotNull
+    public String getInjectedLanguageId() {
+      return ObjectUtils.notNull(myMap.get("language"), "");
+    }
+
+    public String getDisplayName() {
+      return myDisplayName;
+    }
+    
+    public Map<String, String> getValues() {
+      return myMap;
+    }
   }
 }

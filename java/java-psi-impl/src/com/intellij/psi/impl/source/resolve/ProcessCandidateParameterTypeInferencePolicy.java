@@ -103,12 +103,8 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       }
       if (parameter != null) {
         final PsiParameter finalParameter = parameter;
-        PsiType type = PsiResolveHelper.ourGuard.doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return substitutor.substitute(finalParameter.getType());
-          }
-        });
+        PsiType type = PsiResolveHelper.ourGuard.doPreventingRecursion(innerMethodCall, true,
+                                                                       () -> substitutor.substitute(finalParameter.getType()));
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(finalParameter);
         final Pair<PsiType, ConstraintType> constraint =
           new PsiOldInferenceHelper(element.getManager()).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);

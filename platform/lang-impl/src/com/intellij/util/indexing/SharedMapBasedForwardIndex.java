@@ -26,9 +26,9 @@ import java.util.Map;
 
 class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> {
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
-  private MapBasedForwardIndex<Key, Value> myUnderlying;
+  private final MapBasedForwardIndex<Key, Value> myUnderlying;
 
-  public SharedMapBasedForwardIndex(MapBasedForwardIndex<Key, Value> underlying) {
+  SharedMapBasedForwardIndex(MapBasedForwardIndex<Key, Value> underlying) {
     super(underlying.getIndexExtension());
     myUnderlying = underlying;
     mySnapshotIndexExternalizer = VfsAwareMapReduceIndex.createInputsIndexExternalizer(underlying.getIndexExtension());
@@ -37,12 +37,11 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
   @NotNull
   @Override
   public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
-    Collection<Key> keys;
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      keys = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
+      Collection<Key> keys = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
       Collection<Key> keysFromInputsIndex = myUnderlying.getInputsIndex().get(inputId);
 
-      if ((keys == null && keysFromInputsIndex != null) ||
+      if (keys == null && keysFromInputsIndex != null ||
           !DebugAssertions.equals(keysFromInputsIndex, keys, myKeyDescriptor)
         ) {
         SharedIndicesData.associateFileData(inputId, myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
@@ -64,7 +63,7 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
     Collection<Key> keySeq = data.keySet();
     myUnderlying.putData(inputId, keySeq);
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      if (keySeq.size() == 0) keySeq = null;
+      if (keySeq.isEmpty()) keySeq = null;
       SharedIndicesData.associateFileData(inputId, myIndexId, keySeq, mySnapshotIndexExternalizer);
     }
   }

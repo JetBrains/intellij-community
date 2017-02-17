@@ -81,7 +81,7 @@ public class CompilerBackwardReferenceIndex {
         }
       };
 
-      myIndices = new HashMap<ID<?, ?>, InvertedIndex<?, ?, CompiledFileData>>();
+      myIndices = new HashMap<>();
       for (IndexExtension<LightRef, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir));
@@ -117,7 +117,7 @@ public class CompilerBackwardReferenceIndex {
   public void close() {
     myLowMemoryWatcher.stop();
     final CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProc =
-      new CommonProcessors.FindFirstProcessor<BuildDataCorruptedException>();
+      new CommonProcessors.FindFirstProcessor<>();
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
@@ -217,10 +217,10 @@ public class CompilerBackwardReferenceIndex {
               @Override
               public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
                 ID<Key, Value> id = extension.getName();
-                return new PersistentHashMap<Integer, Collection<Key>>(new File(indexDir, id + ".inputs"),
-                                                                       EnumeratorIntegerDescriptor.INSTANCE,
-                                                                       new InputIndexDataExternalizer<Key>(extension.getKeyDescriptor(),
-                                                                                                           id));
+                return new PersistentHashMap<>(new File(indexDir, id + ".inputs"),
+                                               EnumeratorIntegerDescriptor.INSTANCE,
+                                               new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),
+                                                                                id));
               }
             });
     }

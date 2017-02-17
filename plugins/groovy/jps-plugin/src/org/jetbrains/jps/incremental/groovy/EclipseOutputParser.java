@@ -53,7 +53,7 @@ class EclipseOutputParser {
                                                            "'"));
     }
 
-    List<CompilerMessage> parsedMessages = new ArrayList<CompilerMessage>();
+    List<CompilerMessage> parsedMessages = new ArrayList<>();
 
     String[] msgs = StringUtil.convertLineSeparators(input).split(PROB_SEPARATOR);
     for (String msg : msgs) {

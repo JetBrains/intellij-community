@@ -108,4 +108,10 @@ public class Test {
       System.out.println(str + ":" + num);
     }
   }
+
+  void forEach(Map<String, String> map) {
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      //long comment
+    }
+  }
 }

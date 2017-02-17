@@ -31,7 +31,7 @@ import java.util.List;
  */
 
 public class OrFilter implements ElementFilter{
-  private final List<ElementFilter> myFilters = new ArrayList<ElementFilter>();
+  private final List<ElementFilter> myFilters = new ArrayList<>();
 
   public OrFilter(){}
 

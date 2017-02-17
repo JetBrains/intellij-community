@@ -60,7 +60,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     final GradleModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
     if (config == null) return;
 
-    final Map<GradleResourceRootDescriptor, List<File>> files = new HashMap<GradleResourceRootDescriptor, List<File>>();
+    final Map<GradleResourceRootDescriptor, List<File>> files = new HashMap<>();
 
     holder.processDirtyFiles(new FileProcessor<GradleResourceRootDescriptor, GradleResourcesTarget>() {
 
@@ -70,7 +70,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
 
         List<File> fileList = files.get(rd);
         if (fileList == null) {
-          fileList = new ArrayList<File>();
+          fileList = new ArrayList<>();
           files.put(rd, fileList);
         }
 
@@ -80,24 +80,21 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     });
 
     GradleResourceRootDescriptor[] roots = files.keySet().toArray(new GradleResourceRootDescriptor[files.keySet().size()]);
-    Arrays.sort(roots, new Comparator<GradleResourceRootDescriptor>() {
-      @Override
-      public int compare(GradleResourceRootDescriptor r1, GradleResourceRootDescriptor r2) {
-        int res = r1.getIndexInPom() - r2.getIndexInPom();
-        if (r1.isOverwrite()) {
-          assert r2.isOverwrite();
-          return res;
-        }
-
-        if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
-        if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
-
-        if (!r1.getConfiguration().isFiltered) {
-          res = -res;
-        }
-
+    Arrays.sort(roots, (r1, r2) -> {
+      int res = r1.getIndexInPom() - r2.getIndexInPom();
+      if (r1.isOverwrite()) {
+        assert r2.isOverwrite();
         return res;
       }
+
+      if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
+      if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
+
+      if (!r1.getConfiguration().isFiltered) {
+        res = -res;
+      }
+
+      return res;
     });
 
     GradleResourceFileProcessor fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);

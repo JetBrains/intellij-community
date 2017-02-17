@@ -29,13 +29,13 @@ class FontSizeInfoUsageCollector : UsagesCollector() {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
     return setOf(
-      UsageDescriptor("UI font size: ${ui.FONT_SIZE}"),
+      UsageDescriptor("UI font size: ${ui.fontSize}"),
       UsageDescriptor("Editor font size: ${scheme.editorFontSize}"),
       UsageDescriptor("Console font size: ${scheme.consoleFontSize}"),
       UsageDescriptor("Presentation mode font size: ${ui.presentationModeFontSize}"),
       UsageDescriptor("Editor font name:  ${scheme.editorFontName}"),
       UsageDescriptor("Console font name: ${scheme.consoleFontName}"),
-      UsageDescriptor("UI font name: ${ui.FONT_FACE}")
+      UsageDescriptor("UI font name: ${ui.fontFace}")
     )
   }
 

@@ -593,12 +593,13 @@ class Outer {
 
   void testJavaExpressionContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "other")
-    assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template))
-    assertTrue(isApplicable("class Foo {{ <caret>toar }}", template))
-    assertTrue(isApplicable("class Foo {{ return (<caret>toar) }}", template))
-    assertFalse(isApplicable("class Foo {{ return (aaa <caret>toar) }}", template))
-    assertTrue(isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template))
-    assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template))
+    assert !isApplicable("class Foo {{ if (a <caret>toar) }}", template)
+    assert isApplicable("class Foo {{ <caret>toar }}", template)
+    assert isApplicable("class Foo {{ return (<caret>toar) }}", template)
+    assert !isApplicable("class Foo {{ return (aaa <caret>toar) }}", template)
+    assert isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template)
+    assert isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template)
+    assert !isApplicable("class Foo extends <caret>t {}", template)
   }
 
   void testJavaDeclarationContext() {

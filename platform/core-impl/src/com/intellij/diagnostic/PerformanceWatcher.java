@@ -89,12 +89,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   public PerformanceWatcher() {
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
     myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        samplePerformance();
-      }
-    }, SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -117,12 +112,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
         }
       });
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          cleanOldFiles(myLogDir, 0);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
 
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if ("Code Cache".equals(bean.getName())) {
@@ -157,12 +147,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   }
 
   private static void cleanOldFiles(File dir, final int level) {
-    File[] children = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return level > 0 || name.startsWith(THREAD_DUMPS_PREFIX);
-      }
-    });
+    File[] children = dir.listFiles((dir1, name) -> level > 0 || name.startsWith(THREAD_DUMPS_PREFIX));
     if (children == null) return;
 
     Arrays.sort(children);
