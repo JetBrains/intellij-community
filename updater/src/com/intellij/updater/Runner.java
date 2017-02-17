@@ -282,9 +282,12 @@ public class Runner {
   }
 
   private static void install(String jarFile, String destFolder) throws Exception {
-    new StandaloneSwingUpdaterUI(ui -> {
-      logger().info("Installing patch to the " + destFolder);
-      return doInstall(jarFile, ui, destFolder);
+    new StandaloneSwingUpdaterUI(new StandaloneSwingUpdaterUI.InstallOperation() {
+      @Override
+      public boolean execute(UpdaterUI ui) throws OperationCancelledException {
+        logger().info("Installing patch to the " + destFolder);
+        return doInstall(jarFile, ui, destFolder);
+      }
     });
   }
 
