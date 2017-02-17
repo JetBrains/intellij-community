@@ -105,6 +105,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("sdk-updates", "android.jar")
       withModule("wizard", "android.jar")
       withModule("profilers-android", "android.jar")
+      withModule("perfd-host", "android-profilers.jar")
+      withModule("profilers", "android-profilers.jar")
+      withModule("profilers-ui", "android-profilers.jar")
       withModule("adt-ui", "adt-ui.jar")
       withModule("adt-ui-model", "adt-ui.jar")
       withModule("repository")
@@ -139,25 +142,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withJpsModule("android-gradle-jps")
       withJpsModule("android-jps-plugin")
 
-      /*
-      TODO:
-+      dir("resources") {
-+        fileset(file: "${home}/../../out/studio/transform/libs/profilers-transform.jar")
-+        dir("perfd") {
-+          fileset(dir: "${home}/../../out/studio/native/out/release")
-+        }
-+      }
-       */
-
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       //withProjectLibrary("builder-model") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
-      withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("sdklib", "../templates", "lib/templates")
-      withResourceFromModule("android","annotations", "lib/androidAnnotations.jar")
+
       withResourceFromModule("android","lib/antlr4-runtime-4.5.3.jar", "lib")
       withResourceFromModule("android","lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("android","lib/asm-analysis-5.0.3.jar", "lib")
@@ -167,15 +158,17 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")
       withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
 
-      withResource("../../../../prebuilts/studio/layoutlib/data/layoutlib.jar", "lib")
+      withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("android","annotations", "lib/androidAnnotations.jar")
 
+      // TODO: Are these still needed?
       withResourceFromModule("android","lib/gluegen-rt.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-linux-amd64.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-linux-i586.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-macosx-universal.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-windows-amd64.jar", "lib")
       withResourceFromModule("android","lib/gluegen-rt-natives-windows-i586.jar", "lib")
-      withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }
@@ -193,30 +186,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         dir("lib") {
           resources("android")
 
-          fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
           fileset(dir: "${androidHome}/android/lib") {
             include(name: "** /*.jar")
             include(name: "licenses/*")
             exclude(name: "** /fest-*.jar")
             exclude(name: "src/*.jar")
           }
-          fileset(dir: "${home}/../../out/studio/runtime")
           jar("androidAnnotations.jar") {
             fileset(dir: "$androidHome/android/annotations")
-          }
-          dir("device-art-resources") {
-            fileset(dir: "$androidHome/android/device-art-resources")
-          }
-
-          dir("templates") {
-            fileset(dir: "$androidToolsBaseHome/templates")
-          }
-
-          dir("layoutlib") {
-            fileset(dir: "${home}/../../prebuilts/studio/layoutlib") {
-              exclude(name: "PREBUILT")
-              exclude(name: "** /layoutlib.jar")
-            }
           }
         }
       }
@@ -246,6 +223,37 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
+
+    // TODO: figure out if some of these misc resources can be included in a better way
+    def androidPluginLib = "$targetDirectory/plugins/android/lib"
+
+    buildContext.ant.copy(todir: "$androidPluginLib") {
+      fileset(dir: "$root/out/studio/runtime")
+      fileset(file: "$root/prebuilts/studio/layoutlib/data/layoutlib.jar")
+    }
+
+    buildContext.ant.copy(todir: "$androidPluginLib/layoutlib") {
+      fileset(dir: "$root/prebuilts/studio/layoutlib") {
+        exclude(name: "PREBUILT")
+        exclude(name: "BUILD")
+        exclude(name: "data/layoutlib.jar")
+      }
+    }
+
+    buildContext.ant.copy(todir: "$androidPluginLib/templates") {
+      fileset(dir: "$root/tools/base/templates")
+    }
+
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
+      fileset(file: "$root/out/studio/transform/libs/profilers-transform.jar")
+    }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfd") {
+      fileset(dir: "$root/out/studio/native/out/release")
+    }
+
+    buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {
+      fileset(dir: "$root/tools/vendor/google/android-ndk/bin/lldb/shared")
+    }
   }
 
   @Override
@@ -273,6 +281,20 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 // TODO:
       @Override
       String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
+
+      @Override
+      @CompileDynamic
+      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
+          fileset(dir: "$root/prebuilts/tools/windows-x86_64/offline-sdk")
+        }
+
+        def androidRoot = "$root/tools/adt/idea"
+        context.ant.copy(file: "$androidRoot/native/installer/win/builds/uninstall.exe", tofile: "$targetDirectory/uninstall.exe")
+        context.ant.copy(file: "$androidRoot/android/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
+        context.ant.copy(file: "$androidRoot/android/lib/libwebp/win/webp_jni64.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni64.dll")
+      }
     }
   }
 
@@ -286,6 +308,19 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio" }
+
+      @Override
+      @CompileDynamic
+      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
+          fileset(dir: "$root/prebuilts/tools/linux-x86_64/offline-sdk")
+        }
+
+        def androidRoot = "$root/tools/adt/idea"
+        context.ant.copy(file: "$androidRoot/android/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
+        context.ant.copy(file: "$androidRoot/android/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
+      }
     }
   }
 
@@ -307,6 +342,18 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         applicationInfo.isEAP ? "Android Studio ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} Preview.app"
                               : "Android Studio.app"
+      }
+
+      @Override
+      @CompileDynamic
+      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+        context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
+          fileset(dir: "$root/prebuilts/tools/darwin-x86_64/offline-sdk")
+        }
+
+        def androidRoot = "$root/tools/adt/idea"
+        context.ant.copy(file: "$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
       }
     }
   }
