@@ -556,16 +556,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
-      return null;
-    }
-
-    @Override
-    public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
-      return null;
-    }
-
-    @Override
     public RunConfiguration clone() {
       return null;
     }

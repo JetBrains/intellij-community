@@ -86,7 +86,9 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @return the per-runner settings.
    */
   @Nullable
-  ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider);
+  default ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
+    return null;
+  }
 
   /**
    * Creates a UI control for editing the settings for a specific {@link ProgramRunner}. Can return null if the configuration has no
@@ -96,7 +98,9 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @return the editor for the per-runner settings.
    */
   @Nullable
-  SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner);
+  default SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
+    return null;
+  }
 
   /**
    * Clones the run configuration.

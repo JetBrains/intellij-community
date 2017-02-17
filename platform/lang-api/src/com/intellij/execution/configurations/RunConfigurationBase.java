@@ -19,7 +19,6 @@ import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -299,16 +298,5 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @Override
-  public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
   }
 }
