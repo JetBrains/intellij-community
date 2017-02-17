@@ -90,6 +90,9 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     String serviceDirectoryPath = GradleSettings.getInstance(project).getServiceDirectoryPath();
     File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
     files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "gradle.properties"));
+    // add init script
+    files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "init.gradle"));
+    // TODO add init scripts from USER_HOME/.gradle/init.d/ directory
 
     // add project-specific gradle.properties
     GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
