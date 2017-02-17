@@ -60,11 +60,11 @@ public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
                                    ModalityState.NON_MODAL.equals(ModalityState.current()));
   }
 
-  public static boolean hasValidChanges(@NotNull Change[] changes) {
+  private static boolean hasValidChanges(@NotNull Change[] changes) {
     return ContainerUtil.exists(changes, c -> c.getAfterRevision() != null && !c.getAfterRevision().getFile().isDirectory());
   }
 
-  public static void openRepositoryVersion(@NotNull Project project, @NotNull Change[] changes) {
+  private static void openRepositoryVersion(@NotNull Project project, @NotNull Change[] changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
 

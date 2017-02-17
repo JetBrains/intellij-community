@@ -16,23 +16,23 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction.hasValidChanges;
-import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction.openRepositoryVersion;
+import org.jetbrains.annotations.Nullable;
 
 public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCommitAction {
-
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
-    return changes != null && hasValidChanges(changes);
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
+    if (detail != null) {
+      VirtualFile file = ui.createVcsVirtualFile(detail);
+      if (file == null) return false;
+    }
+    return true;
   }
 
   @Override
@@ -40,9 +40,9 @@ public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCom
                                @NotNull FileHistoryUi ui,
                                @NotNull VcsFullCommitDetails detail,
                                @NotNull AnActionEvent e) {
-    Change[] changes = ArrayUtil.toObjectArray(ui.collectRelevantChanges(detail), Change.class);
-    if (hasValidChanges(changes)) {
-      openRepositoryVersion(project, changes);
+    VirtualFile file = ui.createVcsVirtualFile(detail);
+    if (file != null) {
+      OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, file));
     }
   }
 }

@@ -22,31 +22,33 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAction {
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
-    VcsFileRevision fileRevision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-    if (fileRevision == null) return false;
-
-    VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-    if (file == null) return false;
-
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
     VcsKey key = e.getData(VcsDataKeys.VCS);
     if (key == null) return false;
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getProject()).findVcsByName(key.getName());
     if (vcs == null) return false;
+    AnnotationProvider provider = vcs.getAnnotationProvider();
+    if (provider == null) return false;
 
-    return AnnotateRevisionActionBase.isEnabled(vcs, file, fileRevision);
+    if (detail != null) {
+      VcsLogFileRevision fileRevision = ui.createRevision(detail);
+      return AnnotateRevisionActionBase.isEnabled(vcs, ui.createVcsVirtualFile(fileRevision), fileRevision);
+    }
+
+    return true;
   }
 
   @Override

@@ -92,6 +92,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Nullable
   public VirtualFile createVcsVirtualFile(@NotNull VcsFullCommitDetails details) {
     VcsLogFileRevision revision = createRevision(details);
+    return createVcsVirtualFile(revision);
+  }
+
+  @Nullable
+  public VirtualFile createVcsVirtualFile(@Nullable VcsLogFileRevision revision) {
     if (revision != null) {
       return revision.getPath().isDirectory()
              ? new VcsVirtualFolder(revision.getPath().getPath(), null, VcsFileSystem.getInstance())

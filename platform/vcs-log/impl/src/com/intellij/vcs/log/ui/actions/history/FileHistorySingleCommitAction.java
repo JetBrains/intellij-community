@@ -23,9 +23,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,17 +44,19 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
       return;
     }
 
-    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (commits.isEmpty()) {
+    List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
+    if (details.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     e.getPresentation().setVisible(true);
-    e.getPresentation().setEnabled(commits.size() == 1 && isEnabled(e));
+    VcsFullCommitDetails detail = getFirstItem(details);
+    if (detail instanceof LoadingDetails) detail = null;
+    e.getPresentation().setEnabled(details.size() == 1 && isEnabled(ui, detail, e));
   }
 
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
     return true;
   }
 

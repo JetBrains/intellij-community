@@ -22,24 +22,32 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitAction {
 
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     if (filePath == null || filePath.isDirectory() || filePath.getVirtualFile() == null) {
       // currently not working for directories, to be fixed later
       return false;
     }
-    return e.getData(VcsDataKeys.VCS_FILE_REVISION) != null;
+
+    if (detail != null) {
+      VcsFileRevision fileRevision = ui.createRevision(detail);
+      if (fileRevision == null) return false;
+    }
+
+    return true;
   }
 
   @Override

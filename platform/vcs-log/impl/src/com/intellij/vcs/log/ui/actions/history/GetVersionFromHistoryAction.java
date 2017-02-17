@@ -26,15 +26,21 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
 
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+    if (filePath == null || filePath.isDirectory()) return false;
 
-    return revision != null && filePath != null && !filePath.isDirectory();
+    if (detail != null) {
+      VcsFileRevision fileRevision = ui.createRevision(detail);
+      if (fileRevision == null) return false;
+    }
+
+    return true;
   }
 
   @Override
