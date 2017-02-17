@@ -84,16 +84,16 @@ public class LogConsolePreferences extends LogFilterRegistrar {
    */
   private enum LevelPattern {
 
-    ERROR("(?i)ERROR|FATAL", LogConsolePreferences.ERROR),
-    WARNING("(?i)WARN", LogConsolePreferences.WARNING), // "|WARNING" omitted since it is covered by "WARN"
-    INFO("(?i)INFO", LogConsolePreferences.INFO),
-    DEBUG("(?i)DEBUG", LogConsolePreferences.DEBUG);
+    ERROR("ERROR|FATAL", LogConsolePreferences.ERROR),
+    WARNING("WARN", LogConsolePreferences.WARNING), // "|WARNING" omitted since it is covered by "WARN"
+    INFO("INFO", LogConsolePreferences.INFO),
+    DEBUG("DEBUG", LogConsolePreferences.DEBUG);
 
     private final Pattern myPattern;
     private final String myType;
 
     LevelPattern(@NotNull @NonNls String regexp, @NotNull @NonNls String type) {
-      myPattern = Pattern.compile(regexp);
+      myPattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE);
       myType = type;
     }
 
