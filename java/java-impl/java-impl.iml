@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
     <orderEntry type="module" module-name="built-in-server" />
+    <orderEntry type="module" module-name="uast-java" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library">
       <library>
