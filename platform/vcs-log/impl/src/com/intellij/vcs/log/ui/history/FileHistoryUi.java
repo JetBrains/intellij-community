@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.history;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -56,7 +55,6 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  private static final Logger LOG = Logger.getInstance(FileHistoryUi.class);
   @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
                                                                           CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
@@ -106,17 +104,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public VcsLogFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
-      Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
-      ContentRevision revision = change.getAfterRevision();
-      if (revision == null) {
-        revision = change.getBeforeRevision();
-        if (revision == null) {
-          LOG.error("Before and after revisions for commit " + details.getId().toShortString() + ", change " + change + " are null.");
-          return null;
+      for (Change change : changes) {
+        ContentRevision revision = change.getAfterRevision();
+        if (revision != null) {
+          return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
         }
       }
-      return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
     }
+    // this is ok, file was deleted here
     return null;
   }
 

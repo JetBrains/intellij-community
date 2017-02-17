@@ -18,35 +18,19 @@ package com.intellij.vcs.log.ui.actions.history;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
-import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction {
 
   @Override
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getData(VcsDataKeys.VCS_FILE_REVISION) != null &&
-           e.getData(VcsDataKeys.VCS_VIRTUAL_FILE) != null &&
-           e.getData(VcsDataKeys.VCS) != null;
-  }
-
-  @Override
   protected void performAction(@NotNull Project project,
                                @NotNull FileHistoryUi ui,
-                               @NotNull VcsFullCommitDetails details,
+                               @NotNull VcsFullCommitDetails detail,
                                @NotNull AnActionEvent e) {
-    VcsLogFileRevision revision = ui.createRevision(details);
-    VirtualFile vcsVirtualFile = ui.createVcsVirtualFile(details);
-
-    if (revision != null && vcsVirtualFile != null) {
-      AbstractVcsHelper.getInstance(project).loadAndShowCommittedChangesDetails(project, revision.getRevisionNumber(), vcsVirtualFile,
-                                                                                e.getRequiredData(VcsDataKeys.VCS),
-                                                                                revision.getChangedRepositoryPath(),
-                                                                                false);
-    }
+    AbstractVcsHelper.getInstance(project).showChangesListBrowser(VcsLogUtil.createCommittedChangeList(detail),
+                                                                  "Paths affected by commit " + detail.getId().toShortString());
   }
 }

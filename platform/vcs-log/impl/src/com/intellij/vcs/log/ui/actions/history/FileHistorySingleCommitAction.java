@@ -52,7 +52,9 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
     e.getPresentation().setEnabled(commits.size() == 1 && isEnabled(e));
   }
 
-  protected abstract boolean isEnabled(@NotNull AnActionEvent e);
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    return true;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

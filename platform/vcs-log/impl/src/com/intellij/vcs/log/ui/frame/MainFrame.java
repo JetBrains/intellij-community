@@ -34,7 +34,6 @@ import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -216,12 +217,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class,
-                                     detail -> new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
-                                                                                  VcsUserUtil.getShortPresentation(detail.getCommitter()),
-                                                                                  new Date(detail.getCommitTime()),
-                                                                                  detail.getChanges(),
-                                                                                  VcsLogUtil.convertToRevisionNumber(detail.getId())));
+      return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       int[] selectedRows = myGraphTable.getSelectedRows();
