@@ -270,6 +270,9 @@
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/testutils/testutils.iml" filepath="$PROJECT_DIR$/android/tools-base/testutils/testutils.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/typeMigration.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/uast/uast-common/uast-common.iml" filepath="$PROJECT_DIR$/uast/uast-common/uast-common.iml" group="platform/uast" />
+      <module fileurl="file://$PROJECT_DIR$/uast/uast-java/uast-java.iml" filepath="$PROJECT_DIR$/uast/uast-java/uast-java.iml" group="platform/uast" />
+      <module fileurl="file://$PROJECT_DIR$/uast/uast-tests/uast-tests.iml" filepath="$PROJECT_DIR$/uast/uast-tests/uast-tests.iml" group="platform/uast" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />

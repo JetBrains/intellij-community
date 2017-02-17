@@ -1,0 +1,95 @@
+buildscript {
+    ext.kotlin_version = '1.0.5'
+    ext.intellij_core_version = '171.3019.7'
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
+        classpath 'de.undercouch:gradle-download-task:3.1.2'
+    }
+}
+
+String getUastVersion() {
+    return System.getenv("ARTIFACT_VERSION") ?: "1.0"
+}
+
+apply from: 'updateDependencies.gradle'
+
+allprojects {
+    group = 'org.jetbrains.uast'
+    version = getUastVersion()
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'com.jfrog.bintray'
+    apply plugin: "maven-publish"
+
+    configurations {
+        provided
+    }
+
+    sourceSets {
+        main {
+            compileClasspath += configurations.provided
+
+            java.srcDirs = ['src']
+            kotlin.srcDirs = ['src']
+        }
+
+        test {
+            java.srcDirs = ['test']
+            kotlin.srcDirs = ['test']
+        }
+    }
+
+    compileJava {
+        sourceCompatibility = 1.6
+        targetCompatibility = 1.6
+    }
+
+    repositories {
+        jcenter()
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    bintray {
+        user = System.getenv("BINTRAY_USER") ?: ""
+        key = System.getenv("BINTRAY_API_KEY") ?: ""
+
+        publications = ['UastPublication']
+
+        pkg {
+            repo = 'uast'
+            name = 'uast'
+            userOrg = 'kotlin'
+            licenses = ['Apache-2.0']
+            vcsUrl = SCM_URL
+
+            version {
+                name = getUastVersion()
+                released = new Date()
+            }
+        }
+    }
+
+    publishing {
+        publications {
+            UastPublication(MavenPublication) {
+                from components.java
+                groupId 'org.jetbrains.uast'
+                artifactId project.name
+                version getUastVersion()
+
+                artifact sourcesJar
+            }
+        }
+    }
+}
