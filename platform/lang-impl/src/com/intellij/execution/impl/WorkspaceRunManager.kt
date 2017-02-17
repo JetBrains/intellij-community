@@ -15,9 +15,20 @@
  */
 package com.intellij.execution.impl
 
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
+import java.util.function.Function
 
 internal class WorkspaceRunManager(project: Project, propertiesComponent: PropertiesComponent, schemeManagerFactory: SchemeManagerFactory) : RunManagerImpl(project, propertiesComponent) {
+  private val schemeManager = schemeManagerFactory.create("", object: LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>() {
+    override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>,
+                              name: String,
+                              attributeProvider: Function<String, String?>,
+                              isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+      return loadConfiguration(dataHolder.read(), false) as RunnerAndConfigurationSettingsImpl
+    }
+  })
 }

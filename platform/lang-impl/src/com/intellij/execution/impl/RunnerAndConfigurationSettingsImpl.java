@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -40,7 +41,7 @@ import java.util.*;
 /**
  * @author dyoma
  */
-public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndConfigurationSettings, Comparable {
+public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndConfigurationSettings, Comparable, Scheme {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
   @NonNls
@@ -274,6 +275,7 @@ public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndC
     myConfiguration.setName(name);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myConfiguration.getName();

@@ -106,7 +106,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     myProject = project;
 
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
-    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         RunnerAndConfigurationSettings configuration = getSelectedConfiguration();
