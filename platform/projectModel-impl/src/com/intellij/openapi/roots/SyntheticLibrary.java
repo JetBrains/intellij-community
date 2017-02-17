@@ -44,11 +44,41 @@ import java.util.Collection;
  * </ul>
  * @see AdditionalLibraryRootsProvider
  */
+@SuppressWarnings("JavadocReference")
 @ApiStatus.Experimental
 public abstract class SyntheticLibrary {
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
+
+  /**
+   * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
+   * In this case, each {@link com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode#getChildren()} invocation will create a new
+   * {@link com.intellij.ide.projectView.impl.nodes.SyntheticLibraryElementNode} instance passing this library as a value.
+   * In order to figure out if "External Library" children are updated or not, AbstractTreeUi uses
+   * node's equals/hashCode methods which in turn depend on this library's equals/hashCode methods:
+   * see {@link com.intellij.ide.util.treeView.AbstractTreeNode#hashCode()}.
+   *
+   * Please make sure that two SyntheticLibrary instances are equal if they reference the same state. Otherwise, constant UI updates
+   * will degrade performance.
+   * Consider implementing a better equals/hashCode if needed or instantiate {@link SyntheticLibrary} only if state
+   * changed (use some caching in {@link AdditionalLibraryRootsProvider#getAdditionalProjectLibraries(Project)}).
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SyntheticLibrary library = (SyntheticLibrary)o;
+    return getSourceRoots().equals(library.getSourceRoots());
+  }
+
+  /**
+   * @see #equals(Object) javadoc
+   */
+  @Override
+  public int hashCode() {
+    return getSourceRoots().hashCode();
+  }
 
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
