@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,36 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   override fun toString() = name
 
   override fun equals(other: Any?) = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
+
+  /**
+   * If you need to enable multiple tools, please use [.modifyProfile]
+   */
+  @JvmOverloads
+  fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null) {
+    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectInspectionProfileManager)?.project)
+    if (enabled) {
+      if (tools.isEnabled && tools.defaultState.isEnabled) {
+        return
+      }
+
+      tools.isEnabled = true
+      tools.defaultState.isEnabled = true
+      schemeState = SchemeState.POSSIBLY_CHANGED
+    }
+    else {
+      tools.isEnabled = false
+      if (tools.nonDefaultTools == null) {
+        tools.defaultState.isEnabled = false
+      }
+      schemeState = SchemeState.POSSIBLY_CHANGED
+    }
+
+    profileManager.fireProfileChanged(this as InspectionProfileImpl)
+  }
+
+  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
+
+  abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 }
 
 fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {

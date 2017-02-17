@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +48,6 @@ public class InspectionNode extends InspectionTreeNode {
   @Override
   public String getCustomizedTailText() {
     final String shortName = getToolWrapper().getShortName();
-    final ToolsImpl tools = myProfile.getTools(shortName, null);
-    LOG.assertTrue(tools != null, "Can't find tools for " + shortName);
-    return tools.isEnabled() ? null : "Disabled";
+    return myProfile.getTools(shortName, null).isEnabled() ? null : "Disabled";
   }
 }
