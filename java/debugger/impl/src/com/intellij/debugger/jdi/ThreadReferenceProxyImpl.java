@@ -321,6 +321,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       return getThreadReference().isAtBreakpoint();
     } catch (InternalException e) {
       LOG.info(e);
+    } catch (ObjectCollectedException ignored) {
     }
     return false;
   }
