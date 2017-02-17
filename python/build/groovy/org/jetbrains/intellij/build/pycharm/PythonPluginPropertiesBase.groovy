@@ -49,6 +49,7 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
     ]
     pythonPlugin(pythonCommunityPluginModule, "python-ce", "python-community-plugin-build-patches",
                  communityModules, pluginVersion) {
+      withProjectLibrary("markdown4j-2.2")  // Required for ipnb
       pluginXmlModules.each { module ->
         excludeFromModule(module, "META-INF/plugin.xml")
       }
