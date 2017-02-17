@@ -600,13 +600,34 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  @NotNull
+  public static List<Location> allLineLocations(ReferenceType cls) {
+    try {
+      return cls.allLineLocations();
+    }
+    catch (AbsentInformationException | ObjectCollectedException ignored) {
+      return Collections.emptyList();
+    }
+  }
+
   public static int getLineNumber(Location location, boolean zeroBased) {
     try {
       return location.lineNumber() - (zeroBased ? 1 : 0);
     }
-    catch (InternalError e) {
+    catch (InternalError | IllegalArgumentException e) {
       return -1;
     }
+  }
+
+  @Nullable
+  public static Method getMethod(Location location) {
+    try {
+      return location.method();
+    }
+    catch (IllegalArgumentException e) { // Invalid method id
+      LOG.info(e);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
@@ -815,6 +836,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static boolean isLambdaName(@Nullable String name) {
     return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
+  }
+
+  public static boolean isLambda(@Nullable Method method) {
+    return method != null && isLambdaName(method.name());
   }
 
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));

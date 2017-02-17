@@ -468,7 +468,8 @@ public class RedundantCastUtil {
                                                PsiTypeCastExpression returnExpression,
                                                int returnExprIdx,
                                                Function<PsiExpression, PsiTypeCastExpression> computeCastExpression) {
-      final PsiCall newCall = (PsiCall)expression.copy();
+      final PsiCall newCall = LambdaUtil.copyTopLevelCall(expression);
+      if (newCall == null) return;
       final PsiExpressionList newArgsList = newCall.getArgumentList();
       LOG.assertTrue(newArgsList != null);
       final PsiExpression[] newArgs = newArgsList.getExpressions();
@@ -551,7 +552,8 @@ public class RedundantCastUtil {
         if (grandGrandPa instanceof PsiCall) {
           PsiMethod resolve = ((PsiCall)grandGrandPa).resolveMethod();
           if (resolve != null) {
-            PsiCall expression = (PsiCall)grandGrandPa.copy();
+            PsiCall expression = LambdaUtil.copyTopLevelCall((PsiCall)grandGrandPa);
+            if (expression == null) return false;
             PsiExpressionList argumentList = expression.getArgumentList();
             LOG.assertTrue(argumentList != null);
             PsiExpression toReplace = argumentList.getExpressions()[idx];

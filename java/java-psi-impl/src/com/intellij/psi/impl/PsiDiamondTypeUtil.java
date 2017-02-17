@@ -27,7 +27,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,6 @@ public class PsiDiamondTypeUtil {
                   return areTypeArgumentsRedundant(typeArguments, expression, true, method, typeParameters);
                 }
               }
-              return true;
             }
           }
         }

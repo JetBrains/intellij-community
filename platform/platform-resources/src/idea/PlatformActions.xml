@@ -197,6 +197,7 @@
       <action id="Diff.AppendRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowLeftDown"/>
       <action id="Diff.IgnoreLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
       <action id="Diff.IgnoreRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+      <action id="Diff.ResolveConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.MagicResolve"/>
       <separator/>
 
       <action id="Diff.ApplyNonConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflicts"/>

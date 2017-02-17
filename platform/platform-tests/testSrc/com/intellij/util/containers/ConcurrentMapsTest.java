@@ -16,7 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.GCUtil;
+import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.junit.Test;
 

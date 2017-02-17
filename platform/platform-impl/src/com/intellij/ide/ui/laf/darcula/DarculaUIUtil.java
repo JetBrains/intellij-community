@@ -40,9 +40,6 @@ import static javax.swing.SwingConstants.WEST;
  */
 public class DarculaUIUtil {
   private static final Color  GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
-  private static final Color  BALLOON_BORDER = new JBColor(0xe0a8a9, 0x73454b);
-  private static final Color  BALLOON_BACKGROUND = new JBColor(0xe0a8a9, 0x73454b);
-  private static final Insets BALLOON_INSETS = new JBInsets(1, 1, 1, 1);
 
   public static void paintFocusRing(Graphics g, Rectangle bounds) {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
@@ -124,35 +121,23 @@ public class DarculaUIUtil {
   }
 
   public static void showErrorTip(JComponent component) {
-    BalloonBuilder bb = (BalloonBuilder)component.getClientProperty("JComponent.error.balloonBuilder");
-    if (bb != null) {
-      component.putClientProperty("JComponent.error.balloonBuilder", null);
-
-      Balloon balloon = bb.setBorderColor(BALLOON_BORDER)
-          .setFillColor(BALLOON_BACKGROUND)
-          .setBorderInsets(BALLOON_INSETS)
-          .setHideOnFrameResize(false)
-          .setRequestFocus(false)
-          .setFadeoutTime(3000)
-          .setAnimationCycle(300)
-          .setShadow(false)
-          .createBalloon();
+    Balloon balloon = (Balloon)component.getClientProperty("JComponent.error.balloon");
+    if (balloon != null) {
+      component.putClientProperty("JComponent.error.balloon", null);
 
       JComponent root = component.getRootPane();
       Point componentPos = SwingUtilities.convertPoint(component, 0, 0, root);
       Dimension bSize = balloon.getPreferredSize();
       if (componentPos.y >= bSize.height) {
-        balloon.show(new PositionTracker<Balloon>(root) {
+        balloon.show(new PositionTracker<Balloon>(component) {
           @Override public RelativePoint recalculateLocation(Balloon balloon) {
-            return new RelativePoint(getComponent(), new Point(componentPos.x + component.getWidth()/2,
-                                                               componentPos.y));
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), 0));
           }
         }, Balloon.Position.above);
       } else {
-        balloon.show(new PositionTracker<Balloon>(root) {
+        balloon.show(new PositionTracker<Balloon>(component) {
           @Override public RelativePoint recalculateLocation(Balloon balloon) {
-            return new RelativePoint(getComponent(), new Point(componentPos.x + component.getWidth()/2,
-                                                               componentPos.y + component.getHeight()));
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), getComponent().getHeight()));
           }
         }, Balloon.Position.below);
       }

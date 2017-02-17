@@ -17,10 +17,10 @@ package git4idea.test
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.vcs.test.VcsPlatformTest
 import git4idea.DialogManager
@@ -91,11 +91,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")) {
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")): File {
     val targetName = "origin"
     git("clone --bare '${source.root.path}' ${target.path}")
     cd(source)
     git("remote add $targetName '${target.path}'")
+    return target
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {

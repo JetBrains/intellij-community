@@ -42,7 +42,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.impl.DomApplicationComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,13 +193,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   @NotNull
   public DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
     return getProblemHolder(element);
-  }
-
-  public static void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
-    final DomElementsAnnotator annotator = DomApplicationComponent.getInstance().getAnnotator(rootClass);
-    if (annotator != null) {
-      annotator.annotate(element, holder);
-    }
   }
 
   @Override

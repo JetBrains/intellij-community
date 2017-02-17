@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -51,9 +50,7 @@ public class InspectionNodeInfo extends JPanel {
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final ToolsImpl tools = currentProfile.getTools(toolWrapper.getShortName(), project);
-    LOG.assertTrue(tools != null, "Can't find tools for: " + toolWrapper.getShortName());
-    boolean enabled = tools.isEnabled();
+    boolean enabled = currentProfile.getTools(toolWrapper.getShortName(), project).isEnabled();
 
     JPanel titlePanel = new JPanel();
     titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.LINE_AXIS));

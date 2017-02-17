@@ -225,10 +225,15 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
     @NotNull
     @Override
-    public JBIterable<? extends T> children(@NotNull final T node) {
-      final T first = first(node);
+    public JBIterable<? extends T> children(@NotNull T node) {
+      T first = first(node);
       if (first == null) return JBIterable.empty();
-      return JBIterable.generate(first, TO_NEXT);
+      return siblings(first);
+    }
+
+    @NotNull
+    public JBIterable<? extends T> siblings(@NotNull T node) {
+      return JBIterable.generate(node, TO_NEXT);
     }
 
     private final Function<T, T> TO_NEXT = new Function<T, T>() {

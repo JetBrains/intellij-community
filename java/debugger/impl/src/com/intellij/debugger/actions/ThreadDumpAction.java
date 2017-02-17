@@ -207,7 +207,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     for (String waiting : waitingMap.keySet()) {
       final ThreadState waitingThread = nameToThreadMap.get(waiting);
       final ThreadState awaitedThread = nameToThreadMap.get(waitingMap.get(waiting));
-      awaitedThread.addWaitingThread(waitingThread);
+      if (waitingThread != null && awaitedThread != null) { //zombie
+        awaitedThread.addWaitingThread(waitingThread);
+      }
     }
 
     // detect simple deadlocks

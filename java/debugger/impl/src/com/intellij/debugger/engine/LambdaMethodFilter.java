@@ -80,7 +80,7 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
     final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
-    return DebuggerUtilsEx.isLambdaName(method.name()) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
+    return DebuggerUtilsEx.isLambda(method) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 
   @Nullable

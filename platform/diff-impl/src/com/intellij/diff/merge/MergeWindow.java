@@ -95,6 +95,7 @@ public class MergeWindow {
       getWindow().addWindowListener(new WindowAdapter() {
         @Override
         public void windowOpened(WindowEvent e) {
+          e.getWindow().removeWindowListener(this);
           myProcessor.init();
         }
       });

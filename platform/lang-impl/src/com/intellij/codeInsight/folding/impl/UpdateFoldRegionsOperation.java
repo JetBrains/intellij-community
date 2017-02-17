@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -119,7 +120,12 @@ class UpdateFoldRegionsOperation implements Runnable {
       for (FoldingDescriptor descriptor : descriptors) {
         FoldingGroup group = descriptor.getGroup();
         TextRange range = descriptor.getRange();
-        String placeholder = descriptor.getPlaceholderText();
+        String placeholder = null;
+        try {
+          placeholder = descriptor.getPlaceholderText();
+        }
+        catch (IndexNotReadyException ignore) {
+        }
         if (range.getEndOffset() > myEditor.getDocument().getTextLength()) {
           LOG.error(String.format("Invalid folding descriptor detected (%s). It ends beyond the document range (%d)",
                                   descriptor, myEditor.getDocument().getTextLength()));

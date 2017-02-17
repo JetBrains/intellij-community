@@ -29,6 +29,17 @@ public class Test {
       }
     }
     System.out.println(result3);
+
+    // Non-final var used in initializer
+    int size = 5;
+    if(size < input.size()) size = input.size();
+    List<String> result4 = new ArrayList<>(size);
+    for (String s : input) {
+      if(!s.isEmpty()) {
+        result4.add(s);
+      }
+    }
+    System.out.println(result4);
   }
 
   void testSet(List<String> input) {

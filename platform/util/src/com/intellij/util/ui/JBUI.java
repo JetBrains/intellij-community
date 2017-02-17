@@ -74,8 +74,10 @@ public class JBUI {
    * @see UIUtil#isJreHiDPIEnabled()
    * @see UIUtil#isJreHiDPI()
    * @see UIUtil#isJreHiDPI(GraphicsConfiguration)
+   * @see UIUtil#isJreHiDPI(Graphics2D)
    * @see JBUI#isUsrHiDPI()
    * @see JBUI#isPixHiDPI(GraphicsConfiguration)
+   * @see JBUI#isPixHiDPI(Graphics2D)
    * @see UIUtil#drawImage(Graphics, Image, int, int, int, int, ImageObserver)
    * @see UIUtil#createImage(Graphics, int, int, int)
    * @see UIUtil#createImage(GraphicsConfiguration, int, int, int)
@@ -113,6 +115,7 @@ public class JBUI {
      *
      * @see #sysScale()
      * @see #sysScale(GraphicsConfiguration)
+     * @see #sysScale(Graphics2D)
      * @see #sysScale(Component)
      */
     SYS,
@@ -127,6 +130,7 @@ public class JBUI {
      *
      * @see #pixScale()
      * @see #pixScale(GraphicsConfiguration)
+     * @see #pixScale(Graphics2D)
      * @see #pixScale(Component)
      * @see #pixScale(GraphicsConfiguration, float)
      * @see #pixScale(float)
@@ -207,7 +211,7 @@ public class JBUI {
   }
 
   /**
-   * Returns the system scale factor, corresponding to the graphics configuration
+   * Returns the system scale factor, corresponding to the graphics configuration.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
@@ -218,6 +222,23 @@ public class JBUI {
         }
       }
       return (float)gc.getDefaultTransform().getScaleX();
+    }
+    return sysScale();
+  }
+
+  /**
+   * Returns the system scale factor, corresponding to the graphics.
+   * For BufferedImage's graphics, the scale is taken from the graphics itself.
+   * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
+   */
+  public static float sysScale(@Nullable Graphics2D g) {
+    if (UIUtil.isJreHiDPIEnabled() && g != null) {
+      GraphicsConfiguration gc = g.getDeviceConfiguration();
+      if (gc == null || gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER) {
+        // in this case gc doesn't provide a valid scale
+        return (float)g.getTransform().getScaleX();
+      }
+      return sysScale(gc);
     }
     return sysScale();
   }
@@ -267,6 +288,14 @@ public class JBUI {
    */
   public static float pixScale(@Nullable GraphicsConfiguration gc) {
     return UIUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
+  }
+
+  /**
+   * Returns the pixel scale factor, corresponding to the provided graphics.
+   * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
+   */
+  public static float pixScale(@Nullable Graphics2D g) {
+    return UIUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
   }
 
   /**
@@ -424,6 +453,14 @@ public class JBUI {
    */
   public static boolean isPixHiDPI(@Nullable GraphicsConfiguration gc) {
     return isHiDPI(pixScale(gc));
+  }
+
+  /**
+   * Returns whether the {@link ScaleType#PIX} scale factor assumes HiDPI-awareness in the provided graphics.
+   * An equivalent of {@code isHiDPI(pixScale(g))}
+   */
+  public static boolean isPixHiDPI(@Nullable Graphics2D g) {
+    return isHiDPI(pixScale(g));
   }
 
   /**
@@ -717,7 +754,15 @@ public class JBUI {
     boolean updateJBUIScale();
 
     /**
-     * Updates all the scale factors based on the provided graphics configuration.
+     * Updates all the scale factors based on the provided graphics.
+     *
+     * @param g the graphics, if null defaults to {@link #updateJBUIScale()}
+     * @return true if any of the tracked scale factors was updated
+     */
+    boolean updateJBUIScale(@Nullable Graphics2D g);
+
+    /**
+     * Updates all the scale factors based on the provided graphics config.
      *
      * @param gc the graphics config, if null defaults to {@link #updateJBUIScale()}
      * @return true if any of the tracked scale factors was updated
@@ -728,6 +773,12 @@ public class JBUI {
      * @return true if tracked user scale should be updated
      */
     boolean needUpdateJBUIScale();
+
+    /**
+     * @param g the graphics, if null defaults to {@link #needUpdateJBUIScale()}
+     * @return true if any of the tracked scale factors should be updated
+     */
+    boolean needUpdateJBUIScale(@Nullable Graphics2D g);
 
     /**
      * @param gc the graphics config, if null defaults to {@link #needUpdateJBUIScale()}
@@ -774,6 +825,13 @@ public class JBUI {
     }
 
     @Override
+    public boolean updateJBUIScale(@Nullable Graphics2D g) {
+      boolean res = updateJBUIScale();
+      if (g != null) res = res || updateJBUIScale(sysScale(g), ScaleType.SYS);
+      return res;
+    }
+
+    @Override
     public boolean updateJBUIScale(@Nullable GraphicsConfiguration gc) {
       boolean res = updateJBUIScale();
       if (gc != null) res = res || updateJBUIScale(sysScale(gc), ScaleType.SYS);
@@ -787,6 +845,11 @@ public class JBUI {
 
     private boolean needUpdateJBUIScale(float scale, ScaleType type) {
       return getJBUIScale(type) != scale;
+    }
+
+    @Override
+    public boolean needUpdateJBUIScale(@Nullable Graphics2D g) {
+      return needUpdateJBUIScale() || g != null && needUpdateJBUIScale(sysScale(g), ScaleType.SYS);
     }
 
     @Override
@@ -816,6 +879,11 @@ public class JBUI {
     }
 
     @Override
+    public boolean updateJBUIScale(@Nullable Graphics2D g) {
+      return myJBUIScaleDelegate.updateJBUIScale(g);
+    }
+
+    @Override
     public boolean updateJBUIScale(@Nullable GraphicsConfiguration gc) {
       return myJBUIScaleDelegate.updateJBUIScale(gc);
     }
@@ -823,6 +891,11 @@ public class JBUI {
     @Override
     public boolean needUpdateJBUIScale() {
       return myJBUIScaleDelegate.needUpdateJBUIScale();
+    }
+
+    @Override
+    public boolean needUpdateJBUIScale(@Nullable Graphics2D g) {
+      return myJBUIScaleDelegate.needUpdateJBUIScale(g);
     }
 
     @Override
@@ -856,6 +929,11 @@ public class JBUI {
     }
 
     @Override
+    public boolean updateJBUIScale(@Nullable Graphics2D g) {
+      return myJBUIScaleDelegate.updateJBUIScale(g);
+    }
+
+    @Override
     public boolean updateJBUIScale(@Nullable GraphicsConfiguration gc) {
       return myJBUIScaleDelegate.updateJBUIScale(gc);
     }
@@ -863,6 +941,11 @@ public class JBUI {
     @Override
     public boolean needUpdateJBUIScale() {
       return myJBUIScaleDelegate.needUpdateJBUIScale();
+    }
+
+    @Override
+    public boolean needUpdateJBUIScale(@Nullable Graphics2D g) {
+      return myJBUIScaleDelegate.needUpdateJBUIScale(g);
     }
 
     @Override

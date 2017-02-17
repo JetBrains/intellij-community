@@ -352,6 +352,16 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
          "              .   +               .   ", "                   .            .   ",
          "                  - .      -      .   ", "                   .            .   ")
       .run()
+
+    Test("private static final Cleaner NOP = () -> { };_", "private static final Cleaner NOP = () -> { _ };_",
+         "       +      +     +       +   + +  +  + +  +", "       +      +     +       +   + +  +  + +++  +",
+         "                                           -- ", "                                             -- ")
+      .run()
+
+    Test("private static final Cleaner NOP = () -> { };", "private static final Cleaner NOP = () -> { _ };",
+         "       +      +     +       +   + +  +  + +  ", "       +      +     +       +   + +  +  + +++  ",
+         "                                             ", "                                               ")
+      .run()
   }
 
   private inner class Test(input1: String, input2: String,

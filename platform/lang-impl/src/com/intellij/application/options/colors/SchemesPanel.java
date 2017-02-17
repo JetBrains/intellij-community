@@ -113,4 +113,9 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   protected boolean supportsProjectSchemes() {
     return false;
   }
+
+  @Override
+  protected boolean highlightNonDefaultSchemes() {
+    return true;
+  }
 }

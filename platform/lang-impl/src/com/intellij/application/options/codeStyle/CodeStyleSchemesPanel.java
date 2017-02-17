@@ -127,4 +127,9 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   protected boolean supportsProjectSchemes() {
     return true;
   }
+
+  @Override
+  protected boolean highlightNonDefaultSchemes() {
+    return true;
+  }
 }

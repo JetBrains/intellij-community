@@ -32,7 +32,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1924,7 +1923,22 @@ public class InferenceSession {
 
   public static boolean wasUncheckedConversionPerformed(PsiElement call) {
     final Boolean erased = call.getUserData(ERASED);
-    return erased != null && erased.booleanValue();
+    if (erased != null && erased.booleanValue()) {
+      return true;
+    }
+
+    if (call instanceof PsiCallExpression) {
+      PsiExpressionList args = ((PsiCallExpression)call).getArgumentList();
+      if (args != null) {
+        for (PsiExpression expression : args.getExpressions()) {
+          if (expression instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
+            continue;
+          }
+          if (wasUncheckedConversionPerformed(expression)) return true;
+        }
+      }
+    }
+    return false;
   }
 
   public PsiElement getContext() {

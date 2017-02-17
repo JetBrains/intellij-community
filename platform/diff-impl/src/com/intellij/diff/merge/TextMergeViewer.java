@@ -212,6 +212,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
+      DiffUtil.registerAction(new ResolveSelectedConflictsAction(true), myPanel);
       DiffUtil.registerAction(new MyShowPrevChangeMarkerAction(null), myPanel);
       DiffUtil.registerAction(new MyShowNextChangeMarkerAction(null), myPanel);
 
@@ -269,6 +270,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(new ResolveSelectedChangesAction(Side.RIGHT));
       group.add(new IgnoreSelectedChangesSideAction(Side.LEFT, false));
       group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT, false));
+      group.add(new ResolveSelectedConflictsAction(false));
       group.add(new IgnoreSelectedChangesAction());
 
       group.add(Separator.getInstance());
@@ -467,7 +469,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myInitialRediffFinished = true;
 
         if (myViewer.getTextSettings().isAutoApplyNonConflictedChanges()) {
-          if (getFirstUnresolvedChange(false, ThreeSide.BASE) != null) {
+          if (hasNonConflictedChanges(ThreeSide.BASE)) {
             applyNonConflictedChanges(ThreeSide.BASE);
           }
         }
@@ -627,7 +629,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         onChangeAdded(change);
       }
       if (getChangesCount() == 0 && getConflictsCount() == 0) {
-        LOG.assertTrue(getFirstUnresolvedChange(true, ThreeSide.BASE) == null);
+        LOG.assertTrue(ContainerUtil.and(getAllChanges(), TextMergeChange::isResolved));
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
 
@@ -780,7 +782,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Nullable
-    public CharSequence resolveConflictUsingInnerDifferences(@NotNull TextMergeChange change) {
+    private CharSequence tryResolveConflictedChangeUsingInnerDifferences(@NotNull TextMergeChange change) {
       if (!change.isConflict()) return null;
       if (change.isResolved(Side.LEFT) || change.isResolved(Side.RIGHT)) return null;
 
@@ -811,8 +813,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
     }
 
+    public boolean canResolveConflictedChange(@NotNull TextMergeChange change) {
+      return tryResolveConflictedChangeUsingInnerDifferences(change) != null;
+    }
+
     public void resolveConflictedChange(@NotNull TextMergeChange change) {
-      CharSequence newContent = resolveConflictUsingInnerDifferences(change);
+      CharSequence newContent = tryResolveConflictedChangeUsingInnerDifferences(change);
       if (newContent == null) return;
 
       String[] newContentLines = LineTokenizer.tokenize(newContent, false);
@@ -868,33 +874,47 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     // Actions
     //
 
-    @Nullable
-    private TextMergeChange getFirstUnresolvedChange(boolean acceptConflicts, @NotNull ThreeSide side) {
-      for (TextMergeChange change : getAllChanges()) {
-        if (change.isResolved()) continue;
-        if (!acceptConflicts && change.isConflict()) continue;
-        if (!change.isChange(side)) continue;
-        return change;
+    private boolean hasNonConflictedChanges(@NotNull ThreeSide side) {
+      if (ContainerUtil.exists(getAllChanges(), change -> !change.isResolved() &&
+                                                          !change.isConflict() &&
+                                                          change.isChange(side))) {
+        return true;
       }
-      return null;
+
+      if (side == ThreeSide.BASE) {
+        if (ContainerUtil.exists(getAllChanges(), change -> canResolveConflictedChange(change))) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) continue;
-          if (change.isResolved(side)) continue;
-          if (!change.isChange(side)) continue;
-          Side masterSide = side.select(Side.LEFT,
-                                        change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
-                                        Side.RIGHT);
-          replaceChange(change, masterSide, false);
+          applyNonConflictedChange(change, side);
         }
       });
 
-      TextMergeChange firstConflict = getFirstUnresolvedChange(true, ThreeSide.BASE);
-      if (firstConflict != null) doScrollToChange(firstConflict, true);
+      TextMergeChange firstUnresolved = ContainerUtil.find(getAllChanges(), c -> !c.isResolved());
+      if (firstUnresolved != null) doScrollToChange(firstUnresolved, true);
+    }
+
+    private void applyNonConflictedChange(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
+      if (change.isConflict()) {
+        if (side != ThreeSide.BASE) return;
+        resolveConflictedChange(change);
+      }
+      else {
+        if (change.isResolved(side)) return;
+        if (!change.isChange(side)) return;
+        Side masterSide = side.select(Side.LEFT,
+                                      change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
+                                      Side.RIGHT);
+        replaceChange(change, masterSide, false);
+      }
     }
 
     private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
@@ -1122,6 +1142,38 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
+    private class ResolveSelectedConflictsAction extends ApplySelectedChangesActionBase {
+      public ResolveSelectedConflictsAction(boolean shortcut) {
+        super(shortcut);
+        ActionUtil.copyFrom(this, "Diff.ResolveConflict");
+      }
+
+      @Override
+      protected String getText(@NotNull ThreeSide side) {
+        return "Resolve Automatically";
+      }
+
+      @Override
+      protected boolean isVisible(@NotNull ThreeSide side) {
+        return side == ThreeSide.BASE;
+      }
+
+      @Override
+      protected boolean isEnabled(@NotNull TextMergeChange change) {
+        if (change.isResolved()) return false;
+        if (change.isConflict()) return canResolveConflictedChange(change);
+        return true;
+      }
+
+      @Override
+      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+        for (int i = changes.size() - 1; i >= 0; i--) {
+          TextMergeChange change = changes.get(i);
+          applyNonConflictedChange(change, ThreeSide.BASE);
+        }
+      }
+    }
+
     public class ApplyNonConflictsAction extends DumbAwareAction {
       @NotNull private final ThreeSide mySide;
 
@@ -1133,7 +1185,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getFirstUnresolvedChange(false, mySide) != null);
+        e.getPresentation().setEnabled(hasNonConflictedChanges(mySide));
       }
 
       @Override

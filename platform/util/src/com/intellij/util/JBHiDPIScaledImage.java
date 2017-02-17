@@ -55,7 +55,11 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    */
   public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
-    this(g != null ? g.getDeviceConfiguration() : null, width, height, type);
+    super((int)(width * JBUI.sysScale(g)), (int)(height * JBUI.sysScale(g)), type);
+    myImage = null;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = JBUI.sysScale(g);
   }
 
   /**

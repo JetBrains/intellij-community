@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package com.jetbrains.python.pyi
 
 import com.intellij.psi.FileViewProvider
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
-import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * @author vlan
@@ -36,7 +34,7 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     val baseResults = super.multiResolveName(name, exported)
-    val results = if (exported)
+    return if (exported)
       baseResults
         .filter {
           val importedResult = it as? ImportedResolveResult
@@ -45,12 +43,5 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
         }
     else
       baseResults
-    val firstOverload = results.firstOrNull {
-      val element = it.element
-      element is PyCallable &&
-      element.containingFile is PyiFile &&
-      PyiTypeProvider.isOverload(element, TypeEvalContext.deepCodeInsight(project))
-    }
-    return if (firstOverload != null) listOf(firstOverload) else results
   }
 }

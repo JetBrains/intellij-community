@@ -97,6 +97,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return () -> {
       SingleInspectionProfilePanel panel = getSelectedPanel();
       if (panel != null) {
+        showProfile(getSelectedObject());
         panel.setFilter(option);
       }
     };
