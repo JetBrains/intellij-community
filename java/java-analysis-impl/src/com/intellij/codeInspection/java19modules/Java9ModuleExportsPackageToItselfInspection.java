@@ -22,7 +22,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Pavel.Dolgov
@@ -47,11 +50,18 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {
         String moduleName = javaModule.getName();
-        for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
+        List<PsiJavaModuleReferenceElement> references = ContainerUtil.newArrayList(statement.getModuleReferences());
+        for (PsiJavaModuleReferenceElement referenceElement : references) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
             String message = InspectionsBundle.message("inspection.module.exports.package.to.itself");
-            String fixText = InspectionsBundle.message("exports.to.itself.delete.module.fix.name", moduleName);
-            myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(referenceElement, fixText));
+            if (references.size() == 1) {
+              String fixText = InspectionsBundle.message("exports.to.itself.delete.statement.fix");
+              myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(statement, fixText));
+            }
+            else {
+              String fixText = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", moduleName);
+              myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(referenceElement, fixText));
+            }
           }
         }
       }

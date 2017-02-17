@@ -25,7 +25,8 @@ import org.intellij.lang.annotations.Language
  */
 class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private val message = InspectionsBundle.message("inspection.module.exports.package.to.itself")!!
-  private val fix = InspectionsBundle.message("exports.to.itself.delete.module.fix.name", "M")!!
+  private val fix1 = InspectionsBundle.message("exports.to.itself.delete.statement.fix")!!
+  private val fix2 = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", "M")!!
 
   override fun setUp() {
     super.setUp()
@@ -43,18 +44,18 @@ class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtur
   fun testOnlySelfExport() {
     highlight("module M { exports pkg.main to <warning descr=\"$message\">M</warning>; }")
     fix("module M { exports pkg.main to <caret>M; }",
-        "module M { exports pkg.main; }")
+        "module M {\n}")
   }
 
   fun testOnlySelfOpen() {
     highlight("module M { opens pkg.main to <warning descr=\"$message\">M</warning>; }")
     fix("module M { opens pkg.main to <caret>M; }",
-        "module M { opens pkg.main; }")
+        "module M {\n}")
   }
 
   fun testOnlySelfModuleWithComments() {
     fix("module M { exports pkg.main to /*a*/ <caret>M /*b*/; }",
-        "module M { exports pkg.main  /*a*/  /*b*/; }")
+        "module M { /*a*/ /*b*/\n}")
   }
 
   fun testSelfModuleInList() {
@@ -76,8 +77,7 @@ class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtur
   private fun fix(textBefore: String, @Language("JAVA") textAfter: String) {
     myFixture.configureByText("module-info.java", textBefore)
 
-    val action = myFixture.findSingleIntention(fix)
-    assertNotNull(action)
+    val action = myFixture.filterAvailableIntentions(fix1).firstOrNull() ?: myFixture.filterAvailableIntentions(fix2).first()
     myFixture.launchAction(action)
 
     myFixture.checkHighlighting()  // no warning
