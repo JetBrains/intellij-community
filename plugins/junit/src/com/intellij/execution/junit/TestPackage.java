@@ -67,7 +67,7 @@ public class TestPackage extends TestObject {
           try {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            ConfigurationUtil.findAllTestClasses(classFilter, myClasses);
+            ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
           }
           catch (CantRunException ignored) {}
         }
