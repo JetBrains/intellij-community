@@ -16,6 +16,13 @@ public class Test {
     ArrayList<String> result3 = new ArrayList<>(input);
       input.stream().filter(s -> !s.isEmpty()).forEach(result3::add);
     System.out.println(result3);
+
+    // Non-final var used in initializer
+    int size = 5;
+    if(size < input.size()) size = input.size();
+    List<String> result4 = new ArrayList<>(size);
+      input.stream().filter(s -> !s.isEmpty()).forEach(result4::add);
+    System.out.println(result4);
   }
 
   void testSet(List<String> input) {
