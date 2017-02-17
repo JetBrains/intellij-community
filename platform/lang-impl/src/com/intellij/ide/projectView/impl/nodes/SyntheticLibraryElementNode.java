@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -90,14 +89,8 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   protected void update(PresentationData presentation) {
-    ItemPresentation itemPresentation = ObjectUtils.tryCast(getLibrary(), ItemPresentation.class);
-    if (itemPresentation != null) {
-      presentation.updateFrom(itemPresentation);
-    }
-    else {
-      presentation.setPresentableText(getName());
-      presentation.setIcon(AllIcons.Nodes.PpLibFolder);
-    }
+    //noinspection CastToIncompatibleInterface
+    presentation.updateFrom((ItemPresentation)getLibrary());
   }
 
   @Nullable
