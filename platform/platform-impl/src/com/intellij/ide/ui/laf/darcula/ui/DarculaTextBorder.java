@@ -65,7 +65,9 @@ public class DarculaTextBorder implements Border, UIResource {
       Object eop = ((JTextComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
         DarculaUIUtil.paintErrorRing(g2, width, height, c.hasFocus());
-        DarculaUIUtil.showErrorTip((JComponent)c);
+        if (Registry.is("ide.inplace.errors.balloon")) {
+          DarculaUIUtil.showErrorTip((JComponent)c);
+        }
       } else if (c.hasFocus()) {
         DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
       } else {
