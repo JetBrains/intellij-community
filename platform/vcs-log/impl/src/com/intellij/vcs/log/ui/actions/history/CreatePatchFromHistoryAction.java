@@ -15,37 +15,54 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class CreatePatchFromHistoryAction extends AnAction implements DumbAware {
 
-  public CreatePatchFromHistoryAction() {
-    super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-          VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Actions.CreatePatch);
-  }
-
   @Override
-  public void update(AnActionEvent e) {
-    Change[] changes;
-    e.getPresentation().setEnabled((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0);
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+    if (project == null || ui == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
+    List<CommitId> selectedCommits = ui.getVcsLog().getSelectedCommits();
+    String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    e.getPresentation().setEnabledAndVisible(!selectedCommits.isEmpty() && commitMessage != null);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
 
-    CreatePatchFromChangesAction.createPatch(project, commitMessage, Arrays.asList(changes));
+    ui.getVcsLog().requestSelectedDetails(detailsList -> {
+      List<Change> changes = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+      for (VcsFullCommitDetails details : detailsListReversed) {
+        changes.addAll(ui.collectRelevantChanges(details));
+      }
+
+      changes = CommittedChangesTreeBrowser.zipChanges(changes);
+      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes);
+    }, null);
   }
 }
