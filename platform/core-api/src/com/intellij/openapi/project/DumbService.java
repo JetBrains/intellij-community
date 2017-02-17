@@ -21,10 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,6 +272,34 @@ public abstract class DumbService {
    * @see #setAlternativeResolveEnabled(boolean) 
    */
   public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
+   * Invokes the given computable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <T, E extends Throwable> T computeWithAlternativeResolveEnabled(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    setAlternativeResolveEnabled(true);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
+   * Invokes the given runnable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <E extends Throwable> void runWithAlternativeResolveEnabled(@NotNull ThrowableRunnable<E> runnable) throws E {
     setAlternativeResolveEnabled(true);
     try {
       runnable.run();
