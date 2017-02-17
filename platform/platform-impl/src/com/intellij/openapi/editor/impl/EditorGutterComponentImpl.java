@@ -300,7 +300,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isJreHiDPI(this)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
         paintAnnotations(g, startVisualLine, endVisualLine);
@@ -1163,7 +1163,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                int baseHeight,
                                boolean active) {
     Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isJreHiDPI(this)) {
+    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isJreHiDPI(g)) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 

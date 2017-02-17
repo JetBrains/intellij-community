@@ -412,9 +412,9 @@ public final class IconLoader {
     }
 
     @Override
-    public boolean updateJBUIScale(GraphicsConfiguration gc) {
-      if (needUpdateJBUIScale(gc)) {
-        getRealIcon(gc); // force update
+    public boolean updateJBUIScale(Graphics2D g) {
+      if (needUpdateJBUIScale(g)) {
+        getRealIcon(g); // force update
         return true;
       }
       return false;
@@ -426,12 +426,12 @@ public final class IconLoader {
     }
 
     @NotNull
-    private synchronized ImageIcon getRealIcon(@Nullable GraphicsConfiguration gc) {
-      if (!isValid() || needUpdateJBUIScale(gc)) {
+    private synchronized ImageIcon getRealIcon(@Nullable Graphics g) {
+      if (!isValid() || needUpdateJBUIScale((Graphics2D)g)) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        super.updateJBUIScale(gc);
+        super.updateJBUIScale((Graphics2D)g);
         setGlobalFilter(IMAGE_FILTER);
         if (!isValid()) myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
@@ -480,7 +480,7 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      getRealIcon(c != null ? c.getGraphicsConfiguration() : null).paintIcon(c, g, x, y);
+      getRealIcon(g).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -596,7 +596,7 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      final Icon icon = getOrComputeIcon(c != null ? c.getGraphicsConfiguration() : null);
+      final Icon icon = getOrComputeIcon(g);
       if (icon != null) {
         icon.paintIcon(c, g, x, y);
       }
@@ -618,10 +618,10 @@ public final class IconLoader {
       return getOrComputeIcon(null);
     }
 
-    protected final synchronized Icon getOrComputeIcon(@Nullable GraphicsConfiguration gc) {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale(gc) || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
+    protected final synchronized Icon getOrComputeIcon(@Nullable Graphics g) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale((Graphics2D)g) || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
         isDarkVariant = USE_DARK_ICONS;
-        updateJBUIScale(gc);
+        updateJBUIScale((Graphics2D)g);
         filter = IMAGE_FILTER;
         myWasComputed = true;
         numberOfPatchers = ourPatchers.size();

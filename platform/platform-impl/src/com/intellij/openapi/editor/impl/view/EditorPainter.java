@@ -836,7 +836,7 @@ class EditorPainter implements TextDrawingCallback {
         int lineWidth = JBUI.scale(attr.getWidth(settings.getLineCursorWidth()));
         // fully cover extra character's pixel which can appear due to antialiasing
         // see IDEA-148843 for more details
-        if (x > minX && lineWidth > 1) x -= 1 / JBUI.sysScale(myEditor.getComponent());
+        if (x > minX && lineWidth > 1) x -= 1 / JBUI.sysScale(g);
         g.fill(new Rectangle2D.Float(x, y, lineWidth, nominalLineHeight));
         if (myDocument.getTextLength() > 0 && caret != null &&
             !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {

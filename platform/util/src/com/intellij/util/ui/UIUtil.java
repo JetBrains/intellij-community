@@ -355,6 +355,14 @@ public class UIUtil {
   }
 
   /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the graphics represents a HiDPI device.
+   * (analogue of {@link #isRetina(Graphics2D)} on macOS)
+   */
+  public static boolean isJreHiDPI(@Nullable Graphics2D g) {
+    return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(g));
+  }
+
+  /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
    */
   public static boolean isJreHiDPI(@Nullable Component comp) {
@@ -1722,7 +1730,7 @@ public class UIUtil {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
-    if (isJreHiDPI(g.getDeviceConfiguration())) {
+    if (isJreHiDPI(g)) {
       GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
       g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
       c.restore();
@@ -1819,7 +1827,7 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI(((Graphics2D)g).getDeviceConfiguration());
+      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
       if (jmHiDPI) {
         ((Graphics2D)g).setStroke(new BasicStroke(2f));
       }
@@ -1950,10 +1958,14 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
     if (g instanceof Graphics2D) {
-      return createImage(((Graphics2D)g).getDeviceConfiguration(), width, height, type);
+      Graphics2D g2d = (Graphics2D)g;
+      if (isJreHiDPI(g2d)) {
+        return RetinaImage.create(g2d, width, height, type);
+      }
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
     }
-    return createImage(width, height, type);
-  }
+    return createImage(width, height, type);  }
 
   /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
@@ -2037,7 +2049,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isJreHiDPI(((Graphics2D)g).getDeviceConfiguration()) || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || !isJreHiDPI((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
@@ -2188,10 +2200,10 @@ public class UIUtil {
 
   public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    GraphicsConfiguration gc = ((Graphics2D)g).getDeviceConfiguration();
-    boolean isRetina = isJreHiDPI(gc);
-    for (float i = x - 1; i <= x + 1; i += isRetina ? 1/JBUI.sysScale(gc) : 1) {
-      for (float j = y - 1; j <= y + 1; j += isRetina ? 1/JBUI.sysScale(gc) : 1) {
+    boolean isRetina = isJreHiDPI((Graphics2D)g);
+    float scale = 1 / JBUI.sysScale((Graphics2D)g);
+    for (float i = x - 1; i <= x + 1; i += isRetina ? scale : 1) {
+      for (float j = y - 1; j <= y + 1; j += isRetina ? scale : 1) {
         ((Graphics2D)g).drawString(s, i, j);
       }
     }
