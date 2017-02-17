@@ -162,14 +162,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber);
     }
 
-    final Method method = location.method();
+    final Method method = DebuggerUtilsEx.getMethod(location);
 
     if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
-      String methodSignature = method.signature();
-      String methodName = method.name();
-      if (methodSignature != null && methodName != null) {
+      if (method != null && method.name() != null && method.signature() != null) {
         PsiClass psiClass = findPsiClassByName(qName, null);
-        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, methodName, methodSignature);
+        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, method.name(), method.signature());
         if (compiledMethod != null) {
           sourcePosition = SourcePosition.createFromElement(compiledMethod);
           if (lineNumber >= 0) {
@@ -187,11 +185,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     int lambdaOrdinal = -1;
-    if (DebuggerUtilsEx.isLambdaName(method.name())) {
+    if (DebuggerUtilsEx.isLambda(method)) {
       Set<Method> lambdas =
         ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), location1 -> {
           Method method1 = location1.method();
-          if (DebuggerUtilsEx.isLambdaName(method1.name())) {
+          if (DebuggerUtilsEx.isLambda(method1)) {
             return method1;
           }
           return null;

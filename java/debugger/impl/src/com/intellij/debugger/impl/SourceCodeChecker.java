@@ -101,7 +101,7 @@ public class SourceCodeChecker {
         method.isBridge() ||
         method.isStaticInitializer() ||
         (method.declaringType() instanceof ClassType && ((ClassType)method.declaringType()).isEnum()) ||
-        DebuggerUtilsEx.isLambdaName(method.name())) {
+        DebuggerUtilsEx.isLambda(method)) {
       return ThreeState.UNSURE;
     }
     List<Location> locations = DebuggerUtilsEx.allLineLocations(method);

@@ -70,7 +70,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         }
         LOG.info(e);
       }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, getMethod(myLocation));
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, DebuggerUtilsEx.getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       mySourcePosition = ContextUtil.getSourcePosition(this);
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
@@ -83,17 +83,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
-  }
-
-  @Nullable
-  private static Method getMethod(Location location) {
-    try {
-      return location.method();
-    }
-    catch (IllegalArgumentException e) { // Invalid method id
-      LOG.info(e);
-    }
-    return null;
   }
 
   public int getUiIndex() {
