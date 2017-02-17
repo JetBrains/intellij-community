@@ -27,33 +27,38 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
+import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class InspectionsConfigTreeRenderer extends ColoredTreeCellRenderer {
+public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer {
   protected abstract String getFilter();
 
   @Override
-  public void customizeCellRenderer(@NotNull JTree tree,
-                                    Object value,
-                                    boolean selected,
-                                    boolean expanded,
-                                    boolean leaf,
-                                    int row,
-                                    boolean hasFocus) {
-    if (!(value instanceof InspectionConfigTreeNode)) return;
+  public Component getTreeCellRendererComponent(JTree tree,
+                                                Object value,
+                                                boolean selected,
+                                                boolean expanded,
+                                                boolean leaf,
+                                                int row,
+                                                boolean hasFocus) {
+    final SimpleColoredComponent component = new SimpleColoredComponent();
+    if (!(value instanceof InspectionConfigTreeNode)) return component;
     InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
 
     Object object = node.getUserObject();
-
+    boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
+    final Color background = selected ? (reallyHasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
+                                      : UIUtil.getTreeTextBackground();
+    UIUtil.changeBackGround(component, background);
     Color foreground =
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();
 
@@ -73,12 +78,13 @@ public abstract class InspectionsConfigTreeRenderer extends ColoredTreeCellRende
     }
 
     if (text != null) {
-      SearchUtil.appendFragments(getFilter(), text, style, foreground, getBackground(), this);
+      SearchUtil.appendFragments(getFilter(), text, style, foreground, background, component);
     }
     if (hint != null) {
-      append(" " + hint, selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      component.append(" " + hint, selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    setForeground(foreground);
+    component.setForeground(foreground);
+    return component;
   }
 
   @Nullable
