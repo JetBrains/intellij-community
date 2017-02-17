@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -32,7 +31,6 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -42,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -52,18 +49,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
-  @NotNull private final VcsLogData myLogData;
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
-
-  @NotNull private List<Change> mySelectedChanges = Collections.emptyList();
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
                           @NotNull VcsLogData logData,
                           @NotNull VisiblePack visiblePack,
                           @NotNull FilePath filePath) {
     myUi = ui;
-    myLogData = logData;
     myFilePath = filePath;
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack) {
       @Override
@@ -79,12 +72,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                     myLogData, this));
+                                                                     logData, this));
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
+    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
     setLayout(new BorderLayout());
     add(myDetailsSplitter, BorderLayout.CENTER);
@@ -124,8 +116,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Override
   public Object getData(String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      if (myGraphTable.getSelectedRowCount() == 0) return null;
-      return ArrayUtil.toObjectArray(mySelectedChanges, Change.class);
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ArrayUtil.toObjectArray(myUi.collectChanges(details, true), Change.class);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
@@ -137,15 +130,17 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
-      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, myUi::createRevision), VcsFileRevision.class);
     }
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      VcsFullCommitDetails details = notNull(getFirstItem(myUi.getVcsLog().getSelectedDetails()));
-      Object revision = myUi.createVcsVirtualFile(details);
+      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      if (details.isEmpty()) return null;
+      VcsFullCommitDetails detail = notNull(getFirstItem(details));
+      Object revision = myUi.createVcsVirtualFile(detail);
       if (revision != null) return revision;
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
@@ -160,41 +155,5 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Override
   public void dispose() {
     myDetailsSplitter.dispose();
-  }
-
-  private class MyCommitSelectionListenerForDiff extends CommitSelectionListenerForDiff {
-
-    protected MyCommitSelectionListenerForDiff() {
-      super(myLogData, FileHistoryPanel.this.myGraphTable);
-    }
-
-    @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
-      List<Change> changes = ContainerUtil.newArrayList();
-      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-      for (VcsFullCommitDetails details : detailsListReversed) {
-        changes.addAll(myUi.collectRelevantChanges(details));
-      }
-      changes = CommittedChangesTreeBrowser.zipChanges(changes);
-      setChangesToDisplay(changes);
-    }
-
-    @Override
-    protected void setChangesToDisplay(@NotNull List<Change> changes) {
-      mySelectedChanges = changes;
-    }
-
-    @Override
-    protected void clearChanges() {
-      mySelectedChanges = Collections.emptyList();
-    }
-
-    @Override
-    protected void startLoading() {
-    }
-
-    @Override
-    protected void stopLoading() {
-    }
   }
 }

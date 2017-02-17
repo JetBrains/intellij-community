@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -154,6 +155,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private static boolean affectsDirectories(@NotNull Change change, @NotNull Set<FilePath> directories) {
     FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
     return ContainerUtil.find(directories, dir -> VfsUtilCore.isAncestor(dir.getIOFile(), file.getIOFile(), false)) != null;
+  }
+
+  @NotNull
+  public List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList, boolean onlyRelevant) {
+    List<Change> changes = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+    for (VcsFullCommitDetails details : detailsListReversed) {
+      changes.addAll(onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
+    }
+
+    return CommittedChangesTreeBrowser.zipChanges(changes);
   }
 
   @NotNull
