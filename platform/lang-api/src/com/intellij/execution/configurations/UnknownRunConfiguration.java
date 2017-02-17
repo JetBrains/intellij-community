@@ -101,12 +101,6 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
     }
   }
 
-
-  @Override
-  public int getUniqueID() {
-    return System.identityHashCode(this);
-  }
-
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     String factoryName = "";

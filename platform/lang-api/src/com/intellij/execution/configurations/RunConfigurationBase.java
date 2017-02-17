@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Standard base class for run configuration implementations.
@@ -52,8 +54,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private String myName = "";
   private final Icon myIcon;
 
-  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<>();
-  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<>();
+  private List<LogFileOptions> myLogFiles = new SmartList<>();
+  private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
   private boolean mySaveOutput = false;
   private boolean myShowConsoleOnStdOut = false;
   private boolean myShowConsoleOnStdErr = false;
@@ -142,11 +144,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myPredefinedLogFiles.clear();
   }
 
-  public void addPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+  public void addPredefinedLogFile(@NotNull PredefinedLogFile predefinedLogFile) {
     myPredefinedLogFiles.add(predefinedLogFile);
   }
 
-  public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
+  @NotNull
+  public List<PredefinedLogFile> getPredefinedLogFiles() {
     return myPredefinedLogFiles;
   }
 
@@ -162,7 +165,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return list;
   }
 
-  public ArrayList<LogFileOptions> getLogFiles() {
+  @NotNull
+  public List<LogFileOptions> getLogFiles() {
     return myLogFiles;
   }
 
