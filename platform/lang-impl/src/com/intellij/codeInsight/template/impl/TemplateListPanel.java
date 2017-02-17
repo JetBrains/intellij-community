@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     }
 
-
     for (TemplateGroup templateGroup : templateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
         template.applyOptions(getTemplateOptions(template));
@@ -164,7 +163,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    templateSettings.setTemplates(mutatorHelper.apply(templateGroups));
+    templateSettings.setTemplates(mutatorHelper.apply(templateGroups, (original, copied) -> {
+      if (!original.getElements().equals(copied.getElements())) {
+        original.setModified(true);
+      }
+    }));
     templateSettings.setDefaultShortcutChar(myExpandByDefaultPanel.getSelectedChar());
   }
 

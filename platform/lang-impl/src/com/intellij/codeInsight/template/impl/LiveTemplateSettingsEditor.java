@@ -115,7 +115,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
-        myTemplate.setDescription(StringUtil.notNullize(myDescription.getText()).trim());
+        myTemplate.setDescription(myDescription.getText());
         myNodeChanged.run();
       }
     });
