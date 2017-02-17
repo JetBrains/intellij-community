@@ -86,6 +86,19 @@ class GitUpdateTest : GitSingleRepoTest() {
     myRepo.assertStatus(localFile, 'A')
   }
 
+  // IDEA-167688
+  fun `test stash is not called for rebase if there are no local changes`() {
+    broRepo.commitAndPush()
+
+    var stashCalled = false
+    myGit.stashListener = {
+      stashCalled = true
+    }
+
+    updateWithRebase()
+    assertFalse("Stash shouldn't be called for clean working tree", stashCalled)
+  }
+
   private fun createBroRepo(broName: String, parentRepo: File): File {
     cd(myTestRoot)
     git("clone " + parentRepo.name + " " + broName)
