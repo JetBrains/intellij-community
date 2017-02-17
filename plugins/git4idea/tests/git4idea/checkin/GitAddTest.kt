@@ -18,6 +18,7 @@ package git4idea.checkin
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertStatus
 import git4idea.test.git
 
 class GitAddTest : GitSingleRepoTest() {
@@ -30,22 +31,16 @@ class GitAddTest : GitSingleRepoTest() {
   fun `test add one file`() {
     val file = prepareUnversionedFile("unv.txt")
     addUnversionedFile(file)
-    assertStatus(file, 'A')
+    myRepo.assertStatus(file, 'A')
   }
 
   fun `test add directory`() {
     val file = prepareUnversionedFile("dir/unv.txt")
     addUnversionedFile(myProjectRoot.findChild("dir")!!)
-    assertStatus(file, 'A')
+    myRepo.assertStatus(file, 'A')
   }
 
   private fun addUnversionedFile(file: VirtualFile) {
     changeListManager.addUnversionedFiles(changeListManager.addChangeList("dummy", null), listOf(file))
-  }
-
-  private fun assertStatus(file: VirtualFile, status: Char) {
-    val actualStatus = git(myRepo, "status --porcelain ${file.path}")
-    assertTrue("File status is not-changed: $actualStatus", !actualStatus.isEmpty())
-    assertEquals("File status is incorrect: $actualStatus", status, actualStatus[0])
   }
 }

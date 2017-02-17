@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
