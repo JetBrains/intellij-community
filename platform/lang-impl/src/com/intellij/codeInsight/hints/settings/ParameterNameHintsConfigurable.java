@@ -67,7 +67,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private Map<Language, String> myBlackLists = ContainerUtil.newHashMap();
   private Map<Option, JBCheckBox> myOptions;
   
-  private CardLayout myCardLayout;
+  private CardLayout myOptionsCardLayout;
 
   public ParameterNameHintsConfigurable() {
     this(null, null);
@@ -186,9 +186,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void createOptionsPanel(final Language selected,
                                   final List<Language> allLanguages) {
-    myCardLayout = new CardLayout();
+    myOptionsCardLayout = new CardLayout();
     myOptionsPanel = new JPanel();
-    myOptionsPanel.setLayout(myCardLayout);
+    myOptionsPanel.setLayout(myOptionsCardLayout);
     myOptions = ContainerUtil.newHashMap();
 
     allLanguages.forEach(language -> {
@@ -211,7 +211,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       myOptionsPanel.add(language.getDisplayName(), languagePanel);
     });
     
-    myCardLayout.show(myOptionsPanel, selected.getDisplayName());
+    myOptionsCardLayout.show(myOptionsPanel, selected.getDisplayName());
   }
 
   private void initLanguageCombo(Language selected, List<Language> languages) {
@@ -250,7 +250,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       text = getLanguageBlackList(language);
     }
     myEditorTextField.setText(text);
-    myCardLayout.show(myOptionsPanel, language.getDisplayName());
+    myOptionsCardLayout.show(myOptionsPanel, language.getDisplayName());
   }
 
   private static List<Option> getOptions(Language language) {
