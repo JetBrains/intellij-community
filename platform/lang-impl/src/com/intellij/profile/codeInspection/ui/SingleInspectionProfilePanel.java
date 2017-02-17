@@ -130,6 +130,16 @@ public class SingleInspectionProfilePanel extends JPanel {
     return myInitialToolDescriptors;
   }
 
+  public boolean differsFromDefault() {
+    return myRoot.isProperSetting();
+  }
+
+  public void performProfileReset() {
+    getProfile().resetToBase(myProjectProfileManager.getProject());
+    loadDescriptorsConfigs(true);
+    postProcessModification();
+  }
+
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
     if (profile.isProjectLevel()) {
       return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
@@ -499,25 +509,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myProfile.resetToEmpty(e.getProject());
+        myProfile.resetToEmpty(myProjectProfileManager.getProject());
         loadDescriptorsConfigs(false);
         postProcessModification();
       }
     });
-
-    actions.add(new AdvancedSettingsAction(myProjectProfileManager.getProject(), myRoot) {
-      @Override
-      protected InspectionProfileModifiableModel getInspectionProfile() {
-        return myProfile;
-      }
-
-      @Override
-      protected void postProcessModification() {
-        loadDescriptorsConfigs(true);
-        SingleInspectionProfilePanel.this.postProcessModification();
-      }
-    });
-
 
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
     actionToolbar.setTargetComponent(this);

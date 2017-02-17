@@ -101,6 +101,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
+  protected boolean highlightNonDefaultSchemes() {
+    return false;
+  }
+
+  @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
       @Nullable
@@ -158,7 +163,8 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
 
       @Override
       protected void resetScheme(@NotNull InspectionProfileModifiableModel scheme) {
-        throw new UnsupportedOperationException();
+        final SingleInspectionProfilePanel panel = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(scheme);
+        panel.performProfileReset();
       }
 
       @Override

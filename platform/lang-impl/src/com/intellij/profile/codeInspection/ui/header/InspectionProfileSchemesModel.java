@@ -87,7 +87,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   @Override
   public boolean differsFromDefault(@NotNull InspectionProfileModifiableModel profile) {
-    return false;
+    return getProfilePanel(profile).differsFromDefault();
   }
 
   @Override

@@ -166,7 +166,7 @@ public class EditableSchemesCombo<T extends Scheme> {
         SimpleTextAttributes baseAttributes = model.canDeleteScheme(scheme)
                ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-        if (model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
+        if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
           return baseAttributes.derive(-1, JBColor.BLUE, null, null);
         }
         return baseAttributes;
