@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,7 +23,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
@@ -861,7 +862,7 @@ public class LambdaUtil {
       }
       PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
       anEnum.add(resolveMethod);
-      return  (PsiCall)anEnum.add(copyCall);
+      return  (PsiCall)anEnum.add(call);
     }
     return copyCall;
   }
