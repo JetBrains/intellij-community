@@ -19,13 +19,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Pavel.Dolgov
@@ -34,31 +31,25 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    if (file instanceof PsiJavaFile) {
-      PsiJavaFile javaFile = (PsiJavaFile)file;
-      if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9) && javaFile.getModuleDeclaration() != null) {
-        return new ExportedToSelfVisitor(holder);
-      }
-    }
-    return PsiElementVisitor.EMPTY_VISITOR;
+    return PsiUtil.isModuleFile(holder.getFile()) ? new ExportedToSelfVisitor(holder) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
   private static class ExportedToSelfVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public ExportedToSelfVisitor(ProblemsHolder holder) { myHolder = holder; }
+    public ExportedToSelfVisitor(ProblemsHolder holder) {
+      myHolder = holder;
+    }
 
     @Override
-    public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
-      super.visitExportsStatement(statement);
+    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+      super.visitPackageAccessibilityStatement(statement);
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {
         String moduleName = javaModule.getName();
-        List<PsiJavaModuleReferenceElement> referenceElements = ContainerUtil.newArrayList(statement.getModuleReferences());
-        for (PsiJavaModuleReferenceElement referenceElement : referenceElements) {
+        for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
-            String message = InspectionsBundle.message("inspection.module.exports.package.to.itself.message");
+            String message = InspectionsBundle.message("inspection.module.exports.package.to.itself");
             String fixText = InspectionsBundle.message("exports.to.itself.delete.module.fix.name", moduleName);
             myHolder.registerProblem(referenceElement, message, new DeleteElementFix(referenceElement, fixText));
           }
