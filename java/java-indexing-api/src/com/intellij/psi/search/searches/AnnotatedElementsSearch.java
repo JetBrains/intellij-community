@@ -75,7 +75,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
 
   @NotNull
   public static Query<? extends PsiModifierListOwner> searchElements(Parameters parameters) {
-    return new InstanceofQuery<>(INSTANCE.createQuery(parameters), parameters.getTypes());
+    return new InstanceofQuery<PsiModifierListOwner>(INSTANCE.createQuery(parameters), parameters.getTypes());
   }
 
   public static Query<PsiClass> searchPsiClasses(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
