@@ -1651,8 +1651,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       imageGraphics.dispose();
       Graphics2D g2d = (Graphics2D)g.create();
       try {
-        if (UIUtil.isJreHiDPI(this)) {
-          float s = 1 / JBUI.sysScale(this);
+        if (UIUtil.isJreHiDPI(g2d)) {
+          float s = 1 / JBUI.sysScale(g2d);
           g2d.scale(s, s);
         }
         UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
@@ -1719,7 +1719,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (myShadow != null) {
         Graphics2D g2d = (Graphics2D)graphics;
         try {
-          if (UIUtil.isJreHiDPI(this)) {
+          if (UIUtil.isJreHiDPI(g2d)) {
             g2d = (Graphics2D)graphics.create();
             float s = 1 / JBUI.sysScale(this);
             g2d.scale(s, s);
