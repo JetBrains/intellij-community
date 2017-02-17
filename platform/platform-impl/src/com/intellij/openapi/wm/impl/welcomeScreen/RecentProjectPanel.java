@@ -179,7 +179,7 @@ public class RecentProjectPanel extends JPanel {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!ListWithFilter.isSearchActive(myList));
+        e.getPresentation().setEnabled(true);
       }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
