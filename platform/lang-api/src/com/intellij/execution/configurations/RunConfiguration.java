@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see RefactoringListenerProvider
  */
-public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
+public interface RunConfiguration extends RunProfile, Cloneable {
   DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
 
   /**
@@ -111,7 +111,9 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
    * @return the unique ID of the configuration.
    */
   @Deprecated
-  int getUniqueID();
+  default int getUniqueID() {
+    return System.identityHashCode(this);
+  }
 
   /**
    * Checks whether the run configuration settings are valid.
@@ -123,4 +125,10 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
    *                                       to execute the run configuration.
    */
   void checkConfiguration() throws RuntimeConfigurationException;
+
+  default void readExternal(Element element) {
+  }
+
+  default void writeExternal(Element element) {
+  }
 }

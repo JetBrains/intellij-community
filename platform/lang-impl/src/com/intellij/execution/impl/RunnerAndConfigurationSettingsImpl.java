@@ -15,10 +15,12 @@
  */
 package com.intellij.execution.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.module.Module;
@@ -379,7 +381,14 @@ public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndC
         PathMacroManager.getInstance(module).expandPaths(element);
       }
     }
-    myConfiguration.readExternal(element);
+
+    if (myConfiguration instanceof PersistentStateComponent) {
+      XmlSerializer.deserializeAndLoadState((PersistentStateComponent)myConfiguration, element);
+    }
+    else {
+      myConfiguration.readExternal(element);
+    }
+
     myRunnerSettings.loadState(element);
     myConfigurationPerRunnerSettings.loadState(element);
   }
@@ -414,7 +423,13 @@ public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndC
       }
     }
 
-    myConfiguration.writeExternal(element);
+    if (myConfiguration instanceof PersistentStateComponent) {
+      //noinspection ConstantConditions
+      XmlSerializer.serializeInto(((PersistentStateComponent)myConfiguration).getState(), element);
+    }
+    else {
+      myConfiguration.writeExternal(element);
+    }
 
     if (!(myConfiguration instanceof UnknownRunConfiguration)) {
       myRunnerSettings.getState(element);

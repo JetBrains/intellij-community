@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xmlb;
+package com.intellij.execution.impl
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.Project
 
-import java.lang.reflect.Type;
-
-public interface Serializer {
-  @NotNull
-  Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor);
-
-  Binding getClassBinding(@NotNull Class<?> aClass);
-
-  @Nullable
-  Binding getBinding(@NotNull MutableAccessor accessor);
-
-  @Nullable
-  Binding getBinding(@NotNull Type type);
-
-  @Nullable
-  Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type);
+internal class WorkspaceRunManager(project: Project, propertiesComponent: PropertiesComponent, schemeManagerFactory: SchemeManagerFactory) : RunManagerImpl(project, propertiesComponent) {
 }
