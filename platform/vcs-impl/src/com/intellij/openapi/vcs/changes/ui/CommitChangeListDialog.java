@@ -49,9 +49,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -66,11 +64,15 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.createMaybeSingletonList;
+import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.util.ArrayUtil.toObjectArray;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.*;
 
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
-  private static final String TITLE = VcsBundle.message("commit.dialog.title");
+  private static final String TITLE = message("commit.dialog.title");
 
   private static final int LAYOUT_VERSION = 2;
   private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
@@ -92,10 +94,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
   @Nullable private final CommitResultHandler myResultHandler;
 
-  @NotNull private final List<CheckinHandler> myHandlers = ContainerUtil.newArrayList();
-  @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = ContainerUtil.newHashMap();
-  @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = ContainerUtil.newArrayList();
-  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = ContainerUtil.newHashMap();
+  @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
+  @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = newHashMap();
+  @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = newArrayList();
+  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = newHashMap();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
 
   @NotNull private final Map<String, String> myListComments;
@@ -134,8 +136,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  @Nullable LocalChangeList initialSelection,
                                  @Nullable CommitExecutor executor,
                                  @Nullable String comment) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Collection<Change> changes = new HashSet<>();
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+    Collection<Change> changes = newHashSet();
     for (FilePath path : paths) {
       changes.addAll(manager.getChangesIn(path));
     }
@@ -146,13 +148,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<Change> changes,
                                       @Nullable LocalChangeList initialSelection,
-                                      @Nullable final CommitExecutor executor,
+                                      @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor == null) {
       return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment, null);
     }
     else {
-      return commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment, null);
+      return commitChanges(project, changes, initialSelection, singletonList(executor), false, comment, null);
     }
   }
 
@@ -170,7 +172,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler, true);
+    return commitChanges(project, newArrayList(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler, true);
   }
 
   public static boolean commitChanges(@NotNull Project project,
@@ -190,15 +192,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
-                                      @Nullable final AbstractVcs singleVcs,
+                                      @Nullable AbstractVcs singleVcs,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
     if (cancelIfNoChanges && changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       boolean hasUnversioned = !ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles().isEmpty();
       if (!showVcsCommit || !hasUnversioned) {
-        Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
+        Messages.showInfoMessage(project, message("commit.dialog.no.changes.detected.text"),
+                                 message("commit.dialog.no.changes.detected.title"));
         return false;
       }
     }
@@ -210,11 +212,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    ChangeListManager manager = ChangeListManager.getInstance(project);
     CommitChangeListDialog dialog =
       new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, manager.getDefaultChangeList(),
-                                 manager.getChangeListsCopy(), singleVcs,
-                                 false, comment, customResultHandler);
+                                 manager.getChangeListsCopy(), singleVcs, false, comment, customResultHandler);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.show();
     }
@@ -238,7 +239,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
-    List<CommitExecutor> result = new ArrayList<>();
+    List<CommitExecutor> result = newArrayList();
     for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
       result.addAll(vcs.getCommitExecutors());
     }
@@ -251,9 +252,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                         @NotNull AbstractVcs vcs,
                                         @NotNull String changelistName,
                                         @Nullable String comment) {
-    final LocalChangeList lcl = new AlienLocalChangeList(changes, changelistName);
-    new CommitChangeListDialog(project, changes, null, Collections.emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN,
-                               Collections.singletonList(lcl), vcs, true, comment, null).show();
+    LocalChangeList changeList = new AlienLocalChangeList(changes, changelistName);
+    new CommitChangeListDialog(project, changes, null, emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN, singletonList(changeList),
+                               vcs, true, comment, null).show();
   }
 
   private CommitChangeListDialog(@NotNull Project project,
@@ -263,7 +264,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  boolean showVcsCommit,
                                  @NotNull LocalChangeList defaultChangeList,
                                  @NotNull List<LocalChangeList> changeLists,
-                                 @Nullable final AbstractVcs singleVcs,
+                                 @Nullable AbstractVcs singleVcs,
                                  boolean isAlien,
                                  @Nullable String comment,
                                  @Nullable CommitResultHandler customResultHandler) {
@@ -275,22 +276,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myShowVcsCommit = showVcsCommit;
     mySingleVcs = singleVcs;
     myResultHandler = customResultHandler;
-    myListComments = new HashMap<>();
+    myListComments = newHashMap();
     myAdditionalData = new PseudoMap<>();
     myDiffDetails = new MyChangeProcessor(myProject);
 
-    if (!myShowVcsCommit && ContainerUtil.isEmpty(myExecutors)) {
+    if (!myShowVcsCommit && isEmpty(myExecutors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    myAllOfDefaultChangeListChangesIncluded =
-      ContainerUtil.newHashSet(changes).containsAll(ContainerUtil.newHashSet(defaultChangeList.getChanges()));
+    myAllOfDefaultChangeListChangesIncluded = newHashSet(changes).containsAll(newHashSet(defaultChangeList.getChanges()));
 
     myCommitMessageArea = new CommitMessage(project);
 
     myIsAlien = isAlien;
     if (isAlien) {
-      myCommitMessageArea.setChangeLists(ContainerUtil.newArrayList(changeLists));
+      myCommitMessageArea.setChangeLists(newArrayList(changeLists));
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
@@ -329,8 +329,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    final String actionName = getCommitActionName();
-    final String borderTitleName = actionName.replace("_", "").replace("&", "");
+    String actionName = getCommitActionName();
+    String borderTitleName = actionName.replace("_", "").replace("&", "");
 
     JPanel optionsPanel = createOptionsPanel(project, borderTitleName);
     restoreState();
@@ -349,7 +349,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitAction = null;
     }
 
-    myExecutorActions = ContainerUtil.map(myExecutors, CommitExecutorAction::new);
+    myExecutorActions = map(myExecutors, CommitExecutorAction::new);
     if (myCommitAction != null) {
       myCommitAction.setOptions(myExecutorActions);
       myHelpId = HELP_ID;
@@ -375,7 +375,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       mainPanel = mySplitter;
     }
 
-    final JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new GridBagLayout());
     panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
 
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
@@ -389,7 +389,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                            myDiffDetails.refresh();
                                                            mySplitter.skipNextLayouting();
                                                            myDetailsSplitter.getComponent().skipNextLayouting();
-                                                           final Dimension dialogSize = getSize();
+                                                           Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height + integer);
                                                            repaint();
                                                          }
@@ -400,14 +400,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                            myDiffDetails.clear(); // TODO: we may want to keep it in memory
                                                            mySplitter.skipNextLayouting();
                                                            myDetailsSplitter.getComponent().skipNextLayouting();
-                                                           final Dimension dialogSize = getSize();
+                                                           Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height - integer);
                                                            repaint();
                                                          }
                                                        }) {
       @Override
       protected RefreshablePanel createDetails() {
-        final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
+        JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
         return new RefreshablePanel() {
           @Override
           public void refresh() {
@@ -445,10 +445,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private JPanel createOptionsPanel(@NotNull Project project, @NotNull String borderTitleName) {
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
-    for (AbstractVcs vcs : ContainerUtil.sorted(getAffectedVcses(), VCS_COMPARATOR)) {
-      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+    for (AbstractVcs vcs : sorted(getAffectedVcses(), VCS_COMPARATOR)) {
+      CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
+        RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
@@ -469,18 +469,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Box beforeBox = Box.createVerticalBox();
     Box afterBox = Box.createVerticalBox();
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
-      final CheckinHandler handler = factory.createHandler(this, myCommitContext);
+      CheckinHandler handler = factory.createHandler(this, myCommitContext);
       if (CheckinHandler.DUMMY.equals(handler)) continue;
 
       myHandlers.add(handler);
-      final RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
+      RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
       if (beforePanel != null) {
         beforeBox.add(beforePanel.getComponent());
         beforeVisible = true;
         myAdditionalComponents.add(beforePanel);
       }
 
-      final RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(getDisposable());
+      RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(getDisposable());
       if (afterPanel != null) {
         afterBox.add(afterPanel.getComponent());
         afterVisible = true;
@@ -501,7 +501,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       JPanel beforePanel = new JPanel(new BorderLayout());
       beforePanel.add(beforeBox);
       beforePanel.setBorder(IdeBorderFactory.createTitledBorder(
-        VcsBundle.message("border.standard.checkin.options.group", borderTitleName), true));
+        message("border.standard.checkin.options.group", borderTitleName), true));
       optionsBox.add(beforePanel);
     }
 
@@ -510,7 +510,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       JPanel afterPanel = new JPanel(new BorderLayout());
       afterPanel.add(afterBox);
       afterPanel.setBorder(IdeBorderFactory.createTitledBorder(
-        VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), true));
+        message("border.standard.after.checkin.options.group", borderTitleName), true));
       optionsBox.add(afterPanel);
     }
 
@@ -543,7 +543,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
         setCommitMessage(myVcsConfiguration.LAST_COMMIT_MESSAGE);
-        final String messageFromVcs = getInitialMessageFromVcs();
+        String messageFromVcs = getInitialMessageFromVcs();
         if (messageFromVcs != null) {
           myCommitMessageArea.setText(messageFromVcs);
         }
@@ -573,11 +573,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myWarningLabel != null) {
       myWarningLabel.setVisible(false);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-      final VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
+      VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
       if (updateException != null) {
-        final String[] messages = updateException.getMessages();
+        String[] messages = updateException.getMessages();
         if (messages != null && messages.length > 0) {
-          final String message = messages[0];
+          String message = messages[0];
           myWarningLabel.setText("Warning: not all local changes may be shown due to an error: " + message);
           myWarningLabel.setVisible(true);
         }
@@ -618,7 +618,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void setOptions(List<? extends Action> actions) {
-      myOptions = ArrayUtil.toObjectArray(actions, Action.class);
+      myOptions = toObjectArray(actions, Action.class);
     }
   }
 
@@ -637,7 +637,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @NotNull
   protected Action[] createActions() {
-    final List<Action> actions = new ArrayList<>();
+    List<Action> actions = newArrayList();
 
     if (myCommitAction != null) {
       actions.add(myCommitAction);
@@ -660,7 +660,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     ensureDataIsActual(() -> {
       try {
-        final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+        DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
         CheckinHandler.ReturnResult result = runBeforeCommitHandlers(null);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
@@ -675,8 +675,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
   }
 
-  private void execute(final CommitExecutor commitExecutor) {
-    final CommitSession session = commitExecutor.createCommitSession();
+  private void execute(CommitExecutor commitExecutor) {
+    CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
       executeDefaultCommitSession();
       return;
@@ -690,28 +690,25 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     ensureDataIsActual(() -> {
-      final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
+      JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
       if (configurationUI != null) {
-        DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
-                                                        getProject(),
-                                                        session,
-                                                        getIncludedChanges(),
-                                                        getCommitMessage(),
-                                                        configurationUI);
+        DialogWrapper sessionDialog =
+          new SessionDialog(commitExecutor.getActionText(), getProject(), session, getIncludedChanges(), getCommitMessage(),
+                            configurationUI);
         if (!sessionDialog.showAndGet()) {
           session.executionCanceled();
           return;
         }
       }
 
-      final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
+      DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       CheckinHandler.ReturnResult result = runBeforeCommitHandlers(commitExecutor);
       if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
         try {
-          final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> session.execute(getIncludedChanges(), getCommitMessage()),
-            commitExecutor.getActionText(), true, getProject());
+          boolean completed = ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously(() -> session.execute(getIncludedChanges(), getCommitMessage()),
+                                                 commitExecutor.getActionText(), true, getProject());
 
           if (completed) {
             for (CheckinHandler handler : myHandlers) {
@@ -727,11 +724,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
         catch (Throwable e) {
-          Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
+          Messages.showErrorDialog(message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
                                    commitExecutor.getActionText());
 
           for (CheckinHandler handler : myHandlers) {
-            handler.checkinFailed(Collections.singletonList(new VcsException(e)));
+            handler.checkinFailed(singletonList(new VcsException(e)));
           }
         }
         finally {
@@ -750,13 +747,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   private String getInitialMessageFromVcs() {
-    final List<Change> list = getIncludedChanges();
-    final Ref<String> result = new Ref<>();
+    List<Change> list = getIncludedChanges();
+    Ref<String> result = new Ref<>();
     ChangesUtil.processChangesByVcs(myProject, list, (vcs, items) -> {
       if (result.isNull()) {
         CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
         if (checkinEnvironment != null) {
-          final Collection<FilePath> paths = ChangesUtil.getPaths(items);
+          Collection<FilePath> paths = ChangesUtil.getPaths(items);
           String defaultMessage = checkinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
           if (defaultMessage != null) {
             result.set(defaultMessage);
@@ -769,18 +766,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void saveCommentIntoChangeList() {
     if (myLastSelectedListName != null) {
-      final String actualCommentText = myCommitMessageArea.getComment();
-      final String saved = myListComments.get(myLastSelectedListName);
-      if (! Comparing.equal(saved, actualCommentText)) {
-        myListComments.put(myLastSelectedListName, actualCommentText);
+      String commitMessage = myCommitMessageArea.getComment();
+      String savedComment = myListComments.get(myLastSelectedListName);
+      if (!Comparing.equal(savedComment, commitMessage)) {
+        myListComments.put(myLastSelectedListName, commitMessage);
       }
     }
   }
 
   private void updateComment() {
     if (myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return;
-    final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
-    if (list == null || (list.getName().equals(myLastSelectedListName))) {
+
+    LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
+    if (list == null || list.getName().equals(myLastSelectedListName)) {
       return;
     } else if (myLastSelectedListName != null) {
       saveCommentIntoChangeList();
@@ -801,7 +799,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
-      final String listTitle = list.getName();
+      String listTitle = list.getName();
       if (!list.hasDefaultName()) {
         listComment = listTitle;
       }
@@ -812,7 +810,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     return listComment;
   }
-
 
   @Override
   public void dispose() {
@@ -834,7 +831,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public String getCommitActionName() {
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
-      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+      CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (name == null && checkinEnvironment != null) {
         name = checkinEnvironment.getCheckinOperationName();
       }
@@ -847,8 +844,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private boolean checkComment() {
     if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && getCommitMessage().isEmpty()) {
-      int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
-                                                       VcsBundle.message("confirmation.title.check.in.with.empty.comment"),
+      int requestForCheckin = Messages.showYesNoDialog(message("confirmation.text.check.in.with.empty.comment"),
+                                                       message("confirmation.title.check.in.with.empty.comment"),
                                                        Messages.getWarningIcon());
       return requestForCheckin == Messages.YES;
     }
@@ -867,12 +864,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private CheckinHandler.ReturnResult runBeforeCommitHandlers(@Nullable CommitExecutor executor) {
-    final Computable<CheckinHandler.ReturnResult> proceedRunnable = () -> {
+    Computable<CheckinHandler.ReturnResult> proceedRunnable = () -> {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       for (CheckinHandler handler : myHandlers) {
-        if (!(handler.acceptExecutor(executor))) continue;
-        final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
+        if (!handler.acceptExecutor(executor)) continue;
+        CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
         if (result == CheckinHandler.ReturnResult.COMMIT) continue;
         if (result == CheckinHandler.ReturnResult.CANCEL) {
           restartUpdate();
@@ -880,12 +877,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }
 
         if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-          final ChangeList changeList = myBrowser.getSelectedChangeList();
-          CommitHelper.moveToFailedList(changeList,
-                                        getCommitMessage(),
-                                        getIncludedChanges(),
-                                        VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
-                                        myProject);
+          ChangeList changeList = myBrowser.getSelectedChangeList();
+          CommitHelper.moveToFailedList(changeList, getCommitMessage(), getIncludedChanges(),
+                                        message("commit.dialog.rejected.commit.template", changeList.getName()), myProject);
           doCancelAction();
           return CheckinHandler.ReturnResult.CLOSE_WINDOW;
         }
@@ -895,11 +889,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     };
 
     stopUpdate();
-    final Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
+    Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
     Runnable runnable = () -> compoundResultRef.set(proceedRunnable.compute());
-    for (final CheckinHandler handler : myHandlers) {
+    for (CheckinHandler handler : myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
-        final Runnable previousRunnable = runnable;
+        Runnable previousRunnable = runnable;
         runnable = () -> ((CheckinMetaHandler)handler).runCheckinHandlers(previousRunnable);
       }
     }
@@ -928,34 +922,32 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     private final boolean myToClean;
 
     private DefaultListCleaner() {
-      final int selectedSize = getIncludedChanges().size();
-      final ChangeList selectedList = myBrowser.getSelectedChangeList();
-      final int totalSize = selectedList.getChanges().size();
-      myToClean = (totalSize == selectedSize) && (((LocalChangeList)selectedList).hasDefaultName());
+      int selectedSize = getIncludedChanges().size();
+      ChangeList selectedList = myBrowser.getSelectedChangeList();
+      int totalSize = selectedList.getChanges().size();
+      myToClean = totalSize == selectedSize && ((LocalChangeList)selectedList).hasDefaultName();
     }
 
     void clean() {
       if (myToClean) {
-        final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-        clManager.editComment(LocalChangeList.DEFAULT_NAME, "");
+        ChangeListManager.getInstance(myProject).editComment(LocalChangeList.DEFAULT_NAME, "");
       }
     }
   }
 
-  private void saveComments(final boolean isOk) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+  private void saveComments(boolean isOk) {
     if (isOk) {
-      final int selectedSize = getIncludedChanges().size();
-      final ChangeList selectedList = myBrowser.getSelectedChangeList();
-      final int totalSize = selectedList.getChanges().size();
+      int selectedSize = getIncludedChanges().size();
+      int totalSize = myBrowser.getSelectedChangeList().getChanges().size();
       if (totalSize > selectedSize) {
         myListComments.remove(myLastSelectedListName);
       }
     }
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     for (Map.Entry<String, String> entry : myListComments.entrySet()) {
-      final String name = entry.getKey();
-      final String value = entry.getValue();
-      clManager.editComment(name, value);
+      String name = entry.getKey();
+      String value = entry.getValue();
+      changeListManager.editComment(name, value);
     }
   }
 
@@ -971,17 +963,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void doCommit(@Nullable CommitResultHandler customResultHandler) {
-    final CommitHelper helper = new CommitHelper(
-      myProject,
-      myBrowser.getSelectedChangeList(),
-      getIncludedChanges(),
-      TITLE,
-      getCommitMessage(),
-      myHandlers,
-      myAllOfDefaultChangeListChangesIncluded,
-      false,
-      myAdditionalData,
-      customResultHandler);
+    CommitHelper helper =
+      new CommitHelper(myProject, myBrowser.getSelectedChangeList(), getIncludedChanges(), TITLE, getCommitMessage(), myHandlers,
+                       myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData, customResultHandler);
 
     if (myIsAlien) {
       helper.doAlienCommit(mySingleVcs);
@@ -998,7 +982,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   public Set<AbstractVcs> getAffectedVcses() {
-    return myShowVcsCommit ? myBrowser.getAffectedVcses() : Collections.emptySet();
+    return myShowVcsCommit ? myBrowser.getAffectedVcses() : emptySet();
   }
 
   @NotNull
@@ -1006,8 +990,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<VirtualFile> getRoots() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-    return ContainerUtil
-      .map2SetNotNull(myBrowser.getCurrentDisplayedChanges(), (change) -> vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    return map2SetNotNull(myBrowser.getCurrentDisplayedChanges(), change -> vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
   }
 
   @Override
@@ -1023,19 +1006,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    return ContainerUtil.mapNotNull(getIncludedChanges(), (change) -> ChangesUtil.getFilePath(change).getVirtualFile());
+    return mapNotNull(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getVirtualFile());
   }
 
   @NotNull
   @Override
   public Collection<Change> getSelectedChanges() {
-    return ContainerUtil.newArrayList(getIncludedChanges());
+    return newArrayList(getIncludedChanges());
   }
 
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    return ContainerUtil.map(getIncludedChanges(), (change) -> ChangesUtil.getFilePath(change).getIOFile());
+    return map(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getIOFile());
   }
 
   @NotNull
@@ -1049,16 +1032,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     // tod +- performance?
     if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
 
-    return ContainerUtil.exists(myBrowser.getAffectedVcses(), (vcs) -> Comparing.equal(vcs.getName(), name));
+    return exists(myBrowser.getAffectedVcses(), vcs -> Comparing.equal(vcs.getName(), name));
   }
 
   @Override
-  public void setCommitMessage(final String currentDescription) {
+  public void setCommitMessage(String currentDescription) {
     setCommitMessageText(currentDescription);
     myCommitMessageArea.requestFocusInMessage();
   }
 
-  private void setCommitMessageText(final String currentDescription) {
+  private void setCommitMessageText(String currentDescription) {
     myLastKnownComment = currentDescription;
     myCommitMessageArea.setText(currentDescription);
   }
@@ -1097,12 +1080,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @SuppressWarnings("unused")
   @NotNull
   public List<RefreshableOnComponent> getAdditionalComponents() {
-    return Collections.unmodifiableList(myAdditionalComponents);
+    return unmodifiableList(myAdditionalComponents);
   }
 
   private void updateButtons() {
     if (myDisposed || myUpdateDisabled) return;
-    final boolean enabled = hasDiffs();
+    boolean enabled = hasDiffs();
     if (myCommitAction != null) {
       myCommitAction.setEnabled(enabled);
     }
@@ -1146,11 +1129,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  static String trimEllipsis(final String title) {
+  static String trimEllipsis(String title) {
     return StringUtil.trimEnd(title, "...");
   }
 
-  private void ensureDataIsActual(final Runnable runnable) {
+  private void ensureDataIsActual(Runnable runnable) {
     if (myBrowser.isDataIsDirty()) {
       ChangeListManager.getInstance(myProject).invokeAfterUpdate(runnable, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
                                                                  "Refreshing changelists...", ModalityState.current());
@@ -1174,8 +1157,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void updateEnabled(boolean hasDiffs) {
-      setEnabled(hasDiffs
-                 || (myCommitExecutor instanceof CommitExecutorBase) && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
+      setEnabled(
+        hasDiffs || myCommitExecutor instanceof CommitExecutorBase && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
     }
   }
 
@@ -1219,7 +1202,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     protected void selectChange(@NotNull Change change) {
       //noinspection unchecked
-      myBrowser.select((List)Collections.singletonList(change));
+      myBrowser.select((List)singletonList(change));
     }
 
     @Override
