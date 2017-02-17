@@ -16,15 +16,16 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -42,14 +43,18 @@ public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitA
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+  protected void performAction(@NotNull Project project,
+                               @NotNull FileHistoryUi ui,
+                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull AnActionEvent e) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
+    VcsLogFileRevision revision = ui.createRevision(detail);
 
-    StandardDiffFromHistoryHandler handler = new StandardDiffFromHistoryHandler();
-    handler.showDiffForTwo(project, path, revision, new CurrentRevision(notNull(path.getVirtualFile()), VcsRevisionNumber.NULL));
+    if (revision != null) {
+      StandardDiffFromHistoryHandler handler = new StandardDiffFromHistoryHandler();
+      handler.showDiffForTwo(project, path, revision, new CurrentRevision(notNull(path.getVirtualFile()), VcsRevisionNumber.NULL));
+    }
   }
 }

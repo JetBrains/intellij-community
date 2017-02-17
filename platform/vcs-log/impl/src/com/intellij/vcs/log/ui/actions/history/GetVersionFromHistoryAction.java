@@ -16,13 +16,15 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 
 public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
@@ -36,9 +38,16 @@ public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+  protected void performAction(@NotNull Project project,
+                               @NotNull FileHistoryUi ui,
+                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull AnActionEvent e) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-    GetVersionAction.doGet(project, e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION), e.getRequiredData(VcsDataKeys.FILE_PATH));
+
+    VcsLogFileRevision revision = ui.createRevision(detail);
+
+    if (revision != null) {
+      GetVersionAction.doGet(project, revision, e.getRequiredData(VcsDataKeys.FILE_PATH));
+    }
   }
 }

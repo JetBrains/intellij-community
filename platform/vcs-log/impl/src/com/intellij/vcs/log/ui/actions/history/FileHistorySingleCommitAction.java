@@ -15,28 +15,34 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public abstract class FileHistorySingleCommitAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    if (project == null || log == null) {
+    FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+    if (project == null || ui == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    List<CommitId> commits = log.getSelectedCommits();
+    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
     if (commits.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -47,4 +53,26 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
   }
 
   protected abstract boolean isEnabled(@NotNull AnActionEvent e);
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+
+    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
+    if (commits.size() != 1) return;
+    CommitId commit = notNull(getFirstItem(commits));
+
+    List<Integer> commitIndex = Ints.asList(ui.getLogData().getCommitIndex(commit.getHash(), commit.getRoot()));
+    ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIndex, details -> {
+      if (!details.isEmpty()) {
+        performAction(project, ui, notNull(getFirstItem(details)), e);
+      }
+    }, null);
+  }
+
+  protected abstract void performAction(@NotNull Project project,
+                                        @NotNull FileHistoryUi ui,
+                                        @NotNull VcsFullCommitDetails detail,
+                                        @NotNull AnActionEvent e);
 }

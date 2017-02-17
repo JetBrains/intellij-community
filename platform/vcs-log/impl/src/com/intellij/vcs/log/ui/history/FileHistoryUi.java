@@ -15,13 +15,25 @@
  */
 package com.intellij.vcs.log.ui.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -32,19 +44,27 @@ import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
+  private static final Logger LOG = Logger.getInstance(FileHistoryUi.class);
   @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
                                                                           CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  private final MyPropertiesChangeListener myPropertiesChangeListener;
+  @NotNull private final IndexDataGetter myIndexDataGetter;
+  @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull Project project,
@@ -55,6 +75,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     super(logData, project, manager, refresher);
     myUiProperties = uiProperties;
 
+    myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
     myFilterUi = new FileHistoryFilterUi(path, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
@@ -68,6 +89,71 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
     myUiProperties.addChangeListener(myPropertiesChangeListener);
+  }
+
+  @Nullable
+  public VirtualFile createVcsVirtualFile(@NotNull VcsFullCommitDetails details) {
+    VcsLogFileRevision revision = createRevision(details);
+    if (revision != null) {
+      return revision.getPath().isDirectory()
+             ? new VcsVirtualFolder(revision.getPath().getPath(), null, VcsFileSystem.getInstance())
+             : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
+    }
+    return null;
+  }
+
+  @Nullable
+  public VcsLogFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
+    if (details != null && !(details instanceof LoadingDetails)) {
+      List<Change> changes = collectRelevantChanges(details);
+      Change change = ObjectUtils.notNull(ContainerUtil.getFirstItem(changes));
+      ContentRevision revision = change.getAfterRevision();
+      if (revision == null) {
+        revision = change.getBeforeRevision();
+        if (revision == null) {
+          LOG.error("Before and after revisions for commit " + details.getId().toShortString() + ", change " + change + " are null.");
+          return null;
+        }
+      }
+      return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
+    }
+    return null;
+  }
+
+  @NotNull
+  public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
+    Set<FilePath> fileNames = getFileNames(details);
+    if (myPath.isDirectory()) {
+      return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
+    }
+    else {
+      return ContainerUtil.filter(details.getChanges(), change -> affectsFiles(change, fileNames));
+    }
+  }
+
+  @NotNull
+  private Set<FilePath> getFileNames(@NotNull VcsFullCommitDetails details) {
+    int commitIndex = myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot());
+    Set<FilePath> names;
+    if (myVisiblePack instanceof FileHistoryVisiblePack) {
+      IndexDataGetter.FileNamesData namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
+      names = namesData.getAffectedPaths(commitIndex);
+    }
+    else {
+      names = myIndexDataGetter.getFileNames(myPath, commitIndex);
+    }
+    if (names.isEmpty()) return Collections.singleton(myPath);
+    return names;
+  }
+
+  private static boolean affectsFiles(@NotNull Change change, @NotNull Set<FilePath> files) {
+    ContentRevision revision = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision()));
+    return files.contains(revision.getFile());
+  }
+
+  private static boolean affectsDirectories(@NotNull Change change, @NotNull Set<FilePath> directories) {
+    FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
+    return ContainerUtil.find(directories, dir -> VfsUtilCore.isAncestor(dir.getIOFile(), file.getIOFile(), false)) != null;
   }
 
   @NotNull

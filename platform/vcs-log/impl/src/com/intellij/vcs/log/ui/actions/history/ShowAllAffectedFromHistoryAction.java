@@ -16,13 +16,13 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction {
@@ -35,14 +35,18 @@ public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAct
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
-    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
-    VirtualFile revisionVirtualFile = e.getRequiredData(VcsDataKeys.VCS_VIRTUAL_FILE);
+  protected void performAction(@NotNull Project project,
+                               @NotNull FileHistoryUi ui,
+                               @NotNull VcsFullCommitDetails details,
+                               @NotNull AnActionEvent e) {
+    VcsLogFileRevision revision = ui.createRevision(details);
+    VirtualFile vcsVirtualFile = ui.createVcsVirtualFile(details);
 
-    AbstractVcsHelper.getInstance(project).loadAndShowCommittedChangesDetails(project, revision.getRevisionNumber(), revisionVirtualFile,
-                                                                              vcsKey, revision.getChangedRepositoryPath(),
-                                                                              false);
+    if (revision != null && vcsVirtualFile != null) {
+      AbstractVcsHelper.getInstance(project).loadAndShowCommittedChangesDetails(project, revision.getRevisionNumber(), vcsVirtualFile,
+                                                                                e.getRequiredData(VcsDataKeys.VCS),
+                                                                                revision.getChangedRepositoryPath(),
+                                                                                false);
+    }
   }
 }

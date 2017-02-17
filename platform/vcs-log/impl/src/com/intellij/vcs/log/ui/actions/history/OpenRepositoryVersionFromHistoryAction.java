@@ -16,10 +16,12 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction.hasValidChanges;
@@ -27,15 +29,20 @@ import static com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionActi
 
 public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCommitAction {
 
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES);
-    openRepositoryVersion(project, changes);
-  }
-
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     return changes != null && hasValidChanges(changes);
+  }
+
+  @Override
+  protected void performAction(@NotNull Project project,
+                               @NotNull FileHistoryUi ui,
+                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull AnActionEvent e) {
+    Change[] changes = ArrayUtil.toObjectArray(ui.collectRelevantChanges(detail), Change.class);
+    if (hasValidChanges(changes)) {
+      openRepositoryVersion(project, changes);
+    }
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -25,6 +24,9 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -48,13 +50,19 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsKey key = e.getRequiredData(VcsDataKeys.VCS);
+  protected void performAction(@NotNull Project project,
+                               @NotNull FileHistoryUi ui,
+                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull AnActionEvent e) {
+    VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
 
-    AnnotateRevisionActionBase.annotate(e.getRequiredData(VcsDataKeys.VCS_VIRTUAL_FILE),
-                                        e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION),
-                                        notNull(ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName())),
-                                        null, 0);
+    VcsLogFileRevision revision = ui.createRevision(detail);
+    VirtualFile vcsVirtualFile = ui.createVcsVirtualFile(detail);
+
+    if (revision != null && vcsVirtualFile != null) {
+      AnnotateRevisionActionBase.annotate(vcsVirtualFile, revision,
+                                          notNull(ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName())),
+                                          null, 0);
+    }
   }
 }
