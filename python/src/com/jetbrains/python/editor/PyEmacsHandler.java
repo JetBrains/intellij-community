@@ -28,9 +28,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PySequenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -99,59 +101,48 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     
     ChangeIndentContext context = new ChangeIndentContext(project, file, editor, document, caretLine);
-    
-    if (defineSoleIndentIfPossible(context)) {
-      return Result.STOP;
-    }
 
     switch (tryToIndentToRight(context)) {
       case STOP_SUCCESSFUL: return Result.STOP;
       case STOP_UNSUCCESSFUL: return Result.CONTINUE;
       case CONTINUE: break;
     }
-    
+
     if (tryToIndentToLeft(context)) {
       return Result.STOP;
     }
-    
+
     return Result.CONTINUE;
   }
 
-  /**
-   * Checks if target line may have the sole indent (e.g. first expression of compound statement) and applies it in
-   * case of success.
-   * 
-   * @param context       current processing context
-   * @return              {@code true} if target line has the sole indent and it is applied; {@code false} otherwise
-   */
-  private static boolean defineSoleIndentIfPossible(@NotNull ChangeIndentContext context) {
+  private static int getSoleIndent(@NotNull ChangeIndentContext context) {
+    PsiElement element = context.file.findElementAt(context.editor.getCaretModel().getOffset());
+
     int prevLine = context.targetLine - 1;
     while (prevLine >= 0 && isLineContainsWhiteSpacesOnlyEmpty(context.document, prevLine)) {
       prevLine--;
     }
-    
+
     if (prevLine < 0) {
-      return false;
+      return -1;
     }
-    
+
     int indent = getLineIndent(context, prevLine);
     int newIndent = -1;
     if (isLineStartsWithCompoundStatement(context, prevLine)) {
       newIndent = indent + context.getIndentOptions().INDENT_SIZE;
     }
-    else if (indent < getLineIndent(context, context.targetLine)) {
-      newIndent = indent;
+    else if (PsiTreeUtil.getParentOfType(element, PySequenceExpression.class) != null && indent == 0) {
+      newIndent = context.getIndentOptions().INDENT_SIZE;
     }
-
-
-    if (newIndent < 0) {
-      return false;
+    else {
+      if (indent < getLineIndent(context, context.targetLine)) {
+        newIndent = indent;
+      }
     }
-
-    changeIndent(context, newIndent);
-    return true;
+    return newIndent;
   }
-  
+
   /**
    * Tries to indent active line to the right.
    *
@@ -161,14 +152,17 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   private static ProcessingResult tryToIndentToRight(@NotNull ChangeIndentContext context) {
     int targetLineIndent = getLineIndent(context, context.targetLine);
     List<LineInfo> lineInfos = collectIndentsGreaterOrEqualToCurrent(context, context.targetLine);
-    
+
     int newIndent = -1;
     for (int i = lineInfos.size() - 1; i >= 0; i--) {
       LineInfo lineInfo = lineInfos.get(i);
-      if (lineInfo.indent == targetLineIndent) {
+      if (lineInfo.indent == targetLineIndent && !lineInfo.startsWithCompoundStatement) {
         continue;
       }
       newIndent = lineInfo.indent;
+      if (lineInfo.startsWithCompoundStatement) {
+        newIndent += context.getIndentOptions().INDENT_SIZE;
+      }
       break;
     }
 
@@ -185,7 +179,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       changeIndent(context, 0);
       return false;
     }
-    
+
     int newIndent = -1;
     for (int line = 0; line < context.targetLine; line++) {
       if (isLineContainsWhiteSpacesOnlyEmpty(context.document, line)) {
@@ -200,11 +194,11 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
         newIndent = indent;
       }
     }
-    
+
     if (newIndent < 0) {
       return false;
     }
-    
+
     changeIndent(context, newIndent);
     return true;
   }
@@ -245,6 +239,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   private static List<LineInfo> collectIndentsGreaterOrEqualToCurrent(@NotNull ChangeIndentContext context, int targetLine) {
     List<LineInfo> result = new ArrayList<>();
     int targetLineIndent = getLineIndent(context, targetLine);
+    final int soleIndent = getSoleIndent(context);
+    if (soleIndent > 0) {
+      result.add(new LineInfo(targetLine, soleIndent, false));
+    }
+    else {
+      result.add(new LineInfo(targetLine, targetLineIndent, false));
+    }
     int indentUsedLastTime = Integer.MAX_VALUE;
     for (int i = targetLine - 1; i >= 0 && indentUsedLastTime > targetLineIndent; i--) {
       if (isLineContainsWhiteSpacesOnlyEmpty(context.document, i)) {
