@@ -23,7 +23,7 @@ iml_module(
         "//tools/idea/java/openapi[module]",
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea/plugins/IntelliLang[module]",
@@ -38,7 +38,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/plugins/xpath[module]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:Jaxen",

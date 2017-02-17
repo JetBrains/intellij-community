@@ -3,8 +3,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "dvcs-impl",
     # do not sort: must match IML order
-    srcs = ["src"],
-    resources = ["resources"],
+    srcs = [
+        "src",
+        "resources",
+    ],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

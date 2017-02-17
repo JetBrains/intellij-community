@@ -10,7 +10,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/java/compiler/forms-compiler[module]",
         "//tools/idea/platform/forms_rt[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/java/compiler/instrumentation-util[module]",
     ],
 )

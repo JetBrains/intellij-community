@@ -11,5 +11,6 @@ iml_module(
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

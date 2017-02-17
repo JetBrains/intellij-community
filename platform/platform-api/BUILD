@@ -29,9 +29,9 @@ iml_module(
         "//tools/idea/platform/forms_rt[module]",
         "//tools/idea/.idea/libraries:commons-codec",
         "//tools/idea/platform/platform-resources-en[module]",
-        "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/platform/icons[module]",
+        "//tools/idea/lib:automaton",
         "//tools/idea/platform/projectModel-api[module]",
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:proxy-vole",
@@ -41,6 +41,5 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

@@ -26,7 +26,5 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/platform/vcs-tests[module, test]",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

@@ -1,4 +1,18 @@
 java_import(
+    name = "easymock",
+    jars = ["easymock.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "easymockclassextension",
+    jars = ["easymockclassextension.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
     name = "jmock-2.5.1",
     jars = ["jmock-2.5.1.jar"],
     tags = ["managed"],
@@ -27,22 +41,8 @@ java_import(
 )
 
 java_import(
-    name = "assertj-core-3.6.1",
-    jars = ["assertj-core-3.6.1.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "easymock-3.4",
-    jars = ["easymock-3.4.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "memoryfilesystem-0.8.0",
-    jars = ["memoryfilesystem-0.8.0.jar"],
+    name = "assertj-core-3.4.1",
+    jars = ["assertj-core-3.4.1.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

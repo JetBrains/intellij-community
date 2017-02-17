@@ -6,5 +6,8 @@ iml_module(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    deps = ["//tools/idea/.idea/libraries:cucumber-core"],
+    deps = [
+        "//tools/idea/.idea/libraries:cucumber-core",
+        "//tools/idea/.idea/libraries:cucumber-java",
+    ],
 )

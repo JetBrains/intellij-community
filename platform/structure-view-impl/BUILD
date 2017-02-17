@@ -25,7 +25,7 @@ iml_module(
         "//tools/idea/platform/bootstrap[module]",
         "//tools/idea/platform/platform-resources-en[module]",
         "//tools/idea/platform/icons[module]",
-        "//tools/idea/.idea/libraries:automaton",
+        "//tools/idea/lib:automaton",
         "//tools/idea/platform/projectModel-api[module]",
     ],
 )

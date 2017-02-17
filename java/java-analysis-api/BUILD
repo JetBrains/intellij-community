@@ -10,6 +10,5 @@ iml_module(
         "//tools/idea/platform/analysis-api[module]",
         "//tools/idea/java/java-psi-api[module]",
         "//tools/idea/platform/projectModel-api[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

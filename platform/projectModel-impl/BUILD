@@ -18,7 +18,5 @@ iml_module(
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
         "//tools/idea/.idea/libraries:Snappy-Java",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/.idea/libraries:Xerces",
     ],
 )

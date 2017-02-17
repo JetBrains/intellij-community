@@ -9,7 +9,6 @@ iml_module(
     exports = [
         "//tools/idea/platform/analysis-api",
         "//tools/idea/platform/core-impl",
-        "//tools/idea/platform/projectModel-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -22,6 +21,5 @@ iml_module(
         "//tools/idea/platform/projectModel-impl[module]",
         "//tools/idea/platform/editor-ui-ex[module]",
         "//tools/idea/platform/indexing-impl[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

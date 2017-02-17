@@ -20,13 +20,12 @@ iml_module(
         "//tools/idea/build/lib:commons-cli-1.2",
         "//tools/idea/jps/antLayout:antlayout",
         "//tools/idea/platform/util",
-        "//tools/idea:platform-build-scripts",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/.idea/libraries:cli-parser",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Netty",
@@ -39,9 +38,9 @@ iml_module(
         "//tools/idea/build/lib:commons-cli-1.2",
         "//tools/idea/jps/antLayout:antlayout[module]",
         "//tools/idea/platform/util[module]",
-        "//tools/idea:platform-build-scripts[module]",
         "//tools/idea/plugins/ui-designer/jps-plugin:ui-designer-jps-plugin[module]",
         "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
         "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
+        "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
     ],
 )

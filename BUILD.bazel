@@ -25,7 +25,6 @@ iml_module(
         "platform/lang-impl/src",
         "platform/lang-impl/gen",
         "platform/diff-impl/src",
-        "platform/credential-store/src",
         "platform/configuration-store-impl/src",
         "platform/platform-impl/src",
         "platform/built-in-server/src",
@@ -33,11 +32,6 @@ iml_module(
         "xml/xml-structure-view-impl/src",
     ],
     javacopts = ["-extra_checks:off"],
-    package_prefixes = {
-        "platform/credential-store/src": "com.intellij.credentialStore",
-        "platform/configuration-store-impl/src": "com.intellij.configurationStore",
-        "platform/credential-store/test": "com.intellij.credentialStore",
-    },
     res_zips = ["platform/platform-resources/keymaps.zip"],
     # do not sort: must match IML order
     resources = [
@@ -52,12 +46,10 @@ iml_module(
     tags = ["managed"],
     test_srcs = [
         "RegExpSupport/test",
-        "platform/testFramework/extensions/src",
         "platform/vcs-impl/testSrc",
         "spellchecker/testSrc",
         "xml/relaxng/test",
         "platform/xdebugger-impl/testSrc",
-        "platform/credential-store/test",
         "platform/testFramework/testSrc",
     ],
     test_tags = ["manual"],
@@ -66,8 +58,6 @@ iml_module(
     exports = [
         "//tools/idea/xml/xml-analysis-api",
         "//tools/idea/xml/xml-psi-api",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:assertJ",
         "//tools/idea/platform/vcs-api",
         "//tools/idea/xml/openapi:xml-openapi",
         "//tools/idea/.idea/libraries:CGLIB",
@@ -86,7 +76,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/platform/editor-ui-ex",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/platform/built-in-server-api",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/.idea/libraries:Log4J",
@@ -109,15 +98,10 @@ iml_module(
         "//tools/idea/platform/indexing-impl[module]",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:XmlBeans",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/.idea/libraries:memoryfilesystem[test]",
-        "//tools/idea/.idea/libraries:snakeyaml[test]",
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/platform/lvcs-api[module]",
+        "//tools/idea/.idea/libraries:jcip",
         "//tools/idea/platform/diff-api[module]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:commons-codec",
@@ -135,7 +119,9 @@ iml_module(
         "//tools/idea/xml/relaxng/lib:trang-core",
         "//tools/idea/xml/relaxng/lib:jing",
         "//tools/idea/platform/extensions[module]",
+        "//tools/idea/platform/util[module]",
         "//tools/idea/.idea/libraries:Sanselan",
+        "//tools/idea/.idea/libraries:asm",
         "//tools/idea/.idea/libraries:CGLIB",
         "//tools/idea/platform/boot[module]",
         "//tools/idea/.idea/libraries:OroMatcher",
@@ -148,12 +134,12 @@ iml_module(
         "//tools/idea/platform/structure-view-impl[module]",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
-        "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:bouncy-castle-provider",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/bootstrap[module]",
         "//tools/idea/.idea/libraries:Mac",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:JavaHelp",
+        "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:winp",
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/.idea/libraries:jayatana",
@@ -168,13 +154,13 @@ iml_module(
         "//tools/base/common:studio.common[module]",
         "//tools/analytics-library/protos:analytics-protos[module]",
         "//tools/idea/.idea/libraries:pty4j",
-        "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/platform/testFramework/bootstrap:tests_bootstrap[module]",
         "//tools/idea/resources-en[module]",
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/java/java-runtime[module]",
         "//tools/idea/.idea/libraries:Groovy",
+        "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/xml/xml-structure-view-api[module]",
     ],
 )
@@ -302,7 +288,7 @@ iml_module(
         "//tools/idea/java/java-psi-impl",
         "//tools/idea/platform/projectModel-impl",
         "//tools/idea/java/java-analysis-api",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
     ],
     # do not sort: must match IML order
     deps = [
@@ -313,10 +299,7 @@ iml_module(
         "//tools/idea/java/java-analysis-api[module]",
         "//tools/idea/resources-en[module]",
         "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/.idea/libraries:StreamEx",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:asm5",
     ],
 )
 
@@ -354,6 +337,7 @@ iml_module(
         "//tools/idea/java/jsp-openapi[module]",
         "//tools/idea/java/jsp-spi[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/.idea/libraries:asm",
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:jcip",
         "//tools/idea/.idea/libraries:Groovy",
@@ -363,7 +347,7 @@ iml_module(
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea:java-analysis-impl[module]",
         "//tools/idea/platform/external-system-api[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:Velocity",
@@ -393,7 +377,7 @@ iml_module(
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:Velocity",
         "//tools/idea/plugins/java-i18n[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/java/compiler/instrumentation-util[module]",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/plugins/IntelliLang:IntelliLang-java[module]",
@@ -417,8 +401,6 @@ iml_module(
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/platform/built-in-server-api[module, test]",
-        "//tools/idea/.idea/libraries:memoryfilesystem[test]",
-        "//tools/idea:configuration-store-tests[module, test]",
     ],
 )
 
@@ -461,7 +443,6 @@ iml_module(
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:jna",
         "//tools/idea/platform/external-system-api[module]",
         "//tools/idea/platform/projectModel-impl[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
@@ -485,7 +466,7 @@ iml_module(
         "//tools/idea/jps/jps-builders[module]",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/java/compiler/instrumentation-util[module]",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/jps/jps-launcher[module]",
         "//tools/idea/.idea/libraries:Netty",
@@ -493,125 +474,4 @@ iml_module(
         "//tools/idea:java-analysis-impl[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
-)
-
-iml_module(
-    name = "jps-builders-6",
-    srcs = ["jps/jps-builders-6/src"],
-    exclude = [
-        "jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager.java",
-        "jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
-    ],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/util-rt[module]",
-        "//tools/idea/.idea/libraries:Netty",
-        "//tools/idea/.idea/libraries:Log4J",
-        "//tools/idea/.idea/libraries:protobuf",
-        "//tools/idea/jps/lib:optimizedFileManager",
-    ],
-)
-
-iml_module(
-    name = "javac-ref-scanner-8",
-    srcs = ["jps/javac-ref-scanner-8/src"],
-    tags = ["managed"],
-    test_srcs = ["jps/javac-ref-scanner-8/test"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/jps/jps-builders[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
-        "//tools/idea/platform/core-api[module, test]",
-        "//tools/idea:platform-impl_and_others[module]",
-    ],
-)
-
-iml_module(
-    name = "platform-build-scripts",
-    resources = ["platform/build-scripts/groovy"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/.idea/libraries:cli-parser",
-        "//tools/idea/jps/model-api:jps-model-api",
-        "//tools/idea/jps/standalone-builder:jps-standalone-builder",
-        "//tools/idea/platform/util",
-        "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
-    ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/.idea/libraries:cli-parser",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:Netty",
-        "//tools/idea/.idea/libraries:protobuf",
-        "//tools/idea/.idea/libraries:Log4J",
-        "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/jps/model-api:jps-model-api[module]",
-        "//tools/idea/jps/standalone-builder:jps-standalone-builder[module]",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/plugins/ui-designer/jps-plugin:ui-designer-jps-plugin[module]",
-        "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
-        "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
-        "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
-    ],
-)
-
-iml_module(
-    name = "update-server-mock",
-    srcs = ["update-server-mock/src/main/java"],
-    resources = ["update-server-mock/src/main/resources"],
-    tags = ["managed"],
-    test_srcs = ["update-server-mock/src/test/java"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools/idea:update-server-mock/lib/log4j-api-2.6.2",
-        "//tools/idea:update-server-mock/lib/log4j-core-2.6.2",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-    ],
-)
-
-iml_module(
-    name = "junit5_rt_tests",
-    tags = ["managed"],
-    test_srcs = ["plugins/junit5_rt_tests/test"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-api-5.0.0-M3[test]",
-        "//tools/idea/plugins/junit5_rt[module]",
-        "//tools/idea/.idea/libraries:junit5_rt",
-        "//tools/idea/.idea/libraries:opentest4j",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/plugins/junit[module, test]",
-        "//tools/idea/plugins/maven:maven_and_others[module]",
-        "//tools/idea:java-tests[module, test]",
-    ],
-)
-
-java_import(
-    name = "update-server-mock/lib/log4j-api-2.6.2",
-    jars = ["update-server-mock/lib/log4j-api-2.6.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "update-server-mock/lib/log4j-core-2.6.2",
-    jars = ["update-server-mock/lib/log4j-core-2.6.2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
 )

@@ -20,7 +20,7 @@ iml_module(
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/plugins/java-i18n[module]",
         "//tools/idea:java-impl[module]",
         "//tools/idea/platform/platform-api[module]",

@@ -17,6 +17,5 @@ iml_module(
         "//tools/idea/.idea/libraries:microba",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/diff-api[module]",
-        "//tools/idea/.idea/libraries:StreamEx",
     ],
 )

@@ -23,6 +23,5 @@ iml_module(
     deps = [
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

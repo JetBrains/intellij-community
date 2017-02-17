@@ -11,5 +11,6 @@ iml_module(
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:cucumber-core",
         "//tools/idea/plugins/cucumber-jvm-formatter[module]",
+        "//tools/idea/.idea/libraries:cucumber-java",
     ],
 )

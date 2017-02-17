@@ -10,6 +10,5 @@ iml_module(
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/platform/editor-ui-api[module]",
-        "//tools/idea/platform/diff-api[module]",
     ],
 )

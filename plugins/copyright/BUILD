@@ -13,6 +13,5 @@ iml_module(
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/java/openapi[module]",
         "//tools/idea/.idea/libraries:Velocity",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

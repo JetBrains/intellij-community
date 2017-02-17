@@ -7,7 +7,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:ASM",
+        "//tools/idea/.idea/libraries:asm5",
         "//tools/idea/platform/util[module]",
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/platform/platform-api[module]",
