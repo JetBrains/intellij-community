@@ -52,6 +52,22 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
   }
 
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  @Test
+  public void testTestsInSubFolderResolvable() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyUnitTestProcessRunner>("test_metheggs") {
+        @NotNull
+        @Override
+        protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+          return new PyUnitTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 

@@ -15,10 +15,21 @@
  */
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 /**
  * {@link PyProcessWithConsoleTestTask} to be used with python unittest. It saves you from boilerplate
@@ -42,4 +53,44 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   }
 
 
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  abstract static class PyTestsInSubFolderRunner<T extends PyScriptTestProcessRunner<?>> extends PyProcessWithConsoleTestTask<T> {
+    @NotNull
+    private final String[] myFunctionsToCheck;
+
+    /**
+     * @param functionsToCheck name of functions that should be found in test tree and resolved
+     */
+    PyTestsInSubFolderRunner(@NotNull final String... functionsToCheck) {
+      super("/testRunner/env/testsInFolder", SdkCreationType.EMPTY_SDK);
+      myFunctionsToCheck = functionsToCheck.clone();
+      assert functionsToCheck.length > 0 : "Provide functions";
+    }
+
+
+    @Override
+    protected final void checkTestResults(@NotNull final T runner,
+                                          @NotNull final String stdout,
+                                          @NotNull final String stderr,
+                                          @NotNull final String all) {
+      for (final String function : myFunctionsToCheck) {
+        checkMethod(runner, function);
+      }
+    }
+
+    private void checkMethod(@NotNull final T runner, @NotNull final String functionName) throws AssertionError {
+
+      ReadAction.run((ThrowableRunnable<AssertionError>)() -> {
+        final AbstractTestProxy method = runner.findTestByName(functionName);
+        final Location<?> methodLocation = method.getLocation(getProject(), GlobalSearchScope.moduleScope(myFixture.getModule()));
+        Assert.assertNotNull("Failed to resolve method location", methodLocation);
+        final PsiElement methodPsiElement = methodLocation.getPsiElement();
+        Assert.assertNotNull("Failed to get PSI for method location", methodPsiElement);
+        Assert.assertThat("Wrong test returned", methodPsiElement, Matchers.instanceOf(PyFunction.class));
+        Assert.assertEquals("Wrong method name", functionName, ((PsiNamedElement)methodPsiElement).getName());
+      });
+    }
+  }
 }

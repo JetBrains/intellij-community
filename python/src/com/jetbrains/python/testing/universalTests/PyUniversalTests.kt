@@ -57,6 +57,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.stubs.PyFunctionNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
@@ -80,6 +81,26 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTe
                                                                PyUniversalNoseTestFactory)
 
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
+
+
+/**
+ * For cases like "module.class.test_name.subtest_name" situated somewhere deep in folder which is not package,
+ * this function tries to resolve test_name using index.
+ */
+private fun findFunctionByPartialName(qualifiedName: QualifiedName, project: Project): PyFunction? {
+  // TODO: Add to background if too slow
+  val components = ArrayList(qualifiedName.components)
+  components.reverse()
+  components.forEach {
+    for (function in PyFunctionNameIndex.find(it, project)) {
+      val name = function.qualifiedName
+      if (name != null && name.contains(qualifiedName.toString())) {
+        return function
+      }
+    }
+  }
+  return null
+}
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
@@ -116,8 +137,13 @@ private object PyUniversalTestsLocator : SMTestLocator {
       return listOf()
     }
     val qualifiedName = QualifiedName.fromDottedString(path)
-    val element = qualifiedName.toElement(scope.module,
-                                          TypeEvalContext.userInitiated(project, null))
+    // Assume qname id good and resolve it directly
+    var element = qualifiedName.toElement(scope.module,
+                                          TypeEvalContext.codeAnalysis(project, null))
+    if (element == null) {
+      // If no luck then resolve it using heuristic
+      element = findFunctionByPartialName(qualifiedName, project)
+    }
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
       // Parentheses are part of generators / parametrized tests
