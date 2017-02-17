@@ -32,12 +32,13 @@ iml_module(
         "platform/testFramework/src",
         "xml/xml-structure-view-impl/src",
     ],
+    javacopts = ["-extra_checks:off"],
     package_prefixes = {
         "platform/credential-store/src": "com.intellij.credentialStore",
         "platform/configuration-store-impl/src": "com.intellij.configurationStore",
         "platform/credential-store/test": "com.intellij.credentialStore",
     },
-    javacopts = ["-extra_checks:off"],
+    res_zips = ["platform/platform-resources/keymaps.zip"],
     # do not sort: must match IML order
     resources = [
         "xml/xml-analysis-impl/resources",
