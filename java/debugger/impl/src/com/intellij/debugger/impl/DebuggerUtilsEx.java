@@ -604,7 +604,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     try {
       return location.lineNumber() - (zeroBased ? 1 : 0);
     }
-    catch (InternalError e) {
+    catch (InternalError | IllegalArgumentException e) {
       return -1;
     }
   }

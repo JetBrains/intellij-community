@@ -154,7 +154,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       if (settings.SHOW_LINE_NUMBER) {
         String lineNumber;
         try {
-          lineNumber = Integer.toString(myLocation.lineNumber());
+          lineNumber = Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false));
         }
         catch (InternalError e) {
           lineNumber = e.toString();

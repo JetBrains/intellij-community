@@ -94,9 +94,10 @@ public class SourceCodeChecker {
   }
 
   private static ThreeState check(Location location, SourcePosition position, Project project) {
-    Method method = location.method();
+    Method method = DebuggerUtilsEx.getMethod(location);
     // for now skip constructors, bridges, lambdas etc.
-    if (method.isConstructor() ||
+    if (method == null ||
+        method.isConstructor() ||
         method.isSynthetic() ||
         method.isBridge() ||
         method.isStaticInitializer() ||
