@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.java19modules;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -51,7 +51,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
           if (moduleName.equals(referenceElement.getReferenceText())) {
             String message = InspectionsBundle.message("inspection.module.exports.package.to.itself");
             String fixText = InspectionsBundle.message("exports.to.itself.delete.module.fix.name", moduleName);
-            myHolder.registerProblem(referenceElement, message, new DeleteElementFix(referenceElement, fixText));
+            myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(referenceElement, fixText));
           }
         }
       }

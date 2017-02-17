@@ -26,6 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,6 +253,9 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
+
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element);
+  @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @NotNull @Nls String text);
 
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);

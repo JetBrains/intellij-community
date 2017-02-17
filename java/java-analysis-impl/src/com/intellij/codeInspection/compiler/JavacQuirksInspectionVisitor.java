@@ -17,7 +17,7 @@ package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -57,7 +57,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     if (lastElement != null && PsiUtil.isJavaToken(lastElement, JavaTokenType.COMMA)) {
       final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
       final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.fix");
-      myHolder.registerProblem(lastElement, message, new DeleteElementFix(lastElement, fixName));
+      myHolder.registerProblem(lastElement, message, QuickFixFactory.getInstance().createDeleteFix(lastElement, fixName));
     }
   }
 
@@ -73,7 +73,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
           if (list.getFirstChild() != null && QUALIFIER_REFERENCE.accepts(list)) {
             final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.problem");
             final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.fix");
-            myHolder.registerProblem(list, message, new DeleteElementFix(list, fixName));
+            myHolder.registerProblem(list, message, QuickFixFactory.getInstance().createDeleteFix(list, fixName));
           }
         }
       });

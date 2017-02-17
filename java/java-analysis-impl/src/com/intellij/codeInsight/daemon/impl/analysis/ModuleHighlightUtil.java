@@ -97,7 +97,7 @@ public class ModuleHighlightUtil {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorMessages.message("module.no.package");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-      QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+      QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
       return info;
     }
 
@@ -176,7 +176,7 @@ public class ModuleHighlightUtil {
       if (refText != null && !filter.add(refText)) {
         String message = JavaErrorMessages.message(key, refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+        QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
         results.add(info);
       }
     }
@@ -331,7 +331,7 @@ public class ModuleHighlightUtil {
       if (!filter.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.impl", refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(implRef).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(implRef, QuickFixBundle.message("delete.reference.fix.text")));
+        QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(implRef, QuickFixBundle.message("delete.reference.fix.text")));
         results.add(info);
         continue;
       }

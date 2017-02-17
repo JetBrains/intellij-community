@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -62,7 +62,7 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
         if (isInitializerUnused(parameter, method)) {
           holder.registerProblem(
             expression, message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            new DeleteElementFix(expression, message("unused.default.parameter.fix"))
+            QuickFixFactory.getInstance().createDeleteFix(expression, message("unused.default.parameter.fix"))
           );
         }
       }

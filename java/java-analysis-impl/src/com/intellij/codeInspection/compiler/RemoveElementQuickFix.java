@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/** @deprecated use {@link com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix} (to be removed in IDEA 2018) */
+/** @deprecated use {@link com.intellij.codeInsight.intention.QuickFixFactory#createDeleteFix} (to be removed in IDEA 2018) */
 public class RemoveElementQuickFix implements LocalQuickFix {
   private final String myName;
 
