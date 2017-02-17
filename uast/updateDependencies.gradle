@@ -1,0 +1,20 @@
+apply plugin: 'de.undercouch.download'
+
+task updateDependencies {
+    def downloadDir = new File(project.rootDir, "lib/download")
+    downloadDir.mkdirs()
+
+    def intellijCoreZip = new File(downloadDir, "intellij-core.zip")
+
+    download {
+        src "https://s3-eu-west-1.amazonaws.com/intellij-releases/com/jetbrains/intellij/idea/intellij-core/" +
+                "$intellij_core_version/intellij-core-${intellij_core_version}.zip"
+        dest intellijCoreZip
+        onlyIfNewer true
+    }
+
+    copy {
+        from zipTree(intellijCoreZip)
+        into new File("lib/intellij-core")
+    }
+}
