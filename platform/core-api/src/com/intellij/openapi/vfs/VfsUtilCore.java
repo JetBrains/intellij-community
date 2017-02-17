@@ -668,13 +668,8 @@ public class VfsUtilCore {
   }
 
   private static byte[] loadFirstBytes(@NotNull VirtualFile file) throws IOException {
-    InputStream stream = null;
-    try {
-      stream = file.getInputStream();
+    try (InputStream stream = file.getInputStream()) {
       return FileUtil.loadFirst(stream, FileUtilRt.getLargeFilePreviewSize());
-    }
-    finally {
-      if (stream != null) stream.close();
     }
   }
 

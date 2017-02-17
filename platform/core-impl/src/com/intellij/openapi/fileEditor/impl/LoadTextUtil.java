@@ -334,6 +334,13 @@ public final class LoadTextUtil {
     return loadText(file, UNLIMITED);
   }
 
+  /**
+   * Loads content of given virtual file. If limit is {@value UNLIMITED} then full CharSequence will be returned. Else CharSequence
+   * will be truncated by limit if it has bigger length.
+   * @param file Virtual file for content loading
+   * @param limit Maximum characters count or {@value UNLIMITED}
+   * @return Full or truncated CharSequence with file content
+   */
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file, int limit) {
     if (file instanceof LightVirtualFile) {

@@ -436,7 +436,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertFalse(psiFile.isValid());
     psiFile = findFile(vFile);
 
-    assertInstanceOf(psiFile, PsiTextLargeFile.class);
+    assertInstanceOf(psiFile, PsiLargeTextFile.class);
     assertLargeFileContentLimited(getTooLargeContent(), vFile, document);
   }
 
@@ -456,7 +456,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertNotNull(document);
     assertFalse(psiFile.isWritable());
-    assertInstanceOf(psiFile, PsiTextLargeFile.class);
+    assertInstanceOf(psiFile, PsiLargeTextFile.class);
 
     assertLargeFileContentLimited(content, vFile, document);
   }
@@ -466,7 +466,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     PsiFile psiFile = findFile(vFile);
     Document document = getDocument(psiFile);
     assertNull(document);
-    assertInstanceOf(psiFile, PsiBinaryLargeFile.class);
+    assertInstanceOf(psiFile, PsiLargeBinaryFile.class);
   }
 
   public void testLargeFileException() throws Throwable {

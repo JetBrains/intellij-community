@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.file;
+package com.intellij.psi;
 
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiBinaryLargeFile;
-import com.intellij.psi.impl.PsiManagerImpl;
-
-public class PsiBinaryLargeFileImpl extends PsiBinaryFileImpl implements PsiBinaryLargeFile {
-  public PsiBinaryLargeFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
-    super(manager, viewProvider);
-  }
+public interface PsiLargeTextFile extends PsiPlainTextFile, PsiLargeFile {
 }
