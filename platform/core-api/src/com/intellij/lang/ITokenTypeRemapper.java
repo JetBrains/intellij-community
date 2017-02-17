@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
  * Date: 06.04.2008
  * Time: 23:41:56
  */
+@FunctionalInterface
 public interface ITokenTypeRemapper {
   /**
    * An external hook to see and alter token types reported by lexer.

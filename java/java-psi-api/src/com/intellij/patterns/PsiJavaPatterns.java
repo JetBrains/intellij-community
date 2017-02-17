@@ -49,6 +49,7 @@ public class PsiJavaPatterns extends StandardPatterns{
     return new PsiJavaElementPattern.Capture<>(aClass);
   }
 
+  @SafeVarargs
   public static PsiJavaElementPattern.Capture<PsiElement> psiElement(final Class<? extends PsiElement>... classAlternatives) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternCondition<PsiElement>(PsiElement.class) {
       @Override
@@ -73,19 +74,21 @@ public class PsiJavaPatterns extends StandardPatterns{
 
   public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(@Nullable final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteral>(PsiLiteral.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteral && (value == null || value.accepts(((PsiLiteral)o).getValue(), context));
       }
 
       @Override
       public List<ElementPattern<?>> getPatterns() {
-        return Collections.<ElementPattern<?>>singletonList(value);
+        return Collections.singletonList(value);
       }
     });
   }
 
   public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(@NotNull final String... fqns) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternCondition<PsiNewExpression>(PsiNewExpression.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (o instanceof PsiNewExpression) {
           PsiJavaCodeReferenceElement reference = ((PsiNewExpression)o).getClassOrAnonymousClassReference();
@@ -102,13 +105,14 @@ public class PsiJavaPatterns extends StandardPatterns{
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(@Nullable final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternConditionPlus<PsiLiteralExpression>(PsiLiteralExpression.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteralExpression && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
       }
 
       @Override
       public List<ElementPattern<?>> getPatterns() {
-        return Collections.<ElementPattern<?>>singletonList(value);
+        return Collections.singletonList(value);
       }
     });
   }
