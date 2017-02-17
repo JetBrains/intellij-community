@@ -289,7 +289,7 @@ public class JUnitUtil {
 
   public static void checkTestCase(SourceScope scope, Project project) throws NoJUnitException {
     if (scope == null) throw new NoJUnitException();
-    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("org.junit");
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("junit.framework");
     if (aPackage == null || aPackage.getDirectories(scope.getLibrariesScope()).length == 0) {
       throw new NoJUnitException();
     }
