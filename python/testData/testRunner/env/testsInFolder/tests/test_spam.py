@@ -2,9 +2,9 @@ from unittest import TestCase
 
 
 def test_funeggs():
-    pass
+    print("I am function")
 
 
 class EggsTest(TestCase):
     def test_metheggs(self):
-        pass
+        print("I am method")

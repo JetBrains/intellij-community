@@ -51,6 +51,21 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       });
   }
 
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 

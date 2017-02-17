@@ -37,6 +37,22 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
       });
   }
 
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+          return new PyNoseTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 
