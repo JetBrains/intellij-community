@@ -574,7 +574,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
           VirtualFile file = usageInfo.getVirtualFile();
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? "  "+file.getPath() : "", false));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
