@@ -868,7 +868,9 @@ public class GitHistoryUtils {
                                  String... parameters)
     throws VcsException {
 
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
+                                    Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
     StopWatch sw = StopWatch.start("loading details");
