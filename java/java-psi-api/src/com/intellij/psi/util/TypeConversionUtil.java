@@ -23,7 +23,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1066,8 +1065,6 @@ public class TypeConversionUtil {
     return getMaybeSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor, null);
   }
 
-  private static final Set<String> ourReportedSuperClassSubstitutorExceptions = ContainerUtil.newConcurrentSet();
-
   /**
    * Calculates substitutor that binds type parameters in {@code superClass} with
    * values that they have in {@code derivedClass}, given that type parameters in
@@ -1089,9 +1086,7 @@ public class TypeConversionUtil {
     PsiSubstitutor substitutor = getMaybeSuperClassSubstitutor(superClass, derivedClass, derivedSubstitutor, visited);
 
     if (substitutor == null) {
-      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
-        reportHierarchyInconsistency(superClass, derivedClass, visited);
-      }
+      JavaClassSupers.getInstance().reportHierarchyInconsistency(superClass, derivedClass);
       return PsiSubstitutor.EMPTY;
     }
     return substitutor;
@@ -1104,35 +1099,6 @@ public class TypeConversionUtil {
                                                              @NotNull PsiSubstitutor derivedSubstitutor,
                                                              @Nullable Set<PsiClass> visited) {
     return JavaClassSupers.getInstance().getSuperClassSubstitutor(superClass, derivedClass, derivedClass.getResolveScope(), derivedSubstitutor);
-  }
-
-  private static void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass, @NotNull Set<PsiClass> visited) {
-    final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
-    msg.append("visited:\n");
-    for (PsiClass aClass : visited) {
-      msg.append("  each: " + classInfo(aClass));
-    }
-    msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
-    msg.append("\nhierarchy:\n");
-    InheritanceUtil.processSupers(derivedClass, true, psiClass -> {
-      msg.append("each: " + classInfo(psiClass));
-      return true;
-    });
-    LOG.error(msg.toString());
-  }
-
-  @NotNull
-  private static String classInfo(@NotNull PsiClass aClass) {
-    String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
-    s += "extends: ";
-    for (PsiClassType type : aClass.getExtendsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
-    }
-    s += "\nimplements: ";
-    for (PsiClassType type : aClass.getImplementsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
-    }
-    return s + "\n";
   }
 
   @NotNull
