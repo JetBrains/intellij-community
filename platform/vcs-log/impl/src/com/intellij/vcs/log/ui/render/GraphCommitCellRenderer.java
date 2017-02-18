@@ -130,6 +130,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
+    private static final int DISPLAYED_MESSAGE_PART = 80;
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
@@ -198,7 +199,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            getAvailableWidth(column));
+                                            getAvailableWidth(column, myGraphImage.getWidth()));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
         appendText(cell, style, isSelected);
@@ -207,7 +208,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         appendTextPadding(myGraphImage.getWidth());
         appendText(cell, style, isSelected);
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            getAvailableWidth(column));
+                                            getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }
 
@@ -216,15 +217,17 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SpeedSearchUtil.applySpeedSearchHighlighting(myGraphTable, this, false, isSelected);
     }
 
-    private int getAvailableWidth(int column) {
-      int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
-      int freeSpace = columnWidth - super.getPreferredSize().width;
+    private int getAvailableWidth(int column, int graphWidth) {
+      int textAndLabelsWidth = myGraphTable.getColumnModel().getColumn(column).getWidth() - graphWidth;
+      int freeSpace = textAndLabelsWidth - super.getPreferredSize().width;
+      int allowedSpace;
       if (myReferencePainter.isCompact()) {
-        return Math.min(freeSpace, columnWidth / 3);
+        allowedSpace = Math.min(freeSpace, textAndLabelsWidth / 3);
       }
       else {
-        return Math.max(freeSpace, columnWidth / 2);
+        allowedSpace = Math.max(freeSpace, Math.max(textAndLabelsWidth / 2, textAndLabelsWidth - JBUI.scale(DISPLAYED_MESSAGE_PART)));
       }
+      return Math.max(0, allowedSpace);
     }
 
     private int calculateHeight() {
