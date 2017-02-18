@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,8 @@ public class CreatePatchFromHistoryAction extends AnAction implements DumbAware 
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);

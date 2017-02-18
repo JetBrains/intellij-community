@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +84,8 @@ public class CompareRevisionsFromHistoryAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
