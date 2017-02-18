@@ -98,7 +98,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   @Override
   public List<JpsDependencyElement> getDependencies(JpsModule module, JpsJavaClasspathKind classpathKind, boolean exportedOnly) {
-    final List<JpsDependencyElement> result = new ArrayList<JpsDependencyElement>();
+    final List<JpsDependencyElement> result = new ArrayList<>();
     for (JpsDependencyElement dependencyElement : module.getDependenciesList().getDependencies()) {
       final JpsJavaDependencyExtension extension = getDependencyExtension(dependencyElement);
       if (extension == null || extension.getScope().isIncludedIn(classpathKind) && (!exportedOnly || extension.isExported())) {

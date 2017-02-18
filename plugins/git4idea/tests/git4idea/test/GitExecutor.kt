@@ -160,31 +160,31 @@ private class GitExecutorHolder {
   }
 }
 
-class TestFile internal constructor(private val myFile: File) {
+class TestFile internal constructor(val file: File) {
 
   fun append(content: String): TestFile {
-    FileUtil.writeToFile(myFile, content.toByteArray(), true)
+    FileUtil.writeToFile(file, content.toByteArray(), true)
     return this
   }
 
   fun write(content: String): TestFile {
-    FileUtil.writeToFile(myFile, content.toByteArray(), false)
+    FileUtil.writeToFile(file, content.toByteArray(), false)
     return this
   }
 
   fun create(content: String = ""): TestFile {
     assertNotExists()
-    FileUtil.writeToFile(myFile, content.toByteArray(), false)
+    FileUtil.writeToFile(file, content.toByteArray(), false)
     return this
   }
 
   fun assertNotExists(): TestFile {
-    assertFalse(myFile.exists())
+    assertFalse(file.exists())
     return this
   }
 
   fun add(): TestFile {
-    add(myFile.path)
+    add(file.path)
     return this
   }
 
@@ -196,7 +196,7 @@ class TestFile internal constructor(private val myFile: File) {
 
   fun hash() = last()
 
-  fun exists() = myFile.exists()
+  fun exists() = file.exists()
 }
 
 class TestCommit internal constructor(shortHash: String, hash: String) {

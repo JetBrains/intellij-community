@@ -101,7 +101,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -124,6 +123,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -152,6 +152,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
+  private static final Border RENDERER_BORDER = JBUI.Borders.empty(0, 0, 2, 0);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -1099,14 +1100,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
       }
-      myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
       String title = getModel().titleIndex.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
-      myMainPanel.add(cmp, BorderLayout.CENTER);
+      JPanel wrapped = new JPanel(new BorderLayout());
+      wrapped.setBackground(bg);
+      wrapped.setBorder(RENDERER_BORDER);
+      wrapped.add(cmp, BorderLayout.CENTER);
+      myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);
       }

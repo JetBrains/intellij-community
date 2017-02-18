@@ -20,10 +20,10 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.util.containers.ContainerUtil
 import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRepository
-import git4idea.test.GitTestUtil
 import git4idea.test.cd
 import git4idea.test.git
 import git4idea.test.last
+import git4idea.test.makeCommit
 import git4idea.update.GitUpdateResult
 import java.io.File
 import java.util.*
@@ -64,9 +64,9 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     }
 
     cd(myRepository)
-    GitTestUtil.makeCommit("file.txt")
+    makeCommit("file.txt")
     cd(myCommunity)
-    GitTestUtil.makeCommit("com.txt")
+    makeCommit("com.txt")
 
     val spec1 = makePushSpec(myRepository, "master", "origin/master")
     val spec2 = makePushSpec(myCommunity, "master", "origin/master")
@@ -85,14 +85,14 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
   fun test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() {
     Executor.cd(myBro)
-    val broHash = GitTestUtil.makeCommit("bro.txt")
+    val broHash = makeCommit("bro.txt")
     git("push")
     Executor.cd(myBroCommunity)
-    val broCommunityHash = GitTestUtil.makeCommit("bro_com.txt")
+    val broCommunityHash = makeCommit("bro_com.txt")
     git("push")
 
     cd(myRepository)
-    GitTestUtil.makeCommit("file.txt")
+    makeCommit("file.txt")
 
     val mainSpec = makePushSpec(myRepository, "master", "origin/master")
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default

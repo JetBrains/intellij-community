@@ -594,21 +594,18 @@ class UsageRepr {
       stream.println("    AnnotationUsage:");
       stream.println("      Type     : " + myType.getDescr(context));
 
-      final List<String> arguments = new LinkedList<String>();
+      final List<String> arguments = new LinkedList<>();
 
       if (myUsedArguments != null) {
-        myUsedArguments.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(final int value) {
-            arguments.add(context.getValue(value));
-            return true;
-          }
+        myUsedArguments.forEach(value -> {
+          arguments.add(context.getValue(value));
+          return true;
         });
       }
 
       Collections.sort(arguments);
 
-      final List<String> targets = new LinkedList<String>();
+      final List<String> targets = new LinkedList<>();
 
       if (myUsedTargets != null) {
         for (final ElemType e : myUsedTargets) {

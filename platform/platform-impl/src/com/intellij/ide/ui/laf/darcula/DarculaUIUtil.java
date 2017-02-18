@@ -16,11 +16,15 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.*;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -35,18 +39,14 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  public static final Color GLOW_COLOR = new JBColor(new Color(96, 132, 212), new Color(96, 175, 255));
+  private static final Color  GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
 
-  public static void paintFocusRing(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height));
+  public static void paintFocusRing(Graphics g, Rectangle bounds) {
+    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
   }
 
   public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height), true);
-  }
-
-  private static Color getGlow() {
-    return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
+    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
   }
 
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
@@ -56,11 +56,11 @@ public class DarculaUIUtil {
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
     int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(getGlow(), 180 - correction),
-      ColorUtil.toAlpha(getGlow(), 120 - correction),
-      ColorUtil.toAlpha(getGlow(), 70  - correction),
-      ColorUtil.toAlpha(getGlow(), 100 - correction),
-      ColorUtil.toAlpha(getGlow(), 50  - correction)
+      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
     };
 
     final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -100,44 +100,48 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  /**
-   *
-   * @param g Graphics to paint on
-   * @param b Component's bounding rectangle. Can be taken from component with <code>JComponent.getBounds(null)</code>
-   * @param fg foreground painter.
-   * @param bg background painter, usually the component's background color: <code>JComponent.getBackground()</code>
-   * @param maxArcSize maximum arc size. If set to 0.0f then not rounded rectangle is painted. If set to a negative value then the
-   *                   component's height is used and a rounded rectangle with oval endings is painted.
-   * @param lw line width for the outlining decoration.
-   */
-  public static void drawSelection(Graphics2D g, Rectangle2D b, Paint fg, Paint bg, float maxArcSize, float lw) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+  public static void paintErrorRing(Graphics2D g, int width, int height, boolean hasFocus) {
+    int lw = JBUI.scale(UIManager.getInt("TextField.darcula.error.borderWidth"));
+    Shape shape = SystemInfo.isWindows ? new Rectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2) :
+                                         new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
+    Color color = hasFocus ? UIManager.getColor("TextField.darcula.error.active") :
+                             UIManager.getColor("TextField.darcula.error.inactive");
 
-      double arcSize = Float.compare(maxArcSize, 0.0f) == 0 ? 0 : b.getHeight() - 1;
-      if (maxArcSize > 0) arcSize = Math.min(maxArcSize, arcSize);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      Shape s = (arcSize > 0) ?
-                new RoundRectangle2D.Double(b.getX() + lw, b.getY() + lw, b.getWidth() - lw * 2, b.getHeight() - lw * 2,
-                                            arcSize - lw, arcSize - lw) :
-                new Rectangle2D.Double(b.getX() + lw, b.getY() + lw, b.getWidth() - lw * 2, b.getHeight() - lw * 2);
-
-      g2.setPaint(bg);
-      g2.fill(s);
-
-      g2.setPaint(fg);
-      g2.setStroke(new OuterStroke(lw));
-      g2.draw(s);
-    } finally {
-      g2.dispose();
-    }
+    g.setPaint(color);
+    g.setStroke(new OuterStroke(lw));
+    g.draw(shape);
   }
 
   public static boolean isCurrentEventShiftDownEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
+  }
+
+  public static void showErrorTip(JComponent component) {
+    Balloon balloon = (Balloon)component.getClientProperty("JComponent.error.balloon");
+    if (balloon != null) {
+      component.putClientProperty("JComponent.error.balloon", null);
+
+      JComponent root = component.getRootPane();
+      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, root);
+      Dimension bSize = balloon.getPreferredSize();
+      if (componentPos.y >= bSize.height) {
+        balloon.show(new PositionTracker<Balloon>(component) {
+          @Override public RelativePoint recalculateLocation(Balloon balloon) {
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), 0));
+          }
+        }, Balloon.Position.above);
+      } else {
+        balloon.show(new PositionTracker<Balloon>(component) {
+          @Override public RelativePoint recalculateLocation(Balloon balloon) {
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), getComponent().getHeight()));
+          }
+        }, Balloon.Position.below);
+      }
+    }
   }
 
   /**

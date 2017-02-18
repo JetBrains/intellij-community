@@ -19,14 +19,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +44,11 @@ import java.util.Collection;
  * @see AbstractSchemeActions
  * @see SchemesModel
  */
-public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
-  
-  private SchemesCombo<T> mySchemesCombo;
+public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
+  private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
-  private JLabel myInfoLabel;
+  protected InfoComponent myInfoComponent;
 
   public AbstractSchemesPanel() {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -57,15 +58,15 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   private void createUIComponents() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")));
+    controlsPanel.add(new JLabel(getSchemeTypeName() + ":"));
     controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
     myActions = createSchemeActions();
-    mySchemesCombo = new SchemesCombo<>(this);
+    mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
     controlsPanel.add(myToolbar);
-    myInfoLabel = new JLabel();
-    controlsPanel.add(myInfoLabel);
+    myInfoComponent = createInfoComponent();
+    controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
@@ -77,31 +78,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    toolbarActionGroup.add(new TopActionGroup());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarActionGroup, true);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
     return toolbarComponent;
-  }
-
-
-  private class TopActionGroup extends ActionGroup implements DumbAware {
-    public TopActionGroup() {
-      super("", true);
-    }
-
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      Collection<AnAction> actions = myActions.getActions();
-      return actions.toArray(new AnAction[actions.size()]);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setIcon(AllIcons.General.GearPlain);
-    }
   }
 
   public final JComponent getToolbar() {
@@ -119,7 +100,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     return mySchemesCombo.getSelectedScheme();
   }
   
-  public final void selectScheme(@Nullable T scheme) {
+  public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
   }
   
@@ -135,21 +116,24 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     mySchemesCombo.startEdit();
   }
   
+
   public final void cancelEdit() {
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
-    myInfoLabel.setText(message);
-    myInfoLabel.setForeground(messageTypeToColor(messageType));
-  }
+  public abstract void showInfo(@Nullable String message, @NotNull MessageType messageType);
 
-  public final void clearInfo() {
-    myInfoLabel.setText(null);
-  }
+  public abstract void clearInfo();
 
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
+  }
+
+  @NotNull
+  protected abstract InfoComponent createInfoComponent();
+
+  protected String getSchemeTypeName() {
+    return ApplicationBundle.message("editbox.scheme.type.name");
   }
 
   /**
@@ -167,12 +151,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   }
 
   /**
-   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be 
-   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes 
+   * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be
+   *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes
    *         separators.
    */
-  public abstract boolean supportsProjectSchemes();
-  
+  protected abstract boolean supportsProjectSchemes();
+
+  protected abstract boolean highlightNonDefaultSchemes();
+
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
@@ -182,15 +168,28 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
     balloon.showInCenterOf(myToolbar);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
-  
-  @SuppressWarnings("UseJBColor")
-  private static Color messageTypeToColor(@NotNull MessageType messageType) {
-    if (messageType == MessageType.INFO) {
-      return Color.GRAY;
+
+  private static class ShowSchemesActionsListAction extends DumbAwareAction {
+
+    private final ActionGroup myActionGroup;
+    private final Component myParentComponent;
+
+    ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
+      myParentComponent = component;
+      myActionGroup = new DefaultActionGroup(actions.toArray(new AnAction[actions.size()]));
     }
-    else if (messageType == MessageType.ERROR) {
-      return Color.RED;
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      p.setIcon(AllIcons.General.Gear);
     }
-    return JBColor.BLACK;
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final ListPopup actionGroupPopup =
+        JBPopupFactory.getInstance().createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
+      actionGroupPopup.show(new RelativePoint(myParentComponent, new Point(2, myParentComponent.getHeight() - 1)));
+    }
   }
 }

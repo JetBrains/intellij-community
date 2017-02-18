@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -152,12 +152,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
     final String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : null;
-    final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true, new Computable<String>() {
-      @Override
-      public String compute() {
-        return DebugUtil.treeToString(fileElement, true);
-      }
-    });
+    final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true,
+                                                                    () -> DebugUtil.treeToString(fileElement, true));
 
     @NonNls final String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                                    (vFile == null ? "<unknown file>" : vFile.getPath()) +
@@ -165,7 +161,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
     final String creationTraces = ourTraceStubAstBinding ? dumpCreationTraces(fileElement) : null;
 
-    List<Attachment> attachments = new ArrayList<Attachment>();
+    List<Attachment> attachments = new ArrayList<>();
     if (stubString != null) {
       attachments.add(new Attachment("stubTree.txt", stubString));
     }
@@ -176,23 +172,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       attachments.add(new Attachment("creationTraces.txt", creationTraces));
     }
 
-    throw new FailedToBindStubToAstException(message, attachments.toArray(Attachment.EMPTY_ARRAY));
-  }
-
-  private static class FailedToBindStubToAstException extends RuntimeException implements ExceptionWithAttachments {
-
-    private final Attachment[] myAttachments;
-
-    public FailedToBindStubToAstException(String message, Attachment[] attachments) {
-      super(message);
-      myAttachments = attachments;
-    }
-
-    @NotNull
-    @Override
-    public Attachment[] getAttachments() {
-      return myAttachments;
-    }
+    throw new RuntimeExceptionWithAttachments(message, attachments.toArray(Attachment.EMPTY_ARRAY));
   }
 
   @NotNull

@@ -21,10 +21,14 @@ import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -34,6 +38,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +50,10 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
 
@@ -98,14 +107,34 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void updateOkEnabled() {
     String text = myEditorTextField.getText();
-    List<String> rules = StringUtil.split(text, "\n");
-    boolean hasAnyInvalid = rules
-      .stream()
-      .filter((e) -> !e.trim().isEmpty())
-      .map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
-      .anyMatch((e) -> e == null);
-    
-    getOKAction().setEnabled(!hasAnyInvalid);
+    List<String> rules = StringUtil.split(text, "\n", true, false);
+
+    Stream<Integer> intStream = IntStream.iterate(0, i -> i + 1).boxed();
+    List<Integer> invalidLines = StreamEx.of(rules)
+      .zipWith(intStream)
+      .filterKeys((rule) -> !rule.isEmpty())
+      .mapKeys((rule) -> MatcherConstructor.INSTANCE.createMatcher(rule))
+      .filterKeys((matcher) -> matcher == null)
+      .values()
+      .toList();
+
+    getOKAction().setEnabled(invalidLines.isEmpty());
+    highlightErrorLines(invalidLines);
+  }
+
+  private void highlightErrorLines(@NotNull List<Integer> lines) {
+    Editor editor = myEditorTextField.getEditor();
+    if (editor == null) return;
+
+    final TextAttributes attributes = editor.getColorsScheme().getAttributes(ERRORS_ATTRIBUTES);
+    final Document document = editor.getDocument();
+    final int totalLines = document.getLineCount();
+
+    MarkupModel model = editor.getMarkupModel();
+    model.removeAllHighlighters();
+    lines.stream()
+      .filter((current) -> current < totalLines)
+      .forEach((line) -> model.addLineHighlighter(line, HighlighterLayer.ERROR, attributes));
   }
 
   @Override
@@ -115,12 +144,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     Language language = (Language)myCurrentLanguageCombo.getModel().getSelectedItem();
     myBlackLists.put(language, myEditorTextField.getText());
 
-    myBlackLists.entrySet().forEach((entry) -> {
-      Language lang = entry.getKey();
-      String text = entry.getValue();
-      storeBlackListDiff(lang, text);
-    });
-    
+    myBlackLists.forEach((lang, text) -> storeBlackListDiff(lang, text));
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
   }
 

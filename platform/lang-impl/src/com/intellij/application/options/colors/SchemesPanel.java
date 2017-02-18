@@ -18,14 +18,14 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -110,7 +110,12 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
   }
 
   @Override
-  public boolean supportsProjectSchemes() {
+  protected boolean supportsProjectSchemes() {
     return false;
+  }
+
+  @Override
+  protected boolean highlightNonDefaultSchemes() {
+    return true;
   }
 }

@@ -166,7 +166,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null)
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
-        val sdk = PythonSdkType.getSdk(footholdFile) ?: return emptyList()
+        val sdk = PythonSdkType.findPythonSdk(footholdFile) ?: return emptyList()
         val skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context)

@@ -1040,7 +1040,8 @@ public class AbstractTreeUi {
 
     final DefaultMutableTreeNode node = pass.getNode();
 
-    if (!(node.getUserObject() instanceof NodeDescriptor)) return;
+    NodeDescriptor descriptor = getDescriptorFrom(node);
+    if (descriptor == null) return;
 
     if (pass.isUpdateStructure()) {
       setUpdaterState(new UpdaterTreeState(this)).beforeSubtreeUpdate();
@@ -1115,9 +1116,8 @@ public class AbstractTreeUi {
   }
 
   protected void doUpdateNode(@NotNull final DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof NodeDescriptor)) return;
-    final NodeDescriptor descriptor = (NodeDescriptor)userObject;
+    NodeDescriptor descriptor = getDescriptorFrom(node);
+    if (descriptor == null) return;
     final Object prevElement = getElementFromDescriptor(descriptor);
     if (prevElement == null) return;
     update(descriptor, false)
@@ -1695,7 +1695,7 @@ public class AbstractTreeUi {
             public Promise<?> run() {
               NodeDescriptor descriptor = preloaded != null ? preloaded.getDescriptor(getElementFor(eachChild)) : null;
               NodeDescriptor descriptorFromNode = getDescriptorFrom(eachChild);
-              if (descriptor != null) {
+              if (isValid(descriptor)) {
                 eachChild.setUserObject(descriptor);
                 if (descriptorFromNode != null) {
                   descriptor.setChildrenSortingStamp(descriptorFromNode.getChildrenSortingStamp());
@@ -2165,7 +2165,7 @@ public class AbstractTreeUi {
   private MutualMap<Object, Integer> loadElementsFromStructure(final NodeDescriptor descriptor,
                                                                @Nullable LoadedChildren preloadedChildren) {
     MutualMap<Object, Integer> elementToIndexMap = new MutualMap<>(true);
-    final Object element = getBuilder().getTreeStructureElement(descriptor);
+    final Object element = getElementFromDescriptor(descriptor);
     if (!isValid(element)) return elementToIndexMap;
 
 
@@ -2203,7 +2203,7 @@ public class AbstractTreeUi {
       boolean needToUpdate = false;
       NodeDescriptor loadedDesc = loadedChildren.getDescriptor(child);
       final NodeDescriptor childDescr;
-      if (loadedDesc == null) {
+      if (!isValid(loadedDesc)) {
         childDescr = getTreeStructure().createDescriptor(child, descriptor);
         needToUpdate = true;
       }
@@ -2783,8 +2783,8 @@ public class AbstractTreeUi {
 
     if (isNodeBeingBuilt(node)) return;
 
-    final Object o = node.getUserObject();
-    if (!(o instanceof NodeDescriptor)) return;
+    NodeDescriptor descriptor = getDescriptorFrom(node);
+    if (descriptor == null) return;
 
 
     if (isYeildingNow()) {
@@ -2792,7 +2792,7 @@ public class AbstractTreeUi {
       return;
     }
 
-    final Object element = getBuilder().getTreeStructureElement((NodeDescriptor)o);
+    final Object element = getElementFromDescriptor(descriptor);
 
     boolean childrenReady = !isLoadedInBackground(element) && !isUpdatingChildrenNow(node);
 
@@ -2927,7 +2927,7 @@ public class AbstractTreeUi {
     while (eachParent != null) {
       eachParent = eachParent.getParent();
       if (eachParent instanceof DefaultMutableTreeNode) {
-        final Object eachElement = getElementFor((DefaultMutableTreeNode)eachParent);
+        final Object eachElement = getElementFor(eachParent);
         if (isLoadedInBackground(eachElement)) return (DefaultMutableTreeNode)eachParent;
       }
     }
@@ -2963,7 +2963,7 @@ public class AbstractTreeUi {
     }
 
     Promise<Boolean> update;
-    if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) != null) {
+    if (parentPreloadedChildren != null && parentPreloadedChildren.getDescriptor(oldElement) == childDescriptor) {
       update = Promise.resolve(parentPreloadedChildren.isUpdated(oldElement));
     }
     else {
@@ -2978,7 +2978,7 @@ public class AbstractTreeUi {
       final AtomicBoolean forceRemapping = new AtomicBoolean();
       final Ref<Object> newElement = new Ref<>(getElementFromDescriptor(childDesc.get()));
 
-      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
+      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
       Promise<Boolean> promise;
       if (index == null) {
         promise = Promise.resolve(false);
@@ -2989,11 +2989,11 @@ public class AbstractTreeUi {
           if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
             final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<>();
             promise = updateIndexDone;
-            if (parentNode.getUserObject() instanceof NodeDescriptor) {
-              final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+            NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+            if (parentDescriptor != null) {
               childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
               NodeDescriptor oldDesc = getDescriptorFrom(childNode);
-              if (oldDesc != null) {
+              if (isValid(oldDesc)) {
                 childDesc.get().applyFrom(oldDesc);
               }
 
@@ -3068,7 +3068,7 @@ public class AbstractTreeUi {
             result.setResult(null);
           }
           else {
-            elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
+            elementToIndexMap.remove(getElementFromDescriptor(childDesc.get()));
             updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
               .doWhenDone(() -> result.setResult(null));
           }
@@ -3449,8 +3449,8 @@ public class AbstractTreeUi {
   }
 
   private void updateNodeImageAndPosition(@NotNull final DefaultMutableTreeNode node, boolean updatePosition, boolean nodeChanged) {
-    if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
+    if (descriptor == null) return;
     if (getElementFromDescriptor(descriptor) == null) return;
 
     if (updatePosition) {
@@ -4428,20 +4428,8 @@ public class AbstractTreeUi {
 
   @Nullable
   public Object getElementFor(Object node) {
-    if (!(node instanceof DefaultMutableTreeNode)) return null;
-    return getElementFor((DefaultMutableTreeNode)node);
-  }
-
-  @Nullable
-  Object getElementFor(@Nullable DefaultMutableTreeNode node) {
-    if (node != null) {
-      final Object o = node.getUserObject();
-      if (o instanceof NodeDescriptor) {
-        return getElementFromDescriptor((NodeDescriptor)o);
-      }
-    }
-
-    return null;
+    NodeDescriptor descriptor = getDescriptorFrom(node);
+    return descriptor == null ? null : getElementFromDescriptor(descriptor);
   }
 
   public final boolean isNodeBeingBuilt(@NotNull final TreePath path) {
@@ -4474,7 +4462,7 @@ public class AbstractTreeUi {
   }
 
   private boolean isLoadingParentInBackground(Object node) {
-    return node instanceof DefaultMutableTreeNode && isLoadedInBackground(getElementFor((DefaultMutableTreeNode)node));
+    return node instanceof DefaultMutableTreeNode && isLoadedInBackground(getElementFor(node));
   }
 
   public void setTreeStructure(@NotNull AbstractTreeStructure treeStructure) {
@@ -4758,16 +4746,14 @@ public class AbstractTreeUi {
 
       final TreePath path = e.getPath();
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (!(node.getUserObject() instanceof NodeDescriptor)) return;
-
+      NodeDescriptor descriptor = getDescriptorFrom(node);
+      if (descriptor == null) return;
 
       TreePath pathToSelect = null;
       if (isSelectionInside(node)) {
         pathToSelect = new TreePath(node.getPath());
       }
 
-
-      NodeDescriptor descriptor = getDescriptorFrom(node);
       if (getBuilder().isDisposeOnCollapsing(descriptor)) {
         runDone(new TreeRunnable("AbstractTreeUi.MyExpansionListener.treeCollapsed") {
           @Override

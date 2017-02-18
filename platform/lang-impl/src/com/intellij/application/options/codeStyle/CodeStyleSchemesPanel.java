@@ -18,7 +18,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme> {
+public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;
   
@@ -124,7 +124,12 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
   }
 
   @Override
-  public boolean supportsProjectSchemes() {
+  protected boolean supportsProjectSchemes() {
+    return true;
+  }
+
+  @Override
+  protected boolean highlightNonDefaultSchemes() {
     return true;
   }
 }

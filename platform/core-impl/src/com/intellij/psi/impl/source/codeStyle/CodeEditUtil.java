@@ -32,25 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeEditUtil {
-  private static final Key<Boolean> GENERATED_FLAG = new Key<Boolean>("GENERATED_FLAG");
-  private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENT_INFO");
-  private static final Key<Boolean> REFORMAT_BEFORE_KEY = new Key<Boolean>("REFORMAT_BEFORE_KEY");
-  private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT_KEY");
-  private static final ThreadLocal<Boolean> ALLOW_TO_MARK_NODES_TO_REFORMAT = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.TRUE;
-    }
-  };
-  private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.TRUE;
-    }
-  };
-  private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<NotNullFunction<ASTNode, Boolean>>();
+  private static final Key<Boolean> GENERATED_FLAG = new Key<>("GENERATED_FLAG");
+  private static final Key<Integer> INDENT_INFO = new Key<>("INDENT_INFO");
+  private static final Key<Boolean> REFORMAT_BEFORE_KEY = new Key<>("REFORMAT_BEFORE_KEY");
+  private static final Key<Boolean> REFORMAT_KEY = new Key<>("REFORMAT_KEY");
+  private static final ThreadLocal<Boolean> ALLOW_TO_MARK_NODES_TO_REFORMAT = ThreadLocal.withInitial(() -> Boolean.TRUE);
+  private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = ThreadLocal.withInitial(() -> Boolean.TRUE);
+  private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<>();
 
-  public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
+  public static final Key<Boolean> OUTER_OK = new Key<>("OUTER_OK");
 
   private CodeEditUtil() { }
 

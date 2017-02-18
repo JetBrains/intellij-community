@@ -33,20 +33,17 @@ import java.util.List;
  * @author peter
  */
 class MarkerCache {
-  static final Comparator<SelfElementInfo> INFO_COMPARATOR = new Comparator<SelfElementInfo>() {
-    @Override
-    public int compare(SelfElementInfo info1, SelfElementInfo info2) {
-      int o1 = info1.getPsiStartOffset();
-      int o2 = info2.getPsiStartOffset();
-      if (o1 < 0 || o2 < 0) return o1 >= 0 ? -1 : o2 >= 0 ? 1 : 0; // infos without range go after infos with range
-      if (o1 != o2) return o1 > o2 ? 1 : -1;
+  static final Comparator<SelfElementInfo> INFO_COMPARATOR = (info1, info2) -> {
+    int o1 = info1.getPsiStartOffset();
+    int o2 = info2.getPsiStartOffset();
+    if (o1 < 0 || o2 < 0) return o1 >= 0 ? -1 : o2 >= 0 ? 1 : 0; // infos without range go after infos with range
+    if (o1 != o2) return o1 > o2 ? 1 : -1;
 
-      o1 = info1.getPsiEndOffset();
-      o2 = info2.getPsiEndOffset();
-      if (o1 != o2) return o1 > o2 ? 1 : -1;
+    o1 = info1.getPsiEndOffset();
+    o2 = info2.getPsiEndOffset();
+    if (o1 != o2) return o1 > o2 ? 1 : -1;
 
-      return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
-    }
+    return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
   };
   private final SmartPointerTracker myPointers;
   private UpdatedRanges myUpdatedRanges;

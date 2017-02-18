@@ -25,6 +25,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -51,24 +52,26 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   public static TwosideTextDiffProvider create(@Nullable Project project,
                                                @NotNull ContentDiffRequest request,
                                                @NotNull TextDiffSettings settings,
-                                               @NotNull Runnable rediff) {
+                                               @NotNull Runnable rediff,
+                                               @NotNull Disposable disposable) {
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
     if (ignoredRangeProvider == null) return null;
-    return new SmartTextDiffProvider(project, content1, content2, settings, rediff, ignoredRangeProvider);
+    return new SmartTextDiffProvider(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider);
   }
 
   @Nullable
   public static TwosideTextDiffProvider.NoIgnore createNoIgnore(@Nullable Project project,
                                                                 @NotNull ContentDiffRequest request,
                                                                 @NotNull TextDiffSettings settings,
-                                                                @NotNull Runnable rediff) {
+                                                                @NotNull Runnable rediff,
+                                                                @NotNull Disposable disposable) {
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
     if (ignoredRangeProvider == null) return null;
-    return new SmartTextDiffProvider.NoIgnore(project, content1, content2, settings, rediff, ignoredRangeProvider);
+    return new SmartTextDiffProvider.NoIgnore(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider);
   }
 
   private SmartTextDiffProvider(@Nullable Project project,
@@ -76,8 +79,9 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull DiffContent content2,
                                 @NotNull TextDiffSettings settings,
                                 @NotNull Runnable rediff,
+                                @NotNull Disposable disposable,
                                 @NotNull DiffIgnoredRangeProvider ignoredRangeProvider) {
-    this(project, content1, content2, settings, rediff, ignoredRangeProvider, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+    this(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
   }
 
   private SmartTextDiffProvider(@Nullable Project project,
@@ -85,10 +89,11 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull DiffContent content2,
                                 @NotNull TextDiffSettings settings,
                                 @NotNull Runnable rediff,
+                                @NotNull Disposable disposable,
                                 @NotNull DiffIgnoredRangeProvider ignoredRangeProvider,
                                 @NotNull IgnorePolicy[] ignorePolicies,
                                 @NotNull HighlightPolicy[] highlightPolicies) {
-    super(settings, rediff, ignorePolicies, highlightPolicies);
+    super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
     myProject = project;
     myContent1 = content1;
     myContent2 = content2;
@@ -151,8 +156,9 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                      @NotNull DiffContent content2,
                      @NotNull TextDiffSettings settings,
                      @NotNull Runnable rediff,
+                     @NotNull Disposable disposable,
                      @NotNull DiffIgnoredRangeProvider ignoredRangeProvider) {
-      super(project, content1, content2, settings, rediff, ignoredRangeProvider,
+      super(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider,
             IGNORE_POLICIES, ArrayUtil.remove(HIGHLIGHT_POLICIES, DO_NOT_HIGHLIGHT));
     }
 

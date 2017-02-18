@@ -40,12 +40,14 @@ public class Patches {
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
 
   /**
-   * See https://bugs.openjdk.java.net/browse/JDK-6209673.
    * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
    * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
    * monitors exists
+   *
+   * <p> http://bugs.openjdk.java.net/browse/JDK-6209673
+   * <p> http://bugs.openjdk.java.net/browse/JDK-8041654
    */
-  public static final boolean SUN_BUG_ID_6209673 = true;
+  public static final boolean REPAINT_MANAGER_LEAK = !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).

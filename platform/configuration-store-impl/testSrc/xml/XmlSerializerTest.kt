@@ -634,7 +634,7 @@ internal class XmlSerializerTest {
 
   private fun checkSmartSerialization(bean: Bean2, serialized: String) {
     val serializer = SmartSerializer()
-    serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).rootElement)
+    serializer.readExternal(bean, JDOMUtil.load(serialized))
     val serializedState = Element("Bean2")
     serializer.writeExternal(bean, serializedState)
     assertThat(JDOMUtil.writeElement(serializedState)).isEqualTo(serialized)
@@ -644,7 +644,7 @@ internal class XmlSerializerTest {
 private val XML_PREFIX = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
-  val element = bean.serialize<Any>(filter)
+  val element = bean.serialize(filter)
   var actual = JDOMUtil.writeElement(element, "\n").trim()
   if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
     actual = actual.substring(XML_PREFIX.length).trim()

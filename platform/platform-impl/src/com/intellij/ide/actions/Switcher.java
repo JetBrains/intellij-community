@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
@@ -1216,7 +1217,9 @@ public class Switcher extends AnAction implements DumbAware {
 
         FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
         open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
-        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+
+        boolean hasProblem = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, hasProblem ? JBColor.red : null, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
         append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including EPs

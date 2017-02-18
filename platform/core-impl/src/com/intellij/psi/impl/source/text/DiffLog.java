@@ -48,7 +48,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull ASTDiffBuilder astDiffBuilder);
   }
 
-  private final List<LogEntry> myEntries = new ArrayList<LogEntry>();
+  private final List<LogEntry> myEntries = new ArrayList<>();
 
   @NotNull
   public TreeChangeEventImpl performActualPsiChange(@NotNull PsiFile file) {

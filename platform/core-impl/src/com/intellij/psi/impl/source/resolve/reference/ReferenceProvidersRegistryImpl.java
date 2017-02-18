@@ -29,8 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
-  private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION = new LanguageExtension<PsiReferenceContributor>(PsiReferenceContributor.EP_NAME.getName());
-  private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION = new LanguageExtension<PsiReferenceProviderBean>(PsiReferenceProviderBean.EP_NAME.getName());
+  private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION =
+    new LanguageExtension<>(PsiReferenceContributor.EP_NAME.getName());
+  private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION =
+    new LanguageExtension<>(PsiReferenceProviderBean.EP_NAME.getName());
 
   private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = ContainerUtil.newConcurrentMap();
 
@@ -116,7 +118,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static MultiMap<Double, PsiReference[]> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
                                                                                      @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
-    MultiMap<Double, PsiReference[]> map = new MultiMap<Double, PsiReference[]>();
+    MultiMap<Double, PsiReference[]> map = new MultiMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
       if (refs.length > 0) {

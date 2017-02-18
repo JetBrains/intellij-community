@@ -237,12 +237,12 @@ public class GitRebaseDialog extends DialogWrapper {
       return;
     }
     else if (myOntoValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.onto"));
+      setErrorText(GitBundle.getString("rebase.invalid.onto"), myOntoComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.from"));
+      setErrorText(GitBundle.getString("rebase.invalid.from"), myFromComboBox);
       setOKActionEnabled(false);
       return;
     }

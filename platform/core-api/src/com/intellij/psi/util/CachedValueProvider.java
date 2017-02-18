@@ -102,7 +102,7 @@ public interface CachedValueProvider<T> {
      * @see #getDependencyItems()
      */
     public static <T> Result<T> create(@Nullable T value, @NotNull Object... dependencies) {
-      return new Result<T>(value, dependencies);
+      return new Result<>(value, dependencies);
     }
 
     /**
@@ -110,7 +110,7 @@ public interface CachedValueProvider<T> {
      * @see #getDependencyItems()
      */
     public static <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
-      return new Result<T>(value, ArrayUtil.toObjectArray(dependencies));
+      return new Result<>(value, ArrayUtil.toObjectArray(dependencies));
     }
 
   }

@@ -116,12 +116,7 @@ class AstPathPsiMap {
 
   private static class MyReferenceQueue extends ReferenceQueue<StubBasedPsiElementBase<?>> {
     MyReferenceQueue(Project project) {
-      LowMemoryWatcher.register(new Runnable() {
-        @Override
-        public void run() {
-          cleanupStaleReferences();
-        }
-      },project);
+      LowMemoryWatcher.register(() -> cleanupStaleReferences(), project);
     }
 
     void cleanupStaleReferences() {

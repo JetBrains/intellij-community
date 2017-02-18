@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
     Project project = element == null ? null : element.getProject();
-    final ToolsImpl tools = getTools(inspectionToolKey.toString(), project);
+    final ToolsImpl tools = getToolsOrNull(inspectionToolKey.toString(), project);
     HighlightDisplayLevel level = tools != null ? tools.getLevel(element) : HighlightDisplayLevel.WARNING;
     if (!getProfileManager().getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
       level = HighlightDisplayLevel.WARNING;
@@ -318,7 +318,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
-    final Tools toolList = getTools(shortName, element == null ? null : element.getProject());
+    final Tools toolList = getToolsOrNull(shortName, element == null ? null : element.getProject());
     return toolList == null ? null : toolList.getInspectionTool(element);
   }
 
@@ -356,7 +356,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
-    final ToolsImpl tools = getTools(shortName, project);
+    final ToolsImpl tools = getToolsOrNull(shortName, project);
     return tools != null? tools.getTool() : null;
   }
 
@@ -568,7 +568,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return;
     }
 
-    HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getTools(shortName, project) != null
+    HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
                                    ? myBaseProfile.getErrorLevel(key, project)
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
@@ -634,9 +634,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {
-    final ToolsImpl tools = getTools(key.toString(), project);
-    LOG.assertTrue(tools != null, "profile name: " + myName +  " base profile: " + (myBaseProfile != null ? myBaseProfile.getName() : "-") + " key: " + key);
-    return tools.getLevel();
+    return getTools(key.toString(), project).getLevel();
   }
 
   @NotNull
@@ -657,11 +655,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public void enableTool(@NotNull String toolShortName, Project project) {
-    final ToolsImpl tools = getTools(toolShortName, project);
-    tools.setEnabled(true);
-    tools.getDefaultState().setEnabled(true);
-    schemeState = SchemeState.POSSIBLY_CHANGED;
+  public void enableTool(@NotNull String toolShortName, @Nullable Project project) {
+    setToolEnabled(toolShortName, true, project);
   }
 
   public void enableTool(@NotNull String inspectionTool, @NotNull NamedScope namedScope, Project project) {
@@ -683,12 +678,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void disableTool(@NotNull String inspectionTool, @Nullable Project project) {
-    ToolsImpl tools = getTools(inspectionTool, project);
-    tools.setEnabled(false);
-    if (tools.getNonDefaultTools() == null) {
-      tools.getDefaultState().setEnabled(false);
-    }
-    schemeState = SchemeState.POSSIBLY_CHANGED;
+    setToolEnabled(inspectionTool, false, project);
   }
 
   public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project) {
@@ -701,7 +691,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     if (key == null) {
       return false;
     }
-    final Tools toolState = getTools(key.toString(), element == null ? null : element.getProject());
+    final Tools toolState = getToolsOrNull(key.toString(), element == null ? null : element.getProject());
     return toolState != null && toolState.isEnabled(element);
   }
 
@@ -861,7 +851,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NotNull
   @Transient
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
-    final ToolsImpl tools = getTools(key.toString(), project);
+    final ToolsImpl tools = getToolsOrNull(key.toString(), project);
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
   }
 
@@ -884,9 +874,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public ToolsImpl getTools(@NotNull String toolShortName, @Nullable Project project) {
+  @Override
+  @Nullable
+  public ToolsImpl getToolsOrNull(@NotNull String name, @Nullable Project project) {
     initInspectionTools(project);
-    return myTools.get(toolShortName);
+    return myTools.get(name);
   }
 
   public void enableAllTools(Project project) {

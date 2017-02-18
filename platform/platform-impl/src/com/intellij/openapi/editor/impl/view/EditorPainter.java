@@ -45,7 +45,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -823,7 +826,7 @@ class EditorPainter implements TextDrawingCallback {
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
     int minX = getMinX();
     for (EditorImpl.CaretRectangle location : locations) {
-      int x = location.myPoint.x;
+      float x = location.myPoint.x;
       int y = location.myPoint.y - topOverhang;
       Caret caret = location.myCaret;
       CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.DEFAULT : caret.getVisualAttributes();
@@ -833,22 +836,22 @@ class EditorPainter implements TextDrawingCallback {
         int lineWidth = JBUI.scale(attr.getWidth(settings.getLineCursorWidth()));
         // fully cover extra character's pixel which can appear due to antialiasing
         // see IDEA-148843 for more details
-        if (x > minX && lineWidth > 1) x--;
-        g.fillRect(x, y, lineWidth, nominalLineHeight);
+        if (x > minX && lineWidth > 1) x -= 1 / JBUI.sysScale(g);
+        g.fill(new Rectangle2D.Float(x, y, lineWidth, nominalLineHeight));
         if (myDocument.getTextLength() > 0 && caret != null &&
             !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
-          g.fillPolygon(new int[]{
-                          isRtl ? x + lineWidth : x,
-                          isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
-                          isRtl ? x + lineWidth : x
-                        },
-                        new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
+          GeneralPath triangle = new GeneralPath(Path2D.WIND_NON_ZERO, 3);
+          triangle.moveTo(isRtl ? x + lineWidth : x, y);
+          triangle.lineTo(isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE, y);
+          triangle.lineTo(isRtl ? x + lineWidth : x, y + CARET_DIRECTION_MARK_SIZE);
+          triangle.closePath();
+          g.fill(triangle);
         }
       }
       else {
         int width = location.myWidth;
-        int startX = Math.max(minX, isRtl ? x - width : x);
-        g.fillRect(startX, y, width, nominalLineHeight - 1);
+        float startX = Math.max(minX, isRtl ? x - width : x);
+        g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight - 1));
         if (myDocument.getTextLength() > 0 && caret != null) {
           int charCount = DocumentUtil.isSurrogatePair(myDocument, caret.getOffset()) ? 2 : 1;
           int targetVisualColumn = caret.getVisualPosition().column;

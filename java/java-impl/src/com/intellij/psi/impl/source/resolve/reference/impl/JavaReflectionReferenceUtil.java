@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -151,7 +153,7 @@ class JavaReflectionReferenceUtil {
    * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
    */
   @Contract("null, _ -> false")
-  static boolean isReachable(PsiMember member, PsiClass psiClass) {
+  static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
     return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
@@ -174,5 +176,15 @@ class JavaReflectionReferenceUtil {
     if (methodCall != null) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall.getArgumentList());
     }
+  }
+
+  @NotNull
+  static LookupElement withPriority(LookupElement lookupElement, boolean hasPriority) {
+    return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
+  }
+
+  @NotNull
+  static LookupElement withPriority(LookupElement lookupElement, int priority) {
+    return priority == 0 ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
   }
 }

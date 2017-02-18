@@ -109,19 +109,15 @@ class ScopedClassHierarchy {
 
   @NotNull
   static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<Map<GlobalSearchScope, ScopedClassHierarchy>>() {
-      @Nullable
-      @Override
-      public Result<Map<GlobalSearchScope, ScopedClassHierarchy>> compute() {
-        Map<GlobalSearchScope, ScopedClassHierarchy> result = new ConcurrentFactoryMap<GlobalSearchScope, ScopedClassHierarchy>() {
-          @Nullable
-          @Override
-          protected ScopedClassHierarchy create(GlobalSearchScope resolveScope) {
-            return new ScopedClassHierarchy(psiClass, resolveScope);
-          }
-        };
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      Map<GlobalSearchScope, ScopedClassHierarchy> result = new ConcurrentFactoryMap<GlobalSearchScope, ScopedClassHierarchy>() {
+        @Nullable
+        @Override
+        protected ScopedClassHierarchy create(GlobalSearchScope resolveScope1) {
+          return new ScopedClassHierarchy(psiClass, resolveScope1);
+        }
+      };
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     }).get(resolveScope);
   }
 
@@ -165,12 +161,7 @@ class ScopedClassHierarchy {
     List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
     if (list == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      list = ourGuard.doPreventingRecursion(this, true, new Computable<List<PsiClassType.ClassResolveResult>>() {
-        @Override
-        public List<PsiClassType.ClassResolveResult> compute() {
-          return calcImmediateSupersWithCapturing();
-        }
-      });
+      list = ourGuard.doPreventingRecursion(this, true, () -> calcImmediateSupersWithCapturing());
       if (list == null) {
         return Collections.emptyList();
       }

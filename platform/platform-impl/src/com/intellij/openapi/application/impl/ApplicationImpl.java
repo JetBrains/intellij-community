@@ -110,6 +110,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final String myName;
 
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
+  private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
@@ -158,6 +159,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
     getPicoContainer().registerComponentInstance(Application.class, this);
+    getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
@@ -401,11 +403,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, state);
-    }
-    myInvokator.invokeLater(runnable, state, expired);
+    myInvokator.invokeLater(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired);
   }
 
   @Override
@@ -679,11 +677,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, modalityState);
-    }
-    LaterInvocator.invokeAndWait(runnable, modalityState);
+    LaterInvocator.invokeAndWait(myTransactionGuard.wrapLaterInvocation(runnable, modalityState), modalityState);
   }
 
   @Override
@@ -1330,7 +1324,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    myTransactionGuard.submitTransactionAndWait(() -> {
       int prevBase = myWriteStackBase;
       myWriteStackBase = myWriteActionsStack.size();
       try (AccessToken ignored = myLock.writeSuspend()) {

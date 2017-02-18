@@ -53,6 +53,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
+  static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
@@ -154,7 +155,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
                                     new GitBranchPopupActions(repo.getProject(), repo).createActions(),
                                     GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM, null);
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
+                               SHOW_ALL_REPOSITORIES);
     return popupGroup;
   }
 

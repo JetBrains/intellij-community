@@ -86,4 +86,10 @@ public class Test {
           System.out.println(str + ":" + num);
       });
   }
+
+  void forEach(Map<String, String> map) {
+      map.forEach((key, value) -> {
+          //long comment
+      });
+  }
 }

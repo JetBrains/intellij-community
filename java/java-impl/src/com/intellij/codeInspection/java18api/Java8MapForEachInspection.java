@@ -191,7 +191,7 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
       LambdaRefactoringUtil.simplifyToExpressionLambda(newLambda);
       entrySetCall.getArgumentList().add(newLambda);
       ExpressionUtils.bindCallTo(entrySetCall, "forEach");
-      return entrySetCall.getText();
+      return ct.text(entrySetCall);
     }
 
     private static void fixInForeach(PsiForeachStatement loop) {

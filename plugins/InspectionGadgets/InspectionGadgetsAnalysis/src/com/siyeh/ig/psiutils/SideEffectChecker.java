@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -118,11 +119,21 @@ public class SideEffectChecker {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
-      if (method != null && (PropertyUtil.isSimpleGetter(method) || ControlFlowAnalyzer.isPure(method))) {
+      if (isPure(method)) {
         return;
       }
       
       sideEffect = expression;
+    }
+
+    protected boolean isPure(PsiMethod method) {
+      if (method == null) return false;
+      if (PropertyUtil.isSimpleGetter(method)) return true;
+      if (ControlFlowAnalyzer.isPure(method)) {
+        return ControlFlowAnalyzer.getMethodContracts(method).stream()
+          .noneMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
+      }
+      return false;
     }
 
     @Override
@@ -163,9 +174,9 @@ public class SideEffectChecker {
     }
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
       sideEffect = statement;
-      super.visitAssertStatement(statement);
+      super.visitDeclarationStatement(statement);
     }
 
     @Override
@@ -176,8 +187,7 @@ public class SideEffectChecker {
 
     @Override
     public void visitClass(PsiClass aClass) {
-      sideEffect = aClass;
-      super.visitClass(aClass);
+      // local or anonymous class declaration is not side effect per se (unless it's instantiated)
     }
 
     @Override

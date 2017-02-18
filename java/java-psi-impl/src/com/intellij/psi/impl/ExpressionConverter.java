@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ExpressionConverter {
   public static final LanguageExtension<ExpressionConverter> EP =
-    new LanguageExtension<ExpressionConverter>("com.intellij.expressionConverter");
+    new LanguageExtension<>("com.intellij.expressionConverter");
 
   protected abstract PsiElement convert(PsiElement expression, Project project);
 

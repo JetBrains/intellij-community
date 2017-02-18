@@ -106,7 +106,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myHelpFileName = "ideahelp.jar";
   private String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
+  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
@@ -873,18 +873,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
-    myPluginChooserPages = new ArrayList<PluginChooserPage>();
+    myPluginChooserPages = new ArrayList<>();
     for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
       myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
-    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
-      @Override
-      public String fun(Element element) {
-        String id = element.getTextTrim();
-        return StringUtil.isNotEmpty(id) ? id : null;
-      }
+    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, element -> {
+      String id = element.getTextTrim();
+      return StringUtil.isNotEmpty(id) ? id : null;
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
 

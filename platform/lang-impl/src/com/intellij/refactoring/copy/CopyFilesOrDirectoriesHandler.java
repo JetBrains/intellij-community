@@ -21,7 +21,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -44,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -136,7 +136,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         return;
       }
 
-      copyImpl(elements, newName, targetDirectory, false, openInEditor);
+      SmartPointerManager manager = SmartPointerManager.getInstance(project);
+      copyImpl(Arrays.stream(elements)
+                 .map(el -> manager.createSmartPsiElementPointer(el))
+                 .toArray(SmartPsiElementPointer[]::new), newName, targetDirectory, false, openInEditor);
     }
   }
 
@@ -160,7 +163,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, null, element.getProject(), true);
     if (dialog.showAndGet()) {
       String newName = dialog.getNewName();
-      copyImpl(elements, newName, targetDirectory, true, true);
+      SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
+      copyImpl(Arrays.stream(elements)
+                 .map(el -> manager.createSmartPsiElementPointer(el))
+                 .toArray(SmartPsiElementPointer[]::new), newName, targetDirectory, true, true);
     }
   }
 
@@ -203,7 +209,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
    * @param targetDirectory
    * @param openInEditor
    */
-  private static void copyImpl(@NotNull final PsiElement[] elements,
+  private static void copyImpl(@NotNull final SmartPsiElementPointer[] elements,
                                @Nullable final String newName,
                                @NotNull final PsiDirectory targetDirectory,
                                final boolean doClone,
@@ -225,8 +231,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     try {
       PsiFile firstFile = null;
       final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
-      for (PsiElement element : elements) {
-        PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory, choice, title);
+      for (SmartPsiElementPointer element : elements) {
+        PsiElement psiElement = element.getElement();
+        if (psiElement == null) continue;
+        PsiFile f = copyToDirectory((PsiFileSystemItem)psiElement, newName, targetDirectory, choice, title);
         if (firstFile == null) {
           firstFile = f;
         }
@@ -340,7 +348,9 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
 
       if (selection == 0 && file != existing) {
-        WriteAction.run(() -> existing.delete());
+        WriteCommandAction.writeCommandAction(targetDirectory.getProject())
+          .withName(title)
+          .run(() -> existing.delete());
       }
       else {
         return true;

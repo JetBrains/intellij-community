@@ -74,7 +74,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
   @NotNull
   @Override
   public ValidationResult validate(@NotNull String baseDirPath) {
-    /*if (PythonSdkType.isRemote(myProjectAction.getSdk())) {
+    /*if (PythonSdkType.isRemote(myProjectAction.findPythonSdk())) {
       if (PythonRemoteInterpreterManager.getInstance() == null) {
         return new ValidationResult(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }

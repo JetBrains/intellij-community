@@ -207,12 +207,12 @@ public class VcsLogManager implements Disposable {
     private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull final Exception e) {
+    public void consume(@Nullable Object source, @NotNull Exception e) {
       if (myIsBroken.compareAndSet(false, true)) {
         processError(source, e);
       }
       else {
-        LOG.debug(e);
+        LOG.debug("Vcs Log storage is broken and is being recreated", e);
       }
     }
 

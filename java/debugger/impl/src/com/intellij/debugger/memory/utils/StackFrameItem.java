@@ -70,10 +70,8 @@ public class StackFrameItem {
   }
 
   @NotNull
-  public static List<StackFrameItem> createFrames(@Nullable ThreadReferenceProxyImpl threadReferenceProxy,
-                                                  @NotNull SuspendContextImpl suspendContext,
-                                                  boolean withVars)
-    throws EvaluateException {
+  public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
+    ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameItem> res = new ArrayList<>();
       for (StackFrameProxyImpl frame : threadReferenceProxy.frames()) {

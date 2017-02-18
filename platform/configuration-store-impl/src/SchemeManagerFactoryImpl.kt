@@ -61,6 +61,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     return manager
   }
 
+  override fun dispose(schemeManager: SchemeManager<*>) {
+    managers.remove(schemeManager)
+  }
+
   open fun checkPath(originalPath: String): String {
     fun error(message: String) {
       // as error because it is not a new requirement

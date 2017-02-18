@@ -99,7 +99,7 @@ public class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
-    final Set<File> cp = new LinkedHashSet<File>();
+    final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     // util
     for (String path : PathManager.getUtilClassPath()) {
@@ -163,7 +163,7 @@ public class ClasspathBootstrap {
       cp.add(getResourceFile(t.getClass()));
     }
 
-    return new ArrayList<File>(cp);
+    return new ArrayList<>(cp);
   }
 
   public static String getResourcePath(Class aClass) {

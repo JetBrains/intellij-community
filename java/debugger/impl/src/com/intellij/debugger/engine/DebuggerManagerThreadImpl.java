@@ -55,19 +55,6 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     myDisposed = true;
   }
 
-  private static void waitForTerminateFutureToComplete(@NotNull Future<?> future) {
-    try {
-      LOG.debug("Waiting for " + future);
-      future.get(1, TimeUnit.MINUTES);
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    catch (TimeoutException e) {
-      throw new RuntimeException("Termination request is still pending", e);
-    }
-  }
-
   @TestOnly
   public static DebuggerManagerThreadImpl createTestInstance(@NotNull Disposable parent, Project project) {
     return new DebuggerManagerThreadImpl(parent, project);
@@ -125,7 +112,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     invoke(command);
 
     if (currentCommand != null) {
-      final ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(
         () -> {
           if (currentCommand == myEvents.getCurrentEvent()) {
             // if current command is still in progress, cancel it
@@ -145,12 +132,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
             }
           }
         }, terminateTimeoutMillis, TimeUnit.MILLISECONDS);
-
-      // register on project instead of this because it would cause significant delays on each session termination otherwise
-      Disposer.register(myProject, () -> waitForTerminateFutureToComplete(future));
     }
   }
-
 
   @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {

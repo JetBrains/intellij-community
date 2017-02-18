@@ -34,8 +34,8 @@ class DependencyContext implements NamingContext {
   private final static String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
-  private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
-  private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<UsageRepr.Usage, UsageRepr.Usage>();
+  private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
+  private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<>();
   private final int myEmptyName;
 
   UsageRepr.Usage getUsage(final UsageRepr.Usage u) {

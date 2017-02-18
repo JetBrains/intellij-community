@@ -74,4 +74,11 @@ public class Main {
         }
         System.out.println(count);
     }
+
+    void test(List<String> list) {
+        for (String x : list) {
+            if (x.isEmpty()) continue;
+            System.out.println(x);
+        }
+    }
 }

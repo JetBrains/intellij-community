@@ -120,10 +120,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   public abstract boolean isShowRootNames();
 
-  public abstract boolean isCompactReferencesView();
-
-  public abstract boolean isShowTagNames();
-
   @Override
   public boolean areGraphActionsEnabled() {
     return getTable().getRowCount() > 0;

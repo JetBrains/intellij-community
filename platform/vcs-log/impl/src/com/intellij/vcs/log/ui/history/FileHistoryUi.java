@@ -87,16 +87,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public boolean isCompactReferencesView() {
-    return true;
-  }
-
-  @Override
-  public boolean isShowTagNames() {
-    return false;
-  }
-
-  @Override
   public boolean isMultipleRoots() {
     return false;
   }

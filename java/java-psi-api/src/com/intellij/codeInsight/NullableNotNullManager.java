@@ -230,15 +230,12 @@ public abstract class NullableNotNullManager {
   }
 
   private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, final List<PsiParameter> superOwners) {
-    return RecursionManager.doPreventingRecursion(owner, true, new Computable<PsiAnnotation>() {
-      @Override
-      public PsiAnnotation compute() {
-        for (PsiParameter superOwner : superOwners) {
-          PsiAnnotation anno = findNullabilityAnnotationWithDefault(superOwner, false, false);
-          if (anno != null) return anno;
-        }
-        return null;
+    return RecursionManager.doPreventingRecursion(owner, true, () -> {
+      for (PsiParameter superOwner : superOwners) {
+        PsiAnnotation anno = findNullabilityAnnotationWithDefault(superOwner, false, false);
+        if (anno != null) return anno;
       }
+      return null;
     });
   }
 

@@ -121,7 +121,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
     if (ui.isUpdatingChildrenNow(toAdd.getNode())) {
-      toAdd.expire();
+      // toAdd.expire();
     }
     else {
       for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {

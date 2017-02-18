@@ -41,9 +41,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private static final String CANCELED_MESSAGE = "The build has been canceled";
   private final CompileScope myScope;
   private final MessageHandler myDelegateMessageHandler;
-  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
+  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
 
-  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<BuildTarget<?>>();
+  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<>();
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;

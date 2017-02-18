@@ -982,7 +982,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitPackageStatement(PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
-    myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement));
+    myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement, myFile));
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile));
+    }
   }
 
   @Override
@@ -1685,12 +1688,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
-    super.visitExportsStatement(statement);
+  public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    super.visitPackageAccessibilityStatement(statement);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-      PsiJavaCodeReferenceElement ref = statement.getPackageReference();
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(ref));
-      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkExportTargets(statement));
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(statement));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkPackageAccessTargets(statement));
     }
   }
 
@@ -1706,9 +1708,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitProvidesStatement(PsiProvidesStatement statement) {
     super.visitProvidesStatement(statement);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-      PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
-      PsiJavaCodeReferenceElement implRef = statement.getImplementationReference();
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceImplementation(implRef, intRef));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkServiceImplementations(statement));
     }
   }
 

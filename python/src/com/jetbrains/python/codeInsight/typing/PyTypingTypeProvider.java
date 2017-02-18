@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
+  public static final String GENERIC = "typing.Generic";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
@@ -80,7 +81,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .build();
 
   private static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
-    .add("typing.Generic")
+    .add(GENERIC)
     .add("typing.AbstractGeneric")
     .add("typing.Protocol")
     .build();
@@ -89,7 +90,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.overload")
     .add("typing.Any")
     .add("typing.TypeVar")
-    .add("typing.Generic")
+    .add(GENERIC)
     .add("typing.Tuple")
     .add("typing.Callable")
     .add("typing.Type")
@@ -107,7 +108,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
     // Check for the exact name in advance for performance reasons
     if ("Generic".equals(referenceExpression.getName())) {
-      if (resolveToQualifiedNames(referenceExpression, context).contains("typing.Generic")) {
+      if (resolveToQualifiedNames(referenceExpression, context).contains(GENERIC)) {
         return createTypingGenericType();
       }
     }
@@ -219,7 +220,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static PyType createTypingGenericType() {
-    return new PyCustomType("typing.Generic", null, false);
+    return new PyCustomType(GENERIC, null, false);
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
@@ -304,7 +305,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       // Depends on typing.Generic defined as a target expression
-      if ("typing.Generic".equals(target.getQualifiedName())) {
+      if (GENERIC.equals(target.getQualifiedName())) {
         return createTypingGenericType();
       }
       if (context.maySwitchToAST(target)) {

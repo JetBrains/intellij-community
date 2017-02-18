@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -106,7 +107,8 @@ class CollectMigration extends BaseStreamApiMigration {
     return initializerClass != null &&
            varClass != null &&
            CommonClassNames.JAVA_UTIL_HASH_MAP.equals(initializerClass.getQualifiedName()) &&
-           CommonClassNames.JAVA_UTIL_MAP.equals(varClass.getQualifiedName());
+           CommonClassNames.JAVA_UTIL_MAP.equals(varClass.getQualifiedName()) &&
+           !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer);
   }
 
   @Nullable
@@ -171,6 +173,13 @@ class CollectMigration extends BaseStreamApiMigration {
         return terminal;
       }
     }
+  }
+
+  @Contract("null -> false")
+  static boolean hasLambdaCompatibleEmptyInitializer(@Nullable PsiLocalVariable target) {
+    return target != null &&
+           ConstructionUtils.isEmptyCollectionInitializer(target.getInitializer()) &&
+           LambdaGenerationUtil.canBeUncheckedLambda(target.getInitializer());
   }
 
   static boolean isUsedOutsideOf(PsiVariable collectionVariable, Collection<PsiElement> allowedParents) {
@@ -239,7 +248,7 @@ class CollectMigration extends BaseStreamApiMigration {
                    PsiMethodCallExpression addCall,
                    PsiLoopStatement loop,
                    InitializerUsageStatus status) {
-      super(target, loop, ConstructionUtils.isEmptyCollectionInitializer(target.getInitializer()) ? status : ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
+      super(target, loop, hasLambdaCompatibleEmptyInitializer(target) ? status : ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
       myTargetType = target.getType();
       myInitializer = target.getInitializer();
       myElement = element;
@@ -315,13 +324,14 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiClassType rawVarType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
     if (rawType != null && rawVarType != null &&
         rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
-        (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
+        (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+        !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toList()";
     }
     else if (rawType != null && rawVarType != null &&
              rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
-             (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) ||
-              rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION))) {
+             (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
+             !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toSet()";
     }
     else {
@@ -331,7 +341,7 @@ class CollectMigration extends BaseStreamApiMigration {
         PsiExpressionList argumentList = ((PsiNewExpression)copy).getArgumentList();
         if (argumentList != null) {
           PsiExpression arg = ArrayUtil.getFirstElement(argumentList.getExpressions());
-          if (arg != null) {
+          if (arg != null && !(arg.getType() instanceof PsiPrimitiveType)) {
             arg.delete();
           }
         }
@@ -443,7 +453,7 @@ class CollectMigration extends BaseStreamApiMigration {
           PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
           if (ConstructionUtils.isEmptyCollectionInitializer(body)) {
             PsiLocalVariable variable = extractQualifierVariable(tb, qualifierCall);
-            if (variable != null && ConstructionUtils.isEmptyCollectionInitializer(variable.getInitializer())) {
+            if (hasLambdaCompatibleEmptyInitializer(variable)) {
               PsiType mapType = variable.getType();
               PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
               if (valueType == null) return null;
@@ -517,7 +527,7 @@ class CollectMigration extends BaseStreamApiMigration {
         return null;
       }
       PsiLocalVariable variable = extractQualifierVariable(tb, call);
-      if (variable == null || !ConstructionUtils.isEmptyCollectionInitializer(variable.getInitializer())) return null;
+      if (!hasLambdaCompatibleEmptyInitializer(variable)) return null;
       InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getMainLoop());
       return new ToMapTerminal(call, tb.getVariable(), variable, tb.getMainLoop(), status);
     }

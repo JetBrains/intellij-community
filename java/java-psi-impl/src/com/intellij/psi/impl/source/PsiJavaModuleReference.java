@@ -116,12 +116,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     if (StringUtil.isEmpty(refText)) return Collections.emptyList();
     CachedValuesManager manager = CachedValuesManager.getManager(refOwner.getProject());
     Key<CachedValue<Collection<PsiJavaModule>>> key = incompleteCode ? K_INCOMPLETE : K_COMPLETE;
-    return manager.getCachedValue(refOwner, key, new CachedValueProvider<Collection<PsiJavaModule>>() {
-      @Override
-      public Result<Collection<PsiJavaModule>> compute() {
-        Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
-        return Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+    return manager.getCachedValue(refOwner, key, () -> {
+      Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
+      return CachedValueProvider.Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
   }
 }

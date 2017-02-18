@@ -110,7 +110,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
         return processError(vFile,
-                            "Outdated stub in index: " + vFile + " " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
                             ", doc=" + document +
                             ", docSaved=" + saved +
                             ", wasIndexedAlready=" + wasIndexedAlready +
@@ -196,11 +196,11 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     return StubUpdatingIndex.canHaveStub(file);
   }
 
-  private boolean hasPsiInManyProjects(@NotNull final VirtualFile virtualFile) {
-    VirtualFile file = virtualFile;
+  @Override
+  protected boolean hasPsiInManyProjects(@NotNull final VirtualFile virtualFile) {
     int count = 0;
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(file) != null) {
+      if (PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(virtualFile) != null) {
         count++;
       }
     }
@@ -208,13 +208,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
-                                              @NotNull PsiFile psiFile,
-                                              @NotNull ObjectStubTree stubTree,
-                                              Document prevCachedDocument) {
-    String msg = super.getStubAstMismatchDiagnostics(file, psiFile, stubTree, prevCachedDocument);
-    msg += "\nin many projects: " + hasPsiInManyProjects(file);
-    msg += "\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file);
-    return msg;
+  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+    return StubUpdatingIndex.getIndexingStampInfo(file);
   }
 }

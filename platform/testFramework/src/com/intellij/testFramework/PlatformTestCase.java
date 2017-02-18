@@ -34,6 +34,7 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.text.AsyncHighlighterUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -392,6 +393,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
+
+    AsyncHighlighterUpdater.completeAsyncTasks();
 
     ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
 

@@ -59,9 +59,12 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
       value = dh.getUserData(key);
-      if (isOutdated(value)) {
-        value = null;
-        dh.putUserData(key, null);
+      while (isOutdated(value)) {
+        if (dh.replace(key, value, null)) {
+          value = null;
+          break;
+        }
+        value = dh.getUserData(key);
       }
       if (value == null) {
         value = createCachedValue(provider, trackValue);

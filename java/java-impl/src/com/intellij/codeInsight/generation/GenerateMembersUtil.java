@@ -36,6 +36,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -592,6 +593,16 @@ public class GenerateMembersUtil {
       }
 
       OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(sourceParam, targetClass, targetParam);
+    }
+  }
+
+  public static void copyAnnotations(@NotNull PsiModifierList source, @NotNull PsiModifierList target, String... skipAnnotations) {
+    for (PsiAnnotation annotation : source.getAnnotations()) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
+        continue;
+      }
+      target.add(annotation);
     }
   }
 

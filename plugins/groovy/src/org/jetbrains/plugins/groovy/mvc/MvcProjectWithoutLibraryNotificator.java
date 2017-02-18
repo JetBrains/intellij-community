@@ -24,12 +24,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +74,11 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
             }
           }
         ).notify(project);
+      }
+
+      @Override
+      public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+        return DumbService.getInstance(project).runReadActionInSmartMode(() -> performInReadAction(indicator));
       }
 
       @Override

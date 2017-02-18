@@ -92,6 +92,8 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
   }
 
   public void testSimple() throws Exception { doTest(); }
+  
+  public void testManyConstantSources() throws Exception { doTest(); }
   // test that the optimisation for not loading AST works
   public void testWithLibrary() throws Exception { doTest(); }
 }

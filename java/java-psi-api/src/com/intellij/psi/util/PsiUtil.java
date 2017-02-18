@@ -789,7 +789,7 @@ public final class PsiUtil extends PsiUtilCore {
           for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
             final PsiType substituted = substitutor.substitute(typeParameter);
             if (substituted instanceof PsiWildcardType) {
-              if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+              if (substitutionMap == null) substitutionMap = new HashMap<>(substitutor.getSubstitutionMap());
               final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
               LOG.assertTrue(capturedWildcard != null);
               final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
@@ -910,7 +910,7 @@ public final class PsiUtil extends PsiUtilCore {
     while (currentOwner != null) {
       PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
       if (typeParameters.length > 0) {
-        if (result == null) result = new ArrayList<PsiTypeParameter>(typeParameters.length);
+        if (result == null) result = new ArrayList<>(typeParameters.length);
         for (int i = typeParameters.length - 1; i >= 0; i--) {
           result.add(typeParameters[i]);
         }
@@ -1053,7 +1053,7 @@ public final class PsiUtil extends PsiUtilCore {
       if (superClass == null) {
         return true;
       }
-      if (visited == null) visited = new THashSet<PsiClass>();
+      if (visited == null) visited = new THashSet<>();
       if (!visited.add(clazz)) return false;
       return hasDefaultCtrInHierarchy(superClass, true, true, visited);
     }
@@ -1096,12 +1096,7 @@ public final class PsiUtil extends PsiUtilCore {
     return type;
   }
 
-  public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {
-    @Override
-    public int compare(PsiElement o1, PsiElement o2) {
-      return compareElementsByPosition(o1, o2);
-    }
-  };
+  public static final Comparator<PsiElement> BY_POSITION = (o1, o2) -> compareElementsByPosition(o1, o2);
 
   public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @PsiModifier.ModifierConstant String property, boolean value) {
     final PsiModifierList modifierList = owner.getModifierList();
@@ -1255,7 +1250,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
-    ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
+    ArrayList<PsiReturnStatement> vector = new ArrayList<>();
     if (body != null) {
       addReturnStatements(vector, body);
     }

@@ -31,6 +31,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -183,7 +185,7 @@ public class DarculaLaf extends BasicLookAndFeel {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }
-      if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+      if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
@@ -237,7 +239,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUI.isHiDPI() ? "@2x.css" : ".css"));
+    URL url = getClass().getResource(getPrefix() + (JBUI.isUsrHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
@@ -395,6 +397,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       } catch (Exception e) {
         log(e);
       }
+    } else if (key.endsWith("Size")) {
+      return parseSize(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -418,10 +422,11 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static Insets parseInsets(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
-    return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
-                                           Integer.parseInt(numbers.get(1)),
-                                           Integer.parseInt(numbers.get(2)),
-                                           Integer.parseInt(numbers.get(3)));
+    JBInsets insets = new JBInsets(Integer.parseInt(numbers.get(0)),
+                                   Integer.parseInt(numbers.get(1)),
+                                   Integer.parseInt(numbers.get(2)),
+                                   Integer.parseInt(numbers.get(3)));
+    return insets.asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")
@@ -446,6 +451,12 @@ public class DarculaLaf extends BasicLookAndFeel {
     catch (NumberFormatException e) {
       return null;
     }
+  }
+
+  private static Dimension parseSize(String value) {
+    final List<String> numbers = StringUtil.split(value, ",");
+    JBDimension dimension = new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1)));
+    return dimension.asUIResource();
   }
 
   @Override

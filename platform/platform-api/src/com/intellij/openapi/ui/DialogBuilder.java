@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -465,5 +464,9 @@ public class DialogBuilder implements Disposable {
 
   public void setErrorText(@Nullable final String text) {
     myDialogWrapper.setErrorText(text);
+  }
+
+  public void setErrorText(@Nullable final String text, @Nullable JComponent component) {
+    myDialogWrapper.setErrorText(text, component);
   }
 }

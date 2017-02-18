@@ -761,26 +761,26 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="Loop can be collapsed with Stream API"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2streamapi" displayName="Loop can be collapsed with Stream API"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop" displayName="Stream API call chain can be replaced with loop"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="LambdaCanBeMethodCall" displayName="Lambda can be replaced with method call"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="LambdaCanBeMethodCall" displayName="Lambda can be replaced with method call"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.LambdaCanBeMethodCallInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference" displayName="Invalid method reference used for Comparator"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
@@ -791,11 +791,11 @@
     <localInspection groupPath="Java" language="JAVA" shortName="TrivialFunctionalExpressionUsage" displayName="Trivial usage of functional expression"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />
-    <localInspection groupPath="Java" language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
-                     displayName="Possible heap pollution from parameterized vararg type" groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
+                     displayName="Possible heap pollution from parameterized vararg type" groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="JavacQuirks" bundle="messages.InspectionsBundle" key="inspection.compiler.javac.quirks.name"
@@ -814,9 +814,9 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
@@ -829,32 +829,32 @@
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8ListSort"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ListSort"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
                      displayName="Collections.sort() can be replaced with List.sort()"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8ArraySetAll"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ArraySetAll"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ArraySetAllInspection"
                      displayName="Loop can be replaced with Arrays.setAll()"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionRemoveIf"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      displayName="Loop can be replaced with Collection.removeIf()"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8MapApi"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapApi"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapApiInspection"
                      displayName="Replace with single Map method"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Java8MapForEach"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
                      displayName="Replace with Map.forEach"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
@@ -882,9 +882,9 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
                      displayName="Use bulk operation instead of iteration"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ComparatorCombinators"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ComparatorCombinatorsInspection"
                      displayName="Use Comparator combinators"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceInefficientStreamCount"
@@ -899,14 +899,18 @@
                      displayName="Remove redundant lambda parameter types"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalIsPresent"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
                      displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
-                     key="inspection.module.exports.package.to.itself.name" bundle="messages.InspectionsBundle"
+                     key="inspection.module.exports.package.to.itself" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
+    <localInspection language="JAVA" shortName="JavaModuleNaming" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
+                     bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
+                     implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>

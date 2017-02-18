@@ -26,7 +26,7 @@ class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
     val mainDir = File(myTestRoot, "main")
     assertTrue(mainDir.mkdir())
     val path = mainDir.path
-    GitTestUtil.initRepo(path, true)
+    initRepo(path, true)
     return path
   }
 

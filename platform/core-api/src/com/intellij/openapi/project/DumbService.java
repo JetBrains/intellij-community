@@ -21,10 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +45,7 @@ public abstract class DumbService {
   /**
    * @see Project#getMessageBus()
    */
-  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
+  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<>("dumb mode", DumbModeListener.class);
 
   /**
    * The tracker is advanced each time we enter/exit from dumb mode.
@@ -88,13 +86,8 @@ public abstract class DumbService {
    * unless this method is already called with read access allowed.
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
-    final Ref<T> result = new Ref<T>();
-    runReadActionInSmartMode(new Runnable() {
-      @Override
-      public void run() {
-        result.set(r.compute());
-      }
-    });
+    final Ref<T> result = new Ref<>();
+    runReadActionInSmartMode(() -> result.set(r.compute()));
     return result.get();
   }
 
@@ -128,15 +121,12 @@ public abstract class DumbService {
 
     while (true) {
       waitForSmartMode();
-      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (isDumb()) {
-            return false;
-          }
-          r.run();
-          return true;
+      boolean success = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        if (isDumb()) {
+          return false;
         }
+        r.run();
+        return true;
       });
       if (success) break;
     }
@@ -193,7 +183,7 @@ public abstract class DumbService {
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<T>(collection.size());
+      final ArrayList<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {
         if (isDumbAware(element)) {
           result.add(element);
@@ -206,7 +196,7 @@ public abstract class DumbService {
       return (List<T>)collection;
     }
 
-    return new ArrayList<T>(collection);
+    return new ArrayList<>(collection);
   }
 
   /**
@@ -282,6 +272,34 @@ public abstract class DumbService {
    * @see #setAlternativeResolveEnabled(boolean) 
    */
   public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
+   * Invokes the given computable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <T, E extends Throwable> T computeWithAlternativeResolveEnabled(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    setAlternativeResolveEnabled(true);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
+   * Invokes the given runnable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <E extends Throwable> void runWithAlternativeResolveEnabled(@NotNull ThrowableRunnable<E> runnable) throws E {
     setAlternativeResolveEnabled(true);
     try {
       runnable.run();

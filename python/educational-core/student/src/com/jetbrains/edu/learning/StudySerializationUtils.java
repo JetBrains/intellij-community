@@ -20,6 +20,7 @@ import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -208,6 +209,7 @@ public class StudySerializationUtils {
       return state;
     }
 
+    @NotNull
     public static Element convertToForthVersion(Element state) throws StudyUnrecognizedFormatException {
       Element taskManagerElement = state.getChild(MAIN_ELEMENT);
       Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);

@@ -80,7 +80,7 @@ class CopyClassDialog extends DialogWrapper{
                             new Pass<String>() {
                               @Override
                               public void pass(String s) {
-                                setErrorText(s);
+                                setErrorText(s, myDestinationCB);
                               }
                             }, myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));

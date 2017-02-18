@@ -26,7 +26,6 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -68,7 +67,7 @@ public class TestPackage extends TestObject {
           try {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            ConfigurationUtil.findAllTestClasses(classFilter, myClasses);
+            ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
           }
           catch (CantRunException ignored) {}
         }
@@ -99,16 +98,9 @@ public class TestPackage extends TestObject {
     final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
-    final DumbService dumbService = DumbService.getInstance(project);
-    try {
-      dumbService.setAlternativeResolveEnabled(true);
-      final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-      if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
-        getClassFilter(data);//check if junit 4 found
-      }
-    }
-    finally {
-      dumbService.setAlternativeResolveEnabled(false);
+    final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
+    if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
+      JUnitUtil.checkTestCase(sourceScope, project);
     }
     createTempFiles(javaParameters);
 

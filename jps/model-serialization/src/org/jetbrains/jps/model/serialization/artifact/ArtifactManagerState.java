@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Tag("artifacts")
 public class ArtifactManagerState {
-  private List<ArtifactState> myArtifacts = new ArrayList<ArtifactState>();
+  private List<ArtifactState> myArtifacts = new ArrayList<>();
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
