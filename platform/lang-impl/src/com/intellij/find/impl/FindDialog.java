@@ -1663,7 +1663,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       myOmitFileExtension = omitFileExtension;
       myUseBold = useBold;
       setLayout(new BorderLayout());
-      add(myUsageRenderer, BorderLayout.WEST);
+      add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
       setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
     }
